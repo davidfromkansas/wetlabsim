@@ -98,7 +98,7 @@ class Handler(BaseHTTPRequestHandler):
             if p.startswith("/stream/"):
                 return self._stream(p[len("/stream/"):].removesuffix(".mjpg"), qs)
             if p == "/events":
-                return self._json(self.sim.events[-200:])
+                return self._json(self.sim.events if "all" in qs else self.sim.events[-200:])
             if p == "/eval/ground_truth":
                 if not self._authed():
                     return self._err("evaluator token required", 403)
@@ -192,6 +192,11 @@ class Handler(BaseHTTPRequestHandler):
                     while s.gripper_status()["moving"] and time.time() - t0 < 5:
                         time.sleep(0.02)
                 return self._json({"ok": True, "gripper": s.gripper_status()})
+            if p == "/eval/save_recording":
+                if not self._authed():
+                    return self._err("evaluator token required", 403)
+                n = s.save_recording(b["path"])
+                return self._json({"ok": True, "frames": n})
             if p == "/eval/reset":
                 if not self._authed():
                     return self._err("evaluator token required", 403)

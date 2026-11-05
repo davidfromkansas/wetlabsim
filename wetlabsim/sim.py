@@ -143,6 +143,8 @@ class Sim:
             self._wall0 = time.perf_counter()
             self._sim0 = self.d.time
             self.rt_factor = 1.0
+            self.recording: list[tuple[float, np.ndarray]] = []   # (time, qpos) at 30 Hz for replay videos
+            self._next_rec = self.d.time
 
     def open_log(self, run_dir: str | pathlib.Path):
         with self.lock:
@@ -182,6 +184,9 @@ class Sim:
                     self._control()
                     mujoco.mj_step(m, d)
                     n += 1
+                    if d.time >= self._next_rec:
+                        self.recording.append((d.time, d.qpos.copy()))
+                        self._next_rec += 1 / 30
                 sim_done += n * m.opt.timestep
                 if target - d.time > 0.25:  # can't keep up: let time slip, like a dropped frame
                     self._wall0 += (target - d.time) / self.realtime
@@ -440,6 +445,12 @@ class Sim:
                     out[name] = {"pos": p.round(5).tolist(), "quat": self.d.xquat[i].round(5).tolist()}
             return {"time": round(self.d.time, 4), "objects": out}
 
+    def save_recording(self, path):
+        with self.lock:
+            rec = list(self.recording)
+        np.savez_compressed(path, time=np.array([t for t, _ in rec]), qpos=np.array([q for _, q in rec]))
+        return len(rec)
+
     def _log_loop(self):
         while self._running:
             time.sleep(0.05)
@@ -455,6 +466,9 @@ class Sim:
     def render(self, camera: str, depth: bool = False, priority: int = 0, timeout=30.0) -> dict:
         if camera not in S.CAMERAS:
             raise RobotError(f"unknown camera '{camera}', choose from {list(S.CAMERAS)}")
+        if priority == 0:
+            with self.lock:
+                self.log_event("camera", camera=camera)
         box: dict = {}
         ev = threading.Event()
         self._render_seq += 1

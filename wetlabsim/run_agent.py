@@ -106,8 +106,10 @@ def main(argv=None):
     elapsed = time.time() - t0
 
     gt = _eval_call(args.url, token, "/eval/ground_truth")
+    _eval_call(args.url, token, "/eval/save_recording", {"path": str(run_dir / "replay.npz")})
     state = json.loads(urllib.request.urlopen(args.url + "/state").read())
-    events = json.loads(urllib.request.urlopen(args.url + "/events").read())
+    events = json.loads(urllib.request.urlopen(args.url + "/events?all=1").read())
+    (run_dir / "events.json").write_text(json.dumps(events, indent=0))
     result = {
         "run_id": run_id, "agent": args.agent, "model": args.model, "task": task,
         "status": status, "exit_code": proc.returncode, "wall_seconds": round(elapsed, 1),
@@ -118,6 +120,7 @@ def main(argv=None):
     (run_dir / "result.json").write_text(json.dumps(result, indent=2))
     shutil.copytree(workspace, run_dir / "workspace", dirs_exist_ok=True)
     print(f"Done in {elapsed:.0f} s ({status}). Results in {run_dir}")
+    print(f"Make a video of it with: python -m wetlabsim.make_video {run_dir}")
 
 
 if __name__ == "__main__":
