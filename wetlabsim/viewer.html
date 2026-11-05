@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wet Lab Robot Cell</title>
+<style>
+  :root { --bg:#0f1214; --panel:#171b1e; --ink:#e8eaeb; --quiet:#8b9399; --amber:#f2a23a; --red:#e5534b; --green:#4fb477; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.4 -apple-system, system-ui, sans-serif; }
+  header { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid #23292d; }
+  header h1 { font-size:15px; font-weight:600; margin:0; }
+  .badge { padding:2px 8px; border-radius:10px; font-size:12px; font-weight:600; background:#23292d; }
+  .badge.ok { color:var(--green); } .badge.stop { color:var(--red); }
+  main { display:grid; grid-template-columns: 2fr 1fr; gap:12px; padding:12px 16px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  .cam { background:var(--panel); border-radius:8px; overflow:hidden; }
+  .cam img { width:100%; display:block; aspect-ratio: 4/3; background:#000; }
+  .cam .label { padding:6px 10px; color:var(--quiet); font-size:12px; }
+  .side { display:flex; flex-direction:column; gap:12px; }
+  table { width:100%; border-collapse:collapse; font-variant-numeric: tabular-nums; }
+  td { padding:3px 0; } td:last-child { text-align:right; }
+  .panel { background:var(--panel); border-radius:8px; padding:10px 12px; }
+  .panel h2 { font-size:12px; color:var(--quiet); margin:0 0 6px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+  #events { max-height:180px; overflow:auto; font:12px ui-monospace, monospace; color:var(--quiet); white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Wet Lab Robot Cell</h1>
+  <span id="mode" class="badge ok">connecting</span>
+  <span id="clock" class="badge">t = 0.0 s</span>
+  <span id="rt" class="badge">real time</span>
+</header>
+<main>
+  <div class="cam"><img src="/stream/side.mjpg?fps=10" alt="Room camera"><div class="label">Room camera (for people watching, not given to the robot)</div></div>
+  <div class="side">
+    <div class="cam"><img src="/stream/overhead.mjpg?fps=4" alt="Overhead camera"><div class="label">Overhead camera (robot sees this)</div></div>
+    <div class="cam"><img src="/stream/wrist.mjpg?fps=4" alt="Wrist camera"><div class="label">Wrist camera (robot sees this)</div></div>
+    <div class="panel"><h2>Robot</h2><table id="robot"></table></div>
+    <div class="panel"><h2>Commands</h2><div id="events"></div></div>
+  </div>
+</main>
+<script>
+const f = (v, n=3) => Number(v).toFixed(n);
+async function tick() {
+  try {
+    const s = await (await fetch('/state')).json();
+    const m = document.getElementById('mode');
+    m.textContent = s.mode === 'running' ? (s.moving ? 'moving' : 'idle') : 'PROTECTIVE STOP';
+    m.className = 'badge ' + (s.mode === 'running' ? 'ok' : 'stop');
+    document.getElementById('clock').textContent = 't = ' + f(s.time, 1) + ' s';
+    document.getElementById('rt').textContent = 'speed ' + f(s.realtime_factor, 2) + 'x real time';
+    const p = s.tcp_pose, ft = s.tcp_force, g = s.gripper;
+    document.getElementById('robot').innerHTML =
+      `<tr><td>Hand position (m)</td><td>${f(p[0])}, ${f(p[1])}, ${f(p[2])}</td></tr>` +
+      `<tr><td>Gripper</td><td>${f(g.position,0)} / 255 ${g.object_detected ? '(holding something)' : ''}</td></tr>` +
+      `<tr><td>Wrist force (N)</td><td>${f(Math.hypot(ft[0],ft[1],ft[2]),1)}</td></tr>` +
+      (s.protective_stop_reason ? `<tr><td>Stop reason</td><td>${s.protective_stop_reason}</td></tr>` : '');
+    const ev = await (await fetch('/events')).json();
+    document.getElementById('events').textContent = ev.slice(-30).reverse()
+      .map(e => `${f(e.t,1)}s  ${e.kind || e.event}  ${e.target ? JSON.stringify(e.target) : (e.reason || (e.position ?? ''))}`).join('\n');
+  } catch (e) { document.getElementById('mode').textContent = 'disconnected'; }
+}
+setInterval(tick, 500); tick();
+</script>
+</body>
+</html>
