@@ -46,13 +46,15 @@ def build_command(agent: str, task: str, model: str | None, workspace: pathlib.P
         (workspace / ".mcp.json").write_text(json.dumps(mcp, indent=2))
         cmd = ["claude", "-p", prompt, "--mcp-config", str(workspace / ".mcp.json"), "--strict-mcp-config",
                "--allowedTools", "Bash", "Read", "Write", "Edit", *MCP_TOOLS,
-               "--output-format", "stream-json", "--verbose"]
+               "--output-format", "stream-json", "--verbose",
+               "--thinking-display", "summarized"]   # include summarized thinking in the trace
         if model:
             cmd += ["--model", model]
         return cmd
     if agent == "codex":
         cmd = ["codex", "exec", "--sandbox", "workspace-write", "--skip-git-repo-check", "--json",
                "-c", "sandbox_workspace_write.network_access=true",
+               "-c", 'model_reasoning_summary="detailed"',   # include reasoning summaries in the trace
                "-c", f'mcp_servers.wetlab.command="{py}"',
                "-c", 'mcp_servers.wetlab.args=["-m", "wetlabsim.mcp_server"]',
                "-c", f'mcp_servers.wetlab.env={{PYTHONPATH="{ROOT}"}}']
