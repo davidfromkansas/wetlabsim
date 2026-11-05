@@ -121,7 +121,7 @@ def main(argv=None):
     events = json.loads((run / "events.json").read_text()) if (run / "events.json").exists() else []
     result = json.loads((run / "result.json").read_text())
     task = (run / "task.txt").read_text().strip()
-    agent_name = {"claude": "Claude Code", "codex": "Codex"}.get(result["agent"], result["agent"])
+    agent_name = {"claude": "Claude Code", "codex": "Codex", "devin": "Devin"}.get(result["agent"], result["agent"])
     title = args.title or f"{agent_name} controlling a UR5e robot arm"
     out = pathlib.Path(args.out or run / "demo.mp4")
 
@@ -131,7 +131,7 @@ def main(argv=None):
     small = mujoco.Renderer(m, SIDE_H, SIDE_W)
     f_title, f_big, f_med, f_small = _font(26, True), _font(20, True), _font(17), _font(14)
 
-    steps = TR.load(run / "transcript.jsonl") if (run / "transcript.jsonl").exists() else []
+    steps = TR.load_run(run)
     if steps and all(s_.t == 0 for s_ in steps):
         steps = []   # older runs have no timing; leave the panel empty rather than misplace it
     f_mono = _mono(14)

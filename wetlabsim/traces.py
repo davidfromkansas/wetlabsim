@@ -114,3 +114,82 @@ def load(path: str | pathlib.Path) -> list[Step]:
                     else:
                         steps.append(Step(t, "tool", tool))
     return steps
+
+
+def _iso_to_epoch(ts) -> float | None:
+    from datetime import datetime
+    try:
+        return datetime.fromisoformat(str(ts).replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return None
+
+
+def _generic_tool(name: str, args: dict) -> Step:
+    """Map a tool call from an unknown harness (e.g. Devin) onto a trace step by its arguments."""
+    n = name.lower()
+    if n.endswith("look") or n.endswith("__look"):
+        return Step(0, "looks", f"{args.get('camera', 'overhead')} camera")
+    if n.endswith("robot_state"):
+        return Step(0, "tool", "reads the robot state")
+    if n.endswith("emergency_stop"):
+        return Step(0, "tool", "EMERGENCY STOP")
+    if "command" in args or "cmd" in args:
+        return Step(0, "runs", str(args.get("command") or args.get("cmd")))
+    path = args.get("file_path") or args.get("path") or ""
+    if "content" in args or "new_string" in args or "write" in n or "edit" in n:
+        return Step(0, "writes", f"{_short_path(path)}\n{args.get('content') or args.get('new_string') or ''}")
+    if "read" in n and path:
+        f = _short_path(path)
+        return Step(0, "looks", f"saved image {f}") if f.lower().endswith((".png", ".jpg", ".jpeg")) \
+            else Step(0, "reads", f)
+    return Step(0, "tool", f"{name} {json.dumps(args)[:200]}")
+
+
+def load_atif(path, wall_reset: float, sim_reset: float) -> list[Step]:
+    """Read an ATIF trajectory (Devin CLI --export). Step timestamps are wall-clock, so they are
+    shifted onto the robot clock with the run's reset times."""
+    data = json.loads(pathlib.Path(path).read_text())
+    steps: list[Step] = []
+    for s in data.get("steps", []):
+        if s.get("source") != "agent":
+            continue
+        epoch = _iso_to_epoch(s.get("timestamp"))
+        t = sim_reset + (epoch - wall_reset) if epoch else 0.0
+        if (s.get("reasoning_content") or "").strip():
+            steps.append(Step(t, "thinks", s["reasoning_content"].strip()))
+        msg = s.get("message")
+        if isinstance(msg, list):
+            msg = "\n".join(p.get("text", "") for p in msg if isinstance(p, dict))
+        if (msg or "").strip():
+            steps.append(Step(t, "says", msg.strip()))
+        kinds = {}
+        for c in s.get("tool_calls") or []:
+            args = c.get("arguments") or {}
+            if isinstance(args, str):
+                try:
+                    args = json.loads(args)
+                except ValueError:
+                    args = {"command": args}
+            st = _generic_tool(c.get("function_name", ""), args)
+            st.t = t
+            steps.append(st)
+            kinds[c.get("tool_call_id")] = st.kind
+        for r in (s.get("observation") or {}).get("results", []):
+            kind = kinds.get(r.get("source_call_id"))
+            if kind in ("runs", "tool"):
+                txt = _result_text(r.get("content")).strip()
+                steps.append(Step(t, "output", txt or "(no output)"))
+            elif kind == "looks":
+                steps.append(Step(t, "output", "[camera image]"))
+    return steps
+
+
+def load_run(run_dir) -> list[Step]:
+    """Trace steps for a run folder, whichever agent made it."""
+    run = pathlib.Path(run_dir)
+    if (run / "devin_trajectory.json").exists():
+        res = json.loads((run / "result.json").read_text())
+        return load_atif(run / "devin_trajectory.json", res["wall_reset"], res["sim_reset"])
+    if (run / "transcript.jsonl").exists():
+        return load(run / "transcript.jsonl")
+    return []

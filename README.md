@@ -3,7 +3,7 @@
 ![Live viewer](docs/viewer.png)
 
 A realistic, real-time robot cell for testing how well AI agents (Claude Code,
-Codex) can control a robot arm in a wet lab.
+Codex, Devin) can control a robot arm in a wet lab.
 
 A simulated **UR5e arm** with a **Robotiq 2F-85 gripper** stands on a lab bench with
 tube racks and 15 ml tubes. Physics runs in [MuJoCo](https://mujoco.org) and never
@@ -29,6 +29,11 @@ python -m wetlabsim.run_agent --agent codex  --task "Move the tube with the red 
 
 Claude Code and Codex use your existing logins, so no API keys are needed. Install
 them first if you haven't: `npm i -g @anthropic-ai/claude-code @openai/codex`.
+
+Devin works the same way through the Devin CLI (`--agent devin`). Install it with
+`curl -fsSL https://cli.devin.ai/install.sh | bash` (or `brew install --cask devin-cli`),
+then run `devin auth login` once. Devin is only allowed to run Python, edit files in its
+own workspace and use the robot tools.
 
 On a Linux machine with no screen, add `MUJOCO_GL=egl` (NVIDIA GPU) or
 `MUJOCO_GL=osmesa` (CPU only) before the server command.

@@ -1,7 +1,8 @@
-"""Run one agent (Claude Code or Codex) on a task in the robot cell and record everything.
+"""Run one agent (Claude Code, Codex or Devin) on a task in the robot cell and record everything.
 
     python -m wetlabsim.run_agent --agent claude --task "Move the red-capped tube to the empty rack."
     python -m wetlabsim.run_agent --agent codex  --task-file tasks/move_tube.txt
+    python -m wetlabsim.run_agent --agent devin  --task-file tasks/move_tube.txt
 
 The robot cell (python -m wetlabsim.server) must already be running. Each run:
 1. resets the cell to its starting state and starts a new log,
@@ -36,7 +37,8 @@ def _eval_call(url, token, path, body=None):
         return json.loads(r.read())
 
 
-def build_command(agent: str, task: str, model: str | None, workspace: pathlib.Path) -> list[str]:
+def build_command(agent: str, task: str, model: str | None, workspace: pathlib.Path,
+                  run_dir: pathlib.Path) -> list[str]:
     py = sys.executable
     prompt = (f"{task}\n\nThe robot manual is in ROBOT_MANUAL.md. When you are done, "
               "say DONE and briefly describe what you did and what you saw.")
@@ -61,12 +63,30 @@ def build_command(agent: str, task: str, model: str | None, workspace: pathlib.P
         if model:
             cmd += ["--model", model]
         return cmd + [prompt]
-    raise SystemExit(f"unknown agent {agent!r}; use claude or codex")
+    if agent == "devin":
+        # Devin CLI reads AGENTS.md, the MCP config and the permission rules from the workspace.
+        # Like Claude's --allowedTools, only the tools it needs are pre-approved: Python, files
+        # in its workspace, and the robot's MCP tools. Anything else is refused (no one is there
+        # to approve it). Devin has no streaming JSON output, so its full trajectory (ATIF
+        # format, with timestamps) is exported to the run folder instead.
+        mcp = {"mcpServers": {"wetlab": {"command": py, "args": ["-m", "wetlabsim.mcp_server"],
+                                         "env": {"PYTHONPATH": str(ROOT)}}}}
+        perms = {"permissions": {"allow": ["Read(./**)", "Write(./**)", "Exec(python)", "Exec(python3)",
+                                           "Exec(ls)", "Exec(cat)", "mcp__wetlab__*"]}}
+        (workspace / ".devin").mkdir(exist_ok=True)
+        (workspace / ".devin" / "mcp_config.json").write_text(json.dumps(mcp, indent=2))
+        (workspace / ".devin" / "config.json").write_text(json.dumps(perms, indent=2))
+        cmd = ["devin", "--respect-workspace-trust", "false",
+               "--export", str(run_dir / "devin_trajectory.json")]
+        if model:
+            cmd += ["--model", model]
+        return cmd + ["-p", prompt]
+    raise SystemExit(f"unknown agent {agent!r}; use claude, codex or devin")
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--agent", required=True, choices=["claude", "codex"])
+    ap.add_argument("--agent", required=True, choices=["claude", "codex", "devin"])
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument("--task")
     g.add_argument("--task-file")
@@ -91,7 +111,7 @@ def main(argv=None):
     _eval_call(args.url, token, "/eval/reset", {"run_dir": str(run_dir)})
     wall_reset = time.time()
     sim_reset = json.loads(urllib.request.urlopen(args.url + "/state").read())["time"]
-    cmd = build_command(args.agent, task, args.model, workspace)
+    cmd = build_command(args.agent, task, args.model, workspace, run_dir)
     (run_dir / "task.txt").write_text(task)
     (run_dir / "command.json").write_text(json.dumps(cmd, indent=1))
     env = dict(os.environ, PYTHONPATH=str(ROOT) + os.pathsep + os.environ.get("PYTHONPATH", ""),
@@ -133,7 +153,8 @@ def main(argv=None):
     (run_dir / "events.json").write_text(json.dumps(events, indent=0))
     result = {
         "run_id": run_id, "agent": args.agent, "model": args.model, "task": task,
-        "status": status, "exit_code": proc.returncode, "wall_seconds": round(elapsed, 1),
+        "status": status, "wall_reset": wall_reset, "sim_reset": sim_reset,
+        "exit_code": proc.returncode, "wall_seconds": round(elapsed, 1),
         "protective_stops": sum(1 for e in events if e.get("event") == "protective_stop"),
         "commands": sum(1 for e in events if e.get("event") == "command"),
         "final_robot_state": state, "final_objects": gt["objects"],
