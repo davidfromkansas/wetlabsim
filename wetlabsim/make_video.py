@@ -16,10 +16,12 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 from . import scene as S
+from . import traces as TR
 
-W, H = 1280, 720
-MAIN_W, MAIN_H = 960, 720
-SIDE_W, SIDE_H = 320, 240
+W, H = 1920, 1080
+MAIN_X, MAIN_Y, MAIN_W, MAIN_H = 0, 64, 1024, 768     # room camera
+CAM_X, SIDE_W, SIDE_H = 1024, 384, 288                # robot's cameras column
+TRACE_X, TRACE_W = 1408, 512                          # agent trace column (far right)
 IDLE_SPEEDUP = 4.0
 
 
@@ -34,6 +36,27 @@ def _font(size, bold=False):
         return ImageFont.truetype("Arial Bold.ttf" if bold else "Arial.ttf", size)
     except OSError:
         return ImageFont.load_default()
+
+
+def _mono(size):
+    for p in ("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", "/System/Library/Fonts/Menlo.ttc"):
+        try:
+            return ImageFont.truetype(p, size)
+        except OSError:
+            pass
+    return ImageFont.load_default()
+
+
+KIND_STYLE = {
+    "says": ("SAYS", (242, 162, 58), "text"),
+    "thinks": ("THINKS", (190, 160, 240), "text"),
+    "runs": ("RUNS CODE", (111, 190, 255), "mono"),
+    "writes": ("WRITES FILE", (111, 190, 255), "mono"),
+    "output": ("OUTPUT", (139, 147, 153), "mono"),
+    "looks": ("LOOKS THROUGH", (79, 180, 119), "text"),
+    "reads": ("READS", (139, 147, 153), "text"),
+    "tool": ("TOOL", (139, 147, 153), "text"),
+}
 
 
 def describe(ev) -> str | None:
@@ -108,6 +131,52 @@ def main(argv=None):
     small = mujoco.Renderer(m, SIDE_H, SIDE_W)
     f_title, f_big, f_med, f_small = _font(26, True), _font(20, True), _font(17), _font(14)
 
+    steps = TR.load(run / "transcript.jsonl") if (run / "transcript.jsonl").exists() else []
+    if steps and all(s_.t == 0 for s_ in steps):
+        steps = []   # older runs have no timing; leave the panel empty rather than misplace it
+    f_mono = _mono(14)
+
+    def draw_trace(dr, shown, agent, t_start):
+        x0 = TRACE_X
+        dr.rectangle((x0, 0, W, H), fill=(11, 13, 15))
+        dr.line((x0, 0, x0, H), fill=(40, 46, 50), width=2)
+        dr.text((x0 + 16, 16), f"{agent.upper()} TRACE", font=f_small, fill=amber)
+        dr.text((x0 + 16, 36), "what it says, the code it runs, and what comes back", font=f_small, fill=quiet)
+        top, bottom, width = 68, H - 16, TRACE_W - 32
+        blocks = []
+        for st in shown[-40:]:
+            label, col, font = KIND_STYLE[st.kind]
+            body = st.text
+            lines = []
+            for raw in body.splitlines() or [""]:
+                if font == "mono":
+                    lines += [raw[i:i + 58] for i in range(0, max(len(raw), 1), 58)]
+                else:
+                    lines += wrap(raw, f_small, width, dr) or [""]
+            limit = 14 if st.kind in ("runs", "writes") else 6
+            if len(lines) > limit:
+                lines = lines[:limit] + [f"... ({len(lines) - limit} more lines)"]
+            blocks.append((st, label, col, font, lines))
+        # Fit from the newest backwards.
+        y = bottom
+        placed = []
+        for st, label, col, font, lines in reversed(blocks):
+            h = 22 + len(lines) * 18 + 10
+            if y - h < top:
+                break
+            y -= h
+            placed.append((y, st, label, col, font, lines))
+        for n, (y, st, label, col, font, lines) in enumerate(placed):
+            newest = n == 0
+            dr.text((x0 + 16, y), f"{st.t - t_start:4.0f}s  {label}", font=f_small, fill=col if newest else tuple(int(c * 0.7) for c in col))
+            yy = y + 22
+            if font == "mono":
+                dr.rectangle((x0 + 12, yy - 3, W - 12, yy + len(lines) * 18 + 1), fill=(24, 28, 31))
+            for ln in lines:
+                dr.text((x0 + 18, yy), ln, font=f_mono if font == "mono" else f_small,
+                        fill=(225, 228, 230) if newest else (150, 156, 160))
+                yy += 18
+
     captions = [(e["t"], describe(e)) for e in events]
     captions = [(t, c) for t, c in captions if c]
     timeline = build_timeline(times, qpos, events, args.fps)
@@ -141,38 +210,43 @@ def main(argv=None):
         mujoco.mj_forward(m, d)
         big.update_scene(d, camera="side")
         frame = Image.new("RGB", (W, H), (15, 18, 20))
-        frame.paste(Image.fromarray(big.render()), (0, 0))
+        frame.paste(Image.fromarray(big.render()), (MAIN_X, MAIN_Y))
+        dr = ImageDraw.Draw(frame)
+        # Title and clock above the room view.
+        dr.text((20, 16), title, font=f_title, fill=ink)
+        dr.text((MAIN_W - 20, 18), f"{t - t0:5.1f} s", font=f_big, fill=ink, anchor="ra")
+        idle = k + 1 < len(timeline) and timeline[k + 1] - t > 1.5 / args.fps
+        if idle:
+            dr.text((MAIN_W - 120, 21), f"agent thinking  \u25b6\u25b6 {IDLE_SPEEDUP:.0f}x", font=f_small, fill=amber, anchor="ra")
+        # Task under the room view.
+        y = MAIN_Y + MAIN_H + 16
+        dr.text((20, y), "TASK", font=f_small, fill=amber)
+        for ln in wrap(task, f_med, MAIN_W - 40, dr)[:3]:
+            y += 24
+            dr.text((20, y), ln, font=f_med, fill=ink)
+        dr.text((20, H - 34), "Room camera for viewers only. The agent sees only the robot's own cameras and sensors.",
+                font=f_small, fill=quiet)
+        # Robot's cameras column.
         for j, (cam, label) in enumerate([("overhead", "ROBOT'S OVERHEAD CAMERA"), ("gripper/wrist", "ROBOT'S WRIST CAMERA")]):
             small.update_scene(d, camera=cam)
-            frame.paste(Image.fromarray(small.render()), (MAIN_W, j * SIDE_H))
-            ImageDraw.Draw(frame).text((MAIN_W + 8, j * SIDE_H + 6), label, font=f_small, fill=ink,
-                                       stroke_width=2, stroke_fill=(0, 0, 0))
-        dr = ImageDraw.Draw(frame)
-        # Title and clock over the main view.
-        dr.rectangle((0, 0, MAIN_W, 46), fill=(15, 18, 20))
-        dr.text((16, 10), title, font=f_title, fill=ink)
-        idle = k + 1 < len(timeline) and timeline[k + 1] - t > 1.5 / args.fps
-        clock = f"{t - t0:5.1f} s"
-        dr.text((MAIN_W - 16, 12), clock, font=f_big, fill=ink, anchor="ra")
-        if idle:
-            dr.text((MAIN_W - 110, 14), f"agent thinking  ▶▶ {IDLE_SPEEDUP:.0f}x", font=f_small, fill=amber, anchor="ra")
-        # Task banner along the bottom of the main view.
-        dr.rectangle((0, MAIN_H - 40, MAIN_W, MAIN_H), fill=(15, 18, 20))
-        dr.text((16, MAIN_H - 30), "Task: " + task, font=f_small, fill=quiet)
-        # Agent actions panel.
-        x0, y0 = MAIN_W, 2 * SIDE_H
-        dr.rectangle((x0, y0, W, H), fill=(23, 27, 30))
-        dr.text((x0 + 12, y0 + 10), f"WHAT {agent_name.upper()} IS DOING", font=f_small, fill=amber)
-        recent = [(ct, c) for ct, c in captions if ct <= t][-5:]
-        y = y0 + 36
+            frame.paste(Image.fromarray(small.render()), (CAM_X, j * SIDE_H))
+            dr.text((CAM_X + 8, j * SIDE_H + 6), label, font=f_small, fill=ink, stroke_width=2, stroke_fill=(0, 0, 0))
+        # Robot commands under the cameras.
+        y0 = 2 * SIDE_H
+        dr.rectangle((CAM_X, y0, CAM_X + SIDE_W, H), fill=(19, 23, 26))
+        dr.text((CAM_X + 14, y0 + 14), "ROBOT COMMANDS", font=f_small, fill=amber)
+        recent = [(ct, c) for ct, c in captions if ct <= t][-9:]
+        y = y0 + 42
         for n, (ct, c) in enumerate(reversed(recent)):
             col = ink if n == 0 else quiet
-            for ln in wrap(f"{ct - t0:4.0f}s  {c}", f_small, SIDE_W - 24, dr)[:3]:
-                if y > H - 18:
+            for ln in wrap(f"{ct - t0:4.0f}s  {c}", f_small, SIDE_W - 28, dr)[:2]:
+                if y > H - 22:
                     break
-                dr.text((x0 + 12, y), ln, font=f_small, fill=col)
-                y += 18
+                dr.text((CAM_X + 14, y), ln, font=f_small, fill=col)
+                y += 19
             y += 6
+        # Agent trace column (far right), newest at the bottom like a terminal.
+        draw_trace(dr, [s_ for s_ in steps if s_.t <= t], agent_name, t0)
         ff.stdin.write(frame.tobytes())
         if k % 100 == 0:
             print(f"frame {k}/{len(timeline)}", flush=True)

@@ -19,6 +19,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import urllib.request
 
@@ -86,6 +87,8 @@ def main(argv=None):
         shutil.copy(AGENT_DIR / f, workspace / f)
 
     _eval_call(args.url, token, "/eval/reset", {"run_dir": str(run_dir)})
+    wall_reset = time.time()
+    sim_reset = json.loads(urllib.request.urlopen(args.url + "/state").read())["time"]
     cmd = build_command(args.agent, task, args.model, workspace)
     (run_dir / "task.txt").write_text(task)
     (run_dir / "command.json").write_text(json.dumps(cmd, indent=1))
@@ -96,13 +99,29 @@ def main(argv=None):
     t0 = time.time()
     status = "finished"
     with open(run_dir / "transcript.jsonl", "w") as out:
-        proc = subprocess.Popen(cmd, cwd=workspace, env=env, stdout=out, stderr=subprocess.STDOUT,
-                                stdin=subprocess.DEVNULL)
+        proc = subprocess.Popen(cmd, cwd=workspace, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                stdin=subprocess.DEVNULL, text=True, bufsize=1)
+
+        def pump():
+            # Stamp every transcript line with the robot clock so traces line up with the replay.
+            for line in proc.stdout:
+                t = round(sim_reset + time.time() - wall_reset, 3)
+                try:
+                    obj = json.loads(line)
+                    obj["_sim_time"] = t
+                    out.write(json.dumps(obj) + "\n")
+                except json.JSONDecodeError:
+                    out.write(json.dumps({"type": "_raw", "text": line.rstrip(), "_sim_time": t}) + "\n")
+                out.flush()
+
+        reader = threading.Thread(target=pump, daemon=True)
+        reader.start()
         try:
             proc.wait(timeout=args.time_limit)
         except subprocess.TimeoutExpired:
             proc.kill()
             status = "time_limit"
+        reader.join(timeout=5)
     elapsed = time.time() - t0
 
     gt = _eval_call(args.url, token, "/eval/ground_truth")
