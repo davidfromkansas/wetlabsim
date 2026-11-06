@@ -25,6 +25,8 @@ import threading
 import time
 import urllib.request
 
+from . import traces
+
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 AGENT_DIR = ROOT / "agent"
 MCP_TOOLS = ["mcp__wetlab__look", "mcp__wetlab__robot_state", "mcp__wetlab__emergency_stop"]
@@ -77,6 +79,12 @@ def build_command(agent: str, task: str, model: str | None, workspace: pathlib.P
         (workspace / ".devin").mkdir(exist_ok=True)
         (workspace / ".devin" / "mcp_config.json").write_text(json.dumps(mcp, indent=2))
         (workspace / ".devin" / "config.json").write_text(json.dumps(perms, indent=2))
+        # Print mode (-p) only prints the final answer, so hooks log each tool call as it
+        # happens; the recorder streams that log into the transcript and the live page.
+        hook = {"type": "command", "timeout": 10,
+                "command": f'"{py}" -m wetlabsim.devin_hook "{run_dir / "devin_hooks.jsonl"}"'}
+        hooks = {ev: [{"matcher": "", "hooks": [hook]}] for ev in ("PreToolUse", "PostToolUse")}
+        (workspace / ".devin" / "hooks.v1.json").write_text(json.dumps(hooks, indent=2))
         cmd = ["devin", "--respect-workspace-trust", "false",
                "--export", str(run_dir / "devin_trajectory.json")]
         if model:
@@ -121,9 +129,25 @@ def main(argv=None):
     print(f"Run {run_id}: {args.agent} is working. Watch at {args.url}")
     t0 = time.time()
     status = "finished"
+    parser = traces.Parser()
+    lock = threading.Lock()
+    done = threading.Event()
     with open(run_dir / "transcript.jsonl", "w") as out:
         proc = subprocess.Popen(cmd, cwd=workspace, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                 stdin=subprocess.DEVNULL, text=True, bufsize=1)
+
+        def record(obj):
+            # Save to the transcript and send the readable steps to the live page.
+            with lock:
+                out.write(json.dumps(obj) + "\n")
+                out.flush()
+                steps = parser.feed(obj)
+            if steps:
+                try:
+                    _eval_call(args.url, token, "/eval/trace",
+                               {"steps": [{"t": s.t, "kind": s.kind, "text": s.text[:4000]} for s in steps]})
+                except OSError:
+                    pass
 
         def pump():
             # Stamp every transcript line with the robot clock so traces line up with the replay.
@@ -132,13 +156,37 @@ def main(argv=None):
                 try:
                     obj = json.loads(line)
                     obj["_sim_time"] = t
-                    out.write(json.dumps(obj) + "\n")
                 except json.JSONDecodeError:
-                    out.write(json.dumps({"type": "_raw", "text": line.rstrip(), "_sim_time": t}) + "\n")
-                out.flush()
+                    obj = {"type": "_raw", "text": line.rstrip(), "_sim_time": t}
+                record(obj)
+
+        def tail_hooks():
+            # Devin's hook log (one JSON line per tool call), read as it grows.
+            path, pos = run_dir / "devin_hooks.jsonl", 0
+            while True:
+                finished = done.is_set()
+                if path.exists():
+                    with open(path) as f:
+                        f.seek(pos)
+                        for line in iter(f.readline, ""):
+                            if not line.endswith("\n"):
+                                break
+                            pos += len(line.encode())
+                            try:
+                                obj = json.loads(line)
+                            except json.JSONDecodeError:
+                                continue
+                            obj["type"] = "_devin_hook"
+                            obj["_sim_time"] = round(sim_reset + obj.get("_wall", time.time()) - wall_reset, 3)
+                            record(obj)
+                if finished:
+                    return
+                time.sleep(0.3)
 
         reader = threading.Thread(target=pump, daemon=True)
         reader.start()
+        hooks_reader = threading.Thread(target=tail_hooks, daemon=True)
+        hooks_reader.start()
         try:
             proc.wait(timeout=args.time_limit)
         except subprocess.TimeoutExpired:
@@ -155,6 +203,8 @@ def main(argv=None):
                 except subprocess.TimeoutExpired:
                     proc.kill()
         reader.join(timeout=5)
+        done.set()
+        hooks_reader.join(timeout=5)
     elapsed = time.time() - t0
 
     gt = _eval_call(args.url, token, "/eval/ground_truth")

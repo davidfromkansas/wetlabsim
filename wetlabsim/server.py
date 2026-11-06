@@ -44,6 +44,7 @@ class Handler(BaseHTTPRequestHandler):
     sim: Sim
     token: str
     runs_dir: pathlib.Path
+    trace: list = []          # the current run's agent steps, for the live page
     protocol_version = "HTTP/1.1"
 
     def log_message(self, *a):  # quiet
@@ -97,6 +98,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self._camera(p[len("/camera/"):], qs)
             if p.startswith("/stream/"):
                 return self._stream(p[len("/stream/"):].removesuffix(".mjpg"), qs)
+            if p == "/trace":
+                since = int(qs.get("since", ["0"])[0])
+                return self._json({"total": len(self.trace), "steps": self.trace[since:since + 200]})
             if p == "/events":
                 return self._json(self.sim.events if "all" in qs else self.sim.events[-200:])
             if p == "/eval/ground_truth":
@@ -197,9 +201,15 @@ class Handler(BaseHTTPRequestHandler):
                     return self._err("evaluator token required", 403)
                 n = s.save_recording(b["path"])
                 return self._json({"ok": True, "frames": n})
+            if p == "/eval/trace":
+                if not self._authed():
+                    return self._err("evaluator token required", 403)
+                Handler.trace.extend(b["steps"])
+                return self._json({"ok": True})
             if p == "/eval/reset":
                 if not self._authed():
                     return self._err("evaluator token required", 403)
+                Handler.trace = []
                 s.reset()
                 if b.get("run_dir"):
                     s.open_log(b["run_dir"])

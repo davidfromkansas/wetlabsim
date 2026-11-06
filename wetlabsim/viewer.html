@@ -12,8 +12,20 @@
   header h1 { font-size:15px; font-weight:600; margin:0; }
   .badge { padding:2px 8px; border-radius:10px; font-size:12px; font-weight:600; background:#23292d; }
   .badge.ok { color:var(--green); } .badge.stop { color:var(--red); }
-  main { display:grid; grid-template-columns: 2fr 1fr; gap:12px; padding:12px 16px; }
+  main { display:grid; grid-template-columns: 2fr 1fr 1.1fr; gap:12px; padding:12px 16px; align-items:start; }
+  @media (max-width: 1200px) { main { grid-template-columns: 2fr 1fr; } #tracecol { grid-column: 1 / -1; } }
   @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  #tracecol { position:sticky; top:12px; height:calc(100vh - 80px); display:flex; flex-direction:column; }
+  #trace { flex:1; overflow:auto; }
+  .step { margin:0 0 10px; }
+  .step .k { font-size:11px; font-weight:700; letter-spacing:.04em; }
+  .step .k span { color:var(--quiet); font-weight:400; margin-right:6px; }
+  .step pre { margin:3px 0 0; padding:6px 8px; background:#0f1214; border-radius:6px; font:12px/1.35 ui-monospace, monospace;
+              white-space:pre-wrap; word-break:break-word; max-height:220px; overflow:auto; }
+  .step p { margin:3px 0 0; white-space:pre-wrap; }
+  .says { color:#e8eaeb; } .thinks { color:#b49cf2; } .runs { color:#f2a23a; } .output { color:#8b9399; }
+  .looks { color:#4fb477; } .reads, .writes { color:#5aa9e6; } .tool { color:#e5534b; }
+  #trace .empty { color:var(--quiet); }
   .cam { background:var(--panel); border-radius:8px; overflow:hidden; }
   .cam img { width:100%; display:block; aspect-ratio: 4/3; background:#000; }
   .cam .label { padding:6px 10px; color:var(--quiet); font-size:12px; }
@@ -40,6 +52,7 @@
     <div class="panel"><h2>Robot</h2><table id="robot"></table></div>
     <div class="panel"><h2>Commands</h2><div id="events"></div></div>
   </div>
+  <div class="panel" id="tracecol"><h2>Agent trace</h2><div id="trace"><div class="empty">Waiting for an agent run to start.</div></div></div>
 </main>
 <script>
 const f = (v, n=3) => Number(v).toFixed(n);
@@ -63,6 +76,33 @@ async function tick() {
   } catch (e) { document.getElementById('mode').textContent = 'disconnected'; }
 }
 setInterval(tick, 500); tick();
+
+// Live agent trace: what the agent says, thinks and runs, and what comes back.
+const LABEL = {says:'SAYS', thinks:'THINKS', runs:'RUNS CODE', output:'OUTPUT', looks:'LOOKS THROUGH',
+               reads:'READS', writes:'WRITES', tool:'TOOL'};
+let shown = 0;
+async function traceTick() {
+  try {
+    const r = await (await fetch('/trace?since=' + shown)).json();
+    const box = document.getElementById('trace');
+    if (r.total < shown) { shown = 0; box.innerHTML = ''; return; }          // a new run started
+    if (!r.steps.length) return;
+    if (shown === 0) box.innerHTML = '';
+    const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+    for (const s of r.steps) {
+      const d = document.createElement('div');
+      d.className = 'step ' + s.kind;
+      const k = document.createElement('div'); k.className = 'k';
+      k.innerHTML = `<span>${f(s.t, 0)}s</span>` + (LABEL[s.kind] || s.kind.toUpperCase());
+      const body = document.createElement(['runs', 'output', 'writes'].includes(s.kind) ? 'pre' : 'p');
+      body.textContent = s.text;
+      d.append(k, body); box.append(d);
+    }
+    shown += r.steps.length;
+    if (atBottom) box.scrollTop = box.scrollHeight;
+  } catch (e) {}
+}
+setInterval(traceTick, 700); traceTick();
 </script>
 </body>
 </html>

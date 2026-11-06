@@ -53,20 +53,40 @@ def _result_text(content) -> str:
     return "\n".join(parts)
 
 
-def load(path: str | pathlib.Path) -> list[Step]:
-    steps: list[Step] = []
-    tool_kinds: dict[str, str] = {}
-    for line in pathlib.Path(path).read_text().splitlines():
-        try:
-            e = json.loads(line)
-        except json.JSONDecodeError:
-            continue
+class Parser:
+    """Turns transcript events into trace steps one at a time, so traces can be shown live."""
+
+    def __init__(self):
+        self.tool_kinds: dict[str, str] = {}
+
+    def feed(self, e: dict) -> list[Step]:
+        steps: list[Step] = []
+        tool_kinds = self.tool_kinds
         t = float(e.get("_sim_time", 0.0))
         typ = e.get("type")
         # ---- plain text output (e.g. Devin's printed summary)
         if typ == "_raw":
             if e.get("text", "").strip():
                 steps.append(Step(t, "says", e["text"].strip()))
+        # ---- Devin CLI hook events (tool calls as they happen)
+        elif typ == "_devin_hook":
+            name, args = e.get("tool_name", ""), e.get("tool_input") or {}
+            if e.get("hook_event_name") == "PreToolUse":
+                st = _generic_tool(name, args if isinstance(args, dict) else {"command": str(args)})
+                st.t = t
+                steps.append(st)
+            elif e.get("hook_event_name") == "PostToolUse":
+                kind = _generic_tool(name, args if isinstance(args, dict) else {"command": str(args)}).kind
+                resp = e.get("tool_response") or {}
+                if kind in ("runs", "tool"):
+                    txt = str(resp.get("output") or resp.get("error") or "").strip()
+                    try:
+                        txt = str(json.loads(txt)["result"]).strip()
+                    except (ValueError, KeyError, TypeError):
+                        pass
+                    steps.append(Step(t, "output", txt or "(no output)"))
+                elif kind == "looks":
+                    steps.append(Step(t, "output", "[camera image]"))
         # ---- Claude Code stream-json
         elif typ == "assistant":
             for b in e["message"].get("content", []):
@@ -117,6 +137,16 @@ def load(path: str | pathlib.Path) -> list[Step]:
                         steps.append(Step(t, "looks", f"{args.get('camera', 'overhead')} camera"))
                     else:
                         steps.append(Step(t, "tool", tool))
+        return steps
+
+
+def load(path: str | pathlib.Path) -> list[Step]:
+    parser, steps = Parser(), []
+    for line in pathlib.Path(path).read_text().splitlines():
+        try:
+            steps += parser.feed(json.loads(line))
+        except json.JSONDecodeError:
+            continue
     return steps
 
 
