@@ -12,6 +12,9 @@ Streamed thought and message chunks are joined, so each line is one whole though
 Permission requests are answered like print mode would (nobody is there to approve them):
 anything that mentions a --deny folder or a path outside the workspace is refused, and the
 rest is refused too unless Devin offers a one-time allow for a workspace-only action.
+Any other request from Devin gets a JSON-RPC error, so it never waits on us. If Devin goes
+quiet for --idle-timeout seconds with no tool running, the turn is cancelled and the run fails.
+--raw-log saves every ACP message in both directions.
 """
 from __future__ import annotations
 
@@ -23,6 +26,7 @@ import signal
 import subprocess
 import sys
 import threading
+import time
 
 
 def emit(obj):
@@ -48,6 +52,9 @@ def main(argv=None):
     ap.add_argument("--model")
     ap.add_argument("--mcp", default="[]", help="ACP mcpServers list as JSON")
     ap.add_argument("--deny", action="append", default=[], help="folder the agent may not touch")
+    ap.add_argument("--idle-timeout", type=float, default=120,
+                    help="fail if Devin sends nothing for this many seconds while no tool is running")
+    ap.add_argument("--raw-log", help="append every ACP message here (one JSON line each)")
     args = ap.parse_args(argv)
     workspace = os.path.realpath(args.workspace)
     deny = [os.path.realpath(d) for d in args.deny] + args.deny
@@ -70,10 +77,22 @@ def main(argv=None):
     pending: dict[int, list] = {}
     next_id = [0]
     session = [None]
+    last_heard = [time.time()]
+    open_tools: set[str] = set()
+    raw = open(args.raw_log, "a") if args.raw_log else None
+
+    def log_raw(direction, line):
+        if raw:
+            with write_lock:
+                raw.write(json.dumps({"t": round(time.time(), 3), "dir": direction,
+                                      "msg": line.rstrip("\n")}) + "\n")
+                raw.flush()
 
     def send(obj):
+        line = json.dumps(obj)
+        log_raw("out", line)
         with write_lock:
-            proc.stdin.write(json.dumps(obj) + "\n")
+            proc.stdin.write(line + "\n")
             proc.stdin.flush()
 
     def request(method, params):
@@ -107,6 +126,8 @@ def main(argv=None):
         elif what == "tool_call":
             flush()
             meta = u.get("_meta") or {}
+            if u.get("status") not in ("completed", "failed"):
+                open_tools.add(u.get("toolCallId"))
             emit({"type": "_devin_acp", "kind": "tool", "id": u.get("toolCallId"),
                   "name": meta.get("cognition.ai/inferenceToolName") or u.get("kind") or "",
                   "title": u.get("title", ""), "input": u.get("rawInput") or {}})
@@ -115,12 +136,15 @@ def main(argv=None):
             if u.get("content"):
                 tool_out[tid] = _content_text(u["content"])
             if u.get("status") in ("completed", "failed"):
+                open_tools.discard(tid)
                 flush()
                 emit({"type": "_devin_acp", "kind": "tool_result", "id": tid, "status": u["status"],
                       "text": tool_out.pop(tid, "")})
 
     def reader():
         for line in proc.stdout:
+            last_heard[0] = time.time()
+            log_raw("in", line)
             try:
                 m = json.loads(line)
             except ValueError:
@@ -144,6 +168,14 @@ def main(argv=None):
                       "text": f"[permission {'allowed' if ok else 'refused'}] {call.get('title', '')}"})
             elif m.get("method") == "session/update":
                 on_update(m["params"].get("update") or {})
+            elif "id" in m and "method" in m:
+                # A request we don't serve (we offered no fs or terminal): say so instead of
+                # leaving Devin waiting for an answer that never comes.
+                send({"jsonrpc": "2.0", "id": m["id"],
+                      "error": {"code": -32601, "message": f"method not supported: {m['method']}"}})
+                flush()
+                emit({"type": "_devin_acp", "kind": "says",
+                      "text": f"[unsupported ACP request refused] {m['method']}"})
         flush()
         for p in list(pending.values()):   # Devin exited: release anyone waiting
             p[1] = {"error": {"message": "devin acp exited"}}
@@ -157,6 +189,26 @@ def main(argv=None):
             send({"jsonrpc": "2.0", "method": "session/cancel", "params": {"sessionId": session[0]}})
     signal.signal(signal.SIGINT, stop)
 
+    stalled = threading.Event()
+
+    def watchdog():
+        # A tool can legitimately run for a while; silence with nothing running means Devin is stuck.
+        while proc.poll() is None:
+            time.sleep(2)
+            if open_tools:
+                last_heard[0] = max(last_heard[0], time.time() - 2)
+            elif session[0] and time.time() - last_heard[0] > args.idle_timeout:
+                stalled.set()
+                flush()
+                emit({"type": "_raw", "text": f"Error: Devin sent nothing over ACP for "
+                                              f"{args.idle_timeout:.0f} s; cancelling the run"})
+                stop()
+                time.sleep(15)
+                proc.terminate()
+                return
+    if args.idle_timeout > 0:
+        threading.Thread(target=watchdog, daemon=True).start()
+
     code = 0
     try:
         request("initialize", {"protocolVersion": 1, "clientCapabilities": {
@@ -167,6 +219,8 @@ def main(argv=None):
                                          "prompt": [{"type": "text", "text": args.prompt}]})
         flush()
         emit({"type": "_devin_acp", "kind": "end", "stop_reason": res.get("stopReason")})
+        if stalled.is_set():
+            code = 1
     except RuntimeError as e:
         emit({"type": "_raw", "text": f"Error: {e}"})
         code = 1

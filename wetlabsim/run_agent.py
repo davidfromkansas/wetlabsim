@@ -110,7 +110,7 @@ def build_command(agent: str, task: str, model: str | None, workspace: pathlib.P
         # The bridge runs by file path: the agent's PYTHONPATH only has the robot client.
         # It also refuses any permission request for the repo or outside the workspace.
         cmd = [py, str(ROOT / "wetlabsim" / "devin_acp.py"), str(workspace), prompt,
-               "--mcp", json.dumps(mcp), "--deny", str(ROOT)]
+               "--mcp", json.dumps(mcp), "--deny", str(ROOT), "--raw-log", str(run_dir / "devin_acp_raw.jsonl")]
         if model:
             cmd += ["--model", model]
         return cmd
@@ -232,6 +232,8 @@ def main(argv=None):
                     proc.wait(timeout=10)
                 except subprocess.TimeoutExpired:
                     proc.kill()
+        if status == "finished" and proc.returncode:
+            status = "agent_error"
         reader.join(timeout=5)
         done.set()
         hooks_reader.join(timeout=5)
