@@ -9,8 +9,9 @@ These are Franka's own documents, unchanged. Agents get a copy in their workspac
 | `Product Manual Franka Hand_R50010_1.2_EN.pdf` | <https://franka.de/hubfs/Product%20Manual%20Franka%20Hand_R50010_1.2_EN.pdf> | 2026-11-06 | Franka Hand manual. Technical specifications in section 5. |
 | `FCI Control Interface Specification and Robot Limits.html` | <https://frankarobotics.github.io/docs/robot_specifications.html> | 2026-11-06 | Joint and Cartesian limits the controller enforces ("Limits for Franka Emika Robot (FER)"). |
 
-SHA-256 checksums are in `sources.json`. `python -m wetlabsim.datasheets` downloads
-any missing file and checks it.
+The files here are unchanged copies, kept in the repo. SHA-256 checksums are in
+`sources.json`; `python -m wetlabsim.datasheets` checks them and downloads any file that
+is missing from its source.
 
 ## Where the simulator's numbers come from
 
