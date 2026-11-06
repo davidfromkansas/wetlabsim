@@ -112,11 +112,28 @@ def prepare_workspace(workspace: pathlib.Path, client: pathlib.Path, robot: str,
     return note
 
 
+def make_prompt(task: str, note: str) -> str:
+    """The whole prompt the agent gets: the task plus a fixed closing note."""
+    return f"{task}\n\n{note} When you are done, say DONE and briefly describe what you did and what you saw."
+
+
+def default_model(agent: str) -> str:
+    """The model an agent CLI uses when none is given, where its config says (Codex)."""
+    if agent == "codex":
+        try:
+            for line in (pathlib.Path.home() / ".codex" / "config.toml").read_text().splitlines():
+                k, _, v = line.partition("=")
+                if k.strip() == "model":
+                    return v.strip().strip('"')
+        except OSError:
+            pass
+    return ""
+
+
 def build_command(agent: str, task: str, model: str | None, workspace: pathlib.Path,
                   run_dir: pathlib.Path, note: str) -> list[str]:
     py = sys.executable
-    prompt = (f"{task}\n\n{note} When you are done, "
-              "say DONE and briefly describe what you did and what you saw.")
+    prompt = make_prompt(task, note)
     if agent == "claude":
         mcp = {"mcpServers": {"wetlab": {"command": py, "args": ["-m", "wetlabsim.mcp_server"],
                                          "env": {"PYTHONPATH": str(ROOT)}}}}
@@ -200,6 +217,16 @@ def main(argv=None):
     cmd = build_command(args.agent, task, args.model, workspace, run_dir, note)
     (run_dir / "task.txt").write_text(task)
     (run_dir / "command.json").write_text(json.dumps(cmd, indent=1))
+    # What the viewer shows about this run; the model, tokens and cost fill in as the agent reports them.
+    meta = traces.RunMeta(args.agent, args.model or default_model(args.agent))
+    run_info = {
+        "run_id": run_id, "task": task, "prompt": make_prompt(task, note), "docs": args.docs,
+        "robot": robot, "robot_label": info.get("robot", robot), "gripper_label": info.get("gripper", ""),
+        "time_limit": args.time_limit, "sim_start": sim_reset, "status": "running",
+        "workspace": str(workspace), **meta.info(),
+    }
+    _eval_call(args.url, token, "/eval/run", run_info)
+    last_meta_post = [0.0]
     env = dict(os.environ, PYTHONPATH=str(client), WETLAB_ROBOT_URL=args.url)
 
     print(f"Run {run_id}: {args.agent} is working. Watch at {args.url}")
@@ -218,6 +245,13 @@ def main(argv=None):
                 out.write(json.dumps(obj) + "\n")
                 out.flush()
                 steps = parser.feed(obj)
+                changed = meta.feed(obj)
+            if changed and time.time() - last_meta_post[0] > 1.0:
+                last_meta_post[0] = time.time()
+                try:
+                    _eval_call(args.url, token, "/eval/run", meta.info())
+                except OSError:
+                    pass
             if steps:
                 try:
                     _eval_call(args.url, token, "/eval/trace",
@@ -287,12 +321,19 @@ def main(argv=None):
 
     gt = _eval_call(args.url, token, "/eval/ground_truth")
     _eval_call(args.url, token, "/eval/save_recording", {"path": str(run_dir / "replay.npz")})
+    _eval_call(args.url, token, "/eval/close_log", {})
     state = json.loads(urllib.request.urlopen(args.url + "/state").read())
     events = json.loads(urllib.request.urlopen(args.url + "/events?all=1").read())
     (run_dir / "events.json").write_text(json.dumps(events, indent=0))
+    run_info.update(meta.info(), status=status, wall_seconds=round(elapsed, 1))
+    _eval_call(args.url, token, "/eval/run", run_info)
+    (run_dir / "run.json").write_text(json.dumps({k: v for k, v in run_info.items() if k != "workspace"}, indent=1))
     result = {
         "run_id": run_id, "agent": args.agent, "model": args.model, "robot": robot,
-        "docs": args.docs, "task": task,
+        "docs": args.docs, "task": task, "prompt": run_info["prompt"],
+        "model_reported": meta.model, "provider": run_info["provider"],
+        "tokens": meta.input_tokens + meta.output_tokens, "input_tokens": meta.input_tokens,
+        "output_tokens": meta.output_tokens, "cached_tokens": meta.cached_tokens, "cost_usd": meta.cost_usd,
         "status": status, "wall_reset": wall_reset, "sim_reset": sim_reset,
         "exit_code": proc.returncode, "wall_seconds": round(elapsed, 1),
         "protective_stops": sum(1 for e in events if e.get("event") == "protective_stop"),

@@ -168,6 +168,11 @@ def main(argv=None):
                       "text": f"[permission {'allowed' if ok else 'refused'}] {call.get('title', '')}"})
             elif m.get("method") == "session/update":
                 on_update(m["params"].get("update") or {})
+            elif m.get("method") == "_cognition.ai/agent_stopped":
+                # Devin's per-turn totals: the model it ran and the tokens it used.
+                st = m["params"].get("stats") or {}
+                emit({"type": "_devin_acp", "kind": "usage", "model": st.get("modelLabel", ""),
+                      "input_tokens": st.get("inputTokens") or 0, "output_tokens": st.get("outputTokens") or 0})
             elif "id" in m and "method" in m:
                 # A request we don't serve (we offered no fs or terminal): say so instead of
                 # leaving Devin waiting for an answer that never comes.

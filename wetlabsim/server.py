@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import mimetypes
 import os
 import pathlib
 import secrets
@@ -23,9 +24,72 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import numpy as np
 from PIL import Image
 
+from . import traces
 from .sim import RobotError, Sim
 
-VIEWER_HTML = (pathlib.Path(__file__).parent / "viewer.html").read_text()
+VIEWER_PATH = pathlib.Path(__file__).parent / "viewer.html"
+
+
+class Archive:
+    """A finished run, read from its folder, so the viewer can replay it."""
+
+    def __init__(self, run_dir: pathlib.Path):
+        self.dir = run_dir
+        res = json.loads((run_dir / "result.json").read_text()) if (run_dir / "result.json").exists() else {}
+        info = json.loads((run_dir / "run.json").read_text()) if (run_dir / "run.json").exists() else {}
+        if not info:   # runs from before run.json existed
+            meta = traces.RunMeta(res.get("agent", ""), res.get("model"))
+            if (run_dir / "transcript.jsonl").exists():
+                for line in (run_dir / "transcript.jsonl").read_text().splitlines():
+                    try:
+                        meta.feed(json.loads(line))
+                    except json.JSONDecodeError:
+                        pass
+            prompt = res.get("prompt", "")
+            if not prompt and (run_dir / "command.json").exists():   # the prompt is an argument of the CLI command
+                cmd = json.loads((run_dir / "command.json").read_text())
+                prompt = next((a for a in cmd if isinstance(a, str) and "When you are done" in a), "")
+            info = {"run_id": run_dir.name, "task": res.get("task", ""), "prompt": prompt,
+                    "robot": res.get("robot", "ur5e"), "docs": res.get("docs", "assisted"),
+                    "time_limit": 900, "sim_start": res.get("sim_reset", 0.0),
+                    "status": res.get("status", ""), "wall_seconds": res.get("wall_seconds"), **meta.info()}
+        self.info = info
+        self.robot = info.get("robot") or res.get("robot", "ur5e")
+        self.trace = [{"t": st.t, "kind": st.kind, "text": st.text[:4000]} for st in traces.load_run(run_dir)]
+        self.events = json.loads((run_dir / "events.json").read_text()) if (run_dir / "events.json").exists() else []
+        self.states = []
+        if (run_dir / "states.jsonl").exists():
+            for line in (run_dir / "states.jsonl").read_text().splitlines():
+                try:
+                    o = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if "joint_positions" in o:
+                    o.pop("ground_truth", None)   # the evaluator's knowledge stays out of the viewer
+                    self.states.append(o)
+        rec = np.load(run_dir / "replay.npz") if (run_dir / "replay.npz").exists() else None
+        self.rec_t = rec["time"] if rec is not None else np.zeros(0)
+        self.rec_q = rec["qpos"] if rec is not None else np.zeros((0, 0))
+        self.workspace = run_dir / "workspace"
+
+    def end_time(self) -> float:
+        start = self.info.get("sim_start", 0.0)
+        if self.info.get("wall_seconds"):
+            return start + float(self.info["wall_seconds"])
+        ts = [s["time"] for s in self.states] + list(self.rec_t[-1:])
+        return max(ts) if ts else start
+
+    def state_at(self, t):
+        if not self.states:
+            return None
+        import bisect
+        i = bisect.bisect_right([s["time"] for s in self.states], t) - 1
+        return self.states[max(i, 0)]
+
+    def qpos_at(self, t):
+        if not len(self.rec_t):
+            return None
+        return self.rec_q[max(int(np.searchsorted(self.rec_t, t, side="right")) - 1, 0)]
 
 
 def _encode_png(rgb: np.ndarray) -> bytes:
@@ -45,6 +109,8 @@ class Handler(BaseHTTPRequestHandler):
     token: str
     runs_dir: pathlib.Path
     trace: list = []          # the current run's agent steps, for the live page
+    run: dict = {}            # the current run: task, prompt, model, tokens, ... (from run_agent)
+    archives: dict = {}       # finished runs opened in the viewer, by run id
     protocol_version = "HTTP/1.1"
 
     def log_message(self, *a):  # quiet
@@ -55,7 +121,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
+        if "Cache-Control" not in (headers or {}):
+            self.send_header("Cache-Control", "no-store")
         for k, v in (headers or {}).items():
             self.send_header(k, v)
         self.end_headers()
@@ -89,7 +156,7 @@ class Handler(BaseHTTPRequestHandler):
         p = url.path.rstrip("/") or "/"
         try:
             if p == "/":
-                return self._send(200, VIEWER_HTML.encode(), "text/html; charset=utf-8")
+                return self._send(200, VIEWER_PATH.read_bytes(), "text/html; charset=utf-8")
             if p == "/state":
                 return self._json(self.sim.state())
             if p == "/info":
@@ -98,6 +165,25 @@ class Handler(BaseHTTPRequestHandler):
                 return self._camera(p[len("/camera/"):], qs)
             if p.startswith("/stream/"):
                 return self._stream(p[len("/stream/"):].removesuffix(".mjpg"), qs)
+            if p.startswith("/static/"):
+                f = (pathlib.Path(__file__).parent / "static" / pathlib.Path(p).name)
+                if f.is_file():
+                    return self._send(200, f.read_bytes(), mimetypes.guess_type(f.name)[0] or "application/octet-stream",
+                                      {"Cache-Control": "max-age=86400"})
+                return self._err("not found", 404)
+            if p == "/runs":
+                return self._json(self._list_runs())
+            if p.startswith("/runs/"):
+                return self._archive_get(p, qs)
+            if p == "/run":
+                return self._json({k: v for k, v in self.run.items() if k != "workspace"})
+            if p == "/run/files":
+                return self._json(self._workspace_files(self._workspace()))
+            if p == "/run/file":
+                return self._workspace_file(self._workspace(), qs.get("path", [""])[0])
+            if p == "/history/state":
+                st = self.sim.state_at(float(qs.get("t", ["0"])[0]))
+                return self._json(st or self.sim.state())
             if p == "/trace":
                 since = int(qs.get("since", ["0"])[0])
                 return self._json({"total": len(self.trace), "steps": self.trace[since:since + 200]})
@@ -123,9 +209,108 @@ class Handler(BaseHTTPRequestHandler):
             "frames": "all poses are in the robot base frame: x forward over the bench, y left, z up (m)",
         }
 
+    # ------------------------------------------------- the agent's workspace
+    def _workspace(self) -> pathlib.Path | None:
+        w = self.run.get("workspace")
+        return pathlib.Path(w) if w and pathlib.Path(w).is_dir() else None
+
+    def _workspace_files(self, root):
+        """The agent's folder as a tree: what it was given plus anything it saved."""
+        if root is None:
+            return {"files": []}
+
+        def walk(d: pathlib.Path, depth: int):
+            out = []
+            for f in sorted(d.iterdir(), key=lambda f: (f.is_dir(), f.name.lower())):
+                if f.name.startswith(".") or f.name == "__pycache__":
+                    continue
+                rel = str(f.relative_to(root))
+                if f.is_dir():
+                    kids = walk(f, depth + 1) if depth < 3 else []
+                    n = sum(1 for _ in f.iterdir())
+                    out.append({"name": f.name, "path": rel, "dir": True, "items": n, "children": kids})
+                else:
+                    out.append({"name": f.name, "path": rel, "dir": False, "size": f.stat().st_size,
+                                "mtime": f.stat().st_mtime})
+            return out
+        return {"files": walk(root, 0)}
+
+    def _workspace_file(self, root, rel: str):
+        if root is None or not root.is_dir():
+            return self._err("no run", 404)
+        f = (root / rel).resolve()
+        if not str(f).startswith(str(root.resolve()) + os.sep) or not f.is_file():
+            return self._err("not found", 404)
+        ctype = mimetypes.guess_type(f.name)[0] or "text/plain"
+        if ctype.startswith("text/") or f.suffix in (".md", ".py", ".json", ".xml", ".txt"):
+            ctype = ("application/json" if f.suffix == ".json" else "text/plain") + "; charset=utf-8"
+            if f.suffix == ".html":
+                ctype = "text/html; charset=utf-8"
+        # Files come from the agent's folder, so show them in a sandbox: no scripts, no access to this site.
+        return self._send(200, f.read_bytes(), ctype, {"Content-Security-Policy": "sandbox"})
+
+    # ------------------------------------------------------ finished runs
+    def _list_runs(self):
+        out = []
+        for d in sorted(self.runs_dir.iterdir(), reverse=True):
+            if not (d / "result.json").exists():
+                continue
+            try:
+                r = json.loads((d / "result.json").read_text())
+            except ValueError:
+                continue
+            out.append({"run_id": d.name, "task": r.get("task", ""), "agent": r.get("agent"),
+                        "model": r.get("model_reported") or r.get("model"), "status": r.get("status"),
+                        "wall_seconds": r.get("wall_seconds"), "robot": r.get("robot", "ur5e")})
+        return out[:200]
+
+    def _archive(self, run_id: str) -> Archive | None:
+        d = (self.runs_dir / run_id).resolve()
+        if d.parent != self.runs_dir.resolve() or not (d / "result.json").exists():
+            return None
+        if run_id not in self.archives:
+            Handler.archives[run_id] = Archive(d)
+        return self.archives[run_id]
+
+    def _archive_get(self, p: str, qs):
+        parts = p.split("/", 3)            # "", "runs", <id>, rest
+        a = self._archive(parts[2]) if len(parts) > 2 else None
+        if a is None:
+            return self._err("no such run", 404)
+        rest = "/" + (parts[3] if len(parts) > 3 else "")
+        t = float(qs.get("t", ["0"])[0])
+        if rest == "/run":
+            return self._json({**a.info, "end_time": a.end_time()})
+        if rest == "/trace":
+            since = int(qs.get("since", ["0"])[0])
+            return self._json({"total": len(a.trace), "steps": a.trace[since:since + 200]})
+        if rest == "/events":
+            return self._json(a.events)
+        if rest == "/history/state":
+            return self._json(a.state_at(t) or {})
+        if rest == "/run/files":
+            return self._json(self._workspace_files(a.workspace if a.workspace.is_dir() else None))
+        if rest == "/run/file":
+            return self._workspace_file(a.workspace, qs.get("path", [""])[0])
+        if rest.startswith("/camera/"):
+            if a.robot != self.sim.robot:
+                return self._err(f"this run used the {a.robot}; start the server with --robot {a.robot} to replay it", 409)
+            name = rest[len("/camera/"):].partition(".")[0]
+            q = a.qpos_at(t)
+            if q is None or len(q) != self.sim.m.nq:
+                return self._err("no replay for this run", 404)
+            fr = self.sim.render(name, priority=5, qpos=q, at_time=t)
+            return self._send(200, _encode_jpg(fr["rgb"]), "image/jpeg", {"Cache-Control": "max-age=3600"})
+        return self._err("not found", 404)
+
     def _camera(self, rest: str, qs):
         name, _, kind = rest.partition(".")
         kind = kind or "png"
+        if "t" in qs and kind == "jpg":    # the scene as it was at sim time t (viewer rewind)
+            q = self.sim.qpos_at(float(qs["t"][0]))
+            if q is not None:
+                fr = self.sim.render(name, priority=5, qpos=q, at_time=float(qs["t"][0]))
+                return self._send(200, _encode_jpg(fr["rgb"]), "image/jpeg", {"Cache-Control": "max-age=3600"})
         want_depth = kind in ("depth.npy", "rgbd.npz")
         # The viewer page polls frames at low priority so it never delays the agent or shows up
         # in the robot's command log.
@@ -205,6 +390,17 @@ class Handler(BaseHTTPRequestHandler):
                     return self._err("evaluator token required", 403)
                 n = s.save_recording(b["path"])
                 return self._json({"ok": True, "frames": n})
+            if p == "/eval/close_log":
+                # The run is over: later readings go to a fresh session log, not the run's folder.
+                if not self._authed():
+                    return self._err("evaluator token required", 403)
+                s.open_log(self.runs_dir / time.strftime("session-%Y%m%d-%H%M%S"))
+                return self._json({"ok": True})
+            if p == "/eval/run":
+                if not self._authed():
+                    return self._err("evaluator token required", 403)
+                Handler.run = {**Handler.run, **b}
+                return self._json({"ok": True})
             if p == "/eval/trace":
                 if not self._authed():
                     return self._err("evaluator token required", 403)
@@ -214,6 +410,7 @@ class Handler(BaseHTTPRequestHandler):
                 if not self._authed():
                     return self._err("evaluator token required", 403)
                 Handler.trace = []
+                Handler.run = {}
                 s.reset()
                 if b.get("run_dir"):
                     s.open_log(b["run_dir"])

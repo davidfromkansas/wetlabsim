@@ -118,3 +118,19 @@ def test_standard_docs_workspace(tmp_path):
     assert any(p.suffix == ".pdf" for p in (ws / "datasheets").iterdir())
     robot_py = (client / "wetlabsim" / "robot.py").read_text()
     assert "pixel_to_point" not in robot_py and "def get_camera_frame" in robot_py
+
+
+def test_run_meta_reads_model_and_usage():
+    from wetlabsim import traces
+    assert traces.model_label("claude-opus-5-5") == "Claude Opus 5.5"
+    assert traces.model_label("gpt-6-astra") == "GPT-6 Astra"
+    assert traces.model_label("swe-2-flash-medium") == "SWE-2 Flash Medium"
+    m = traces.RunMeta("claude")
+    m.feed({"type": "system", "subtype": "init", "model": "claude-opus-5-5"})
+    m.feed({"type": "result", "total_cost_usd": 0.5,
+            "usage": {"input_tokens": 10, "cache_read_input_tokens": 90, "output_tokens": 5}})
+    i = m.info()
+    assert (i["provider"], i["tokens"], i["cached_tokens"], i["cost_usd"]) == ("Anthropic", 105, 90, 0.5)
+    c = traces.RunMeta("codex", "gpt-6-astra")
+    c.feed({"type": "turn.completed", "usage": {"input_tokens": 100, "cached_input_tokens": 40, "output_tokens": 7}})
+    assert c.info()["tokens"] == 107 and c.info()["provider"] == "OpenAI"

@@ -249,3 +249,105 @@ def load_run(run_dir) -> list[Step]:
     if (run / "transcript.jsonl").exists():
         return load(run / "transcript.jsonl")
     return []
+
+
+# ------------------------------------------------------------------ run info
+AGENTS = {"claude": ("Claude Code", "Anthropic"), "codex": ("Codex", "OpenAI"), "devin": ("Devin", "Cognition")}
+
+
+def provider_of(model: str, agent: str) -> str:
+    """Which company makes a model, from its name (falls back to the agent's maker)."""
+    m = (model or "").lower()
+    if m.startswith(("claude", "opus", "sonnet", "haiku", "fable")):
+        return "Anthropic"
+    if m.startswith(("gpt", "o1", "o3", "o4", "codex")):
+        return "OpenAI"
+    if m.startswith("swe"):
+        return "Cognition"
+    if m.startswith("gemini"):
+        return "Google"
+    return AGENTS.get(agent, (agent, ""))[1]
+
+
+def model_label(model: str) -> str:
+    """'claude-opus-5-5' -> 'Claude Opus 5.5', 'gpt-6-astra' -> 'GPT-6 Astra'; labels pass through."""
+    if not model or " " in model:
+        return model or ""
+    parts = model.split("-")
+    if parts[0] == "gpt" and len(parts) > 1:
+        return "GPT-" + parts[1] + "".join(" " + p.capitalize() for p in parts[2:])
+    if parts[0] == "swe":
+        nums = [p for p in parts[1:] if p.isdigit()]
+        rest = [p.capitalize() for p in parts[1 + len(nums):]]
+        return " ".join(["SWE-" + ".".join(nums)] + rest)
+    words, nums = [], []
+    for p in parts:
+        (nums if p.isdigit() else words).append(p)
+    name = " ".join(w.upper() if w in ("swe",) else w.capitalize() for w in words)
+    return (name + " " + ".".join(nums)).strip()
+
+
+class RunMeta:
+    """Follows a transcript for the model the agent reports and the tokens and cost it used."""
+
+    def __init__(self, agent: str, model: str | None = None):
+        self.agent = agent
+        self.model = model or ""
+        self.input_tokens = 0
+        self.output_tokens = 0
+        self.cached_tokens = 0      # part of the input read from the provider's cache
+        self.cost_usd: float | None = None
+        self._claude_msgs: dict[str, tuple[int, int]] = {}
+
+    def feed(self, e: dict) -> bool:
+        """Update from one transcript event. Returns True if anything changed."""
+        typ = e.get("type")
+        if typ == "system" and e.get("subtype") == "init" and e.get("model"):
+            self.model = e["model"]
+            return True
+        if typ == "assistant":      # Claude Code: one usage per API message, repeated per block
+            msg = e.get("message") or {}
+            u = msg.get("usage") or {}
+            if msg.get("id") and u:
+                inp = (u.get("input_tokens") or 0) + (u.get("cache_creation_input_tokens") or 0) \
+                    + (u.get("cache_read_input_tokens") or 0)
+                self._claude_msgs[msg["id"]] = (inp, u.get("output_tokens") or 0, u.get("cache_read_input_tokens") or 0)
+                self.input_tokens = sum(m[0] for m in self._claude_msgs.values())
+                self.output_tokens = sum(m[1] for m in self._claude_msgs.values())
+                self.cached_tokens = sum(m[2] for m in self._claude_msgs.values())
+                return True
+        if typ == "result":         # Claude Code's final totals (the per-message counts above are partial)
+            u = e.get("usage") or {}
+            if u:
+                self.cached_tokens = u.get("cache_read_input_tokens") or 0
+                self.input_tokens = (u.get("input_tokens") or 0) + (u.get("cache_creation_input_tokens") or 0) \
+                    + self.cached_tokens
+                self.output_tokens = u.get("output_tokens") or 0
+            if e.get("total_cost_usd") is not None:
+                self.cost_usd = float(e["total_cost_usd"])
+            return True
+        if typ == "turn.completed":  # Codex
+            u = e.get("usage") or {}
+            self.input_tokens += u.get("input_tokens") or 0
+            self.cached_tokens += u.get("cached_input_tokens") or 0
+            self.output_tokens += (u.get("output_tokens") or 0)
+            return True
+        if typ == "_devin_acp" and e.get("kind") == "usage":
+            self.model = e.get("model") or self.model
+            self.input_tokens = e.get("input_tokens") or self.input_tokens
+            self.output_tokens = e.get("output_tokens") or self.output_tokens
+            self.cached_tokens = e.get("cached_tokens") or self.cached_tokens
+            return True
+        return False
+
+    def info(self) -> dict:
+        agent_label, _ = AGENTS.get(self.agent, (self.agent, ""))
+        return {
+            "agent": self.agent, "agent_label": agent_label,
+            "model": self.model, "model_label": model_label(self.model),
+            "provider": provider_of(self.model, self.agent),
+            "tokens": self.input_tokens + self.output_tokens,
+            "input_tokens": self.input_tokens, "output_tokens": self.output_tokens,
+            "cached_tokens": self.cached_tokens,
+            "cost_usd": self.cost_usd,
+        }

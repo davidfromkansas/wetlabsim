@@ -9,6 +9,7 @@ available to the evaluator, never to the robot API.
 """
 from __future__ import annotations
 
+import bisect
 import json
 import pathlib
 import queue
@@ -150,6 +151,7 @@ class Sim:
             self._sim0 = self.d.time
             self.rt_factor = 1.0
             self.recording: list[tuple[float, np.ndarray]] = []   # (time, qpos) at 30 Hz for replay videos
+            self.state_log: list[dict] = []   # robot readings at 20 Hz, so the viewer can rewind
             self._next_rec = self.d.time
 
     def open_log(self, run_dir: str | pathlib.Path):
@@ -514,6 +516,13 @@ class Sim:
             if not self._log_f:
                 continue
             s = self.state()
+            self.state_log.append(dict(s))
+            # Keep memory bounded when the cell idles for hours between runs (a run resets both).
+            if len(self.state_log) > 2 * 3600 * 20:
+                del self.state_log[:3600 * 20]
+            if len(self.recording) > 2 * 3600 * 30:
+                with self.lock:
+                    del self.recording[:3600 * 30]
             s["ground_truth"] = self.ground_truth()["objects"]
             with self.lock:
                 if self._log_f:
@@ -548,16 +557,31 @@ class Sim:
                          "rotation": R.round(6).tolist(), "depth_units": "metres along the camera z axis"}
         return out
 
-    def render(self, camera: str, depth: bool = False, priority: int = 0, timeout=30.0) -> dict:
+    def state_at(self, t: float) -> dict | None:
+        """The logged robot readings closest before sim time t (for rewinding the viewer)."""
+        log = self.state_log
+        i = bisect.bisect_right([s["time"] for s in log], t) - 1
+        return log[max(i, 0)] if log else None
+
+    def qpos_at(self, t: float):
+        rec = self.recording
+        if not rec:
+            return None
+        i = bisect.bisect_right([r[0] for r in rec], t) - 1
+        return rec[max(i, 0)][1]
+
+    def render(self, camera: str, depth: bool = False, priority: int = 0, timeout=30.0,
+               qpos=None, at_time: float | None = None) -> dict:
+        """Render a camera now, or (qpos given) the scene as it was at at_time."""
         if camera not in self.P["cameras"]:
             raise RobotError(f"unknown camera '{camera}', choose from {list(self.P['cameras'])}")
-        if priority == 0:
+        if priority == 0 and qpos is None:
             with self.lock:
                 self.log_event("camera", camera=camera)
         box: dict = {}
         ev = threading.Event()
         self._render_seq += 1
-        self._render_q.put((priority, self._render_seq, camera, depth, box, ev))
+        self._render_q.put((priority, self._render_seq, camera, depth, box, ev, qpos, at_time))
         if not ev.wait(timeout):
             raise RobotError("camera timed out")
         if "error" in box:
@@ -571,14 +595,19 @@ class Sim:
         dep_r.enable_depth_rendering()
         while self._running:
             try:
-                _, _, camera, depth, box, ev = self._render_q.get(timeout=0.2)
+                _, _, camera, depth, box, ev, qpos, at_time = self._render_q.get(timeout=0.2)
             except queue.Empty:
                 continue
             try:
                 with self.lock:
-                    rd.qpos[:] = self.d.qpos
-                    rd.qvel[:] = self.d.qvel
-                    rd.time = self.d.time
+                    if qpos is None:
+                        rd.qpos[:] = self.d.qpos
+                        rd.qvel[:] = self.d.qvel
+                        rd.time = self.d.time
+                    else:
+                        rd.qpos[:] = qpos
+                        rd.qvel[:] = 0
+                        rd.time = at_time or 0.0
                     bp, bR = self.base_tf()
                 mujoco.mj_forward(self.m, rd)
                 cam_name = self.P["cameras"][camera]
