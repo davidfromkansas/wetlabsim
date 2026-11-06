@@ -167,6 +167,21 @@ ROBOTS = {
         "max_opening_mm": 80,
         "cameras": {"overhead": "overhead", "wrist": "wrist", "side": "side"},
         "mount_quat": "1 0 0 0",
+        # Limits from Franka's own documents (agent/datasheets/SOURCES.md):
+        # joint and Cartesian limits from the FCI "Limits for Franka Emika Robot (FER)" table,
+        # sensing and force ranges from the datasheet (product manual p. 34), gripper from the
+        # Franka Hand manual (section 5.1).
+        "joint_vmax": np.array([2.175, 2.175, 2.175, 2.175, 2.61, 2.61, 2.61]),   # rad/s
+        "joint_amax": np.array([15.0, 7.5, 10.0, 12.5, 15.0, 20.0, 20.0]),        # rad/s^2
+        "cart_vmax": 1.7, "rot_vmax": 2.5,          # m/s, rad/s
+        "ft_noise": (0.035, 0.005),                 # force (N), torque (Nm) noise RMS
+        "ft_bias": (0.8, 0.15),                     # relative force (N) / torque (Nm) accuracy
+        # Stop when the external wrench leaves the datasheet's nominal force/torque range.
+        "reflex_force": (np.array([-125.0, -100.0, -50.0]), np.array([95.0, 100.0, 150.0])),   # N
+        "reflex_torque": (np.full(3, -10.0), np.full(3, 10.0)),                                # Nm
+        "grip_speed_mm_s": 50.0,                    # per finger
+        "grip_force_n": (30.0, 70.0),               # continuous grasping force range
+        "grip_stroke_mm": 80.0,
     },
     "ur5e": {
         "name": "Universal Robots UR5e", "gripper": "Robotiq 2F-85",
@@ -183,6 +198,11 @@ ROBOTS = {
         "max_opening_mm": 85,
         "cameras": {"overhead": "overhead", "wrist": "gripper/wrist", "side": "side"},
         "mount_quat": "0 0 0 1",
+        "joint_vmax": np.full(6, 3.14), "joint_amax": np.full(6, 40.0),
+        "cart_vmax": 1.0, "rot_vmax": 1.0,
+        "ft_noise": (0.3, 0.02), "ft_bias": (0.0, 0.0),
+        "reflex_force": (np.full(3, -1e9), np.full(3, 1e9)), "reflex_force_norm": 140.0,
+        "reflex_torque": (np.full(3, -1e9), np.full(3, 1e9)),
     },
 }
 DEFAULT_ROBOT = "franka"

@@ -46,6 +46,7 @@ class Frame:
         self.camera_position = np.array(meta["pose"]["position"])        # base frame
         self.camera_rotation = np.array(meta["pose"]["rotation"])        # base<-camera, OpenCV axes
 
+    # --- assisted helpers (left out of the client agents get at the standard docs level)
     def pixel_to_point(self, u: float, v: float, depth: float | None = None) -> np.ndarray:
         """3D point in the robot base frame seen at pixel (u, v)."""
         if depth is None:
@@ -61,6 +62,7 @@ class Frame:
         k = self.intrinsics
         pc = self.camera_rotation.T @ (np.asarray(p_base) - self.camera_position)
         return (k["fx"] * pc[0] / pc[2] + k["cx"], k["fy"] * pc[1] / pc[2] + k["cy"])
+    # --- end assisted helpers
 
     def save(self, path: str):
         from PIL import Image

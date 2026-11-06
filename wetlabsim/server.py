@@ -119,6 +119,7 @@ class Handler(BaseHTTPRequestHandler):
             "robot": P["name"], "gripper": P["gripper"], "robot_id": self.sim.robot,
             "cameras": list(P["cameras"]), "joint_names": P["arm_joints"],
             "joint_limits": [self.sim.joint_lo.tolist(), self.sim.joint_hi.tolist()],
+            "camera_calibration": self.sim.calibration(),
             "frames": "all poses are in the robot base frame: x forward over the bench, y left, z up (m)",
         }
 

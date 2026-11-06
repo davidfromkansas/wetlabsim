@@ -22,7 +22,6 @@ import numpy as np
 from . import scene as S
 
 CTRL_DT = 0.008                # trajectory sample period (s)
-PROTECTIVE_FORCE = 140.0       # N at the wrist before a protective stop
 TRACKING_LIMIT = 0.25          # rad of joint tracking error before a protective stop
 CAM_W, CAM_H = 640, 480
 
@@ -143,6 +142,9 @@ class Sim:
             self.grip_cmd = 0.0
             self.grip_rate = 255.0
             self.ft_offset = np.zeros(6)
+            # A real wrist force estimate is off by up to its rated accuracy until it is tared.
+            fb, tb = self.P["ft_bias"]
+            self.ft_bias = np.concatenate([self.rng.uniform(-fb, fb, 3), self.rng.uniform(-tb, tb, 3)])
             self.events: list[dict] = []
             self._wall0 = time.perf_counter()
             self._sim0 = self.d.time
@@ -222,9 +224,9 @@ class Sim:
         # Safety checks (every 10 steps).
         if self.mode == "running" and int(d.time / self.m.opt.timestep) % 10 == 0:
             err = np.max(np.abs(d.ctrl[self.arm_act] - d.qpos[self.arm_qadr]))
-            f = np.linalg.norm(self._ft_compensated()[:3])
-            if f > PROTECTIVE_FORCE:
-                self._protective_stop(f"wrist force {f:.0f} N exceeded {PROTECTIVE_FORCE:.0f} N")
+            reflex = self._reflex(self._ft_external())
+            if reflex:
+                self._protective_stop(reflex)
             elif err > TRACKING_LIMIT:
                 self._protective_stop(f"joint tracking error {err:.2f} rad (arm blocked)")
 
@@ -296,7 +298,7 @@ class Sim:
         pose = np.asarray(pose, float)
         if pose.shape != (6,):
             raise RobotError("pose must be [x, y, z, rx, ry, rz]")
-        speed = float(np.clip(speed, 0.001, 1.0))
+        speed = float(np.clip(speed, 0.001, self.P["cart_vmax"]))
         with self.lock:
             self._check_running()
             q_start = self.d.ctrl[self.arm_act].copy()
@@ -305,7 +307,7 @@ class Sim:
         q0, q1 = quat_from_mat(R0), quat_from_mat(R1)
         dist = np.linalg.norm(p1 - p0)
         ang = 2 * np.arccos(min(1.0, abs(float(np.dot(q0, q1)))))
-        T = max(1.875 * dist / speed, 1.875 * ang / 1.0, 0.2)
+        T = max(1.875 * dist / speed, 1.875 * ang / self.P["rot_vmax"], 0.2)
         times = np.arange(0.0, T + CTRL_DT, CTRL_DT)
         times[-1] = T
         qs = np.zeros((len(times), self.n_arm))
@@ -317,7 +319,8 @@ class Sim:
                 raise RobotError("target pose is unreachable along a straight line"
                                  f" (failed at {100*s:.0f}% of the path)")
             qs[k] = q = sol
-        return self._start_motion(times, qs, kind="move_l", target=pose.round(5).tolist())
+        return self._start_motion(self._within_joint_limits(times, qs), qs,
+                                  kind="move_l", target=pose.round(5).tolist())
 
     def move_j(self, joints, speed=1.0) -> Motion:
         q1 = np.asarray(joints, float)
@@ -325,7 +328,7 @@ class Sim:
             raise RobotError(f"joints must have {self.n_arm} values (radians)")
         if np.any(q1 < self.joint_lo) or np.any(q1 > self.joint_hi):
             raise RobotError("joint target outside joint limits")
-        speed = float(np.clip(speed, 0.01, 3.14))
+        speed = float(np.clip(speed, 0.01, float(np.max(self.P["joint_vmax"]))))
         with self.lock:
             self._check_running()
             q0 = self.d.ctrl[self.arm_act].copy()
@@ -333,7 +336,8 @@ class Sim:
         times = np.arange(0.0, T + CTRL_DT, CTRL_DT)
         times[-1] = T
         qs = q0 + quintic(times / T)[:, None] * (q1 - q0)
-        return self._start_motion(times, qs, kind="move_j", target=q1.round(5).tolist())
+        return self._start_motion(self._within_joint_limits(times, qs), qs,
+                                  kind="move_j", target=q1.round(5).tolist())
 
     def move_j_ik(self, pose, speed=1.0) -> Motion:
         """Joint-space move to a tool pose (path is not a straight line)."""
@@ -373,13 +377,36 @@ class Sim:
             self.stop_reason = ""
             self.log_event("command", kind="unlock_protective_stop")
 
+    def _within_joint_limits(self, times, qs):
+        """Stretch a trajectory in time until no joint exceeds its speed or acceleration limit
+        (a real controller slows the motion down rather than tracking it badly)."""
+        if len(times) < 3:
+            return times
+        dt = np.diff(times)
+        v = np.diff(qs, axis=0) / dt[:, None]
+        a = np.diff(v, axis=0) / dt[1:, None]
+        k = max(1.0, np.max(np.abs(v) / self.P["joint_vmax"]),
+                np.sqrt(np.max(np.abs(a) / self.P["joint_amax"])))
+        return times * k
+
     def gripper_move(self, position, speed=255, force=150):
         position = float(np.clip(position, 0, 255))
+        P = self.P
         with self.lock:
             self.grip_target = position
-            self.grip_rate = 40.0 + 360.0 * float(np.clip(speed, 0, 255)) / 255.0
-            scale = 0.2 + 0.8 * float(np.clip(force, 0, 255)) / 255.0
-            self.m.actuator_forcerange[self.grip_act] = self.grip_force_base * scale
+            sp = float(np.clip(speed, 0, 255)) / 255.0
+            fo = float(np.clip(force, 0, 255)) / 255.0
+            if "grip_speed_mm_s" in P:
+                # Both fingers move at up to the rated speed; 0..255 spans the full stroke.
+                full = 255.0 * 2 * P["grip_speed_mm_s"] / P["grip_stroke_mm"]
+                self.grip_rate = max(0.1, sp) * full
+                lo, hi = P["grip_force_n"]
+                # The tendon force splits over both fingers, so it is twice the squeeze.
+                f = 2 * (lo + (hi - lo) * fo)
+                self.m.actuator_forcerange[self.grip_act] = [-f, f]
+            else:
+                self.grip_rate = 40.0 + 360.0 * sp
+                self.m.actuator_forcerange[self.grip_act] = self.grip_force_base * (0.2 + 0.8 * fo)
             self.log_event("command", kind="gripper", position=position, speed=speed, force=force)
 
     def zero_ft(self):
@@ -387,8 +414,27 @@ class Sim:
             self.ft_offset = self._ft_compensated(offset=False)
 
     # ------------------------------------------------------------- sensors
+    def _reflex(self, w) -> str:
+        """Reason for a protective stop if the external wrench is outside the safe range."""
+        P = self.P
+        (flo, fhi), (tlo, thi) = P["reflex_force"], P["reflex_torque"]
+        f, t = w[:3], w[3:]
+        if "reflex_force_norm" in P and np.linalg.norm(f) > P["reflex_force_norm"]:
+            return f"wrist force {np.linalg.norm(f):.0f} N exceeded {P['reflex_force_norm']:.0f} N"
+        for i, ax in enumerate("xyz"):
+            if not flo[i] <= f[i] <= fhi[i]:
+                return f"external force F{ax} {f[i]:.0f} N outside {flo[i]:.0f}..{fhi[i]:.0f} N (cartesian reflex)"
+            if not tlo[i] <= t[i] <= thi[i]:
+                return f"external torque M{ax} {t[i]:.1f} Nm outside {tlo[i]:.0f}..{thi[i]:.0f} Nm (cartesian reflex)"
+        return ""
+
+    def _ft_external(self) -> np.ndarray:
+        """True external wrench at the flange (no sensor bias, no tare)."""
+        return self._ft_compensated(offset=False) - self.ft_bias
+
     def _ft_compensated(self, offset=True) -> np.ndarray:
-        """Wrist force/torque in the tool flange frame, with the gripper's weight removed."""
+        """Wrist force/torque in the tool flange frame, with the gripper's weight removed,
+        as the sensor reports it (including its bias)."""
         d, m = self.d, self.m
         raw_f = d.sensor("ft_force").data.copy()
         raw_t = d.sensor("ft_torque").data.copy()
@@ -398,7 +444,7 @@ class Sim:
         r = R.T @ (d.subtree_com[self.ft_body] - d.site_xpos[self.ft_site])
         f = raw_f + Fg
         t = raw_t + np.cross(r, Fg)
-        out = np.concatenate([f, t])
+        out = np.concatenate([f, t]) + self.ft_bias
         return out - self.ft_offset if offset else out
 
     def _grip_ctrl(self, position):
@@ -430,7 +476,8 @@ class Sim:
             qd = d.qvel[self.arm_dadr].copy()
             pw, Rw = d.site_xpos[self.tcp_site].copy(), d.site_xmat[self.tcp_site].reshape(3, 3).copy()
             pb, Rb = self.to_base(pw, Rw)
-            ft = self._ft_compensated() + np.concatenate([self.rng.normal(0, 0.3, 3), self.rng.normal(0, 0.02, 3)])
+            fn, tn = self.P["ft_noise"]
+            ft = self._ft_compensated() + np.concatenate([self.rng.normal(0, fn, 3), self.rng.normal(0, tn, 3)])
             return {
                 "time": round(d.time, 4),
                 "mode": self.mode,
@@ -473,6 +520,34 @@ class Sim:
                     self._log_f.write(json.dumps(s) + "\n")
 
     # ------------------------------------------------------------- cameras
+    def calibration(self) -> dict:
+        """Camera calibration as a lab would have it after a hand-eye calibration: intrinsics,
+        the fixed camera's pose in the base frame, and the wrist camera's pose in the TCP frame.
+        Poses use OpenCV camera axes (x right, y down, z forward)."""
+        with self.lock:
+            d = mujoco.MjData(self.m)
+            d.qpos[:] = self.d.qpos
+        mujoco.mj_forward(self.m, d)
+        bp, bR = d.xpos[self.base_body], d.xmat[self.base_body].reshape(3, 3)
+        tp, tR = d.site_xpos[self.tcp_site], d.site_xmat[self.tcp_site].reshape(3, 3)
+        out = {}
+        for name, cam in self.P["cameras"].items():
+            if name == "side":
+                continue
+            cid = self.m.camera(cam).id
+            f = (CAM_H / 2) / np.tan(np.deg2rad(self.m.cam_fovy[cid]) / 2)
+            Rw = d.cam_xmat[cid].reshape(3, 3) @ np.diag([1.0, -1.0, -1.0])
+            pw = d.cam_xpos[cid]
+            if name == "wrist":
+                frame, p, R = "tcp", tR.T @ (pw - tp), tR.T @ Rw
+            else:
+                frame, p, R = "base", bR.T @ (pw - bp), bR.T @ Rw
+            out[name] = {"intrinsics": {"fx": f, "fy": f, "cx": CAM_W / 2, "cy": CAM_H / 2,
+                                        "width": CAM_W, "height": CAM_H, "distortion": [0, 0, 0, 0, 0]},
+                         "pose_frame": frame, "position": p.round(5).tolist(),
+                         "rotation": R.round(6).tolist(), "depth_units": "metres along the camera z axis"}
+        return out
+
     def render(self, camera: str, depth: bool = False, priority: int = 0, timeout=30.0) -> dict:
         if camera not in self.P["cameras"]:
             raise RobotError(f"unknown camera '{camera}', choose from {list(self.P['cameras'])}")

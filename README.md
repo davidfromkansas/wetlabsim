@@ -35,6 +35,15 @@ Devin works the same way through the Devin CLI (`--agent devin`). Install it wit
 then run `devin auth login` once. Devin is only allowed to run Python, edit files in its
 own workspace and use the robot tools.
 
+By default agents get what a lab would hand over with a real Franka: Franka's own
+documents unchanged (`agent/datasheets/`, see `SOURCES.md` there), a short site sheet and
+camera calibration, the robot-only MuJoCo model, and a command reference without tips
+(`agent/franka/`). `--docs assisted` gives them our hand-written manual with tips and
+pixel/point helpers instead. The simulator's speed, acceleration, force-sensing and
+protective-stop limits follow Franka's published numbers (sources in
+`agent/datasheets/SOURCES.md`). Franka's PDFs are downloaded on first use
+(`python -m wetlabsim.datasheets`) and checked against recorded checksums.
+
 The arm is a Franka Panda by default. To run the earlier UR5e + Robotiq 2F-85 cell
 instead, start the server with `--robot ur5e` (or set `WETLAB_ROBOT=ur5e`); agents
 automatically get that robot's manual.

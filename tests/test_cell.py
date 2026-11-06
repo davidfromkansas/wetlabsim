@@ -69,3 +69,52 @@ def test_gripper_opens_and_closes(robot):
         assert s.gripper_status()["position"] < 10
     finally:
         s.stop_threads()
+
+
+def test_franka_joint_speed_limits():
+    """A fast joint move is slowed down to Franka's rated joint speeds."""
+    s = Sim(robot="franka")
+    s.start()
+    try:
+        time.sleep(0.2)
+        q = s.ready_q.copy()
+        q[0] += 1.5
+        mo = s.move_j(q, speed=10.0)
+        peak = np.zeros(7)
+        while not mo.done.is_set():
+            peak = np.maximum(peak, np.abs(s.d.qvel[s.arm_dadr]))
+            time.sleep(0.005)
+        assert mo.result == "done"
+        assert np.all(peak <= s.P["joint_vmax"] * 1.1), peak
+    finally:
+        s.stop_threads()
+
+
+def test_franka_stops_when_pushing_into_bench():
+    s = Sim(robot="franka")
+    s.start()
+    try:
+        time.sleep(0.2)
+        s.gripper_move(255)
+        mo = s.move_l([0.30, 0.0, -0.05, np.pi, 0, 0], speed=0.2)   # 5 cm into the bench
+        mo.done.wait(20)
+        assert s.mode == "protective_stop", mo.result
+    finally:
+        s.stop_threads()
+
+
+def test_standard_docs_workspace(tmp_path):
+    """The default (standard) workspace has Franka's documents, the robot model, the
+    calibration and a command reference, and its client has no pixel/point helpers."""
+    from wetlabsim import run_agent as RA
+    ws, client = tmp_path / "ws", tmp_path / "client"
+    ws.mkdir(), client.mkdir()
+    info = {"camera_calibration": Sim(robot="franka").calibration()}
+    RA.prepare_workspace(ws, client, "franka", "standard", "Move the red tube.", info)
+    names = {p.name for p in ws.iterdir()}
+    assert {"GOAL.md", "COMMANDS.md", "SITE.md", "cameras.json", "datasheets", "robot_model"} <= names
+    assert "ROBOT_MANUAL.md" not in names
+    assert (ws / "robot_model" / "panda.xml").exists()
+    assert any(p.suffix == ".pdf" for p in (ws / "datasheets").iterdir())
+    robot_py = (client / "wetlabsim" / "robot.py").read_text()
+    assert "pixel_to_point" not in robot_py and "def get_camera_frame" in robot_py

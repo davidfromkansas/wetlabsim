@@ -6,7 +6,7 @@
 
 The robot cell (python -m wetlabsim.server) must already be running. Each run:
 1. resets the cell to its starting state and starts a new log,
-2. gives the agent a fresh workspace with the robot manual and the agent plug,
+2. gives the agent a fresh workspace with the robot's documents and the agent plug,
 3. runs the agent CLI with your existing login (no API keys needed),
 4. saves the transcript, the robot's state log and the final object positions.
 """
@@ -49,9 +49,9 @@ _sys.meta_path[:] = [f for f in _sys.meta_path
 '''
 
 # Things an agent has no business touching on a real robot: the simulator's own code and
-# models (which say where every object is), and the evaluator's token and ground truth.
+# scene (which says where every object is), and the evaluator's token and ground truth.
 PEEK_MARKERS = [str(ROOT), "wetlabsim/scene.py", "wetlabsim/sim.py", "wetlabsim/server.py", "wetlabsim/assets", "wetlabsim.scene",
-                "wetlabsim.sim", "wetlabsim.server", "import mujoco", ".eval_token", "ground_truth",
+                "wetlabsim.sim", "wetlabsim.server", ".eval_token", "ground_truth",
                 "site-packages/wetlabsim"]
 
 
@@ -67,10 +67,55 @@ def sim_source_peeks(transcript: pathlib.Path) -> list[dict]:
     return peeks
 
 
+DOCS_LEVELS = ("standard", "assisted")
+
+
+def prepare_workspace(workspace: pathlib.Path, client: pathlib.Path, robot: str, docs: str,
+                      task: str, info: dict) -> str:
+    """Put what the agent gets for this documentation level into its workspace and client
+    folder. Returns the note added to the task prompt.
+
+    standard: the task, Franka's own documents unchanged, a site sheet, the camera
+              calibration, the robot-only model and a command reference without tips.
+    assisted: our hand-written manual with tips and pixel/point helpers (the earlier setup).
+    """
+    robot_py = (ROOT / "wetlabsim" / "robot.py").read_text()
+    if docs == "assisted":
+        shutil.copy(AGENT_DIR / f"ROBOT_MANUAL_{robot}.md", workspace / "ROBOT_MANUAL.md")
+        for f in ("CLAUDE.md", "AGENTS.md"):
+            shutil.copy(AGENT_DIR / f, workspace / f)
+        note = "The robot manual is in ROBOT_MANUAL.md."
+    else:
+        if robot != "franka":
+            raise SystemExit("the standard docs level exists only for the Franka; use --docs assisted")
+        from .datasheets import fetch
+        fetch()
+        for f in ("AGENTS.md", "CLAUDE.md", "COMMANDS.md", "SITE.md"):
+            shutil.copy(AGENT_DIR / "franka" / f, workspace / f)
+        (workspace / "GOAL.md").write_text(task + "\n")
+        (workspace / "cameras.json").write_text(json.dumps(info["camera_calibration"], indent=1))
+        sheets = workspace / "datasheets"
+        sheets.mkdir()
+        for s in json.loads((AGENT_DIR / "datasheets" / "sources.json").read_text()):
+            shutil.copy(AGENT_DIR / "datasheets" / s["file"], sheets / s["file"])
+        shutil.copy(AGENT_DIR / "datasheets" / "sources.json", sheets / "sources.json")
+        model = ROOT / "wetlabsim" / "assets" / "franka_emika_panda"
+        shutil.copytree(model, workspace / "robot_model", ignore=shutil.ignore_patterns("*.md"))
+        # Leave out the pixel/point helpers: at this level agents use the calibration themselves.
+        a = robot_py.index("    # --- assisted helpers")
+        b = robot_py.index("    # --- end assisted helpers\n") + len("    # --- end assisted helpers\n")
+        robot_py = robot_py[:a] + robot_py[b:]
+        note = "The task is also in GOAL.md; AGENTS.md lists the documents in this folder."
+    (client / "wetlabsim").mkdir()
+    (client / "wetlabsim" / "__init__.py").write_text(CLIENT_INIT)
+    (client / "wetlabsim" / "robot.py").write_text(robot_py)
+    return note
+
+
 def build_command(agent: str, task: str, model: str | None, workspace: pathlib.Path,
-                  run_dir: pathlib.Path) -> list[str]:
+                  run_dir: pathlib.Path, note: str) -> list[str]:
     py = sys.executable
-    prompt = (f"{task}\n\nThe robot manual is in ROBOT_MANUAL.md. When you are done, "
+    prompt = (f"{task}\n\n{note} When you are done, "
               "say DONE and briefly describe what you did and what you saw.")
     if agent == "claude":
         mcp = {"mcpServers": {"wetlab": {"command": py, "args": ["-m", "wetlabsim.mcp_server"],
@@ -127,6 +172,9 @@ def main(argv=None):
     ap.add_argument("--time-limit", type=float, default=900, help="seconds before the agent is stopped")
     ap.add_argument("--url", default=os.environ.get("WETLAB_ROBOT_URL", "http://127.0.0.1:8765"))
     ap.add_argument("--runs", default="runs")
+    ap.add_argument("--docs", choices=DOCS_LEVELS, default="standard",
+                    help="what the agent is given: Franka's documents and a command reference "
+                         "(standard), or our manual with tips and helpers (assisted)")
     args = ap.parse_args(argv)
 
     task = args.task or pathlib.Path(args.task_file).read_text().strip()
@@ -136,27 +184,22 @@ def main(argv=None):
     run_dir = runs / run_id
     run_dir.mkdir(parents=True)
 
-    # Fresh workspace outside the runs folder, with only the manual for this cell's robot in it.
+    # Fresh workspace outside the runs folder, with only the documents for this cell's robot.
+    # The agent's own Python can import only the robot client (wetlabsim.robot), like a real
+    # robot's SDK. That copy comes first on PYTHONPATH, so it also hides an installed copy of
+    # the full package, whose scene and simulator code would reveal where everything is.
     info = json.loads(urllib.request.urlopen(args.url + "/info").read())
     robot = info.get("robot_id", "ur5e")
     workspace = pathlib.Path(tempfile.mkdtemp(prefix=f"wetlab-{run_id}-"))
-    shutil.copy(AGENT_DIR / f"ROBOT_MANUAL_{robot}.md", workspace / "ROBOT_MANUAL.md")
-    for f in ("CLAUDE.md", "AGENTS.md"):
-        shutil.copy(AGENT_DIR / f, workspace / f)
+    client = pathlib.Path(tempfile.mkdtemp(prefix=f"wetlab-{run_id}-client-"))
+    note = prepare_workspace(workspace, client, robot, args.docs, task, info)
 
     _eval_call(args.url, token, "/eval/reset", {"run_dir": str(run_dir)})
     wall_reset = time.time()
     sim_reset = json.loads(urllib.request.urlopen(args.url + "/state").read())["time"]
-    cmd = build_command(args.agent, task, args.model, workspace, run_dir)
+    cmd = build_command(args.agent, task, args.model, workspace, run_dir, note)
     (run_dir / "task.txt").write_text(task)
     (run_dir / "command.json").write_text(json.dumps(cmd, indent=1))
-    # The agent's own Python can import only the robot client (wetlabsim.robot), like a real
-    # robot's SDK. This copy comes first on PYTHONPATH, so it also hides an installed copy of the
-    # full package, whose scene and simulator code would reveal where everything is.
-    client = pathlib.Path(tempfile.mkdtemp(prefix=f"wetlab-{run_id}-client-"))
-    (client / "wetlabsim").mkdir()
-    (client / "wetlabsim" / "__init__.py").write_text(CLIENT_INIT)
-    shutil.copy(ROOT / "wetlabsim" / "robot.py", client / "wetlabsim" / "robot.py")
     env = dict(os.environ, PYTHONPATH=str(client), WETLAB_ROBOT_URL=args.url)
 
     print(f"Run {run_id}: {args.agent} is working. Watch at {args.url}")
@@ -248,7 +291,8 @@ def main(argv=None):
     events = json.loads(urllib.request.urlopen(args.url + "/events?all=1").read())
     (run_dir / "events.json").write_text(json.dumps(events, indent=0))
     result = {
-        "run_id": run_id, "agent": args.agent, "model": args.model, "robot": robot, "task": task,
+        "run_id": run_id, "agent": args.agent, "model": args.model, "robot": robot,
+        "docs": args.docs, "task": task,
         "status": status, "wall_reset": wall_reset, "sim_reset": sim_reset,
         "exit_code": proc.returncode, "wall_seconds": round(elapsed, 1),
         "protective_stops": sum(1 for e in events if e.get("event") == "protective_stop"),

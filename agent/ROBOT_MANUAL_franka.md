@@ -57,7 +57,7 @@ With seven joints the arm can reach most poses in more than one way; `move_l` an
 
 | Call | What it does |
 | --- | --- |
-| `r.move_l(pose, speed=0.25)` | Straight-line tool move (m/s, max 1.0). Blocks until done. Raises `RobotError` if unreachable or stopped. |
+| `r.move_l(pose, speed=0.25)` | Straight-line tool move (m/s, max 1.7). Blocks until done. Raises `RobotError` if unreachable or stopped. |
 | `r.move_j_pose(pose, speed=1.0)` | Faster joint-space move to a pose. The path curves, so only use it with a clear path. |
 | `r.move_j(joints, speed=1.0)` | Move to seven joint angles (rad). |
 | `r.stop()` | Stop now. |
@@ -71,7 +71,7 @@ With seven joints the arm can reach most poses in more than one way; `move_l` an
 | `r.get_state()` | Everything below, plus the controller clock. |
 | `r.get_tcp_pose()` | Current tool pose. |
 | `r.get_joint_positions()` | Seven joint angles. |
-| `r.get_tcp_force()` | Force/torque at the wrist `[Fx, Fy, Fz, Tx, Ty, Tz]` (N, Nm), estimated from the joint torque sensors, hand weight removed. About 0.3 N of noise. |
+| `r.get_tcp_force()` | Force/torque at the wrist `[Fx, Fy, Fz, Tx, Ty, Tz]` (N, Nm), estimated from the joint torque sensors, hand weight removed. About 0.035 N of noise, and up to 0.8 N of offset until you tare it with `zero_ft_sensor()`. |
 | `r.zero_ft_sensor()` | Tare the force sensor. |
 | `r.get_gripper_status()` | `position` (0 open to 255 closed), `object_detected`, `moving`. |
 
@@ -80,7 +80,7 @@ With seven joints the arm can reach most poses in more than one way; `move_l` an
 `r.gripper_move(position, speed=255, force=150)`. Position 0 is fully open and 255 is
 fully closed. The gap between the finger pads is about `3 mm + 80 mm × (1 − position/255)`,
 so 83 mm fully open.
-`force` (0 to 255) scales the grip force up to the hand's 70 N continuous limit.
+`force` (0 to 255) sets the grip force from 30 N to 70 N.
 `object_detected` is True when the fingers stopped on something before reaching
 the requested position. Opening fully next to other objects can hit them, so open
 only as wide as you need.
@@ -110,7 +110,7 @@ camera pose in the base frame (OpenCV axes: x right, y down, z forward).
 - **Racks:** white tube racks with square slots about 24 mm wide on a 30 mm grid,
   walls 4.5 cm tall.
 - **Arm:** Franka Emika Panda, 7 joints, 855 mm reach, 3 kg payload.
-- **Gripper:** Franka Hand, parallel fingers, 80 mm maximum opening, 70 N continuous grip force.
+- **Gripper:** Franka Hand, parallel fingers, 80 mm stroke, 30-70 N continuous grip force, 50 mm/s per finger.
 
 ## Good practice
 
