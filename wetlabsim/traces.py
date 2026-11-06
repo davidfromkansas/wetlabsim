@@ -68,6 +68,28 @@ class Parser:
         if typ == "_raw":
             if e.get("text", "").strip():
                 steps.append(Step(t, "says", e["text"].strip()))
+        # ---- Devin through ACP (devin_acp.py)
+        elif typ == "_devin_acp":
+            kind = e.get("kind")
+            if kind in ("thinks", "says") and e.get("text", "").strip():
+                steps.append(Step(t, kind, e["text"].strip()))
+            elif kind == "tool":
+                args = e.get("input") or {}
+                st = _generic_tool(e.get("name", ""), args if isinstance(args, dict) else {"command": str(args)})
+                st.t = t
+                steps.append(st)
+                tool_kinds[e.get("id")] = st.kind
+            elif kind == "tool_result":
+                k = tool_kinds.get(e.get("id"))
+                if k in ("runs", "tool"):
+                    txt = (e.get("text") or "").strip()
+                    try:
+                        txt = str(json.loads(txt)["result"]).strip()
+                    except (ValueError, KeyError, TypeError):
+                        pass
+                    steps.append(Step(t, "output", txt or "(no output)"))
+                elif k == "looks":
+                    steps.append(Step(t, "output", "[camera image]"))
         # ---- Devin CLI hook events (tool calls as they happen)
         elif typ == "_devin_hook":
             name, args = e.get("tool_name", ""), e.get("tool_input") or {}

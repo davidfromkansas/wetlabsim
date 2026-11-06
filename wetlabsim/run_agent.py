@@ -95,30 +95,22 @@ def build_command(agent: str, task: str, model: str | None, workspace: pathlib.P
             cmd += ["--model", model]
         return cmd + [prompt]
     if agent == "devin":
-        # Devin CLI reads AGENTS.md, the MCP config and the permission rules from the workspace.
-        # Like Claude's --allowedTools, only the tools it needs are pre-approved: Python, files
-        # in its workspace, and the robot's MCP tools. Anything else is refused (no one is there
-        # to approve it). Devin has no streaming JSON output, so its full trajectory (ATIF
-        # format, with timestamps) is exported to the run folder instead.
-        mcp = {"mcpServers": {"wetlab": {"command": py, "args": ["-m", "wetlabsim.mcp_server"],
-                                         "env": {"PYTHONPATH": str(ROOT)}}}}
+        # Devin CLI reads AGENTS.md and the permission rules from the workspace. Like Claude's
+        # --allowedTools, only the tools it needs are pre-approved: Python, files in its
+        # workspace, and the robot's MCP tools. Anything else is refused (no one is there to
+        # approve it). Devin runs through its ACP server (devin_acp.py), which streams its
+        # thinking, tool calls and replies as they happen; print mode only shows the answer.
+        mcp = [{"name": "wetlab", "command": py, "args": ["-m", "wetlabsim.mcp_server"],
+                "env": [{"name": "PYTHONPATH", "value": str(ROOT)}]}]
         perms = {"permissions": {"allow": ["Read(./**)", "Write(./**)", "Exec(python)", "Exec(python3)",
                                            "Exec(ls)", "Exec(cat)", "mcp__wetlab__*"],
                                  "deny": [f"Read({ROOT}/**)", f"Write({ROOT}/**)"]}}
         (workspace / ".devin").mkdir(exist_ok=True)
-        (workspace / ".devin" / "mcp_config.json").write_text(json.dumps(mcp, indent=2))
         (workspace / ".devin" / "config.json").write_text(json.dumps(perms, indent=2))
-        # Print mode (-p) only prints the final answer, so hooks log each tool call as it
-        # happens; the recorder streams that log into the transcript and the live page.
-        hook = {"type": "command", "timeout": 10,
-                "command": f'"{py}" -m wetlabsim.devin_hook "{run_dir / "devin_hooks.jsonl"}"'}
-        hooks = {ev: [{"matcher": "", "hooks": [hook]}] for ev in ("PreToolUse", "PostToolUse")}
-        (workspace / ".devin" / "hooks.v1.json").write_text(json.dumps(hooks, indent=2))
-        cmd = ["devin", "--respect-workspace-trust", "false",
-               "--export", str(run_dir / "devin_trajectory.json")]
+        cmd = [py, "-m", "wetlabsim.devin_acp", str(workspace), prompt, "--mcp", json.dumps(mcp)]
         if model:
             cmd += ["--model", model]
-        return cmd + ["-p", prompt]
+        return cmd
     raise SystemExit(f"unknown agent {agent!r}; use claude, codex or devin")
 
 
