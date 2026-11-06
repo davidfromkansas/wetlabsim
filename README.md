@@ -5,7 +5,7 @@
 A realistic, real-time robot cell for testing how well AI agents (Claude Code,
 Codex, Devin) can control a robot arm in a wet lab.
 
-A simulated **UR5e arm** with a **Robotiq 2F-85 gripper** stands on a lab bench with
+A simulated **Franka Emika Panda arm** with its **Franka Hand gripper** stands on a lab bench with
 tube racks and 15 ml tubes. Physics runs in [MuJoCo](https://mujoco.org) and never
 pauses. Agents control the arm by writing Python against a robot API that mirrors
 real hardware. They only get what a real robot would have: camera images (with
@@ -35,6 +35,10 @@ Devin works the same way through the Devin CLI (`--agent devin`). Install it wit
 then run `devin auth login` once. Devin is only allowed to run Python, edit files in its
 own workspace and use the robot tools.
 
+The arm is a Franka Panda by default. To run the earlier UR5e + Robotiq 2F-85 cell
+instead, start the server with `--robot ur5e` (or set `WETLAB_ROBOT=ur5e`); agents
+automatically get that robot's manual.
+
 On a Linux machine with no screen, add `MUJOCO_GL=egl` (NVIDIA GPU) or
 `MUJOCO_GL=osmesa` (CPU only) before the server command.
 
@@ -49,13 +53,13 @@ cameras: `python examples/scripted_pick_place.py`.
 | Robot cell | `wetlabsim/sim.py`, `wetlabsim/server.py` | Real-time physics, the arm's motion controller, sensors, safety stops, cameras, and the live viewer. |
 | Robot API | `wetlabsim/robot.py` | What agents' code imports: `move_l`, `gripper_move`, `get_camera_frame`, and so on. |
 | Agent plug | `wetlabsim/mcp_server.py` | MCP tools so agents can look through the cameras, read the robot state, and hit stop. |
-| Robot manual | `agent/ROBOT_MANUAL.md` | What agents read first, like a manual a lab tech would hand you. |
+| Robot manual | `agent/ROBOT_MANUAL_<robot>.md` | What agents read first, like a manual a lab tech would hand you. |
 | Run recorder | `wetlabsim/run_agent.py` | Resets the cell, runs one agent on one task, saves everything. |
 
 ### What makes it realistic
 
 - **Time never stops.** While the model thinks, the arm holds its last position.
-- **No hidden knowledge.** Agents get cameras (overhead and wrist, colour and depth, calibrated), joint angles, wrist force/torque with ~0.3 N noise, and Robotiq gripper status, including "object detected".
+- **No hidden knowledge.** Agents get cameras (overhead and wrist, colour and depth, calibrated), joint angles, wrist force/torque with ~0.3 N noise, and gripper status, including "object detected".
 - **Real controller behaviour.** Straight-line moves, joint moves, unreachable poses are rejected, and a hard bump triggers a protective stop that has to be cleared.
 - **Real physics.** Tubes can slip, tip over or get knocked out of their racks.
 

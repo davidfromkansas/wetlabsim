@@ -1,4 +1,4 @@
-"""Robot API for agents: a UR5e arm, a Robotiq 2F-85 gripper and two cameras.
+"""Robot API for agents: the robot arm, its parallel gripper and two cameras.
 
 This is the only way to act on the lab. It talks to the robot cell over the
 network, like a real robot's controller. Time keeps running while your code
@@ -7,7 +7,7 @@ thinks: the arm holds its last commanded position until you send a new command.
 Coordinates: metres, in the robot base frame. x points forward over the bench,
 y to the robot's left, z up; the bench top is at z = 0. Tool poses are
 [x, y, z, rx, ry, rz] where (rx, ry, rz) is a rotation vector (axis * angle,
-radians), the same convention as Universal Robots' controllers.
+radians).
 [x, y, z, 3.14159, 0, 0] means the gripper points straight down.
 
 Example:
@@ -106,7 +106,7 @@ class Robot:
         return self.get_state()["time"]
 
     def get_joint_positions(self) -> list[float]:
-        """Six joint angles (rad): base, shoulder, elbow, wrist 1, wrist 2, wrist 3."""
+        """Joint angles (rad), base to wrist (see the robot manual for names and limits)."""
         return self.get_state()["joint_positions"]
 
     def get_tcp_pose(self) -> list[float]:
@@ -137,7 +137,7 @@ class Robot:
         return self._cmd("/move_l", {"pose": list(map(float, pose)), "speed": speed, "wait": wait})
 
     def move_j(self, joints, speed: float = 1.0, wait: bool = True) -> dict:
-        """Move in joint space to six joint angles (rad). speed in rad/s."""
+        """Move in joint space to the given joint angles (rad). speed in rad/s."""
         return self._cmd("/move_j", {"joints": list(map(float, joints)), "speed": speed, "wait": wait})
 
     def move_j_pose(self, pose, speed: float = 1.0, wait: bool = True) -> dict:
@@ -155,7 +155,7 @@ class Robot:
 
     # --------------------------------------------------------------- gripper
     def gripper_move(self, position: int, speed: int = 255, force: int = 150, wait: bool = True) -> dict:
-        """Robotiq-style command. position: 0 = fully open (85 mm), 255 = fully closed.
+        """position: 0 = fully open, 255 = fully closed (see the manual for the opening width).
         Returns gripper status; status['object_detected'] is True if the fingers
         stopped on something before reaching the requested position."""
         return self._cmd("/gripper", {"position": position, "speed": speed, "force": force, "wait": wait})["gripper"]

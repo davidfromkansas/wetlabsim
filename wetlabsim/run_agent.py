@@ -136,9 +136,12 @@ def main(argv=None):
     run_dir = runs / run_id
     run_dir.mkdir(parents=True)
 
-    # Fresh workspace outside the runs folder, with only the manual in it.
+    # Fresh workspace outside the runs folder, with only the manual for this cell's robot in it.
+    info = json.loads(urllib.request.urlopen(args.url + "/info").read())
+    robot = info.get("robot_id", "ur5e")
     workspace = pathlib.Path(tempfile.mkdtemp(prefix=f"wetlab-{run_id}-"))
-    for f in ("ROBOT_MANUAL.md", "CLAUDE.md", "AGENTS.md"):
+    shutil.copy(AGENT_DIR / f"ROBOT_MANUAL_{robot}.md", workspace / "ROBOT_MANUAL.md")
+    for f in ("CLAUDE.md", "AGENTS.md"):
         shutil.copy(AGENT_DIR / f, workspace / f)
 
     _eval_call(args.url, token, "/eval/reset", {"run_dir": str(run_dir)})
@@ -245,7 +248,7 @@ def main(argv=None):
     events = json.loads(urllib.request.urlopen(args.url + "/events?all=1").read())
     (run_dir / "events.json").write_text(json.dumps(events, indent=0))
     result = {
-        "run_id": run_id, "agent": args.agent, "model": args.model, "task": task,
+        "run_id": run_id, "agent": args.agent, "model": args.model, "robot": robot, "task": task,
         "status": status, "wall_reset": wall_reset, "sim_reset": sim_reset,
         "exit_code": proc.returncode, "wall_seconds": round(elapsed, 1),
         "protective_stops": sum(1 for e in events if e.get("event") == "protective_stop"),

@@ -96,13 +96,14 @@ def wrap(text, font, width, draw):
     return lines
 
 
-def build_timeline(times, qpos, events, fps):
-    """Video frame -> sim time. Fast-forward when nothing is moving and no command is new."""
+def build_timeline(times, qpos, events, fps, arm_q, finger_q):
+    """Video frame -> sim time. Fast-forward when nothing is moving and no command is new.
+    arm_q / finger_q: qpos indices of the arm joints and the gripper's finger joints."""
     dq = np.abs(np.diff(qpos, axis=0))
     # The arm and gripper count as moving at any speed; loose tubes only when clearly moving,
     # so a tube resting on the floor doesn't keep the whole video in real time.
-    arm = dq[:, ROBOT_QPOS:ROBOT_QPOS + 6].max(axis=1) > 3e-4               # ignore slow creep while gripping
-    fingers = dq[:, [ROBOT_QPOS + 6, ROBOT_QPOS + 10]].max(axis=1) > 1e-3          # gripper driver joints
+    arm = dq[:, arm_q].max(axis=1) > 3e-4               # ignore slow creep while gripping
+    fingers = dq[:, finger_q].max(axis=1) > 1e-3
     tubes = dq[:, [i + k for i in range(0, ROBOT_QPOS, 7) for k in range(3)]].max(axis=1) > 1e-4  # tube positions
     moving = np.r_[False, arm | fingers | tubes]
     ev_t = np.array(sorted(e["t"] for e in events)) if events else np.array([])
@@ -132,10 +133,17 @@ def main(argv=None):
     result = json.loads((run / "result.json").read_text())
     task = (run / "task.txt").read_text().strip()
     agent_name = {"claude": "Claude Code", "codex": "Codex", "devin": "Devin"}.get(result["agent"], result["agent"])
-    title = args.title or f"{agent_name} controlling a UR5e robot arm"
+    # Runs from before the Franka switch don't record their robot: they were all UR5e.
+    robot = result.get("robot", "ur5e")
+    P = S.profile(robot)
+    title = args.title or f"{agent_name} controlling a {P['name']} robot arm"
     out = pathlib.Path(args.out or run / "demo.mp4")
 
-    m = S.build_model()
+    m = S.build_model(robot)
+    arm_q = [m.joint(j).qposadr[0] for j in P["arm_joints"]]
+    finger_q = [m.joint(j).qposadr[0] for j in
+                (["finger_joint1", "finger_joint2"] if robot == "franka"
+                 else ["gripper/right_driver_joint", "gripper/left_driver_joint"])]
     d = mujoco.MjData(m)
     big = mujoco.Renderer(m, MAIN_H, MAIN_W)
     small = mujoco.Renderer(m, SIDE_H, SIDE_W)
@@ -189,7 +197,7 @@ def main(argv=None):
 
     captions = [(e["t"], describe(e)) for e in events]
     captions = [(t, c) for t, c in captions if c]
-    timeline, speeds = build_timeline(times, qpos, events, args.fps)
+    timeline, speeds = build_timeline(times, qpos, events, args.fps, arm_q, finger_q)
     t0 = times[0]
 
     ff = subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
@@ -236,7 +244,7 @@ def main(argv=None):
         dr.text((20, H - 34), "Room camera for viewers only. The agent sees only the robot's own cameras and sensors.",
                 font=f_small, fill=quiet)
         # Robot's cameras column.
-        for j, (cam, label) in enumerate([("overhead", "ROBOT'S OVERHEAD CAMERA"), ("gripper/wrist", "ROBOT'S WRIST CAMERA")]):
+        for j, (cam, label) in enumerate([("overhead", "ROBOT'S OVERHEAD CAMERA"), (P["cameras"]["wrist"], "ROBOT'S WRIST CAMERA")]):
             small.update_scene(d, camera=cam)
             frame.paste(Image.fromarray(small.render()), (CAM_X, j * SIDE_H))
             dr.text((CAM_X + 8, j * SIDE_H + 6), label, font=f_small, fill=ink, stroke_width=2, stroke_fill=(0, 0, 0))

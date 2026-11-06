@@ -1,7 +1,8 @@
 """Real-time physics, the robot controller, sensors and cameras.
 
 The world never pauses: physics runs against the wall clock in its own thread.
-Agents only see what a real UR5e + Robotiq 2F-85 + cameras would report:
+Agents only see what the real robot (a Franka Panda with its hand, or a UR5e with a
+Robotiq 2F-85) and its cameras would report:
 joint encoders, the controller's TCP pose, wrist force/torque, gripper status,
 and camera images (colour + depth). Ground-truth object poses are only
 available to the evaluator, never to the robot API.
@@ -23,8 +24,6 @@ from . import scene as S
 CTRL_DT = 0.008                # trajectory sample period (s)
 PROTECTIVE_FORCE = 140.0       # N at the wrist before a protective stop
 TRACKING_LIMIT = 0.25          # rad of joint tracking error before a protective stop
-GRIP_JOINT = "gripper/right_driver_joint"
-GRIP_RANGE = 0.8               # driver joint travel (rad) mapped to 0..255
 CAM_W, CAM_H = 640, 480
 
 
@@ -94,24 +93,29 @@ class Motion:
 
 # ------------------------------------------------------------------ simulator
 class Sim:
-    def __init__(self, run_dir: str | pathlib.Path | None = None, realtime: float = 1.0):
-        self.m = S.build_model()
+    def __init__(self, run_dir: str | pathlib.Path | None = None, realtime: float = 1.0,
+                 robot: str | None = None):
+        self.robot = S.robot_name(robot)
+        self.P = P = S.profile(self.robot)
+        self.m = S.build_model(self.robot)
         self.d = mujoco.MjData(self.m)
         self.lock = threading.RLock()
         self.realtime = realtime
         m = self.m
-        self.arm_qadr = np.array([m.joint(j).qposadr[0] for j in S.ARM_JOINTS])
-        self.arm_dadr = np.array([m.joint(j).dofadr[0] for j in S.ARM_JOINTS])
-        self.arm_act = np.array([m.actuator(a).id for a in S.ARM_ACTUATORS])
-        self.grip_act = m.actuator("gripper/fingers_actuator").id
-        self.grip_qadr = m.joint(GRIP_JOINT).qposadr[0]
-        self.grip_dadr = m.joint(GRIP_JOINT).dofadr[0]
-        self.tcp_site = m.site(S.TCP_SITE).id
-        self.ft_site = m.site("gripper/ft_site").id
-        self.ft_body = m.body("gripper/base_mount").id
-        self.base_body = m.body("base").id
-        self.joint_lo = m.jnt_range[[m.joint(j).id for j in S.ARM_JOINTS], 0]
-        self.joint_hi = m.jnt_range[[m.joint(j).id for j in S.ARM_JOINTS], 1]
+        self.n_arm = len(P["arm_joints"])
+        self.arm_qadr = np.array([m.joint(j).qposadr[0] for j in P["arm_joints"]])
+        self.arm_dadr = np.array([m.joint(j).dofadr[0] for j in P["arm_joints"]])
+        self.arm_act = np.array([m.actuator(a).id for a in P["arm_actuators"]])
+        self.grip_act = m.actuator(P["grip_actuator"]).id
+        self.grip_qadr = m.joint(P["grip_joint"]).qposadr[0]
+        self.grip_dadr = m.joint(P["grip_joint"]).dofadr[0]
+        self.tcp_site = m.site(P["tcp_site"]).id
+        self.ft_site = m.site(P["ft_site"]).id
+        self.ft_body = m.body(P["ft_body"]).id
+        self.base_body = m.body(P["base_body"]).id
+        self.ready_q = P["ready_q"]
+        self.joint_lo = m.jnt_range[[m.joint(j).id for j in P["arm_joints"]], 0]
+        self.joint_hi = m.jnt_range[[m.joint(j).id for j in P["arm_joints"]], 1]
         self.grip_force_base = m.actuator_forcerange[self.grip_act].copy()
         self._ik_data = mujoco.MjData(m)
         self.rng = np.random.default_rng()
@@ -126,9 +130,9 @@ class Sim:
     def reset(self):
         with self.lock:
             mujoco.mj_resetData(self.m, self.d)
-            self.d.qpos[self.arm_qadr] = S.READY_Q
-            self.d.ctrl[self.arm_act] = S.READY_Q
-            self.d.ctrl[self.grip_act] = 0
+            self.d.qpos[self.arm_qadr] = self.ready_q
+            self.d.ctrl[self.arm_act] = self.ready_q
+            self.d.ctrl[self.grip_act] = self._grip_ctrl(0.0)
             mujoco.mj_forward(self.m, self.d)
             for _ in range(250):            # let tubes settle in their racks
                 mujoco.mj_step(self.m, self.d)
@@ -214,7 +218,7 @@ class Sim:
         # Gripper: ramp the command at the requested speed (Robotiq-style).
         step = self.grip_rate * self.m.opt.timestep
         self.grip_cmd += np.clip(self.grip_target - self.grip_cmd, -step, step)
-        d.ctrl[self.grip_act] = self.grip_cmd
+        d.ctrl[self.grip_act] = self._grip_ctrl(self.grip_cmd)
         # Safety checks (every 10 steps).
         if self.mode == "running" and int(d.time / self.m.opt.timestep) % 10 == 0:
             err = np.max(np.abs(d.ctrl[self.arm_act] - d.qpos[self.arm_qadr]))
@@ -304,7 +308,7 @@ class Sim:
         T = max(1.875 * dist / speed, 1.875 * ang / 1.0, 0.2)
         times = np.arange(0.0, T + CTRL_DT, CTRL_DT)
         times[-1] = T
-        qs = np.zeros((len(times), 6))
+        qs = np.zeros((len(times), self.n_arm))
         q = q_start
         for k, t in enumerate(times):
             s = quintic(t / T)
@@ -317,8 +321,8 @@ class Sim:
 
     def move_j(self, joints, speed=1.0) -> Motion:
         q1 = np.asarray(joints, float)
-        if q1.shape != (6,):
-            raise RobotError("joints must have 6 values (radians)")
+        if q1.shape != (self.n_arm,):
+            raise RobotError(f"joints must have {self.n_arm} values (radians)")
         if np.any(q1 < self.joint_lo) or np.any(q1 > self.joint_hi):
             raise RobotError("joint target outside joint limits")
         speed = float(np.clip(speed, 0.01, 3.14))
@@ -397,9 +401,15 @@ class Sim:
         out = np.concatenate([f, t])
         return out - self.ft_offset if offset else out
 
+    def _grip_ctrl(self, position):
+        """Actuator command for a gripper position on the 0 (open) .. 255 (closed) scale."""
+        o = self.P["grip_ctrl_open"]
+        return o + (255.0 - 2 * o) * position / 255.0   # o=0: same scale; o=255: reversed
+
     def gripper_status(self):
-        d = self.d
-        pos = float(np.clip(d.qpos[self.grip_qadr] / GRIP_RANGE * 255.0, 0, 255))
+        d, P = self.d, self.P
+        q_open, q_closed = P["grip_open"], P.get("grip_closed", 0.0)
+        pos = float(np.clip((d.qpos[self.grip_qadr] - q_open) / (q_closed - q_open) * 255.0, 0, 255))
         vel = abs(float(d.qvel[self.grip_dadr]))
         moving = bool(abs(self.grip_cmd - self.grip_target) > 0.5 or vel > 0.05)   # plain bool for JSON
         if moving:
@@ -416,7 +426,7 @@ class Sim:
     def state(self) -> dict:
         with self.lock:
             d = self.d
-            q = d.qpos[self.arm_qadr] + self.rng.normal(0, 2e-5, 6)
+            q = d.qpos[self.arm_qadr] + self.rng.normal(0, 2e-5, self.n_arm)
             qd = d.qvel[self.arm_dadr].copy()
             pw, Rw = d.site_xpos[self.tcp_site].copy(), d.site_xmat[self.tcp_site].reshape(3, 3).copy()
             pb, Rb = self.to_base(pw, Rw)
@@ -464,8 +474,8 @@ class Sim:
 
     # ------------------------------------------------------------- cameras
     def render(self, camera: str, depth: bool = False, priority: int = 0, timeout=30.0) -> dict:
-        if camera not in S.CAMERAS:
-            raise RobotError(f"unknown camera '{camera}', choose from {list(S.CAMERAS)}")
+        if camera not in self.P["cameras"]:
+            raise RobotError(f"unknown camera '{camera}', choose from {list(self.P['cameras'])}")
         if priority == 0:
             with self.lock:
                 self.log_event("camera", camera=camera)
@@ -496,7 +506,7 @@ class Sim:
                     rd.time = self.d.time
                     bp, bR = self.base_tf()
                 mujoco.mj_forward(self.m, rd)
-                cam_name = S.CAMERAS[camera]
+                cam_name = self.P["cameras"][camera]
                 cid = self.m.camera(cam_name).id
                 rgb_r.update_scene(rd, camera=cam_name)
                 box["rgb"] = rgb_r.render().copy()

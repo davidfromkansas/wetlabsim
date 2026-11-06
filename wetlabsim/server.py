@@ -3,7 +3,7 @@
 Start it with:  python -m wetlabsim.server
 Then open http://localhost:8765 to watch, and let agents use wetlabsim.robot.Robot.
 
-Robot endpoints mirror what a real UR5e controller, Robotiq gripper and lab
+Robot endpoints mirror what a real robot controller, its gripper and lab
 cameras expose. Evaluator endpoints (/eval/...) need the token printed at start
 and saved to runs/.eval_token; agents are never given it.
 """
@@ -114,10 +114,10 @@ class Handler(BaseHTTPRequestHandler):
             return None
 
     def sim_info(self):
-        from . import scene as S
+        P = self.sim.P
         return {
-            "robot": "Universal Robots UR5e", "gripper": "Robotiq 2F-85",
-            "cameras": list(S.CAMERAS), "joint_names": S.ARM_JOINTS,
+            "robot": P["name"], "gripper": P["gripper"], "robot_id": self.sim.robot,
+            "cameras": list(P["cameras"]), "joint_names": P["arm_joints"],
             "joint_limits": [self.sim.joint_lo.tolist(), self.sim.joint_hi.tolist()],
             "frames": "all poses are in the robot base frame: x forward over the bench, y left, z up (m)",
         }
@@ -229,6 +229,8 @@ def main(argv=None):
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--runs", default="runs", help="where run logs are written")
+    ap.add_argument("--robot", choices=["franka", "ur5e"], default=None,
+                    help="robot arm (default: $WETLAB_ROBOT or franka)")
     args = ap.parse_args(argv)
 
     runs = pathlib.Path(args.runs).resolve()
@@ -238,13 +240,13 @@ def main(argv=None):
     tok_file.write_text(token)
     os.chmod(tok_file, 0o600)
 
-    sim = Sim()
+    sim = Sim(robot=args.robot)
     sim.open_log(runs / time.strftime("session-%Y%m%d-%H%M%S"))
     sim.start()
     Handler.sim, Handler.token, Handler.runs_dir = sim, token, runs
     srv = ThreadingHTTPServer((args.host, args.port), Handler)
     srv.daemon_threads = True
-    print(f"Wet lab robot cell running. Watch it at http://{args.host}:{args.port}")
+    print(f"Wet lab robot cell running with a {sim.P['name']}. Watch it at http://{args.host}:{args.port}")
     print(f"Evaluator token saved to {tok_file}")
     try:
         srv.serve_forever()

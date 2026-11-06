@@ -1,10 +1,13 @@
-"""Builds the bench scene: a UR5e with a Robotiq 2F-85 gripper, tube racks and tubes.
+"""Builds the bench scene: a robot arm with a parallel gripper, tube racks and tubes.
 
-The robot models come from MuJoCo Menagerie (see wetlabsim/assets/*/LICENSE).
-Everything else (bench, racks, tubes, cameras) is defined here.
+Two robots are available: a Franka Emika Panda with the Franka Hand (the default) and a
+UR5e with a Robotiq 2F-85. Pick one with WETLAB_ROBOT=franka|ur5e. The robot models come
+from MuJoCo Menagerie (see wetlabsim/assets/*/LICENSE). Everything else (bench, racks,
+tubes, cameras) is defined here.
 """
 from __future__ import annotations
 
+import os
 import pathlib
 import warnings
 
@@ -101,7 +104,7 @@ def _look_at_axes(pos, target, up=(0, 0, 1)):
     return " ".join(f"{v:.5f}" for v in (*x, *y))
 
 
-def _world_xml() -> str:
+def _world_xml(mount_quat: str) -> str:
     bh = BENCH_HEIGHT
     racks = "".join(_rack_xml(n, *p) for n, p in RACKS.items())
     tubes = "".join(_tube_xml(i, *t) for i, t in enumerate(TUBES))
@@ -135,7 +138,7 @@ def _world_xml() -> str:
       <geom type="box" size="0.03 0.03 {(bh-0.04)/2}" pos="-0.5 0.55 {(bh-0.04)/2}" material="steel"/>
       <geom type="box" size="0.03 0.03 {(bh-0.04)/2}" pos="-0.5 -0.55 {(bh-0.04)/2}" material="steel"/>
     </body>
-    <site name="robot_mount" pos="{ROBOT_BASE[0]} {ROBOT_BASE[1]} {ROBOT_BASE[2]}" quat="0 0 0 1"/>
+    <site name="robot_mount" pos="{ROBOT_BASE[0]} {ROBOT_BASE[1]} {ROBOT_BASE[2]}" quat="{mount_quat}"/>
     <camera name="overhead" pos="{over_pos[0]} {over_pos[1]} {over_pos[2]}"
             xyaxes="{_look_at_axes(over_pos, (0.42, 0.0, bh), up=(-1, 0, 0))}" fovy="50"/>
     <camera name="side" pos="{side_pos[0]} {side_pos[1]} {side_pos[2]}"
@@ -147,8 +150,106 @@ def _world_xml() -> str:
 """
 
 
-def build_model() -> mujoco.MjModel:
-    world = mujoco.MjSpec.from_string(_world_xml())
+# Everything that differs between the two robots. Joint, actuator, site and camera names
+# are as they appear in the compiled model.
+ROBOTS = {
+    "franka": {
+        "name": "Franka Emika Panda", "gripper": "Franka Hand",
+        "arm_joints": [f"joint{i}" for i in range(1, 8)],
+        "arm_actuators": [f"actuator{i}" for i in range(1, 8)],
+        "home_q": np.array([0.0, 0.0, 0.0, -1.5708, 0.0, 1.5708, 0.7854]),
+        # gripper pointing down over the bench, fingers closing along y
+        "ready_q": np.array([0.0, -0.5, 0.0, -2.3, 0.0, 1.8, 0.7854]),
+        "tcp_site": "tcp", "ft_site": "ft_site", "ft_body": "hand", "base_body": "link0",
+        "grip_actuator": "actuator8", "grip_joint": "finger_joint1",
+        "grip_open": 0.04,           # finger joint travel (m) when fully open
+        "grip_ctrl_open": 255.0,     # actuator command for fully open (0 is closed)
+        "max_opening_mm": 80,
+        "cameras": {"overhead": "overhead", "wrist": "wrist", "side": "side"},
+        "mount_quat": "1 0 0 0",
+    },
+    "ur5e": {
+        "name": "Universal Robots UR5e", "gripper": "Robotiq 2F-85",
+        "arm_joints": ["shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint",
+                       "wrist_1_joint", "wrist_2_joint", "wrist_3_joint"],
+        "arm_actuators": ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"],
+        "home_q": np.array([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]),
+        "ready_q": np.array([0.0, -1.2, 1.6, -1.97, -1.5708, 0.0]),
+        "tcp_site": "gripper/pinch", "ft_site": "gripper/ft_site", "ft_body": "gripper/base_mount",
+        "base_body": "base",
+        "grip_actuator": "gripper/fingers_actuator", "grip_joint": "gripper/right_driver_joint",
+        "grip_open": 0.0, "grip_closed": 0.8,   # driver joint (rad)
+        "grip_ctrl_open": 0.0,
+        "max_opening_mm": 85,
+        "cameras": {"overhead": "overhead", "wrist": "gripper/wrist", "side": "side"},
+        "mount_quat": "0 0 0 1",
+    },
+}
+DEFAULT_ROBOT = "franka"
+
+
+def robot_name(robot: str | None = None) -> str:
+    robot = robot or os.environ.get("WETLAB_ROBOT", DEFAULT_ROBOT)
+    if robot not in ROBOTS:
+        raise ValueError(f"unknown robot {robot!r}; choose from {list(ROBOTS)}")
+    return robot
+
+
+def profile(robot: str | None = None) -> dict:
+    return ROBOTS[robot_name(robot)]
+
+
+def _add_wrist_camera(body, cam_pos, target):
+    """A RealSense-style camera on the gripper, looking along the fingers."""
+    cam_pos, target = np.asarray(cam_pos, float), np.asarray(target, float)
+    f = target - cam_pos
+    f /= np.linalg.norm(f)
+    x = np.array([0.0, -1.0, 0])
+    y = np.cross(-f, x)   # MuJoCo cameras look along their -z axis
+    cam = body.add_camera(name="wrist", pos=cam_pos.tolist(), fovy=70)
+    cam.alt.type = mujoco.mjtOrientation.mjORIENTATION_XYAXES
+    cam.alt.xyaxes = [*x, *y]
+
+
+def _match_options(*specs):
+    for spec in specs:  # match the world's solver options so attaching is silent
+        spec.option.impratio = 10
+        spec.option.cone = mujoco.mjtCone.mjCONE_ELLIPTIC
+        spec.option.integrator = mujoco.mjtIntegrator.mjINT_IMPLICITFAST
+
+
+def _franka(world):
+    arm = mujoco.MjSpec.from_file(str(ASSETS / "franka_emika_panda" / "panda.xml"))
+    # Grippy finger pads that resist twisting, like the silicone pads on the UR's gripper.
+    for g in arm.geoms:
+        if g.classname.name.startswith("fingertip_pad_collision"):
+            g.condim = 4
+            g.friction = [1.0, 0.05, 0.001]
+    # Menagerie's hand servo is soft (100 N/m: about 1 N of squeeze on a tube), too weak to
+    # hold or let go of things reliably. Stiffen it so the force limit decides the grip:
+    # up to 70 N continuous, as on the real hand (the tendon force splits over both fingers).
+    act = arm.actuator("actuator8")
+    kp, kv = 3000.0, 150.0
+    act.gainprm[0] = 0.04 * kp / 255      # command 0..255 maps to 0..40 mm per finger
+    act.biasprm[1], act.biasprm[2] = -kp, -kv
+    act.forcerange = [-140, 140]
+    hand = arm.body("hand")
+    # Tool centre point between the fingertips (Franka's default TCP is 103.4 mm past the flange).
+    hand.add_site(name="tcp", pos=[0, 0, 0.1034], size=[0.004] * 3, group=5)
+    # The Panda estimates the external wrench at the flange from its joint torque sensors;
+    # measure it where the hand bolts on.
+    hand.add_site(name="ft_site", pos=[0, 0, 0], size=[0.004] * 3, group=5)
+    _add_wrist_camera(hand, [-0.075, 0.0, 0.04], [0.0, 0.0, 0.22])
+    for body in arm.bodies:   # Franka's controller compensates for gravity
+        body.gravcomp = 1.0
+    _match_options(arm)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        world.site("robot_mount").attach_body(arm.body("link0"), "", "")
+    return "ft_site"
+
+
+def _ur5e(world):
     arm = mujoco.MjSpec.from_file(str(ASSETS / "universal_robots_ur5e" / "ur5e.xml"))
     grip = mujoco.MjSpec.from_file(str(ASSETS / "robotiq_2f85" / "2f85.xml"))
 
@@ -162,50 +263,30 @@ def build_model() -> mujoco.MjModel:
     # Force/torque sensing site where the gripper bolts onto the wrist flange.
     mount = grip.body("base_mount")
     mount.add_site(name="ft_site", pos=[0, 0, 0], size=[0.004] * 3, group=5)
-
-    # Wrist camera (like a RealSense on the wrist), looking along the gripper.
-    base = grip.body("base")
-    cam_pos = np.array([-0.085, 0.0, 0.07])
-    target = np.array([0.0, 0.0, 0.20])
-    f = target - cam_pos
-    f /= np.linalg.norm(f)
-    x = np.array([0.0, -1.0, 0])
-    y = np.cross(-f, x)   # MuJoCo cameras look along their -z axis
-    cam = base.add_camera(name="wrist", pos=cam_pos.tolist(), fovy=70)
-    cam.alt.type = mujoco.mjtOrientation.mjORIENTATION_XYAXES
-    cam.alt.xyaxes = [*x, *y]
+    _add_wrist_camera(grip.body("base"), [-0.085, 0.0, 0.07], [0.0, 0.0, 0.20])
 
     # Real UR arms compensate for gravity in their controller; do the same here.
     for spec in (arm, grip):
         for body in spec.bodies:
             body.gravcomp = 1.0
-
-    for spec in (arm, grip):  # match the world's solver options so attaching is silent
-        spec.option.impratio = 10
-        spec.option.cone = mujoco.mjtCone.mjCONE_ELLIPTIC
-        spec.option.integrator = mujoco.mjtIntegrator.mjINT_IMPLICITFAST
+    _match_options(arm, grip)
 
     arm.site("attachment_site").attach_body(mount, "gripper/", "")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         world.site("robot_mount").attach_body(arm.body("base"), "", "")
+    return "gripper/ft_site"
 
-    # Sensors on the wrist (the UR5e has a built-in force/torque sensor at the flange).
+
+def build_model(robot: str | None = None) -> mujoco.MjModel:
+    robot = robot_name(robot)
+    world = mujoco.MjSpec.from_string(_world_xml(ROBOTS[robot]["mount_quat"]))
+    ft_site = _franka(world) if robot == "franka" else _ur5e(world)
+    # Wrist force/torque sensor (UR5e: built in at the flange; Panda: estimated from joint torques).
     world.add_sensor(name="ft_force", type=mujoco.mjtSensor.mjSENS_FORCE,
-                     objtype=mujoco.mjtObj.mjOBJ_SITE, objname="gripper/ft_site")
+                     objtype=mujoco.mjtObj.mjOBJ_SITE, objname=ft_site)
     world.add_sensor(name="ft_torque", type=mujoco.mjtSensor.mjSENS_TORQUE,
-                     objtype=mujoco.mjtObj.mjOBJ_SITE, objname="gripper/ft_site")
+                     objtype=mujoco.mjtObj.mjOBJ_SITE, objname=ft_site)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         return world.compile()
-
-
-ARM_JOINTS = [
-    "shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint",
-    "wrist_1_joint", "wrist_2_joint", "wrist_3_joint",
-]
-ARM_ACTUATORS = ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
-HOME_Q = np.array([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0])
-READY_Q = np.array([0.0, -1.2, 1.6, -1.97, -1.5708, 0.0])   # gripper pointing down over the bench
-TCP_SITE = "gripper/pinch"
-CAMERAS = {"overhead": "overhead", "wrist": "gripper/wrist", "side": "side"}
