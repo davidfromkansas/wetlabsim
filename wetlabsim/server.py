@@ -62,7 +62,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _json(self, obj, code=200):
-        self._send(code, json.dumps(obj).encode())
+        self._send(code, json.dumps(obj, default=lambda o: o.item() if hasattr(o, "item") else str(o)).encode())
 
     def _err(self, msg, code=400):
         self._json({"ok": False, "error": msg}, code)
@@ -126,7 +126,10 @@ class Handler(BaseHTTPRequestHandler):
         name, _, kind = rest.partition(".")
         kind = kind or "png"
         want_depth = kind in ("depth.npy", "rgbd.npz")
-        fr = self.sim.render(name, depth=want_depth, priority=0)
+        # The viewer page polls frames at low priority so it never delays the agent or shows up
+        # in the robot's command log.
+        viewer = "viewer" in qs
+        fr = self.sim.render(name, depth=want_depth, priority=5 if viewer else 0)
         meta = {"time": fr["time"], "intrinsics": fr["intrinsics"], "pose": fr["pose"]}
         hdr = {"X-Frame-Meta": json.dumps(meta)}
         if kind == "png":

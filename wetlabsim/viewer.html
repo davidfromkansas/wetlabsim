@@ -45,10 +45,10 @@
   <span id="rt" class="badge">real time</span>
 </header>
 <main>
-  <div class="cam"><img src="/stream/side.mjpg?fps=10" alt="Room camera"><div class="label">Room camera (for people watching, not given to the robot)</div></div>
+  <div class="cam"><img data-cam="side" data-fps="10" alt="Room camera"><div class="label">Room camera (for people watching, not given to the robot)</div></div>
   <div class="side">
-    <div class="cam"><img src="/stream/overhead.mjpg?fps=4" alt="Overhead camera"><div class="label">Overhead camera (robot sees this)</div></div>
-    <div class="cam"><img src="/stream/wrist.mjpg?fps=4" alt="Wrist camera"><div class="label">Wrist camera (robot sees this)</div></div>
+    <div class="cam"><img data-cam="overhead" data-fps="4" alt="Overhead camera"><div class="label">Overhead camera (robot sees this)</div></div>
+    <div class="cam"><img data-cam="wrist" data-fps="4" alt="Wrist camera"><div class="label">Wrist camera (robot sees this)</div></div>
     <div class="panel"><h2>Robot</h2><table id="robot"></table></div>
     <div class="panel"><h2>Commands</h2><div id="events"></div></div>
   </div>
@@ -76,6 +76,22 @@ async function tick() {
   } catch (e) { document.getElementById('mode').textContent = 'disconnected'; }
 }
 setInterval(tick, 500); tick();
+
+// Camera views: fetch one frame at a time instead of holding video streams open. Browsers allow
+// only 6 connections per site, so streams in two tabs would starve the trace and status updates.
+for (const img of document.querySelectorAll('img[data-cam]')) {
+  const cam = img.dataset.cam, gap = 1000 / Number(img.dataset.fps);
+  const next = () => {
+    if (document.hidden) return setTimeout(next, 500);
+    const t0 = performance.now(), fr = new Image();
+    fr.onload = () => { img.src = fr.src; setTimeout(() => URL.revokeObjectURL(fr.src), 2000);
+                        setTimeout(next, Math.max(0, gap - (performance.now() - t0))); };
+    fr.onerror = () => setTimeout(next, 1000);
+    fetch(`/camera/${cam}.jpg?viewer=1`).then(r => r.blob()).then(b => { fr.src = URL.createObjectURL(b); })
+      .catch(() => setTimeout(next, 1000));
+  };
+  next();
+}
 
 // Live agent trace: what the agent says, thinks and runs, and what comes back.
 const LABEL = {says:'SAYS', thinks:'THINKS', runs:'RUNS CODE', output:'OUTPUT', looks:'LOOKS THROUGH',

@@ -401,7 +401,7 @@ class Sim:
         d = self.d
         pos = float(np.clip(d.qpos[self.grip_qadr] / GRIP_RANGE * 255.0, 0, 255))
         vel = abs(float(d.qvel[self.grip_dadr]))
-        moving = abs(self.grip_cmd - self.grip_target) > 0.5 or vel > 0.05
+        moving = bool(abs(self.grip_cmd - self.grip_target) > 0.5 or vel > 0.05)   # plain bool for JSON
         if moving:
             obj = 0
         elif self.grip_target - pos > 6:
