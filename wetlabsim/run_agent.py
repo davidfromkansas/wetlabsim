@@ -17,6 +17,7 @@ import json
 import os
 import pathlib
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -141,8 +142,18 @@ def main(argv=None):
         try:
             proc.wait(timeout=args.time_limit)
         except subprocess.TimeoutExpired:
-            proc.kill()
+            # Ask the agent to stop first so it can save its trace (Devin writes its export
+            # on exit), then force it after a grace period.
             status = "time_limit"
+            proc.send_signal(signal.SIGINT)
+            try:
+                proc.wait(timeout=20)
+            except subprocess.TimeoutExpired:
+                proc.terminate()
+                try:
+                    proc.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
         reader.join(timeout=5)
     elapsed = time.time() - t0
 

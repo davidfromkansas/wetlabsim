@@ -63,8 +63,12 @@ def load(path: str | pathlib.Path) -> list[Step]:
             continue
         t = float(e.get("_sim_time", 0.0))
         typ = e.get("type")
+        # ---- plain text output (e.g. Devin's printed summary)
+        if typ == "_raw":
+            if e.get("text", "").strip():
+                steps.append(Step(t, "says", e["text"].strip()))
         # ---- Claude Code stream-json
-        if typ == "assistant":
+        elif typ == "assistant":
             for b in e["message"].get("content", []):
                 if b.get("type") == "text" and b["text"].strip():
                     steps.append(Step(t, "says", b["text"].strip()))

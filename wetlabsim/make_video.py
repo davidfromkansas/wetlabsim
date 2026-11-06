@@ -23,6 +23,8 @@ MAIN_X, MAIN_Y, MAIN_W, MAIN_H = 0, 64, 1024, 768     # room camera
 CAM_X, SIDE_W, SIDE_H = 1024, 384, 288                # robot's cameras column
 TRACE_X, TRACE_W = 1408, 512                          # agent trace column (far right)
 IDLE_SPEEDUP = 4.0
+LONG_IDLE_SPEEDUP = 16.0                               # long waits (no command for 10 s+)
+ROBOT_QPOS = 21                                       # qpos[:21] are the three loose tubes
 
 
 def _font(size, bold=False):
@@ -96,16 +98,24 @@ def wrap(text, font, width, draw):
 
 def build_timeline(times, qpos, events, fps):
     """Video frame -> sim time. Fast-forward when nothing is moving and no command is new."""
-    moving = np.r_[False, np.max(np.abs(np.diff(qpos, axis=0)), axis=1) > 1e-5]
+    dq = np.abs(np.diff(qpos, axis=0))
+    # The arm and gripper count as moving at any speed; loose tubes only when clearly moving,
+    # so a tube resting on the floor doesn't keep the whole video in real time.
+    arm = dq[:, ROBOT_QPOS:ROBOT_QPOS + 6].max(axis=1) > 3e-4               # ignore slow creep while gripping
+    fingers = dq[:, [ROBOT_QPOS + 6, ROBOT_QPOS + 10]].max(axis=1) > 1e-3          # gripper driver joints
+    tubes = dq[:, [i + k for i in range(0, ROBOT_QPOS, 7) for k in range(3)]].max(axis=1) > 1e-4  # tube positions
+    moving = np.r_[False, arm | fingers | tubes]
     ev_t = np.array(sorted(e["t"] for e in events)) if events else np.array([])
-    out, t = [], times[0]
+    out, speeds, t = [], [], times[0]
     while t <= times[-1]:
-        out.append(t)
         i = min(np.searchsorted(times, t), len(times) - 1)
-        near_event = len(ev_t) and np.min(np.abs(ev_t - t)) < 0.7
-        busy = moving[max(0, i - 15):i + 15].any() or near_event
-        t += (1.0 if busy else IDLE_SPEEDUP) / fps
-    return out
+        gap = np.min(np.abs(ev_t - t)) if len(ev_t) else 1e9
+        busy = moving[max(0, i - 15):i + 15].any() or gap < 0.7
+        speed = 1.0 if busy else (LONG_IDLE_SPEEDUP if gap > 10 else IDLE_SPEEDUP)
+        out.append(t)
+        speeds.append(speed)
+        t += speed / fps
+    return out, speeds
 
 
 def main(argv=None):
@@ -179,7 +189,7 @@ def main(argv=None):
 
     captions = [(e["t"], describe(e)) for e in events]
     captions = [(t, c) for t, c in captions if c]
-    timeline = build_timeline(times, qpos, events, args.fps)
+    timeline, speeds = build_timeline(times, qpos, events, args.fps)
     t0 = times[0]
 
     ff = subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
@@ -215,9 +225,8 @@ def main(argv=None):
         # Title and clock above the room view.
         dr.text((20, 16), title, font=f_title, fill=ink)
         dr.text((MAIN_W - 20, 18), f"{t - t0:5.1f} s", font=f_big, fill=ink, anchor="ra")
-        idle = k + 1 < len(timeline) and timeline[k + 1] - t > 1.5 / args.fps
-        if idle:
-            dr.text((MAIN_W - 120, 21), f"agent thinking  \u25b6\u25b6 {IDLE_SPEEDUP:.0f}x", font=f_small, fill=amber, anchor="ra")
+        if speeds[k] > 1:
+            dr.text((MAIN_W - 120, 21), f"agent thinking  \u25b6\u25b6 {speeds[k]:.0f}x", font=f_small, fill=amber, anchor="ra")
         # Task under the room view.
         y = MAIN_Y + MAIN_H + 16
         dr.text((20, y), "TASK", font=f_small, fill=amber)
