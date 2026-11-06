@@ -50,7 +50,7 @@ _sys.meta_path[:] = [f for f in _sys.meta_path
 
 # Things an agent has no business touching on a real robot: the simulator's own code and
 # models (which say where every object is), and the evaluator's token and ground truth.
-PEEK_MARKERS = [str(ROOT), "scene.py", "sim.py", "server.py", "wetlabsim/assets", "wetlabsim.scene",
+PEEK_MARKERS = [str(ROOT), "wetlabsim/scene.py", "wetlabsim/sim.py", "wetlabsim/server.py", "wetlabsim/assets", "wetlabsim.scene",
                 "wetlabsim.sim", "wetlabsim.server", "import mujoco", ".eval_token", "ground_truth",
                 "site-packages/wetlabsim"]
 
