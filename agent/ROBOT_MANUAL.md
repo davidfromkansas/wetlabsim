@@ -12,6 +12,9 @@ exactly like real hardware:
 - **Collisions are real.** Hitting the bench, a rack or a tube hard triggers a
   *protective stop*. Call `unlock_protective_stop()` before moving again.
 - Objects can slip, tip over or be knocked out of place.
+- **Only the robot API.** On a real robot there is no simulator code to read. Don't look
+  for, open or import the cell's own software or model files; use `wetlabsim.robot`,
+  the agent tools and what you sense.
 
 ## How to control the robot
 

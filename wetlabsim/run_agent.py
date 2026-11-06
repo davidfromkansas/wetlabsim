@@ -40,6 +40,33 @@ def _eval_call(url, token, path, body=None):
         return json.loads(r.read())
 
 
+# The agent's wetlabsim package: just the robot client. A `pip install -e` of the full package
+# adds an import hook that would still find wetlabsim.scene etc., so it is switched off here.
+CLIENT_INIT = '''"""Robot client for the wet lab robot cell. Use: from wetlabsim.robot import Robot"""
+import sys as _sys
+_sys.meta_path[:] = [f for f in _sys.meta_path
+                     if not getattr(f, "__module__", "").startswith("__editable__")]
+'''
+
+# Things an agent has no business touching on a real robot: the simulator's own code and
+# models (which say where every object is), and the evaluator's token and ground truth.
+PEEK_MARKERS = [str(ROOT), "scene.py", "sim.py", "server.py", "wetlabsim/assets", "wetlabsim.scene",
+                "wetlabsim.sim", "wetlabsim.server", "import mujoco", ".eval_token", "ground_truth",
+                "site-packages/wetlabsim"]
+
+
+def sim_source_peeks(transcript: pathlib.Path) -> list[dict]:
+    """Agent steps that mention the simulator's internals (only what the agent ran or read)."""
+    peeks = []
+    for st in traces.load(transcript):
+        if st.kind not in ("runs", "reads", "writes", "tool"):
+            continue
+        hits = sorted({m for m in PEEK_MARKERS if m in st.text})
+        if hits:
+            peeks.append({"t": st.t, "kind": st.kind, "matched": hits, "text": st.text[:300]})
+    return peeks
+
+
 def build_command(agent: str, task: str, model: str | None, workspace: pathlib.Path,
                   run_dir: pathlib.Path) -> list[str]:
     py = sys.executable
@@ -51,6 +78,7 @@ def build_command(agent: str, task: str, model: str | None, workspace: pathlib.P
         (workspace / ".mcp.json").write_text(json.dumps(mcp, indent=2))
         cmd = ["claude", "-p", prompt, "--mcp-config", str(workspace / ".mcp.json"), "--strict-mcp-config",
                "--allowedTools", "Bash", "Read", "Write", "Edit", *MCP_TOOLS,
+               "--disallowedTools", f"Read(/{ROOT}/**)", f"Edit(/{ROOT}/**)", f"Write(/{ROOT}/**)",
                "--output-format", "stream-json", "--verbose",
                "--thinking-display", "summarized"]   # include summarized thinking in the trace
         if model:
@@ -75,7 +103,8 @@ def build_command(agent: str, task: str, model: str | None, workspace: pathlib.P
         mcp = {"mcpServers": {"wetlab": {"command": py, "args": ["-m", "wetlabsim.mcp_server"],
                                          "env": {"PYTHONPATH": str(ROOT)}}}}
         perms = {"permissions": {"allow": ["Read(./**)", "Write(./**)", "Exec(python)", "Exec(python3)",
-                                           "Exec(ls)", "Exec(cat)", "mcp__wetlab__*"]}}
+                                           "Exec(ls)", "Exec(cat)", "mcp__wetlab__*"],
+                                 "deny": [f"Read({ROOT}/**)", f"Write({ROOT}/**)"]}}
         (workspace / ".devin").mkdir(exist_ok=True)
         (workspace / ".devin" / "mcp_config.json").write_text(json.dumps(mcp, indent=2))
         (workspace / ".devin" / "config.json").write_text(json.dumps(perms, indent=2))
@@ -123,8 +152,14 @@ def main(argv=None):
     cmd = build_command(args.agent, task, args.model, workspace, run_dir)
     (run_dir / "task.txt").write_text(task)
     (run_dir / "command.json").write_text(json.dumps(cmd, indent=1))
-    env = dict(os.environ, PYTHONPATH=str(ROOT) + os.pathsep + os.environ.get("PYTHONPATH", ""),
-               WETLAB_ROBOT_URL=args.url)
+    # The agent's own Python can import only the robot client (wetlabsim.robot), like a real
+    # robot's SDK. This copy comes first on PYTHONPATH, so it also hides an installed copy of the
+    # full package, whose scene and simulator code would reveal where everything is.
+    client = pathlib.Path(tempfile.mkdtemp(prefix=f"wetlab-{run_id}-client-"))
+    (client / "wetlabsim").mkdir()
+    (client / "wetlabsim" / "__init__.py").write_text(CLIENT_INIT)
+    shutil.copy(ROOT / "wetlabsim" / "robot.py", client / "wetlabsim" / "robot.py")
+    env = dict(os.environ, PYTHONPATH=str(client), WETLAB_ROBOT_URL=args.url)
 
     print(f"Run {run_id}: {args.agent} is working. Watch at {args.url}")
     t0 = time.time()
@@ -220,9 +255,15 @@ def main(argv=None):
         "commands": sum(1 for e in events if e.get("event") == "command"),
         "final_robot_state": state, "final_objects": gt["objects"],
     }
+    peeks = sim_source_peeks(run_dir / "transcript.jsonl")
+    result["fair"] = not peeks
+    result["sim_source_peeks"] = peeks
     (run_dir / "result.json").write_text(json.dumps(result, indent=2))
     shutil.copytree(workspace, run_dir / "workspace", dirs_exist_ok=True)
     print(f"Done in {elapsed:.0f} s ({status}). Results in {run_dir}")
+    if peeks:
+        print(f"WARNING: the agent looked at the simulator's own code ({len(peeks)} times), "
+              "so this run doesn't count as a fair score. See sim_source_peeks in result.json.")
     print(f"Make a video of it with: python -m wetlabsim.make_video {run_dir}")
 
 
