@@ -107,7 +107,10 @@ def build_command(agent: str, task: str, model: str | None, workspace: pathlib.P
                                  "deny": [f"Read({ROOT}/**)", f"Write({ROOT}/**)"]}}
         (workspace / ".devin").mkdir(exist_ok=True)
         (workspace / ".devin" / "config.json").write_text(json.dumps(perms, indent=2))
-        cmd = [py, "-m", "wetlabsim.devin_acp", str(workspace), prompt, "--mcp", json.dumps(mcp)]
+        # The bridge runs by file path: the agent's PYTHONPATH only has the robot client.
+        # It also refuses any permission request for the repo or outside the workspace.
+        cmd = [py, str(ROOT / "wetlabsim" / "devin_acp.py"), str(workspace), prompt,
+               "--mcp", json.dumps(mcp), "--deny", str(ROOT)]
         if model:
             cmd += ["--model", model]
         return cmd

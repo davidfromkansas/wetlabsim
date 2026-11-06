@@ -9,12 +9,16 @@ Prints one JSON line per trace event on stdout:
     {"type": "_devin_acp", "kind": "tool", "id": ..., "name": ..., "input": {...}}
     {"type": "_devin_acp", "kind": "tool_result", "id": ..., "status": ..., "text": ...}
 Streamed thought and message chunks are joined, so each line is one whole thought or reply.
-Permission requests are refused, like print mode: nobody is there to approve them.
+Permission requests are answered like print mode would (nobody is there to approve them):
+anything that mentions a --deny folder or a path outside the workspace is refused, and the
+rest is refused too unless Devin offers a one-time allow for a workspace-only action.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
 import signal
 import subprocess
 import sys
@@ -43,7 +47,21 @@ def main(argv=None):
     ap.add_argument("prompt")
     ap.add_argument("--model")
     ap.add_argument("--mcp", default="[]", help="ACP mcpServers list as JSON")
+    ap.add_argument("--deny", action="append", default=[], help="folder the agent may not touch")
     args = ap.parse_args(argv)
+    workspace = os.path.realpath(args.workspace)
+    deny = [os.path.realpath(d) for d in args.deny] + args.deny
+
+    def allowed(tool_call: dict) -> bool:
+        # Only workspace-only actions: no denied folder, no absolute path outside the workspace.
+        text = json.dumps(tool_call.get("rawInput") or {}) + " " + (tool_call.get("title") or "")
+        if any(d in text for d in deny):
+            return False
+        for p in re.findall(r"(?<![\w.])/(?:[\w.@-]+/)*[\w.@-]+", text):
+            rp = os.path.realpath(p)
+            if not (rp == workspace or rp.startswith(workspace + os.sep)):
+                return False
+        return True
 
     cmd = ["devin", "acp"] + (["--model", args.model] if args.model else [])
     proc = subprocess.Popen(cmd, cwd=args.workspace, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -112,12 +130,18 @@ def main(argv=None):
                 pending[m["id"]][0].set()
             elif m.get("method") == "session/request_permission":
                 opts = m["params"].get("options", [])
-                pick = next((o for o in opts if o.get("kind", "").startswith("reject")), None)
+                call = m["params"].get("toolCall") or {}
+                ok = allowed(call)
+                want = "allow_once" if ok else "reject"
+                pick = next((o for o in opts if o.get("kind", "").startswith(want)), None)
+                if pick is None:
+                    ok = False
+                    pick = next((o for o in opts if o.get("kind", "").startswith("reject")), None)
                 outcome = {"outcome": "selected", "optionId": pick["optionId"]} if pick \
                     else {"outcome": "cancelled"}
                 send({"jsonrpc": "2.0", "id": m["id"], "result": {"outcome": outcome}})
-                tool = (m["params"].get("toolCall") or {}).get("title", "")
-                emit({"type": "_devin_acp", "kind": "says", "text": f"[permission refused] {tool}"})
+                emit({"type": "_devin_acp", "kind": "says",
+                      "text": f"[permission {'allowed' if ok else 'refused'}] {call.get('title', '')}"})
             elif m.get("method") == "session/update":
                 on_update(m["params"].get("update") or {})
         flush()
@@ -137,7 +161,7 @@ def main(argv=None):
     try:
         request("initialize", {"protocolVersion": 1, "clientCapabilities": {
             "fs": {"readTextFile": False, "writeTextFile": False}, "terminal": False}})
-        session[0] = request("session/new", {"cwd": args.workspace,
+        session[0] = request("session/new", {"cwd": workspace,
                                              "mcpServers": json.loads(args.mcp)})["sessionId"]
         res = request("session/prompt", {"sessionId": session[0],
                                          "prompt": [{"type": "text", "text": args.prompt}]})
