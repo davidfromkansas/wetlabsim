@@ -1,7 +1,7 @@
 {
  "summary": {
   "batch": "opus-group1",
-  "runs": 30,
+  "runs": 24,
   "passed": 20,
   "by_task": {
    "T1": [
@@ -38,16 +38,6 @@
     1.0,
     0.0,
     1.0
-   ],
-   "T24": [
-    0.5,
-    0.0,
-    0.5
-   ],
-   "T25": [
-    0.75,
-    0.75,
-    0.0
    ],
    "T23": [
     0.75,
@@ -422,43 +412,6 @@
    "prompt": "Put the 1.5 ml tube into well B3 of the small-tube rack."
   },
   {
-   "run_id": "20261106-214828-claude-T24",
-   "task_id": "T24",
-   "task_title": "Unscrew a cap",
-   "attempt": 2,
-   "batch": "opus-group1",
-   "score": 0.5,
-   "passed": false,
-   "status": "time_limit",
-   "seconds": 900.6,
-   "cost_usd": 2.434666600000001,
-   "tokens": 3735238,
-   "model": "claude-opus-5-5",
-   "flags": {
-    "protective_stops": 1,
-    "claimed_success_but_failed": false,
-    "knocked_over": [],
-    "interrupted": null
-   },
-   "fair": true,
-   "detail": {
-    "cap": {
-     "on": false,
-     "turns_from_seated": 2.067,
-     "seated": false,
-     "tightness_nm": 0.0,
-     "cross_threaded": false
-    },
-    "cap_on_bench": false,
-    "open_side_up": false,
-    "tube_still_in_clamp": false
-   },
-   "final_answer": "Found a comfortable solution with joint 7 at 0.6 rad, which leaves room for the 180\u00b0 roll. Computing the standoff/lift configurations and checking link heights above the bench.",
-   "commands": 161,
-   "sim_start": 0.52,
-   "prompt": "Open the red tube and put the cap down on the bench, open side up."
-  },
-  {
    "run_id": "20261106-220329-claude-T23",
    "task_id": "T23",
    "task_title": "Tidy the bench",
@@ -729,45 +682,6 @@
    "prompt": "Put the 1.5 ml tube into well B3 of the small-tube rack."
   },
   {
-   "run_id": "20261106-223029-claude-T24",
-   "task_id": "T24",
-   "task_title": "Unscrew a cap",
-   "attempt": 3,
-   "batch": "opus-group1",
-   "score": 0.0,
-   "passed": false,
-   "status": "time_limit",
-   "seconds": 900.4,
-   "cost_usd": 2.5597678000000004,
-   "tokens": 4636314,
-   "model": "claude-opus-5-5",
-   "flags": {
-    "protective_stops": 3,
-    "claimed_success_but_failed": false,
-    "knocked_over": [
-     "tube_red"
-    ],
-    "interrupted": null
-   },
-   "fair": true,
-   "detail": {
-    "cap": {
-     "on": true,
-     "turns_from_seated": 2.008,
-     "seated": false,
-     "tightness_nm": 0.0,
-     "cross_threaded": false
-    },
-    "cap_on_bench": false,
-    "open_side_up": false,
-    "tube_still_in_clamp": false
-   },
-   "final_answer": "Rack B spans x 0.40\u20130.49 m, y 0.10\u20130.29 m, so that probe landed on its edge. Re-probing the bench at a spot the height map shows is clear.",
-   "commands": 248,
-   "sim_start": 0.52,
-   "prompt": "Open the red tube and put the cap down on the bench, open side up."
-  },
-  {
    "run_id": "20261106-224531-claude-T23",
    "task_id": "T23",
    "task_title": "Tidy the bench",
@@ -878,79 +792,6 @@
    "prompt": "A tube has fallen over. Put it upright in any empty slot."
   },
   {
-   "run_id": "20261106-231317-claude-T24",
-   "task_id": "T24",
-   "task_title": "Unscrew a cap",
-   "attempt": 1,
-   "batch": "opus-group1",
-   "score": 0.5,
-   "passed": false,
-   "status": "time_limit",
-   "seconds": 900.5,
-   "cost_usd": 2.023509200000001,
-   "tokens": 3017468,
-   "model": "claude-opus-5-5",
-   "flags": {
-    "protective_stops": 2,
-    "claimed_success_but_failed": false,
-    "knocked_over": [],
-    "interrupted": null
-   },
-   "fair": true,
-   "detail": {
-    "cap": {
-     "on": false,
-     "turns_from_seated": 2.067,
-     "seated": false,
-     "tightness_nm": 0.0,
-     "cross_threaded": false
-    },
-    "cap_on_bench": false,
-    "open_side_up": false,
-    "tube_still_in_clamp": false
-   },
-   "final_answer": "The gripper stopped at about 70 mm instead of closing on the 22 mm cap, so a finger is hitting something. Opening the gripper and looking.",
-   "commands": 308,
-   "sim_start": 0.522,
-   "prompt": "Open the red tube and put the cap down on the bench, open side up."
-  },
-  {
-   "run_id": "20261106-231713-claude-T25",
-   "task_id": "T25",
-   "task_title": "Screw a cap back on",
-   "attempt": 1,
-   "batch": "opus-group1",
-   "score": 0.75,
-   "passed": false,
-   "status": "time_limit",
-   "seconds": 900.5,
-   "cost_usd": 1.8565848,
-   "tokens": 3399938,
-   "model": "claude-opus-5-5",
-   "flags": {
-    "protective_stops": 1,
-    "claimed_success_but_failed": false,
-    "knocked_over": [],
-    "interrupted": null
-   },
-   "fair": true,
-   "detail": {
-    "cap": {
-     "on": true,
-     "turns_from_seated": 0.0,
-     "seated": true,
-     "tightness_nm": 0.5308,
-     "cross_threaded": false
-    },
-    "tube_still_in_clamp": false,
-    "knocked_over": []
-   },
-   "final_answer": "The cap lifted off with no resistance, so it was never threaded. I'm measuring the bare tube rim again before a clean restart.",
-   "commands": 484,
-   "sim_start": 0.534,
-   "prompt": "Close the open tube tightly."
-  },
-  {
    "run_id": "20261106-232818-claude-T1",
    "task_id": "T1",
    "task_title": "Move one tube",
@@ -1015,82 +856,6 @@
    "commands": 29,
    "sim_start": 0.524,
    "prompt": "A tube has fallen over. Put it upright in any empty slot."
-  },
-  {
-   "run_id": "20261106-233214-claude-T25",
-   "task_id": "T25",
-   "task_title": "Screw a cap back on",
-   "attempt": 2,
-   "batch": "opus-group1",
-   "score": 0.75,
-   "passed": false,
-   "status": "time_limit",
-   "seconds": 900.5,
-   "cost_usd": 2.2685379999999995,
-   "tokens": 3844495,
-   "model": "claude-opus-5-5",
-   "flags": {
-    "protective_stops": 2,
-    "claimed_success_but_failed": false,
-    "knocked_over": [
-     "tube_red"
-    ],
-    "interrupted": null
-   },
-   "fair": true,
-   "detail": {
-    "cap": {
-     "on": true,
-     "turns_from_seated": 0.0,
-     "seated": true,
-     "tightness_nm": 0.7039,
-     "cross_threaded": false
-    },
-    "tube_still_in_clamp": false,
-    "knocked_over": [
-     "tube_red"
-    ]
-   },
-   "final_answer": "Gripped (\u224819 mm, matches tube body). Lifting.",
-   "commands": 192,
-   "sim_start": 0.542,
-   "prompt": "Close the open tube tightly."
-  },
-  {
-   "run_id": "20261106-233707-claude-T25",
-   "task_id": "T25",
-   "task_title": "Screw a cap back on",
-   "attempt": 3,
-   "batch": "opus-group1",
-   "score": 0.0,
-   "passed": false,
-   "status": "time_limit",
-   "seconds": 900.7,
-   "cost_usd": 2.1887008,
-   "tokens": 3865369,
-   "model": "claude-opus-5-5",
-   "flags": {
-    "protective_stops": 1,
-    "claimed_success_but_failed": false,
-    "knocked_over": [],
-    "interrupted": null
-   },
-   "fair": true,
-   "detail": {
-    "cap": {
-     "on": false,
-     "turns_from_seated": 0.0,
-     "seated": false,
-     "tightness_nm": 0.0,
-     "cross_threaded": false
-    },
-    "tube_still_in_clamp": false,
-    "knocked_over": []
-   },
-   "final_answer": "Got the cap. Moving over the tube, setting joint 7 to its start angle, and lowering the cap onto the rim.",
-   "commands": 195,
-   "sim_start": 0.522,
-   "prompt": "Close the open tube tightly."
   }
  ]
 }
