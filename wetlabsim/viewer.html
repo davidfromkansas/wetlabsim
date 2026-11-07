@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Robot Run Viewer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg:#F6F7F9; --panel:#FFFFFF; --line:#E5E7EB; --line2:#EEF0F3; --ink:#111827; --text:#1F2937; --muted:#6B7280;
+    --blue:#2563EB; --blue-soft:#BFDBFE; --blue-tint:#EFF4FF; --green:#15803D; --green-soft:#DCFCE7;
+    --red:#DC2626; --red-soft:#FEE2E2; --amber:#B45309; --amber-soft:#FEF3C7; --purple:#7C3AED;
+    --sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.5 var(--sans); }
+  .wrap { padding:16px 20px 28px; }
+  button { font:inherit; }
+  :focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
+  .mono { font-family:var(--mono); font-variant-numeric: tabular-nums; }
+  .cap { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+
+  /* header */
+  header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:14px 32px; padding-bottom:14px; border-bottom:1px solid var(--line); }
+  .head-l { flex:1 1 520px; min-width:0; }
+  .pill { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; padding:2px 8px; border-radius:999px; background:var(--green-soft); color:var(--green); }
+  .pill.done { background:#E0E7FF; color:#3730A3; } .pill.bad { background:var(--red-soft); color:var(--red); } .pill.idle { background:var(--line); color:var(--muted); }
+  .taskline { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  h1 { margin:2px 0 0; font-size:22px; font-weight:600; color:var(--ink); text-wrap:balance; }
+  .linkbtn { padding:0; border:0; background:none; color:var(--blue); font-weight:500; font-size:13px; cursor:pointer; }
+  .stats { display:flex; flex-wrap:wrap; margin:0 0 0 auto; }
+  .stat { padding:0 28px; border-left:1px solid #D1D5DB; display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .stat:first-child { padding-left:0; border-left:0; } .stat:last-child { padding-right:0; }
+  .stat dd { margin:0; display:flex; flex-direction:column; gap:2px; }
+  .stat .main { font-size:18px; font-weight:600; color:var(--ink); line-height:1.2; font-variant-numeric:tabular-nums; display:flex; align-items:center; gap:6px; }
+  .stat .main img { width:18px; height:18px; }
+  .stat .sub { font-size:12px; color:var(--muted); }
+
+  /* timeline */
+  .timeline { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); }
+  .play { width:36px; height:36px; flex:none; border-radius:50%; border:0; background:var(--ink); color:#fff; font-size:13px; font-weight:700; cursor:pointer; }
+  .ttext { font-family:var(--mono); font-size:13px; color:var(--ink); flex:none; }
+  .ttext .lim { color:var(--muted); }
+  .track { position:relative; flex:1; min-width:120px; height:28px; cursor:pointer; touch-action:none; }
+  .track .rail, .track .done, .track .viewed { position:absolute; left:0; top:11px; height:6px; border-radius:3px; }
+  .track .rail { right:0; background:var(--line); } .track .done { background:var(--blue-soft); } .track .viewed { background:var(--blue); }
+  .track .tick { position:absolute; top:3px; width:3px; height:8px; border-radius:1px; margin-left:-1px; }
+  .track .thumb { position:absolute; top:7px; width:14px; height:14px; margin-left:-7px; border-radius:50%; background:var(--blue); box-shadow:0 0 0 3px rgba(37,99,235,.25); }
+  .track:focus-visible { outline:2px solid var(--blue); outline-offset:4px; border-radius:4px; }
+  select.speed { height:30px; padding:0 8px; border-radius:6px; border:1px solid #D1D5DB; background:#fff; color:var(--ink); font:600 13px var(--sans); cursor:pointer; }
+  .live { flex:none; font-size:12px; font-weight:600; padding:5px 10px; border-radius:6px; border:0; cursor:pointer; }
+  .live.on { background:var(--red-soft); color:var(--red); cursor:default; } .live.off { background:var(--blue); color:#fff; }
+
+  /* layout */
+  main { display:grid; grid-template-columns: minmax(300px,1fr) minmax(0,2fr) minmax(320px,1.1fr); gap:16px; padding-top:16px; align-items:start; }
+  @media (max-width: 1150px) { main { grid-template-columns: minmax(0,1.5fr) minmax(300px,1fr); } #leftcol { grid-column: 1 / -1; order:3; display:grid; grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 760px) { main { grid-template-columns: minmax(0,1fr); } #leftcol { display:flex; } .stat { padding:0 16px; } .timeline { flex-wrap:wrap; } .track { flex-basis:100%; order:5; } }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px; min-width:0; }
+  .card h3 { margin:0; font-size:14px; color:var(--ink); }
+  #leftcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+  .badge { font-size:12px; font-weight:600; padding:2px 8px; border-radius:4px; background:var(--green-soft); color:var(--green); }
+  .badge.stop { background:var(--red-soft); color:var(--red); }
+  table.joints { width:100%; border-collapse:collapse; font-size:13px; }
+  table.joints th { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.06em; font-weight:500; padding:2px 0; text-align:right; }
+  table.joints th:first-child { text-align:left; }
+  table.joints td { text-align:right; padding:3px 0; font-family:var(--mono); border-top:1px solid var(--line2); }
+  table.joints td:first-child { text-align:left; font-family:var(--sans); }
+  dl.tel { margin:10px 0 0; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 10px; font-size:13px; }
+  dl.tel dt { color:var(--muted); min-width:0; } dl.tel dd { margin:0; text-align:right; font-family:var(--mono); font-size:12px; color:var(--ink); white-space:nowrap; }
+  .tel-note { margin:8px 0 0; font-size:12px; color:var(--muted); }
+
+  .files { margin-top:8px; font-size:13px; max-height:360px; overflow:auto; }
+  .frow { display:grid; grid-template-columns:minmax(0,1fr) 70px; gap:8px; align-items:center; min-height:26px; padding:0 6px; border-radius:6px; color:var(--text); text-decoration:none; }
+  .frow:nth-child(even) { background:#F7F8FA; } .frow:hover { background:var(--blue-tint); }
+  .frow .nm { display:flex; align-items:center; gap:6px; min-width:0; } .frow .nm span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .frow .sz { text-align:right; color:var(--muted); font-size:12px; }
+  button.frow { width:100%; border:0; background:none; text-align:left; cursor:pointer; font:inherit; }
+  .caret { width:8px; flex:none; color:var(--muted); font-size:9px; }
+
+  #midcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+  figure { margin:0; position:relative; border-radius:10px; overflow:hidden; background:#fff; }
+  figure img { display:block; width:100%; background:#0b0f14; }
+  .aud { border:2px dashed #D97706; } .aud img { aspect-ratio:16/9; object-fit:cover; }
+  .aud figcaption { padding:10px 14px; background:var(--amber-soft); border-top:2px solid var(--amber); display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .aud figcaption b { font-size:16px; color:var(--ink); }
+  .tag-amber { background:#FCD34D; color:#78350F; font-size:12px; font-weight:700; padding:3px 8px; border-radius:4px; }
+  .cams { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  .aicam { border:1px solid var(--line); } .aicam img { aspect-ratio:4/3; object-fit:cover; }
+  .aicam figcaption { padding:10px 14px; background:var(--blue-tint); border-top:2px solid var(--blue); display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .aicam figcaption b { font-size:15px; color:var(--ink); }
+  .tag-blue { background:var(--blue); color:#fff; font-size:11px; font-weight:700; padding:3px 8px; border-radius:4px; }
+  .seen { position:absolute; top:8px; right:8px; background:rgba(255,255,255,.92); font-size:11px; padding:2px 6px; border-radius:4px; color:var(--muted); }
+  .seen.yes { color:var(--blue); }
+
+  /* chat */
+  #chat { min-width:0; background:var(--panel); border:1px solid var(--line); border-radius:12px; display:flex; flex-direction:column; height:calc(100vh - 170px); min-height:480px; position:sticky; top:12px; overflow:hidden; }
+  #chat .ch { display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--line); }
+  #chat .ch img { width:22px; height:22px; } #chat .ch h2 { margin:0; font-size:14px; font-weight:600; color:var(--ink); flex:1; }
+  #feed { list-style:none; margin:0; padding:16px 16px 16px 14px; overflow-y:auto; flex:1; display:flex; flex-direction:column; }
+  .prompt { align-self:flex-end; max-width:88%; margin-bottom:8px; }
+  .prompt .lbl { font-size:11px; color:var(--muted); text-align:right; margin-bottom:4px; }
+  .prompt .bub { background:#EEF2F7; color:var(--ink); border-radius:14px 14px 4px 14px; padding:10px 12px; white-space:pre-wrap; }
+  .it { padding-left:24px; min-width:0; margin-top:8px; }
+  .it.turn { margin-top:24px; }
+  .who { display:flex; align-items:center; gap:8px; margin:0 0 4px -24px; font-size:12px; }
+  .who img { width:16px; height:16px; } .who strong { color:var(--ink); font-weight:600; } .who span { color:var(--muted); margin-left:auto; font-variant-numeric:tabular-nums; }
+  .it p { margin:0; line-height:1.55; white-space:pre-wrap; overflow-wrap:anywhere; }
+  .it p.think { color:var(--muted); font-style:italic; font-size:13px; }
+  .lite { font-size:13px; color:#374151; }
+  .lite .row { display:flex; gap:6px; align-items:baseline; min-width:0; }
+  .lite .row b { font-weight:600; flex:none; } .lite code { font:12.5px var(--mono); color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dot { font-size:10px; color:var(--green); flex:none; }
+  .lite img { display:block; margin:6px 0 0 14px; width:150px; aspect-ratio:4/3; object-fit:cover; border-radius:6px; border:1px solid var(--line); }
+  .codecard { border:1px solid #D1D5DB; border-radius:8px; overflow:hidden; font:12.5px var(--mono); }
+  .codecard .bar { display:flex; justify-content:space-between; gap:8px; padding:5px 8px; background:#F3F4F6; color:var(--muted); font:12px var(--sans); }
+  .codecard pre { margin:0; padding:8px; white-space:pre-wrap; overflow-wrap:anywhere; color:var(--text); max-height:240px; overflow:auto; font:inherit; }
+  .codecard .out { padding:6px 8px; border-top:1px solid var(--line); color:var(--muted); white-space:pre-wrap; overflow-wrap:anywhere; max-height:180px; overflow:auto; }
+  .codecard .out.err { color:var(--red); }
+  .thinking { margin-top:20px; display:flex; gap:8px; align-items:center; color:var(--muted); font-size:13px; }
+  .empty { color:var(--muted); }
+
+  /* prompt dialog */
+  .scrim { position:fixed; inset:0; z-index:20; background:rgba(17,24,39,.45); display:flex; justify-content:center; align-items:flex-start; padding:80px 16px; }
+  .dialog { width:100%; max-width:680px; background:#fff; border:1px solid #D1D5DB; border-radius:12px; box-shadow:0 20px 50px rgba(17,24,39,.2); }
+  .dialog .dh { display:flex; align-items:center; padding:12px 16px; border-bottom:1px solid var(--line); }
+  .dialog h2 { margin:0; font-size:15px; color:var(--ink); flex:1; }
+  .dialog .x { width:28px; height:28px; border:0; border-radius:6px; background:var(--line); color:var(--ink); cursor:pointer; }
+  .dialog pre { margin:0; padding:16px; white-space:pre-wrap; font:13px/1.6 var(--mono); color:var(--text); max-height:60vh; overflow:auto; }
+  .dialog p { margin:0; padding:10px 16px 14px; font-size:12px; color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="head-l">
+      <div style="display:flex; align-items:center; gap:10px"><span id="status" class="pill idle">● Connecting</span><span class="cap">Task</span></div>
+      <div class="taskline"><h1 id="task">Waiting for a run</h1><button id="openPrompt" class="linkbtn" hidden>Full prompt ›</button></div>
+    </div>
+    <dl class="stats">
+      <div class="stat"><dt class="cap">Model</dt><dd><span class="main" id="model">—</span><span class="sub" id="modelSub"></span></dd></div>
+      <div class="stat"><dt class="cap">Cost</dt><dd><span class="main" id="cost">—</span><span class="sub" id="costSub"></span></dd></div>
+      <div class="stat"><dt class="cap">Robot</dt><dd><span class="main" id="robot">—</span><span class="sub" id="robotSub"></span></dd></div>
+    </dl>
+  </header>
+
+  <section class="timeline" aria-label="Timeline">
+    <button id="play" class="play" aria-label="Pause">❚❚</button>
+    <span class="ttext" id="ttext">00:00 <span class="lim">/ 15:00</span></span>
+    <div id="track" class="track" role="slider" tabindex="0" aria-label="Run time" aria-valuemin="0" aria-valuemax="900" aria-valuenow="0" aria-valuetext="00:00">
+      <div class="rail"></div><div class="done" id="tDone"></div><div class="viewed" id="tViewed"></div>
+      <div id="ticks"></div><div class="thumb" id="tThumb"></div>
+    </div>
+    <label class="cap" for="speed" style="position:absolute; left:-9999px">Playback speed</label>
+    <select id="speed" class="speed"><option>0.5x</option><option selected>1x</option><option>2x</option><option>4x</option><option>8x</option></select>
+    <button id="live" class="live on">● Live</button>
+  </section>
+
+  <main>
+    <section id="leftcol" aria-label="Robot readings and sandbox workspace">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+          <h3>Robot readings</h3><span id="safety" class="badge">No safety stop</span>
+        </div>
+        <table class="joints"><thead><tr><th scope="col">Joint</th><th scope="col">Angle (rad)</th><th scope="col">Speed (rad/s)</th></tr></thead><tbody id="joints"></tbody></table>
+        <dl class="tel" id="tel"></dl>
+        <p class="tel-note">This is what the AI reads from the robot. It is not told where any objects are; it finds them with the cameras.</p>
+      </div>
+      <div class="card">
+        <h3>Sandbox Workspace</h3>
+        <div class="files" id="files"><div class="empty">No run yet.</div></div>
+      </div>
+    </section>
+
+    <section id="midcol" aria-label="Cameras">
+      <figure class="aud">
+        <img id="cam-side" data-cam="side" data-fps="10" alt="Audience camera, hidden from the AI">
+        <figcaption><b>Audience view</b><span class="tag-amber">ONLY PEOPLE SEE THIS</span></figcaption>
+      </figure>
+      <div class="cams">
+        <figure class="aicam"><img id="cam-overhead" data-cam="overhead" data-fps="4" alt="Overhead camera"><span class="seen" id="seen-overhead">Not looked at yet</span>
+          <figcaption><b>Overhead camera</b><span class="tag-blue">AI SEES THIS</span></figcaption></figure>
+        <figure class="aicam"><img id="cam-wrist" data-cam="wrist" data-fps="4" alt="Wrist camera"><span class="seen" id="seen-wrist">Not looked at yet</span>
+          <figcaption><b>Wrist camera</b><span class="tag-blue">AI SEES THIS</span></figcaption></figure>
+      </div>
+    </section>
+
+    <section id="chat" aria-labelledby="chatTitle">
+      <div class="ch"><img id="chatLogo" alt="" hidden><h2 id="chatTitle">The AI</h2></div>
+      <ol id="feed"><li class="empty">Nothing yet. The AI's thoughts, code and replies appear here as it works.</li></ol>
+    </section>
+  </main>
+</div>
+
+<div class="scrim" id="scrim" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="ptitle">
+    <div class="dh"><h2 id="ptitle">Prompt sent to the model</h2><button class="x" id="closePrompt" aria-label="Close">✕</button></div>
+    <pre id="promptText"></pre>
+    <p>Sent once, word for word. Everything else the AI learns comes from its folder, the robot and the cameras.</p>
+  </div>
+</div>
+
+<script>
+// Live view of the current run (or a finished one with ?run=<id>). Everything shown comes from the
+// robot cell's server; when rewound, readings, cameras and chat are taken from what was recorded.
+const qs = new URLSearchParams(location.search);
+const ARCHIVE = qs.get('run');
+const BASE = ARCHIVE ? '/runs/' + encodeURIComponent(ARCHIVE) : '';
+const LOGOS = { Anthropic: '/static/anthropic.svg', OpenAI: '/static/openai.svg', Cognition: '/static/cognition.svg', Google: '/static/google.svg' };
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const mmss = (s) => { s = Math.max(0, Math.floor(s || 0)); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+const kfmt = (n) => n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'k' : String(n);
+async function getJSON(u) { const r = await fetch(u, { cache: 'no-store' }); if (!r.ok) throw new Error(r.status); return r.json(); }
+
+let run = {}, trace = [], events = [], live = {}, robotInfo = {};
+let start = 0, limit = 900, now = 0;           // run-relative seconds
+let following = true, viewT = 0, playing = true, speed = 1, lastFrame = performance.now();
+
+// ---------------------------------------------------------------- header
+function renderHeader() {
+  const st = $('status');
+  const s = run.status || (run.run_id ? 'running' : '');
+  const stop = live.mode === 'protective_stop' && following;
+  const label = !run.run_id ? 'No run' : stop ? 'Safety stop' : s === 'running' ? 'Running' : s === 'finished' ? 'Finished'
+    : s === 'time_limit' ? 'Time limit reached' : s === 'agent_error' ? 'Agent stopped responding' : s;
+  st.textContent = '● ' + label;
+  st.className = 'pill ' + (!run.run_id ? 'idle' : stop || s === 'time_limit' || s === 'agent_error' ? 'bad' : s === 'running' ? '' : 'done');
+  $('task').textContent = run.task || 'Waiting for a run';
+  $('openPrompt').hidden = !run.prompt;
+  const prov = run.provider || '';
+  $('model').innerHTML = (LOGOS[prov] ? `<img src="${LOGOS[prov]}" alt="${esc(prov)} logo">` : '') + esc(run.model_label || run.model || '—');
+  $('modelSub').textContent = [prov, run.agent_label].filter(Boolean).join(' · ');
+  if (run.cost_usd != null) { $('cost').textContent = '$' + Number(run.cost_usd).toFixed(2); $('costSub').textContent = kfmt(run.tokens || 0) + ' tokens'; }
+  else if (run.tokens) { $('cost').textContent = kfmt(run.tokens) + ' tokens';
+    $('costSub').textContent = run.agent === 'claude' && run.status === 'running' ? '$ shown when the run ends' : (run.agent_label || 'This agent') + " doesn't report $"; }
+  else { $('cost').textContent = '—'; $('costSub').textContent = run.run_id ? 'reported as the agent works' : ''; }
+  if (run.cached_tokens) $('costSub').title = kfmt(run.cached_tokens) + ' of the input tokens were read from cache';
+  const rl = run.robot_label || robotInfo.robot || '—';
+  $('robot').textContent = rl.replace('Franka Emika ', 'Franka ');
+  $('robotSub').textContent = (run.gripper_label || robotInfo.gripper) ? 'with ' + (run.gripper_label || robotInfo.gripper) : '';
+  const logo = LOGOS[prov];
+  $('chatLogo').hidden = !logo; if (logo) { $('chatLogo').src = logo; $('chatLogo').alt = prov + ' logo'; }
+  $('chatTitle').textContent = run.model_label || 'The AI';
+}
+$('openPrompt').onclick = () => { $('promptText').textContent = run.prompt || ''; $('scrim').hidden = false; $('closePrompt').focus(); };
+$('closePrompt').onclick = () => { $('scrim').hidden = true; };
+$('scrim').onclick = (e) => { if (e.target.id === 'scrim') $('scrim').hidden = true; };
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('scrim').hidden = true; });
+
+// -------------------------------------------------------------- timeline
+const viewTime = () => following ? now : viewT;
+function renderTimeline() {
+  const v = viewTime(), lim = Math.max(limit, now, 1);
+  const pct = (x) => (Math.min(Math.max(x / lim, 0), 1) * 100).toFixed(2) + '%';
+  $('tDone').style.width = pct(now);
+  $('tViewed').style.width = pct(v);
+  $('tThumb').style.left = pct(v);
+  const late = now / lim;
+  $('tViewed').style.background = $('tThumb').style.background = late >= 1 ? 'var(--red)' : late > 0.9 ? '#D97706' : 'var(--blue)';
+  $('ttext').innerHTML = (following ? mmss(v) : 'Viewing ' + mmss(v) + ' · now ' + mmss(now)) + ` <span class="lim">/ ${mmss(lim)}</span>`;
+  const tr = $('track');
+  tr.setAttribute('aria-valuemax', String(Math.round(lim))); tr.setAttribute('aria-valuenow', String(Math.round(v)));
+  tr.setAttribute('aria-valuetext', mmss(v) + ' of ' + mmss(lim));
+  const lv = $('live');
+  if (ARCHIVE) { lv.className = 'live ' + (v >= now - 0.5 ? 'on' : 'off'); lv.textContent = v >= now - 0.5 ? 'End of run' : 'Jump to end'; }
+  else { lv.className = 'live ' + (following ? 'on' : 'off'); lv.textContent = following ? '● Live' : 'Back to live'; }
+  $('play').textContent = playing ? '❚❚' : '▶'; $('play').setAttribute('aria-label', playing ? 'Pause' : 'Play');
+}
+function renderTicks() {
+  const lim = Math.max(limit, now, 1), out = [];
+  for (const e of events) {
+    const t = e.t - start; if (t < 0) continue;
+    let color = null, title = '';
+    if (e.event === 'protective_stop') { color = 'var(--red)'; title = 'Safety stop: ' + (e.reason || ''); }
+    else if (e.event === 'camera') { color = 'var(--blue)'; title = 'AI looked at the ' + e.camera + ' camera'; }
+    if (color) out.push(`<span class="tick" title="${esc(title)} at ${mmss(t)}" style="left:${(t / lim * 100).toFixed(2)}%;background:${color}"></span>`);
+  }
+  for (const s of trace) if (s.kind === 'says') { const t = s.t - start; out.push(`<span class="tick" title="AI message at ${mmss(t)}" style="left:${(t / lim * 100).toFixed(2)}%;background:var(--purple);top:17px"></span>`); }
+  $('ticks').innerHTML = out.join('');
+}
+function seekTo(t) {
+  t = Math.min(Math.max(t, 0), now);
+  if (!ARCHIVE && t >= now - 0.25) { following = true; } else { following = false; viewT = t; }
+  refreshView(true);
+}
+const track = $('track');
+function seekFromEvent(e) { const r = track.getBoundingClientRect(); seekTo((e.clientX - r.left) / r.width * Math.max(limit, now, 1)); }
+track.addEventListener('pointerdown', (e) => { track.setPointerCapture(e.pointerId); seekFromEvent(e); track.onpointermove = seekFromEvent; });
+track.addEventListener('pointerup', () => { track.onpointermove = null; });
+track.addEventListener('keydown', (e) => {
+  const step = e.shiftKey ? 30 : 5, v = viewTime();
+  if (e.key === 'ArrowLeft') { seekTo(v - step); e.preventDefault(); }
+  else if (e.key === 'ArrowRight') { seekTo(v + step); e.preventDefault(); }
+  else if (e.key === 'Home') { seekTo(0); e.preventDefault(); }
+  else if (e.key === 'End') { seekTo(now); e.preventDefault(); }
+});
+$('play').onclick = () => {
+  if (playing) { playing = false; if (following) { following = false; viewT = now; } }
+  else { playing = true; if (ARCHIVE && viewT >= now - 0.5) viewT = 0; }
+  refreshView(true);
+};
+$('speed').onchange = (e) => { speed = parseFloat(e.target.value); };
+$('live').onclick = () => { if (ARCHIVE) seekTo(now); else { following = true; playing = true; refreshView(true); } };
+
+// --------------------------------------------------------------- readings
+const f3 = (x) => (x > -0.0005 ? '' : '−') + Math.abs(x).toFixed(3);
+const f2 = (x) => (x > -0.005 ? '' : '−') + Math.abs(x).toFixed(2);
+function renderState(s) {
+  if (!s || !s.joint_positions) return;
+  const stop = s.mode === 'protective_stop';
+  $('safety').className = 'badge' + (stop ? ' stop' : ''); $('safety').textContent = stop ? 'Safety stop' : 'No safety stop';
+  $('safety').title = stop ? (s.protective_stop_reason || '') : '';
+  $('joints').innerHTML = s.joint_positions.map((q, i) => `<tr><td>Joint ${i + 1}</td><td>${f3(q)}</td><td>${f2(s.joint_velocities[i] || 0)}</td></tr>`).join('');
+  const p = s.tcp_pose || [0, 0, 0, 0, 0, 0], f = s.tcp_force || [0, 0, 0, 0, 0, 0], g = s.gripper || {};
+  const gapMM = (3 + 80 * (1 - (g.position || 0) / 255)).toFixed(0);
+  const rows = [
+    ['Hand position (x, y, z)', p.slice(0, 3).map(f3).join(', ') + ' m'],
+    ['Hand orientation (rot. vector)', p.slice(3).map(f3).join(', ') + ' rad'],
+    ['Wrist force (x, y, z)', f.slice(0, 3).map((x) => f2(x)).join(', ') + ' N'],
+    ['Wrist torque (x, y, z)', f.slice(3).map((x) => f2(x)).join(', ') + ' Nm'],
+    ['Arm moving', s.moving ? 'Yes' : 'No'],
+    ['Gripper opening', (run.robot === 'ur5e' ? (85 * (1 - (g.position || 0) / 255)).toFixed(0) : gapMM) + ' mm (' + Math.round(g.position || 0) + '/255)'],
+    ['Holding something', g.object_detected ? 'Yes' : 'No'],
+    ['Robot clock', (s.time || 0).toFixed(3) + ' s'],
+  ];
+  if (stop) rows.unshift(['Stop reason', s.protective_stop_reason || '']);
+  $('tel').innerHTML = rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+}
+
+// ---------------------------------------------------------------- cameras
+const camImgs = ['side', 'overhead', 'wrist'].map((c) => $('cam-' + c));
+let lastCamT = -1;
+function camLoop(img) {
+  const cam = img.dataset.cam, gap = 1000 / Number(img.dataset.fps);
+  const next = () => {
+    if (document.hidden) return setTimeout(next, 500);
+    if (!following || ARCHIVE) return setTimeout(next, 250);   // rewound: frames come from refreshCams()
+    const t0 = performance.now();
+    const fr = new Image();
+    fr.onload = () => { img.src = fr.src; setTimeout(() => URL.revokeObjectURL(fr.src), 2000); setTimeout(next, Math.max(0, gap - (performance.now() - t0))); };
+    fr.onerror = () => setTimeout(next, 1000);
+    fetch(`/camera/${cam}.jpg?viewer=1`).then((r) => r.ok ? r.blob() : Promise.reject()).then((b) => { fr.src = URL.createObjectURL(b); }).catch(() => setTimeout(next, 1000));
+  };
+  next();
+}
+camImgs.forEach(camLoop);
+// Rewound frames: times snap to a 0.1 s grid (so the browser can cache them) and each camera has at
+// most one request in flight; the newest wanted time is fetched next, so dragging never piles up.
+const camWant = {}, camBusy = {};
+function fetchCam(img) {
+  const cam = img.dataset.cam;
+  if (camBusy[cam] || camWant[cam] == null) return;
+  const t = camWant[cam]; camWant[cam] = null; camBusy[cam] = true;
+  const fr = new Image();
+  fr.onload = fr.onerror = () => { if (fr.naturalWidth) img.src = fr.src; camBusy[cam] = false; fetchCam(img); };
+  fr.src = `${BASE}/camera/${cam}.jpg?t=${t}`;
+}
+function refreshCams(force) {
+  if (following && !ARCHIVE) return;
+  const t = (Math.round((start + viewTime()) * 10) / 10).toFixed(1);
+  if (!force && t === lastCamT) return;
+  lastCamT = t;
+  for (const img of camImgs) { camWant[img.dataset.cam] = t; fetchCam(img); }
+}
+function renderSeen() {
+  const v = start + viewTime();
+  for (const cam of ['overhead', 'wrist']) {
+    let last = null;
+    for (const e of events) if (e.event === 'camera' && e.camera === cam && e.t >= start && e.t <= v) last = e.t;
+    const el = $('seen-' + cam);
+    el.textContent = last == null ? 'Not looked at yet' : 'AI last looked ' + mmss(last - start);
+    el.className = 'seen' + (last == null ? '' : ' yes');
+  }
+}
+
+// ------------------------------------------------------------------- chat
+let feedKey = '', viewChanged = false;
+function renderFeed() {
+  const v = start + viewTime();
+  const shown = trace.filter((s) => s.t <= v + 0.01);
+  const key = shown.length + '|' + (run.prompt || '') + '|' + (run.model_label || '') + '|' + following + '|' + run.status;
+  if (key === feedKey) { viewChanged = false; return; }
+  feedKey = key;
+  const box = $('feed'), atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+  const logo = LOGOS[run.provider], who = esc(run.model_label || 'The AI');
+  const out = [];
+  if (run.prompt) out.push(`<li class="prompt"><div class="lbl">Prompt sent to the model · 00:00</div><div class="bub">${esc(run.prompt)}</div></li>`);
+  let prevT = null, prevKind = null;
+  for (let i = 0; i < shown.length; i++) {
+    const s = shown[i];
+    if (s.kind === 'output') continue;       // shown with the code that produced it
+    const next = shown[i + 1], outText = next && next.kind === 'output' ? next.text : null;
+    const turn = prevT === null || s.t - prevT > 30 || ((s.kind === 'says' || s.kind === 'thinks') && !['says', 'thinks'].includes(prevKind));
+    const head = turn ? `<div class="who">${logo ? `<img src="${logo}" alt="">` : ''}<strong>${who}</strong><span>${mmss(s.t - start)}</span></div>` : '';
+    let body = '';
+    if (s.kind === 'says') body = `<p>${esc(s.text)}</p>`;
+    else if (s.kind === 'thinks') body = `<p class="think">${esc(s.text)}</p>`;
+    else if (s.kind === 'runs') {
+      const err = outText && /Error|Traceback|refused|protective stop/i.test(outText);
+      body = `<div class="codecard"><div class="bar"><span><span class="dot" style="color:${err ? 'var(--red)' : 'var(--green)'}">●</span> Run code</span><span>${mmss(s.t - start)}</span></div><pre>${esc(s.text)}</pre>` +
+        (outText != null ? `<div class="out${err ? ' err' : ''}">⎿ ${esc(outText)}</div>` : '') + '</div>';
+    } else {
+      const label = s.kind === 'reads' ? 'Read file' : s.kind === 'writes' ? 'Wrote file' : s.kind === 'looks' ? 'Look' : 'Tool';
+      let text = s.kind === 'writes' ? s.text.split('\n')[0] : s.text, img = '';
+      if (s.kind === 'looks') {
+        const m = /^(overhead|wrist|side) camera/.exec(s.text), f = /saved image (.+)$/.exec(s.text);
+        if (m) img = `<img src="${BASE}/camera/${m[1]}.jpg?t=${s.t.toFixed(3)}" alt="What the ${m[1]} camera showed at ${mmss(s.t - start)}" loading="lazy">`;
+        else if (f) img = `<img src="${BASE}/run/file?path=${encodeURIComponent(f[1])}" alt="${esc(f[1])}" loading="lazy" onerror="this.remove()">`;
+        text = m ? m[1] + ' camera' : f ? f[1] : text;
+      }
+      body = `<div class="lite"><div class="row"><span class="dot">●</span><b>${label}</b><code title="${esc(s.text)}">${esc(text)}</code></div>${img}</div>`;
+    }
+    out.push(`<li class="it${turn ? ' turn' : ''}">${head}${body}</li>`);
+    prevT = s.t; prevKind = s.kind;
+  }
+  if (!shown.length && !run.prompt) out.push('<li class="empty">Nothing yet. The AI\'s thoughts, code and replies appear here as it works.</li>');
+  if (following && run.status === 'running') out.push(`<li class="thinking">${logo ? `<img src="${logo}" alt="" style="width:16px;height:16px">` : ''} Thinking…</li>`);
+  box.innerHTML = out.join('');
+  viewChanged = false;
+  if (atBottom || following || viewChanged) box.scrollTop = box.scrollHeight;   // show the latest item at the playhead
+}
+
+// ------------------------------------------------------------------ files
+const openDirs = new Set(['datasheets']);
+let filesJSON = '';
+function sizeText(f) { return f.dir ? f.items + ' items' : f.size >= 1e6 ? (f.size / 1e6).toFixed(1) + ' MB' : f.size >= 1e3 ? Math.round(f.size / 1e3) + ' KB' : f.size + ' bytes'; }
+function renderFiles(list) {
+  const rows = [];
+  const walk = (items, depth) => {
+    for (const f of items) {
+      const pad = `padding-left:${6 + depth * 16}px`;
+      if (f.dir) {
+        const open = openDirs.has(f.path);
+        rows.push(`<button class="frow" data-dir="${esc(f.path)}" aria-expanded="${open}" style="${pad}"><span class="nm"><span class="caret">${open ? '▼' : '▶'}</span><svg width="16" height="13" viewBox="0 0 18 14" aria-hidden="true" style="flex:none"><path d="M1 2.2C1 1.5 1.5 1 2.2 1h4.3l1.6 1.8h7.7c.7 0 1.2.5 1.2 1.2V12c0 .7-.5 1.2-1.2 1.2H2.2C1.5 13.2 1 12.7 1 12z" fill="#62AEF7"/></svg><span>${esc(f.name)}</span></span><span class="sz">${sizeText(f)}</span></button>`);
+        if (open && f.children) walk(f.children, depth + 1);
+      } else {
+        rows.push(`<a class="frow" href="${BASE}/run/file?path=${encodeURIComponent(f.path)}" target="_blank" rel="noopener" style="${pad}"><span class="nm"><span class="caret"></span><svg width="12" height="15" viewBox="0 0 14 17" aria-hidden="true" style="flex:none"><path d="M1.5 1h7.2L12.5 4.8v10.7c0 .3-.2.5-.5.5H1.5c-.3 0-.5-.2-.5-.5v-14c0-.3.2-.5.5-.5z" fill="#fff" stroke="#9CA3AF"/><path d="M8.7 1v3.8h3.8" fill="none" stroke="#9CA3AF"/></svg><span>${esc(f.name)}</span></span><span class="sz">${sizeText(f)}</span></a>`);
+      }
+    }
+  };
+  walk(list, 0);
+  $('files').innerHTML = rows.length ? rows.join('') : '<div class="empty">No run yet.</div>';
+}
+$('files').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-dir]'); if (!b) return;
+  const p = b.dataset.dir; openDirs.has(p) ? openDirs.delete(p) : openDirs.add(p);
+  renderFiles(JSON.parse(filesJSON).files || []);
+});
+
+// ---------------------------------------------------------------- polling
+async function pollRun() {
+  try {
+    run = await getJSON(BASE + '/run');
+    start = run.sim_start || 0; limit = run.time_limit || 900;
+    if (ARCHIVE) { now = (run.end_time || start) - start; if (!pollRun.inited) { pollRun.inited = true; following = false; viewT = 0; playing = false; } }
+    renderHeader();
+  } catch (e) {}
+}
+async function pollTrace() {
+  try {
+    const r = await getJSON(`${BASE}/trace?since=${trace.length}`);
+    if (r.total < trace.length) trace = [];      // a new run started
+    trace = trace.concat(r.steps);
+    if (r.total > trace.length) return pollTrace();
+  } catch (e) {}
+}
+async function pollEvents() { try { events = await getJSON(ARCHIVE ? BASE + '/events' : '/events?all=1'); } catch (e) {} }
+async function pollFiles() {
+  try { const j = await getJSON(BASE + '/run/files'); const s = JSON.stringify(j); if (s !== filesJSON) { filesJSON = s; renderFiles(j.files || []); } } catch (e) {}
+}
+let stateBusy = false, statePending = false, lastStateT = -1;
+async function pollState(force) {
+  if (stateBusy) { statePending = statePending || force; return; }   // one request at a time; catch up after
+  stateBusy = true;
+  try {
+    if (!ARCHIVE) { live = await getJSON('/state'); if (run.run_id && run.status === 'running') now = Math.max(0, live.time - start); else if (run.run_id) now = Math.max(now, (run.wall_seconds || 0)); }
+    if (following && !ARCHIVE) renderState(live);
+    else { const t = start + viewTime(); if (force || Math.abs(t - lastStateT) > 0.1) { lastStateT = t; renderState(await getJSON(`${BASE}/history/state?t=${t.toFixed(3)}`)); } }
+  } catch (e) {} finally {
+    stateBusy = false;
+    if (statePending) { statePending = false; pollState(true); }
+  }
+}
+function refreshView(force) { viewChanged = viewChanged || force; renderTimeline(); renderFeed(); renderSeen(); refreshCams(force); pollState(force); }
+
+async function boot() {
+  try { robotInfo = await getJSON('/info'); } catch (e) {}
+  await pollRun(); await pollTrace(); await pollEvents(); await pollFiles();
+  renderTicks(); refreshView(true);
+  if (!ARCHIVE) {
+    setInterval(async () => { const prev = run.run_id; await pollRun(); if (run.run_id !== prev) { trace = []; following = true; playing = true; } }, 2000);
+    setInterval(async () => { await pollTrace(); renderTicks(); }, 700);
+    setInterval(async () => { await pollEvents(); renderTicks(); }, 1000);
+    setInterval(pollFiles, 3000);
+    setInterval(() => pollState(false), 500);
+  }
+  // Playback clock: advances the view while playing a rewound or finished run.
+  const tick = (ts) => {
+    const dt = (ts - lastFrame) / 1000; lastFrame = ts;
+    if (playing && !following) {
+      viewT += dt * speed;
+      if (viewT >= now) { if (ARCHIVE) { viewT = now; playing = false; } else following = true; }
+      refreshView(false);
+    } else { renderTimeline(); renderFeed(); renderSeen(); }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+boot();
+</script>
+</body>
+</html>
