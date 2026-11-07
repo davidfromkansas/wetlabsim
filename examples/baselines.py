@@ -254,7 +254,7 @@ def b_t24(arm):
     arm.grip(force=200)
     arm.r.move_l(down(cx, cy, z + 0.05), speed=0.05)
     # Turn the hand over (pointing up) between the racks, open the fingers so the cap sits
-    # on them open side up, then tip the hand 50 degrees so it slides off and lands flat.
+    # on them open side up, then tip the hand 45 degrees so it slides off and lands flat.
     # (A parallel gripper can't set a cap down open side up any more directly.)
     arm.r.move_j(READY, speed=0.8)
     arm.r.move_j_pose(down(0.45, 0.0, 0.40), speed=0.8)
@@ -262,15 +262,15 @@ def b_t24(arm):
     arm.r.move_l([0.45, 0.0, 0.30, 0.0, 0.0, 0.0], speed=0.1)
     arm.release(CAP_GRIP - 60)
     time.sleep(0.5)
-    arm.r.move_l([0.45, 0.0, 0.30, *rotvec(ry(math.radians(50)))], speed=0.3)
+    arm.r.move_l([0.45, 0.0, 0.30, *rotvec(ry(math.radians(45)))], speed=0.3)
     time.sleep(2.0)
     arm.r.move_j_pose(down(0.40, 0.0, 0.35), speed=0.8)
 
 
 def b_t25(arm):
-    """Screw the red cap back on: pick it up (it lies open side down), set it on the rim,
-    twist clockwise (seen from above) in 120 degree strokes going down with the thread,
-    then squeeze it tight."""
+    """Screw the red cap back on: pick it up (it lies open side down), set it square on the
+    rim and press lightly, twist clockwise (seen from above) in 120 degree strokes going down
+    with the thread, then squeeze it tight."""
     c = pos("tube_red_cap")
     t = pos("tube_red")
     arm.release(CAP_GRIP - 30)
@@ -279,8 +279,12 @@ def b_t25(arm):
     arm.r.move_l(down(c[0], c[1], SAFE_Z), speed=0.1)
     rim = t[2] + S.CAP_SEAT + S.THREAD_LEN          # cap top when resting on the rim
     z = rim - S.CAP_HEIGHT / 2
+    # Where the cap sits in the fingers (it may not be gripped dead centre).
+    held = pos("tube_red_cap")[2] - arm.r.get_tcp_pose()[2]
+    z = rim - held
     arm.r.move_j_pose(down(t[0], t[1], z + 0.03), speed=0.8)
-    arm.r.move_l(down(t[0], t[1], z + 0.0015), speed=0.02)
+    arm.r.move_l(down(t[0], t[1], z + 0.002), speed=0.02)
+    arm.r.move_l(down(t[0], t[1], z - 0.0008), speed=0.005)     # set it on the rim, pressing lightly
     step = math.radians(120)
     for k in range(14):
         st = truth()["caps"]["red"]

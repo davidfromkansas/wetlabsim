@@ -69,6 +69,21 @@ def sim_source_peeks(transcript: pathlib.Path) -> list[dict]:
     return peeks
 
 
+def workspace_leaks(*dirs: pathlib.Path) -> list[pathlib.Path]:
+    """Files the agent can read that name the cell's own folder. From that path an agent could
+    import the full package (simulator, scene) instead of only the robot client."""
+    root, out = str(ROOT), []
+    for base in dirs:
+        for f in base.rglob("*"):
+            if f.is_file() and f.suffix.lower() not in (".pdf", ".stl", ".obj", ".png", ".jpg"):
+                try:
+                    if root in f.read_text(errors="ignore"):
+                        out.append(f)
+                except OSError:
+                    pass
+    return out
+
+
 DOCS_LEVELS = ("standard", "assisted")
 
 
@@ -139,8 +154,11 @@ def build_command(agent: str, task: str, model: str | None, workspace: pathlib.P
     if agent == "claude":
         mcp = {"mcpServers": {"wetlab": {"command": py, "args": ["-m", "wetlabsim.mcp_server"],
                                          "env": {"PYTHONPATH": str(ROOT)}}}}
-        (workspace / ".mcp.json").write_text(json.dumps(mcp, indent=2))
-        cmd = ["claude", "-p", prompt, "--mcp-config", str(workspace / ".mcp.json"), "--strict-mcp-config",
+        # Kept out of the workspace: it names the cell's own folder and Python, which an agent
+        # could otherwise put on its path to import more than the robot client.
+        cfg = pathlib.Path(tempfile.mkdtemp(prefix="wetlab-mcp-")) / "mcp.json"
+        cfg.write_text(json.dumps(mcp, indent=2))
+        cmd = ["claude", "-p", prompt, "--mcp-config", str(cfg), "--strict-mcp-config",
                "--allowedTools", "Bash", "Read", "Write", "Edit", *MCP_TOOLS,
                "--disallowedTools", f"Read(/{ROOT}/**)", f"Edit(/{ROOT}/**)", f"Write(/{ROOT}/**)",
                "--output-format", "stream-json", "--verbose",
@@ -226,6 +244,10 @@ def main(argv=None):
     wall_reset = time.time()
     sim_reset = json.loads(urllib.request.urlopen(args.url + "/state").read())["time"]
     cmd = build_command(args.agent, task, args.model, workspace, run_dir, note)
+    leaks = workspace_leaks(workspace, client)
+    if leaks:
+        raise SystemExit(f"setup check failed: these files in the agent's workspace name the cell's "
+                         f"folder ({ROOT}): {', '.join(map(str, leaks))}")
     (run_dir / "task.txt").write_text(task)
     (run_dir / "command.json").write_text(json.dumps(cmd, indent=1))
     # What the viewer shows about this run; the model, tokens and cost fill in as the agent reports them.

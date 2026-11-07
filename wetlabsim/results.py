@@ -31,6 +31,8 @@ def collect(runs_dir: pathlib.Path, batch: str | None = None) -> list[dict]:
             continue
         if not r.get("task_id") or (batch and r.get("batch") != batch):
             continue
+        if r.get("excluded"):
+            continue
         rows.append({
             "run_id": d.name, "task_id": r["task_id"], "task_title": r.get("task_title", ""),
             "attempt": r.get("attempt"), "batch": r.get("batch"), "score": r.get("score", 0.0),
@@ -41,6 +43,17 @@ def collect(runs_dir: pathlib.Path, batch: str | None = None) -> list[dict]:
             "sim_start": r.get("sim_reset"), "prompt": T.TASKS[r["task_id"]].prompt if r["task_id"] in T.TASKS else "",
         })
     return rows
+
+
+def excluded(runs_dir: pathlib.Path, batch: str | None = None) -> list[dict]:
+    """Runs left out of the table (e.g. "harness leak"), each replaced by a clean re-run."""
+    out = []
+    for f in sorted(pathlib.Path(runs_dir).glob("*/result.json")):
+        r = json.loads(f.read_text())
+        if r.get("excluded") and (not batch or r.get("batch") == batch):
+            out.append({"run_id": f.parent.name, "task_id": r.get("task_id"), "attempt": r.get("attempt"),
+                        "score": r.get("score"), "passed": r.get("passed"), "why": r["excluded"]})
+    return out
 
 
 def _flag_list(row) -> list[str]:
@@ -73,7 +86,8 @@ def _verdict(row):
     return "fail", "Fail"
 
 
-def render(rows: list[dict], batch: str | None, live: bool, images: dict | None = None) -> str:
+def render(rows: list[dict], batch: str | None, live: bool, images: dict | None = None,
+           left_out: list[dict] | None = None) -> str:
     order = [t for t in T.TASKS if any(r["task_id"] == t for r in rows)] or list(T.TASKS)
     by_task: dict[str, list[dict]] = {t: [] for t in order}
     for r in rows:
@@ -165,11 +179,24 @@ td.rate {{ font-weight:700; text-align:center; white-space:nowrap }}
 <div class="wrap"><table><thead><tr><th>Task</th>{head}<th>Pass rate</th></tr></thead><tbody>
 {"".join(body)}
 </tbody></table></div>
+{_left_out_html(left_out, live)}
 <div class="foot">Pass/partial comes from the simulator's true state at the end of each run (T12's answer
 is graded by a judge model against it). Partial = some credit. Flags: safety stops, "said done but failed"
 (the agent's last message claims success), knocked-over items, runs stopped by a usage limit (re-run, not
 counted). Costs are {COST_LABEL.lower()}: these runs use a subscription.</div>
 </main></body></html>"""
+
+
+def _left_out_html(left_out, live) -> str:
+    if not left_out:
+        return ""
+    items = "".join(
+        f'<li>{html.escape(r["task_id"] or "")} try {r["attempt"]}: score {r["score"]} '
+        f'({"pass" if r["passed"] else "fail"}), excluded: {html.escape(r["why"])} · '
+        + (f'<a href="/?run={r["run_id"]}">open run</a>' if live else html.escape(r["run_id"])) + "</li>"
+        for r in left_out)
+    return (f'<h2 style="font-size:15px;margin:22px 0 6px">Excluded runs ({len(left_out)})</h2>'
+            f'<div class="sub">Replaced by clean re-runs in the table above.</div><ul class="ex">{items}</ul>')
 
 
 def key_frames(runs_dir: pathlib.Path, rows: list[dict]) -> dict:
@@ -208,7 +235,8 @@ def main(argv=None):
     ap.add_argument("--out", default="results.html")
     a = ap.parse_args(argv)
     rows = collect(pathlib.Path(a.runs), a.batch)
-    page = render(rows, a.batch, live=False, images=key_frames(pathlib.Path(a.runs), rows))
+    page = render(rows, a.batch, live=False, images=key_frames(pathlib.Path(a.runs), rows),
+                  left_out=excluded(pathlib.Path(a.runs), a.batch))
     pathlib.Path(a.out).write_text(page)
     summary = {"batch": a.batch, "runs": len(rows), "passed": sum(r["passed"] for r in rows),
                "by_task": {t: [round(r["score"], 2) for r in rows if r["task_id"] == t] for t in T.TASKS}}

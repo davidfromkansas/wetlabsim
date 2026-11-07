@@ -189,7 +189,8 @@ class Handler(BaseHTTPRequestHandler):
             if p == "/results":
                 from . import results
                 batch = qs.get("batch", [None])[0]
-                page = results.render(results.collect(self.runs_dir, batch), batch, live=True)
+                page = results.render(results.collect(self.runs_dir, batch), batch, live=True,
+                                      left_out=results.excluded(self.runs_dir, batch))
                 return self._send(200, page.encode(), "text/html; charset=utf-8")
             if p.startswith("/runs/"):
                 return self._archive_get(p, qs)
@@ -461,9 +462,12 @@ def main(argv=None):
 
     runs = pathlib.Path(args.runs).resolve()
     runs.mkdir(parents=True, exist_ok=True)
-    token = secrets.token_hex(16)
+    # Cells sharing a runs folder (several on different ports) share one evaluator token.
     tok_file = runs / ".eval_token"
-    tok_file.write_text(token)
+    token = tok_file.read_text().strip() if tok_file.exists() else ""
+    if not token:
+        token = secrets.token_hex(16)
+        tok_file.write_text(token)
     os.chmod(tok_file, 0o600)
 
     sim = Sim(robot=args.robot)

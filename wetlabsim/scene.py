@@ -362,7 +362,7 @@ def _threads_xml() -> str:
     """One weld per 15 ml tube that holds its cap on; threads.py moves its target as the cap turns."""
     return "<equality>" + "".join(
         f'<weld name="thread_{c}" body1="tube_{c}" body2="tube_{c}_cap" relpose="0 0 {CAP_SEAT} 1 0 0 0" '
-        f'solref="0.004 1" solimp="0.99 0.999 0.001"/>' for c, _ in TUBE_COLOURS) + "</equality>"
+        f'solref="0.004 1" solimp="0.995 0.9999 0.001"/>' for c, _ in TUBE_COLOURS) + "</equality>"
 
 
 def _look_at_axes(pos, target, up=(0, 0, 1)):

@@ -55,7 +55,9 @@ looking forward along x; the "front" row of a rack is the one nearest the robot.
   tube (29 mm wide, 120 mm tall) and 1.5 ml screw-cap tubes (11 mm wide, 45 mm tall). All
   have pointed bottoms and don't stand up on their own.
 - **15 ml caps:** screw caps, right-hand thread (anticlockwise seen from above to open),
-  3 mm per turn; a cap comes off after about two turns. They start hand-tight.
+  3 mm per turn; a cap comes off after about two turns. They start hand-tight. To put one
+  back on, set it squarely on the rim and press lightly while turning it clockwise; a cap
+  that goes on crooked cross-threads and has to be unscrewed and started again.
 - **Petri dishes:** 100 mm dishes (89 mm across the base, 20 mm tall). Wider than the
   hand opens.
 - **Pipette and pipette stand:** a single-channel pipette (about 19 cm long, with a finger

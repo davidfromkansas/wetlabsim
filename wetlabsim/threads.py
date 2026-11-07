@@ -3,7 +3,14 @@
 Each cap is its own free body. While it is on a tube, a weld holds it at a pose that the
 controller moves along the thread: turning the cap by an angle lifts it by pitch x angle /
 2 pi. A plug inside the cap stands in for the thread crests, so a cap that has come off
-rests on the rim, and twisting it the tightening way there catches the thread again.
+rests on the rim.
+
+Putting a cap back on works like a real one. It catches the thread only when it sits on
+the rim (pressed on with at least 1 N), is within 1 mm of the tube's axis and 5 degrees of
+straight, and is twisted the closing way. Nothing snaps it into place: the thread starts
+from wherever the cap is and centres it over the first quarter turn. A cap that catches
+more than 3 degrees off straight cross-threads: it binds after half a turn, never seats,
+and has to be unscrewed and started again.
 
 Friction in the thread works like a real cap:
 - A seated cap holds until the twist on it passes its breakaway torque. That torque is the
@@ -29,10 +36,30 @@ CATCH_TORQUE = 0.002      # N m, twist needed to start a loose cap turning
 THREAD_DRAG = 0.002       # N m per rad/s: how fast a given extra twist turns the cap
 MAX_SPIN = 12.0           # rad/s
 TURN_LEN = 2 * math.pi * S.THREAD_LEN / S.THREAD_PITCH    # rad from seated to free (~2.1 turns)
+# Catching the thread (a real 15 ml cap needs to be about this square and centred).
+CATCH_HEIGHT = 0.0005     # m, within this of resting on the rim
+CATCH_PRESS = 1.0         # N, pressed onto the rim at least this hard
+CATCH_OFFSET = 0.001      # m from the tube's axis
+CATCH_TILT = 5.0          # degrees
+CROSS_TILT = 3.0          # degrees: catching more crooked than this cross-threads
+CENTRE_TURN = math.pi / 2  # rad of turning over which the thread centres the cap
+BIND_TURN = math.pi       # rad a cross-threaded cap turns before it binds
 
 
 def _rotz(a):
     return np.array([math.cos(a / 2), 0, 0, math.sin(a / 2)])
+
+
+def _slerp(q1, f):
+    """Slerp from q1 to the identity."""
+    q0 = np.array([1.0, 0, 0, 0])
+    dot = float(np.clip(q1[0], -1, 1))
+    if dot < 0:
+        q1, dot = -q1, -dot
+    a = math.acos(dot)
+    if a < 1e-6:
+        return q1.copy()
+    return (math.sin((1 - f) * a) * q1 + math.sin(f * a) * q0) / math.sin(a)
 
 
 def _twist_angle(R):
@@ -58,6 +85,10 @@ class Cap:
         self.tight = tight if on and theta == 0 else 0.0
         self.phase = 0.0           # weld twist = theta + phase
         self.torque = 0.0
+        self.cross = False         # cross-threaded
+        self.theta0 = theta        # where it caught the thread
+        self.lat0 = np.zeros(2)    # its offset from the axis then (tube frame)
+        self.swing0 = np.array([1.0, 0, 0, 0])   # and its tilt
 
 
 class Threads:
@@ -111,27 +142,36 @@ class Threads:
         Rc = self.d.xmat[c.cap].reshape(3, 3)
         return _twist_angle(Rt.T @ Rc)
 
-    def _hand_torque(self, c: Cap) -> float:
-        """Twist on the cap about the tube axis from its contacts, positive = loosening."""
+    def _contacts(self, c: Cap) -> tuple[float, float]:
+        """(twist on the cap about the tube axis from everything but its tube, positive =
+        loosening; how hard the tube's rim pushes back on the cap along the axis, N)."""
         d, m = self.d, self.m
         n = d.ncon
         if n == 0:
-            return 0.0
+            return 0.0, 0.0
         g = d.contact.geom[:n]
         hits = np.nonzero(np.isin(g[:, 0], c.geoms) | np.isin(g[:, 1], c.geoms))[0]
         if len(hits) == 0:
-            return 0.0
+            return 0.0, 0.0
         axis = d.xmat[c.tube].reshape(3, 3)[:, 2]
         centre = d.xpos[c.cap]
-        tau = 0.0
+        tau = press = 0.0
         for i in hits:
             con = d.contact[i]
             mujoco.mj_contactForce(m, d, i, self._f)
             f = con.frame.reshape(3, 3).T @ self._f[:3]          # force on geom2
             if con.geom1 in c.geoms:
-                f = -f
-            tau += float(np.dot(np.cross(con.pos - centre, f), axis))
-        return tau
+                f, other = -f, con.geom2
+            else:
+                other = con.geom1
+            if m.geom_bodyid[other] == c.tube:
+                press += float(f @ axis)
+            else:
+                tau += float(np.dot(np.cross(con.pos - centre, f), axis))
+        return tau, press
+
+    def _hand_torque(self, c: Cap) -> float:
+        return self._contacts(c)[0]
 
     def _step_on(self, c: Cap):
         tau = self._hand_torque(c)
@@ -150,6 +190,8 @@ class Threads:
             return
         w = math.copysign(min(excess / THREAD_DRAG, MAX_SPIN), tau)
         c.theta += w * self.m.opt.timestep
+        if c.cross and c.theta < c.theta0 - BIND_TURN:     # cross-threaded: it jams
+            c.theta = c.theta0 - BIND_TURN
         if c.theta <= 0.0:                       # just seated: the squeeze counts as tightness
             c.theta = 0.0
             c.tight = max(c.tight, -tau)
@@ -159,9 +201,16 @@ class Threads:
         self._set_target(c, c.theta)
 
     def _set_target(self, c: Cap, theta: float):
+        """Weld target: up the thread by theta, still off-centre and tilted as it caught until
+        the thread has centred it (never, if it's cross-threaded)."""
         e = self.m.eq_data[c.eq]
-        e[3:6] = [0, 0, S.CAP_SEAT + S.THREAD_PITCH * theta / (2 * math.pi)]
-        e[6:10] = _rotz(theta + c.phase)
+        f = 0.0 if c.cross else min(1.0, max(0.0, (c.theta0 - theta) / CENTRE_TURN))
+        lat = (1 - f) * c.lat0
+        e[3:6] = [lat[0], lat[1], S.CAP_SEAT + S.THREAD_PITCH * theta / (2 * math.pi)]
+        swing = _slerp(c.swing0, f)
+        q = np.zeros(4)
+        mujoco.mju_mulQuat(q, swing, _rotz(theta + c.phase))
+        e[6:10] = q
 
     def _set_skirt(self, c: Cap, on: bool):
         ct, ca = S.SKIRT_ON if on else S.SKIRT_OFF
@@ -174,23 +223,35 @@ class Threads:
         self._set_skirt(c, False)
 
     def _try_catch(self, c: Cap):
-        """A loose cap resting square on its tube's rim catches the thread when twisted on."""
+        """A loose cap pressed square onto its tube's rim catches the thread when twisted
+        the closing way. It stays where it is: the thread centres it as it turns."""
         d = self.d
         Rt = d.xmat[c.tube].reshape(3, 3)
         rel = Rt.T @ (d.xpos[c.cap] - d.xpos[c.tube])
-        Rc = d.xmat[c.cap].reshape(3, 3)
-        if (np.hypot(rel[0], rel[1]) < 0.002 and Rt[:, 2] @ Rc[:, 2] > math.cos(math.radians(10))
-                and abs(rel[2] - (S.CAP_SEAT + S.THREAD_LEN)) < 0.002
-                and self._hand_torque(c) < -CATCH_TORQUE):
-            c.on, c.tight = True, 0.0
-            c.theta = TURN_LEN - 0.05
-            c.phase = self._phi(c) - c.theta     # so the weld's twist matches the cap's
-            self._set_target(c, c.theta)
-            d.eq_active[c.eq] = 1
-            self._set_skirt(c, True)
+        Rrel = Rt.T @ d.xmat[c.cap].reshape(3, 3)
+        tilt = math.degrees(math.acos(max(-1.0, min(1.0, Rrel[2, 2]))))
+        if (abs(rel[2] - (S.CAP_SEAT + S.THREAD_LEN)) > CATCH_HEIGHT or np.hypot(rel[0], rel[1]) > CATCH_OFFSET
+                or tilt > CATCH_TILT):
+            return
+        tau, press = self._contacts(c)
+        if press < CATCH_PRESS or tau > -CATCH_TORQUE:
+            return
+        c.on, c.tight = True, 0.0
+        c.cross = tilt > CROSS_TILT
+        c.theta = c.theta0 = min(TURN_LEN - 0.01, (rel[2] - S.CAP_SEAT) / S.THREAD_PITCH * 2 * math.pi)
+        c.lat0 = rel[:2].copy()
+        phi = _twist_angle(Rrel)
+        q_rel = np.zeros(4)
+        mujoco.mju_mat2Quat(q_rel, Rrel.flatten())
+        mujoco.mju_mulQuat(c.swing0, q_rel, _rotz(-phi))     # the tilt, without the twist
+        c.phase = phi - c.theta
+        self._set_target(c, c.theta)
+        d.eq_active[c.eq] = 1
+        self._set_skirt(c, True)
 
     # ------------------------------------------------------------------ state
     def state(self) -> dict:
         return {c.colour: {"on": c.on, "turns_from_seated": round(c.theta / (2 * math.pi), 3),
-                           "seated": c.on and c.theta <= 1e-6, "tightness_nm": round(c.tight, 4)}
+                           "seated": c.on and c.theta <= 1e-6, "tightness_nm": round(c.tight, 4),
+                           "cross_threaded": c.on and c.cross}
                 for c in self.caps}
