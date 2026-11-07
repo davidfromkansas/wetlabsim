@@ -12,7 +12,6 @@ answer next to the true state of the bench.
 from __future__ import annotations
 
 import json
-import math
 import re
 import subprocess
 
@@ -44,14 +43,7 @@ def hit_usage_limit(run_dir) -> bool:
     return bool(LIMIT.search(tail)) and '"is_error": true' in tail.replace('"is_error":true', '"is_error": true')
 
 
-def knocked_over(gt0, gt1) -> list[str]:
-    out = []
-    for name in gt0["objects"]:
-        if name.endswith("_cap") or name not in gt1["objects"]:
-            continue
-        if T._up(gt0, name) > math.cos(math.radians(30)) and T._up(gt1, name) < math.cos(math.radians(60)):
-            out.append(name)
-    return out
+knocked_over = T.knocked_over
 
 
 def judge_inventory(answer: str, gt) -> dict:
