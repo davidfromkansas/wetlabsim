@@ -61,7 +61,9 @@ def sim_source_peeks(transcript: pathlib.Path) -> list[dict]:
     for st in traces.load(transcript):
         if st.kind not in ("runs", "reads", "writes", "tool"):
             continue
-        hits = sorted({m for m in PEEK_MARKERS if m in st.text})
+        # Running the cell's Python interpreter by its full path isn't looking at the simulator.
+        text = st.text.replace(str(ROOT / ".venv" / "bin" / "python"), "python")
+        hits = sorted({m for m in PEEK_MARKERS if m in text})
         if hits:
             peeks.append({"t": st.t, "kind": st.kind, "matched": hits, "text": st.text[:300]})
     return peeks
@@ -185,7 +187,11 @@ def main(argv=None):
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument("--task")
     g.add_argument("--task-file")
+    g.add_argument("--task-id", help="a task from the task library (wetlabsim/tasks.py), e.g. T1: "
+                                     "sets the prompt, lays out the bench and scores the run")
     ap.add_argument("--model", help="optional model name passed to the CLI")
+    ap.add_argument("--batch", help="a name grouping runs for the results page, e.g. opus-group1")
+    ap.add_argument("--try", dest="attempt", type=int, help="which try of this task in the batch (1, 2, ...)")
     ap.add_argument("--time-limit", type=float, default=900, help="seconds before the agent is stopped")
     ap.add_argument("--url", default=os.environ.get("WETLAB_ROBOT_URL", "http://127.0.0.1:8765"))
     ap.add_argument("--runs", default="runs")
@@ -194,10 +200,14 @@ def main(argv=None):
                          "(standard), or our manual with tips and helpers (assisted)")
     args = ap.parse_args(argv)
 
-    task = args.task or pathlib.Path(args.task_file).read_text().strip()
+    from . import tasks as T
+    if args.task_id and args.task_id not in T.TASKS:
+        raise SystemExit(f"unknown task {args.task_id}; choose from {', '.join(T.TASKS)}")
+    task = (T.TASKS[args.task_id].prompt if args.task_id
+            else args.task or pathlib.Path(args.task_file).read_text().strip())
     runs = pathlib.Path(args.runs).resolve()
     token = (runs / ".eval_token").read_text().strip()
-    run_id = time.strftime("%Y%m%d-%H%M%S") + f"-{args.agent}"
+    run_id = time.strftime("%Y%m%d-%H%M%S") + f"-{args.agent}" + (f"-{args.task_id}" if args.task_id else "")
     run_dir = runs / run_id
     run_dir.mkdir(parents=True)
 
@@ -211,7 +221,8 @@ def main(argv=None):
     client = pathlib.Path(tempfile.mkdtemp(prefix=f"wetlab-{run_id}-client-"))
     note = prepare_workspace(workspace, client, robot, args.docs, task, info)
 
-    _eval_call(args.url, token, "/eval/reset", {"run_dir": str(run_dir)})
+    _eval_call(args.url, token, "/eval/reset", {"run_dir": str(run_dir), "task": args.task_id})
+    gt0 = _eval_call(args.url, token, "/eval/ground_truth")
     wall_reset = time.time()
     sim_reset = json.loads(urllib.request.urlopen(args.url + "/state").read())["time"]
     cmd = build_command(args.agent, task, args.model, workspace, run_dir, note)
@@ -223,6 +234,8 @@ def main(argv=None):
         "run_id": run_id, "task": task, "prompt": make_prompt(task, note), "docs": args.docs,
         "robot": robot, "robot_label": info.get("robot", robot), "gripper_label": info.get("gripper", ""),
         "time_limit": args.time_limit, "sim_start": sim_reset, "status": "running",
+        "task_id": args.task_id, "task_title": T.TASKS[args.task_id].title if args.task_id else None,
+        "batch": args.batch, "attempt": args.attempt,
         "workspace": str(workspace), **meta.info(),
     }
     _eval_call(args.url, token, "/eval/run", run_info)
@@ -343,6 +356,20 @@ def main(argv=None):
     peeks = sim_source_peeks(run_dir / "transcript.jsonl")
     result["fair"] = not peeks
     result["sim_source_peeks"] = peeks
+    result["cost_label"] = "API-equivalent cost (not billed)"
+    result["batch"], result["attempt"] = args.batch, args.attempt
+    if args.task_id:
+        from .scoring import score_run
+        sc = score_run(args.task_id, gt0, gt, run_dir, events)
+        result.update(sc)
+        if sc["flags"]["interrupted"]:
+            result["status"] = "interrupted: usage limit"
+        (run_dir / "start_objects.json").write_text(json.dumps(gt0))
+        run_info.update(task_id=args.task_id, score=sc["score"], passed=sc["passed"], flags=sc["flags"],
+                        status=result["status"])
+        (run_dir / "run.json").write_text(json.dumps({k: v for k, v in run_info.items() if k != "workspace"}, indent=1))
+        _eval_call(args.url, token, "/eval/run", run_info)
+        print(f"Score: {sc['score']} ({'PASS' if sc['passed'] else 'FAIL'}) {json.dumps(sc['detail'])[:300]}")
     (run_dir / "result.json").write_text(json.dumps(result, indent=2))
     shutil.copytree(workspace, run_dir / "workspace", dirs_exist_ok=True)
     print(f"Done in {elapsed:.0f} s ({status}). Results in {run_dir}")

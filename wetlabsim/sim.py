@@ -21,6 +21,8 @@ import mujoco
 import numpy as np
 
 from . import scene as S
+from . import tasks as T
+from .threads import Threads
 
 CTRL_DT = 0.008                # trajectory sample period (s)
 TRACKING_LIMIT = 0.25          # rad of joint tracking error before a protective stop
@@ -121,21 +123,29 @@ class Sim:
         self.rng = np.random.default_rng()
         self.run_dir = pathlib.Path(run_dir) if run_dir else None
         self._log_f = None
+        self.threads = Threads(m, self.d)
+        self._cap_rgba0 = {}
+        self.task = None
         self.reset()
         self._running = False
         self._render_q: queue.PriorityQueue = queue.PriorityQueue()
         self._render_seq = 0
 
     # ---------------------------------------------------------------- setup
-    def reset(self):
+    def reset(self, task: str | None = None):
+        """Start over, with the bench laid out for a task (tasks.py), or the default bench."""
         with self.lock:
-            mujoco.mj_resetData(self.m, self.d)
-            self.d.qpos[self.arm_qadr] = self.ready_q
-            self.d.ctrl[self.arm_act] = self.ready_q
-            self.d.ctrl[self.grip_act] = self._grip_ctrl(0.0)
-            mujoco.mj_forward(self.m, self.d)
-            for _ in range(250):            # let tubes settle in their racks
-                mujoco.mj_step(self.m, self.d)
+            m, d = self.m, self.d
+            mujoco.mj_resetData(m, d)
+            d.qpos[self.arm_qadr] = self.ready_q
+            d.ctrl[self.arm_act] = self.ready_q
+            d.ctrl[self.grip_act] = self._grip_ctrl(0.0)
+            self.task = task
+            self._lay_out(task)
+            mujoco.mj_forward(m, d)
+            for _ in range(250):            # let things settle
+                self.threads.step()
+                mujoco.mj_step(m, d)
             self.motion: Motion | None = None
             self.mode = "running"           # or "protective_stop"
             self.stop_reason = ""
@@ -153,6 +163,36 @@ class Sim:
             self.recording: list[tuple[float, np.ndarray]] = []   # (time, qpos) at 30 Hz for replay videos
             self.state_log: list[dict] = []   # robot readings at 20 Hz, so the viewer can rewind
             self._next_rec = self.d.time
+
+    def _set_free(self, name: str, pos_b, quat):
+        adr = self.m.jnt_qposadr[self.m.body_jntadr[self.m.body(name).id]]
+        self.d.qpos[adr:adr + 3] = np.asarray(pos_b) + np.array(S.ROBOT_BASE)
+        self.d.qpos[adr + 3:adr + 7] = quat
+
+    def _lay_out(self, task):
+        poses, caps, colours = T.layout_for(task)
+        m = self.m
+        for name, rgba in self._cap_rgba0.items():     # undo the last task's recolouring
+            m.geom_rgba[m.geom(name).id] = rgba
+        for body, rgba in colours.items():
+            g = m.geom(f"{body}_capvis").id
+            self._cap_rgba0.setdefault(f"{body}_capvis", m.geom_rgba[g].copy())
+            m.geom_rgba[g] = rgba
+        for name, (pos, quat) in poses.items():
+            if not name.endswith("_cap"):
+                self._set_free(name, pos, quat)
+        # A tube that starts in the spring rack has already pushed its slot's pad back.
+        for r in range(S.CLAMP_ROWS):
+            for c in range(S.CLAMP_COLS):
+                slot = S.clamp_slot(r, c)
+                full = any(np.hypot(p[0] - slot[0], p[1] - slot[1]) < 0.004 for p, _ in poses.values())
+                self.d.qpos[m.joint(f"clamp_pad_{r}_{c}").qposadr[0]] = 0.0038 if full else 0.0
+        for colour, _ in S.TUBE_COLOURS:
+            if caps.get(colour) == "off":
+                self.threads.place(colour, on=False)
+                self._set_free(f"tube_{colour}_cap", *poses[f"tube_{colour}_cap"])
+            else:
+                self.threads.place(colour, on=True)
 
     def open_log(self, run_dir: str | pathlib.Path):
         with self.lock:
@@ -190,6 +230,7 @@ class Sim:
                 n = 0
                 while d.time < target and n < 100:
                     self._control()
+                    self.threads.step()
                     mujoco.mj_step(m, d)
                     n += 1
                     if d.time >= self._next_rec:
@@ -503,7 +544,8 @@ class Sim:
                 if j >= 0 and self.m.jnt_type[j] == mujoco.mjtJoint.mjJNT_FREE:
                     p = self.to_base(self.d.xpos[i])
                     out[name] = {"pos": p.round(5).tolist(), "quat": self.d.xquat[i].round(5).tolist()}
-            return {"time": round(self.d.time, 4), "objects": out}
+            return {"time": round(self.d.time, 4), "task": self.task, "objects": out,
+                    "caps": self.threads.state()}
 
     def save_recording(self, path):
         with self.lock:
@@ -571,9 +613,26 @@ class Sim:
         i = bisect.bisect_right([r[0] for r in rec], t) - 1
         return rec[max(i, 0)][1]
 
+    def save_model(self, run_dir):
+        """Keep the scene as it is now (task recolouring included) so this run can be replayed
+        after the scene changes. Scenes are ~40 MB, so each distinct one is stored once in
+        runs/_models/ and the run gets a pointer to it (model.ref)."""
+        import hashlib
+        run_dir = pathlib.Path(run_dir)
+        with self.lock:
+            buf = np.zeros(mujoco.mj_sizeModel(self.m), dtype=np.uint8)
+            mujoco.mj_saveModel(self.m, None, buf)
+        name = hashlib.sha256(buf.tobytes()).hexdigest()[:16] + ".mjb"
+        store = run_dir.parent / "_models"
+        store.mkdir(exist_ok=True)
+        if not (store / name).exists():
+            (store / name).write_bytes(buf.tobytes())
+        (run_dir / "model.ref").write_text(name + "\n")
+
     def render(self, camera: str, depth: bool = False, priority: int = 0, timeout=30.0,
-               qpos=None, at_time: float | None = None) -> dict:
-        """Render a camera now, or (qpos given) the scene as it was at at_time."""
+               qpos=None, at_time: float | None = None, model: mujoco.MjModel | None = None) -> dict:
+        """Render a camera now, or (qpos given) the scene as it was at at_time. model: an
+        older run's own scene, to replay it."""
         if camera not in self.P["cameras"]:
             raise RobotError(f"unknown camera '{camera}', choose from {list(self.P['cameras'])}")
         if priority == 0 and qpos is None:
@@ -582,7 +641,7 @@ class Sim:
         box: dict = {}
         ev = threading.Event()
         self._render_seq += 1
-        self._render_q.put((priority, self._render_seq, camera, depth, box, ev, qpos, at_time))
+        self._render_q.put((priority, self._render_seq, camera, depth, box, ev, qpos, at_time, model))
         if not ev.wait(timeout):
             raise RobotError("camera timed out")
         if "error" in box:
@@ -594,10 +653,27 @@ class Sim:
         rgb_r = mujoco.Renderer(self.m, CAM_H, CAM_W)
         dep_r = mujoco.Renderer(self.m, CAM_H, CAM_W)
         dep_r.enable_depth_rendering()
+        other: dict[int, tuple] = {}     # renderers for older runs' scenes
         while self._running:
             try:
-                _, _, camera, depth, box, ev, qpos, at_time = self._render_q.get(timeout=0.2)
+                _, _, camera, depth, box, ev, qpos, at_time, model = self._render_q.get(timeout=0.2)
             except queue.Empty:
+                continue
+            if model is not None:
+                try:
+                    if id(model) not in other:
+                        if len(other) > 4:
+                            other.clear()
+                        other[id(model)] = (model, mujoco.MjData(model), mujoco.Renderer(model, CAM_H, CAM_W))
+                    om, od, orr = other[id(model)]
+                    od.qpos[:] = qpos
+                    mujoco.mj_forward(om, od)
+                    orr.update_scene(od, camera=self.P["cameras"][camera])
+                    box["rgb"] = orr.render().copy()
+                    box["time"] = round(at_time or 0.0, 4)
+                except Exception as e:  # noqa: BLE001
+                    box["error"] = f"render failed: {e}"
+                ev.set()
                 continue
             try:
                 with self.lock:

@@ -1,6 +1,7 @@
 """Quick checks that the cell builds and the controller behaves. Run: python -m pytest tests"""
 import time
 
+import mujoco
 import numpy as np
 import pytest
 
@@ -136,3 +137,106 @@ def test_run_meta_reads_model_and_usage():
     c = traces.RunMeta("codex", "gpt-6-astra")
     c.feed({"type": "turn.completed", "usage": {"input_tokens": 100, "cached_input_tokens": 40, "output_tokens": 7}})
     assert c.info()["tokens"] == 107 and c.info()["provider"] == "OpenAI"
+
+
+# ---------------------------------------------------------------- task library, caps, clamp
+def _step(s, secs, before=None):
+    for _ in range(int(secs / s.m.opt.timestep)):
+        if before:
+            before()
+        s.threads.step()
+        mujoco.mj_step(s.m, s.d)
+
+
+@pytest.mark.parametrize("task", [None, "T1", "T7", "T18", "T23", "T24", "T25"])
+def test_task_layouts_settle(task):
+    """Every task's starting bench is still after 3 s, and doing nothing doesn't pass it."""
+    from wetlabsim import tasks as T
+    s = Sim(robot="franka")
+    s.reset(task)
+    g0 = s.ground_truth()
+    _step(s, 3.0)
+    g1 = s.ground_truth()
+    for n in g0["objects"]:
+        assert np.linalg.norm(np.subtract(g1["objects"][n]["pos"], g0["objects"][n]["pos"])) < 0.003, n
+    if task:
+        assert not T.score(task, g0, g1, {"judge": {"score": 0}})["passed"]
+
+
+def _twist_cap(s, cap, torque):
+    """Twist a cap about its tube's axis with an outside torque, as fingers would."""
+    axis = s.d.xmat[cap.tube].reshape(3, 3)[:, 2]
+    s.d.xfrc_applied[cap.cap, 3:6] = torque * axis
+
+
+def test_screw_cap_unscrews_and_screws_back_on():
+    s = Sim(robot="franka")
+    s.reset("T24")                             # red tube in the clamp, cap tight
+    th = s.threads
+    cap = th.by_colour["red"]
+    extra = {"t": 0.0}
+    measured = th._hand_torque
+    th._hand_torque = lambda c: measured(c) + (extra["t"] if c is cap else 0.0)
+
+    def twist(tq, secs):
+        extra["t"] = tq
+        _step(s, secs, lambda: _twist_cap(s, cap, tq))
+        s.d.xfrc_applied[cap.cap] = 0
+        extra["t"] = 0.0
+
+    twist(0.05, 1.0)                           # below its tightness: holds
+    assert th.state()["red"]["seated"]
+    twist(0.15, 0.5)                           # breaks loose and climbs the thread
+    st = th.state()["red"]
+    assert st["on"] and not st["seated"] and st["turns_from_seated"] > 0.5
+    while th.state()["red"]["on"]:
+        twist(0.02, 0.2)
+    assert th.state()["red"]["turns_from_seated"] > 2.0
+    # Put the loose cap back on the rim, then twist it closed and tight.
+    tq = s.d.qpos[s.m.jnt_qposadr[s.m.body_jntadr[cap.tube]]:][:7].copy()
+    ca = s.m.jnt_qposadr[s.m.body_jntadr[cap.cap]]
+    s.d.qpos[ca:ca + 3] = tq[:3] + [0.0005, 0, S.CAP_SEAT + S.THREAD_LEN + 0.003]
+    s.d.qpos[ca + 3:ca + 7] = tq[3:]
+    s.d.qvel[s.m.jnt_dofadr[s.m.body_jntadr[cap.cap]]:][:6] = 0
+    _step(s, 1.0)
+    for _ in range(40):
+        twist(-0.02, 0.25)
+        if th.state()["red"]["seated"]:
+            break
+    twist(-0.08, 0.5)
+    st = th.state()["red"]
+    assert st["on"] and st["seated"] and st["tightness_nm"] >= 0.06
+
+
+def test_clamp_holds_a_tube_against_twisting():
+    s = Sim(robot="franka")
+    s.reset("T24")
+    tid = s.m.body("tube_red").id
+    q0 = s.d.xquat[tid].copy()
+    _step(s, 1.0, lambda: s.d.xfrc_applied.__setitem__((tid, 5), 0.15))
+    s.d.xfrc_applied[tid] = 0
+    turned = np.degrees(2 * np.arccos(min(1.0, abs(float(np.dot(q0, s.d.xquat[tid]))))))
+    assert turned < 10, turned
+
+
+def test_tube_stays_in_a_full_strength_grip():
+    """A light tube held at full grip doesn't creep out of the fingers (it used to)."""
+    s = Sim(robot="franka")
+    s.reset("T1")
+    p = np.array(s.ground_truth()["objects"]["tube_red"]["pos"])
+
+    def go(mo):
+        while not mo.done.is_set():
+            _step(s, 0.05, s._control)
+        _step(s, 0.3, s._control)
+
+    go(s.move_l([p[0], p[1], 0.25, np.pi, 0, 0], 0.3))
+    go(s.move_l([p[0], p[1], 0.10, np.pi, 0, 0], 0.08))
+    s.gripper_move(255, 255, 255)
+    _step(s, 1.5, s._control)
+    go(s.move_l([p[0], p[1], 0.30, np.pi, 0, 0], 0.15))
+    p0 = np.array(s.ground_truth()["objects"]["tube_red"]["pos"])
+    _step(s, 20.0, s._control)
+    p1 = np.array(s.ground_truth()["objects"]["tube_red"]["pos"])
+    assert np.linalg.norm(p1 - p0) < 0.002
+    assert s.mode == "running"

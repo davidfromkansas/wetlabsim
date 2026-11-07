@@ -21,6 +21,7 @@ import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+import mujoco
 import numpy as np
 from PIL import Image
 
@@ -28,6 +29,9 @@ from . import traces
 from .sim import RobotError, Sim
 
 VIEWER_PATH = pathlib.Path(__file__).parent / "viewer.html"
+
+
+_MODELS: dict[str, mujoco.MjModel] = {}   # saved scenes, shared by the runs that used them
 
 
 class Archive:
@@ -70,6 +74,15 @@ class Archive:
         rec = np.load(run_dir / "replay.npz") if (run_dir / "replay.npz").exists() else None
         self.rec_t = rec["time"] if rec is not None else np.zeros(0)
         self.rec_q = rec["qpos"] if rec is not None else np.zeros((0, 0))
+        # The scene as it was for this run (saved at reset), so old runs replay after the
+        # scene changes.
+        ref = run_dir / "model.ref"
+        mjb = run_dir.parent / "_models" / ref.read_text().strip() if ref.exists() else None
+        self.model = None
+        if mjb and mjb.exists():
+            if mjb.name not in _MODELS:
+                _MODELS[mjb.name] = mujoco.MjModel.from_binary_path(str(mjb))
+            self.model = _MODELS[mjb.name]
         self.workspace = run_dir / "workspace"
 
     def end_time(self) -> float:
@@ -173,6 +186,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self._err("not found", 404)
             if p == "/runs":
                 return self._json(self._list_runs())
+            if p == "/results":
+                from . import results
+                batch = qs.get("batch", [None])[0]
+                page = results.render(results.collect(self.runs_dir, batch), batch, live=True)
+                return self._send(200, page.encode(), "text/html; charset=utf-8")
             if p.startswith("/runs/"):
                 return self._archive_get(p, qs)
             if p == "/run":
@@ -297,9 +315,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._err(f"this run used the {a.robot}; start the server with --robot {a.robot} to replay it", 409)
             name = rest[len("/camera/"):].partition(".")[0]
             q = a.qpos_at(t)
-            if q is None or len(q) != self.sim.m.nq:
+            nq = (a.model or self.sim.m).nq
+            if q is None or len(q) != nq:
                 return self._err("no replay for this run", 404)
-            fr = self.sim.render(name, priority=5, qpos=q, at_time=t)
+            fr = self.sim.render(name, priority=5, qpos=q, at_time=t, model=a.model)
             return self._send(200, _encode_jpg(fr["rgb"]), "image/jpeg", {"Cache-Control": "max-age=3600"})
         return self._err("not found", 404)
 
@@ -380,9 +399,17 @@ class Handler(BaseHTTPRequestHandler):
             if p == "/gripper":
                 s.gripper_move(b["position"], b.get("speed", 255), b.get("force", 150))
                 if wait:
-                    t0 = time.time()
+                    # Block until the fingers reach the target or have stalled (on an object)
+                    # for 0.3 s, like the real hand's move command. A squeezed finger can take
+                    # a moment to start moving when told to open.
+                    t0 = still = time.time()
                     time.sleep(0.05)
-                    while s.gripper_status()["moving"] and time.time() - t0 < 5:
+                    while time.time() - t0 < 5:
+                        g = s.gripper_status()
+                        if g["moving"]:
+                            still = time.time()
+                        elif abs(g["position"] - g["requested"]) < 3 or time.time() - still > 0.3:
+                            break
                         time.sleep(0.02)
                 return self._json({"ok": True, "gripper": s.gripper_status()})
             if p == "/eval/save_recording":
@@ -411,9 +438,10 @@ class Handler(BaseHTTPRequestHandler):
                     return self._err("evaluator token required", 403)
                 Handler.trace = []
                 Handler.run = {}
-                s.reset()
+                s.reset(b.get("task"))
                 if b.get("run_dir"):
                     s.open_log(b["run_dir"])
+                    s.save_model(b["run_dir"])
                 return self._json({"ok": True})
             return self._err("not found", 404)
         except RobotError as e:
