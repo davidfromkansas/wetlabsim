@@ -97,7 +97,8 @@ def render(rows: list[dict], batch: str | None, live: bool, images: dict | None 
     n_pass = sum(r["passed"] for r in counted)
     cost = sum(r["cost_usd"] or 0 for r in rows)
     secs = sum(r["seconds"] or 0 for r in rows)
-    model = next((r["model"] for r in rows if r["model"]), "")
+    from .traces import model_label
+    model = model_label(next((r["model"] for r in rows if r["model"]), "") or "")
     e = html.escape
 
     def link(r):
@@ -112,7 +113,7 @@ def render(rows: list[dict], batch: str | None, live: bool, images: dict | None 
         cells = []
         for i in range(tries):
             if i >= len(rs):
-                cells.append('<td class="cell empty">not run yet</td>')
+                cells.append(f'<td class="cell empty" data-try="Try {i + 1}">not run yet</td>')
                 continue
             r = rs[i]
             cls, word = _verdict(r)
@@ -127,12 +128,12 @@ def render(rows: list[dict], batch: str | None, live: bool, images: dict | None 
             anchor = (f'<a href="{link(r)}">open run</a>' if live
                       else f'<span class="rid">{e(r["run_id"])}</span>')
             cells.append(
-                f'<td class="cell"><div class="v {cls}">{word}<span class="sc">{r["score"]:.2f}</span></div>'
+                f'<td class="cell" data-try="Try {i + 1}"><div class="v {cls}">{word}<span class="sc">{r["score"]:.2f}</span></div>'
                 f'<div class="meta">{time_s} · {cost_s}</div>{img}'
                 f'{"<ul class=flags>" + flags + "</ul>" if flags else ""}<div class="lk">{anchor}</div></td>')
         body.append(f'<tr><th class="task"><div class="tid">{e(t)}</div><div class="tt">{e(task.title if task else "")}'
                     f'</div><div class="tp">{e(task.prompt if task else "")}</div></th>{"".join(cells)}'
-                    f'<td class="rate">{rate}</td></tr>')
+                    f'<td class="rate" data-try="Pass rate">{rate}</td></tr>')
     head = "".join(f"<th>Try {i + 1}</th>" for i in range(tries))
     note = ("Live: each run opens in the replay viewer." if live else
             "Snapshot. Pictures are each run's start and end, from the room camera. On the Mac, open "
@@ -167,6 +168,16 @@ th.task {{ width:280px; font-weight:400 }} .tid {{ font-weight:700 }} .tt {{ fon
 td.empty {{ color:var(--mute); font-style:italic }}
 td.rate {{ font-weight:700; text-align:center; white-space:nowrap }}
 .foot {{ color:var(--mute); font-size:12px; margin-top:12px }}
+@media (max-width: 700px) {{
+  table, tbody, tr, th, td {{ display:block; min-width:0; width:auto }}
+  thead {{ display:none }}
+  tr {{ border-bottom:6px solid var(--bg) }}
+  th.task {{ width:auto; border-bottom:none; padding-bottom:4px }}
+  td {{ border-bottom:none; padding-top:6px }}
+  td[data-try]::before {{ content:attr(data-try); display:block; font-size:11px; color:var(--mute); font-weight:600; margin-bottom:2px }}
+  td.rate {{ text-align:left }}
+  .frames img {{ width:46% }}
+}}
 </style></head><body><main>
 <h1>Task results{(" · " + e(batch)) if batch else ""}</h1>
 <div class="sub">{e(model or "")} · Claude Code · {len(rows)} runs · {note}</div>
