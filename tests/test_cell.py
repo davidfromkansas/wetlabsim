@@ -139,16 +139,15 @@ def test_run_meta_reads_model_and_usage():
     assert c.info()["tokens"] == 107 and c.info()["provider"] == "OpenAI"
 
 
-# ---------------------------------------------------------------- task library, caps, clamp
+# ---------------------------------------------------------------- task library
 def _step(s, secs, before=None):
     for _ in range(int(secs / s.m.opt.timestep)):
         if before:
             before()
-        s.threads.step()
         mujoco.mj_step(s.m, s.d)
 
 
-@pytest.mark.parametrize("task", [None, "T1", "T7", "T18", "T23", "T24", "T25"])
+@pytest.mark.parametrize("task", [None, "T1", "T7", "T18", "T19", "T23"])
 def test_task_layouts_settle(task):
     """Every task's starting bench is still after 3 s, and doing nothing doesn't pass it."""
     from wetlabsim import tasks as T
@@ -161,142 +160,6 @@ def test_task_layouts_settle(task):
         assert np.linalg.norm(np.subtract(g1["objects"][n]["pos"], g0["objects"][n]["pos"])) < 0.003, n
     if task:
         assert not T.score(task, g0, g1, {"judge": {"score": 0}})["passed"]
-
-
-class _Hand:
-    """Stands in for fingers on a cap: an outside twist (and push) the thread controller counts
-    as if it came through contacts."""
-
-    def __init__(self, s, cap):
-        self.s, self.cap, self.tq, self.push = s, cap, 0.0, 0.0
-        measured = s.threads._contacts
-        s.threads._contacts = lambda c: (
-            (measured(c)[0] + self.tq, measured(c)[1]) if c is cap else measured(c))
-
-    def apply(self, tq, push, secs):
-        self.tq = tq
-        s, cap = self.s, self.cap
-
-        def before():
-            axis = s.d.xmat[cap.tube].reshape(3, 3)[:, 2]
-            s.d.xfrc_applied[cap.cap, :3] = -push * axis
-            s.d.xfrc_applied[cap.cap, 3:6] = tq * axis
-        _step(s, secs, before)
-        s.d.xfrc_applied[cap.cap] = 0
-        self.tq = 0.0
-
-
-def _cap_on_rim(s, cap, tilt_deg=0.0, offset=0.0):
-    """Set a loose cap on its tube's rim (optionally tilted about x and off-centre along x)."""
-    m, d = s.m, s.d
-    ta, ca = m.jnt_qposadr[m.body_jntadr[cap.tube]], m.jnt_qposadr[m.body_jntadr[cap.cap]]
-    tp = d.qpos[ta:ta + 3].copy()
-    a = np.radians(tilt_deg)
-    d.qpos[ca:ca + 3] = tp + [offset, 0, S.CAP_SEAT + S.THREAD_LEN + 0.0005]
-    d.qpos[ca + 3:ca + 7] = [np.cos(a / 2), np.sin(a / 2), 0, 0]
-    d.qvel[m.jnt_dofadr[m.body_jntadr[cap.cap]]:][:6] = 0
-    _step(s, 0.5)
-
-
-def test_screw_cap_unscrews():
-    s = Sim(robot="franka")
-    s.reset("T24")                             # red tube in the clamp, cap tight
-    th = s.threads
-    hand = _Hand(s, th.by_colour["red"])
-    hand.apply(0.05, 0, 1.0)                   # below its tightness: holds
-    assert th.state()["red"]["seated"]
-    hand.apply(0.15, 0, 0.5)                   # breaks loose and climbs the thread
-    st = th.state()["red"]
-    assert st["on"] and not st["seated"] and st["turns_from_seated"] > 0.5
-    for _ in range(40):
-        if not th.state()["red"]["on"]:
-            break
-        hand.apply(0.02, 0, 0.2)
-    assert not th.state()["red"]["on"]
-
-
-def test_square_pressed_cap_screws_on_and_tightens():
-    s = Sim(robot="franka")
-    s.reset("T25")                             # tube in the clamp, cap off
-    th = s.threads
-    cap = th.by_colour["red"]
-    _cap_on_rim(s, cap, tilt_deg=1.0, offset=0.0006)
-    hand = _Hand(s, cap)
-    hand.apply(-0.02, 2.0, 0.3)
-    assert th.state()["red"]["on"] and not th.state()["red"]["cross_threaded"]
-    for _ in range(60):
-        hand.apply(-0.02, 2.0, 0.25)
-        if th.state()["red"]["seated"]:
-            break
-    hand.apply(-0.08, 2.0, 0.5)
-    st = th.state()["red"]
-    assert st["seated"] and st["tightness_nm"] >= 0.06
-    # The thread centred it: seated square on the axis.
-    Rt = s.d.xmat[cap.tube].reshape(3, 3)
-    rel = Rt.T @ (s.d.xpos[cap.cap] - s.d.xpos[cap.tube])
-    assert np.hypot(rel[0], rel[1]) < 0.0002
-
-
-def test_cap_resting_without_a_push_does_not_catch():
-    s = Sim(robot="franka")
-    s.reset("T25")
-    th = s.threads
-    cap = th.by_colour["red"]
-    _cap_on_rim(s, cap)
-    _Hand(s, cap).apply(-0.02, 0.0, 1.0)        # twisting, but not pressing on
-    assert not th.state()["red"]["on"]
-
-
-def _catch_held(s, cap, tilt_deg=0.0, offset=0.0, lift=0.0):
-    """Pose a cap as fingers would hold it on the rim, pressed and twisted closed, and ask
-    the thread whether it catches."""
-    m, d = s.m, s.d
-    ta, ca = m.jnt_qposadr[m.body_jntadr[cap.tube]], m.jnt_qposadr[m.body_jntadr[cap.cap]]
-    a = np.radians(tilt_deg)
-    d.qpos[ca:ca + 3] = d.qpos[ta:ta + 3] + [offset, 0, S.CAP_SEAT + S.THREAD_LEN + lift]
-    d.qpos[ca + 3:ca + 7] = [np.cos(a / 2), np.sin(a / 2), 0, 0]
-    mujoco.mj_forward(m, d)
-    s.threads._contacts = lambda c: (-0.02, 2.0)
-    s.threads._try_catch(cap)
-    return s.threads.state()["red"]
-
-
-def test_catching_the_thread_needs_a_square_centred_cap_on_the_rim():
-    s = Sim(robot="franka")
-    cap = s.threads.by_colour["red"]
-    for kw, on, cross in [({}, True, False), ({"tilt_deg": 2.0, "offset": 0.0008}, True, False),
-                          ({"tilt_deg": 4.0}, True, True), ({"tilt_deg": 7.0}, False, False),
-                          ({"offset": 0.0015}, False, False), ({"lift": 0.0012}, False, False)]:
-        s.reset("T25")
-        st = _catch_held(s, cap, **kw)
-        assert (st["on"], st["cross_threaded"]) == (on, cross), kw
-
-
-def test_cross_threaded_cap_binds_and_never_seats():
-    s = Sim(robot="franka")
-    s.reset("T25")
-    th = s.threads
-    cap = th.by_colour["red"]
-    measured = th._contacts
-    _catch_held(s, cap, tilt_deg=4.0)
-    th._contacts = measured
-    hand = _Hand(s, cap)
-    for _ in range(40):
-        hand.apply(-0.05, 2.0, 0.25)
-    st = th.state()["red"]
-    assert st["on"] and st["cross_threaded"] and not st["seated"]
-    assert st["turns_from_seated"] > 1.0
-
-
-def test_clamp_holds_a_tube_against_twisting():
-    s = Sim(robot="franka")
-    s.reset("T24")
-    tid = s.m.body("tube_red").id
-    q0 = s.d.xquat[tid].copy()
-    _step(s, 1.0, lambda: s.d.xfrc_applied.__setitem__((tid, 5), 0.15))
-    s.d.xfrc_applied[tid] = 0
-    turned = np.degrees(2 * np.arccos(min(1.0, abs(float(np.dot(q0, s.d.xquat[tid]))))))
-    assert turned < 10, turned
 
 
 def test_tube_stays_in_a_full_strength_grip():
@@ -333,13 +196,3 @@ def test_agent_workspace_never_names_the_cell_folder(tmp_path):
     assert RA.workspace_leaks(ws, client) == []
     (ws / "oops.json").write_text(str(RA.ROOT))
     assert RA.workspace_leaks(ws, client) == [ws / "oops.json"]
-
-
-def test_cap_on_its_thread_stays_square_when_pushed():
-    s = Sim(robot="franka")
-    s.reset("T24")
-    cap = s.threads.by_colour["red"]
-    _step(s, 1.0, lambda: s.d.xfrc_applied.__setitem__((cap.cap, 0), 10.0))
-    Rt = s.d.xmat[cap.tube].reshape(3, 3)
-    tilt = np.degrees(np.arccos(min(1.0, (Rt.T @ s.d.xmat[cap.cap].reshape(3, 3))[2, 2])))
-    assert tilt < 0.5, tilt

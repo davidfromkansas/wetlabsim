@@ -22,7 +22,6 @@ import numpy as np
 
 from . import scene as S
 from . import tasks as T
-from .threads import Threads
 
 CTRL_DT = 0.008                # trajectory sample period (s)
 TRACKING_LIMIT = 0.25          # rad of joint tracking error before a protective stop
@@ -123,7 +122,6 @@ class Sim:
         self.rng = np.random.default_rng()
         self.run_dir = pathlib.Path(run_dir) if run_dir else None
         self._log_f = None
-        self.threads = Threads(m, self.d)
         self._cap_rgba0 = {}
         self.task = None
         self.reset()
@@ -144,7 +142,6 @@ class Sim:
             self._lay_out(task)
             mujoco.mj_forward(m, d)
             for _ in range(250):            # let things settle
-                self.threads.step()
                 mujoco.mj_step(m, d)
             self.motion: Motion | None = None
             self.mode = "running"           # or "protective_stop"
@@ -170,7 +167,7 @@ class Sim:
         self.d.qpos[adr + 3:adr + 7] = quat
 
     def _lay_out(self, task):
-        poses, caps, colours = T.layout_for(task)
+        poses, colours = T.layout_for(task)
         m = self.m
         for name, rgba in self._cap_rgba0.items():     # undo the last task's recolouring
             m.geom_rgba[m.geom(name).id] = rgba
@@ -179,20 +176,7 @@ class Sim:
             self._cap_rgba0.setdefault(f"{body}_capvis", m.geom_rgba[g].copy())
             m.geom_rgba[g] = rgba
         for name, (pos, quat) in poses.items():
-            if not name.endswith("_cap"):
-                self._set_free(name, pos, quat)
-        # A tube that starts in the spring rack has already pushed its slot's pad back.
-        for r in range(S.CLAMP_ROWS):
-            for c in range(S.CLAMP_COLS):
-                slot = S.clamp_slot(r, c)
-                full = any(np.hypot(p[0] - slot[0], p[1] - slot[1]) < 0.004 for p, _ in poses.values())
-                self.d.qpos[m.joint(f"clamp_pad_{r}_{c}").qposadr[0]] = 0.0038 if full else 0.0
-        for colour, _ in S.TUBE_COLOURS:
-            if caps.get(colour) == "off":
-                self.threads.place(colour, on=False)
-                self._set_free(f"tube_{colour}_cap", *poses[f"tube_{colour}_cap"])
-            else:
-                self.threads.place(colour, on=True)
+            self._set_free(name, pos, quat)
 
     def open_log(self, run_dir: str | pathlib.Path):
         with self.lock:
@@ -230,7 +214,6 @@ class Sim:
                 n = 0
                 while d.time < target and n < 100:
                     self._control()
-                    self.threads.step()
                     mujoco.mj_step(m, d)
                     n += 1
                     if d.time >= self._next_rec:
@@ -544,8 +527,7 @@ class Sim:
                 if j >= 0 and self.m.jnt_type[j] == mujoco.mjtJoint.mjJNT_FREE:
                     p = self.to_base(self.d.xpos[i])
                     out[name] = {"pos": p.round(5).tolist(), "quat": self.d.xquat[i].round(5).tolist()}
-            return {"time": round(self.d.time, 4), "task": self.task, "objects": out,
-                    "caps": self.threads.state()}
+            return {"time": round(self.d.time, 4), "task": self.task, "objects": out}
 
     def save_recording(self, path):
         with self.lock:

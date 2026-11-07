@@ -31,7 +31,7 @@ def collect(runs_dir: pathlib.Path, batch: str | None = None) -> list[dict]:
             continue
         if not r.get("task_id") or (batch and r.get("batch") != batch):
             continue
-        if r.get("excluded"):
+        if r.get("excluded") or r["task_id"] not in T.TASKS:   # excluded, or a task since removed
             continue
         rows.append({
             "run_id": d.name, "task_id": r["task_id"], "task_title": r.get("task_title", ""),

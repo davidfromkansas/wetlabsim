@@ -34,10 +34,8 @@ The files are unchanged; only the rack meshes were renamed.
   has a flat bottom, which lets a dropped conical tube stand on its tip). The 1.5 ml tube
   collides as a 10.5 mm capsule, because its hull (11.4 mm, it includes the lip under the
   thread) is wider than the rack's wells.
-- **15 ml caps** screw on and off: each cap is its own body, held on by a weld that
-  `wetlabsim/threads.py` moves along a 3 mm-pitch thread as the cap is twisted. AutoBio's
-  screw-thread plugin isn't used (it ships only as a Linux binary). The 50 ml and 1.5 ml
-  caps are fixed to their tubes.
+- **Caps** are fixed to their tubes. AutoBio's screw-thread plugin isn't used (it ships
+  only as a Linux binary), so the caps don't come off.
 - **Racks and petri dish:** AutoBio's box collision proxies, as in its `*.gen.xml` models.
   The tube rack's proxies are resized for 18 mm (15 ml) and 30 mm (50 ml) holes, from a
   catalogue rack (Bel-Art Poxygrid F18722-0000 and F18794); AutoBio's holes are 17 mm.

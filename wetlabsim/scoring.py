@@ -54,9 +54,9 @@ def judge_inventory(answer: str, gt) -> dict:
         "which slots are empty? Don't move anything.'\n\n"
         f"TRUE STATE (from the simulator):\n{json.dumps(truth, indent=1)}\n\n"
         f"AGENT'S ANSWER:\n{answer[:6000]}\n\n"
-        "Grade 0 to 1: 0.5 for the item counts (fraction of the nine item kinds counted correctly; "
+        "Grade 0 to 1: 0.5 for the item counts (fraction of the eight item kinds counted correctly; "
         "naming them differently is fine) and 0.5 for the empty slots (rack A: which 15 ml slots are "
-        "taken and that the rest are empty; rack B empty; the 60-well rack; the clamp). Be fair to "
+        "taken and that the rest are empty; rack B empty; the 60-well rack). Be fair to "
         "reasonable descriptions. Reply with only JSON: {\"score\": <number>, \"notes\": \"<one or two "
         "sentences>\"}"
     )

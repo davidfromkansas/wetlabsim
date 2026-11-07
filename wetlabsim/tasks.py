@@ -4,7 +4,7 @@ Every task starts from the same bench (scene.py) with its own starting layout. S
 uses only the true state of the simulation at the end of the run (and, for the one
 "look and report" task, the agent's final answer). Agents never see any of this.
 
-Task IDs follow the task doc (T-numbers). The two screw-cap tasks are T24 and T25.
+Task IDs follow the task doc (T-numbers).
 """
 from __future__ import annotations
 
@@ -54,7 +54,6 @@ class Task:
     title: str
     prompt: str
     layout: Callable[[dict], None] = lambda L: None        # edits the default layout
-    caps: dict = field(default_factory=dict)               # colour -> "off" (cap lies on the bench)
     cap_colours: dict = field(default_factory=dict)        # body -> rgba override (e.g. a red 50 ml cap)
     score: Callable = None
     needs_answer: bool = False
@@ -80,7 +79,7 @@ def _upright(gt, name, deg=15):
 
 
 def in_15ml_slot(gt, name):
-    """(rack, row, col) of the 15 ml rack slot or clamp slot a tube stands in, or None."""
+    """(rack, row, col) of the 15 ml rack slot a tube stands in, or None."""
     p = _pos(gt, name)
     if not _upright(gt, name):
         return None
@@ -90,11 +89,6 @@ def in_15ml_slot(gt, name):
                 s = S.slot_center(rack, r, c)
                 if np.hypot(*(p[:2] - s[:2])) < 0.006 and p[2] < S.RACK_FLOOR + S.TUBE_HALF_LEN + 0.01:
                     return (rack, r, c)
-    for r in range(S.CLAMP_ROWS):
-        for c in range(S.CLAMP_COLS):
-            s = S.clamp_slot(r, c)
-            if np.hypot(*(p[:2] - s[:2])) < 0.006 and p[2] < S.CLAMP_FLOOR + S.TUBE_HALF_LEN + 0.01:
-                return ("clamp", r, c)
     return None
 
 
@@ -133,26 +127,15 @@ def in_well(gt, name):
     return f"{'ABCDE'[4 - row]}{12 - col}"
 
 
-def in_clamp(gt, name) -> bool:
-    """Held upright in a slot of the spring-grip rack: square in the slot, with its tip at
-    least 15 mm down inside the rack (a tube pulled up a little is still gripped by the pads)."""
-    p = _pos(gt, name)
-    if not _upright(gt, name):
-        return False
-    tip = p[2] - S.TUBE_HALF_LEN
-    return any(np.hypot(*(p[:2] - S.clamp_slot(r, c)[:2])) < 0.006 and tip <= S.CLAMP_H - 0.015
-               for r in range(S.CLAMP_ROWS) for c in range(S.CLAMP_COLS))
-
-
 def knocked_over(gt0, gt1) -> list[str]:
     """Things that stood upright at the start and lie down at the end."""
-    return [n for n in gt0["objects"] if not n.endswith("_cap") and n in gt1["objects"]
+    return [n for n in gt0["objects"] if n in gt1["objects"]
             and _up(gt0, n) > math.cos(math.radians(30)) and _up(gt1, n) < math.cos(math.radians(60))]
 
 
 def _others_still(gt0, gt1, keep: set):
     """Names of objects (other than keep) that moved more than MOVED_TOL."""
-    return [n for n in gt0["objects"] if n not in keep and not n.endswith("_cap")
+    return [n for n in gt0["objects"] if n not in keep
             and _moved(gt0, gt1, n) > MOVED_TOL]
 
 
@@ -190,7 +173,7 @@ def score_t5(gt0, gt1, ctx):
 def score_t7(gt0, gt1, ctx):
     slot = in_15ml_slot(gt1, "tube_green")
     disturbed = _others_still(gt0, gt1, {"tube_green"})
-    ok = slot is not None and slot[0] != "clamp"
+    ok = slot is not None
     return _result(1.0 if ok and not disturbed else 0.5 if ok else 0.0, ok and not disturbed,
                    green_tube_in=slot, disturbed=disturbed)
 
@@ -207,13 +190,12 @@ def truth_inventory(gt) -> dict:
     return {
         "items": {"15 ml tubes (red, blue, green caps)": 3, "50 ml tube (orange cap, lying down)": 1,
                   "1.5 ml tube (yellow cap)": 1, "white 15/50 ml tube racks": 2,
-                  "blue 60-well rack for 1.5 ml tubes": 1, "spring-grip tube rack (clamp)": 1,
+                  "blue 60-well rack for 1.5 ml tubes": 1,
                   "petri dishes": 2, "pipette": 1, "pipette stand": 1},
         "empty_15ml_slots": {rack: len(v) for rack, v in empty15.items()},
         "rack_a_occupied": sorted([s[1:] for s in occupied if s[0] == "rack_a"]),
         "rack_b": "empty",
         "60_well_rack": f"one 1.5 ml tube in well {in_well(gt, 'microtube')}, the other 59 wells empty",
-        "clamp": "all 24 slots empty",
     }
 
 
@@ -237,35 +219,6 @@ def score_t19(gt0, gt1, ctx):
     well = in_well(gt1, "microtube")
     ok = well == "B3"
     return _result(1.0 if ok else 0.5 if well else 0.0, ok, microtube_in=well)
-
-
-def score_t24(gt0, gt1, ctx):
-    cap = gt1["caps"]["red"]
-    cp = _pos(gt1, "tube_red_cap")
-    open_up = _up(gt1, "tube_red_cap") < -math.cos(math.radians(20))
-    on_bench = cp[2] < 0.004
-    tube_ok = in_clamp(gt1, "tube_red")
-    off = not cap["on"]
-    score = ((0.5 if off else 0.0) + (0.25 if off and on_bench else 0)
-             + (0.25 if off and on_bench and open_up and tube_ok else 0))
-    return _result(score, off and on_bench and open_up and tube_ok, cap=cap, cap_on_bench=bool(on_bench),
-                   open_side_up=bool(open_up), tube_still_in_clamp=tube_ok)
-
-
-TIGHT_PASS = 0.06   # N m
-
-
-def score_t25(gt0, gt1, ctx):
-    """Closed tightly, with the tube still upright in the clamp and nothing knocked over."""
-    cap = gt1["caps"]["red"]
-    closed = cap["on"] and cap["seated"] and cap["tightness_nm"] >= TIGHT_PASS
-    tube_ok = in_clamp(gt1, "tube_red")
-    knocked = knocked_over(gt0, gt1)
-    score = 0.0
-    if cap["on"]:
-        score = 0.25 + (0.25 if cap["seated"] else 0) + (0.25 if closed else 0) + (0.25 if closed and tube_ok and not knocked else 0)
-    return _result(score, closed and tube_ok and not knocked, cap=cap, tube_still_in_clamp=tube_ok,
-                   knocked_over=knocked)
 
 
 def dishes_stacked(gt):
@@ -309,15 +262,6 @@ def _t19(L):
     pass        # the 1.5 ml tube starts in well C9 (the default bench)
 
 
-def _in_clamp(L):
-    L["tube_red"] = _tube15_in(S.clamp_slot(1, 2), S.CLAMP_FLOOR)
-
-
-def _t25(L):
-    _in_clamp(L)
-    L["tube_red_cap"] = ((0.36, 0.26, S.CAP_HEIGHT + 0.0005), UP)    # set down open side down
-
-
 def _t23(L):
     L["tube_blue"] = ((0.30, 0.03, S.TUBE_RADIUS + 0.001), FLAT_Y)
 
@@ -341,24 +285,19 @@ TASKS = {t.id: t for t in [
          cap_colours={"tube50": RED}, score=score_t18),
     Task("T19", "Small tube into a named well",
          "Put the 1.5 ml tube into well B3 of the small-tube rack.", layout=_t19, score=score_t19),
-    Task("T24", "Unscrew a cap",
-         "Open the red tube and put the cap down on the bench, open side up.",
-         layout=_in_clamp, score=score_t24),
-    Task("T25", "Screw a cap back on", "Close the open tube tightly.", layout=_t25,
-         caps={"red": "off"}, score=score_t25),
     Task("T23", "Tidy the bench",
          "Tidy the bench: tubes in racks they fit, dishes stacked, pipette on its stand.",
          layout=_t23, score=score_t23),
 ]}
 
 
-def layout_for(task_id: str | None) -> tuple[dict, dict, dict]:
-    """(poses, cap states, cap colour overrides) for a task, or the default bench."""
+def layout_for(task_id: str | None) -> tuple[dict, dict]:
+    """(poses, cap colour overrides) for a task, or the default bench."""
     L = default_layout()
     t = TASKS.get(task_id) if task_id else None
     if t:
         t.layout(L)
-    return L, (t.caps if t else {}), (t.cap_colours if t else {})
+    return L, (t.cap_colours if t else {})
 
 
 def score(task_id: str, gt0: dict, gt1: dict, ctx: dict | None = None) -> dict:

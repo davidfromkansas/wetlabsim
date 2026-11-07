@@ -5,7 +5,7 @@ positions from the simulator's true state instead of from the cameras, so they s
 task is physically possible, not that it is easy to perceive. Run with the cell running:
 
     python examples/baselines.py            # every task
-    python examples/baselines.py T1 T24     # some
+    python examples/baselines.py T1 T7      # some
 """
 from __future__ import annotations
 
@@ -118,12 +118,8 @@ def tube_in_slot(arm, name, rack, row, col):
     p = arm.pick_tube15(name)
     grip_z = p[2] + S.TUBE_HALF_LEN - 0.035          # where we held it
     held_from_bottom = grip_z - (p[2] - S.TUBE_HALF_LEN)
-    if rack == "clamp":
-        s = S.clamp_slot(row, col)
-        arm.place_tube15(s[0], s[1], S.CLAMP_FLOOR, held_from_bottom)
-    else:
-        s = S.slot_center(rack, row, col)
-        arm.place_tube15(s[0], s[1], S.RACK_FLOOR, held_from_bottom)
+    s = S.slot_center(rack, row, col)
+    arm.place_tube15(s[0], s[1], S.RACK_FLOOR, held_from_bottom)
 
 
 # ----------------------------------------------------------------------- tasks
@@ -220,86 +216,6 @@ def move_microtube(arm, well):
 
 def b_t19(arm):
     move_microtube(arm, "B3")
-
-
-CAP_GRIP = 175          # just open enough for the 22.6 mm cap
-
-
-def b_t24(arm):
-    """Unscrew the red cap: grip, turn 120 degrees anticlockwise (seen from above) while
-    rising with the thread, let go, turn back, repeat; then lift the cap off and set it
-    down open side up by turning the hand over and letting it slide off."""
-    t = pos("tube_red")
-    cx, cy = t[0], t[1]
-    cap_mid = t[2] + S.CAP_SEAT - S.CAP_HEIGHT / 2
-    arm.release(CAP_GRIP - 30)
-    arm.hop(cx, cy, cap_mid + 0.06)
-    z = cap_mid
-    step = math.radians(120)
-    a0 = -step / 2
-    arm.r.move_l(down(cx, cy, z, a0), speed=0.05)
-    for k in range(12):
-        caps = truth()["caps"]["red"]
-        if not caps["on"]:
-            break
-        arm.grip(force=255)
-        # Anticlockwise from above = +yaw. The cap rises pitch x turn / 2 pi.
-        dz = S.THREAD_PITCH * step / (2 * math.pi)
-        arm.r.move_l(down(cx, cy, z + dz, a0 + step), speed=0.03)
-        z += dz
-        arm.release(CAP_GRIP - 30)
-        arm.r.move_l(down(cx, cy, z, a0), speed=0.05)
-    caps = truth()["caps"]["red"]
-    assert not caps["on"], f"cap still on: {caps}"
-    arm.grip(force=200)
-    arm.r.move_l(down(cx, cy, z + 0.05), speed=0.05)
-    # Turn the hand over (pointing up) between the racks, open the fingers so the cap sits
-    # on them open side up, then tip the hand 45 degrees so it slides off and lands flat.
-    # (A parallel gripper can't set a cap down open side up any more directly.)
-    arm.r.move_j(READY, speed=0.8)
-    arm.r.move_j_pose(down(0.45, 0.0, 0.40), speed=0.8)
-    arm.r.move_j_pose([0.45, 0.0, 0.40, 0.0, 0.0, 0.0], speed=0.4)
-    arm.r.move_l([0.45, 0.0, 0.30, 0.0, 0.0, 0.0], speed=0.1)
-    arm.release(CAP_GRIP - 60)
-    time.sleep(0.5)
-    arm.r.move_l([0.45, 0.0, 0.30, *rotvec(ry(math.radians(45)))], speed=0.3)
-    time.sleep(2.0)
-    arm.r.move_j_pose(down(0.40, 0.0, 0.35), speed=0.8)
-
-
-def b_t25(arm):
-    """Screw the red cap back on: pick it up (it lies open side down), set it square on the
-    rim and press lightly, twist clockwise (seen from above) in 120 degree strokes going down
-    with the thread, then squeeze it tight."""
-    c = pos("tube_red_cap")
-    t = pos("tube_red")
-    arm.release(CAP_GRIP - 30)
-    arm.hop(c[0], c[1], max(LOW_GRIP, c[2] - S.CAP_HEIGHT / 2))
-    arm.grip(force=200)
-    arm.r.move_l(down(c[0], c[1], SAFE_Z), speed=0.1)
-    rim = t[2] + S.CAP_SEAT + S.THREAD_LEN          # cap top when resting on the rim
-    z = rim - S.CAP_HEIGHT / 2
-    # Where the cap sits in the fingers (it may not be gripped dead centre).
-    held = pos("tube_red_cap")[2] - arm.r.get_tcp_pose()[2]
-    z = rim - held
-    arm.r.move_j_pose(down(t[0], t[1], z + 0.03), speed=0.8)
-    arm.r.move_l(down(t[0], t[1], z + 0.002), speed=0.02)
-    arm.r.move_l(down(t[0], t[1], z - 0.0008), speed=0.005)     # set it on the rim, pressing lightly
-    step = math.radians(120)
-    for k in range(14):
-        st = truth()["caps"]["red"]
-        if st["on"] and st["seated"] and st["tightness_nm"] >= T.TIGHT_PASS:
-            break
-        arm.grip(force=255)
-        dz = -S.THREAD_PITCH * step / (2 * math.pi)
-        if st["on"] and st["seated"]:
-            dz = 0.0
-        arm.r.move_l(down(t[0], t[1], z + dz, -step / 2), speed=0.03)
-        z += dz
-        arm.release(CAP_GRIP - 30)
-        arm.r.move_l(down(t[0], t[1], z, step / 2), speed=0.05)
-    arm.release(CAP_GRIP - 30)
-    arm.r.move_l(down(t[0], t[1], SAFE_Z), speed=0.1)
 
 
 def quat_mat(q):
@@ -408,7 +324,7 @@ def b_t23(arm):
 
 
 BASELINES = {"T1": b_t1, "T3": b_t3, "T5": b_t5, "T7": b_t7, "T12": b_t12, "T18": b_t18,
-             "T19": b_t19, "T24": b_t24, "T25": b_t25, "T23": b_t23}
+             "T19": b_t19, "T23": b_t23}
 
 
 def run(task_id):
