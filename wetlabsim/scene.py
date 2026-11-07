@@ -2,8 +2,9 @@
 
 Two robots are available: a Franka Emika Panda with the Franka Hand (the default) and a
 UR5e with a Robotiq 2F-85. Pick one with WETLAB_ROBOT=franka|ur5e. The robot models come
-from MuJoCo Menagerie (see wetlabsim/assets/*/LICENSE). Everything else (bench, racks,
-tubes, cameras) is defined here.
+from MuJoCo Menagerie (see wetlabsim/assets/*/LICENSE). The tubes, racks and other
+lab items use AutoBio's meshes (wetlabsim/assets/autobio/NOTICE.md). Everything is laid
+out here.
 """
 from __future__ import annotations
 
@@ -19,24 +20,34 @@ ASSETS = pathlib.Path(__file__).parent / "assets"
 BENCH_HEIGHT = 0.90          # bench top, world z (m)
 ROBOT_BASE = (0.0, 0.0, BENCH_HEIGHT)
 
-# 15 ml conical tube (Falcon style), simplified to a cylinder with a cap.
-TUBE_RADIUS = 0.0085
-TUBE_HALF_LEN = 0.055
-CAP_RADIUS = 0.0095
-CAP_HALF_LEN = 0.006
+# Tubes, racks and the extra bench items use meshes from AutoBio (see
+# wetlabsim/assets/autobio/NOTICE.md). Collision shapes are simple: a tube is the convex
+# hull of its body mesh (so the conical tip is real and a dropped tube falls over) plus a
+# cylinder for the cap, which is fixed to the tube (no screw thread). Racks use AutoBio's
+# box proxies. Masses are mesh plastic volume x density: polypropylene 0.90 g/cm3 for
+# tube bodies and racks, HDPE 0.95 for caps, polystyrene 1.05 for the dish.
+AUTOBIO = ASSETS / "autobio"
 
-# Tube rack: 2 rows x 4 slots.
-RACK_ROWS, RACK_COLS = 2, 4
-SLOT = 0.024                 # inner slot width
-WALL = 0.006
-RACK_WALL_H = 0.045          # wall height above rack floor
-RACK_FLOOR = 0.006           # floor thickness
-PITCH = SLOT + WALL
+# 15 ml conical tube with screw cap: 16.8 mm wide, 122.6 mm tall with the cap.
+TUBE_RADIUS = 0.0084
+TUBE_HALF_LEN = 0.0613       # body frame is at the tube's middle
+CAP_RADIUS = 0.0113
+CAP_HALF_LEN = 0.0051
+TUBE_MASS, CAP_MASS = 0.0045, 0.0019
+
+# Tube rack (AutoBio's 205 x 96 x 60 mm centrifuge-tube rack), long side along the base
+# y axis: 15 ml holes in 3 rows x 6 columns on a 36 mm grid, with 2 x 5 bigger 50 ml
+# holes between them. Row 0 is nearest the robot, column 0 is on the robot's right.
+RACK_ROWS, RACK_COLS = 3, 6
+PITCH = 0.036
+RACK_HALF_H = 0.030          # rack body frame is at mid height
+RACK_FLOOR = 0.006           # top of the bottom plate, above the bench
+RACK_TOP = 0.060
 
 # Where the racks sit, in the robot base frame (x forward, y left, z up).
 RACKS = {
-    "rack_a": (0.45, -0.18),
-    "rack_b": (0.45, 0.18),
+    "rack_a": (0.45, -0.19),
+    "rack_b": (0.45, 0.19),
 }
 # Starting tubes: (rack, row, col, cap colour name, rgba)
 TUBES = [
@@ -45,49 +56,137 @@ TUBES = [
     ("rack_a", 1, 1, "green", (0.15, 0.7, 0.25, 1)),
 ]
 
+# Other things on the bench, out of the way at the back: (name, x, y). The 60-well rack
+# holds two 1.5 ml screw tubes; the 50 ml tube lies on its side.
+PLATE_60 = ("rack_60well", 0.74, -0.24)
+MICROTUBES = [("microtube_1", 0, 2), ("microtube_2", 1, 5)]   # (name, row, col) in the 60-well rack
+FALCON_50 = ("tube50_orange", 0.76, 0.06)
+DISH = ("petri_dish", 0.74, 0.28)
+
 
 def slot_center(rack: str, row: int, col: int) -> np.ndarray:
-    """Slot centre in robot base frame (x, y), top-of-floor z."""
+    """15 ml slot centre in robot base frame (x, y), top-of-floor z."""
     rx, ry = RACKS[rack]
     x = rx + (row - (RACK_ROWS - 1) / 2) * PITCH
     y = ry + (col - (RACK_COLS - 1) / 2) * PITCH
     return np.array([x, y, RACK_FLOOR])
 
 
+def _mesh(name: str, file: str) -> str:
+    return f'<mesh name="{name}" file="{AUTOBIO / file}" scale="0.001 0.001 0.001"/>'
+
+
+MESHES = "".join([
+    _mesh("tube15_body", "centrifuge_tube_15ml_body.STL"),
+    _mesh("tube15_cap", "centrifuge_tube_15ml_cap.STL"),
+    _mesh("tube50_body", "centrifuge_tube_50ml_body.STL"),
+    _mesh("tube50_cap", "centrifuge_tube_50ml_cap.STL"),
+    _mesh("micro_body", "centrifuge_1-5ml_screw_body.STL"),
+    _mesh("micro_cap", "centrifuge_1-5ml_screw_cap.STL"),
+    _mesh("rack_upper", "rack_upper_plane_visual.obj"),
+    _mesh("rack_lower", "rack_lower_plane_visual.obj"),
+    _mesh("rack_pillars", "rack_pillars_visual.obj"),
+    _mesh("plate60", "rack_plate_60well.obj"),
+    _mesh("dish", "cell_dish_100.obj"),
+])
+
+GRIP = 'condim="4" friction="1 0.01 0.001"'
+
+
+def _box(size, pos, extra=""):
+    return (f'<geom type="box" size="{size[0]:.5f} {size[1]:.5f} {size[2]:.5f}" '
+            f'pos="{pos[0]:.5f} {pos[1]:.5f} {pos[2]:.5f}" {extra}/>')
+
+
 def _rack_xml(name: str, x: float, y: float) -> str:
-    """A rack is a floor plate plus a grid of thin walls forming slots."""
-    w = RACK_ROWS * PITCH + WALL      # extent along x
-    l = RACK_COLS * PITCH + WALL      # extent along y
-    z0 = BENCH_HEIGHT
+    """AutoBio's rack: meshes to look at, boxes to collide with (its own proxy layout:
+    floor plate, outer walls and short walls between the holes). Turned 90 degrees so the
+    long side runs along y."""
+    hide = 'rgba="0 0 0 0" group="3"'
     parts = [
-        f'<geom name="{name}_floor" type="box" size="{w/2} {l/2} {RACK_FLOOR/2}" '
-        f'pos="0 0 {RACK_FLOOR/2}" material="rack"/>'
+        _box((0.1025, 0.048, 0.003), (0, 0, -0.027), hide),
+        _box((0.1025, 0.00175, 0.03), (0, 0.04625, 0), hide),
+        _box((0.1025, 0.00175, 0.03), (0, -0.04625, 0), hide),
+        _box((0.002, 0.048, 0.03), (0.1005, 0, 0), hide),
+        _box((0.002, 0.048, 0.03), (-0.1005, 0, 0), hide),
     ]
-    wz = RACK_FLOOR + RACK_WALL_H / 2
-    for i in range(RACK_ROWS + 1):     # walls running along y
-        px = -w / 2 + WALL / 2 + i * PITCH
-        parts.append(f'<geom type="box" size="{WALL/2} {l/2} {RACK_WALL_H/2}" pos="{px} 0 {wz}" material="rack"/>')
-    for j in range(RACK_COLS + 1):     # walls running along x
-        py = -l / 2 + WALL / 2 + j * PITCH
-        parts.append(f'<geom type="box" size="{w/2} {WALL/2} {RACK_WALL_H/2}" pos="0 {py} {wz}" material="rack"/>')
-    return f'<body name="{name}" pos="{x} {y} {z0}">' + "".join(parts) + "</body>"
+    for i in range(2):
+        for j in range(6):
+            parts.append(_box((0.003, 0.0095, 0.03), (-0.09 + 0.036 * j, -0.018 + 0.036 * i, 0), hide))
+    for i in range(3):
+        for j in range(5):
+            parts.append(_box((0.0095, 0.003, 0.03), (-0.072 + 0.036 * j, -0.036 + 0.036 * i, 0), hide))
+    for m in ("rack_upper", "rack_lower", "rack_pillars"):
+        parts.append(f'<geom type="mesh" mesh="{m}" material="rack" contype="0" conaffinity="0" group="1"/>')
+    return (f'<body name="{name}" pos="{x} {y} {BENCH_HEIGHT + RACK_HALF_H}" quat="0.7071068 0 0 0.7071068">'
+            + "".join(parts) + "</body>")
+
+
+def _screw_tube(name, pos, rgba, body_mesh, cap_mesh, top, cap_r, cap_t, body_mass, cap_mass,
+                half, quat="1 0 0 0", free=True):
+    """A capped tube with its body frame at mid height. top = cap top above the tube's tip."""
+    z0 = -half
+    r = " ".join(str(v) for v in rgba)
+    joint = f'<freejoint name="{name}_joint"/>' if free else ""
+    return (
+        f'<body name="{name}" pos="{pos[0]} {pos[1]} {pos[2]}" quat="{quat}">{joint}'
+        f'<geom name="{name}_body" type="mesh" mesh="{body_mesh}" pos="0 0 {z0}" material="tube" '
+        f'mass="{body_mass}" {GRIP}/>'
+        f'<geom type="mesh" mesh="{cap_mesh}" pos="0 0 {z0 + top}" euler="3.14159265 0 0" rgba="{r}" '
+        f'contype="0" conaffinity="0" mass="0" group="1"/>'
+        f'<geom name="{name}_cap" type="cylinder" size="{cap_r} {cap_t / 2}" pos="0 0 {z0 + top - cap_t / 2}" '
+        f'rgba="0 0 0 0" group="3" mass="{cap_mass}" {GRIP}/>'
+        f"</body>"
+    )
 
 
 def _tube_xml(i: int, rack: str, row: int, col: int, colour: str, rgba) -> str:
     c = slot_center(rack, row, col)
     z = BENCH_HEIGHT + RACK_FLOOR + TUBE_HALF_LEN + 0.0005
-    r = " ".join(str(v) for v in rgba)
-    return (
-        f'<body name="tube_{colour}" pos="{c[0]} {c[1]} {z}">'
-        f'<freejoint name="tube_{colour}_joint"/>'
-        f'<geom name="tube_{colour}_body" type="cylinder" size="{TUBE_RADIUS} {TUBE_HALF_LEN}" '
-        f'material="tube" mass="0.02" condim="4" friction="1 0.01 0.001"/>'
-        f'<geom name="tube_{colour}_cap" type="cylinder" size="{CAP_RADIUS} {CAP_HALF_LEN}" '
-        f'pos="0 0 {TUBE_HALF_LEN - CAP_HALF_LEN + 0.004}" rgba="{r}" mass="0.004" condim="4" friction="1 0.01 0.001"/>'
-        f'<geom type="cylinder" size="{TUBE_RADIUS*0.8} {TUBE_HALF_LEN*0.5}" pos="0 0 {-TUBE_HALF_LEN*0.45}" '
-        f'rgba="0.95 0.85 0.3 0.6" contype="0" conaffinity="0" mass="0"/>'
-        f"</body>"
-    )
+    return _screw_tube(f"tube_{colour}", (c[0], c[1], z), rgba, "tube15_body", "tube15_cap",
+                       0.1226, CAP_RADIUS, 2 * CAP_HALF_LEN, TUBE_MASS, CAP_MASS, TUBE_HALF_LEN)
+
+
+def _extras_xml() -> str:
+    """Bench items that aren't part of the starting task layout."""
+    bh = BENCH_HEIGHT
+    # 60-well rack for 1.5 ml tubes (197 x 72 x 21 mm), long side along y. Estimated 45 g:
+    # its mesh is a solid block, so the volume method would overstate it.
+    name, x, y = PLATE_60
+    walls = [((0.0985, 0.001, 0.0105), (0, -0.035, 0)), ((0.0985, 0.003, 0.0105), (0, 0.033, 0)),
+             ((0.0028, 0.036, 0.0105), (-0.0957, 0, 0)), ((0.001, 0.036, 0.0105), (0.0975, 0, 0))]
+    walls += [((0.0025, 0.032, 0.0105), (-0.0792 + 0.0162 * k, -0.002, 0)) for k in range(11)]
+    walls += [((0.0947, 0.001, 0.0105), (0.0018, -0.0218 + 0.0132 * k, 0)) for k in range(4)]
+    m = 0.045 / len(walls)
+    plate = (f'<body name="{name}" pos="{x} {y} {bh + 0.0105}" quat="0.7071068 0 0 0.7071068">'
+             f'<freejoint name="{name}_joint"/>'
+             + "".join(_box(s, p, f'mass="{m:.5f}" rgba="0 0 0 0" group="3"') for s, p in walls)
+             + '<geom type="mesh" mesh="plate60" rgba="0.2 0.35 0.75 1" contype="0" conaffinity="0" mass="0" group="1"/>'
+             + "</body>")
+    # 1.5 ml screw tubes standing in two of its wells (5 rows x 12 columns).
+    micro = ""
+    for mname, row, col in MICROTUBES:
+        lx, ly = -0.0873 + 0.0162 * col, 0.0244 - 0.0132 * row
+        micro += _screw_tube(mname, (x - ly, y + lx, bh + 0.0224 + 0.0005), (0.95, 0.75, 0.1, 1),
+                             "micro_body", "micro_cap", 0.04455, 0.0062, 0.0086, 0.00097, 0.00028, 0.0224)
+    # 50 ml conical tube lying on its side along y (body 29 mm wide; cap 35 mm).
+    fname, fx, fy = FALCON_50
+    falcon = _screw_tube(fname, (fx, fy, bh + 0.0176 + 0.001), (0.95, 0.45, 0.1, 1),
+                         "tube50_body", "tube50_cap", 0.11965, 0.0175, 0.0123, 0.0086, 0.0041, 0.0598,
+                         quat="0.7071068 0.7071068 0 0")
+    # 100 mm petri dish, polystyrene (23 g with its lid). AutoBio's proxy: base disc + 16 wall boxes.
+    dname, dx, dy = DISH
+    ring = "".join(
+        _box((0.00868, 0.00098, 0.009),
+             (0.04266 * np.sin(k * np.pi / 8), 0.04266 * np.cos(k * np.pi / 8), 0.011),
+             f'euler="0 0 {-k * np.pi / 8:.5f}" mass="0.0009" rgba="0 0 0 0" group="3"')
+        for k in range(16))
+    dish = (f'<body name="{dname}" pos="{dx} {dy} {bh + 0.0005}"><freejoint name="{dname}_joint"/>'
+            f'<geom type="cylinder" size="0.0445 0.001" pos="0 0 0.001" mass="0.0086" rgba="0 0 0 0" group="3"/>'
+            + ring
+            + '<geom type="mesh" mesh="dish" rgba="0.92 0.95 0.97 0.45" contype="0" conaffinity="0" mass="0" group="1"/>'
+            + "</body>")
+    return plate + micro + falcon + dish
 
 
 def _look_at_axes(pos, target, up=(0, 0, 1)):
@@ -107,7 +206,7 @@ def _look_at_axes(pos, target, up=(0, 0, 1)):
 def _world_xml(mount_quat: str) -> str:
     bh = BENCH_HEIGHT
     racks = "".join(_rack_xml(n, *p) for n, p in RACKS.items())
-    tubes = "".join(_tube_xml(i, *t) for i, t in enumerate(TUBES))
+    tubes = "".join(_tube_xml(i, *t) for i, t in enumerate(TUBES)) + _extras_xml()
     over_pos = (0.75, 0.0, bh + 1.0)
     side_pos = (1.35, -0.95, bh + 0.75)
     return f"""
@@ -126,6 +225,7 @@ def _world_xml(mount_quat: str) -> str:
     <material name="steel" rgba="0.6 0.62 0.65 1" specular="0.6"/>
     <material name="rack" rgba="0.95 0.95 0.97 1"/>
     <material name="tube" rgba="0.88 0.92 0.95 0.55" specular="0.8"/>
+    {MESHES}
   </asset>
   <worldbody>
     <light pos="0.4 0.3 3" dir="0 -0.1 -1" diffuse="0.45 0.45 0.45" specular="0.1 0.1 0.1" castshadow="true"/>

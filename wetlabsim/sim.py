@@ -499,7 +499,8 @@ class Sim:
             out = {}
             for i in range(self.m.nbody):
                 name = self.m.body(i).name
-                if name.startswith("tube_"):
+                j = self.m.body_jntadr[i]
+                if j >= 0 and self.m.jnt_type[j] == mujoco.mjtJoint.mjJNT_FREE:
                     p = self.to_base(self.d.xpos[i])
                     out[name] = {"pos": p.round(5).tolist(), "quat": self.d.xquat[i].round(5).tolist()}
             return {"time": round(self.d.time, 4), "objects": out}

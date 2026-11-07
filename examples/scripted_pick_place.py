@@ -24,16 +24,16 @@ def point_cloud(frame):
 def find_cap(frame, rgb_target):
     """Pixel centre of the cap closest in colour to rgb_target."""
     dist = np.abs(frame.rgb.astype(int) - np.array(rgb_target)).sum(axis=2)
-    v, u = np.nonzero(dist < 90)
+    v, u = np.nonzero(dist < 60)   # tight enough to skip the orange 50 ml cap
     return (float(u.mean()), float(v.mean())) if len(u) > 20 else None
 
 
 def rack_slots(pts, y_side):
-    """Slot centres of the rack on one side of the robot, from the tops of its walls
-    (4.5 cm high) and the catalogue grid (2 x 4 slots, 30 mm apart)."""
-    walls = pts[(np.abs(pts[..., 2] - 0.05) < 0.006) & (np.sign(pts[..., 1]) == y_side)]
-    cx, cy = (walls[:, 0].min() + walls[:, 0].max()) / 2, (walls[:, 1].min() + walls[:, 1].max()) / 2
-    return [(cx + (row - 0.5) * 0.03, cy + (col - 1.5) * 0.03) for row in range(2) for col in range(4)]
+    """15 ml hole centres of the rack on one side of the robot, from its top plate
+    (6 cm high, 205 x 96 mm) and the catalogue grid (3 x 6 holes, 36 mm apart)."""
+    top = pts[(np.abs(pts[..., 2] - 0.058) < 0.004) & (np.sign(pts[..., 1]) == y_side)]
+    cx, cy = (top[:, 0].min() + top[:, 0].max()) / 2, (top[:, 1].min() + top[:, 1].max()) / 2
+    return [(cx + (row - 1) * 0.036, cy + (col - 2.5) * 0.036) for row in range(3) for col in range(6)]
 
 
 r = Robot()

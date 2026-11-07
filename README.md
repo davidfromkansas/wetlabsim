@@ -6,7 +6,7 @@ A realistic, real-time robot cell for testing how well AI agents (Claude Code,
 Codex, Devin) can control a robot arm in a wet lab.
 
 A simulated **Franka Emika Panda arm** with its **Franka Hand gripper** stands on a lab bench with
-tube racks and 15 ml tubes. Physics runs in [MuJoCo](https://mujoco.org) and never
+tube racks, 15 ml tubes and other lab items. Physics runs in [MuJoCo](https://mujoco.org) and never
 pauses. Agents control the arm by writing Python against a robot API that mirrors
 real hardware. They only get what a real robot would have: camera images (with
 depth), joint readings, wrist force, and gripper status. Nobody tells them where the
@@ -58,7 +58,7 @@ cameras: `python examples/scripted_pick_place.py`.
 
 | Part | File | What it does |
 | --- | --- | --- |
-| Scene | `wetlabsim/scene.py` | Bench, racks, tubes, cameras, the arm and gripper (models from [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie)). |
+| Scene | `wetlabsim/scene.py` | Bench, racks, tubes, cameras, the arm and gripper (robot models from [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie), lab items from [AutoBio](https://github.com/autobio-bench/AutoBio)). |
 | Robot cell | `wetlabsim/sim.py`, `wetlabsim/server.py` | Real-time physics, the arm's motion controller, sensors, safety stops, cameras, and the live viewer. |
 | Robot API | `wetlabsim/robot.py` | What agents' code imports: `move_l`, `gripper_move`, `get_camera_frame`, and so on. |
 | Agent plug | `wetlabsim/mcp_server.py` | MCP tools so agents can look through the cameras, read the robot state, and hit stop. |
@@ -89,3 +89,15 @@ Scoring rules per task come next.
 - The true object positions are only available to the run recorder, via a token saved in `runs/.eval_token`. Agents aren't given it, but they run on your machine as you, so a determined agent could find it. Check transcripts when results look too good.
 - Agents run with permission to execute code. Run them on a machine you're comfortable with (the cloud machine is a good choice).
 - Robot models are © their authors under their own licences: see `wetlabsim/assets/*/LICENSE`.
+
+## Credits
+
+The tubes, tube racks, 60-well rack and petri dish are 3D models from **AutoBio**, used
+with credit (the AutoBio repository has no licence file). Details in
+[`wetlabsim/assets/autobio/NOTICE.md`](wetlabsim/assets/autobio/NOTICE.md).
+
+> Zhiqian Lan, Yuxuan Jiang, Ruiqi Wang, Xuanbing Xie, Rongkui Zhang, Yicheng Zhu,
+> Peihang Li, Tianshuo Yang, Tianxing Chen, Haoyu Gao, Xiaokang Yang, Xuelong Li,
+> Hongyuan Zhang, Yao Mu, Ping Luo. *AutoBio: A Simulation and Benchmark for Robotic
+> Automation in Digital Biology Laboratory.* arXiv:2505.14030, 2025.
+> https://github.com/autobio-bench/AutoBio

@@ -105,10 +105,14 @@ camera pose in the base frame (OpenCV axes: x right, y down, z forward).
 
 ## Equipment specs (from the catalogue)
 
-- **Tubes:** 15 ml conical tubes, about 17 mm wide and 12 cm tall, with a coloured
-  screw cap about 19 mm wide on top. They weigh about 25 g.
-- **Racks:** white tube racks with square slots about 24 mm wide on a 30 mm grid,
-  walls 4.5 cm tall.
+- **Tubes:** 15 ml conical tubes with a pointed bottom, about 17 mm wide and 12.3 cm
+  tall with the coloured screw cap on (cap about 23 mm wide, 10 mm tall). Empty, about
+  6.5 g. They don't stand up on their own.
+- **Racks:** white two-tier centrifuge-tube racks, 205 x 96 mm, 60 mm tall. The top
+  plate has 15 ml holes in 3 rows x 6 columns on a 36 mm grid, with bigger 50 ml holes
+  between them (2 x 5). A tube stands in a hole on the bottom plate.
+- **Other items on the bench:** a blue 60-well rack with two 1.5 ml tubes, a 50 ml
+  tube with an orange cap, and a 100 mm petri dish.
 - **Arm:** Franka Emika Panda, 7 joints, 855 mm reach, 3 kg payload.
 - **Gripper:** Franka Hand, parallel fingers, 80 mm stroke, 30-70 N continuous grip force, 50 mm/s per finger.
 
@@ -116,5 +120,5 @@ camera pose in the base frame (OpenCV axes: x right, y down, z forward).
 
 - Look before you move, and look again after each step to check it worked.
 - Approach from above, then move down slowly (0.05 to 0.1 m/s) near objects.
-- Grip tubes on the body, below the cap and above the rack walls.
+- Grip tubes on the body, below the cap and above the rack's top plate.
 - After grasping, check `object_detected` and the wrist force before lifting far.

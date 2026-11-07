@@ -21,8 +21,10 @@ ROBOTS = list(S.ROBOTS)
 def test_tubes_settle_in_racks(robot):
     s = Sim(robot=robot)
     gt = s.ground_truth()["objects"]
-    assert set(gt) == {f"tube_{c}" for *_, c, _ in S.TUBES}
-    for name, o in gt.items():
+    tubes = {f"tube_{c}" for *_, c, _ in S.TUBES}
+    assert tubes <= set(gt)
+    for name in tubes:
+        o = gt[name]
         assert abs(o["pos"][2] - (S.RACK_FLOOR + S.TUBE_HALF_LEN)) < 0.003, name
 
 
