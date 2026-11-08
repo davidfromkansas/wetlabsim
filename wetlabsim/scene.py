@@ -122,11 +122,46 @@ MESHES = "".join([
       ("beam_visual", "legs_visual", "beam_collision_0", "leg1_collision_0", "leg2_collision_0")],
 ])
 
-# Contacts on light items (a 6 g tube in a 70 N grip) are made hard: MuJoCo's default soft
-# contacts scale with mass, so a hard squeeze slowly sinks into a light object until it
-# pops out. Impedance near 1 removes that give without changing friction.
-LIGHT_SOL = 'solref="0.004 1" solimp="0.99 0.999 0.001" solmix="10"'
-GRIP = f'condim="4" friction="1 0.01 0.001" {LIGHT_SOL}'
+# Solver options (MuJoCo <option>), chosen on the physics panel.
+OPTION = dict(timestep=0.001, integrator="implicitfast", cone="elliptic", impratio=10,
+              tolerance=1e-10, noslip_iterations=2)
+FLAGS = dict(speculative="enable")
+
+# Contact properties by material, as MuJoCo default classes: every collision shape names
+# its material instead of carrying its own numbers, so the same material always behaves the
+# same. Unlisted attributes keep MuJoCo's defaults (solimp 0.9 0.95 0.001 0.5 2, solmix 1,
+# priority 0, margin 0, gap 0). solref 0.005 s is hard, as MuJoCo's tuning guide advises
+# for rigid objects; the rubber fingertip pads keep the softer default and, by priority,
+# decide every contact they're in, as a soft pad does against hard plastic.
+MATERIALS = {
+    "polypropylene": dict(condim=4, friction=(1, 0.005, 0.0001), solref=(0.005, 1)),  # tubes, caps, pipette, racks, stand
+    "polystyrene": dict(condim=3, friction=(1, 0.005, 0.0001), solref=(0.005, 1)),    # petri dishes
+    "rubber_pad": dict(condim=4, friction=(1, 0.05, 0.001), solref=(0.02, 1), priority=1),  # fingertip pads
+    "robot": dict(condim=3, friction=(1, 0.005, 0.0001), solref=(0.005, 1)),          # arm links, hand, finger shells
+    "bench": dict(condim=3, friction=(1, 0.005, 0.0001), solref=(0.005, 1)),          # bench top, legs, floor
+}
+_SOLIMP_DEFAULT = (0.9, 0.95, 0.001, 0.5, 2)
+GRIP = 'class="polypropylene"'
+
+
+def _xml_attrs(d):
+    return " ".join(f'{k}="{" ".join(str(x) for x in v) if isinstance(v, tuple) else v}"' for k, v in d.items())
+
+
+def _defaults_xml():
+    return ("<default>" + "".join(f'<default class="{n}"><geom {_xml_attrs(p)}/></default>'
+                                  for n, p in MATERIALS.items()) + "</default>")
+
+
+def _set_material(geom, name):
+    """Give a geom of an attached robot model the contact properties of a material."""
+    p = MATERIALS[name]
+    geom.condim = p["condim"]
+    geom.friction = list(p["friction"])
+    geom.solref = list(p["solref"])
+    geom.solimp = list(p.get("solimp", _SOLIMP_DEFAULT))
+    geom.solmix = p.get("solmix", 1.0)
+    geom.priority = p.get("priority", 0)
 
 
 def _box(size, pos, extra=""):
@@ -148,7 +183,7 @@ def _rack_xml(name: str, x: float, y: float) -> str:
     """AutoBio's rack: meshes to look at, boxes to collide with (its proxy layout: floor
     plate, outer walls and short walls between the holes, sized for HOLE15 and HOLE50).
     Turned 90 degrees so the long side runs along y."""
-    hide = 'rgba="0 0 0 0" group="3"'
+    hide = 'rgba="0 0 0 0" group="3" class="polypropylene"'
     r15 = HOLE15 / 2
     stub = PITCH / 2 - r15                      # half length of a wall between two 15 ml holes
     t50 = PITCH / 2 - HOLE50 / 2                # half thickness of the walls around a 50 ml hole
@@ -214,7 +249,7 @@ def _extras_xml() -> str:
     walls += [((0.0947, 0.001, 0.0105), (0.0018, -0.0218 + 0.0132 * k, 0)) for k in range(4)]
     m = 0.045 / len(walls)
     plate = (f'<body name="{name}"><freejoint name="{name}_joint"/>'
-             + "".join(_box(s, p, f'mass="{m:.5f}" rgba="0 0 0 0" group="3"') for s, p in walls)
+             + "".join(_box(s, p, f'mass="{m:.5f}" rgba="0 0 0 0" group="3" {GRIP}') for s, p in walls)
              + '<geom type="mesh" mesh="plate60" rgba="0.2 0.35 0.75 1" contype="0" conaffinity="0" mass="0" group="1"/>'
              + "</body>")
     # The 1.5 ml tube's mesh hull is 11.4 mm wide (it includes the lip under the thread),
@@ -230,10 +265,10 @@ def _extras_xml() -> str:
         ring = "".join(
             _box((0.00868, 0.00098, 0.009),
                  (0.04266 * np.sin(k * np.pi / 8), 0.04266 * np.cos(k * np.pi / 8), 0.011),
-                 f'euler="0 0 {-k * np.pi / 8:.5f}" mass="0.0009" rgba="0 0 0 0" group="3"')
+                 f'euler="0 0 {-k * np.pi / 8:.5f}" mass="0.0009" rgba="0 0 0 0" group="3" class="polystyrene"')
             for k in range(16))
         dishes += (f'<body name="{dname}"><freejoint name="{dname}_joint"/>'
-                   f'<geom type="cylinder" size="0.0445 0.001" pos="0 0 0.001" mass="0.0086" rgba="0 0 0 0" group="3"/>'
+                   f'<geom type="cylinder" size="0.0445 0.001" pos="0 0 0.001" mass="0.0086" rgba="0 0 0 0" group="3" class="polystyrene"/>'
                    + ring
                    + '<geom type="mesh" mesh="dish" rgba="0.92 0.95 0.97 0.45" contype="0" conaffinity="0" mass="0" group="1"/>'
                    + "</body>")
@@ -249,7 +284,7 @@ def _extras_xml() -> str:
     # Pipette stand (AutoBio's), fixed to the bench, beam along x.
     sx, sy = PIPETTE_STAND
     stand = (f'<body name="pipette_stand" pos="{sx} {sy} {BENCH_HEIGHT}">'
-             + "".join(f'<geom type="mesh" mesh="stand_{n}" rgba="0 0 0 0" group="3"/>'
+             + "".join(f'<geom type="mesh" mesh="stand_{n}" rgba="0 0 0 0" group="3" {GRIP}/>'
                        for n in ("beam_collision_0", "leg1_collision_0", "leg2_collision_0"))
              + "".join(f'<geom type="mesh" mesh="stand_{n}" material="rack" contype="0" conaffinity="0" group="1"/>'
                        for n in ("beam_visual", "legs_visual"))
@@ -280,7 +315,8 @@ def _world_xml(mount_quat: str) -> str:
     return f"""
 <mujoco model="wetlab_bench">
   <compiler angle="radian" autolimits="true"/>
-  <option timestep="0.002" integrator="implicitfast" cone="elliptic" impratio="10"/>
+  <option {_xml_attrs(OPTION)}><flag {_xml_attrs(FLAGS)}/></option>
+  {_defaults_xml()}
   <visual>
     <global offwidth="1280" offheight="960"/>
     <headlight ambient="0.2 0.2 0.2" diffuse="0.25 0.25 0.25" specular="0.05 0.05 0.05"/>
@@ -300,8 +336,8 @@ def _world_xml(mount_quat: str) -> str:
   <worldbody>
     <light pos="0.4 0.3 3" dir="0 -0.1 -1" diffuse="0.45 0.45 0.45" specular="0.1 0.1 0.1" castshadow="true"/>
     <light pos="-1 -1 2.5" dir="0.4 0.4 -1" diffuse="0.25 0.25 0.25" castshadow="false"/>
-    <geom name="floor" type="plane" size="4 4 0.1" material="floor"/>
-    <body name="bench" pos="0.35 0 0">
+    <geom name="floor" type="plane" size="4 4 0.1" material="floor" class="bench"/>
+    <body name="bench" pos="0.35 0 0" childclass="bench">
       <geom name="benchtop" type="box" size="0.55 0.6 0.02" pos="0 0 {bh-0.02}" material="benchtop"/>
       <geom type="box" size="0.03 0.03 {(bh-0.04)/2}" pos="0.5 0.55 {(bh-0.04)/2}" material="steel"/>
       <geom type="box" size="0.03 0.03 {(bh-0.04)/2}" pos="0.5 -0.55 {(bh-0.04)/2}" material="steel"/>
@@ -403,18 +439,24 @@ def _add_wrist_camera(body, cam_pos, target):
 
 def _match_options(*specs):
     for spec in specs:  # match the world's solver options so attaching is silent
-        spec.option.impratio = 10
+        spec.option.timestep = OPTION["timestep"]
+        spec.option.impratio = OPTION["impratio"]
+        spec.option.tolerance = OPTION["tolerance"]
+        spec.option.noslip_iterations = OPTION["noslip_iterations"]
         spec.option.cone = mujoco.mjtCone.mjCONE_ELLIPTIC
-        spec.option.integrator = mujoco.mjtIntegrator.mjINT_IMPLICITFAST
+        spec.option.integrator = getattr(mujoco.mjtIntegrator, "mjINT_" + OPTION["integrator"].upper())
+        if FLAGS.get("speculative") == "enable":
+            spec.option.enableflags |= mujoco.mjtEnableBit.mjENBL_SPECULATIVE
 
 
 def _franka(world):
     arm = mujoco.MjSpec.from_file(str(ASSETS / "franka_emika_panda" / "panda.xml"))
-    # Grippy finger pads that resist twisting, like the silicone pads on the UR's gripper.
+    # Fingertip pads are rubber; every other colliding shape is the robot's hard shell.
     for g in arm.geoms:
         if g.classname.name.startswith("fingertip_pad_collision"):
-            g.condim = 4
-            g.friction = [1.0, 0.05, 0.001]
+            _set_material(g, "rubber_pad")
+        elif g.contype or g.conaffinity:
+            _set_material(g, "robot")
     # Menagerie's hand servo is soft (100 N/m: about 1 N of squeeze on a tube), too weak to
     # hold or let go of things reliably. Stiffen it so the force limit decides the grip:
     # up to 70 N continuous, as on the real hand (the tendon force splits over both fingers).
@@ -443,12 +485,13 @@ def _ur5e(world):
     arm = mujoco.MjSpec.from_file(str(ASSETS / "universal_robots_ur5e" / "ur5e.xml"))
     grip = mujoco.MjSpec.from_file(str(ASSETS / "robotiq_2f85" / "2f85.xml"))
 
-    # Silicone finger pads: grippy, with some resistance to twisting (the stock
-    # pads let round tubes spin between the fingers).
-    for g in grip.geoms:
-        if g.classname.name in ("pad_box1", "pad_box2"):
-            g.condim = 4
-            g.friction = [1.0, 0.05, 0.001]
+    # Silicone finger pads are rubber; every other colliding shape is the robot's hard shell.
+    for spec in (arm, grip):
+        for g in spec.geoms:
+            if g.classname.name in ("pad_box1", "pad_box2"):
+                _set_material(g, "rubber_pad")
+            elif g.contype or g.conaffinity:
+                _set_material(g, "robot")
 
     # Force/torque sensing site where the gripper bolts onto the wrist flange.
     mount = grip.body("base_mount")
