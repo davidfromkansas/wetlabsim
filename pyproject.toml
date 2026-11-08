@@ -2,7 +2,7 @@
 name = "wetlabsim"
 version = "0.1.0"
 description = "Real-time MuJoCo wet lab robot cell for evaluating AI agents that control robot arms"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = ["mujoco>=4.0,<5", "numpy", "pillow", "mcp"]
 
 [project.scripts]
