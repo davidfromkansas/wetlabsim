@@ -134,7 +134,7 @@ FLAGS = dict(speculative="enable")
 # for rigid objects; the rubber fingertip pads keep the softer default and, by priority,
 # decide every contact they're in, as a soft pad does against hard plastic.
 MATERIALS = {
-    "polypropylene": dict(condim=4, friction=(1, 0.005, 0.0001), solref=(0.005, 1)),  # tubes, caps, pipette, racks, stand
+    "polypropylene": dict(condim=6, friction=(1, 0.005, 0.0001), solref=(0.005, 1)),  # tubes, caps, pipette, racks, stand
     "polystyrene": dict(condim=3, friction=(1, 0.005, 0.0001), solref=(0.005, 1)),    # petri dishes
     "rubber_pad": dict(condim=4, friction=(1, 0.05, 0.001), solref=(0.02, 1), priority=1),  # fingertip pads
     "robot": dict(condim=3, friction=(1, 0.005, 0.0001), solref=(0.005, 1)),          # arm links, hand, finger shells
