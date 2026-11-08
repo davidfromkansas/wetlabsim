@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0">
+<!-- MuJoCo physics settings for the wet lab bench. Live, editable copy (saves choices for Claude):
+     https://claude.ai/artifact/7rsi22YcN92XsCFDaWktDy . Opened from this file, the page is read-only. -->
+<title>Wet Lab Physics Panel</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the page follows MuJoCo's own model file: <option>, <flag>, <geom> per object, mass and inertia, <actuator>, <body>. One row per attribute, MuJoCo's name first, plain words underneath. */
+:root {
+  --bg: #f7f8f9; --surface: #ffffff; --surface-2: #f1f3f5; --line: #e4e7eb; --line-strong: #d3d8de;
+  --fg: #111418; --fg-2: #4a525c; --fg-3: #7a838d;
+  --accent: #0d7c86; --accent-soft: #e3f3f4;
+  --ok: #1f7a4a; --ok-soft: #e4f4ea; --warn: #9a5b07; --warn-soft: #fbf0dc; --risk: #b3261e; --risk-soft: #fbe7e5;
+  --future: #5b5bd6; --future-soft: #ececfb;
+  --body: "Geist", ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --ease: cubic-bezier(0.23, 1, 0.32, 1);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1113; --surface: #161a1d; --surface-2: #1d2226; --line: #262c31; --line-strong: #343b42;
+  --fg: #eef1f3; --fg-2: #aab3bb; --fg-3: #7d8790; --accent: #3fb8c2; --accent-soft: #12303a;
+  --ok: #5fcf8e; --ok-soft: #12291c; --warn: #e3a64a; --warn-soft: #2e2311; --risk: #f08279; --risk-soft: #331815;
+  --future: #9a9af2; --future-soft: #1f1f3a; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e1113; --surface: #161a1d; --surface-2: #1d2226; --line: #262c31; --line-strong: #343b42;
+  --fg: #eef1f3; --fg-2: #aab3bb; --fg-3: #7d8790; --accent: #3fb8c2; --accent-soft: #12303a;
+  --ok: #5fcf8e; --ok-soft: #12291c; --warn: #e3a64a; --warn-soft: #2e2311; --risk: #f08279; --risk-soft: #331815;
+  --future: #9a9af2; --future-soft: #1f1f3a; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 900px; margin: 0 auto; padding-block: 28px 150px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 28px; font-weight: 650; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.lede { color: var(--fg-2); max-width: 66ch; margin: 8px 0 0; }
+.lede code, .note-box code { font-family: var(--mono); font-size: 13px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12.5px; font-weight: 500; background: var(--surface-2); color: var(--fg-2); border: 1px solid var(--line); }
+.pill b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+.legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin: 20px 0 6px; }
+.legend div { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--fg-2); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 12px; margin-top: 18px; border-bottom: 1px solid var(--line); }
+.chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex: none; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--fg-2); font: 500 13px var(--mono); cursor: pointer; transition: background .2s var(--ease), color .2s var(--ease), transform .12s var(--ease); }
+.chip:active { transform: scale(0.97); }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.tools { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.search { flex: 1 1 220px; min-width: 0; height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font: 14px var(--body); }
+.seg { display: inline-flex; padding: 3px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--line); }
+.seg button { height: 26px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: var(--fg-2); font: 500 12.5px var(--body); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+section.group { margin-top: 36px; scroll-margin-top: 130px; }
+.group h2 { font-size: 19px; font-weight: 620; margin: 0; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.group h2 code { font-family: var(--mono); font-size: 15px; color: var(--accent); font-weight: 500; }
+.group > p { margin: 4px 0 0; color: var(--fg-2); font-size: 14px; max-width: 70ch; }
+.sub { margin-top: 18px; }
+.sub h3 { font-size: 15px; margin: 0 0 2px; font-weight: 600; }
+.sub > p { margin: 0; font-size: 13.5px; color: var(--fg-2); max-width: 70ch; }
+.list { margin-top: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 18px; padding: 14px 16px; border-top: 1px solid var(--line); transition: background .25s var(--ease); }
+.row:first-child { border-top: 0; }
+.row.changed { background: var(--accent-soft); }
+.row.locked { opacity: .7; }
+.name { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.name code { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--fg); }
+.plain { margin: 3px 0 0; color: var(--fg-2); font-size: 14px; max-width: 64ch; }
+.simple { margin: 4px 0 0; color: var(--fg); font-size: 15px; max-width: 64ch; }
+.simple + .plain { font-size: 13px; color: var(--fg-3); }
+.lbl { font-weight: 600; color: var(--fg-2); }
+.facts { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 12.5px; color: var(--fg-3); font-variant-numeric: tabular-nums; }
+.facts code { font-family: var(--mono); font-size: 12px; color: var(--fg-2); }
+.facts a { color: var(--accent); text-decoration: none; }
+.tag { height: 20px; padding: 0 7px; border-radius: 5px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; }
+.tag.changed-from-default { background: var(--surface-2); color: var(--fg-2); }
+.tag.wk { color: var(--risk); box-shadow: inset 0 0 0 1px var(--risk); }
+.tag.rec { background: var(--ok-soft); color: var(--ok); }
+.tag.future { background: var(--future-soft); color: var(--future); }
+.tag.debug { background: var(--warn-soft); color: var(--warn); }
+.tag.ours { background: var(--warn-soft); color: var(--warn); }
+.suggest { margin-top: 6px; font-size: 13px; color: var(--ok); display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+.suggest button { border: 0; background: none; color: var(--accent); font: 500 13px var(--body); padding: 0; cursor: pointer; }
+.ctrl { display: flex; align-items: flex-start; justify-content: flex-end; gap: 6px; flex-wrap: wrap; padding-top: 2px; }
+.reset { border: 0; background: none; color: var(--fg-3); font: 12px var(--body); cursor: pointer; padding: 6px 2px; visibility: hidden; }
+.row.changed .reset { visibility: visible; }
+.switch { position: relative; width: 44px; height: 26px; flex: none; border-radius: 999px; border: 0; background: var(--line-strong); cursor: pointer; transition: background .25s var(--ease); }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .3s var(--ease); }
+.switch[aria-checked="true"] { background: var(--accent); }
+.switch[aria-checked="true"]::after { transform: translateX(18px); }
+.switch:disabled { cursor: not-allowed; opacity: .5; }
+select, input.num { height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font: 13px var(--mono); padding: 0 8px; }
+input.num { width: 92px; text-align: right; }
+.vec { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.vec input.num { width: 70px; }
+select:focus, input.num:focus, .switch:focus-visible, .chip:focus-visible, .btn:focus-visible, .search:focus { outline: none; box-shadow: 0 0 0 3px var(--accent-soft); border-color: var(--accent); }
+.note-box { margin-top: 10px; padding: 12px 14px; border-radius: 10px; background: var(--surface-2); font-size: 13.5px; color: var(--fg-2); max-width: 74ch; }
+.note-box dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 6px 0 0; }
+.note-box dt { font-family: var(--mono); font-size: 12.5px; color: var(--fg); }
+.note-box dd { margin: 0; }
+.savebar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 8; padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); background: color-mix(in oklab, var(--surface) 92%, transparent); backdrop-filter: blur(12px); border-top: 1px solid var(--line); }
+.savebar-in { max-width: 900px; margin: 0 auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.status { flex: 1 1 200px; min-width: 0; font-size: 13.5px; color: var(--fg-2); }
+.status b { color: var(--fg); }
+.note { flex: 2 1 220px; min-width: 0; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font: 14px var(--body); }
+.btn { height: 36px; padding: 0 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font: 600 14px var(--body); cursor: pointer; transition: transform .12s var(--ease); }
+.btn:active { transform: scale(0.97); }
+.btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.toast { position: fixed; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); z-index: 9; transform: translate(-50%, 16px); opacity: 0; pointer-events: none; max-width: min(460px, calc(100vw - 32px)); padding: 12px 16px; border-radius: 10px; background: var(--fg); color: var(--bg); font-size: 14px; transition: transform .4s var(--ease), opacity .3s var(--ease); }
+.toast.show { transform: translate(-50%, 0); opacity: 1; }
+.empty { padding: 18px; color: var(--fg-3); }
+.foot { margin-top: 40px; color: var(--fg-3); font-size: 13px; max-width: 70ch; }
+@media (max-width: 640px) { .row { grid-template-columns: 1fr; } .ctrl, .vec { justify-content: flex-start; } h1 { font-size: 24px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Wet lab physics panel</h1>
+    <p class="lede">Every setting in our MuJoCo model, by its MuJoCo name, in the order MuJoCo's own model file uses: <code>&lt;option&gt;</code>, its <code>&lt;flag&gt;</code> switches, contact settings for each material (MuJoCo <code>&lt;default class&gt;</code>), collision shapes, mass and inertia, <code>&lt;actuator&gt;</code> and <code>&lt;body&gt;</code>. Each row shows MuJoCo's default, what the test branch runs and one line of plain English. Saving stores your choices; nothing changes in the simulator until Claude applies them on a separate branch, tests them and reports back.</p>
+    <div class="meta">
+      <span class="pill">Running <b>MuJoCo 4.0</b></span>
+      <span class="pill"><b id="m-count">0</b>&nbsp;settings</span>
+      <span class="pill" id="m-saved">Not saved yet</span>
+    </div>
+    <div class="legend">
+      <div><span class="tag changed-from-default">Not default</span><span>We run something other than MuJoCo's default.</span></div>
+      <div><span class="tag wk">Workaround</span><span>A value Claude picked by trial and error to hide a problem.</span></div>
+      <div><span class="tag rec">Suggested</span><span>A change Claude suggests testing, with the reason.</span></div>
+      <div><span class="tag future">New in 4.0</span><span>Did not exist in 3.17.</span></div>
+    </div>
+  </header>
+
+  <div class="bar">
+    <div class="chips" id="chips" role="toolbar" aria-label="Sections"></div>
+    <div class="tools">
+      <input class="search" id="q" type="search" placeholder="Search, e.g. solref, friction, timestep" aria-label="Search settings">
+      <div class="seg" role="group" aria-label="Show">
+        <button type="button" id="f-all" aria-pressed="true">All</button>
+        <button type="button" id="f-changed" aria-pressed="false">Changed</button>
+        <button type="button" id="f-rec" aria-pressed="false">Suggested</button>
+      </div>
+    </div>
+  </div>
+
+  <main id="groups"></main>
+
+  <p class="foot">Defaults and today's values are the values the test branch claude/physics-materials runs (Nov 8), with MuJoCo 4.0.0. Links go to the MuJoCo documentation. "Not MuJoCo settings" are parts of our own code, listed so nothing is hidden.</p>
+</div>
+
+<div class="savebar">
+  <div class="savebar-in">
+    <div class="status" id="status"><b>No changes</b> · edit any setting to start</div>
+    <input class="note" id="note" type="text" placeholder="Note for Claude (optional)" aria-label="Note for Claude">
+    <button class="btn" id="discard" type="button" disabled>Discard</button>
+    <button class="btn primary" id="save" type="button" disabled>Save for Claude</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const XML = "https://mujoco.readthedocs.io/en/latest/XMLreference.html#";
+const D = (a) => XML + a;
+const DEF_SOLREF = [0.02, 1], DEF_SOLIMP = [0.9, 0.95, 0.001, 0.5, 2], DEF_FRIC = [1, 0.005, 0.0001];
+const HARD = [0.005, 1];
+
+// One contact block per material (a MuJoCo default class), with the values the test branch runs.
+const MATERIALS = [
+  { g: "polypropylene", name: "Polypropylene: hard lab plastic", objects: "15 ml tubes and caps, 50 ml tube, 1.5 ml tube, pipette, tube racks A and B, 60-well rack, pipette stand", n: 106,
+    fric: [1, 0.005, 0.0001], condim: 6, solref: HARD, priority: 0 },
+  { g: "polystyrene", name: "Polystyrene: petri dishes", objects: "both petri dishes", n: 34, fric: [1, 0.005, 0.0001], condim: 3, solref: HARD, priority: 0 },
+  { g: "rubber_pad", name: "Rubber: fingertip pads", objects: "the Franka Hand's fingertip pads (5 blocks per finger)", n: 10, fric: [1, 0.05, 0.001], condim: 4, solref: DEF_SOLREF, priority: 1 },
+  { g: "robot", name: "Robot shell: metal and hard plastic", objects: "arm links, hand, finger outlines", n: 13, fric: DEF_FRIC, condim: 3, solref: HARD, priority: 0 },
+  { g: "bench", name: "Bench: laminate top, steel legs, floor", objects: "bench top, 4 legs, floor", n: 6, fric: DEF_FRIC, condim: 3, solref: HARD, priority: 0 },
+];
+
+function geomRows(G) {
+  const k = `material[${G.g}]`;
+  const rows = [
+    { id: `${k}/friction`, name: "friction", type: "vec", n: 3, labels: ["slide", "twist", "roll"], def: DEF_FRIC, cur: G.fric, doc: D("body-geom-friction"),
+      plain: "Grip: [sliding, twisting, rolling]. Sliding 1.0 is MuJoCo's default and a guess for our materials; a measurement would replace it." + (G.g === "polypropylene" ? " Rolling only counts with condim 6. Measured, 50 ml tube nudged at 20 cm/s: rolling 0.0001 rolls about 20–27 cm (barely brakes), 0.001 stops in 2 cm." : ""),
+      rec: G.g === "polypropylene" ? { value: [1, 0.005, 0.0005], why: "A realistic rolling resistance between the two measured values; a real tube rolled on a real bench would pin it down." } : null },
+    { id: `${k}/condim`, name: "condim", type: "select", options: ["1", "3", "4", "6"], def: "3", cur: String(G.condim), doc: D("body-geom-condim"),
+      plain: "Which kinds of friction are on: 1 none, 3 sliding, 4 adds twisting, 6 adds rolling.",
+      rec: null },
+    { id: `${k}/solref`, name: "solref", type: "vec", n: 2, labels: ["timeconst s", "dampratio"], def: DEF_SOLREF, cur: G.solref, doc: D("body-geom-solref"),
+      plain: "How fast an overlap is pushed apart (seconds) and how bouncy that is. Smaller time = harder. Must stay at least 2× the physics step. MuJoCo's guide: hard objects 0.004–0.01 s; the 0.02 default is like hard rubber. Negative numbers set a real stiffness and damping instead, which doesn't soften on very light objects." },
+    { id: `${k}/solimp`, name: "solimp", type: "vec", n: 5, labels: ["dmin", "dmax", "width m", "midpoint", "power"], def: DEF_SOLIMP, cur: DEF_SOLIMP, doc: D("body-geom-solimp"),
+      plain: "How firmly a contact resists being pushed in, from dmin (just touching) to dmax (pushed in by width). Near 1 is almost rigid; MuJoCo's guide calls raising it 'the weak lever'." },
+    { id: `${k}/solmix`, name: "solmix", type: "num", step: 1, def: 1, cur: 1, doc: D("body-geom-solmix"),
+      plain: "When two objects touch, how much this one's solref and solimp count in the blend. Ignored when one side has higher priority." },
+    { id: `${k}/priority`, name: "priority", type: "num", step: 1, def: 0, cur: G.priority, doc: D("body-geom-priority"),
+      plain: "When two objects touch, the higher priority object's contact settings are used outright instead of blended." },
+    { id: `${k}/margin`, name: "margin", type: "num", step: 0.0005, def: 0, cur: 0, doc: D("body-geom-margin"),
+      plain: "Distance (m) at which a contact starts being considered, before surfaces actually touch." },
+    { id: `${k}/gap`, name: "gap", type: "num", step: 0.0005, def: 0, cur: 0, doc: D("body-geom-gap"),
+      plain: "Part of the margin where the contact is tracked but exerts no force." },
+  ];
+  return rows.map(r => ({ ...r, sub: G.name, subId: G.g, count: G.n, objects: G.objects }));
+}
+
+const GROUPS = [
+ { id: "version", head: "MuJoCo version", plain: "Which release of the physics engine we run.", rows: [
+  { id: "mujoco/version", name: "mujoco 4.0.0", type: "note", doc: "https://mujoco.readthedocs.io/en/latest/changelog.html",
+    plain: "We now run 4.0.0 (upgraded Nov 7). Every default on this page is unchanged from 3.17; 4.0 adds one new switch, flag speculative. The earlier results stay reproducible under the git tag v1-mujoco-3.17." },
+  { id: "mujoco/v4_extras", name: "flex elasto-plasticity, Filament renderer (4.0)", type: "note", doc: D("flex-elasticity-yield"),
+    plain: "Also new in 4.0: objects that bend and stay bent (gloves, soft lids, a crushed tube), and a more realistic renderer. Not needed for the current tasks; noted for later." },
+ ]},
+ { id: "option", head: "<option>", plain: "Global physics settings: how time steps forward and how forces are solved each step.", rows: [
+  { id: "option/timestep", name: "timestep", type: "num", step: 0.0005, unit: "s", def: 0.002, cur: 0.001, doc: D("option-timestep"),
+    plain: "Length of one step. 0.001 s = 1000 steps per second of robot time. Smaller is more accurate and slower. Measured: the live cell still keeps up with real time at 1 ms." },
+  { id: "option/integrator", name: "integrator", type: "select", options: ["Euler", "RK4", "implicit", "implicitfast", "discrete"], def: "Euler", cur: "implicitfast", doc: D("option-integrator"),
+    plain: "The maths that moves everything forward one step. Tested Nov 8: with discrete plus noslip, the 15 ml tube slid out of a full grip (discrete's no-slip pass leaves out the finger tendon, as MuJoCo's docs warn). implicitfast held it best.",
+    rec: { value: "implicitfast", why: "discrete dropped the held tube in testing; implicitfast held it with 0.1 mm creep." } },
+  { id: "option/solver", name: "solver", type: "select", options: ["PGS", "CG", "Newton"], def: "Newton", cur: "Newton", doc: D("option-solver"),
+    plain: "The method that works out contact and joint forces each step. Newton is the most accurate." },
+  { id: "option/iterations", name: "iterations", type: "num", step: 10, def: 100, cur: 100, doc: D("option-iterations"),
+    plain: "Most attempts the solver makes per step." },
+  { id: "option/tolerance", name: "tolerance", type: "num", step: 1e-10, def: 1e-8, cur: 1e-10, doc: D("option-tolerance"),
+    plain: "How exact the solver must get before stopping early. Smaller = more precise." },
+  { id: "option/ls_iterations", name: "ls_iterations", type: "num", step: 5, def: 50, cur: 50, doc: D("option-ls-iterations"),
+    plain: "Inner search steps inside each solver attempt." },
+  { id: "option/ls_tolerance", name: "ls_tolerance", type: "num", step: 0.001, def: 0.01, cur: 0.01, doc: D("option-ls-tolerance"),
+    plain: "Exactness of that inner search." },
+  { id: "option/noslip_iterations", name: "noslip_iterations", type: "num", step: 1, def: 0, cur: 2, doc: D("option-noslip-iterations"),
+    plain: "Extra clean-up passes each step that cancel tiny sliding where friction should hold. MuJoCo's own fix for held objects creeping. Measured: creep 4.5 mm in 20 s without it, 0.1 mm with 2." },
+  { id: "option/noslip_tolerance", name: "noslip_tolerance", type: "num", step: 1e-7, def: 1e-6, cur: 1e-6, doc: D("option-noslip-tolerance"),
+    plain: "How exact those clean-up passes must get." },
+  { id: "option/cone", name: "cone", type: "select", options: ["pyramidal", "elliptic"], def: "pyramidal", cur: "elliptic", doc: D("option-cone"),
+    plain: "Shape of the friction model. Elliptic is the true round shape; pyramidal an approximation. MuJoCo suggests elliptic for grasping." },
+  { id: "option/impratio", name: "impratio", type: "num", step: 1, def: 1, cur: 10, doc: D("option-impratio"),
+    plain: "How much stiffer friction's hold is than the pressing contact. It doesn't change how grippy a surface is (that's friction); it reduces the slow give below that limit. Measured: creep 3.1 mm in 60 s at 1, 0.34 mm at 10. MuJoCo suggests raising it for grasping." },
+  { id: "option/jacobian", name: "jacobian", type: "select", options: ["auto", "dense", "sparse"], def: "auto", cur: "auto", doc: D("option-jacobian"),
+    plain: "Internal speed choice for the solver's maths. No effect on behaviour." },
+  { id: "option/ccd_iterations", name: "ccd_iterations", type: "num", step: 5, def: 35, cur: 35, doc: D("option-ccd-iterations"),
+    plain: "Search effort when two mesh shapes (tubes, caps, fingers) touch." },
+  { id: "option/ccd_tolerance", name: "ccd_tolerance", type: "num", step: 1e-7, def: 1e-6, cur: 1e-6, doc: D("option-ccd-tolerance"),
+    plain: "Exactness of that search." },
+  { id: "option/sdf_iterations", name: "sdf_iterations", type: "num", step: 1, def: 10, cur: 10, doc: D("option-sdf-iterations"),
+    plain: "Only for distance-field shapes (none in our scene now)." },
+  { id: "option/sdf_initpoints", name: "sdf_initpoints", type: "num", step: 10, def: 40, cur: 40, doc: D("option-sdf-initpoints"),
+    plain: "Only for distance-field shapes (none in our scene now)." },
+  { id: "option/gravity", name: "gravity", type: "vec", n: 3, labels: ["x", "y", "z"], unit: "m/s²", def: [0, 0, -9.81], cur: [0, 0, -9.81], doc: D("option-gravity"),
+    plain: "Earth gravity." },
+  { id: "option/density", name: "density", type: "num", step: 0.1, unit: "kg/m³", def: 0, cur: 0, doc: D("option-density"),
+    plain: "Density of the surrounding air. 0 = vacuum.",
+    rec: { value: 1.2, why: "Real air. A small effect, mostly on how a light cap or tube falls." } },
+  { id: "option/viscosity", name: "viscosity", type: "num", step: 0.00001, unit: "Pa·s", def: 0, cur: 0, doc: D("option-viscosity"),
+    plain: "Thickness of the surrounding air.",
+    rec: { value: 0.000018, why: "Real air, paired with density." } },
+  { id: "option/wind", name: "wind", type: "vec", n: 3, labels: ["x", "y", "z"], unit: "m/s", def: [0, 0, 0], cur: [0, 0, 0], doc: D("option-wind"),
+    plain: "Moving air. Only felt when density is above 0." },
+  { id: "option/o_margin", name: "o_margin, o_solref, o_solimp, o_friction", type: "note", doc: D("option-o-margin"),
+    plain: "Global contact overrides. They only apply when flag override is on, which would replace every object's own contact settings. Leave unused." },
+  { id: "option/sleep_tolerance", name: "sleep_tolerance", type: "num", step: 0.0001, def: 0.001, cur: 0.001, doc: D("option-sleep-tolerance"),
+    plain: "How still something must be to fall asleep. Only matters if flag sleep is on." },
+ ]},
+ { id: "flag", head: "<option><flag>", plain: "MuJoCo's on/off switches. The first ten are basic physics you'd only turn off when debugging; the next ten are speed, safety and collision options left on; then three measurement-only switches and five real behaviour choices.", rows: [
+  ...[["contact", "Objects touch at all."], ["constraint", "All constraints: contacts, limits, friction, welds."], ["limit", "Joints stop at their ends."],
+      ["equality", "Equality links (welds). None used in our scene now."], ["frictionloss", "Dry friction inside joints."], ["gravity", "Gravity acts."],
+      ["spring", "Joint springs."], ["damper", "Joint damping."], ["actuation", "Motors work."], ["sensor", "Sensors compute."]]
+     .map(([k, p]) => ({ id: "flag/" + k, name: k, type: "toggle", onLabel: "enable", def: true, cur: true, debug: true, doc: D("option-flag-" + k), plain: p + " Leave enabled." })),
+  ...[["warmstart", "Start each step's solver from the last answer. Faster and steadier."], ["filterparent", "A body doesn't collide with the body it hangs from. Needed for the arm."],
+      ["clampctrl", "Keep motor commands inside their allowed range."], ["refsafe", "Refuse contacts harder than the step allows (solref timeconst ≥ 2 × timestep)."],
+      ["midphase", "Fast pre-check before detailed collision. Speed only."], ["eulerdamp", "Stable damping with the Euler integrator. No effect with ours."],
+      ["autoreset", "Restart the simulation if numbers explode."], ["nativeccd", "MuJoCo's own convex collision code."], ["multiccd", "Several contact points between flat-sided shapes, not one. Helps tubes sit stably."],
+      ["island", "Solve separate groups of touching objects apart. Speed only."]]
+     .map(([k, p]) => ({ id: "flag/" + k, name: k, type: "toggle", onLabel: "enable", def: true, cur: true, doc: D("option-flag-" + k), plain: p })),
+  { id: "flag/override", name: "override", type: "toggle", onLabel: "enable", def: false, cur: false, doc: D("option-flag-override"), plain: "Use the o_ values for every contact, ignoring each object's own. Keep off." },
+  { id: "flag/energy", name: "energy", type: "toggle", onLabel: "enable", def: false, cur: false, doc: D("option-flag-energy"), plain: "Compute energy for diagnostics. No effect on behaviour." },
+  { id: "flag/fwdinv", name: "fwdinv", type: "toggle", onLabel: "enable", def: false, cur: false, doc: D("option-flag-fwdinv"), plain: "Compare forward and inverse dynamics. Diagnostics only." },
+  { id: "flag/invdiscrete", name: "invdiscrete", type: "toggle", onLabel: "enable", def: false, cur: false, doc: D("option-flag-invdiscrete"), plain: "Discrete-time inverse dynamics. Diagnostics only." },
+  { id: "flag/sleep", name: "sleep", type: "toggle", onLabel: "enable", def: false, cur: false, doc: D("option-flag-sleep"), plain: "Stop computing objects at rest until touched. Faster, but a light tube that should settle could freeze. Keep off for realism." },
+  { id: "flag/diagexact", name: "diagexact", type: "toggle", onLabel: "enable", def: false, cur: false, doc: D("option-flag-diagexact"), plain: "Compute one solver quantity exactly instead of approximately. May firm up contacts on very light objects." },
+  { id: "flag/ipc", name: "ipc", type: "toggle", onLabel: "enable", def: false, cur: false, doc: D("option-flag-ipc"), plain: "Experimental contact method that keeps objects from ever overlapping. New and slow; test only." },
+  { id: "flag/speculative", name: "speculative", type: "toggle", onLabel: "enable", def: false, cur: true, future: true, doc: D("option-flag-speculative"),
+    plain: "Predict contacts just before they happen instead of fixing overlaps afterwards. Measured: no visible effect on the grip and release checks; harmless." },
+ ]},
+ { id: "geom", head: "<default class> materials", plain: "How each material touches others. Every colliding shape in the scene names one of these MuJoCo default classes, so the same material always behaves the same, and a new object only needs its material. MuJoCo can't know how hard or grippy plastic and rubber are; these are the values we give it.", sub: true,
+   rows: MATERIALS.flatMap(geomRows) },
+ { id: "shape", head: "Collision shapes", plain: "Which shapes touch things. These are about geometry, not material.", rows: [
+  { id: "geom[fingershell]/contype+conaffinity", name: "contype / conaffinity (finger outlines)", type: "toggle", onLabel: "collides", def: true, cur: true, doc: D("body-geom-contype"),
+    plain: "Whether the coarse outline of each finger touches anything. Off = only the fingertip pads touch objects. Tested: turning it off alone did not fix the sticky 1.5 ml tube." },
+  { id: "geom[pads]/shape", name: "fingertip pad shape", type: "select", options: ["4 blocks + backing (Menagerie)", "real grooved fingertip (Franka drawing)"], def: "4 blocks + backing (Menagerie)", cur: "4 blocks + backing (Menagerie)", ours: true,
+    plain: "The real Franka fingertip (Franka Hand manual, section 5.2.6) is an 18 × 18 mm face with a cross-shaped V-groove, 110°, 1.95 mm deep, that centres round objects. The downloaded model copies it roughly as four square blocks with a straight-sided 5 mm slot. The 1.5 ml tube sticks in that slot's square corners when the hand opens (T19); the real sloped groove would let it slide out. Not built yet.",
+    rec: { value: "real grooved fingertip (Franka drawing)", why: "Matches Franka's drawing; the likely fix for the sticky 1.5 ml tube, with real-stiffness hardness." } },
+  { id: "geom[micro]/type", name: "geom type (1.5 ml tube)", type: "select", options: ["capsule", "mesh"], def: "mesh", cur: "capsule", wk: true, doc: D("body-geom-type"),
+    plain: "Collision shape. A capsule today, because the mesh (11.4 mm with its lip) didn't fit the 11.2 mm wells. The proper fix is checking both sizes against catalogue numbers." },
+ ]},
+ { id: "mass", head: "Mass and inertia", plain: "How heavy each object is and how that weight is spread through its shape.", rows: [
+  { id: "geom[tube15]/mass", name: "geom mass (15 ml tube, cap)", type: "vec", n: 2, labels: ["body g", "cap g"], def: null, cur: [4.5, 1.9], unit: "g", doc: D("body-geom-mass"),
+    plain: "Given directly: plastic volume of AutoBio's model × polypropylene 0.90 / HDPE 0.95 g/cm³. Weigh a real tube to confirm." },
+  { id: "geom[tube50]/mass", name: "geom mass (50 ml tube, cap)", type: "vec", n: 2, labels: ["body g", "cap g"], def: null, cur: [8.6, 4.1], unit: "g", doc: D("body-geom-mass"), plain: "Same method." },
+  { id: "geom[micro]/mass", name: "geom mass (1.5 ml tube, cap)", type: "vec", n: 2, labels: ["body g", "cap g"], def: null, cur: [0.97, 0.28], unit: "g", doc: D("body-geom-mass"), plain: "Same method." },
+  { id: "geom[dishes]/mass", name: "geom mass (petri dish)", type: "num", step: 1, def: null, cur: 23, unit: "g", doc: D("body-geom-mass"), plain: "Same method, polystyrene 1.05 g/cm³." },
+  { id: "geom[rack60]/mass", name: "geom mass (60-well rack)", type: "num", step: 1, def: null, cur: 45, unit: "g", doc: D("body-geom-mass"), plain: "Estimate: its 3D model is a solid block, so the volume method would be wrong." },
+  { id: "geom[pipette]/mass", name: "geom mass (pipette)", type: "num", step: 5, def: null, cur: 100, unit: "g", doc: D("body-geom-mass"), plain: "Estimate. Weigh a real pipette to confirm." },
+  { id: "mesh[tubes]/inertia", name: "mesh inertia (tube meshes)", type: "select", options: ["legacy", "convex", "exact", "shell"], def: "legacy", cur: "legacy", doc: D("asset-mesh-inertia"),
+    plain: "How MuJoCo spreads a mesh's mass: as a solid (legacy, convex, exact) or on its surface (shell).",
+    rec: { value: "shell", why: "A tube is a thin shell with its weight at the outside. Changes how it spins and rolls slightly." } },
+ ]},
+ { id: "actuator", head: "<actuator>", plain: "The motors. Values come from MuJoCo Menagerie's Franka model and Franka's datasheet.", rows: [
+  { id: "actuator[arm]/kp", name: "kp (arm joints 1–7)", type: "vec", n: 7, labels: ["1", "2", "3", "4", "5", "6", "7"], def: [4500, 4500, 3500, 3500, 2000, 2000, 2000], cur: [4500, 4500, 3500, 3500, 2000, 2000, 2000], doc: D("actuator-position-kp"),
+    plain: "Stiffness of each joint motor: how hard it pulls towards its target (N·m/rad). From the Menagerie model, unchanged." },
+  { id: "actuator[arm]/kv", name: "kv (arm joints 1–7)", type: "vec", n: 7, labels: ["1", "2", "3", "4", "5", "6", "7"], def: [450, 450, 350, 350, 200, 200, 200], cur: [450, 450, 350, 350, 200, 200, 200], doc: D("actuator-position-kv"),
+    plain: "Damping of each joint motor. Unchanged from Menagerie." },
+  { id: "actuator[arm]/forcerange", name: "forcerange (arm joints)", type: "vec", n: 2, labels: ["joints 1–4 N·m", "joints 5–7 N·m"], def: [87, 12], cur: [87, 12], doc: D("actuator-general-forcerange"),
+    plain: "Torque limits, matching Franka's datasheet." },
+  { id: "actuator[gripper]/kp", name: "kp (gripper, actuator8)", type: "num", step: 100, def: 100, cur: 3000, doc: D("actuator-position-kp"),
+    plain: "Finger motor stiffness (N/m). Menagerie's 100 squeezed only about 1 N, too weak to hold a tube; at 3000 the force limit decides the grip, like the real hand." },
+  { id: "actuator[gripper]/kv", name: "kv (gripper)", type: "num", step: 10, def: 10, cur: 150, doc: D("actuator-position-kv"),
+    plain: "Finger motor damping, raised with kp." },
+  { id: "actuator[gripper]/forcerange", name: "forcerange (gripper)", type: "num", step: 5, unit: "N", def: 100, cur: 140, doc: D("actuator-general-forcerange"),
+    plain: "Total squeeze limit. Each grip command picks 30–70 N per finger, from Franka's datasheet." },
+  { id: "actuator[all]/delay", name: "delay (actuators)", type: "num", step: 0.001, unit: "s", def: 0, cur: 0, doc: "https://mujoco.readthedocs.io/en/latest/modeling.html#cdelay",
+    plain: "How late motor commands take effect. Real robots are never instant. (actuator delay, with nsample and interp, added in MuJoCo 3.5.)",
+    rec: { value: 0.001, why: "Franka's control loop runs at 1 kHz, so about 1 ms." } },
+  { id: "sensor[ft]/delay", name: "delay (force/torque sensor)", type: "num", step: 0.001, unit: "s", def: 0, cur: 0, doc: "https://mujoco.readthedocs.io/en/latest/modeling.html#cdelay",
+    plain: "How late the wrist force reading arrives. (sensor delay, with nsample and interval.)",
+    rec: { value: 0.001, why: "About one control cycle, like the real robot." } },
+ ]},
+ { id: "body", head: "<body>", plain: "Settings on the robot's bodies.", rows: [
+  { id: "body[arm]/gravcomp", name: "gravcomp (arm links)", type: "num", step: 0.1, def: 0, cur: 1, doc: D("body-gravcomp"),
+    plain: "Cancels gravity on the arm's own links, as Franka's controller does. 1 = fully compensated." },
+ ]},
+ { id: "ours", head: "Not MuJoCo settings", plain: "Parts of our own code that also shape behaviour. Listed so nothing is hidden.", rows: [
+  { id: "ours/arm_control", name: "arm control", type: "select", options: ["stiff position", "compliant (impedance)"], def: "stiff position", cur: "stiff position", ours: true,
+    plain: "Stiff: the arm goes exactly where told. Compliant: it gives a little when pushed, like a real Franka set up for contact work. Compliant needs new controller code.",
+    rec: { value: "compliant (impedance)", why: "Closer to how a real Franka handles contact." } },
+  { id: "ours/reflex", name: "collision stop", type: "toggle", onLabel: "on", def: true, cur: true, ours: true,
+    plain: "Stop the arm when the wrist feels more than Franka's limits (−50 to 150 N up/down, ±100 N sideways, ±10 N·m)." },
+  { id: "ours/ft_noise", name: "force noise", type: "num", step: 0.005, unit: "N", def: 0.035, cur: 0.035, ours: true, plain: "Random noise on the wrist force reading, from Franka's datasheet." },
+  { id: "ours/ft_bias", name: "force offset until zeroed", type: "num", step: 0.1, unit: "N", def: 0.8, cur: 0.8, ours: true, plain: "Franka's stated accuracy, until the agent zeroes the sensor." },
+  { id: "ours/tracking_limit", name: "blocked-arm stop", type: "num", step: 0.05, unit: "rad", def: 0.25, cur: 0.25, ours: true, plain: "Stop the arm if a joint lags its target by more than this (it's pushing against something)." },
+ ]},
+];
+
+// Everyday-language description of each setting, by row id, or by the attribute name after the last "/".
+const SIMPLE = {
+  "option/timestep": "The simulator moves time forward in tiny jumps, like the frames of a film. This is how long each jump is. Shorter jumps give smoother, more accurate motion but make the computer work harder, so the bench may run slower than real time.",
+  "option/integrator": "The recipe the simulator follows to work out where everything will be after each jump. Some recipes are quicker; others stay steadier when things are stiff, like a tight grip.",
+  "option/solver": "The part that works out how hard things push on each other each jump: a tube on a finger, a rack on the bench. Like a referee settling every shove at once.",
+  "option/iterations": "How many attempts that referee gets each jump to settle all the pushes. More attempts can be more exact but slower. Rarely the limit for us.",
+  "option/tolerance": "How close to perfect the referee's answer must be before it stops. A smaller number is pickier: slightly more accurate, slightly slower.",
+  "option/ls_iterations": "Smaller attempts inside each big attempt. Like double-checking your arithmetic. Rarely matters.",
+  "option/ls_tolerance": "How picky those inner checks are. Rarely matters.",
+  "option/noslip_iterations": "Extra tidy-up passes each jump that stop things held by friction from slowly creeping, like a tube slipping down between fingers. 0 = off. Raising it to 1–3 makes grips hold firm; it costs a little speed.",
+  "option/noslip_tolerance": "How picky those tidy-up passes are. Leave as is.",
+  "option/cone": "The shape of friction's 'limit'. Elliptic is the realistic round version (same grip in every direction); pyramidal is a quicker, boxy approximation that grips a bit differently on diagonals.",
+  "option/impratio": "How firmly friction holds compared with how hard two things press together. Higher means a held tube gives and creeps less. It doesn't make surfaces grippier: a tube too heavy for the grip still slips.",
+  "option/jacobian": "A behind-the-scenes choice about how the maths is stored. Only changes speed, never what happens.",
+  "option/ccd_iterations": "How carefully the simulator works out exactly where two curved shapes touch (a round tube against a finger). Higher = more careful, slightly slower.",
+  "option/ccd_tolerance": "How precise that touch-point check must be. Smaller = more precise.",
+  "option/sdf_iterations": "Only for a special kind of shape (used for things like screw threads) that we don't have any more. Ignore.",
+  "option/sdf_initpoints": "Same as above: only for shapes we don't use now. Ignore.",
+  "option/gravity": "Which way is down and how strongly things fall. Set to Earth's gravity; there's no reason to change it.",
+  "option/density": "How thick the air is. 0 means no air at all, like space. 1.2 is normal room air; it slows falling things a tiny bit.",
+  "option/viscosity": "How 'syrupy' the air is. Real air is barely syrupy. Pairs with density; almost no effect at our sizes.",
+  "option/wind": "A steady breeze blowing across the bench. Only works if there's air (density above 0). A lab bench has none.",
+  "option/sleep_tolerance": "How still something must be before the simulator stops paying attention to it. Only used if the 'sleep' switch is on, and it's off.",
+  "flag/contact": "Lets objects bump into and rest on each other. Off = everything falls through everything, like ghosts.",
+  "flag/constraint": "Master switch for all the rules: touching, joints stopping at their ends, friction. Off = nothing holds together.",
+  "flag/limit": "Robot joints stop at their ends, like your elbow can't bend backwards.",
+  "flag/equality": "Lets two parts be locked together. We don't use any right now.",
+  "flag/frictionloss": "A little built-in stiffness inside the robot's joints, like a hinge that doesn't swing freely.",
+  "flag/gravity": "Things fall. Off = everything floats.",
+  "flag/spring": "Springy joints bounce back to where they started.",
+  "flag/damper": "Joints don't swing forever; motion slows down and settles, like a door closer.",
+  "flag/actuation": "The robot's motors work. Off = the robot goes limp.",
+  "flag/sensor": "The robot's sensors (like its wrist force sensor) give readings.",
+  "flag/warmstart": "Each jump starts from the last jump's answer, like picking up a puzzle where you left off. Faster and steadier.",
+  "flag/filterparent": "Robot parts that are joined together don't 'bump into' each other at the joint. Needed or the arm would fight itself.",
+  "flag/clampctrl": "Commands can't ask a motor for more than it can do, like a volume knob that stops at max.",
+  "flag/refsafe": "Stops anyone setting surfaces harder than the simulator can safely handle at this jump length. A safety rail.",
+  "flag/midphase": "A quick rough look before checking collisions carefully. Only saves time.",
+  "flag/eulerdamp": "Only matters for a different recipe (integrator) than ours. No effect for us.",
+  "flag/autoreset": "If the maths ever blows up, restart instead of crashing. A safety net.",
+  "flag/nativeccd": "Use MuJoCo's own built-in method for checking where curved shapes touch. The standard choice.",
+  "flag/multiccd": "Find several touch points between two shapes instead of one, so a tube lying down sits steady instead of wobbling.",
+  "flag/island": "Handle separate piles of objects separately. Only saves time.",
+  "flag/override": "Use one set of surface settings for every object, ignoring each object's own. Would wipe out all the per-object settings below. Keep off.",
+  "flag/energy": "Keep track of energy so we can check the maths. Changes nothing on the bench.",
+  "flag/fwdinv": "A self-check of the maths. Changes nothing on the bench.",
+  "flag/invdiscrete": "Another self-check of the maths. Changes nothing on the bench.",
+  "flag/sleep": "Stop simulating objects that are sitting still until something touches them. Faster, but a tube that should gently settle might freeze in place. Off = most realistic.",
+  "flag/diagexact": "Do one internal calculation exactly instead of estimating it. Might make very light objects (small tubes) behave a bit more solidly. Costs some speed.",
+  "flag/ipc": "A new, experimental way of making sure things never overlap at all. Slow. For testing only.",
+  "flag/speculative": "Look slightly ahead, so objects are stopped just before they would overlap instead of being pushed apart afterwards. Like braking before a wall instead of bouncing off it. New in 4.0.",
+  "geom[fingershell]/contype+conaffinity": "Whether the rough outline of each finger can touch things at all. Off = only the small rubber fingertip pads touch objects, like on the real hand.",
+  "contype+conaffinity": "Whether this part of the finger can touch things at all. Off = only the small rubber fingertip pads touch objects, like on the real hand.",
+  "friction": "How grippy the surface is, as three numbers: against sliding, against twisting, against rolling. Higher = grippier. Rubber is grippier than smooth plastic.",
+  "condim": "Which kinds of grip are switched on: 1 none (ice), 3 sliding only, 4 also twisting, 6 also rolling. More kinds = round things settle instead of spinning or rolling forever.",
+  "solref": "How hard the surface is, written as a time: how quickly it pushes back when pressed. Smaller = harder (like glass), larger = softer (like rubber). The first number can't be shorter than two physics jumps.",
+  "solimp": "How much the surface resists being pressed into. Numbers near 1 barely squish (hard plastic); lower numbers let things sink in a little (a sponge).",
+  "solmix": "When two surfaces touch, how much this one's hardness counts in the blend. Higher = this surface gets more of a say.",
+  "priority": "When two surfaces touch, the one with the higher number simply decides how the contact behaves, instead of blending the two.",
+  "margin": "How close two things must get before the simulator starts watching for a touch. 0 = only when they actually touch.",
+  "gap": "Part of that watching zone where nothing pushes yet. Usually 0.",
+  "mass": "How heavy the object is. Heavier things are harder to knock over and need a firmer grip to lift.",
+  "inertia": "How the weight is spread inside the shape: solid all the way through, or only in the walls like a real hollow tube. Changes how it spins and rolls.",
+  "shape": "The shape of each fingertip's gripping face. The real one is a flat square with a shallow V-shaped cross groove that centres round things; the model uses four square bumps with a straight slot between them.",
+  "type": "The simple shape the simulator uses for touching: a pill shape instead of the true tube outline. Easier, but less exact.",
+  "actuator[arm]/kp": "How strongly each joint motor pulls toward where it's told to go. Higher = stiffer, more exact arm; lower = floppier.",
+  "actuator[arm]/kv": "How much each joint motor resists moving fast, so the arm doesn't overshoot and wobble. Like a shock absorber.",
+  "actuator[arm]/forcerange": "The strongest twist each joint can give. Matches the real robot's limits.",
+  "actuator[gripper]/kp": "How strongly the fingers push toward their target. Higher = the fingers squeeze up to the force limit instead of feebly.",
+  "actuator[gripper]/kv": "How much the fingers resist snapping shut too fast, so they close smoothly.",
+  "actuator[gripper]/forcerange": "The hardest the hand can squeeze in total. The real Franka hand: 70 N continuous.",
+  "actuator[all]/delay": "How long before a command actually reaches the motors. Real robots are never instant; a tiny delay makes tight moves a little more realistic.",
+  "sensor[ft]/delay": "How long before the robot 'feels' a force at its wrist. Real sensors lag slightly.",
+  "body[arm]/gravcomp": "The arm holds up its own weight, so it doesn't sag, just like the real Franka's controller does. 1 = fully held up.",
+  "ours/arm_control": "Whether the arm goes exactly where told no matter what's in the way (stiff), or gives a little when it bumps something (compliant), like a careful human arm.",
+  "ours/reflex": "The arm freezes if it bumps into something too hard, like the real robot's safety stop.",
+  "ours/ft_noise": "A little random jitter in the wrist force reading, like any real sensor.",
+  "ours/ft_bias": "A small constant error in the force reading until the robot resets (zeroes) it, like a kitchen scale that needs taring.",
+  "ours/tracking_limit": "The arm freezes if it's clearly being blocked, i.e. falling well behind where it was told to be.",
+};
+const simple = (r) => SIMPLE[r.id] || SIMPLE[r.id.slice(r.id.lastIndexOf("/") + 1)] || "";
+
+const ALL = GROUPS.flatMap(g => g.rows.filter(r => r.type !== "note").map(r => ({ ...r, group: g.id })));
+const byId = Object.fromEntries(ALL.map(r => [r.id, r]));
+const state = Object.fromEntries(ALL.map(r => [r.id, clone(r.cur)]));
+let filter = "all", query = "", section = "all", db = null;
+
+function clone(v) { return Array.isArray(v) ? v.slice() : v; }
+function same(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+function fmt(v, r) {
+  if (v === null || v === undefined) return "computed from shape";
+  if (typeof v === "boolean") return v ? (r && r.onLabel ? r.onLabel : "on") : "off";
+  if (Array.isArray(v)) return v.map(x => fmtNum(x)).join(" ");
+  if (typeof v === "number") return fmtNum(v) + (r && r.unit ? " " + r.unit : "");
+  return String(v);
+}
+function fmtNum(x) { return Math.abs(x) > 0 && Math.abs(x) < 1e-3 ? x.toExponential(0) : String(+x.toPrecision(6)); }
+function changed(id) { return !same(state[id], byId[id].cur); }
+function notDefault(r) { return r.def !== null && r.def !== undefined && !same(r.cur, r.def); }
+function locked(r) { return r.needs && state[r.needs] === byId[r.needs].cur; }
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function control(r) {
+  const dis = locked(r) ? "disabled" : "", v = state[r.id], idc = "c-" + r.id.replace(/[^\w-]/g, "_");
+  if (r.type === "toggle") return `<button class="switch" type="button" role="switch" id="${idc}" data-id="${r.id}" aria-checked="${!!v}" aria-label="${esc(r.name)}" ${dis}></button>`;
+  if (r.type === "select") return `<select id="${idc}" data-id="${r.id}" aria-label="${esc(r.name)}" ${dis}>${r.options.map(o => `<option ${o == v ? "selected" : ""}>${o}</option>`).join("")}</select>`;
+  if (r.type === "num") return `<input class="num" id="${idc}" data-id="${r.id}" type="number" step="${r.step ?? "any"}" value="${v}" aria-label="${esc(r.name)}" ${dis}>`;
+  if (r.type === "vec") return `<div class="vec">${v.map((x, i) => `<input class="num" id="${idc}-${i}" data-id="${r.id}" data-i="${i}" type="number" step="any" value="${x}" title="${esc(r.labels?.[i] ?? "")}" aria-label="${esc(r.name)} ${esc(r.labels?.[i] ?? i)}" ${dis}>`).join("")}</div>`;
+  return "";
+}
+function rowHtml(r) {
+  if (r.type === "note") return `<div class="row"><div style="min-width:0"><div class="name"><code>${esc(r.name)}</code></div><p class="plain">${r.plain}</p><div class="facts"><a href="${r.doc}" target="_blank" rel="noopener">MuJoCo docs ↗</a></div></div><div></div></div>`;
+  const tags = [notDefault(r) && !r.ours ? `<span class="tag changed-from-default">Not default</span>` : "", r.wk ? `<span class="tag wk">Workaround</span>` : "",
+    r.rec ? `<span class="tag rec">Suggested</span>` : "", r.future ? `<span class="tag future">New in 4.0</span>` : "", r.debug ? `<span class="tag debug">Leave on</span>` : "",
+    r.ours ? `<span class="tag ours">Our code</span>` : ""].join("");
+  const rec = r.rec && !same(state[r.id], r.rec.value) ? `<div class="suggest"><span>Suggested: <code>${esc(fmt(r.rec.value, r))}</code>. ${r.rec.why}</span><button type="button" data-apply="${r.id}">Use this</button></div>` : "";
+  const lab = r.type === "vec" && r.labels ? `<span>Fields: ${r.labels.map(esc).join(" · ")}</span>` : "";
+  return `<div class="row ${changed(r.id) ? "changed" : ""} ${locked(r) ? "locked" : ""}" id="r-${r.id.replace(/[^\w-]/g, "_")}">
+    <div style="min-width:0">
+      <div class="name"><code>${esc(r.name)}</code>${tags}</div>
+      ${simple(r) ? `<p class="simple">${simple(r)}</p><p class="plain"><span class="lbl">In MuJoCo terms:</span> ${r.plain}</p>` : `<p class="plain">${r.plain}</p>`}
+      <div class="facts">${r.ours ? "" : `<span>MuJoCo default <code>${esc(fmt(r.def, r))}</code></span>`}<span>We run <code>${esc(fmt(r.cur, r))}</code>${r.unit && r.type !== "num" ? " " + r.unit : ""}</span>${lab}${r.doc ? `<a href="${r.doc}" target="_blank" rel="noopener">MuJoCo docs ↗</a>` : ""}${locked(r) ? `<span>Pick MuJoCo 4.0 first.</span>` : ""}</div>
+      ${rec}
+    </div>
+    <div class="ctrl">${control(r)}<button class="reset" type="button" data-reset="${r.id}">Undo</button></div>
+  </div>`;
+}
+function visible(r) {
+  if (section !== "all" && r.group !== section) return false;
+  if (filter === "changed" && !(r.type !== "note" && changed(r.id))) return false;
+  if (filter === "rec" && !(r.rec && !same(state[r.id], r.rec.value))) return false;
+  if (query) { const hay = (r.name + " " + r.id + " " + r.plain + " " + simple(r) + " " + (r.sub || "")).toLowerCase(); if (!query.split(/\s+/).every(w => hay.includes(w))) return false; }
+  return true;
+}
+function render() {
+  const out = GROUPS.map(g => {
+    const rows = g.rows.map(r => ({ ...r, group: g.id })).filter(r => r.type === "note" ? (section === "all" || section === g.id) && filter === "all" && !query : visible(byId[r.id] || r));
+    if (!rows.length) return "";
+    let body;
+    if (g.sub) {
+      const subs = [];
+      rows.forEach(r => { let s = subs.find(x => x.id === r.subId); if (!s) subs.push(s = { id: r.subId, name: r.sub, count: r.count, objects: r.objects, rows: [] }); s.rows.push(r); });
+      body = `<div class="note-box">Shared attributes, in plain words:<dl>
+        <dt>friction</dt><dd>grip: sliding, twisting, rolling</dd><dt>condim</dt><dd>which of those frictions are on</dd>
+        <dt>solref</dt><dd>how fast an overlap is pushed apart (hardness)</dd><dt>solimp</dt><dd>how firmly a contact resists being pushed in</dd>
+        <dt>solmix · priority</dt><dd>whose settings win when two objects touch</dd><dt>margin · gap</dt><dd>when a contact starts counting</dd></dl></div>` +
+        subs.map(s => `<div class="sub"><h3>${esc(s.name)}</h3><p>${s.count} shape${s.count > 1 ? "s" : ""}: ${esc(s.objects)}</p><div class="list">${s.rows.map(r => rowHtml(byId[r.id])).join("")}</div></div>`).join("");
+    } else body = `<div class="list">${rows.map(r => rowHtml(byId[r.id] || r)).join("")}</div>`;
+    return `<section class="group" id="g-${g.id}"><h2><code>${esc(g.head)}</code></h2><p>${g.plain}</p>${body}</section>`;
+  }).join("");
+  document.getElementById("groups").innerHTML = out || `<div class="list"><div class="empty">Nothing matches.</div></div>`;
+  wire(); updateBar();
+}
+function setVal(id, v, rerender) { state[id] = v; if (rerender) render(); else { const el = document.getElementById("r-" + id.replace(/[^\w-]/g, "_")); if (el) { el.classList.toggle("changed", changed(id)); } updateBar(); } }
+function wire() {
+  document.querySelectorAll(".switch[data-id]").forEach(b => b.onclick = () => setVal(b.dataset.id, !state[b.dataset.id], true));
+  document.querySelectorAll("select[data-id]").forEach(s => s.onchange = () => setVal(s.dataset.id, s.value, true));
+  document.querySelectorAll("input.num[data-id]").forEach(inp => inp.oninput = () => {
+    const n = parseFloat(inp.value); if (Number.isNaN(n)) return;
+    const id = inp.dataset.id;
+    if (inp.dataset.i !== undefined) { const v = state[id].slice(); v[+inp.dataset.i] = n; setVal(id, v); } else setVal(id, n);
+  });
+  document.querySelectorAll("[data-apply]").forEach(b => b.onclick = () => setVal(b.dataset.apply, clone(byId[b.dataset.apply].rec.value), true));
+  document.querySelectorAll("[data-reset]").forEach(b => b.onclick = () => setVal(b.dataset.reset, clone(byId[b.dataset.reset].cur), true));
+}
+function diffs() { return ALL.filter(r => changed(r.id)).map(r => ({ id: r.id, name: r.name, group: r.sub || r.group, from: r.cur, to: state[r.id] })); }
+function updateBar() {
+  const d = diffs();
+  document.getElementById("m-count").textContent = ALL.length;
+  document.getElementById("status").innerHTML = d.length ? `<b>${d.length} change${d.length > 1 ? "s" : ""}</b> · ${d.slice(0, 3).map(x => esc(x.name)).join(", ")}${d.length > 3 ? "…" : ""}` : `<b>No changes</b> · edit any setting to start`;
+  document.getElementById("discard").disabled = !d.length;
+  document.getElementById("save").disabled = !db || (!d.length && !document.getElementById("note").value.trim());
+}
+function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 3800); }
+
+const chips = document.getElementById("chips");
+chips.innerHTML = [`<button class="chip" type="button" data-sec="all" aria-pressed="true">all</button>`].concat(GROUPS.map(g => `<button class="chip" type="button" data-sec="${g.id}" aria-pressed="false">${esc(g.head)}</button>`)).join("");
+chips.querySelectorAll(".chip").forEach(b => b.onclick = () => { section = b.dataset.sec; chips.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", String(x === b))); render(); });
+[["f-all", "all"], ["f-changed", "changed"], ["f-rec", "rec"]].forEach(([id, f]) => document.getElementById(id).onclick = () => { filter = f; ["f-all", "f-changed", "f-rec"].forEach(x => document.getElementById(x).setAttribute("aria-pressed", String(x === id))); render(); });
+document.getElementById("q").oninput = (e) => { query = e.target.value.trim().toLowerCase(); render(); };
+document.getElementById("note").oninput = updateBar;
+document.getElementById("discard").onclick = () => { ALL.forEach(r => state[r.id] = clone(r.cur)); render(); toast("Back to what the simulator runs today."); };
+document.getElementById("save").onclick = async () => {
+  if (!db) return;
+  const btn = document.getElementById("save"); btn.disabled = true; btn.textContent = "Saving…";
+  const doc = { format: "mujoco-v3", values: state, changes: diffs(), note: document.getElementById("note").value.trim(), savedAt: new Date().toISOString(), mujoco: "4.0.0" };
+  try {
+    await db.doc("configs/latest").set(doc);
+    await db.collection("history").doc(doc.savedAt.replace(/[:.]/g, "-")).set(doc);
+    document.getElementById("m-saved").textContent = "Saved " + new Date(doc.savedAt).toLocaleString();
+    toast(doc.changes.length ? `Saved ${doc.changes.length} change${doc.changes.length > 1 ? "s" : ""}. Tell Claude "go" in chat to apply them.` : "Saved your note.");
+  } catch (e) { toast("Couldn't save: " + (e && e.message ? e.message : "try again in a moment") + "."); }
+  finally { btn.textContent = "Save for Claude"; updateBar(); }
+};
+render();
+(async () => {
+  try { db = await window.claude?.use?.("db"); } catch { db = null; }
+  if (!db) { updateBar(); return; }
+  try {
+    const snap = await Promise.race([db.doc("configs/latest").get(), new Promise((_, r) => setTimeout(() => r(new Error("timeout")), 10000))]);
+    const data = snap && snap.exists ? snap.data() : null;
+    if (data && /^mujoco-v[23]$/.test(data.format) && data.values) {
+      Object.entries(data.values).forEach(([k, v]) => { if (k in state) state[k] = v; });
+      document.getElementById("m-saved").textContent = "Saved " + new Date(data.savedAt).toLocaleString();
+      if (data.note) document.getElementById("note").value = data.note;
+      render();
+    }
+  } catch { /* first visit or offline */ }
+  updateBar();
+})();
+</script>
+
+</body></html>

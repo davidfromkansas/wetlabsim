@@ -84,6 +84,18 @@ Each run creates `runs/<date>-<agent>/` with:
 
 Scoring rules per task come next.
 
+## MuJoCo physics settings
+
+Every MuJoCo setting the bench uses, by its MuJoCo name, with MuJoCo's default, the value
+we run, a plain-English explanation and a link to the MuJoCo docs:
+[docs/physics-settings.html](docs/physics-settings.html) (open it in a browser). The live,
+editable copy, where choices are saved for Claude to apply, is
+[on claude.ai](https://claude.ai/artifact/7rsi22YcN92XsCFDaWktDy).
+
+In the code, contact properties are set per material (MuJoCo default classes) in
+`MATERIALS` in `wetlabsim/scene.py`, and solver options in `OPTION` and `FLAGS` there.
+`scripts/physics_checks.py` measures grip creep, release, sinking and speed after a change.
+
 ## Notes
 
 - The true object positions are only available to the run recorder, via a token saved in `runs/.eval_token`. Agents aren't given it, but they run on your machine as you, so a determined agent could find it. Check transcripts when results look too good.
