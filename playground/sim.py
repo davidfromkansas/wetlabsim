@@ -22,7 +22,20 @@ from . import libero as LB
 from . import world as W
 
 VIEW_W, VIEW_H = 1280, 800
+VIEW_PIXELS = VIEW_W * VIEW_H   # the main view keeps about this many pixels at any shape
+VIEW_MAX = (1920, 1200)         # the models' offscreen buffer (visual/global offwidth, offheight)
 FOVY = 45.0        # the free camera's vertical field of view (MuJoCo's default)
+
+# The free-play floor in the main view only: a dark grid whose lines glow and breathe, with
+# light streaks racing along the grid lines. The robot's own cameras keep the plain grid.
+TRON_PERIOD = 2.4               # s, one breath of the grid's glow
+TRON_GLOW = (0.35, 1.0)         # emission range of the grid lines
+TRON_STREAKS = 10
+TRON_SPEED = 1.2                # m/s
+TRON_RUN = 5.0                  # m a streak travels before it starts again elsewhere
+TRON_SPAN = 2.5                 # streaks run on grid lines within this many metres of the origin
+TRON_TAIL = [(0.15, 1.0), (0.25, 0.6), (0.35, 0.3)]   # (length m, alpha) of the head and its fading tail
+TRON_RGB = (0.1, 0.75, 1.0)
 
 
 class PlaygroundSim(Sim):
@@ -46,6 +59,7 @@ class PlaygroundSim(Sim):
         self._frame_cv = threading.Condition()
         self._viewers = 0
         self._last_view_req = 0.0
+        self.view_size = (VIEW_W, VIEW_H)       # rendered size of the main view, set to the page's box
 
     # ------------------------------------------------------------- scene
     def _make_model(self) -> mujoco.MjModel:
@@ -243,8 +257,18 @@ class PlaygroundSim(Sim):
         up = np.cross(right, fwd)
         return pos, fwd, right, up
 
-    def pixel_ray(self, u: float, v: float, aspect: float = VIEW_W / VIEW_H):
+    def set_view_size(self, w: float, h: float) -> tuple[int, int]:
+        """Render the main view in the shape of the page's box (w x h), at about VIEW_PIXELS."""
+        aspect = float(np.clip(w / max(h, 1.0), 0.4, 3.0))
+        hh = math.sqrt(VIEW_PIXELS / aspect)
+        ww = aspect * hh
+        k = min(1.0, VIEW_MAX[0] / ww, VIEW_MAX[1] / hh)
+        self.view_size = (int(ww * k) // 2 * 2, int(hh * k) // 2 * 2)
+        return self.view_size
+
+    def pixel_ray(self, u: float, v: float, aspect: float | None = None):
         """World ray through a point of the main view (u, v in 0..1 from the top left)."""
+        aspect = aspect or self.view_size[0] / self.view_size[1]
         pos, fwd, right, up = self._cam_frame()
         t = math.tan(math.radians(FOVY) / 2)
         d = fwd + (2 * u - 1) * t * aspect * right + (1 - 2 * v) * t * up
@@ -409,8 +433,47 @@ class PlaygroundSim(Sim):
             self._frame_cv.wait_for(lambda: self._frame[0] > after, timeout)
             return self._frame
 
+    @staticmethod
+    def _tron_streaks(t: float) -> list[dict]:
+        """Light streaks on the floor's grid lines (10 cm apart), each with a fading tail."""
+        out = []
+        cells = int(TRON_SPAN / 0.1)
+        for i in range(TRON_STREAKS):
+            run = TRON_RUN / TRON_SPEED
+            k, phase = divmod(t / run + i / TRON_STREAKS, 1.0)
+            rng = np.random.default_rng((i, int(k)))
+            line = 0.1 * int(rng.integers(-cells, cells + 1))
+            along_x = bool(rng.integers(2))
+            sign = 1.0 if rng.integers(2) else -1.0
+            head = sign * (phase * TRON_RUN - TRON_RUN / 2)
+            back = 0.0
+            for length, alpha in TRON_TAIL:
+                c = head - sign * (back + length / 2)
+                back += length
+                x, y = (c, line) if along_x else (line, c)
+                out.append({"type": "box", "size": [length / 2, 0.007, 0.0005], "pos": [x, y, 0.0006],
+                            "yaw": 0.0 if along_x else math.pi / 2, "rgba": [*TRON_RGB, alpha], "glow": 1.0})
+        return out
+
+    def _tron_floor(self, sc, m, t: float):
+        mat = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_MATERIAL, "tron")
+        floor = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, "floor")
+        if mat < 0 or floor < 0:
+            return
+        lo, hi = TRON_GLOW
+        glow = lo + (hi - lo) * (0.5 - 0.5 * math.cos(2 * math.pi * t / TRON_PERIOD))
+        for i in range(sc.ngeom):
+            g = sc.geoms[i]
+            if g.objtype == mujoco.mjtObj.mjOBJ_GEOM and g.objid == floor:
+                g.matid = mat
+                g.texid = int(m.mat_texid[mat, mujoco.mjtTextureRole.mjTEXROLE_RGB])
+                g.rgba[:] = m.mat_rgba[mat]
+                g.emission = glow
+                g.reflectance = float(m.mat_reflectance[mat])
+                break
+
     def _view_loop(self):
-        ver, r, rd = None, None, None
+        ver, r, rd, size = None, None, None, None
         types = {"box": mujoco.mjtGeom.mjGEOM_BOX, "cylinder": mujoco.mjtGeom.mjGEOM_CYLINDER}
         opt = mujoco.MjvOption()
         seq = 0
@@ -420,25 +483,34 @@ class PlaygroundSim(Sim):
                 continue
             t0 = time.perf_counter()
             with self.lock:
-                if ver != self._model_ver:
-                    ver, m = self._model_ver, self.m
+                if ver != self._model_ver or size != self.view_size:
+                    ver, m, size = self._model_ver, self.m, self.view_size
                     rd = mujoco.MjData(m)
                     if r is not None:
                         r.close()
-                    r = mujoco.Renderer(m, VIEW_H, VIEW_W)
+                    r = mujoco.Renderer(m, size[1], size[0])
                 rd.qpos[:] = self.d.qpos
                 rd.time = self.d.time
+                tron = self.scene_mode == "free"
             mujoco.mj_kinematics(m, rd)
             mujoco.mj_camlight(m, rd)
             r.update_scene(rd, camera=self.view, scene_option=opt)
             sc = r.scene
-            for g in self.overlay + self._selection_overlay():
+            now = time.time()
+            shapes = self.overlay + self._selection_overlay()
+            if tron:
+                self._tron_floor(sc, m, now)
+                shapes = self._tron_streaks(now) + shapes
+            sc.flags[mujoco.mjtRndFlag.mjRND_SKYBOX] = not tron
+            sc.flags[mujoco.mjtRndFlag.mjRND_FOG] = tron
+            for g in shapes:
                 if sc.ngeom >= sc.maxgeom:
                     break
                 mat = np.zeros(9)
                 mujoco.mju_quat2Mat(mat, np.array(W.yaw_quat(g["yaw"])))
                 mujoco.mjv_initGeom(sc.geoms[sc.ngeom], types[g["type"]], np.array(g["size"], float),
                                     np.array(g["pos"], float), mat, np.array(g["rgba"], np.float32))
+                sc.geoms[sc.ngeom].emission = g.get("glow", 0.0)
                 sc.ngeom += 1
             img = r.render()
             buf = io.BytesIO()

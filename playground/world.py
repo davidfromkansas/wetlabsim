@@ -65,7 +65,8 @@ def _world_xml() -> str:
     <global offwidth="1920" offheight="1200" azimuth="150" elevation="-25"/>
     <headlight ambient="0.5 0.5 0.5" diffuse="0.3 0.3 0.3" specular="0.05 0.05 0.05"/>
     <quality shadowsize="4096"/>
-    <map znear="0.01" zfar="50"/>
+    <map znear="0.01" zfar="50" fogstart="0.8" fogend="2.2"/>
+    <rgba fog="0 0 0 1"/>
   </visual>
   <asset>
     <texture name="grid" type="2d" builtin="checker" mark="edge" rgb1="0.975 0.975 0.965"
@@ -73,6 +74,10 @@ def _world_xml() -> str:
     <texture name="sky" type="skybox" builtin="gradient" rgb1="0.99 0.99 0.985" rgb2="0.93 0.94 0.95"
              width="256" height="1536"/>
     <material name="grid" texture="grid" texrepeat="10 10" texuniform="true" reflectance="0"/>
+    <!-- the main view's floor in free play (sim.py swaps it in there only): Tron's glowing grid -->
+    <texture name="tron" type="2d" builtin="checker" mark="edge" rgb1="0.015 0.025 0.05"
+             rgb2="0.015 0.025 0.05" markrgb="0.15 0.85 1.0" width="64" height="64"/>
+    <material name="tron" texture="tron" texrepeat="10 10" texuniform="true" reflectance="0.12"/>
   </asset>
   <worldbody>
     <light pos="0.5 -1.0 4" dir="-0.1 0.25 -1" diffuse="0.5 0.5 0.5" specular="0.1 0.1 0.1" castshadow="true"/>

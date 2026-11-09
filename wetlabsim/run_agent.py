@@ -212,7 +212,7 @@ def main(argv=None):
     ap.add_argument("--model", help="optional model name passed to the CLI")
     ap.add_argument("--batch", help="a name grouping runs for the results page, e.g. opus-group1")
     ap.add_argument("--try", dest="attempt", type=int, help="which try of this task in the batch (1, 2, ...)")
-    ap.add_argument("--time-limit", type=float, default=900, help="seconds before the agent is stopped")
+    ap.add_argument("--time-limit", type=float, default=900, help="seconds before the agent is stopped (0: no limit)")
     ap.add_argument("--url", default=os.environ.get("WETLAB_ROBOT_URL", "http://127.0.0.1:8765"))
     ap.add_argument("--runs", default="runs")
     ap.add_argument("--site-file", help="a site sheet to give the agent instead of the bench's SITE.md")
@@ -337,7 +337,7 @@ def main(argv=None):
         hooks_reader = threading.Thread(target=tail_hooks, daemon=True)
         hooks_reader.start()
         try:
-            proc.wait(timeout=args.time_limit)
+            proc.wait(timeout=args.time_limit if args.time_limit > 0 else None)
         except subprocess.TimeoutExpired:
             # Ask the agent to stop first so it can save its trace (Devin writes its export
             # on exit), then force it after a grace period.

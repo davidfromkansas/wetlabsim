@@ -34,7 +34,8 @@ from .sim import PlaygroundSim
 
 HERE = pathlib.Path(__file__).parent
 PAGE = HERE / "static" / "index.html"
-TIME_LIMIT = 180.0     # seconds: a run that hasn't finished by then is stopped
+TIME_LIMIT = 180.0     # seconds: a LIBERO run that hasn't finished by then is stopped
+FREE_TIME_LIMIT = 0.0  # free play: no limit (0), the run goes until it finishes or is stopped
 
 MODELS = [
     {"id": "claude", "label": "Claude Opus 5.5", "via": "Claude Code", "agent": "claude", "model": "opus",
@@ -134,7 +135,7 @@ class PGHandler(Handler):
             if p == "/pg/catalog":
                 return self._json({"tabs": catalog.TABS, "items": catalog.available(), "robots": catalog.ROBOTS,
                                    "models": [{k: m[k] for k in ("id", "label", "via", "provider")} for m in MODELS],
-                                   "time_limit": TIME_LIMIT})
+                                   "time_limit": TIME_LIMIT, "free_time_limit": FREE_TIME_LIMIT})
             if p.startswith("/pg/thumb/"):
                 f = catalog.ASSETS / pathlib.Path(p).stem / "thumb.png"
                 if f.is_file():
@@ -189,6 +190,9 @@ class PGHandler(Handler):
                 if "preset" in b:
                     self._camera_preset(b["preset"])
                 return self._json({"ok": True})
+            if p == "/pg/viewsize":
+                w, h = s.set_view_size(float(b["w"]), float(b["h"]))
+                return self._json({"ok": True, "w": w, "h": h})
             if p == "/pg/probe":
                 lock = self._locked()
                 if lock:
@@ -270,7 +274,7 @@ class PGHandler(Handler):
                     s.selected = None
                     s.play()
                     st = self.runner.start(task, b.get("model", "claude"), site.site_sheet(s.placed),
-                                           float(b.get("time_limit", TIME_LIMIT)))
+                                           float(b.get("time_limit", FREE_TIME_LIMIT)))
                     return self._json({"ok": True, "run": st})
                 s.play()
                 return self._json({"ok": True, "run": self.runner.status()})

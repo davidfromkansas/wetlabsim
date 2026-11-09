@@ -162,7 +162,7 @@ body.lib #right #chatpane{display:flex!important}
         <label for="task" style="font-size:13px;font-weight:600;color:var(--ink)">Task for the Franka Panda</label>
         <textarea id="task" rows="5" placeholder="Tell this robot what to do, in plain words. Example: put the apple in the bowl."></textarea>
         <div style="display:flex;flex-direction:column;gap:4px"><label for="model" class="small" style="font-weight:600">AI model</label><select id="model"></select></div>
-        <div class="note"><b style="color:var(--ink)">What the AI gets</b><br>Your task, the Franka's manuals, a site sheet naming what's in the scene (not where), its two cameras and its sensors. It writes code to move the robot. It has <span id="limitTxt">3 minutes</span>.</div>
+        <div class="note"><b style="color:var(--ink)">What the AI gets</b><br>Your task, the Franka's manuals, a site sheet naming what's in the scene (not where), its two cameras and its sensors. It writes code to move the robot. <span id="limitTxt">There's no time limit: it runs until it finishes or you stop it.</span></div>
         <button class="primary" id="startBtn">Play · start the task</button>
         <p class="small" style="margin:0">Pausing freezes physics; the robot waits. Runs use your own Claude Code or Codex login.</p>
       </div>
@@ -225,14 +225,14 @@ const api = async (path, body) => {
   const r = await fetch(path, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
   return r.json();
 };
-const S = {cat: null, tab: 'Kitchen', search: '', scene: null, armed: null, sel: 'robot', traceN: 0, runKey: null, model: 'claude'};
+const S = {viewW: 1280, viewH: 800, cat: null, tab: 'Kitchen', search: '', scene: null, armed: null, sel: 'robot', traceN: 0, runKey: null, model: 'claude'};
 const view = $('view'), stage = $('stage');
 const LIBHINT = 'Drag an object onto the scene, or click it and then click where it should go. It lands on whatever is under it.';
 
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast.h); toast.h = setTimeout(() => t.style.display = 'none', 2600); }
 function uv(e) {
   // image is object-fit: contain; map to the rendered frame
-  const r = view.getBoundingClientRect(), ar = 1280 / 800;
+  const r = view.getBoundingClientRect(), ar = S.viewW / S.viewH;
   let w = r.width, h = r.height, ox = 0, oy = 0;
   if (w / h > ar) { w = h * ar; ox = (r.width - w) / 2; } else { h = w / ar; oy = (r.height - h) / 2; }
   return {u: (e.clientX - r.left - ox) / w, v: (e.clientY - r.top - oy) / h, x: e.clientX - stage.getBoundingClientRect().left, y: e.clientY - stage.getBoundingClientRect().top};
@@ -433,8 +433,8 @@ function render() {
   $('stopBtn').style.display = active ? '' : 'none';
   $('newTaskBtn').style.display = active ? 'none' : '';
   if (run.started) {
-    const left = Math.max(0, run.time_limit - run.elapsed);
-    $('runStatus').textContent = active ? `Working · ${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')} left` : ({finished: 'Finished', error: 'The AI stopped with an error', stopped: 'Stopped'}[run.status] || run.status);
+    const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+    $('runStatus').textContent = active ? (run.time_limit > 0 ? `Working · ${mmss(Math.max(0, run.time_limit - run.elapsed))} left` : `Working · ${mmss(run.elapsed)}`) : ({finished: 'Finished', error: 'The AI stopped with an error', stopped: 'Stopped'}[run.status] || run.status);
     const m = run.model || {}; $('chatLogo').src = m.provider === 'openai' ? '/static/openai.svg' : '/static/anthropic.svg';
     if (!$('chatModel').dataset.set) $('chatModel').textContent = m.label || '';
   }
@@ -543,9 +543,17 @@ $('lStop').onclick = async () => { await api('/pg/libero/stop', {}); refresh(); 
   const items = S.cat.items;
   for (const it of items) { it.collision = it.collision || ''; }
   $('lModel').innerHTML = $('model').innerHTML = S.cat.models.map(m => `<option value="${m.id}">${m.label} · ${m.via}</option>`).join('');
-  $('limitTxt').textContent = Math.round(S.cat.time_limit / 60) + ' minutes';
   renderTabs(); renderItems();
   view.onload = () => $('loading').style.display = 'none';
+  // Render the main view in the shape of its box, so it fills it with no bands.
+  const fit = async () => {
+    const r = stage.getBoundingClientRect();
+    if (r.width < 10 || r.height < 10) return;
+    const v = await api('/pg/viewsize', {w: r.width, h: r.height});
+    if (v.ok) { S.viewW = v.w; S.viewH = v.h; }
+  };
+  new ResizeObserver(() => { clearTimeout(fit.h); fit.h = setTimeout(fit, 150); }).observe(stage);
+  await fit();
   view.src = '/pg/view.mjpg';
   $('camOver').src = '/stream/overhead.mjpg?fps=4';
   $('camWrist').src = '/stream/wrist.mjpg?fps=4';
