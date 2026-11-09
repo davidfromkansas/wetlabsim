@@ -76,7 +76,7 @@ async function live() {
   try {
     const d = await (await fetch('/api/live')).json();
     const rows = [];
-    for (const lab of d.labs) for (const r of lab.runs) rows.push(`<li><span class="dot"></span><span class="t"><b>${esc(r.task)}</b><span class="small">${esc(r.model)} · lab ${esc(lab.lab)}</span></span><a href="${esc(lab.url)}/?watch=1">Watch</a></li>`);
+    for (const lab of d.labs) for (const r of lab.runs) rows.push(`<li><span class="dot"></span><span class="t"><b>${esc(r.task)}</b><span class="small">${esc(r.model)} · ${esc(r.session_name || 'lab ' + lab.lab)}</span></span><a href="${esc(lab.url)}/?watch=1${r.session ? '&s=' + encodeURIComponent(r.session) : ''}">Watch</a></li>`);
     $('live').innerHTML = rows.join('') || '<li class="small">Nothing is running right now.</li>';
   } catch (e) {}
   setTimeout(live, 4000);
