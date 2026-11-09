@@ -17,9 +17,9 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;padding:10px
 .hgroup{display:flex;align-items:center;gap:10px;flex:1 1 220px;min-width:0}
 .brand{font-size:16px;font-weight:700;color:var(--ink)}
 .seg{display:flex;padding:3px;border-radius:10px;background:var(--soft);gap:2px}
-.seg button{height:30px;padding:0 12px;border-radius:8px;border:0;background:transparent;color:#374151;font-size:13px;font-weight:500;cursor:pointer}
+.seg button{white-space:nowrap;height:30px;padding:0 12px;border-radius:8px;border:0;background:transparent;color:#374151;font-size:13px;font-weight:500;cursor:pointer}
 .seg button[aria-pressed=true]{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(17,24,39,.12)}
-.chip{font-size:12px;color:var(--muted);padding:2px 8px;border-radius:999px;background:var(--soft)}
+.chip{white-space:nowrap;font-size:12px;color:var(--muted);padding:2px 8px;border-radius:999px;background:var(--soft)}
 .play{height:40px;padding:0 18px 0 14px;display:flex;align-items:center;gap:8px;border-radius:999px;border:0;background:var(--blue);color:#fff;font-weight:600;cursor:pointer}
 .play.on{background:var(--red)}
 .round{height:40px;width:40px;border-radius:999px;border:1px solid #D1D5DB;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
@@ -95,6 +95,29 @@ dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:1
 dt{color:var(--muted)}dd{margin:0;text-align:right;font-family:'JetBrains Mono',monospace}
 #loading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;z-index:9;font-size:15px;color:var(--muted)}
 .libero{display:none}
+body.lib .libero{display:flex}
+body.lib .freeonly{display:none!important}
+#liberoPane{flex-direction:column;gap:12px;flex:1;overflow:auto;border:0}
+.official{font-size:15px;font-weight:600;color:var(--ink);line-height:1.35}
+.setrow{display:flex;align-items:center;gap:8px}
+.setrow button{height:30px;width:30px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;cursor:pointer;font-size:15px;color:var(--ink)}
+.setrow button:disabled{opacity:.4;cursor:not-allowed}
+#lDots{display:grid;grid-template-columns:repeat(25,1fr);gap:3px}
+#lDots button{aspect-ratio:1;border-radius:50%;border:0;padding:0;background:#D1D5DB;cursor:pointer}
+#lDots button.p{background:var(--blue)}#lDots button.f{background:#F59E0B}
+#lDots button.cur{outline:2px solid var(--ink);outline-offset:1px}
+.legend{display:flex;gap:12px;font-size:11.5px;color:var(--muted)}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:0}
+table.board{width:100%;border-collapse:collapse;font-size:12.5px}
+table.board th{text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:4px 4px;border-bottom:1px solid var(--line)}
+table.board td{padding:6px 4px;border-bottom:1px solid var(--line2);color:var(--ink)}
+table.board td.n{font-family:'JetBrains Mono',monospace;text-align:right}table.board th.n{text-align:right}
+#goalCard{position:absolute;right:14px;top:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;max-width:280px;font-size:12.5px;box-shadow:0 1px 3px rgba(17,24,39,.08);flex-direction:column;gap:2px}
+#goalCard b{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+#goalState{font-weight:600}
+.libtag{font-size:12px;font-weight:600;color:var(--blue2);background:var(--blueBg);padding:4px 10px;border-radius:6px}
+body.lib #right #chatpane{display:flex!important}
+.chatempty{color:var(--muted);font-size:13px;padding:6px 0}
 </style>
 </head>
 <body>
@@ -125,7 +148,7 @@ dt{color:var(--muted)}dd{margin:0;text-align:right;font-family:'JetBrains Mono',
     <div class="sec">
       <h2 class="cap">Robots in the scene</h2>
       <button class="robotbtn" id="robotBtn" aria-pressed="true"><b style="display:block">Franka Panda</b><span class="small"><span class="dot" id="robotDot"></span><span id="robotStatus">No task yet</span></span></button>
-      <p class="small" style="margin:6px 0 0">Every scene starts with a Franka. Click it (here or in the scene) to give it a task.</p>
+      <p class="small freeonly" style="margin:6px 0 0">Every scene starts with a Franka. Click it (here or in the scene) to give it a task.</p>
     </div>
     <div id="robotPanel" style="display:flex;flex-direction:column;flex:1;min-height:0">
       <div class="sec">
@@ -135,13 +158,31 @@ dt{color:var(--muted)}dd{margin:0;text-align:right;font-family:'JetBrains Mono',
           <figure><img id="camWrist" alt="Wrist camera"><figcaption><b>Wrist</b><span>AI SEES</span></figcaption></figure>
         </div>
       </div>
-      <div id="taskpane" class="sec" style="border:0">
+      <div id="taskpane" class="sec freeonly" style="border:0">
         <label for="task" style="font-size:13px;font-weight:600;color:var(--ink)">Task for the Franka Panda</label>
         <textarea id="task" rows="5" placeholder="Tell this robot what to do, in plain words. Example: put the apple in the bowl."></textarea>
         <div style="display:flex;flex-direction:column;gap:4px"><label for="model" class="small" style="font-weight:600">AI model</label><select id="model"></select></div>
         <div class="note"><b style="color:var(--ink)">What the AI gets</b><br>Your task, the Franka's manuals, a site sheet naming what's in the scene (not where), its two cameras and its sensors. It writes code to move the robot. It has <span id="limitTxt">3 minutes</span>.</div>
         <button class="primary" id="startBtn">Play · start the task</button>
         <p class="small" style="margin:0">Pausing freezes physics; the robot waits. Runs use your own Claude Code or Codex login.</p>
+      </div>
+      <div id="liberoPane" class="sec libero">
+        <div><h2 class="cap" style="margin-bottom:6px">Official task · LIBERO-Goal</h2>
+          <select id="lTask" aria-label="LIBERO task" style="width:100%"></select></div>
+        <div class="official" id="lLang"></div>
+        <div class="note"><b style="color:var(--ink)">Done when</b><br><span id="lDone"></span><br><span class="small">Checked live by LIBERO's own rule. The task text can't be edited.</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div class="setrow"><button id="lPrev" aria-label="Previous setup">‹</button><span style="flex:1;text-align:center;font-weight:600;color:var(--ink)">Setup <span id="lSetupN">1</span> of <span id="lSetupTotal">50</span></span><button id="lNext" aria-label="Next setup">›</button></div>
+          <div id="lDots" aria-label="The 50 starting setups"></div>
+          <div class="legend"><span><i style="background:var(--blue)"></i>passed</span><span><i style="background:#F59E0B"></i>failed</span><span><i style="background:#D1D5DB"></i>not run</span><span style="flex:1;text-align:right" id="lDotsFor"></span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px"><label for="lModel" class="small" style="font-weight:600">AI model</label><select id="lModel"></select></div>
+        <div style="display:flex;gap:8px"><button class="primary" id="lRun1">Run this setup</button><button class="ghostbtn" id="lRunAll" style="height:42px;flex:none;padding:0 14px;white-space:nowrap">Run all 50</button></div>
+        <button class="ghostbtn" id="lStop" style="display:none;flex:none">Stop</button>
+        <span class="small" id="lStatus"></span>
+        <div><h2 class="cap">Scoreboard · this task</h2>
+          <table class="board"><thead><tr><th>Model</th><th class="n">Passed</th><th class="n">Avg time</th><th class="n">Cost</th></tr></thead><tbody id="lBoard"></tbody></table>
+          <p class="small" style="margin:6px 0 0">Our Franka controller and AI setup, so scores aren't comparable with LIBERO's published leaderboard. Avg time counts passed runs only.</p></div>
       </div>
       <section id="chatpane" aria-label="AI chat">
         <div class="chathead"><img id="chatLogo" src="/static/anthropic.svg" alt=""><b id="chatModel" style="flex:1;color:var(--ink)">Claude Opus 5.5</b><span class="small" id="chatCost"></span></div>
@@ -159,21 +200,22 @@ dt{color:var(--muted)}dd{margin:0;text-align:right;font-family:'JetBrains Mono',
 
   <section id="stage" aria-label="3D scene">
     <img id="view" alt="3D scene rendered live by MuJoCo" draggable="false">
-    <div class="tl"><span class="live" id="liveTag" style="display:none">● Running · real time</span><span class="hint" id="hintTag">Drag objects in from the right. Drag to orbit, right-drag to pan, scroll to zoom.</span></div>
+    <div class="tl"><span class="live" id="liveTag" style="display:none">● Running · real time</span><span class="libtag libero" id="libTag"></span><span class="hint" id="hintTag">Drag objects in from the right. Drag to orbit, right-drag to pan, scroll to zoom.</span></div>
     <div class="bl"><button data-preset="home">Reset view</button><button data-preset="top">Top view</button><button data-preset="robot">Robot close-up</button></div>
-    <span class="small br">1 grid square = 10 cm</span>
+    <span class="small br freeonly">1 grid square = 10 cm</span>
+    <div id="goalCard" class="libero"><b>Goal check</b><span id="goalState"></span><span class="small" id="goalText"></span></div>
     <div id="droptag"></div>
     <div id="toast"></div>
   </section>
 
   <aside id="right" aria-label="Object library">
-    <div class="lib-top">
+    <div class="lib-top freeonly">
       <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0;font-size:15px;color:var(--ink)">Objects</h2><span class="small">NVIDIA SimReady</span></div>
       <input id="search" type="search" placeholder="Search, e.g. mug, bowl, crate" aria-label="Search objects">
       <div class="tabs" role="tablist" id="tabs"></div>
     </div>
-    <div id="items" role="tabpanel"></div>
-    <p class="libhint" id="libhint">Drag an object onto the scene, or click it and then click where it should go. It lands on whatever is under it.</p>
+    <div id="items" class="freeonly" role="tabpanel"></div>
+    <p class="libhint freeonly" id="libhint">Drag an object onto the scene, or click it and then click where it should go. It lands on whatever is under it.</p>
   </aside>
 </main>
 </div>
@@ -359,13 +401,14 @@ async function pollTrace() {
 function fmtClock(t) { const m = Math.floor(t / 60), s = t - m * 60; return String(m).padStart(2, '0') + ':' + s.toFixed(1).padStart(4, '0'); }
 function render() {
   const sc = S.scene; if (!sc) return;
+  applyMode();
   const run = sc.run || {}, active = !!run.active, playing = !sc.paused;
   $('playBtn').classList.toggle('on', playing);
   $('playLabel').textContent = playing ? 'Pause' : 'Play';
   $('playIcon').innerHTML = playing ? '<rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/>' : '<path d="M3 1.5 L12.5 7 L3 12.5 Z"/>';
   $('clock').textContent = fmtClock(sc.time);
   $('rt').textContent = playing ? (sc.realtime_factor >= 0.97 ? 'real time' : (sc.realtime_factor * 100).toFixed(0) + '% of real time') : 'paused';
-  $('lockmsg').style.display = sc.locked ? '' : 'none'; $('lockmsg').textContent = active ? 'Scene locked while the AI runs' : 'Scene locked while playing · pause to edit';
+  $('lockmsg').style.display = sc.locked ? '' : 'none'; $('lockmsg').textContent = S.lib ? 'Scene locked for a fair test' : active ? 'Scene locked while the AI runs' : 'Scene locked while playing · pause to edit';
   $('right').classList.toggle('locked', !!sc.locked);
   $('liveTag').style.display = playing ? '' : 'none';
   $('hintTag').style.display = playing ? 'none' : '';
@@ -396,6 +439,7 @@ function render() {
     if (!$('chatModel').dataset.set) $('chatModel').textContent = m.label || '';
   }
   $('startBtn').disabled = active;
+  if (S.lib) renderLiberoLive();
 }
 async function refresh() {
   S.scene = await api('/pg/scene');
@@ -407,13 +451,98 @@ async function loop() {
   setTimeout(loop, 500);
 }
 $('task').oninput = render;
-$('modeLibero').onclick = () => toast('LIBERO test mode is coming next');
+
+// ---------------------------------------------------------------- LIBERO test mode
+S.lib = null; S.L = null; S.lDone = null;
+function applyMode() {
+  const lib = S.scene.mode === 'libero';
+  if (lib === S.lib) return;
+  S.lib = lib;
+  document.body.classList.toggle('lib', lib);
+  (lib ? $('right') : $('robotPanel')).appendChild($('chatpane'));
+  $('modeFree').setAttribute('aria-pressed', !lib); $('modeLibero').setAttribute('aria-pressed', lib);
+  $('modechip').textContent = lib ? 'LIBERO-Goal · results saved' : 'Free play · not saved';
+  $('hintTag').textContent = lib ? 'Drag to orbit, scroll to zoom.' : 'Drag objects in from the right. Drag to orbit, right-drag to pan, scroll to zoom.';
+  if (lib) { if (!S.runKey) $('feed').innerHTML = '<li class="chatempty">Press “Run this setup” and the AI\'s messages show up here.</li>'; loadLibero(); }
+  else { S.showChat = false; }
+}
+async function setMode(mode) {
+  if (S.scene && S.scene.mode === mode) return;
+  toast(mode === 'libero' ? 'Loading LIBERO-Goal…' : 'Back to your own scene…');
+  const r = await api('/pg/mode', {mode});
+  if (!r.ok) { toast(r.error); return; }
+  S.sel = 'robot'; S.runKey = null; refresh();
+}
+$('modeFree').onclick = () => setMode('free');
+$('modeLibero').onclick = () => setMode('libero');
+async function loadLibero() {
+  const sc = S.scene, task = sc && sc.task;
+  S.L = await api('/pg/libero' + (task ? '?task=' + encodeURIComponent(task) : ''));
+  renderLibero();
+}
+function fmtSecs(x) { return x == null ? '–' : x >= 60 ? Math.floor(x / 60) + 'm ' + Math.round(x % 60) + 's' : x.toFixed(0) + 's'; }
+function renderLibero() {
+  const L = S.L; if (!L) return;
+  const sel = $('lTask');
+  if (sel.options.length !== L.tasks.length) sel.innerHTML = L.tasks.map((t, i) => `<option value="${t.id}">${i + 1}. ${esc(t.language)}</option>`).join('');
+  sel.value = L.task;
+  const t = L.tasks.find(x => x.id === L.task) || L.tasks[0];
+  $('lLang').textContent = '“' + t.language + '”'; $('lDone').textContent = t.done_when;
+  $('goalText').textContent = t.done_when;
+  $('lSetupTotal').textContent = t.setups;
+  const board = L.scores.board;
+  const mine = board.find(b => b.model === $('lModel').value);
+  $('lDotsFor').textContent = mine ? 'for ' + mine.label : '';
+  const res = mine ? mine.setups : {};
+  $('lDots').innerHTML = Array.from({length: t.setups}, (_, i) => { const r = res[i + 1]; return `<button data-k="${i}" class="${r === true ? 'p' : r === false ? 'f' : ''}" title="Setup ${i + 1}${r === true ? ' · passed' : r === false ? ' · failed' : ''}"></button>`; }).join('');
+  $('lDots').querySelectorAll('button').forEach(b => b.onclick = () => loadSetup(+b.dataset.k));
+  $('lBoard').innerHTML = board.length ? board.map(b => `<tr><td>${esc(b.label)}</td><td class="n">${b.passed}/${b.tried}</td><td class="n">${fmtSecs(b.avg_seconds)}</td><td class="n">${b.avg_cost == null ? '–' : '$' + b.avg_cost.toFixed(2)}</td></tr>`).join('')
+    : '<tr><td colspan="4" class="small" style="color:var(--muted)">No runs yet for this task.</td></tr>';
+  renderLiberoLive();
+}
+function renderLiberoLive() {
+  const sc = S.scene, b = sc.bench || {}, busy = !!b.active || !!(sc.run && sc.run.active);
+  const k = sc.setup || 0, n = sc.setups || 50;
+  $('lSetupN').textContent = k + 1;
+  $('libTag').textContent = 'LIBERO-Goal · Setup ' + (k + 1);
+  $('lDots').querySelectorAll('button').forEach(d => { d.classList.toggle('cur', +d.dataset.k === k); d.disabled = busy; });
+  for (const id of ['lPrev', 'lNext', 'lRun1', 'lRunAll', 'lTask', 'lModel', 'modeFree']) $(id).disabled = busy;
+  $('lPrev').disabled = busy || k === 0; $('lNext').disabled = busy || k === n - 1;
+  $('lStop').style.display = b.active ? '' : 'none';
+  $('goalState').textContent = sc.goal_met ? '✓ Goal reached' : 'Not yet';
+  $('goalState').style.color = sc.goal_met ? 'var(--green)' : 'var(--muted)';
+  let st = '';
+  if (b.active) st = b.queue.length > 1 ? `Running setup ${(b.current ?? 0) + 1} · ${b.done} of ${b.queue.length} done, ${b.passed} passed` : `Running setup ${(b.current ?? 0) + 1}…`;
+  else if (b.last) st = `Last: setup ${b.last.setup} ${b.last.passed ? 'passed' : 'failed'} (${b.last.how}, ${b.last.seconds}s)`;
+  $('lStatus').textContent = st;
+  $('newTaskBtn').style.display = 'none';
+  if (sc.run && sc.run.started && !sc.run.active && !b.active && b.last) $('runStatus').textContent = b.last.passed ? '✓ Passed · goal reached in ' + b.last.seconds + 's' : 'Failed · ' + b.last.how;
+  const key = (b.done || 0) + ':' + !!b.active;
+  if (S.lDone !== key) { S.lDone = key; loadLibero(); }
+}
+async function loadSetup(k, task) {
+  const r = await api('/pg/libero/setup', {task: task || S.scene.task, setup: k});
+  if (!r.ok) { toast(r.error); return; }
+  await refresh(); loadLibero();
+}
+$('lPrev').onclick = () => loadSetup(Math.max(0, S.scene.setup - 1));
+$('lNext').onclick = () => loadSetup(Math.min(S.scene.setups - 1, S.scene.setup + 1));
+$('lTask').onchange = () => loadSetup(0, $('lTask').value);
+$('lModel').onchange = renderLibero;
+async function runBench(all) {
+  const r = await api('/pg/libero/run', {model: $('lModel').value, all});
+  if (!r.ok) { toast(r.error); return; }
+  refresh();
+}
+$('lRun1').onclick = () => runBench(false);
+$('lRunAll').onclick = () => { if (confirm('Run all 50 setups one after another? Each can take up to 3 minutes, so this can take about 2½ hours.')) runBench(true); };
+$('lStop').onclick = async () => { await api('/pg/libero/stop', {}); refresh(); };
 
 (async function init() {
   S.cat = await api('/pg/catalog');
   const items = S.cat.items;
   for (const it of items) { it.collision = it.collision || ''; }
-  $('model').innerHTML = S.cat.models.map(m => `<option value="${m.id}">${m.label} · ${m.via}</option>`).join('');
+  $('lModel').innerHTML = $('model').innerHTML = S.cat.models.map(m => `<option value="${m.id}">${m.label} · ${m.via}</option>`).join('');
   $('limitTxt').textContent = Math.round(S.cat.time_limit / 60) + ' minutes';
   renderTabs(); renderItems();
   view.onload = () => $('loading').style.display = 'none';

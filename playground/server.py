@@ -27,7 +27,9 @@ from wetlabsim.server import Handler
 from wetlabsim.sim import RobotError
 
 from . import catalog
+from . import libero as LB
 from . import site
+from .bench import Bench
 from .sim import PlaygroundSim
 
 HERE = pathlib.Path(__file__).parent
@@ -101,8 +103,11 @@ class Runner:
 class PGHandler(Handler):
     sim: PlaygroundSim
     runner: Runner
+    bench: Bench
 
     def _locked(self) -> str:
+        if self.sim.scene_mode == "libero":
+            return "LIBERO scenes are fixed: switch to Free play to build your own"
         if self.runner.active():
             return "the scene is locked while the AI is running; stop the run to edit"
         if not self.sim.paused:
@@ -136,7 +141,14 @@ class PGHandler(Handler):
                     return self._send(200, f.read_bytes(), "image/png", {"Cache-Control": "max-age=86400"})
                 return self._err("not found", 404)
             if p == "/pg/scene":
-                return self._json({**self.sim.scene_info(), "run": self.runner.status(), "locked": self._locked()})
+                return self._json({**self.sim.scene_info(), "run": self.runner.status(), "locked": self._locked(),
+                                   "bench": self.bench.status()})
+            if p == "/pg/libero":
+                cur = self.sim.libero_task.id if self.sim.libero_task else None
+                return self._json({"tasks": [{"id": t.id, "language": t.language, "goal": list(t.goal),
+                                              "done_when": LB.done_when(t.goal), "setups": len(t.states)} for t in LB.tasks()],
+                                   "task": cur, "setup": self.sim.setup,
+                                   "scores": self.bench.scoreboard(qs.get("task", [cur])[0])})
             if p == "/pg/view.mjpg":
                 return self._view_stream()
             if p == "/pg/view.jpg":
@@ -224,8 +236,36 @@ class PGHandler(Handler):
             if p == "/pg/clear":
                 s.clear()
                 return self._json({"ok": True})
+            if p == "/pg/mode":
+                if self.runner.active() or self.bench.active():
+                    return self._json({"ok": False, "error": "stop the run first"})
+                if b.get("mode") == "libero":
+                    s.set_libero(b.get("task") or LB.tasks()[0].id, int(b.get("setup", 0)))
+                else:
+                    s.set_free()
+                return self._json({"ok": True})
+            if p == "/pg/libero/setup":
+                if self.runner.active() or self.bench.active():
+                    return self._json({"ok": False, "error": "stop the run first"})
+                s.set_libero(b.get("task") or s.libero_task.id, int(b.get("setup", 0)))
+                return self._json({"ok": True})
+            if p == "/pg/libero/run":
+                if s.scene_mode != "libero":
+                    return self._json({"ok": False, "error": "load a LIBERO task first"})
+                n = len(s.libero_task.states)
+                setups = list(range(n)) if b.get("all") else [s.setup]
+                try:
+                    self.bench.start(b.get("model", "claude"), setups, float(b.get("time_limit", TIME_LIMIT)))
+                except RuntimeError as e:
+                    return self._json({"ok": False, "error": str(e)})
+                return self._json({"ok": True})
+            if p == "/pg/libero/stop":
+                self.bench.stop()
+                return self._json({"ok": True})
             if p == "/pg/play":
                 task = (b.get("task") or "").strip()
+                if s.scene_mode == "libero" and task:
+                    return self._json({"ok": False, "error": "in LIBERO mode, use Run this setup"})
                 if task and not self.runner.active():
                     s.selected = None
                     s.play()
@@ -238,10 +278,11 @@ class PGHandler(Handler):
                 s.pause()
                 return self._json({"ok": True})
             if p == "/pg/stop":
+                self.bench.stop()
                 self.runner.stop()
                 return self._json({"ok": True})
             if p == "/pg/reset":
-                if self.runner.active():
+                if self.runner.active() or self.bench.active():
                     return self._json({"ok": False, "error": "stop the run first"})
                 s.reset()
                 s.pause()
@@ -288,6 +329,7 @@ def main(argv=None):
     url = f"http://{args.host}:{args.port}"
     PGHandler.sim, PGHandler.token, PGHandler.runs_dir = sim, token, runs
     PGHandler.runner = Runner(url, runs)
+    PGHandler.bench = Bench(sim, PGHandler.runner, PGHandler, runs / "libero_results.jsonl")
     srv = ThreadingHTTPServer((args.host, args.port), PGHandler)
     srv.daemon_threads = True
     print(f"MuJoCo Playground is running at {url}")

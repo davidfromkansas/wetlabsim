@@ -96,6 +96,28 @@ In the code, contact properties are set per material (MuJoCo default classes) in
 `MATERIALS` in `wetlabsim/scene.py`, and solver options in `OPTION` and `FLAGS` there.
 `scripts/physics_checks.py` measures grip creep, release, sinking and speed after a change.
 
+## Playground (drag and drop, plus LIBERO tests)
+
+A web page for building a scene and giving the Franka a task, running on your Mac:
+
+```bash
+pip install -e .
+python -m playground.server        # opens http://localhost:8780
+```
+
+- **Free play**: drag NVIDIA SimReady objects (with their own MuJoCo physics) onto the
+  packing table, click the robot, type a task, pick Claude Code or Codex, and press Play.
+  The AI writes code to move the robot and its chat shows live. Nothing is graded or saved.
+- **LIBERO test**: LIBERO-Goal's own room, table and objects, its 10 tasks and its 50
+  official starting setups. LIBERO's own success rule decides pass or fail. Results go to
+  `runs/playground/libero_results.jsonl` and a scoreboard (passed, average time, cost).
+  We use our Franka controller, not LIBERO's, so scores don't compare with LIBERO's leaderboard.
+
+Runs use your existing Claude Code or Codex login, with a 3 minute limit.
+The object files are already in `playground/assets` and `playground/libero_assets`.
+To rebuild them: `python -m playground.tools.build_assets` (SimReady, from Hugging Face) and
+`python -m playground.tools.import_libero <LIBERO checkout>`.
+
 ## Notes
 
 - The true object positions are only available to the run recorder, via a token saved in `runs/.eval_token`. Agents aren't given it, but they run on your machine as you, so a determined agent could find it. Check transcripts when results look too good.
@@ -103,6 +125,10 @@ In the code, contact properties are set per material (MuJoCo default classes) in
 - Robot models are © their authors under their own licences: see `wetlabsim/assets/*/LICENSE`.
 
 ## Credits
+
+The playground's objects are NVIDIA SimReady assets (Hugging Face `nvidia/simready-assets`).
+The LIBERO-Goal scene, objects, tasks and starting setups come from
+[LIBERO](https://github.com/Lifelong-Robot-Learning/LIBERO) (licence in `playground/libero_assets/LICENSE`).
 
 The tubes, tube racks, 60-well rack and petri dish are 3D models from **AutoBio**, used
 with credit (the AutoBio repository has no licence file). Details in

@@ -18,6 +18,7 @@ from PIL import Image
 from wetlabsim.sim import RobotError, Sim
 
 from . import catalog
+from . import libero as LB
 from . import world as W
 
 VIEW_W, VIEW_H = 1280, 800
@@ -28,6 +29,10 @@ class PlaygroundSim(Sim):
     def __init__(self, placed: list[W.Placed] | None = None, robot: str = "franka", **kw):
         self.placed = placed or W.default_scene()
         self._uid = 0
+        self.scene_mode = "free"                      # or "libero"
+        self.libero_task: LB.Task | None = None
+        self.setup = 0                          # which of the task's 50 starting setups
+        self.checker: LB.Checker | None = None
         super().__init__(robot=robot, **kw)
         self.paused = True                      # start in build mode
         cam = mujoco.MjvCamera()
@@ -44,6 +49,8 @@ class PlaygroundSim(Sim):
 
     # ------------------------------------------------------------- scene
     def _make_model(self) -> mujoco.MjModel:
+        if self.scene_mode == "libero":
+            return LB.build(self.robot)
         return W.build(self.placed, self.robot)
 
     def _index(self):
@@ -52,8 +59,53 @@ class PlaygroundSim(Sim):
         root = self.base_body
         self.robot_bodies = {b for b in range(m.nbody) if self._in_subtree(b, root)}
         self.body_uid = {}
+        self.checker = None
+        if self.scene_mode == "libero":
+            self.checker = LB.Checker(m)
+            self._burner = m.site("flat_stove_1_burner").id
+            m.site_rgba[self._burner, 3] = 0.0     # the burner glows only when the stove is on
+            return
         for p in self.placed:
             self.body_uid[m.body(f"obj_{p.uid}").id] = p.uid
+
+    def _swap_model(self):
+        """Build the scene for the current mode from scratch and start it over."""
+        with self.lock:
+            self.m = self._make_model()
+            self.d = mujoco.MjData(self.m)
+            self._index()
+            self.selected = None
+            self._model_ver += 1
+            self.reset()
+            self.paused = True
+
+    def set_libero(self, task_id: str, setup: int = 0):
+        t = LB.task(task_id)
+        if not 0 <= setup < len(t.states):
+            raise RobotError(f"setup must be 1..{len(t.states)}")
+        with self.lock:
+            switching = self.scene_mode != "libero"
+            self.scene_mode, self.libero_task, self.setup = "libero", t, setup
+            if switching:
+                self._swap_model()
+            else:
+                self.reset()
+                self.paused = True
+
+    def set_free(self):
+        with self.lock:
+            if self.scene_mode != "free":
+                self.scene_mode, self.libero_task = "free", None
+                self._swap_model()
+
+    def goal_met(self) -> bool:
+        if self.scene_mode != "libero" or self.checker is None:
+            return False
+        with self.lock:
+            ok = self.checker.check(self.d, self.libero_task.goal)
+            on = self.checker.turned_on(self.d, "flat_stove_1")
+            self.m.site_rgba[self._burner, 3] = 1.0 if on else 0.0
+        return ok
 
     def _in_subtree(self, b, root):
         m = self.m
@@ -64,7 +116,11 @@ class PlaygroundSim(Sim):
         return False
 
     def _lay_out(self, task):
-        """Nothing to do: every object starts where the user put it (the model's own pose)."""
+        """Free play: nothing to do, every object starts where the user put it (the model's own
+        pose). LIBERO: the task's official starting setup."""
+        if self.scene_mode == "libero" and self.libero_task is not None:
+            arm = LB.apply_setup(self.m, self.d, self.libero_task.states[self.setup], self.arm_qadr)
+            self.d.ctrl[self.arm_act] = arm
 
     def new_uid(self, item: str) -> str:
         self._uid += 1
@@ -84,6 +140,8 @@ class PlaygroundSim(Sim):
 
     def rebuild(self):
         """Recompile the scene after an edit. The robot keeps its pose; objects stay put."""
+        if self.scene_mode != "free":
+            raise RobotError("the LIBERO scene can't be edited")
         with self.lock:
             self._sync_placed()
             old_m, old_d = self.m, self.d
@@ -146,6 +204,13 @@ class PlaygroundSim(Sim):
             self.reset()
 
     def scene_info(self) -> dict:
+        if self.scene_mode == "libero":
+            t = self.libero_task
+            return {"mode": "libero", "objects": [], "paused": self.paused, "selected": self.selected,
+                    "time": round(self.d.time, 3), "realtime_factor": round(self.rt_factor, 3),
+                    "task": t.id, "language": t.language, "setup": self.setup, "setups": len(t.states),
+                    "goal_met": self.goal_met(),
+                    "robots": [{"id": "robot", "label": self.P["name"], "gripper": self.P["gripper"]}]}
         with self.lock:
             self._sync_placed()
             items = []
@@ -153,7 +218,7 @@ class PlaygroundSim(Sim):
                 it = catalog.item(p.item)
                 items.append({**p.as_dict(), "label": it["label"], "fixed": it["fixed"],
                               "removable": p.uid != W.TABLE_UID})
-            return {"objects": items, "paused": self.paused, "selected": self.selected,
+            return {"mode": "free", "objects": items, "paused": self.paused, "selected": self.selected,
                     "time": round(self.d.time, 3), "realtime_factor": round(self.rt_factor, 3),
                     "robots": [{"id": "robot", "label": self.P["name"], "gripper": self.P["gripper"]}]}
 
