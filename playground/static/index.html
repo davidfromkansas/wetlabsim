@@ -252,7 +252,7 @@ const api = async (path, body) => {
   const r = await fetch(path, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
   return r.json();
 };
-const S = {cat: null, tab: 'Kitchen', search: '', scene: null, armed: null, sel: 'robot', runKey: null, model: 'claude'};
+const S = {cat: null, tab: 'All', search: '', scene: null, armed: null, sel: 'robot', runKey: null, model: 'claude'};
 const view = $('view'), stage = $('stage');
 const LIBHINT = 'Drag an object onto the scene, or click it and then click where it should go. It lands on whatever is under it.';
 
@@ -270,9 +270,9 @@ function fmtSize(s) { return s.map(v => (v * 100).toFixed(v < 0.1 ? 1 : 0)).join
 function fmtMass(m) { return m == null ? '' : (m < 1 ? Math.round(m * 1000) + ' g' : m.toFixed(1) + ' kg'); }
 function renderTabs() {
   const tabs = $('tabs'); tabs.innerHTML = '';
-  for (const t of S.cat.tabs) {
+  for (const t of ['All', ...S.cat.tabs]) {
     if (t === 'Robots') continue;
-    const n = S.cat.items.filter(i => i.tab === t).length;
+    const n = S.cat.items.filter(i => t === 'All' ? i.tab !== 'Robots' : i.tab === t).length;
     const b = document.createElement('button'); b.role = 'tab'; b.setAttribute('aria-selected', S.tab === t && !S.search);
     b.innerHTML = `${t} <span style="opacity:.7">${n}</span>`; b.onclick = () => { S.tab = t; S.search = ''; $('search').value = ''; renderTabs(); renderItems(); };
     tabs.appendChild(b);
@@ -281,7 +281,7 @@ function renderTabs() {
 function renderItems() {
   const box = $('items'); box.innerHTML = '';
   const q = S.search.toLowerCase();
-  const list = S.cat.items.filter(i => q ? (i.label + ' ' + i.tab).toLowerCase().includes(q) : i.tab === S.tab);
+  const list = S.cat.items.filter(i => q ? (i.label + ' ' + i.tab).toLowerCase().includes(q) : (S.tab === 'All' ? i.tab !== 'Robots' : i.tab === S.tab));
   for (const it of list) {
     const c = document.createElement('button'); c.className = 'card' + (S.armed === it.id ? ' armed' : ''); c.draggable = true;
     c.title = 'Drag onto the scene, or click and then click in the scene';
