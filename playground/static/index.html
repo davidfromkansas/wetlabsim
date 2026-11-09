@@ -733,9 +733,36 @@ function renderFiles() {
     }
   };
   walk(list, 0);
+  // Code the AI ran inline (python -c, heredocs) never becomes a file in its folder: list each
+  // run from the transcript as a view-only file in a "Code runs" folder of its own.
+  const runs = codeRuns();
+  if (runs.length) {
+    const open = S.openDirs.has('__code');
+    rows.push(`<button class="frow" data-dir="__code" aria-expanded="${open}" style="padding-left:6px"><span class="nm"><span class="caret">${open ? '▼' : '▶'}</span><svg width="16" height="13" viewBox="0 0 18 14" aria-hidden="true" style="flex:none"><path d="M1 2.2C1 1.5 1.5 1 2.2 1h4.3l1.6 1.8h7.7c.7 0 1.2.5 1.2 1.2V12c0 .7-.5 1.2-1.2 1.2H2.2C1.5 13.2 1 12.7 1 12z" fill="#A78BFA"/></svg><span>Code runs</span></span><span class="sz">${runs.length} items</span></button>`);
+    if (open) runs.forEach((r, i) => rows.push(`<button class="frow" data-code="${i}" style="padding-left:22px"><span class="nm"><span class="caret"></span><svg width="12" height="15" viewBox="0 0 14 17" aria-hidden="true" style="flex:none"><path d="M1.5 1h7.2L12.5 4.8v10.7c0 .3-.2.5-.5.5H1.5c-.3 0-.5-.2-.5-.5v-14c0-.3.2-.5.5-.5z" fill="#fff" stroke="#9CA3AF"/><path d="M8.7 1v3.8h3.8" fill="none" stroke="#9CA3AF"/></svg><span>${r.name}</span></span><span class="sz">${mmss(r.t)}</span></button>`));
+  }
   $('files').innerHTML = rows.length ? rows.join('') : '<div class="empty">Files appear here when a run starts.</div>';
 }
+function codeRuns() {
+  const out = [], tr = S.trace || [], start = (S.runInfo && S.runInfo.sim_start) || 0;
+  tr.forEach((st, i) => {
+    if (st.kind !== 'runs') return;
+    const next = tr[i + 1];
+    // Python (a python -c / heredoc call, or Python itself) is .py; other shell commands .sh.
+    const py = /(^|\s)python3?\b|from wetlabsim|import \w/.test(st.text);
+    out.push({name: `code-${String(out.length + 1).padStart(2, '0')}.${py ? 'py' : 'sh'}`, t: st.t - start, code: st.text,
+              output: next && next.kind === 'output' ? next.text : null});
+  });
+  return out;
+}
 $('files').addEventListener('click', (e) => {
+  const c = e.target.closest('[data-code]');
+  if (c) {   // view-only: shown from the transcript in a new tab, never written anywhere
+    const r = codeRuns()[+c.dataset.code]; if (!r) return;
+    const text = `# ${r.name} · run at ${mmss(r.t)} · from the run's transcript (the AI ran this inline; view only)\n\n${r.code}\n` + (r.output != null ? `\n# --- output ---\n${r.output.split('\n').map(l => '# ' + l).join('\n')}\n` : '');
+    window.open(URL.createObjectURL(new Blob([text], {type: 'text/plain;charset=utf-8'})), '_blank', 'noopener');
+    return;
+  }
   const b = e.target.closest('[data-dir]'); if (!b) return;
   const p = b.dataset.dir; S.openDirs.has(p) ? S.openDirs.delete(p) : S.openDirs.add(p);
   renderFiles();
@@ -753,6 +780,7 @@ async function pollFiles() {
 }
 setInterval(() => { if (S.sideTab === 'files') pollFiles(); }, 2000);
 
+S.codeCount = 0;
 async function pollTrace() {
   const run = S.scene && S.scene.run;
   if (run && run.started) {
@@ -767,6 +795,8 @@ async function pollTrace() {
     if (info.model_label) { $('chatModel').textContent = info.model_label; $('chatModel').dataset.set = 1; }
   } else if (S.runKey) { S.runKey = null; S.trace = []; S.runInfo = {}; $('chatCost').textContent = ''; delete $('chatModel').dataset.set; }
   renderFeed();
+  const n = codeRuns().length;      // new inline code: refresh the Files tab's "Code runs" folder
+  if (n !== S.codeCount) { S.codeCount = n; if (S.sideTab === 'files') renderFiles(); }
 }
 
 // ---------------------------------------------------------------- state
