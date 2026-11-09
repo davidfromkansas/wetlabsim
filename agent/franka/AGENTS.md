@@ -10,3 +10,6 @@ What's here:
 - `robot_model/panda.xml`: a MuJoCo model of the arm and hand (the robot only).
 
 Do the task you were given using only the robot's command interface and the agent tools.
+
+Keep everything you write (scripts, notes, saved images) in this folder, not in a scratchpad
+or temporary folder elsewhere, so it is kept with the run.

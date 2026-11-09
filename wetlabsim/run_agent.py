@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import os
 import pathlib
 import shutil
@@ -67,6 +68,11 @@ def sim_source_peeks(transcript: pathlib.Path) -> list[dict]:
         if hits:
             peeks.append({"t": st.t, "kind": st.kind, "matched": hits, "text": st.text[:300]})
     return peeks
+
+
+def transcript_text(run_dir: pathlib.Path) -> str:
+    f = run_dir / "transcript.jsonl"
+    return f.read_text(errors="ignore") if f.exists() else ""
 
 
 def workspace_leaks(*dirs: pathlib.Path) -> list[pathlib.Path]:
@@ -404,6 +410,12 @@ def main(argv=None):
         _eval_call(args.url, token, "/eval/run", run_info)
         print(f"Score: {sc['score']} ({'PASS' if sc['passed'] else 'FAIL'}) {json.dumps(sc['detail'])[:300]}")
     (run_dir / "result.json").write_text(json.dumps(result, indent=2))
+    # Claude Code keeps its own scratchpad outside the workspace (and may use it despite being
+    # asked not to): keep a copy of whatever the agent wrote there with the run.
+    for pad in sorted(set(re.findall(r"(/(?:private/)?tmp/claude-[^\s'\"]+?/scratchpad)\b", transcript_text(run_dir)))):
+        src = pathlib.Path(pad)
+        if src.is_dir() and any(src.iterdir()):
+            shutil.copytree(src, workspace / "scratchpad (outside the workspace)", dirs_exist_ok=True)
     shutil.copytree(workspace, run_dir / "workspace", dirs_exist_ok=True)
     print(f"Done in {elapsed:.0f} s ({status}). Results in {run_dir}")
     if peeks:
