@@ -628,8 +628,20 @@ async function refresh() {
   if (S.sel !== 'robot' && !S.scene.objects.find(o => o.uid === S.sel)) S.sel = 'robot';
   render();
 }
+// If the server goes away (restarted, or stopped and started again), the live streams end and
+// don't come back by themselves: once it answers again, reconnect them.
+function openStreams() {
+  const t = Date.now();
+  view.src = '/pg/view.mjpg?r=' + t;
+  $('camOver').src = '/stream/overhead.mjpg?fps=4&r=' + t;
+  $('camWrist').src = '/stream/wrist.mjpg?fps=4&r=' + t;
+}
 async function loop() {
-  try { await refresh(); await pollTrace(); } catch (e) {}
+  try {
+    await refresh();
+    if (S.offline) { S.offline = false; openStreams(); toast('Reconnected to the simulator'); }
+    await pollTrace();
+  } catch (e) { S.offline = true; }
   setTimeout(loop, 500);
 }
 $('task').oninput = render;
@@ -816,9 +828,7 @@ $('wModel').onchange = renderWet;
   view.onload = () => $('loading').style.display = 'none';
   const sendAspect = () => { const r = stage.getBoundingClientRect(); if (r.width > 50 && r.height > 50) api('/pg/camera', {aspect: r.width / r.height}); };
   sendAspect(); new ResizeObserver(() => { clearTimeout(sendAspect.h); sendAspect.h = setTimeout(sendAspect, 150); }).observe(stage);
-  view.src = '/pg/view.mjpg';
-  $('camOver').src = '/stream/overhead.mjpg?fps=4';
-  $('camWrist').src = '/stream/wrist.mjpg?fps=4';
+  openStreams();
   setTimeout(() => $('loading').style.display = 'none', 8000);
   loop();
 })();
