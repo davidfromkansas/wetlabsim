@@ -26,7 +26,7 @@ import threading
 import time
 import urllib.request
 
-from . import traces
+from . import launchers, storage, traces
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 AGENT_DIR = ROOT / "agent"
@@ -161,12 +161,16 @@ def default_model(agent: str) -> str:
 
 
 def build_command(agent: str, task: str, model: str | None, workspace: pathlib.Path,
-                  run_dir: pathlib.Path, note: str) -> list[str]:
+                  run_dir: pathlib.Path, note: str, robot_url: str = "", robot_token: str = "") -> list[str]:
     py = sys.executable
     prompt = make_prompt(task, note)
+    # The agent's own tools (look, robot_state, emergency_stop) reach the robot the same way its
+    # Python does: the robot API's URL and this run's token. Passed to each CLI explicitly,
+    # since not every CLI hands its own environment on to tool servers.
+    tool_env = {"PYTHONPATH": str(ROOT), "WETLAB_ROBOT_URL": robot_url, "WETLAB_ROBOT_TOKEN": robot_token}
     if agent == "claude":
         mcp = {"mcpServers": {"wetlab": {"command": py, "args": ["-m", "wetlabsim.mcp_server"],
-                                         "env": {"PYTHONPATH": str(ROOT)}}}}
+                                         "env": tool_env}}}
         # Kept out of the workspace: it names the cell's own folder and Python, which an agent
         # could otherwise put on its path to import more than the robot client.
         cfg = pathlib.Path(tempfile.mkdtemp(prefix="wetlab-mcp-")) / "mcp.json"
@@ -185,7 +189,7 @@ def build_command(agent: str, task: str, model: str | None, workspace: pathlib.P
                "-c", 'model_reasoning_summary="detailed"',   # include reasoning summaries in the trace
                "-c", f'mcp_servers.wetlab.command="{py}"',
                "-c", 'mcp_servers.wetlab.args=["-m", "wetlabsim.mcp_server"]',
-               "-c", f'mcp_servers.wetlab.env={{PYTHONPATH="{ROOT}"}}']
+               "-c", "mcp_servers.wetlab.env={" + ", ".join(f'{k}="{v}"' for k, v in tool_env.items()) + "}"]
         if model:
             cmd += ["--model", model]
         return cmd + [prompt]
@@ -196,7 +200,7 @@ def build_command(agent: str, task: str, model: str | None, workspace: pathlib.P
         # approve it). Devin runs through its ACP server (devin_acp.py), which streams its
         # thinking, tool calls and replies as they happen; print mode only shows the answer.
         mcp = [{"name": "wetlab", "command": py, "args": ["-m", "wetlabsim.mcp_server"],
-                "env": [{"name": "PYTHONPATH", "value": str(ROOT)}]}]
+                "env": [{"name": k, "value": v} for k, v in tool_env.items()]}]
         perms = {"permissions": {"allow": ["Read(./**)", "Write(./**)", "Exec(python)", "Exec(python3)",
                                            "Exec(ls)", "Exec(cat)", "mcp__wetlab__*"],
                                  # The folder above the cell's, so this file doesn't name the cell's
@@ -226,7 +230,12 @@ def main(argv=None):
     ap.add_argument("--batch", help="a name grouping runs for the results page, e.g. opus-group1")
     ap.add_argument("--try", dest="attempt", type=int, help="which try of this task in the batch (1, 2, ...)")
     ap.add_argument("--time-limit", type=float, default=900, help="seconds before the agent is stopped (0: no limit)")
-    ap.add_argument("--url", default=os.environ.get("WETLAB_ROBOT_URL", "http://127.0.0.1:8765"))
+    ap.add_argument("--url", default=os.environ.get("WETLAB_ROBOT_URL", "http://127.0.0.1:8765"),
+                    help="the cell's own server (the evaluator, the live page)")
+    ap.add_argument("--robot-url", help="the robot API the agent gets, if the cell runs one (with a run "
+                                        "token in WETLAB_ROBOT_TOKEN); else the agent uses --url")
+    ap.add_argument("--launcher", default="local", help="where the agent's CLI runs (wetlabsim.launchers)")
+    ap.add_argument("--store", default="local", help="where the run's record is kept (wetlabsim.storage)")
     ap.add_argument("--runs", default="runs")
     ap.add_argument("--site-file", help="a site sheet to give the agent instead of the bench's SITE.md")
     ap.add_argument("--docs", choices=DOCS_LEVELS, default="standard",
@@ -242,8 +251,13 @@ def main(argv=None):
     runs = pathlib.Path(args.runs).resolve()
     token = (runs / ".eval_token").read_text().strip()
     run_id = time.strftime("%Y%m%d-%H%M%S") + f"-{args.agent}" + (f"-{args.task_id}" if args.task_id else "")
-    run_dir = runs / run_id
-    run_dir.mkdir(parents=True)
+    store = storage.get(args.store, runs)
+    run_dir = store.create(run_id)
+    launcher = launchers.get(args.launcher)
+    # The robot as the agent reaches it: the robot API with this run's token (kept out of the
+    # saved command and of the agent's workspace files), or the cell's own URL.
+    robot_url = args.robot_url or args.url
+    robot_token = os.environ.pop("WETLAB_ROBOT_TOKEN", "")
 
     # Fresh workspace outside the runs folder, with only the documents for this cell's robot.
     # The agent's own Python can import only the robot client (wetlabsim.robot), like a real
@@ -260,13 +274,13 @@ def main(argv=None):
     gt0 = _eval_call(args.url, token, "/eval/ground_truth")
     wall_reset = time.time()
     sim_reset = json.loads(urllib.request.urlopen(args.url + "/state").read())["time"]
-    cmd = build_command(args.agent, task, args.model, workspace, run_dir, note)
+    cmd = build_command(args.agent, task, args.model, workspace, run_dir, note, robot_url, robot_token)
     leaks = workspace_leaks(workspace, client)
     if leaks:
         raise SystemExit(f"setup check failed: these files in the agent's workspace name the cell's "
                          f"folder ({ROOT}): {', '.join(map(str, leaks))}")
-    (run_dir / "task.txt").write_text(task)
-    (run_dir / "command.json").write_text(json.dumps(cmd, indent=1))
+    store.write_text(run_id, "task.txt", task)
+    store.write_json(run_id, "command.json", [a.replace(robot_token, "<run token>") if robot_token else a for a in cmd])
     # What the viewer shows about this run; the model, tokens and cost fill in as the agent reports them.
     meta = traces.RunMeta(args.agent, args.model or default_model(args.agent))
     run_info = {
@@ -279,7 +293,7 @@ def main(argv=None):
     }
     _eval_call(args.url, token, "/eval/run", run_info)
     last_meta_post = [0.0]
-    env = dict(os.environ, PYTHONPATH=str(client), WETLAB_ROBOT_URL=args.url)
+    env = dict(os.environ, PYTHONPATH=str(client), WETLAB_ROBOT_URL=robot_url, WETLAB_ROBOT_TOKEN=robot_token)
 
     print(f"Run {run_id}: {args.agent} is working. Watch at {args.url}")
     t0 = time.time()
@@ -287,9 +301,8 @@ def main(argv=None):
     parser = traces.Parser()
     lock = threading.Lock()
     done = threading.Event()
-    with open(run_dir / "transcript.jsonl", "w") as out:
-        proc = subprocess.Popen(cmd, cwd=workspace, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                stdin=subprocess.DEVNULL, text=True, bufsize=1)
+    with store.open(run_id, "transcript.jsonl", "w") as out:
+        proc = launcher.start(cmd, workspace, env)
 
         def record(obj):
             # Save to the transcript and send the readable steps to the live page.
@@ -376,10 +389,10 @@ def main(argv=None):
     _eval_call(args.url, token, "/eval/close_log", {})
     state = json.loads(urllib.request.urlopen(args.url + "/state").read())
     events = json.loads(urllib.request.urlopen(args.url + "/events?all=1").read())
-    (run_dir / "events.json").write_text(json.dumps(events, indent=0))
+    store.write_json(run_id, "events.json", events, indent=0)
     run_info.update(meta.info(), status=status, wall_seconds=round(elapsed, 1))
     _eval_call(args.url, token, "/eval/run", run_info)
-    (run_dir / "run.json").write_text(json.dumps({k: v for k, v in run_info.items() if k != "workspace"}, indent=1))
+    store.write_json(run_id, "run.json", {k: v for k, v in run_info.items() if k != "workspace"})
     result = {
         "run_id": run_id, "agent": args.agent, "model": args.model, "robot": robot,
         "docs": args.docs, "task": task, "prompt": run_info["prompt"],
@@ -403,20 +416,21 @@ def main(argv=None):
         result.update(sc)
         if sc["flags"]["interrupted"]:
             result["status"] = "interrupted: usage limit"
-        (run_dir / "start_objects.json").write_text(json.dumps(gt0))
+        store.write_json(run_id, "start_objects.json", gt0, indent=None)
         run_info.update(task_id=args.task_id, score=sc["score"], passed=sc["passed"], flags=sc["flags"],
                         status=result["status"])
-        (run_dir / "run.json").write_text(json.dumps({k: v for k, v in run_info.items() if k != "workspace"}, indent=1))
+        store.write_json(run_id, "run.json", {k: v for k, v in run_info.items() if k != "workspace"})
         _eval_call(args.url, token, "/eval/run", run_info)
         print(f"Score: {sc['score']} ({'PASS' if sc['passed'] else 'FAIL'}) {json.dumps(sc['detail'])[:300]}")
-    (run_dir / "result.json").write_text(json.dumps(result, indent=2))
+    store.write_json(run_id, "result.json", result, indent=2)
     # Claude Code keeps its own scratchpad outside the workspace (and may use it despite being
     # asked not to): keep a copy of whatever the agent wrote there with the run.
     for pad in sorted(set(re.findall(r"(/(?:private/)?tmp/claude-[^\s'\"]+?/scratchpad)\b", transcript_text(run_dir)))):
         src = pathlib.Path(pad)
         if src.is_dir() and any(src.iterdir()):
             shutil.copytree(src, workspace / "scratchpad (outside the workspace)", dirs_exist_ok=True)
-    shutil.copytree(workspace, run_dir / "workspace", dirs_exist_ok=True)
+    store.copy_tree(run_id, "workspace", workspace)
+    store.finish(run_id)
     print(f"Done in {elapsed:.0f} s ({status}). Results in {run_dir}")
     if peeks:
         print(f"WARNING: the agent looked at the simulator's own code ({len(peeks)} times), "

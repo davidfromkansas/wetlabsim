@@ -29,6 +29,9 @@ import urllib.request
 import numpy as np
 
 DEFAULT_URL = os.environ.get("WETLAB_ROBOT_URL", "http://127.0.0.1:8765")
+# The run's token for the robot API, when the cell hands one out (it opens this robot only,
+# for this run only).
+DEFAULT_TOKEN = os.environ.get("WETLAB_ROBOT_TOKEN", "")
 
 
 class RobotError(Exception):
@@ -71,15 +74,18 @@ class Frame:
 
 
 class Robot:
-    def __init__(self, url: str = DEFAULT_URL, timeout: float = 120.0):
+    def __init__(self, url: str = DEFAULT_URL, timeout: float = 120.0, token: str = DEFAULT_TOKEN):
         self.url = url.rstrip("/")
         self.timeout = timeout
+        self.token = token
 
     # ------------------------------------------------------------ transport
     def _req(self, method, path, body=None, raw=False):
         data = json.dumps(body).encode() if body is not None else None
-        req = urllib.request.Request(self.url + path, data=data, method=method,
-                                     headers={"Content-Type": "application/json"})
+        headers = {"Content-Type": "application/json"}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        req = urllib.request.Request(self.url + path, data=data, method=method, headers=headers)
         try:
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
                 payload = resp.read()

@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import pathlib
 import secrets
 import signal
@@ -33,9 +34,11 @@ from .bench import Bench
 from . import wetlab as WL
 from wetlabsim import tasks as WT
 from .sim import PlaygroundSim
+from wetlabsim import robot_api as RA
 
 HERE = pathlib.Path(__file__).parent
 PAGE = HERE / "static" / "index.html"
+ROBOT_API_URL = ""      # set when the robot API listener is running (main)
 TIME_LIMIT = 180.0     # seconds: a LIBERO test run that hasn't finished by then is stopped
 FREE_TIME_LIMIT = 0.0  # free play: no limit, the run goes until the AI finishes or you stop it
 
@@ -149,8 +152,16 @@ class Runner:
             self.runs.mkdir(parents=True, exist_ok=True)
             log = open(self.runs / "playground-runner.log", "a")
             self.log_from = log.tell()          # this run's part of the shared log starts here
+            env = dict(os.environ)
+            if ROBOT_API_URL:
+                # The agent gets the robot API and a token for this robot, for this run only.
+                self.token = RA.TOKENS.issue(urllib.parse.urlparse(self.url).path, run=task[:60])
+                env["WETLAB_ROBOT_TOKEN"] = self.token
+                cmd += ["--robot-url", ROBOT_API_URL]
             self.proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
-                                         start_new_session=True, cwd=str(HERE.parent))
+                                         start_new_session=True, cwd=str(HERE.parent), env=env)
+            proc, tok = self.proc, getattr(self, "token", None)
+            threading.Thread(target=lambda: (proc.wait(), RA.TOKENS.revoke(tok)), daemon=True).start()
             self.info = {"model": mdl, "task": task, "started": time.time(), "time_limit": time_limit,
                          "status": "starting"}
             return self.status()
@@ -163,6 +174,7 @@ class Runner:
                 except ProcessLookupError:
                     pass
                 self.info["status"] = "stopped"
+            RA.TOKENS.revoke(getattr(self, "token", None))
 
     def status(self) -> dict:
         if not self.info:
@@ -343,6 +355,10 @@ class PGHandler(Handler):
             return
 
     def do_POST(self):
+        # With a robot API running, robot commands are only taken there, with a run token.
+        tail = re.sub(r"^/st/[^/]+", "", urllib.parse.urlparse(self.path).path).rstrip("/")
+        if ROBOT_API_URL and not getattr(self, "robot_api", False) and tail in RA.ROBOT_COMMANDS:
+            return self._err("robot commands go through the robot API, with a run token", 403)
         if self._station_request():
             if self.path.startswith("/pg/"):
                 return self._err("not found", 404)
@@ -594,10 +610,17 @@ class PGHandler(Handler):
             s._set_view({"lookat": [0.0, 0.0, 0.85], "distance": 2.8, "azimuth": 145.0, "elevation": -28.0}, False)
 
 
+class RobotAPIHandler(RA.RobotAPIMixin, PGHandler):
+    """The robot API listener: the robot's commands, readings and the agent's two cameras, for
+    the station a run token opens. Shares the app's state (PGHandler's class attributes)."""
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="MuJoCo Playground")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8780)
+    ap.add_argument("--robot-port", type=int, default=8781,
+                    help="the robot API, the only door agents get (0: none; agents then use the app's URL)")
     ap.add_argument("--runs", default="runs/playground")
     ap.add_argument("--no-browser", action="store_true")
     args = ap.parse_args(argv)
@@ -626,6 +649,13 @@ def main(argv=None):
     PGHandler.wetbench = WL.WetBench(sim, PGHandler.runner, PGHandler, runs / "wetlab_results.jsonl")
     srv = ThreadingHTTPServer((args.host, args.port), PGHandler)
     srv.daemon_threads = True
+    if args.robot_port:
+        global ROBOT_API_URL
+        rsrv = ThreadingHTTPServer((args.host, args.robot_port), RobotAPIHandler)
+        rsrv.daemon_threads = True
+        threading.Thread(target=rsrv.serve_forever, daemon=True, name="robot-api").start()
+        ROBOT_API_URL = f"http://{args.host}:{args.robot_port}"
+        print(f"Robot API for agents at {ROBOT_API_URL} (run tokens only)")
     print(f"MuJoCo Playground is running at {url}")
     if not args.no_browser:
         import webbrowser
