@@ -1193,6 +1193,8 @@ function render() {
 async function refresh() {
   const sid = SID, sc = await api('/pg/scene');
   if (sid !== SID) return;                 // switched sessions meanwhile
+  // A hosted lab from before the site was updated: back to the front, which opens a new one.
+  if (sc.stale && S.cat.front && !S.watch && !Object.values(sc.runs || {}).some(r => r.active || r.queued)) { location.href = S.cat.front + '/'; return; }
   if (sc.ok === false) {                   // the session closed (the server restarted, say)
     await loadSessions();
     const next = (S.sess.mine[0] || {}).id;

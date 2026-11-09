@@ -661,7 +661,7 @@ class PGHandler(Handler):
                 return self._json({**info, "run": run, "runs": runs, "locked": self._locked(),
                                    "bench": self.bench.status(), "wetbench": self.wetbench.status(),
                                    "session": {"id": self.sess.id, "name": self.sess.name,
-                                               "mine": self._owns()}})
+                                               "mine": self._owns()}, "stale": LABS.stale()})
             if p == "/pg/wetlab":
                 return self._json({"tasks": [{"id": t.id, "title": t.title, "prompt": t.prompt,
                                               "needs_answer": t.needs_answer} for t in WT.TASKS.values()],

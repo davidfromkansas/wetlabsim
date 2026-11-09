@@ -29,6 +29,10 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 IGNORE = [".git", ".venv", "runs", "build", "**/__pycache__", ".pytest_cache", "*.mp4", ".DS_Store",
           "playground/libero_assets/files", "hosting"]
 MAX_LABS = 10
+# This deploy's build: a new one each deploy (inside a container, the one it was deployed with).
+# Labs from an older build aren't handed out again and shut down once nothing runs in them.
+BUILD = os.environ.get("WETLAB_BUILD") or time.strftime("%Y%m%d-%H%M%S") + "-" + subprocess.run(
+    ["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
 FRONT_URL = "https://davidfromkansas--wetlab-playground-web.us-east.modal.run"
 
 image = (
@@ -37,7 +41,8 @@ image = (
     .apt_install("libegl1", "libgl1", "libgles2", "libegl-mesa0", "libgl1-mesa-dri", "libglvnd0")
     .pip_install("mujoco>=4.0,<5", "numpy", "pillow", "mcp", "modal")
     .env({"MUJOCO_GL": "egl", "EGL_PLATFORM": "surfaceless", "PYTHONPATH": "/app", "PYTHONUNBUFFERED": "1",
-          "WETLAB_MAX_LABS": str(MAX_LABS), "WETLAB_FRONT_URL": FRONT_URL, "WETLAB_MODAL_APP": "wetlab-playground"})
+          "WETLAB_MAX_LABS": str(MAX_LABS), "WETLAB_FRONT_URL": FRONT_URL, "WETLAB_MODAL_APP": "wetlab-playground",
+          "WETLAB_BUILD": BUILD})
     .add_local_dir(str(ROOT), "/app", ignore=IGNORE)
 )
 runs = modal.Volume.from_name("wetlab-playground-runs", create_if_missing=True)
