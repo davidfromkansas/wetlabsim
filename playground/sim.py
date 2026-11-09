@@ -316,6 +316,43 @@ class PlaygroundSim(Sim):
                 self.active_station = self.stations[0].uid if self.stations else None
             self.rebuild()
 
+    def duplicate_station(self, uid: str) -> str:
+        """Copy a station (robot, table and what is on the table) into the nearest free spot
+        beside it. The copy becomes the active station."""
+        with self.lock:
+            st = self.station(uid)
+            if st is None:
+                raise RobotError("no such station")
+            self._sync_placed()
+            sx, sy = st.footprint()
+            c, s = float(np.cos(st.yaw)), float(np.sin(st.yaw))
+            spot = None
+            for k in (1, 2, 3, 4):
+                # beside it first (along the table's long side), then in front / behind
+                for lx, ly in ((k * (sx + 0.4), 0), (-k * (sx + 0.4), 0),
+                               (0, -k * (sy + 0.5)), (0, k * (sy + 0.5))):
+                    dx, dy = c * lx - s * ly, s * lx + c * ly
+                    out = self.station_spot(st.pos[0] + dx, st.pos[1] + dy, st.yaw)
+                    if out["valid"]:
+                        spot = (dx, dy)
+                        break
+                if spot:
+                    break
+            if spot is None:
+                raise RobotError("no free space next to this station")
+            dx, dy = spot
+            riders = self._on_table(st)
+            new = self._new_station_uid()
+            base = (st.name or f"Station {uid[2:]}").strip()
+            self.stations.append(W.Station(new, st.robot, (st.pos[0] + dx, st.pos[1] + dy), st.yaw,
+                                           f"{base} copy"[:40]))
+            for p in riders:
+                self.placed.append(W.Placed(self.new_uid(p.item), p.item,
+                                            (p.pos[0] + dx, p.pos[1] + dy, p.pos[2]), p.yaw, p.quat))
+            self.rebuild()
+            self.active_station = new
+        return new
+
     def rename_station(self, uid: str, name: str):
         st = self.station(uid)
         if st is None:

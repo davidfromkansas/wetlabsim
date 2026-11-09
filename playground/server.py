@@ -871,6 +871,10 @@ class PGHandler(Handler):
                     return self._json({"ok": False, "error": spot.get("reason") or "no room to turn it"})
                 s.move_station(st.uid, st.pos, yaw)
                 return self._json({"ok": True})
+            if p == "/pg/station/duplicate":
+                uid = s.duplicate_station(b["uid"])
+                s.frame_station(uid)
+                return self._json({"ok": True, "uid": uid})
             if p == "/pg/station/remove":
                 s.remove_station(b["uid"])
                 self.runners.pop(b["uid"], None)
