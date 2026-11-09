@@ -6,6 +6,7 @@
 <title>MuJoCo Playground</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/pg/static/generative-loaders.css">
 <style>
 :root{--bg:#F6F7F9;--panel:#FFFFFF;--line:#E5E7EB;--line2:#EEF0F3;--ink:#111827;--ink2:#1F2937;--muted:#4B5563;--soft:#F3F4F6;--blue:#2563EB;--blue2:#1D4ED8;--blueBg:#EFF4FF;--green:#16A34A;--red:#DC2626;--amber:#92400E;--amberBg:#FEF3C7}
 *{box-sizing:border-box}
@@ -122,6 +123,8 @@ body.fixed .sidetabs{display:none}
 #feed .codecard .out.err{color:var(--red)}
 #feed .thinking{margin-top:20px;display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px}
 #feed .empty{color:var(--muted);font-size:13px}
+#feed .runerr{border:1px solid #FCA5A5;background:#FEF2F2;color:#991B1B;border-radius:8px;padding:8px 10px;font-size:13px}
+#feed .runerr pre{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font:12px 'JetBrains Mono',monospace;color:#7F1D1D}
 #jumpBtn{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);display:none;height:30px;padding:0 12px;border-radius:999px;border:1px solid #D1D5DB;background:#fff;color:var(--ink);font-size:12.5px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(17,24,39,.15)}
 .runbar{padding:10px 16px;border-top:1px solid var(--line2);display:flex;gap:8px;align-items:center}
 #stage{flex:1;min-width:0;position:relative;background:#FBFBF9;display:flex;align-items:center;justify-content:center;overflow:hidden}
@@ -233,7 +236,7 @@ table.board.big th,table.board.big td{padding:12px 14px}
     <div class="rcards" id="rcards"></div>
   </div>
 </div>
-<div id="loading"><svg width="40" height="40" viewBox="0 0 26 26" fill="none" stroke="#2563EB" stroke-width="1.6"><path d="M13 3 L23 8.5 L13 14 L3 8.5 Z"/><path d="M3 8.5 V17.5 L13 23 V14"/><path d="M23 8.5 V17.5 L13 23"/></svg>Loading the playground…</div>
+<div id="loading"><span class="il-loader" data-variant="snake" data-speed="1" data-paused="false" aria-hidden="true" style="--il-color:#2563EB;--il-size:24px;--il-duration:1.2s"><span class="il-snake"><i style="--il-i:0;--il-scale:1"></i><i style="--il-i:1;--il-scale:.925"></i><i style="--il-i:2;--il-scale:.85"></i><i style="--il-i:3;--il-scale:.775"></i><i style="--il-i:4;--il-scale:.7"></i><i style="--il-i:5;--il-scale:.625"></i><i style="--il-i:6;--il-scale:.55"></i><b></b></span></span>Loading the playground…</div>
 <div class="app">
 <header>
   <div class="hgroup">
@@ -635,13 +638,19 @@ function esc(s) { return String(s).replace(/[&<>]/g, c => ({'&': '&amp;', '<': '
 // scroll up and it stops, with a button to jump back to the latest.
 const LOGOS = {anthropic: '/static/anthropic.svg', openai: '/static/openai.svg', cognition: '/static/cognition.svg'};
 S.trace = []; S.runInfo = {}; S.follow = true; S.feedKey = '';
+// generative-loaders' InlineLoader variant="snake" (the markup its React component renders;
+// the styles are vendored in /pg/static/generative-loaders.css).
+function snake(size = 24) {
+  const dots = Array.from({length: 7}, (_, i) => `<i style="--il-i:${i};--il-scale:${(1 - i * .075).toFixed(3)}"></i>`).join('');
+  return `<span class="il-loader" data-variant="snake" data-speed="1" data-paused="false" aria-hidden="true" style="--il-size:${size}px;--il-duration:1.2s"><span class="il-snake">${dots}<b></b></span></span>`;
+}
 function mmss(x) { x = Math.max(0, x); return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(Math.floor(x % 60)).padStart(2, '0'); }
 function feedAtBottom() { const f = $('feed'); return f.scrollHeight - f.scrollTop - f.clientHeight < 40; }
 $('feed').addEventListener('scroll', () => { S.follow = feedAtBottom(); $('jumpBtn').style.display = S.follow ? 'none' : 'block'; });
 $('jumpBtn').onclick = () => { S.follow = true; $('jumpBtn').style.display = 'none'; const f = $('feed'); f.scrollTop = f.scrollHeight; };
 function renderFeed() {
   const run = (S.scene && S.scene.run) || {}, info = S.runInfo, trace = S.trace, active = !!run.active;
-  const key = (S.scene && S.scene.active) + '|' + (run.started || '') + '|' + trace.length + '|' + active + '|' + S.mode;
+  const key = (S.scene && S.scene.active) + '|' + (run.started || '') + '|' + trace.length + '|' + active + '|' + (run.status || '') + '|' + S.mode;
   if (key === S.feedKey) return;
   S.feedKey = key;
   const m = run.model || {}, logo = LOGOS[m.provider] || '', who = esc(info.model_label || m.label || 'The AI');
@@ -676,7 +685,9 @@ function renderFeed() {
     out.push(`<li class="it${turn ? ' turn' : ''}">${head}${body}</li>`);
     prevT = st.t; prevKind = st.kind;
   }
-  if (active) out.push(`<li class="thinking">${logo ? `<img src="${logo}" alt="" style="width:16px;height:16px">` : ''} Thinking…</li>`);
+  // A run that failed before saying anything: show why, instead of an empty chat.
+  if (!active && run.status === 'error' && !trace.some(st => st.kind === 'says')) out.push(`<li class="it turn"><div class="who">${logo ? `<img src="${logo}" alt="">` : ''}<strong>${who}</strong></div><div class="runerr"><b>The run stopped before the AI could start.</b>${run.error_text ? `<pre>${esc(run.error_text)}</pre>` : ''}</div></li>`);
+  if (active) out.push(`<li class="thinking">${snake(16)} Thinking…</li>`);
   const f = $('feed');
   f.innerHTML = out.join('');
   if (S.follow) f.scrollTop = f.scrollHeight;
@@ -969,7 +980,7 @@ $('wModel').onchange = renderWet;
   S.cat = await api('/pg/catalog');
   const items = S.cat.items;
   for (const it of items) { it.collision = it.collision || ''; }
-  $('wModel').innerHTML = $('lModel').innerHTML = $('model').innerHTML = [...new Set(S.cat.models.map(m => m.via))].map(v => `<optgroup label="${v}">` + S.cat.models.filter(m => m.via === v).map(m => `<option value="${m.id}">${m.label}</option>`).join('') + '</optgroup>').join('');
+  $('wModel').innerHTML = $('lModel').innerHTML = $('model').innerHTML = [...new Set(S.cat.models.map(m => m.via))].map(v => `<optgroup label="${v}">` + S.cat.models.filter(m => m.via === v).map(m => `<option value="${m.id}"${m.needs ? ' disabled' : ''}>${m.label}${m.needs ? ' · needs ' + m.needs : ''}</option>`).join('') + '</optgroup>').join('');
   renderTabs(); renderItems();
   view.onload = () => $('loading').style.display = 'none';
   const sendAspect = () => { const r = stage.getBoundingClientRect(); if (r.width > 50 && r.height > 50) api('/pg/camera', {aspect: r.width / r.height}); };

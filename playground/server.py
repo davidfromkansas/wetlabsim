@@ -40,7 +40,10 @@ TIME_LIMIT = 180.0     # seconds: a LIBERO test run that hasn't finished by then
 FREE_TIME_LIMIT = 0.0  # free play: no limit, the run goes until the AI finishes or you stop it
 
 # Every model the agent runner can drive, by the CLI that runs it (for Devin, Cognition's own
-# models; Devin's Claude and GPT models are here through Claude Code and Codex). The ids "claude" and "codex"
+# models; Devin's Claude and GPT models are here through Claude Code and Codex).
+# "needs": a plan this machine's account doesn't have (checked 2026-11-09: Devin Free runs only
+# SWE-2 Flash Medium and SWE-1.6 Slow). Devin would quietly run its default model instead, so
+# these are shown but can't be started. The ids "claude" and "codex"
 # are kept from the first two entries so earlier results stay on the scoreboards.
 MODELS = [
     {"id": "claude", "label": "Claude Opus 5.5", "via": "Claude Code", "agent": "claude", "model": "opus",
@@ -68,33 +71,45 @@ MODELS = [
     {"id": "gpt-5.6-luna", "label": "GPT-5.6 Luna", "via": "Codex CLI", "agent": "codex", "model": "gpt-5.6-luna",
      "provider": "openai"},
     {"id": "swe-2-max", "label": "SWE-2 Max", "via": "Devin", "agent": "devin", "model": "swe-2-max",
-     "provider": "cognition"},
+     "provider": "cognition",
+     "needs": "Devin Pro"},
     {"id": "swe-2-high", "label": "SWE-2 High", "via": "Devin", "agent": "devin", "model": "swe-2-high",
-     "provider": "cognition"},
+     "provider": "cognition",
+     "needs": "Devin Pro"},
     {"id": "swe-2-medium", "label": "SWE-2 Medium", "via": "Devin", "agent": "devin", "model": "swe-2-medium",
-     "provider": "cognition"},
+     "provider": "cognition",
+     "needs": "Devin Pro"},
     {"id": "swe-2-max-lightning", "label": "SWE-2 Max Lightning", "via": "Devin", "agent": "devin", "model": "swe-2-max-lightning",
-     "provider": "cognition"},
+     "provider": "cognition",
+     "needs": "Devin Pro"},
     {"id": "swe-2-high-lightning", "label": "SWE-2 High Lightning", "via": "Devin", "agent": "devin", "model": "swe-2-high-lightning",
-     "provider": "cognition"},
+     "provider": "cognition",
+     "needs": "Devin Pro"},
     {"id": "swe-2-medium-lightning", "label": "SWE-2 Medium Lightning", "via": "Devin", "agent": "devin", "model": "swe-2-medium-lightning",
-     "provider": "cognition"},
+     "provider": "cognition",
+     "needs": "Devin Pro"},
     {"id": "swe-2-flash-max", "label": "SWE-2 Flash Max", "via": "Devin", "agent": "devin", "model": "swe-2-flash-max",
-     "provider": "cognition"},
+     "provider": "cognition",
+     "needs": "Devin Pro"},
     {"id": "swe-2-flash-high", "label": "SWE-2 Flash High", "via": "Devin", "agent": "devin", "model": "swe-2-flash-high",
-     "provider": "cognition"},
+     "provider": "cognition",
+     "needs": "Devin Pro"},
     {"id": "swe-2-flash-medium", "label": "SWE-2 Flash Medium", "via": "Devin", "agent": "devin", "model": "swe-2-flash-medium",
      "provider": "cognition"},
     {"id": "swe-1-7", "label": "SWE-1.7 Max", "via": "Devin", "agent": "devin", "model": "swe-1-7",
-     "provider": "cognition"},
+     "provider": "cognition",
+     "needs": "Devin Pro"},
     {"id": "swe-1-7-medium", "label": "SWE-1.7 Medium", "via": "Devin", "agent": "devin", "model": "swe-1-7-medium",
-     "provider": "cognition"},
+     "provider": "cognition",
+     "needs": "Devin Pro"},
     {"id": "swe-1-6", "label": "SWE-1.6", "via": "Devin", "agent": "devin", "model": "swe-1-6",
-     "provider": "cognition"},
+     "provider": "cognition",
+     "needs": "Devin Pro"},
     {"id": "swe-1-6-slow", "label": "SWE-1.6 Slow", "via": "Devin", "agent": "devin", "model": "swe-1-6-slow",
      "provider": "cognition"},
     {"id": "adaptive", "label": "Adaptive", "via": "Devin", "agent": "devin", "model": "adaptive",
-     "provider": "cognition"},
+     "provider": "cognition",
+     "needs": "Devin Pro"},
 ]
 
 
@@ -120,6 +135,8 @@ class Runner:
             mdl = next((m for m in MODELS if m["id"] == model_id), None)
             if mdl is None:
                 raise RobotError(f"unknown model {model_id!r}")
+            if mdl.get("needs"):
+                raise RobotError(f"{mdl['label']} needs {mdl['needs']} on this machine's account")
             cmd = [sys.executable, "-m", "wetlabsim.run_agent", "--agent", mdl["agent"], "--task", task,
                    "--url", self.url, "--runs", str(self.runs), "--time-limit", str(time_limit),
                    "--docs", self.docs, *(extra or [])]
@@ -131,6 +148,7 @@ class Runner:
                 cmd += ["--model", mdl["model"]]
             self.runs.mkdir(parents=True, exist_ok=True)
             log = open(self.runs / "playground-runner.log", "a")
+            self.log_from = log.tell()          # this run's part of the shared log starts here
             self.proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
                                          start_new_session=True, cwd=str(HERE.parent))
             self.info = {"model": mdl, "task": task, "started": time.time(), "time_limit": time_limit,
@@ -159,7 +177,34 @@ class Runner:
             out["status"] = ("error" if self.proc.returncode != 0 or rs == "agent_error"
                              else "time_limit" if rs == "time_limit" else "finished")
             out["exit_code"] = self.proc.returncode
+            if out["status"] == "error":
+                out["error_text"] = self.error_text()
         return out
+
+    def error_text(self) -> str:
+        """Why a run failed, in the runner's or the agent's own words: the agent's last error
+        message if it reported one, else the end of what the runner printed."""
+        run_id = self.board.run.get("run_id") if getattr(self, "board", None) else None
+        tr = self.runs / run_id / "transcript.jsonl" if run_id else None
+        if tr and tr.exists():
+            for line in reversed(tr.read_text(errors="ignore").splitlines()[-200:]):
+                try:
+                    o = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                msg = (o.get("is_error") and o.get("result")) or (o.get("type") == "error" and o.get("message")) \
+                    or (isinstance(o.get("error"), str) and o["error"]) \
+                    or (isinstance(o.get("error"), dict) and o["error"].get("message"))
+                if msg:
+                    return str(msg)[:600]
+        try:
+            with open(self.runs / "playground-runner.log", errors="ignore") as f:
+                f.seek(getattr(self, "log_from", 0))
+                lines = [l.strip() for l in f.read().splitlines() if l.strip()]
+        except OSError:
+            return ""
+        lines = [l for l in lines if not l.startswith(("Make a video", "Run ", "Done in "))]
+        return "\n".join(lines[-6:])[:600]
 
 
 class PGHandler(Handler):
@@ -239,7 +284,7 @@ class PGHandler(Handler):
                 return self._err("not found", 404)
             if p == "/pg/catalog":
                 return self._json({"tabs": catalog.TABS, "items": catalog.available(), "robots": catalog.robots(),
-                                   "models": [{k: m[k] for k in ("id", "label", "via", "provider")} for m in MODELS],
+                                   "models": [{k: m[k] for k in ("id", "label", "via", "provider", "needs") if k in m} for m in MODELS],
                                    "time_limit": TIME_LIMIT})
             if p.startswith("/pg/thumb/"):
                 f = catalog.ASSETS / pathlib.Path(p).stem / "thumb.png"

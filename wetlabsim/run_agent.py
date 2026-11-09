@@ -193,7 +193,9 @@ def build_command(agent: str, task: str, model: str | None, workspace: pathlib.P
                 "env": [{"name": "PYTHONPATH", "value": str(ROOT)}]}]
         perms = {"permissions": {"allow": ["Read(./**)", "Write(./**)", "Exec(python)", "Exec(python3)",
                                            "Exec(ls)", "Exec(cat)", "mcp__wetlab__*"],
-                                 "deny": [f"Read({ROOT}/**)", f"Write({ROOT}/**)"]}}
+                                 # The folder above the cell's, so this file doesn't name the cell's
+                                 # own folder (the workspace leak check refuses files that do).
+                                 "deny": [f"Read({ROOT.parent}/**)", f"Write({ROOT.parent}/**)"]}}
         (workspace / ".devin").mkdir(exist_ok=True)
         (workspace / ".devin" / "config.json").write_text(json.dumps(perms, indent=2))
         # The bridge runs by file path: the agent's PYTHONPATH only has the robot client.
