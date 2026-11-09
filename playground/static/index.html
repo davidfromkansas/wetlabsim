@@ -156,6 +156,7 @@ body.filing #chatpane,body.filing #right .freeonly{display:none!important}
 body.v3 #view{position:relative;opacity:0}
 #view.dragging{cursor:grabbing}
 .tl{position:absolute;left:14px;top:84px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}
+.hint:empty{display:none!important}
 .hint{max-width:min(290px,28vw);font-size:12px;color:#374151;background:rgba(255,255,255,.9);border:1px solid var(--line);padding:4px 10px;border-radius:6px}
 .live{font-size:12px;font-weight:600;color:var(--red);background:#FEE2E2;padding:4px 10px;border-radius:6px}
 .bl{position:absolute;right:14px;bottom:14px;display:flex;gap:6px;align-items:center;z-index:2}
@@ -492,7 +493,7 @@ button:active:not(:disabled){transform:scale(.97)}
       <div class="pip"><img id="camWrist" alt="Wrist camera, what the AI sees"><div class="pcap">Wrist<span>AI SEES</span><button class="exp" data-cam="wrist" aria-label="Expand wrist camera" title="Expand"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M7 1 H11 V5 M5 11 H1 V7 M11 1 L7 5 M1 11 L5 7"/></svg></button></div></div>
     </div>
     <div id="bigCamWrap" role="dialog" aria-modal="true" aria-label="Camera, large"><div class="bigcam"><img id="bigCam" alt=""><div class="pcap" style="padding:8px 10px 8px 14px;font-size:13px"><b id="bigName" style="font-weight:600"></b><span>AI SEES THIS</span><button class="exp wide" id="shrinkBtn" aria-label="Shrink camera"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M11 5 H7 V1 M1 7 H5 V11 M7 5 L11 1 M5 7 L1 11"/></svg>Shrink</button></div></div></div>
-    <div class="tl"><span class="live" id="liveTag" style="display:none">● Running · real time</span><span class="libtag libero wetlab" id="libTag"></span><span class="hint" id="hintTag">Drag objects in from the right. Drag to orbit, right-drag to pan, scroll to zoom.</span></div>
+    <div class="tl"><span class="live" id="liveTag" style="display:none">● Running · real time</span><span class="libtag libero wetlab" id="libTag"></span><span class="hint" id="hintTag"></span></div>
     <div class="bl"><button class="camreset" data-preset="home" aria-label="Reset view" title="Reset view (Home)" style="width:32px;height:32px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E5E7EB" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 8 a5 5 0 1 0 1.6 -3.7"/><path d="M3 2 V5 H6"/></svg></button><button data-preset="robot" class="fixedonly">Robot close-up</button></div>
     <div class="campad" role="group" aria-label="Camera">
       <div class="joy" id="joy" tabindex="0" role="application" aria-label="Camera joystick: drag to slide the view, or use the arrow keys" title="Drag to slide the view (arrow keys too)">
@@ -1185,7 +1186,7 @@ function render() {
     if (!$('chatModel').dataset.set) $('chatModel').textContent = m.label || '';
   }
   $('startBtn').disabled = active;
-  if (!S.placing) $('hintTag').textContent = S.fixed || S.watch ? 'Drag to orbit, right-drag to pan, scroll to zoom.' : 'Drag objects in from the right. Click a robot to give it a task. Drag to orbit, right-drag to pan, scroll to zoom.';
+  if (!S.placing) $('hintTag').textContent = '';   // the scene hint only shows while placing a station
   if (S.mode === 'libero') renderLiberoLive();
   if (S.mode === 'wetlab') renderWetLive();
 }
