@@ -35,6 +35,8 @@ from . import wetlab as WL
 from wetlabsim import tasks as WT
 from .sim import PlaygroundSim
 from wetlabsim import robot_api as RA
+from . import labs as LABS
+from . import scene3d as S3
 
 HERE = pathlib.Path(__file__).parent
 PAGE = HERE / "static" / "index.html"
@@ -43,6 +45,7 @@ TIME_LIMIT = 180.0     # seconds: a LIBERO test run that hasn't finished by then
 # The public site (main --public): Claude only, free play only, every run capped, the AI in
 # a cloud sandbox, a few runs at once with a queue.
 PUBLIC = False
+FRONT = False               # the public site's front: hands out labs, lists live runs and past runs
 MAX_ACTIVE = 4              # runs at once on the public site; more wait in a queue
 RUN_LAUNCHER = "local"      # where agents run (wetlabsim.launchers)
 AGENT_ROBOT_URL = ""        # the robot API as agents outside this machine reach it ("" = ROBOT_API_URL)
@@ -167,7 +170,9 @@ class Runner:
             self.proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
                                          start_new_session=True, cwd=str(HERE.parent), env=env)
             proc, tok = self.proc, getattr(self, "token", None)
-            threading.Thread(target=lambda: (proc.wait(), RA.TOKENS.revoke(tok)), daemon=True).start()
+            slot = getattr(self, "slot", None)
+            threading.Thread(target=lambda: (proc.wait(), RA.TOKENS.revoke(tok), LABS.free_slot(slot)),
+                             daemon=True).start()
             self.info = {"model": mdl, "task": task, "started": time.time(), "time_limit": time_limit,
                          "status": "starting"}
             return self.status()
@@ -271,18 +276,21 @@ def _start_queued(cls):
     """Start waiting runs while there is room (MAX_ACTIVE on the public site; no limit locally)."""
     with QUEUE_LOCK:
         while QUEUE:
-            active = sum(1 for r in cls.runners.values() if r.active())
+            # Runs at once: across every lab on the shared site, else on this server.
+            active = LABS.slots_in_use() if LABS.shared() else sum(1 for r in cls.runners.values() if r.active())
             if PUBLIC and active >= MAX_ACTIVE:
                 return
             job = QUEUE.pop(0)
             st = cls.sim.station(job["station"])
             if st is None:
                 continue
+            slot = LABS.take_slot() if LABS.shared() else None
             try:
-                cls.station_runner(job["station"]).start(job["task"], job["model"],
-                                                         site.site_sheet(cls.sim.placed, st, cls.sim.stations),
-                                                         job["limit"])
+                r = cls.station_runner(job["station"])
+                r.slot = slot
+                r.start(job["task"], job["model"], site.site_sheet(cls.sim.placed, st, cls.sim.stations), job["limit"])
             except Exception as e:  # noqa: BLE001
+                LABS.free_slot(slot)
                 print("could not start a queued run:", e)
 
 
@@ -326,6 +334,24 @@ class PGHandler(Handler):
         self.path = "/" + rest
         return True
 
+    def _claim_lab(self):
+        """The visitor's own lab, found by a cookie (no sign-in)."""
+        import http.cookies
+        c = http.cookies.SimpleCookie(self.headers.get("Cookie", ""))
+        if "wl_owner" not in c:      # the front page sets it; a request without it starts nothing
+            return self._err("open the site's front page first", 400)
+        owner = c["wl_owner"].value
+        try:
+            out = LABS.claim_lab(owner)
+        except Exception as e:  # noqa: BLE001
+            return self._err(f"could not start a lab: {e}", 503)
+        body = json.dumps(out).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def _runs_status(self) -> dict:
         out = {uid: self.runners[uid].status() for uid in list(self.runners)}
         for i, q in enumerate(list(QUEUE)):
@@ -344,6 +370,17 @@ class PGHandler(Handler):
         return ""
 
     def do_GET(self):
+        LABS.touch()
+        if FRONT:
+            path = urllib.parse.urlparse(self.path).path
+            if path in ("/", "/live"):
+                # The visitor's cookie is set with the page, so every lab request after it carries
+                # it: a repeated or retried request finds the same lab instead of starting another.
+                hdr = {} if "wl_owner=" in self.headers.get("Cookie", "") else {
+                    "Set-Cookie": f"wl_owner={secrets.token_urlsafe(18)}; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax"}
+                return self._send(200, (HERE / "static" / "front.html").read_bytes(), "text/html; charset=utf-8", hdr)
+            if path == "/api/live":
+                return self._json(LABS.live_list())
         if self._station_request():
             if self.path.startswith("/pg/"):
                 return self._err("not found", 404)
@@ -371,7 +408,8 @@ class PGHandler(Handler):
                                    "models": [{k: m[k] for k in ("id", "label", "via", "provider", "needs") if k in m}
                                               for m in MODELS if not PUBLIC or m["agent"] == "claude"],
                                    "time_limit": TIME_LIMIT, "public": PUBLIC,
-                                   "free_time_limit": FREE_TIME_LIMIT, "max_active": MAX_ACTIVE if PUBLIC else 0})
+                                   "free_time_limit": FREE_TIME_LIMIT, "max_active": MAX_ACTIVE if PUBLIC else 0,
+                                   "owner": LABS.owner_ok(self.headers), "front": LABS.FRONT_URL})
             if p.startswith("/pg/thumb/"):
                 f = catalog.ASSETS / pathlib.Path(p).stem / "thumb.png"
                 if f.is_file():
@@ -401,6 +439,25 @@ class PGHandler(Handler):
                                    "study_setups": LB.STUDY_SETUPS,
                                    "scores": self.bench.scoreboard(qs.get("task", [cur])[0]),
                                    "suite_board": self.bench.suite_board(study)})
+            # The main view drawn in the browser (scene3d): the scene once, then a pose stream.
+            if p == "/pg/scene3d":
+                with self.sim.lock:
+                    m, ver = self.sim.m, self.sim._model_ver
+                out = S3.scene(m, ver)
+                out["floorfx"] = self.sim.scene_mode == "free"      # the Tron floor, drawn by the page
+                return self._json(out)
+            if p.startswith("/pg/mesh/") or p.startswith("/pg/tex/"):
+                m = self.sim.m
+                i = int(pathlib.Path(p).stem)
+                data, ctype = ((S3.mesh_bin(m, i), "application/octet-stream") if p.startswith("/pg/mesh/")
+                               else (S3.tex_png(m, i), "image/png"))
+                hdr = {"Cache-Control": "max-age=86400"}       # the URL carries the content's hash
+                if "gzip" in self.headers.get("Accept-Encoding", "") and ctype != "image/png":
+                    import gzip
+                    data, hdr["Content-Encoding"] = gzip.compress(data, 5), "gzip"
+                return self._send(200, data, ctype, hdr)
+            if p == "/pg/poses.sse":
+                return self._pose_stream()
             if p == "/pg/view.mjpg":
                 return self._view_stream()
             if p == "/pg/view.jpg":
@@ -411,6 +468,34 @@ class PGHandler(Handler):
             return self._err(str(e))
         except (BrokenPipeError, ConnectionResetError):
             return None
+
+    def _pose_stream(self):
+        """Server-sent events, ~30 a second: every body's pose, the view's overlay shapes and the
+        server's camera (for glides and presets). Ends when the browser goes away."""
+        s = self.sim
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Accel-Buffering", "no")
+        self.end_headers()
+        try:
+            while True:
+                t0 = time.time()
+                LABS.touch()
+                s._glide_step()
+                with s.lock:
+                    xpos, xquat, ver = s.d.xpos.copy(), s.d.xquat.copy(), s._model_ver
+                    c = s.view
+                    cam = {"lookat": [round(float(v), 4) for v in c.lookat], "distance": round(float(c.distance), 4),
+                           "azimuth": round(float(c.azimuth), 3), "elevation": round(float(c.elevation), 3)}
+                shapes = list(s.overlay) + s._selection_overlay()
+                frame = S3.poses(xpos, xquat, {"v": str(ver), "t": round(float(s.d.time), 3), "cam": cam,
+                                               "shapes": shapes, "paused": s.paused})
+                self.wfile.write(b"data: " + frame.encode() + b"\n\n")
+                self.wfile.flush()
+                time.sleep(max(0.0, 1 / 30 - (time.time() - t0)))
+        except (BrokenPipeError, ConnectionResetError, OSError):
+            return
 
     def _view_stream(self):
         self.send_response(200)
@@ -429,6 +514,15 @@ class PGHandler(Handler):
             return
 
     def do_POST(self):
+        LABS.touch()
+        if FRONT:
+            if urllib.parse.urlparse(self.path).path == "/api/lab":
+                return self._claim_lab()
+            return self._err("not found", 404)      # the front runs no labs of its own
+        # Someone else's lab: watch only. Changes need the key the owner's link carries.
+        if (urllib.parse.urlparse(self.path).path.startswith("/pg/") and not getattr(self, "robot_api", False)
+                and not LABS.owner_ok(self.headers)):
+            return self._err("this lab is someone else's: you can watch it, not change it", 403)
         # With a robot API running, robot commands are only taken there, with a run token.
         tail = re.sub(r"^/st/[^/]+", "", urllib.parse.urlparse(self.path).path).rstrip("/")
         if ROBOT_API_URL and not getattr(self, "robot_api", False) and tail in RA.ROBOT_COMMANDS:
@@ -456,6 +550,7 @@ class PGHandler(Handler):
         try:
             b = self._body()
             s = self.sim
+            s.use_camera(b.get("cam"))       # a page drawing its own view picks through its camera
             if p == "/pg/camera":
                 s.orbit(float(b.get("azimuth", 0)), float(b.get("elevation", 0)), float(b.get("zoom", 1.0)),
                         tuple(b.get("pan", (0.0, 0.0))))
@@ -724,7 +819,11 @@ def main(argv=None):
     ap.add_argument("--public", action="store_true",
                     help="the public site: Claude only, free play only, runs capped at --run-minutes, "
                          "at most --max-active at once, agents in cloud sandboxes (--launcher)")
+    ap.add_argument("--front", action="store_true",
+                    help="the public site's front: hands each visitor their own lab, lists live and past runs")
     ap.add_argument("--run-minutes", type=float, default=5.0)
+    ap.add_argument("--idle-minutes", type=float, default=15.0,
+                    help="a hosted lab shuts down after this long with no one looking and nothing running")
     ap.add_argument("--max-active", type=int, default=4)
     ap.add_argument("--launcher", default="local", help="where agents run (wetlabsim.launchers)")
     ap.add_argument("--agent-robot-url", default="",
@@ -736,7 +835,8 @@ def main(argv=None):
     ap.add_argument("--runs", default="runs/playground")
     ap.add_argument("--no-browser", action="store_true")
     args = ap.parse_args(argv)
-    global PUBLIC, MAX_ACTIVE, RUN_LAUNCHER, AGENT_ROBOT_URL, FREE_TIME_LIMIT
+    global PUBLIC, MAX_ACTIVE, RUN_LAUNCHER, AGENT_ROBOT_URL, FREE_TIME_LIMIT, FRONT
+    FRONT = args.front
     PUBLIC, MAX_ACTIVE, RUN_LAUNCHER, AGENT_ROBOT_URL = args.public, args.max_active, args.launcher, args.agent_robot_url
     if PUBLIC:
         FREE_TIME_LIMIT = args.run_minutes * 60
@@ -773,6 +873,17 @@ def main(argv=None):
             if QUEUE:
                 _start_queued(PGHandler)
     threading.Thread(target=_queue_loop, daemon=True, name="run-queue").start()
+    if LABS.shared():
+        def live_runs():
+            out = []
+            for uid, r in list(PGHandler.runners.items()):
+                st = r.status()
+                if st.get("active"):
+                    out.append({"station": uid, "task": st.get("task", "")[:200],
+                                "model": (st.get("model") or {}).get("label", ""), "started": st.get("started")})
+            return out
+        LABS.start_reporting(live_runs, args.idle_minutes,
+                             lambda: bool(QUEUE) or any(r.active() for r in PGHandler.runners.values()))
     if args.robot_port:
         global ROBOT_API_URL
         rsrv = ThreadingHTTPServer((args.host, args.robot_port), RobotAPIHandler)

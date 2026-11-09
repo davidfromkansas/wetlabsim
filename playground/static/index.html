@@ -97,6 +97,11 @@ body.chatting #right .freeonly{display:none!important}
 .sidetabs .live{width:7px;height:7px;border-radius:50%;background:var(--red);padding:0;display:none}
 body.running .sidetabs .live{display:inline-block}
 body.fixed #tabObjects{display:none}
+/* watching someone else's hosted lab: nothing to edit or start */
+.watchtag{display:none;font-size:12px;font-weight:600;color:var(--amber);background:var(--amberBg);padding:4px 10px;border-radius:6px}
+body.watch .watchtag{display:inline}
+body.watch #tabObjects,body.watch #addStationBtn,body.watch .stacts,body.watch #playBtn,body.watch #resetBtn,
+body.watch .taskcard,body.watch #stopBtn,body.watch .bl,body.watch #lockmsg,body.watch .campad,body.watch .camreset{display:none!important}
 /* the Files tab: the AI's work folder, in the robot cell viewer's "Sandbox Workspace" style */
 #filespane{flex:1;display:none;flex-direction:column;min-height:0;padding:12px 16px 14px;gap:8px}
 body.filing #filespane{display:flex}
@@ -143,6 +148,10 @@ body.filing #chatpane,body.filing #right .freeonly{display:none!important}
 .runbar{padding:10px 16px;border-top:1px solid var(--line2);display:flex;gap:8px;align-items:center}
 #stage{flex:1;min-width:0;position:relative;background:#FBFBF9;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #view{display:block;width:100%;height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;cursor:grab}
+/* the 3D view drawn in the page (view3d.js): the canvas sits under the (now see-through) video
+   element, which still takes the mouse, so every drag, click and drop works as before */
+.view3d{position:absolute;inset:0;display:block}
+body.v3 #view{position:relative;opacity:0}
 #view.dragging{cursor:grabbing}
 .tl{position:absolute;left:14px;top:12px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}
 .hint{font-size:12px;color:#374151;background:rgba(255,255,255,.9);border:1px solid var(--line);padding:4px 10px;border-radius:6px}
@@ -270,7 +279,9 @@ table.board.big th,table.board.big td{padding:12px 14px}
   </div>
   <div class="hgroup" style="justify-content:flex-end">
     <span class="lockmsg" id="lockmsg" style="display:none"></span>
-    <a class="small" href="/pg/runs" target="_blank" rel="noopener" style="color:var(--blue2);font-weight:600;text-decoration:none">Past runs ↗</a>
+    <span class="watchtag" id="watchTag">Watching · read only · <a id="ownLab" href="/">Start your own lab</a></span>
+    <a class="small" id="liveLink" href="/live" target="_blank" rel="noopener" style="color:var(--blue2);font-weight:600;text-decoration:none;display:none">Live now ↗</a>
+    <a class="small" id="pastLink" href="/pg/runs" target="_blank" rel="noopener" style="color:var(--blue2);font-weight:600;text-decoration:none">Past runs ↗</a>
     <span class="small">MuJoCo 4.0</span>
   </div>
 </header>
@@ -397,8 +408,20 @@ table.board.big th,table.board.big td{padding:12px 14px}
 </div>
 <script>
 const $ = (id) => document.getElementById(id);
+// A hosted lab: the owner's link carries ?key=; keep it (not in the address bar, so a shared
+// link only lets others watch) and send it with every request.
+const LAB_KEY = (() => {
+  const q = new URLSearchParams(location.search), k = q.get('key');
+  try {
+    if (k) { localStorage.setItem('labKey', k); q.delete('key'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '')); }
+    return k || localStorage.getItem('labKey') || '';
+  } catch (e) { return k || ''; }
+})();
+const PICK_PATHS = new Set(['/pg/pick', '/pg/probe', '/pg/place', '/pg/move', '/pg/station/probe', '/pg/station/add', '/pg/station/move']);
 const api = async (path, body) => {
-  const r = await fetch(path, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+  if (body && window.V3 && PICK_PATHS.has(path)) body = {...body, cam: window.V3.camForServer()};
+  const headers = LAB_KEY ? {'X-Lab-Key': LAB_KEY} : {};
+  const r = await fetch(path, body === undefined ? {headers} : {method: 'POST', headers: {...headers, 'Content-Type': 'application/json'}, body: JSON.stringify(body)});
   return r.json();
 };
 const S = {cat: null, tab: 'All', search: '', scene: null, armed: null, sel: 'robot', runKey: null, model: 'claude'};
@@ -410,6 +433,10 @@ const LIBHINT = 'Drag an object onto the scene, or click it and then click where
 
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast.h); toast.h = setTimeout(() => t.style.display = 'none', 2600); }
 function uv(e) {
+  if (window.V3) {   // the in-page view fills the box exactly
+    const r = view.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+    return {u: (e.clientX - r.left) / r.width, v: (e.clientY - r.top) / r.height, x: e.clientX - sr.left, y: e.clientY - sr.top};
+  }
   // image is object-fit: contain; map to the rendered frame
   const r = view.getBoundingClientRect(), ar = (view.naturalWidth && view.naturalHeight) ? view.naturalWidth / view.naturalHeight : 1.6;
   let w = r.width, h = r.height, ox = 0, oy = 0;
@@ -516,6 +543,10 @@ window.addEventListener('mouseup', async (e) => {
 });
 let camQ = null, camBusy = false;
 async function camera(delta) {
+  if (window.V3) {        // move the in-page view now; the server follows (for picking and glides)
+    window.V3.applyDelta(delta);
+    if (S.cat && S.cat.public && !S.cat.owner) { window.V3.setFollow(false); return; }   // a watcher's own view
+  }
   if (camQ) { for (const k of ['azimuth', 'elevation']) camQ[k] = (camQ[k] || 0) + (delta[k] || 0); if (delta.pan) camQ.pan = [(camQ.pan || [0, 0])[0] + delta.pan[0], (camQ.pan || [0, 0])[1] + delta.pan[1]]; if (delta.zoom) camQ.zoom = (camQ.zoom || 1) * delta.zoom; if (delta.move) camQ.move = (camQ.move || [0, 0, 0]).map((v, i) => v + delta.move[i]); }
   else camQ = {...delta};
   if (camBusy) return; camBusy = true;
@@ -523,7 +554,7 @@ async function camera(delta) {
   camBusy = false;
 }
 view.addEventListener('wheel', (e) => { e.preventDefault(); camera({zoom: Math.exp(e.deltaY * 0.0012)}); }, {passive: false});
-document.querySelectorAll('.bl button, .camreset').forEach(b => b.onclick = () => api('/pg/camera', {preset: b.dataset.preset}));
+document.querySelectorAll('.bl button, .camreset').forEach(b => b.onclick = () => { if (window.V3) window.V3.setFollow(true); api('/pg/camera', {preset: b.dataset.preset}); });
 // Camera pad: click for one step, hold to keep moving.
 let camHold = null;
 const camStep = (m) => camera({move: m});
@@ -548,7 +579,7 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'r' && S.sel && S.sel !== 'robot') rotateSel();
   if (e.target.tagName === 'SELECT' || e.metaKey || e.ctrlKey || e.altKey) return;
   if (CAM_KEYS[e.key]) { e.preventDefault(); camStep(e.repeat ? CAM_KEYS[e.key].map(v => v * 0.5) : CAM_KEYS[e.key]); }
-  if (e.key === 'Home') { e.preventDefault(); api('/pg/camera', {preset: 'home'}); }
+  if (e.key === 'Home') { e.preventDefault(); if (window.V3) window.V3.setFollow(true); api('/pg/camera', {preset: 'home'}); }
 });
 
 // ---------------------------------------------------------------- object panel
@@ -884,9 +915,9 @@ async function refresh() {
 // don't come back by themselves: once it answers again, reconnect them.
 // A stream that breaks while the server stays up (an error mid-stream) shows a broken picture:
 // try it again shortly.
-view.addEventListener('error', () => { clearTimeout(view.retry); view.retry = setTimeout(() => { view.src = '/pg/view.mjpg?r=' + Date.now(); }, 1000); });
+view.addEventListener('error', () => { if (window.V3) return; clearTimeout(view.retry); view.retry = setTimeout(() => { view.src = '/pg/view.mjpg?r=' + Date.now(); }, 1000); });
 function openStreams() {
-  view.src = '/pg/view.mjpg?r=' + Date.now();
+  if (!window.V3) view.src = '/pg/view.mjpg?r=' + Date.now();
   openCams();
 }
 // The selected station's two cameras (what its AI sees).
@@ -1080,6 +1111,12 @@ $('wModel').onchange = renderWet;
   if (S.cat.public) {   // the public site: free play only, every run capped
     $('modeLibero').style.display = $('modeWet').style.display = 'none';
     document.body.classList.add('public');
+    if (S.cat.front) {   // a hosted lab: the front lists live and past runs
+      $('pastLink').href = S.cat.front + '/pg/runs'; $('liveLink').href = S.cat.front + '/live';
+      $('liveLink').style.display = ''; $('ownLab').href = S.cat.front + '/';
+    }
+    // Someone else's lab (no owner key): watch only. The server refuses changes anyway.
+    if (!S.cat.owner) { document.body.classList.add('watch'); S.sideTab = 'chat'; }
   }
   const items = S.cat.items;
   for (const it of items) { it.collision = it.collision || ''; }
@@ -1089,6 +1126,12 @@ $('wModel').onchange = renderWet;
   const sendAspect = () => { const r = stage.getBoundingClientRect(); if (r.width > 50 && r.height > 50) api('/pg/camera', {aspect: r.width / r.height}); };
   sendAspect(); new ResizeObserver(() => { clearTimeout(sendAspect.h); sendAspect.h = setTimeout(sendAspect, 150); }).observe(stage);
   $('modelLogo').src = LOGOS[modelInfo($('model').value).provider] || LOGOS.anthropic;
+  // Draw the main view in the page (instant camera); fall back to the server's video.
+  try {
+    const m = await import('/pg/static/view3d.js?v=2');
+    const v = m.start({stage, onReady: () => { $('loading').style.display = 'none'; }});
+    if (v) { window.V3 = v; document.body.classList.add('v3'); }
+  } catch (e) { console.warn('3D view unavailable, using video', e); }
   openStreams();
   setTimeout(() => $('loading').style.display = 'none', 8000);
   loop();

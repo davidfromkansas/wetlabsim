@@ -399,10 +399,15 @@ class PlaygroundSim(Sim):
         self._glide = {**target, "t0": time.time()}
 
     def _glide_step(self):
-        """Ease the main view towards where it is gliding (half a second or so)."""
+        """Ease the main view towards where it is gliding (half a second or so). Called by
+        both the video and the pose stream: at most one step per frame time."""
         g = self._glide
         if g is None:
             return
+        now = time.time()
+        if now - getattr(self, "_glide_t", 0.0) < 0.03:
+            return
+        self._glide_t = now
         c = self.view
         k = 0.22
         c.lookat[:] = np.array(c.lookat) + k * (np.array(g["lookat"]) - np.array(c.lookat))
@@ -452,8 +457,12 @@ class PlaygroundSim(Sim):
             self.paused = True
 
     # ------------------------------------------------------ the camera
+    # A request from a page that draws the view itself names its own camera (thread-local, for the
+    # length of that request): picking and placing then follow what that page shows.
+    _req = threading.local()
+
     def _cam_frame(self):
-        c = self.view
+        c = getattr(self._req, "cam", None) or self.view
         az, el = math.radians(c.azimuth), math.radians(c.elevation)
         fwd = np.array([math.cos(el) * math.cos(az), math.cos(el) * math.sin(az), math.sin(el)])
         pos = np.array(c.lookat) - c.distance * fwd
@@ -473,11 +482,22 @@ class PlaygroundSim(Sim):
     def pixel_ray(self, u: float, v: float, aspect: float | None = None):
         """World ray through a point of the main view (u, v in 0..1 from the top left)."""
         if aspect is None:
-            aspect = self.view_size[0] / self.view_size[1]
+            aspect = getattr(self._req, "aspect", None) or self.view_size[0] / self.view_size[1]
         pos, fwd, right, up = self._cam_frame()
         t = math.tan(math.radians(FOVY) / 2)
         d = fwd + (2 * u - 1) * t * aspect * right + (1 - 2 * v) * t * up
         return pos, d / np.linalg.norm(d)
+
+    def use_camera(self, cam: dict | None):
+        """For this request: pick and place through the camera the page drew (or the shared one)."""
+        if not cam:
+            self._req.cam = self._req.aspect = None
+            return
+        c = mujoco.MjvCamera()
+        c.type = mujoco.mjtCamera.mjCAMERA_FREE
+        c.lookat[:] = [float(v) for v in cam["lookat"]]
+        c.distance, c.azimuth, c.elevation = float(cam["distance"]), float(cam["azimuth"]), float(cam["elevation"])
+        self._req.cam, self._req.aspect = c, float(cam.get("aspect") or 0) or None
 
     def orbit(self, d_az=0.0, d_el=0.0, zoom=1.0, pan=(0.0, 0.0)):
         c = self.view
