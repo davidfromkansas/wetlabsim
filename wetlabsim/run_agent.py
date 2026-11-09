@@ -13,6 +13,7 @@ The robot cell (python -m wetlabsim.server) must already be running. Each run:
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import re
 import os
@@ -37,8 +38,15 @@ def _eval_call(url, token, path, body=None):
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(url + path, data=data, method="POST" if data else "GET",
                                  headers={"X-Eval-Token": token, "Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return json.loads(r.read())
+    # Over a hosted tunnel a reply now and then arrives cut short: ask again.
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return json.loads(r.read())
+        except (http.client.IncompleteRead, http.client.RemoteDisconnected, ConnectionResetError):
+            if attempt == 3:
+                raise
+            time.sleep(0.5 * (attempt + 1))
 
 
 # The agent's wetlabsim package: just the robot client. A `pip install -e` of the full package
@@ -249,7 +257,7 @@ def main(argv=None):
     task = (T.TASKS[args.task_id].prompt if args.task_id
             else args.task or pathlib.Path(args.task_file).read_text().strip())
     runs = pathlib.Path(args.runs).resolve()
-    token = (runs / ".eval_token").read_text().strip()
+    token = os.environ.get("WETLAB_EVAL_TOKEN") or (runs / ".eval_token").read_text().strip()
     run_id = time.strftime("%Y%m%d-%H%M%S") + f"-{args.agent}" + (f"-{args.task_id}" if args.task_id else "")
     store = storage.get(args.store, runs)
     run_dir = store.create(run_id)
@@ -258,6 +266,10 @@ def main(argv=None):
     # saved command and of the agent's workspace files), or the cell's own URL.
     robot_url = args.robot_url or args.url
     robot_token = os.environ.pop("WETLAB_ROBOT_TOKEN", "")
+    own_token = False
+    if args.robot_url and not robot_token:
+        # Run from outside the cell (a hosted orchestrator): ask the cell for a run token.
+        robot_token, own_token = _eval_call(args.url, token, "/eval/robot_token", {})["token"], True
 
     # Fresh workspace outside the runs folder, with only the documents for this cell's robot.
     # The agent's own Python can import only the robot client (wetlabsim.robot), like a real
@@ -429,6 +441,10 @@ def main(argv=None):
         src = pathlib.Path(pad)
         if src.is_dir() and any(src.iterdir()):
             shutil.copytree(src, workspace / "scratchpad (outside the workspace)", dirs_exist_ok=True)
+    if hasattr(proc, "sync_workspace"):     # a remote agent: bring its folder back for the record
+        proc.sync_workspace(workspace)
+    if own_token:
+        _eval_call(args.url, token, "/eval/robot_token/revoke", {"token": robot_token})
     store.copy_tree(run_id, "workspace", workspace)
     store.finish(run_id)
     print(f"Done in {elapsed:.0f} s ({status}). Results in {run_dir}")

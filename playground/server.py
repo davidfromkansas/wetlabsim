@@ -359,6 +359,19 @@ class PGHandler(Handler):
         tail = re.sub(r"^/st/[^/]+", "", urllib.parse.urlparse(self.path).path).rstrip("/")
         if ROBOT_API_URL and not getattr(self, "robot_api", False) and tail in RA.ROBOT_COMMANDS:
             return self._err("robot commands go through the robot API, with a run token", 403)
+        if urllib.parse.urlparse(self.path).path.endswith("/eval/robot_token/revoke"):
+            if not self._authed():
+                return self._err("evaluator token required", 403)
+            RA.TOKENS.revoke(self._body().get("token"))
+            return self._json({"ok": True})
+        if urllib.parse.urlparse(self.path).path.endswith("/eval/robot_token"):
+            # An orchestrator running elsewhere (with the evaluator's token) asks for a run token
+            # for the robot this URL names.
+            if not self._authed():
+                return self._err("evaluator token required", 403)
+            self._body()      # read it all: an unread request body makes the close drop the reply
+            prefix = urllib.parse.urlparse(self.path).path[:-len("/eval/robot_token")]
+            return self._json({"ok": True, "token": RA.TOKENS.issue(prefix, run="external")})
         if self._station_request():
             if self.path.startswith("/pg/"):
                 return self._err("not found", 404)
@@ -619,6 +632,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="MuJoCo Playground")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8780)
+    ap.add_argument("--model-proxy-port", type=int, default=0,
+                    help="serve the model proxy (agents' Anthropic calls, with run tokens) on this port")
     ap.add_argument("--robot-port", type=int, default=8781,
                     help="the robot API, the only door agents get (0: none; agents then use the app's URL)")
     ap.add_argument("--runs", default="runs/playground")
@@ -627,11 +642,12 @@ def main(argv=None):
     runs = pathlib.Path(args.runs).resolve()
     runs.mkdir(parents=True, exist_ok=True)
     tok_file = runs / ".eval_token"
-    token = tok_file.read_text().strip() if tok_file.exists() else ""
+    token = os.environ.get("WETLAB_EVAL_TOKEN") or (tok_file.read_text().strip() if tok_file.exists() else "")
     if not token:
         token = secrets.token_hex(16)
         tok_file.write_text(token)
-    os.chmod(tok_file, 0o600)
+    if tok_file.exists():
+        os.chmod(tok_file, 0o600)
     from .tools import fetch_libero as fetch_assets
     if fetch_assets.missing():    # LIBERO's objects, one time (~200 MB), while free play loads
         print("Downloading LIBERO's objects in the background (one time, about 200 MB)...")
@@ -656,6 +672,10 @@ def main(argv=None):
         threading.Thread(target=rsrv.serve_forever, daemon=True, name="robot-api").start()
         ROBOT_API_URL = f"http://{args.host}:{args.robot_port}"
         print(f"Robot API for agents at {ROBOT_API_URL} (run tokens only)")
+    if args.model_proxy_port:
+        from . import model_proxy
+        model_proxy.serve(args.host, args.model_proxy_port)
+        print(f"Model proxy for agents on port {args.model_proxy_port} (run tokens only)")
     print(f"MuJoCo Playground is running at {url}")
     if not args.no_browser:
         import webbrowser
