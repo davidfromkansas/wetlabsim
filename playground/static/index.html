@@ -159,12 +159,12 @@ body.v3 #view{position:relative;opacity:0}
 .hint:empty{display:none!important}
 .hint{max-width:min(290px,28vw);font-size:12px;color:#374151;background:rgba(255,255,255,.9);border:1px solid var(--line);padding:4px 10px;border-radius:6px}
 .live{font-size:12px;font-weight:600;color:var(--red);background:#FEE2E2;padding:4px 10px;border-radius:6px}
-.bl{position:absolute;right:14px;bottom:14px;display:flex;gap:6px;align-items:center;z-index:2}
+.bl{position:absolute;right:14px;top:12px;display:flex;gap:6px;align-items:center;z-index:2}
 .bl button{height:32px;padding:0 10px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;font-weight:500;font-size:12px;color:var(--ink);cursor:pointer}
 .br{position:absolute;right:14px;bottom:54px}
 .camreset{position:relative;flex:none;width:38px;height:38px;border-radius:50%;border:0;background:#2B3140;box-shadow:0 3px 6px rgba(17,24,39,.25);cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
 .camreset:active{transform:scale(.97)}
-.campad{position:absolute;right:18px;bottom:80px;display:flex;gap:14px;align-items:center;user-select:none}
+.campad{position:absolute;right:18px;bottom:18px;display:flex;gap:14px;align-items:center;user-select:none}
 .joy{position:relative;width:126px;height:126px;border-radius:50%;background:#2B3140;box-shadow:0 3px 6px rgba(17,24,39,.25),inset 0 2px 6px rgba(0,0,0,.35);touch-action:none;cursor:grab}
 .joy:active{cursor:grabbing}
 .joy .tick{position:absolute;width:8px;height:8px;fill:#6B7280}
@@ -225,7 +225,7 @@ table.board{width:100%;border-collapse:collapse;font-size:12.5px}
 table.board th{text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:4px 4px;border-bottom:1px solid var(--line)}
 table.board td{padding:6px 4px;border-bottom:1px solid var(--line2);color:var(--ink)}
 table.board td.n{font-family:'JetBrains Mono',monospace;text-align:right}table.board th.n{text-align:right}
-#goalCard{position:absolute;right:14px;top:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;max-width:280px;font-size:12.5px;box-shadow:0 1px 3px rgba(17,24,39,.08);flex-direction:column;gap:2px}
+#goalCard{position:absolute;right:58px;top:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;max-width:280px;font-size:12.5px;box-shadow:0 1px 3px rgba(17,24,39,.08);flex-direction:column;gap:2px}
 #goalCard b{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 #goalState{font-weight:600}
 .suites{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
@@ -272,7 +272,7 @@ body:not(.watch) .sessname.can{cursor:text}
 .snone{font-size:12.5px;color:#6B7280;padding:2px 10px}
 .snote{margin-top:auto;padding:0 10px;font-size:11.5px;line-height:1.45;color:#6B7280}
 /* the floating stations bar */
-.dock{position:absolute;left:14px;right:14px;top:12px;display:flex;justify-content:center;pointer-events:none;z-index:3}
+.dock{position:absolute;left:58px;right:58px;top:12px;display:flex;justify-content:center;pointer-events:none;z-index:3}
 .dockin{pointer-events:auto;display:flex;gap:6px;align-items:center;max-width:100%;overflow-x:auto;padding:6px;border-radius:14px;background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);box-shadow:0 8px 24px rgba(17,24,39,.16),0 0 0 1px rgba(17,24,39,.06);scroll-snap-type:x proximity;scrollbar-width:thin}
 .schip{flex:none;display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:10px;border:0;background:transparent;cursor:pointer;font:13px Inter,sans-serif;color:var(--ink);text-align:left;line-height:1.25;scroll-snap-align:start}
 .schip img{width:40px;height:40px;border-radius:7px;object-fit:cover;background:var(--soft)}
@@ -368,7 +368,7 @@ button:active:not(:disabled){transform:scale(.97)}
   button{transition:none}button:active:not(:disabled){transform:none}
 }
 /* a narrow stage (LIBERO and Wet Lab show their left column too): smaller camera windows */
-@container (max-width:900px){.pip{width:160px}.campad{bottom:70px;transform:scale(.8);transform-origin:bottom right}}
+@container (max-width:900px){.pip{width:160px}.campad{bottom:14px;transform:scale(.8);transform-origin:bottom right}}
 @container (max-width:700px){.pip{width:128px}.campad{display:none!important}.bl button:not(.camreset){padding:0 8px}}
 </style>
 </head>
@@ -494,7 +494,7 @@ button:active:not(:disabled){transform:scale(.97)}
     </div>
     <div id="bigCamWrap" role="dialog" aria-modal="true" aria-label="Camera, large"><div class="bigcam"><img id="bigCam" alt=""><div class="pcap" style="padding:8px 10px 8px 14px;font-size:13px"><b id="bigName" style="font-weight:600"></b><span>AI SEES THIS</span><button class="exp wide" id="shrinkBtn" aria-label="Shrink camera"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M11 5 H7 V1 M1 7 H5 V11 M7 5 L11 1 M5 7 L1 11"/></svg>Shrink</button></div></div></div>
     <div class="tl"><span class="live" id="liveTag" style="display:none">● Running · real time</span><span class="libtag libero wetlab" id="libTag"></span><span class="hint" id="hintTag"></span></div>
-    <div class="bl"><button class="camreset" data-preset="home" aria-label="Reset view" title="Reset view (Home)" style="width:32px;height:32px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E5E7EB" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 8 a5 5 0 1 0 1.6 -3.7"/><path d="M3 2 V5 H6"/></svg></button><button data-preset="robot" class="fixedonly">Robot close-up</button></div>
+    <div class="bl"><button class="camreset" data-preset="home" aria-label="Reset view" title="Reset view (Home)" style="width:36px;height:36px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E5E7EB" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 8 a5 5 0 1 0 1.6 -3.7"/><path d="M3 2 V5 H6"/></svg></button></div>
     <div class="campad" role="group" aria-label="Camera">
       <div class="joy" id="joy" tabindex="0" role="application" aria-label="Camera joystick: drag to slide the view, or use the arrow keys" title="Drag to slide the view (arrow keys too)">
         <svg class="tick" style="left:59px;top:8px" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 2 L9 8 H1 Z"/></svg>
