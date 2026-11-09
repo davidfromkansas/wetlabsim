@@ -19,9 +19,11 @@ from wetlabsim.sim import RobotError, Sim
 
 from . import catalog
 from . import libero as LB
+from . import tron
 from . import world as W
 
-VIEW_W, VIEW_H = 1280, 800
+VIEW_W, VIEW_H = 1280, 800      # default size of the main view
+MAX_W, MAX_H = 1920, 1200        # the scene's offscreen buffer (offwidth/offheight)
 FOVY = 45.0        # the free camera's vertical field of view (MuJoCo's default)
 
 
@@ -40,6 +42,7 @@ class PlaygroundSim(Sim):
         cam.lookat[:] = [0.0, 0.0, 0.85]
         cam.distance, cam.azimuth, cam.elevation = 2.8, 145.0, -28.0
         self.view = cam
+        self.view_size = (VIEW_W, VIEW_H)
         self.overlay: list[dict] = []           # ghost and highlight shapes for the main view
         self.selected: str | None = None        # uid of the selected object, or "robot"
         self._frame = (0, b"")                  # (sequence, jpeg) of the latest main view
@@ -243,8 +246,18 @@ class PlaygroundSim(Sim):
         up = np.cross(right, fwd)
         return pos, fwd, right, up
 
-    def pixel_ray(self, u: float, v: float, aspect: float = VIEW_W / VIEW_H):
+    def set_view_aspect(self, aspect: float):
+        """Match the main view's shape to the page's box, so it fills it (about a megapixel)."""
+        aspect = float(np.clip(aspect, 0.5, 4.0))
+        h = math.sqrt(VIEW_W * VIEW_H / aspect)
+        w = h * aspect
+        k = min(1.0, MAX_W / w, MAX_H / h)
+        self.view_size = (int(w * k) // 2 * 2, int(h * k) // 2 * 2)
+
+    def pixel_ray(self, u: float, v: float, aspect: float | None = None):
         """World ray through a point of the main view (u, v in 0..1 from the top left)."""
+        if aspect is None:
+            aspect = self.view_size[0] / self.view_size[1]
         pos, fwd, right, up = self._cam_frame()
         t = math.tan(math.radians(FOVY) / 2)
         d = fwd + (2 * u - 1) * t * aspect * right + (1 - 2 * v) * t * up
@@ -410,7 +423,7 @@ class PlaygroundSim(Sim):
             return self._frame
 
     def _view_loop(self):
-        ver, r, rd = None, None, None
+        ver, r, rd, size = None, None, None, None
         types = {"box": mujoco.mjtGeom.mjGEOM_BOX, "cylinder": mujoco.mjtGeom.mjGEOM_CYLINDER}
         opt = mujoco.MjvOption()
         seq = 0
@@ -420,18 +433,21 @@ class PlaygroundSim(Sim):
                 continue
             t0 = time.perf_counter()
             with self.lock:
-                if ver != self._model_ver:
-                    ver, m = self._model_ver, self.m
-                    rd = mujoco.MjData(m)
+                if ver != self._model_ver or size != self.view_size:
+                    if ver != self._model_ver:
+                        rd = mujoco.MjData(self.m)
+                    ver, m, size = self._model_ver, self.m, self.view_size
                     if r is not None:
                         r.close()
-                    r = mujoco.Renderer(m, VIEW_H, VIEW_W)
+                    r = mujoco.Renderer(m, size[1], size[0])
                 rd.qpos[:] = self.d.qpos
                 rd.time = self.d.time
             mujoco.mj_kinematics(m, rd)
             mujoco.mj_camlight(m, rd)
             r.update_scene(rd, camera=self.view, scene_option=opt)
             sc = r.scene
+            if self.scene_mode == "free":
+                tron.draw(sc, time.time())
             for g in self.overlay + self._selection_overlay():
                 if sc.ngeom >= sc.maxgeom:
                     break

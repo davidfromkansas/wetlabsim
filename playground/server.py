@@ -34,7 +34,8 @@ from .sim import PlaygroundSim
 
 HERE = pathlib.Path(__file__).parent
 PAGE = HERE / "static" / "index.html"
-TIME_LIMIT = 180.0     # seconds: a run that hasn't finished by then is stopped
+TIME_LIMIT = 180.0     # seconds: a LIBERO test run that hasn't finished by then is stopped
+FREE_TIME_LIMIT = 0.0  # free play: no limit, the run goes until the AI finishes or you stop it
 
 MODELS = [
     {"id": "claude", "label": "Claude Opus 5.5", "via": "Claude Code", "agent": "claude", "model": "opus",
@@ -186,6 +187,8 @@ class PGHandler(Handler):
             if p == "/pg/camera":
                 s.orbit(float(b.get("azimuth", 0)), float(b.get("elevation", 0)), float(b.get("zoom", 1.0)),
                         tuple(b.get("pan", (0.0, 0.0))))
+                if "aspect" in b:
+                    s.set_view_aspect(float(b["aspect"]))
                 if "preset" in b:
                     self._camera_preset(b["preset"])
                 return self._json({"ok": True})
@@ -270,7 +273,7 @@ class PGHandler(Handler):
                     s.selected = None
                     s.play()
                     st = self.runner.start(task, b.get("model", "claude"), site.site_sheet(s.placed),
-                                           float(b.get("time_limit", TIME_LIMIT)))
+                                           float(b.get("time_limit", FREE_TIME_LIMIT)))
                     return self._json({"ok": True, "run": st})
                 s.play()
                 return self._json({"ok": True, "run": self.runner.status()})
