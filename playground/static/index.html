@@ -49,20 +49,36 @@ select{height:36px;padding:0 10px;border-radius:8px;border:1px solid #D1D5DB;bac
 .ghostbtn{height:36px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;font-weight:500;font-size:13px;color:var(--ink);cursor:pointer;flex:1}
 .ghostbtn:disabled{background:var(--soft);color:#6B7280;cursor:not-allowed}
 #taskpane{display:flex;flex-direction:column;gap:10px;flex:1;overflow:auto}
-#chatpane{flex:1;display:none;flex-direction:column;min-height:0}
-.chathead{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line2)}
-.chathead img{width:20px;height:20px}
-#feed{list-style:none;margin:0;padding:14px 16px;display:flex;flex-direction:column;overflow-y:auto;flex:1;gap:10px}
-.you{align-self:flex-end;max-width:88%}
-.you div:last-child{background:#EEF2F7;color:var(--ink);border-radius:14px 14px 4px 14px;padding:9px 12px}
-.say{font-size:14px;color:var(--ink2);white-space:pre-wrap}
-.think{font-size:13px;color:var(--muted);font-style:italic;white-space:pre-wrap;border-left:2px solid var(--line);padding-left:8px;max-height:140px;overflow:hidden}
-.code{border:1px solid #D1D5DB;border-radius:8px;overflow:hidden;font:12px 'JetBrains Mono',monospace}
-.code .h{padding:4px 8px;background:var(--soft);color:var(--muted);font:12px Inter,sans-serif}
-.code pre{margin:0;padding:8px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto;font:inherit;color:var(--ink2)}
-.code .o{padding:4px 8px;border-top:1px solid var(--line);color:var(--muted);white-space:pre-wrap;max-height:120px;overflow:auto}
-.lite{font-size:13px;color:#374151}
-.lite::before{content:"● ";color:#15803D;font-size:10px}
+#chatpane{flex:1;display:none;flex-direction:column;min-height:0;position:relative}
+body.chatting #chatpane,body.lib #chatpane{display:flex}
+body.chatting #right .freeonly{display:none!important}
+.chathead{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.chathead img{width:22px;height:22px}
+.chathead b{font-size:14px;font-weight:600}
+/* chat items: the same look as the robot cell's viewer (wetlabsim/viewer.html) */
+#feed{list-style:none;margin:0;padding:16px 16px 16px 14px;overflow-y:auto;flex:1;display:flex;flex-direction:column}
+#feed .prompt{align-self:flex-end;max-width:88%;margin-bottom:8px}
+#feed .prompt .lbl{font-size:11px;color:var(--muted);text-align:right;margin-bottom:4px}
+#feed .prompt .bub{background:#EEF2F7;color:var(--ink);border-radius:14px 14px 4px 14px;padding:10px 12px;white-space:pre-wrap}
+#feed .it{padding-left:24px;min-width:0;margin-top:8px}
+#feed .it.turn{margin-top:24px}
+#feed .who{display:flex;align-items:center;gap:8px;margin:0 0 4px -24px;font-size:12px}
+#feed .who img{width:16px;height:16px}#feed .who strong{color:var(--ink);font-weight:600}#feed .who span{color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums}
+#feed .it p{margin:0;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+#feed .it p.think{color:var(--muted);font-style:italic;font-size:13px}
+#feed .lite{font-size:13px;color:#374151}
+#feed .lite .row{display:flex;gap:6px;align-items:baseline;min-width:0}
+#feed .lite .row b{font-weight:600;flex:none}#feed .lite code{font:12.5px 'JetBrains Mono',monospace;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#feed .sdot{font-size:10px;color:var(--green);flex:none}
+#feed .lite img{display:block;margin:6px 0 0 14px;width:150px;aspect-ratio:4/3;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+#feed .codecard{border:1px solid #D1D5DB;border-radius:8px;overflow:hidden;font:12.5px 'JetBrains Mono',monospace}
+#feed .codecard .bar{display:flex;justify-content:space-between;gap:8px;padding:5px 8px;background:#F3F4F6;color:var(--muted);font:12px Inter,sans-serif}
+#feed .codecard pre{margin:0;padding:8px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink2);max-height:240px;overflow:auto;font:inherit}
+#feed .codecard .out{padding:6px 8px;border-top:1px solid var(--line);color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto}
+#feed .codecard .out.err{color:var(--red)}
+#feed .thinking{margin-top:20px;display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px}
+#feed .empty{color:var(--muted);font-size:13px}
+#jumpBtn{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);display:none;height:30px;padding:0 12px;border-radius:999px;border:1px solid #D1D5DB;background:#fff;color:var(--ink);font-size:12.5px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(17,24,39,.15)}
 .runbar{padding:10px 16px;border-top:1px solid var(--line2);display:flex;gap:8px;align-items:center}
 #stage{flex:1;min-width:0;position:relative;background:#FBFBF9;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #view{display:block;width:100%;height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;cursor:grab}
@@ -116,8 +132,6 @@ table.board td.n{font-family:'JetBrains Mono',monospace;text-align:right}table.b
 #goalCard b{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 #goalState{font-weight:600}
 .libtag{font-size:12px;font-weight:600;color:var(--blue2);background:var(--blueBg);padding:4px 10px;border-radius:6px}
-body.lib #right #chatpane{display:flex!important}
-.chatempty{color:var(--muted);font-size:13px;padding:6px 0}
 </style>
 </head>
 <body>
@@ -184,11 +198,6 @@ body.lib #right #chatpane{display:flex!important}
           <table class="board"><thead><tr><th>Model</th><th class="n">Passed</th><th class="n">Avg time</th><th class="n">Cost</th></tr></thead><tbody id="lBoard"></tbody></table>
           <p class="small" style="margin:6px 0 0">Our Franka controller and AI setup, so scores aren't comparable with LIBERO's published leaderboard. Avg time counts passed runs only.</p></div>
       </div>
-      <section id="chatpane" aria-label="AI chat">
-        <div class="chathead"><img id="chatLogo" src="/static/anthropic.svg" alt=""><b id="chatModel" style="flex:1;color:var(--ink)">Claude Opus 5.5</b><span class="small" id="chatCost"></span></div>
-        <ol id="feed"></ol>
-        <div class="runbar"><span class="small" id="runStatus" style="flex:1"></span><button class="ghostbtn" id="stopBtn" style="flex:none;padding:0 12px">Stop run</button><button class="ghostbtn" id="newTaskBtn" style="flex:none;padding:0 12px;display:none">New task</button></div>
-      </section>
     </div>
     <div id="objPanel" class="sec" style="display:none;flex-direction:column;gap:12px;border:0">
       <div><span class="cap" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Selected object</span><h3 id="objName" style="margin:2px 0 0;font-size:16px;color:var(--ink)"></h3><span class="small">NVIDIA SimReady · physics from the asset</span></div>
@@ -215,6 +224,12 @@ body.lib #right #chatpane{display:flex!important}
       <div class="tabs" role="tablist" id="tabs"></div>
     </div>
     <div id="items" class="freeonly" role="tabpanel"></div>
+    <section id="chatpane" aria-label="AI chat">
+        <div class="chathead"><img id="chatLogo" src="/static/anthropic.svg" alt=""><b id="chatModel" style="flex:1;color:var(--ink)">Claude Opus 5.5</b><span class="small" id="chatCost"></span></div>
+        <ol id="feed"></ol>
+        <button id="jumpBtn">↓ Jump to latest</button>
+        <div class="runbar"><span class="small" id="runStatus" style="flex:1"></span><button class="ghostbtn" id="stopBtn" style="flex:none;padding:0 12px">Stop run</button><button class="ghostbtn" id="newTaskBtn" style="flex:none;padding:0 12px;display:none">New task</button></div>
+      </section>
     <p class="libhint freeonly" id="libhint">Drag an object onto the scene, or click it and then click where it should go. It lands on whatever is under it.</p>
   </aside>
 </main>
@@ -225,7 +240,7 @@ const api = async (path, body) => {
   const r = await fetch(path, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
   return r.json();
 };
-const S = {cat: null, tab: 'Kitchen', search: '', scene: null, armed: null, sel: 'robot', traceN: 0, runKey: null, model: 'claude'};
+const S = {cat: null, tab: 'Kitchen', search: '', scene: null, armed: null, sel: 'robot', runKey: null, model: 'claude'};
 const view = $('view'), stage = $('stage');
 const LIBHINT = 'Drag an object onto the scene, or click it and then click where it should go. It lands on whatever is under it.';
 
@@ -366,35 +381,75 @@ $('startBtn').onclick = async () => {
   if (!task) { toast('Type a task for the robot first'); $('task').focus(); return; }
   const r = await api('/pg/play', {task, model: $('model').value});
   if (!r.ok) { toast(r.error); return; }
-  S.traceN = 0; $('feed').innerHTML = ''; S.runTask = task;
+  S.runTask = task; S.follow = true; S.showChat = true;
   refresh();
 };
 $('stopBtn').onclick = async () => { await api('/pg/stop', {}); refresh(); };
 $('newTaskBtn').onclick = () => { S.showChat = false; render(); };
 function esc(s) { return String(s).replace(/[&<>]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;'}[c])); }
-function addStep(st) {
-  const feed = $('feed'), li = document.createElement('li');
-  const k = st.kind, t = st.text || '';
-  if (k === 'says') li.innerHTML = `<div class="say">${esc(t)}</div>`;
-  else if (k === 'thinks') li.innerHTML = `<div class="think">${esc(t)}</div>`;
-  else if (k === 'runs' || k === 'writes') li.innerHTML = `<div class="code"><div class="h"><span style="color:#15803D">●</span> ${k === 'runs' ? 'Run robot code' : 'Write ' + esc(t.split('\n')[0])}</div><pre>${esc(k === 'runs' ? t : t.split('\n').slice(1).join('\n'))}</pre></div>`;
-  else if (k === 'output') { const last = feed.lastElementChild && feed.lastElementChild.querySelector('.code'); if (last) { const o = document.createElement('div'); o.className = 'o'; o.textContent = '⎿ ' + t.slice(0, 1500); last.appendChild(o); return; } li.innerHTML = `<div class="lite">${esc(t.slice(0, 400))}</div>`; }
-  else if (k === 'looks') li.innerHTML = `<div class="lite">Looks through the ${esc(t)}</div>`;
-  else li.innerHTML = `<div class="lite">${esc(k === 'reads' ? 'Reads ' + t : t)}</div>`;
-  const atBottom = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 60;
-  feed.appendChild(li); if (atBottom) feed.scrollTop = feed.scrollHeight;
+// The chat: the same rendering as the robot cell's viewer (wetlabsim/viewer.html), rebuilt
+// from the whole trace whenever it grows. It follows new items while you're at the bottom;
+// scroll up and it stops, with a button to jump back to the latest.
+const LOGOS = {anthropic: '/static/anthropic.svg', openai: '/static/openai.svg'};
+S.trace = []; S.runInfo = {}; S.follow = true; S.feedKey = '';
+function mmss(x) { x = Math.max(0, x); return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(Math.floor(x % 60)).padStart(2, '0'); }
+function feedAtBottom() { const f = $('feed'); return f.scrollHeight - f.scrollTop - f.clientHeight < 40; }
+$('feed').addEventListener('scroll', () => { S.follow = feedAtBottom(); $('jumpBtn').style.display = S.follow ? 'none' : 'block'; });
+$('jumpBtn').onclick = () => { S.follow = true; $('jumpBtn').style.display = 'none'; const f = $('feed'); f.scrollTop = f.scrollHeight; };
+function renderFeed() {
+  const run = (S.scene && S.scene.run) || {}, info = S.runInfo, trace = S.trace, active = !!run.active;
+  const key = (run.started || '') + '|' + trace.length + '|' + active + '|' + S.lib;
+  if (key === S.feedKey) return;
+  S.feedKey = key;
+  const m = run.model || {}, logo = LOGOS[m.provider] || '', who = esc(info.model_label || m.label || 'The AI');
+  const start = info.sim_start || 0, out = [];
+  if (!run.started) out.push(`<li class="empty">${S.lib ? 'Press “Run this setup” and the AI\'s messages show up here.' : 'Nothing yet. The AI\'s thoughts, code and replies appear here as it works.'}</li>`);
+  else out.push(`<li class="prompt"><div class="lbl">Your task</div><div class="bub">${esc(run.task || '')}</div></li>`);
+  let prevT = null, prevKind = null;
+  for (let i = 0; i < trace.length; i++) {
+    const st = trace[i];
+    if (st.kind === 'output') continue;       // shown with the code that produced it
+    const next = trace[i + 1], outText = next && next.kind === 'output' ? next.text : null;
+    const turn = prevT === null || st.t - prevT > 30 || ((st.kind === 'says' || st.kind === 'thinks') && !['says', 'thinks'].includes(prevKind));
+    const head = turn ? `<div class="who">${logo ? `<img src="${logo}" alt="">` : ''}<strong>${who}</strong><span>${mmss(st.t - start)}</span></div>` : '';
+    let body = '';
+    if (st.kind === 'says') body = `<p>${esc(st.text)}</p>`;
+    else if (st.kind === 'thinks') body = `<p class="think">${esc(st.text)}</p>`;
+    else if (st.kind === 'runs') {
+      const err = outText && /Error|Traceback|refused|protective stop/i.test(outText);
+      body = `<div class="codecard"><div class="bar"><span><span class="sdot" style="color:${err ? 'var(--red)' : 'var(--green)'}">●</span> Run code</span><span>${mmss(st.t - start)}</span></div><pre>${esc(st.text)}</pre>` +
+        (outText != null ? `<div class="out${err ? ' err' : ''}">⎿ ${esc(outText)}</div>` : '') + '</div>';
+    } else {
+      const label = st.kind === 'reads' ? 'Read file' : st.kind === 'writes' ? 'Wrote file' : st.kind === 'looks' ? 'Look' : 'Tool';
+      let text = st.kind === 'writes' ? st.text.split('\n')[0] : st.text, img = '';
+      if (st.kind === 'looks') {
+        const c = /^(overhead|wrist|side) camera/.exec(st.text), f = /saved image (.+)$/.exec(st.text);
+        if (c) img = `<img src="/camera/${c[1]}.jpg?t=${st.t.toFixed(3)}" alt="What the ${c[1]} camera showed at ${mmss(st.t - start)}" loading="lazy">`;
+        else if (f) img = `<img src="/run/file?path=${encodeURIComponent(f[1])}" alt="${esc(f[1])}" loading="lazy" onerror="this.remove()">`;
+        text = c ? c[1] + ' camera' : f ? f[1] : text;
+      }
+      body = `<div class="lite"><div class="row"><span class="sdot">●</span><b>${label}</b><code title="${esc(st.text)}">${esc(text)}</code></div>${img}</div>`;
+    }
+    out.push(`<li class="it${turn ? ' turn' : ''}">${head}${body}</li>`);
+    prevT = st.t; prevKind = st.kind;
+  }
+  if (active) out.push(`<li class="thinking">${logo ? `<img src="${logo}" alt="" style="width:16px;height:16px">` : ''} Thinking…</li>`);
+  const f = $('feed');
+  f.innerHTML = out.join('');
+  if (S.follow) f.scrollTop = f.scrollHeight;
 }
 async function pollTrace() {
   const run = S.scene && S.scene.run;
-  if (!run || !run.started) return;
-  const key = run.started;
-  if (S.runKey !== key) { S.runKey = key; S.traceN = 0; $('feed').innerHTML = `<li class="you"><div class="small" style="text-align:right">Your task</div><div>${esc(run.task)}</div></li>`; }
-  const r = await api('/trace?since=' + S.traceN);
-  for (const st of r.steps) addStep(st);
-  S.traceN += r.steps.length;
-  const info = await api('/run');
-  if (info.cost_usd != null || info.tokens) $('chatCost').textContent = (info.cost_usd != null ? '$' + Number(info.cost_usd).toFixed(2) + ' · ' : '') + (info.tokens ? (info.tokens / 1000).toFixed(1) + 'k tokens' : '');
-  if (info.model_label) $('chatModel').textContent = info.model_label;
+  if (run && run.started) {
+    if (S.runKey !== run.started) { S.runKey = run.started; S.trace = []; S.runInfo = {}; S.follow = true; $('jumpBtn').style.display = 'none'; }
+    const r = await api('/trace?since=' + S.trace.length);
+    S.trace.push(...r.steps);
+    const info = await api('/run');
+    if (info.run_id) S.runInfo = info;
+    if (info.cost_usd != null || info.tokens) $('chatCost').textContent = (info.cost_usd != null ? '$' + Number(info.cost_usd).toFixed(2) + ' · ' : '') + (info.tokens ? (info.tokens / 1000).toFixed(1) + 'k tokens' : '');
+    if (info.model_label) $('chatModel').textContent = info.model_label;
+  }
+  renderFeed();
 }
 
 // ---------------------------------------------------------------- state
@@ -427,9 +482,11 @@ function render() {
     $('objCol').textContent = it.collision || ''; $('delBtn').disabled = !obj.removable || sc.locked; $('rotBtn').disabled = sc.locked;
     $('delBtn').textContent = obj.removable ? 'Remove' : 'Always here';
   }
+  // In free play the chat takes the object library's place while a run is on, and stays
+  // until "New task" brings the library back.
   const showChat = active || (run.started && S.showChat !== false);
-  $('taskpane').style.display = showChat ? 'none' : 'flex';
-  $('chatpane').style.display = showChat ? 'flex' : 'none';
+  document.body.classList.toggle('chatting', !S.lib && !!showChat);
+  $('task').readOnly = active;
   $('stopBtn').style.display = active ? '' : 'none';
   $('newTaskBtn').style.display = active ? 'none' : '';
   if (run.started) {
@@ -460,11 +517,11 @@ function applyMode() {
   if (lib === S.lib) return;
   S.lib = lib;
   document.body.classList.toggle('lib', lib);
-  (lib ? $('right') : $('robotPanel')).appendChild($('chatpane'));
   $('modeFree').setAttribute('aria-pressed', !lib); $('modeLibero').setAttribute('aria-pressed', lib);
   $('modechip').textContent = lib ? 'LIBERO-Goal · results saved' : 'Free play · not saved';
   $('hintTag').textContent = lib ? 'Drag to orbit, scroll to zoom.' : 'Drag objects in from the right. Drag to orbit, right-drag to pan, scroll to zoom.';
-  if (lib) { if (!S.runKey) $('feed').innerHTML = '<li class="chatempty">Press “Run this setup” and the AI\'s messages show up here.</li>'; loadLibero(); }
+  S.feedKey = '';
+  if (lib) loadLibero();
   else { S.showChat = false; }
 }
 async function setMode(mode) {
