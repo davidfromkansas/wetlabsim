@@ -95,7 +95,20 @@ body.fixed .sidetabs{display:none}
 .live{font-size:12px;font-weight:600;color:var(--red);background:#FEE2E2;padding:4px 10px;border-radius:6px}
 .bl{position:absolute;left:14px;bottom:12px;display:flex;gap:6px}
 .bl button{height:32px;padding:0 10px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;font-weight:500;font-size:12px;color:var(--ink);cursor:pointer}
-.br{position:absolute;right:14px;bottom:16px}
+.br{position:absolute;right:214px;bottom:16px}
+.camreset{position:absolute;right:14px;top:12px;width:38px;height:38px;border-radius:50%;border:0;background:#2B3140;box-shadow:0 3px 6px rgba(17,24,39,.25);cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
+.camreset:hover{filter:brightness(1.2)}.camreset:active{transform:translateY(1px)}
+.campad{position:absolute;right:18px;bottom:18px;display:flex;gap:14px;align-items:center;user-select:none}
+.dpad{position:relative;width:126px;height:126px;filter:drop-shadow(0 3px 6px rgba(17,24,39,.25))}
+.dpad .arm{position:absolute;background:#2B3140;border-radius:9px}
+.dpad .arm.v{left:42px;top:0;width:42px;height:126px}.dpad .arm.h{left:0;top:42px;width:126px;height:42px}
+.dpad .hub{position:absolute;left:52px;top:52px;width:22px;height:22px;border-radius:50%;background:#1F2430;box-shadow:inset 0 1px 2px rgba(0,0,0,.5)}
+.dk{position:absolute;width:42px;height:42px;border:0;background:transparent;border-radius:9px;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
+.rocker{width:46px;height:126px;border-radius:23px;background:#2B3140;display:flex;flex-direction:column;overflow:hidden;filter:drop-shadow(0 3px 6px rgba(17,24,39,.25))}
+.rk{flex:1;border:0;background:transparent;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
+.dk:hover,.rk:hover{background:rgba(255,255,255,.08)}.dk:active,.rk:active{background:rgba(0,0,0,.25)}
+.rkline{height:2px;margin:0 10px;background:#1F2430;border-radius:1px}
+.dk:focus-visible,.rk:focus-visible,.camreset:focus-visible{outline:2px solid #2563EB;outline-offset:2px}
 #droptag{position:absolute;transform:translate(-50%,-140%);white-space:nowrap;font-size:12px;font-weight:600;color:#fff;background:var(--blue);padding:3px 8px;border-radius:6px;box-shadow:0 2px 6px rgba(37,99,235,.3);pointer-events:none;display:none}
 #droptag.bad{background:var(--red)}
 #toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:6px 12px;border-radius:8px;font-size:13px;display:none}
@@ -145,7 +158,7 @@ table.board{width:100%;border-collapse:collapse;font-size:12.5px}
 table.board th{text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:4px 4px;border-bottom:1px solid var(--line)}
 table.board td{padding:6px 4px;border-bottom:1px solid var(--line2);color:var(--ink)}
 table.board td.n{font-family:'JetBrains Mono',monospace;text-align:right}table.board th.n{text-align:right}
-#goalCard{position:absolute;right:14px;top:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;max-width:280px;font-size:12.5px;box-shadow:0 1px 3px rgba(17,24,39,.08);flex-direction:column;gap:2px}
+#goalCard{position:absolute;right:64px;top:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;max-width:280px;font-size:12.5px;box-shadow:0 1px 3px rgba(17,24,39,.08);flex-direction:column;gap:2px}
 #goalCard b{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 #goalState{font-weight:600}
 .suites{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
@@ -274,8 +287,22 @@ table.board.big th,table.board.big td{padding:12px 14px}
   <section id="stage" aria-label="3D scene">
     <img id="view" alt="3D scene rendered live by MuJoCo" draggable="false">
     <div class="tl"><span class="live" id="liveTag" style="display:none">● Running · real time</span><span class="libtag libero wetlab" id="libTag"></span><span class="hint" id="hintTag">Drag objects in from the right. Drag to orbit, right-drag to pan, scroll to zoom.</span></div>
-    <div class="bl"><button data-preset="home">Reset view</button><button data-preset="top">Top view</button><button data-preset="robot">Robot close-up</button></div>
+    <div class="bl"><button data-preset="top">Top view</button><button data-preset="robot">Robot close-up</button></div>
     <span class="small br freeonly">1 grid square = 10 cm</span>
+    <button class="camreset" data-preset="home" aria-label="Reset view" title="Reset view (Home)"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#E5E7EB" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 8 a5 5 0 1 0 1.6 -3.7"/><path d="M3 2 V5 H6"/></svg></button>
+    <div class="campad" role="group" aria-label="Camera">
+      <div class="dpad"><div class="arm v"></div><div class="arm h"></div><div class="hub"></div>
+        <button class="dk" style="left:42px;top:0" data-move="0,1,0" aria-label="Move forward" title="Forward (↑)"><svg width="12" height="12" viewBox="0 0 10 10" style="transform:rotate(0deg)" aria-hidden="true"><path d="M5 2 L9 8 H1 Z" fill="#E5E7EB"/></svg></button>
+        <button class="dk" style="left:0;top:42px" data-move="-1,0,0" aria-label="Move left" title="Left (←)"><svg width="12" height="12" viewBox="0 0 10 10" style="transform:rotate(-90deg)" aria-hidden="true"><path d="M5 2 L9 8 H1 Z" fill="#E5E7EB"/></svg></button>
+        <button class="dk" style="left:84px;top:42px" data-move="1,0,0" aria-label="Move right" title="Right (→)"><svg width="12" height="12" viewBox="0 0 10 10" style="transform:rotate(90deg)" aria-hidden="true"><path d="M5 2 L9 8 H1 Z" fill="#E5E7EB"/></svg></button>
+        <button class="dk" style="left:42px;top:84px" data-move="0,-1,0" aria-label="Move back" title="Back (↓)"><svg width="12" height="12" viewBox="0 0 10 10" style="transform:rotate(180deg)" aria-hidden="true"><path d="M5 2 L9 8 H1 Z" fill="#E5E7EB"/></svg></button>
+      </div>
+      <div class="rocker">
+        <button class="rk" data-move="0,0,1" aria-label="Raise camera" title="Raise (+ or Page Up)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#E5E7EB" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 8 H13"/><path d="M8 3 V13"/></svg></button>
+        <div class="rkline"></div>
+        <button class="rk" data-move="0,0,-1" aria-label="Lower camera" title="Lower (− or Page Down)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#E5E7EB" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 8 H13"/></svg></button>
+      </div>
+    </div>
     <div id="goalCard" class="libero wetlab"><b>Goal check</b><span id="goalState"></span><span class="small" id="goalText"></span></div>
     <div id="droptag"></div>
     <div id="toast"></div>
@@ -417,19 +444,38 @@ window.addEventListener('mouseup', async (e) => {
 });
 let camQ = null, camBusy = false;
 async function camera(delta) {
-  if (camQ) { for (const k of ['azimuth', 'elevation']) camQ[k] = (camQ[k] || 0) + (delta[k] || 0); if (delta.pan) camQ.pan = [(camQ.pan || [0, 0])[0] + delta.pan[0], (camQ.pan || [0, 0])[1] + delta.pan[1]]; if (delta.zoom) camQ.zoom = (camQ.zoom || 1) * delta.zoom; }
+  if (camQ) { for (const k of ['azimuth', 'elevation']) camQ[k] = (camQ[k] || 0) + (delta[k] || 0); if (delta.pan) camQ.pan = [(camQ.pan || [0, 0])[0] + delta.pan[0], (camQ.pan || [0, 0])[1] + delta.pan[1]]; if (delta.zoom) camQ.zoom = (camQ.zoom || 1) * delta.zoom; if (delta.move) camQ.move = (camQ.move || [0, 0, 0]).map((v, i) => v + delta.move[i]); }
   else camQ = {...delta};
   if (camBusy) return; camBusy = true;
   while (camQ) { const q = camQ; camQ = null; await api('/pg/camera', q); }
   camBusy = false;
 }
 view.addEventListener('wheel', (e) => { e.preventDefault(); camera({zoom: Math.exp(e.deltaY * 0.0012)}); }, {passive: false});
-document.querySelectorAll('.bl button').forEach(b => b.onclick = () => api('/pg/camera', {preset: b.dataset.preset}));
+document.querySelectorAll('.bl button, .camreset').forEach(b => b.onclick = () => api('/pg/camera', {preset: b.dataset.preset}));
+// Camera pad: click for one step, hold to keep moving.
+let camHold = null;
+const camStep = (m) => camera({move: m});
+const camStop = () => { clearTimeout(camHold); clearInterval(camHold); camHold = null; };
+document.querySelectorAll('.campad [data-move]').forEach(b => {
+  const m = b.dataset.move.split(',').map(Number);
+  b.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return; e.preventDefault(); camStop(); camStep(m);
+    camHold = setTimeout(() => { camHold = setInterval(() => camStep(m.map(v => v * 0.35)), 50); }, 300);
+  });
+  b.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); camStep(m); } });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => b.addEventListener(t, camStop));
+});
+window.addEventListener('blur', camStop);
+const CAM_KEYS = {ArrowUp: [0, 1, 0], ArrowDown: [0, -1, 0], ArrowLeft: [-1, 0, 0], ArrowRight: [1, 0, 0],
+                  PageUp: [0, 0, 1], PageDown: [0, 0, -1], '+': [0, 0, 1], '=': [0, 0, 1], '-': [0, 0, -1]};
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
   if (e.key === 'Escape') { S.armed = null; renderItems(); hideTag(); api('/pg/ghost/clear', {}); }
   if ((e.key === 'Delete' || e.key === 'Backspace') && S.sel && S.sel !== 'robot') removeSel();
   if (e.key === 'r' && S.sel && S.sel !== 'robot') rotateSel();
+  if (e.target.tagName === 'SELECT' || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (CAM_KEYS[e.key]) { e.preventDefault(); camStep(e.repeat ? CAM_KEYS[e.key].map(v => v * 0.5) : CAM_KEYS[e.key]); }
+  if (e.key === 'Home') { e.preventDefault(); api('/pg/camera', {preset: 'home'}); }
 });
 
 // ---------------------------------------------------------------- object panel

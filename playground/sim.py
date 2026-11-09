@@ -315,6 +315,17 @@ class PlaygroundSim(Sim):
             flat /= max(np.linalg.norm(flat), 1e-9)
             c.lookat[:] = np.array(c.lookat) + c.distance * (pan[0] * right + pan[1] * flat)
 
+    def move_camera(self, right=0.0, forward=0.0, up=0.0):
+        """Slide the main view's camera over the floor (right/forward, keeping its angle) or
+        raise/lower it, in metres. Only the audience view moves; the robot's cameras don't."""
+        c = self.view
+        _, fwd, r, _ = self._cam_frame()
+        flat = np.array([fwd[0], fwd[1], 0.0])
+        flat /= max(np.linalg.norm(flat), 1e-9)
+        p = np.array(c.lookat) + right * r + forward * flat
+        p[2] = float(np.clip(p[2] + up, -0.5, 3.0))
+        c.lookat[:] = p
+
     def focus(self, target):
         self.view.lookat[:] = target
 

@@ -209,6 +209,9 @@ class PGHandler(Handler):
             if p == "/pg/camera":
                 s.orbit(float(b.get("azimuth", 0)), float(b.get("elevation", 0)), float(b.get("zoom", 1.0)),
                         tuple(b.get("pan", (0.0, 0.0))))
+                if "move" in b:
+                    k = 0.05 * s.view.distance       # one step: about a grid square at the usual distance
+                    s.move_camera(*(float(v) * k for v in b["move"]))
                 if "aspect" in b:
                     s.set_view_aspect(float(b["aspect"]))
                 if "preset" in b:
