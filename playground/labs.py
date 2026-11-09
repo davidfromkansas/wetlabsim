@@ -45,6 +45,23 @@ def idle_for() -> float:
     return time.time() - _last_request
 
 
+# Real use: the owner clicking, dragging, typing or scrolling (the page polling doesn't count).
+_last_active = time.time()
+_idle_limit: float | None = None      # seconds; set on the hosted site only
+
+
+def active():
+    global _last_active
+    _last_active = time.time()
+
+
+def idle_left() -> float | None:
+    """Seconds until this lab closes for lack of use (None where labs don't close)."""
+    if _idle_limit is None:
+        return None
+    return max(0.0, _idle_limit - (time.time() - _last_active))
+
+
 def owner_ok(headers) -> bool:
     """Whether a request may change this lab (only its owner, by the key their link carries)."""
     if not OWNER_KEY:
@@ -134,6 +151,10 @@ def start_reporting(get_runs, idle_minutes: float, busy):
     """Report to the registry every few seconds; exit when nobody has looked for idle_minutes
     and nothing is running (the container then ends), or, once a newer build is out, as soon as
     nothing is running and the page has gone (it is told to, see stale())."""
+    global _idle_limit
+    _idle_limit = idle_minutes * 60
+    active()
+
     def loop():
         global _stale
         while True:
@@ -148,8 +169,10 @@ def start_reporting(get_runs, idle_minutes: float, busy):
                 print(f"lab {LAB_ID} is build {BUILD}, the site is on {cur}: shutting down")
                 forget()
                 os._exit(0)
-            if idle_for() > idle_minutes * 60 and not busy():
-                print(f"lab {LAB_ID} idle for {idle_minutes} min: shutting down")
+            if busy():
+                active()          # a run (or one waiting in line) counts as use
+            elif idle_left() <= 0:
+                print(f"lab {LAB_ID}: no activity for {idle_minutes} min: shutting down")
                 forget()
                 os._exit(0)
     threading.Thread(target=loop, daemon=True, name="lab-report").start()

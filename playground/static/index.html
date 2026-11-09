@@ -176,6 +176,12 @@ body.v3 #view{position:relative;opacity:0}
 .rk:active{background:rgba(0,0,0,.25)}
 .rkline{height:2px;margin:0 10px;background:#1F2430;border-radius:1px}
 .rk:focus-visible,.camreset:focus-visible{outline:2px solid #2563EB;outline-offset:2px}
+.idlecard{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;width:min(320px,calc(100% - 32px));display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:14px;background:#fff;box-shadow:0 16px 40px rgba(17,24,39,.22),0 0 0 1px rgba(17,24,39,.08);font-size:13.5px;color:var(--ink);text-align:center;animation:idleIn 160ms ease-out}
+@keyframes idleIn{from{opacity:0;transform:translate(-50%,-50%) scale(.96)}to{opacity:1;transform:translate(-50%,-50%)}}
+.idlecard[hidden]{display:none}
+.idlecard b{font-size:15px}
+.idlecard span{color:#374151;line-height:1.45}
+.idlecard button{margin-top:4px;height:36px;border:0;border-radius:9px;background:var(--blue);color:#fff;font:600 13.5px Inter,sans-serif;cursor:pointer}
 #droptag{position:absolute;transform:translate(-50%,-140%);white-space:nowrap;font-size:12px;font-weight:600;color:#fff;background:var(--blue);padding:3px 8px;border-radius:6px;box-shadow:0 2px 6px rgba(37,99,235,.3);pointer-events:none;display:none}
 #droptag.bad{background:var(--red)}
 #toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:6px 12px;border-radius:8px;font-size:13px;display:none}
@@ -512,6 +518,16 @@ button:active:not(:disabled){transform:scale(.97)}
     <div id="goalCard" class="libero wetlab"><b>Goal check</b><span id="goalState"></span><span class="small" id="goalText"></span></div>
     <div id="droptag"></div>
     <div id="toast"></div>
+    <div class="idlecard" id="idleCard" role="alertdialog" aria-live="assertive" aria-labelledby="idleTitle" hidden>
+      <b id="idleTitle">Still there?</b>
+      <span>No activity for a while. This lab closes in <span id="idleLeft">60</span> s.</span>
+      <button id="idleStay">I'm still here</button>
+    </div>
+    <div class="idlecard closed" id="closedCard" role="alertdialog" aria-labelledby="closedTitle" hidden>
+      <b id="closedTitle">This lab closed</b>
+      <span>It shut down after 5 minutes with no activity. Its sessions weren't saved.</span>
+      <button id="closedOpen">Open a new lab</button>
+    </div>
     <div class="stmenu" id="stMenu" role="menu" aria-label="Station actions">
       <button role="menuitem" data-act="duplicate"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5" y="5" width="9" height="9" rx="2"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/></svg>Duplicate</button>
       <button role="menuitem" data-act="rename"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 2.5l3 3L6 13H3v-3z"/></svg>Rename</button>
@@ -1190,11 +1206,34 @@ function render() {
   if (S.mode === 'libero') renderLiberoLive();
   if (S.mode === 'wetlab') renderWetLive();
 }
+// A hosted lab closes after 5 minutes without real use (clicks, typing, scrolling, a run).
+// The page polling doesn't count; this tells the lab when its owner does something.
+let lastActive = 0, idleEnd = null;
+function markActive() {
+  if (S.watch || !S.cat || !S.cat.front) return;
+  const now = Date.now(); if (now - lastActive < 15000) return; lastActive = now;
+  api('/pg/active', {});
+}
+['pointerdown', 'keydown', 'wheel'].forEach(t => window.addEventListener(t, markActive, {capture: true, passive: true}));
+function idleCheck(left) {
+  if (left == null || S.watch) return;
+  idleEnd = Date.now() + left * 1000;
+  $('idleCard').hidden = left > 60;
+}
+setInterval(() => {
+  if (idleEnd == null || $('idleCard').hidden) return;
+  const s = Math.max(0, Math.round((idleEnd - Date.now()) / 1000));
+  $('idleLeft').textContent = s;
+  if (s <= 0) { $('idleCard').hidden = true; $('closedCard').hidden = false; idleEnd = null; }
+}, 500);
+$('idleStay').onclick = () => { lastActive = 0; markActive(); $('idleCard').hidden = true; };
+$('closedOpen').onclick = () => { location.href = (S.cat.front || '') + '/'; };
 async function refresh() {
   const sid = SID, sc = await api('/pg/scene');
   if (sid !== SID) return;                 // switched sessions meanwhile
   // A hosted lab from before the site was updated: back to the front, which opens a new one.
   if (sc.stale && S.cat.front && !S.watch && !Object.values(sc.runs || {}).some(r => r.active || r.queued)) { location.href = S.cat.front + '/'; return; }
+  idleCheck(sc.idle_left);
   if (sc.ok === false) {                   // the session closed (the server restarted, say)
     await loadSessions();
     const next = (S.sess.mine[0] || {}).id;

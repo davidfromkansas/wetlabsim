@@ -661,7 +661,8 @@ class PGHandler(Handler):
                 return self._json({**info, "run": run, "runs": runs, "locked": self._locked(),
                                    "bench": self.bench.status(), "wetbench": self.wetbench.status(),
                                    "session": {"id": self.sess.id, "name": self.sess.name,
-                                               "mine": self._owns()}, "stale": LABS.stale()})
+                                               "mine": self._owns()}, "stale": LABS.stale(),
+                                   "idle_left": LABS.idle_left()})
             if p == "/pg/wetlab":
                 return self._json({"tasks": [{"id": t.id, "title": t.title, "prompt": t.prompt,
                                               "needs_answer": t.needs_answer} for t in WT.TASKS.values()],
@@ -764,6 +765,11 @@ class PGHandler(Handler):
         if (urllib.parse.urlparse(self.path).path.startswith("/pg/") and not getattr(self, "robot_api", False)
                 and not LABS.owner_ok(self.headers)):
             return self._err("this lab is someone else's: you can watch it, not change it", 403)
+        if not getattr(self, "robot_api", False):
+            LABS.active()          # the owner did something: the lab is in use
+        if re.sub(r"^/s/[^/]+", "", urllib.parse.urlparse(self.path).path).rstrip("/") == "/pg/active":
+            self._body()
+            return self._json({"ok": True, "idle_left": LABS.idle_left()})
         if urllib.parse.urlparse(self.path).path.rstrip("/") == "/pg/sessions/new":
             return self._new_session()
         if not self._bind_session():
@@ -1106,8 +1112,8 @@ def main(argv=None):
     ap.add_argument("--front", action="store_true",
                     help="the public site's front: hands each visitor their own lab, lists live and past runs")
     ap.add_argument("--run-minutes", type=float, default=5.0)
-    ap.add_argument("--idle-minutes", type=float, default=15.0,
-                    help="a hosted lab shuts down after this long with no one looking and nothing running")
+    ap.add_argument("--idle-minutes", type=float, default=5.0,
+                    help="a hosted lab shuts down after this long with no clicks, typing or scrolling from its owner and nothing running")
     ap.add_argument("--max-active", type=int, default=4)
     ap.add_argument("--launcher", default="local", help="where agents run (wetlabsim.launchers)")
     ap.add_argument("--agent-robot-url", default="",

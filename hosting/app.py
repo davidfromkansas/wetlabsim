@@ -8,7 +8,7 @@ web (the front, Modal's stable web address): gives each visitor (a browser cooki
 lab (one container per visitor): a playground server in public mode (free play only, Claude
   models only, runs capped at 5 minutes and about $3, at most 4 runs at once across all labs,
   more wait in a queue). Its page is reached through a tunnel of its own; only the owner's link
-  (?key=) can change it, anyone else watches. It shuts down after 15 idle minutes. The robot
+  (?key=) can change it, anyone else watches. It shuts down after 5 minutes with no clicks, typing or runs. The robot
   API and the model proxy leave through tunnels of their own, for the agents only: each run's
   Claude Code runs in a Modal Sandbox that can reach those two and nothing else, and the
   Anthropic key ("anthropic-secret") stays in the lab container.
@@ -89,14 +89,14 @@ def web():
 @app.function(cpu=4.0, memory=6144, secrets=lab_secrets,
               volumes={"/data": runs}, max_containers=MAX_LABS, timeout=12 * 3600)
 def lab(lab_id: str, owner_key: str):
-    """One visitor's lab, for as long as it is in use (its server exits after 15 idle minutes)."""
+    """One visitor's lab, for as long as it is in use (its server exits after 5 minutes with no real activity)."""
     with modal.forward(8780) as page, modal.forward(8781) as robot, modal.forward(8782) as proxy:
         env = dict(os.environ, WETLAB_SESSION_DIR="/tmp/sessions", WETLAB_LAB_ID=lab_id, WETLAB_OWNER_KEY=owner_key, WETLAB_LAB_URL=page.url,
                    WETLAB_RUN_TAG=lab_id, WETLAB_MODEL_PROXY_URL=proxy.url, WETLAB_RUN_BUDGET_USD="3")
         _commit_loop()
         proc = subprocess.Popen(
             ["python", "-m", "playground.server", "--host", "0.0.0.0", "--port", "8780", "--no-browser",
-             "--public", "--run-minutes", "5", "--max-active", "4", "--idle-minutes", "15",
+             "--public", "--run-minutes", "5", "--max-active", "4", "--idle-minutes", "5",
              "--launcher", "modal", "--robot-port", "8781", "--agent-robot-url", robot.url,
              "--model-proxy-port", "8782", "--runs", "/data/runs"],
             cwd="/app", env=env)
