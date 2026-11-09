@@ -76,7 +76,7 @@ def _world_xml() -> str:
   </asset>
   <worldbody>
     <light pos="0.5 -1.0 4" dir="-0.1 0.25 -1" diffuse="0.5 0.5 0.5" specular="0.1 0.1 0.1" castshadow="true"/>
-    <light pos="-2 2 3" dir="0.5 -0.5 -1" diffuse="0.2 0.2 0.2" castshadow="false"/>
+    <light type="directional" pos="-2 2 3" dir="0.5 -0.5 -1" diffuse="0.2 0.2 0.2" castshadow="false"/>
     <geom name="floor" type="plane" size="10 10 0.1" material="grid" class="bench"/>
   </worldbody>
 </mujoco>
