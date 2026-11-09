@@ -25,10 +25,10 @@ def main(argv=None):
         try:
             src = fetch(it["hf"], pathlib.Path(a.cache))
             m = convert(src, catalog.ASSETS / id_, hollow=it["hollow"])
-            thumbs = sorted((src / "simready_usd" / ".thumbs" / "256x256").glob("*.usd*.png"))
+            tdir = src / "simready_usd" / ".thumbs" / "256x256"
+            thumbs = sorted(tdir.glob("*_transparent.png")) or sorted(tdir.glob("*.usd*.png"))
             if thumbs:
                 shutil.copy(thumbs[0], catalog.ASSETS / id_ / "thumb.png")
-            lic = src / ".metadata" / "LICENSE.txt"
             print(f"{id_:20s} mass={m['mass']} size={m['size']} parts={len(m['collision_parts'])}")
         except Exception as e:  # noqa: BLE001
             print(f"{id_:20s} FAILED: {e}", file=sys.stderr)

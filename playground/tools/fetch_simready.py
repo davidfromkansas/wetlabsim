@@ -25,7 +25,8 @@ def wanted(path: str) -> bool:
     if "/source_assets/" in path or "/.metadata/" in path:
         return False
     if "/.thumbs/" in path:
-        return (path.endswith(".usd.png") or path.endswith(".usda.png")) and "/256x256/" in path and "simready_usd/.thumbs" in path
+        return path.endswith(("_transparent.png", ".usd.png", ".usda.png")) and "/256x256/" in path \
+            and "simready_usd/.thumbs" in path
     return "/simready_usd/" in path or path.endswith("LICENSE.txt")
 
 

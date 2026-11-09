@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MuJoCo Playground</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F6F7F9;--panel:#FFFFFF;--line:#E5E7EB;--line2:#EEF0F3;--ink:#111827;--ink2:#1F2937;--muted:#4B5563;--soft:#F3F4F6;--blue:#2563EB;--blue2:#1D4ED8;--blueBg:#EFF4FF;--green:#16A34A;--red:#DC2626;--amber:#92400E;--amberBg:#FEF3C7}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink2);font:14px/1.5 Inter,system-ui,sans-serif}
+button{font:inherit}
+.app{height:100vh;display:flex;flex-direction:column}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;padding:10px 20px;background:var(--panel);border-bottom:1px solid var(--line)}
+.hgroup{display:flex;align-items:center;gap:10px;flex:1 1 220px;min-width:0}
+.brand{font-size:16px;font-weight:700;color:var(--ink)}
+.seg{display:flex;padding:3px;border-radius:10px;background:var(--soft);gap:2px}
+.seg button{height:30px;padding:0 12px;border-radius:8px;border:0;background:transparent;color:#374151;font-size:13px;font-weight:500;cursor:pointer}
+.seg button[aria-pressed=true]{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(17,24,39,.12)}
+.chip{font-size:12px;color:var(--muted);padding:2px 8px;border-radius:999px;background:var(--soft)}
+.play{height:40px;padding:0 18px 0 14px;display:flex;align-items:center;gap:8px;border-radius:999px;border:0;background:var(--blue);color:#fff;font-weight:600;cursor:pointer}
+.play.on{background:var(--red)}
+.round{height:40px;width:40px;border-radius:999px;border:1px solid #D1D5DB;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.clock{font:500 15px 'JetBrains Mono',monospace;color:var(--ink)}
+.small{font-size:12px;color:var(--muted)}
+.lockmsg{font-size:12px;font-weight:600;color:var(--amber);background:var(--amberBg);padding:4px 10px;border-radius:6px}
+main{flex:1;display:flex;min-height:0}
+aside{background:var(--panel);display:flex;flex-direction:column;min-height:0}
+#left{width:360px;flex:none;border-right:1px solid var(--line);overflow:hidden}
+#right{width:320px;flex:none;border-left:1px solid var(--line)}
+h2.cap{margin:0 0 8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.sec{padding:14px 16px;border-bottom:1px solid var(--line2)}
+.robotbtn{width:100%;text-align:left;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+.robotbtn[aria-pressed=true]{border:2px solid var(--blue);background:var(--blueBg)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#9CA3AF;margin-right:6px}
+.cams{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cams figure{margin:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--soft)}
+.cams img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#E5E7EB}
+.cams figcaption{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:var(--blueBg);border-top:2px solid var(--blue);font-size:12px}
+.cams figcaption b{font-weight:600;color:var(--ink)}
+.cams figcaption span{font-size:10px;font-weight:700;color:var(--blue2)}
+textarea{width:100%;resize:vertical;padding:10px 12px;border-radius:10px;border:1px solid #D1D5DB;font:14px/1.5 Inter,sans-serif;color:var(--ink)}
+select{height:36px;padding:0 10px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;font:14px Inter,sans-serif;color:var(--ink)}
+.note{background:var(--bg);border-radius:8px;padding:10px 12px;font-size:12.5px;color:#374151}
+.primary{height:42px;border-radius:10px;border:0;background:var(--ink);color:#fff;font-weight:600;cursor:pointer;width:100%}
+.primary:disabled{opacity:.5;cursor:not-allowed}
+.ghostbtn{height:36px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;font-weight:500;font-size:13px;color:var(--ink);cursor:pointer;flex:1}
+.ghostbtn:disabled{background:var(--soft);color:#6B7280;cursor:not-allowed}
+#taskpane{display:flex;flex-direction:column;gap:10px;flex:1;overflow:auto}
+#chatpane{flex:1;display:none;flex-direction:column;min-height:0}
+.chathead{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line2)}
+.chathead img{width:20px;height:20px}
+#feed{list-style:none;margin:0;padding:14px 16px;display:flex;flex-direction:column;overflow-y:auto;flex:1;gap:10px}
+.you{align-self:flex-end;max-width:88%}
+.you div:last-child{background:#EEF2F7;color:var(--ink);border-radius:14px 14px 4px 14px;padding:9px 12px}
+.say{font-size:14px;color:var(--ink2);white-space:pre-wrap}
+.think{font-size:13px;color:var(--muted);font-style:italic;white-space:pre-wrap;border-left:2px solid var(--line);padding-left:8px;max-height:140px;overflow:hidden}
+.code{border:1px solid #D1D5DB;border-radius:8px;overflow:hidden;font:12px 'JetBrains Mono',monospace}
+.code .h{padding:4px 8px;background:var(--soft);color:var(--muted);font:12px Inter,sans-serif}
+.code pre{margin:0;padding:8px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto;font:inherit;color:var(--ink2)}
+.code .o{padding:4px 8px;border-top:1px solid var(--line);color:var(--muted);white-space:pre-wrap;max-height:120px;overflow:auto}
+.lite{font-size:13px;color:#374151}
+.lite::before{content:"● ";color:#15803D;font-size:10px}
+.runbar{padding:10px 16px;border-top:1px solid var(--line2);display:flex;gap:8px;align-items:center}
+#stage{flex:1;min-width:0;position:relative;background:#FBFBF9;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#view{display:block;width:100%;height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;cursor:grab}
+#view.dragging{cursor:grabbing}
+.tl{position:absolute;left:14px;top:12px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}
+.hint{font-size:12px;color:#374151;background:rgba(255,255,255,.9);border:1px solid var(--line);padding:4px 10px;border-radius:6px}
+.live{font-size:12px;font-weight:600;color:var(--red);background:#FEE2E2;padding:4px 10px;border-radius:6px}
+.bl{position:absolute;left:14px;bottom:12px;display:flex;gap:6px}
+.bl button{height:32px;padding:0 10px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;font-weight:500;font-size:12px;color:var(--ink);cursor:pointer}
+.br{position:absolute;right:14px;bottom:16px}
+#droptag{position:absolute;transform:translate(-50%,-140%);white-space:nowrap;font-size:12px;font-weight:600;color:#fff;background:var(--blue);padding:3px 8px;border-radius:6px;box-shadow:0 2px 6px rgba(37,99,235,.3);pointer-events:none;display:none}
+#droptag.bad{background:var(--red)}
+#toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:6px 12px;border-radius:8px;font-size:13px;display:none}
+.lib-top{padding:14px 16px 10px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line2)}
+input[type=search]{height:36px;padding:0 12px;border-radius:8px;border:1px solid #D1D5DB;font:14px Inter,sans-serif;color:var(--ink);background:#F9FAFB}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tabs button{height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--line);background:#fff;color:#374151;font-size:12.5px;font-weight:500;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+#items{padding:12px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start;overflow-y:auto;flex:1}
+.card{border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden;cursor:grab;text-align:left;padding:0}
+.card.armed{border:2px solid var(--blue)}
+.card .th{height:84px;background:var(--bg);display:flex;align-items:center;justify-content:center}
+.card .th img{max-height:80px;max-width:100%}
+.card .tx{padding:6px 8px 8px}
+.card .n{font-size:13px;font-weight:600;color:var(--ink);line-height:1.3}
+.card .s{font-size:11.5px;color:var(--muted)}
+.libhint{margin:0;padding:10px 16px 14px;border-top:1px solid var(--line2);font-size:12px;color:var(--muted)}
+#right.locked #items{opacity:.45;pointer-events:none}
+dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13px}
+dt{color:var(--muted)}dd{margin:0;text-align:right;font-family:'JetBrains Mono',monospace}
+#loading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;z-index:9;font-size:15px;color:var(--muted)}
+.libero{display:none}
+</style>
+</head>
+<body>
+<div id="loading"><svg width="40" height="40" viewBox="0 0 26 26" fill="none" stroke="#2563EB" stroke-width="1.6"><path d="M13 3 L23 8.5 L13 14 L3 8.5 Z"/><path d="M3 8.5 V17.5 L13 23 V14"/><path d="M23 8.5 V17.5 L13 23"/></svg>Loading the playground…</div>
+<div class="app">
+<header>
+  <div class="hgroup">
+    <svg aria-hidden="true" width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#2563EB" stroke-width="1.6"><path d="M13 3 L23 8.5 L13 14 L3 8.5 Z"/><path d="M3 8.5 V17.5 L13 23 V14"/><path d="M23 8.5 V17.5 L13 23"/></svg>
+    <span class="brand">MuJoCo Playground</span>
+    <div class="seg" role="group" aria-label="Mode">
+      <button id="modeFree" aria-pressed="true">Free play</button>
+      <button id="modeLibero" aria-pressed="false">LIBERO test</button>
+    </div>
+    <span class="chip" id="modechip">Free play · not saved</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="play" id="playBtn" aria-label="Play"><svg id="playIcon" width="14" height="14" viewBox="0 0 14 14" fill="#fff"><path d="M3 1.5 L12.5 7 L3 12.5 Z"/></svg><span id="playLabel">Play</span></button>
+    <button class="round" id="resetBtn" title="Put everything back where it started" aria-label="Reset"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#374151" stroke-width="1.6" stroke-linecap="round"><path d="M3 8 a5 5 0 1 0 1.6 -3.7"/><path d="M3 2 V5 H6"/></svg></button>
+    <div style="display:flex;flex-direction:column;line-height:1.25;margin-left:4px"><span class="clock" id="clock">00:00.0</span><span class="small" id="rt">paused</span></div>
+  </div>
+  <div class="hgroup" style="justify-content:flex-end">
+    <span class="lockmsg" id="lockmsg" style="display:none"></span>
+    <span class="small">MuJoCo 4.0</span>
+  </div>
+</header>
+<main>
+  <aside id="left" aria-label="Robot and task">
+    <div class="sec">
+      <h2 class="cap">Robots in the scene</h2>
+      <button class="robotbtn" id="robotBtn" aria-pressed="true"><b style="display:block">Franka Panda</b><span class="small"><span class="dot" id="robotDot"></span><span id="robotStatus">No task yet</span></span></button>
+      <p class="small" style="margin:6px 0 0">Every scene starts with a Franka. Click it (here or in the scene) to give it a task.</p>
+    </div>
+    <div id="robotPanel" style="display:flex;flex-direction:column;flex:1;min-height:0">
+      <div class="sec">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px"><h3 style="margin:0;font-size:15px;color:var(--ink)">Franka Panda</h3><span class="small">on the table · Franka Hand</span></div>
+        <div class="cams">
+          <figure><img id="camOver" alt="Overhead camera"><figcaption><b>Overhead</b><span>AI SEES</span></figcaption></figure>
+          <figure><img id="camWrist" alt="Wrist camera"><figcaption><b>Wrist</b><span>AI SEES</span></figcaption></figure>
+        </div>
+      </div>
+      <div id="taskpane" class="sec" style="border:0">
+        <label for="task" style="font-size:13px;font-weight:600;color:var(--ink)">Task for the Franka Panda</label>
+        <textarea id="task" rows="5" placeholder="Tell this robot what to do, in plain words. Example: put the apple in the bowl."></textarea>
+        <div style="display:flex;flex-direction:column;gap:4px"><label for="model" class="small" style="font-weight:600">AI model</label><select id="model"></select></div>
+        <div class="note"><b style="color:var(--ink)">What the AI gets</b><br>Your task, the Franka's manuals, a site sheet naming what's in the scene (not where), its two cameras and its sensors. It writes code to move the robot. It has <span id="limitTxt">3 minutes</span>.</div>
+        <button class="primary" id="startBtn">Play · start the task</button>
+        <p class="small" style="margin:0">Pausing freezes physics; the robot waits. Runs use your own Claude Code or Codex login.</p>
+      </div>
+      <section id="chatpane" aria-label="AI chat">
+        <div class="chathead"><img id="chatLogo" src="/static/anthropic.svg" alt=""><b id="chatModel" style="flex:1;color:var(--ink)">Claude Opus 5.5</b><span class="small" id="chatCost"></span></div>
+        <ol id="feed"></ol>
+        <div class="runbar"><span class="small" id="runStatus" style="flex:1"></span><button class="ghostbtn" id="stopBtn" style="flex:none;padding:0 12px">Stop run</button><button class="ghostbtn" id="newTaskBtn" style="flex:none;padding:0 12px;display:none">New task</button></div>
+      </section>
+    </div>
+    <div id="objPanel" class="sec" style="display:none;flex-direction:column;gap:12px;border:0">
+      <div><span class="cap" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Selected object</span><h3 id="objName" style="margin:2px 0 0;font-size:16px;color:var(--ink)"></h3><span class="small">NVIDIA SimReady · physics from the asset</span></div>
+      <dl><dt>Size</dt><dd id="objSize"></dd><dt>Mass</dt><dd id="objMass"></dd><dt>Friction</dt><dd id="objFric"></dd><dt>Collision</dt><dd id="objCol" style="font-family:Inter;font-size:12px"></dd></dl>
+      <div style="display:flex;gap:8px"><button class="ghostbtn" id="rotBtn">Rotate 90°</button><button class="ghostbtn" id="delBtn">Remove</button></div>
+      <p class="small" style="margin:0">Drag it in the scene to move it. Click the robot to give it a task.</p>
+    </div>
+  </aside>
+
+  <section id="stage" aria-label="3D scene">
+    <img id="view" alt="3D scene rendered live by MuJoCo" draggable="false">
+    <div class="tl"><span class="live" id="liveTag" style="display:none">● Running · real time</span><span class="hint" id="hintTag">Drag objects in from the right. Drag to orbit, right-drag to pan, scroll to zoom.</span></div>
+    <div class="bl"><button data-preset="home">Reset view</button><button data-preset="top">Top view</button><button data-preset="robot">Robot close-up</button></div>
+    <span class="small br">1 grid square = 10 cm</span>
+    <div id="droptag"></div>
+    <div id="toast"></div>
+  </section>
+
+  <aside id="right" aria-label="Object library">
+    <div class="lib-top">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0;font-size:15px;color:var(--ink)">Objects</h2><span class="small">NVIDIA SimReady</span></div>
+      <input id="search" type="search" placeholder="Search, e.g. mug, bowl, crate" aria-label="Search objects">
+      <div class="tabs" role="tablist" id="tabs"></div>
+    </div>
+    <div id="items" role="tabpanel"></div>
+    <p class="libhint" id="libhint">Drag an object onto the scene, or click it and then click where it should go. It lands on whatever is under it.</p>
+  </aside>
+</main>
+</div>
+<script>
+const $ = (id) => document.getElementById(id);
+const api = async (path, body) => {
+  const r = await fetch(path, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+  return r.json();
+};
+const S = {cat: null, tab: 'Kitchen', search: '', scene: null, armed: null, sel: 'robot', traceN: 0, runKey: null, model: 'claude'};
+const view = $('view'), stage = $('stage');
+const LIBHINT = 'Drag an object onto the scene, or click it and then click where it should go. It lands on whatever is under it.';
+
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast.h); toast.h = setTimeout(() => t.style.display = 'none', 2600); }
+function uv(e) {
+  // image is object-fit: contain; map to the rendered frame
+  const r = view.getBoundingClientRect(), ar = 1280 / 800;
+  let w = r.width, h = r.height, ox = 0, oy = 0;
+  if (w / h > ar) { w = h * ar; ox = (r.width - w) / 2; } else { h = w / ar; oy = (r.height - h) / 2; }
+  return {u: (e.clientX - r.left - ox) / w, v: (e.clientY - r.top - oy) / h, x: e.clientX - stage.getBoundingClientRect().left, y: e.clientY - stage.getBoundingClientRect().top};
+}
+
+// ---------------------------------------------------------------- library
+function fmtSize(s) { return s.map(v => (v * 100).toFixed(v < 0.1 ? 1 : 0)).join(' × ') + ' cm'; }
+function fmtMass(m) { return m == null ? '' : (m < 1 ? Math.round(m * 1000) + ' g' : m.toFixed(1) + ' kg'); }
+function renderTabs() {
+  const tabs = $('tabs'); tabs.innerHTML = '';
+  for (const t of S.cat.tabs) {
+    if (t === 'Robots') continue;
+    const n = S.cat.items.filter(i => i.tab === t).length;
+    const b = document.createElement('button'); b.role = 'tab'; b.setAttribute('aria-selected', S.tab === t && !S.search);
+    b.innerHTML = `${t} <span style="opacity:.7">${n}</span>`; b.onclick = () => { S.tab = t; S.search = ''; $('search').value = ''; renderTabs(); renderItems(); };
+    tabs.appendChild(b);
+  }
+}
+function renderItems() {
+  const box = $('items'); box.innerHTML = '';
+  const q = S.search.toLowerCase();
+  const list = S.cat.items.filter(i => q ? (i.label + ' ' + i.tab).toLowerCase().includes(q) : i.tab === S.tab);
+  for (const it of list) {
+    const c = document.createElement('button'); c.className = 'card' + (S.armed === it.id ? ' armed' : ''); c.draggable = true;
+    c.title = 'Drag onto the scene, or click and then click in the scene';
+    c.innerHTML = `<div class="th"><img src="${it.thumb}" alt=""></div><div class="tx"><div class="n">${it.label}</div><div class="s">${fmtSize(it.size)}${it.mass ? ' · ' + fmtMass(it.mass) : ''}</div></div>`;
+    c.ondragstart = (e) => { e.dataTransfer.setData('text/plain', it.id); e.dataTransfer.effectAllowed = 'copy'; S.dragItem = it; const img = new Image(); img.src = it.thumb; e.dataTransfer.setDragImage(c.querySelector('img'), 30, 30); };
+    c.ondragend = () => { S.dragItem = null; hideTag(); api('/pg/ghost/clear', {}); };
+    c.onclick = () => { S.armed = S.armed === it.id ? null : it.id; renderItems(); $('libhint').textContent = S.armed ? `Now click in the scene to place the ${it.label.toLowerCase()}. Esc to cancel.` : LIBHINT; };
+    box.appendChild(c);
+  }
+  if (!list.length) box.innerHTML = '<p class="small">Nothing matches.</p>';
+}
+$('search').oninput = (e) => { S.search = e.target.value; renderTabs(); renderItems(); };
+
+// ---------------------------------------------------------------- dropping
+let probeBusy = false, probeNext = null;
+async function probe(item, p, uid) {
+  if (probeBusy) { probeNext = [item, p, uid]; return; }
+  probeBusy = true;
+  try {
+    const r = await api('/pg/probe', {item, u: p.u, v: p.v, uid});
+    S.lastSpot = r;
+    if (!S.dragItem && !S.armed && !(drag && drag.obj)) { hideTag(); api('/pg/ghost/clear', {}); return; }
+    const label = (S.cat.items.find(i => i.id === item) || {}).label || '';
+    showTag(p, r.valid ? `${label} · lands on ${r.surface.toLowerCase().startsWith('the') ? r.surface : 'the ' + r.surface.toLowerCase()}` : (r.reason || "can't go there"), !r.valid);
+  } finally {
+    probeBusy = false;
+    if (probeNext) { const n = probeNext; probeNext = null; probe(...n); }
+  }
+}
+function showTag(p, text, bad) { const t = $('droptag'); t.style.display = 'block'; t.style.left = p.x + 'px'; t.style.top = p.y + 'px'; t.textContent = text; t.classList.toggle('bad', !!bad); }
+function hideTag() { $('droptag').style.display = 'none'; }
+stage.addEventListener('dragover', (e) => { if (!S.dragItem) return; e.preventDefault(); probe(S.dragItem.id, uv(e)); });
+stage.addEventListener('dragleave', (e) => { if (e.target === stage || e.target === view) { hideTag(); api('/pg/ghost/clear', {}); } });
+stage.addEventListener('drop', async (e) => {
+  e.preventDefault(); const id = e.dataTransfer.getData('text/plain') || (S.dragItem && S.dragItem.id); if (!id) return;
+  S.dragItem = null; probeNext = null; hideTag(); await place(id, uv(e));
+});
+async function place(id, p) {
+  const r = await api('/pg/place', {item: id, u: p.u, v: p.v});
+  if (!r.ok) toast(r.error || "Can't go there"); else { S.sel = r.uid; }
+  refresh();
+}
+
+// ---------------------------------------------------------------- mouse in the scene
+let drag = null;
+view.addEventListener('contextmenu', e => e.preventDefault());
+view.addEventListener('mousedown', async (e) => {
+  const p = uv(e);
+  drag = {x: e.clientX, y: e.clientY, btn: e.button, shift: e.shiftKey, moved: false, p0: p, obj: null};
+  if (e.button === 0 && !S.armed && S.scene && !S.scene.locked) {
+    const hit = await api('/pg/pick', {u: p.u, v: p.v});
+    if (drag && hit.kind === 'object' && hit.removable) drag.obj = hit;
+  }
+});
+window.addEventListener('mousemove', (e) => {
+  if (S.armed && e.target === view) probe(S.armed, uv(e));
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+  if (!drag.moved) return;
+  view.classList.add('dragging');
+  if (drag.obj) { probe(drag.obj.item, uv(e), drag.obj.uid); return; }
+  drag.x = e.clientX; drag.y = e.clientY;
+  if (drag.btn === 2 || drag.shift) camera({pan: [-dx / 900, dy / 900]});
+  else camera({azimuth: -dx * 0.3, elevation: -dy * 0.3});
+});
+window.addEventListener('mouseup', async (e) => {
+  if (!drag) return;
+  const d = drag; drag = null; view.classList.remove('dragging');
+  if (d.moved && d.obj) { probeNext = null; hideTag(); const r = await api('/pg/move', {uid: d.obj.uid, u: uv(e).u, v: uv(e).v}); if (!r.ok) toast(r.error); S.sel = d.obj.uid; refresh(); return; }
+  if (d.moved || e.target !== view) return;
+  const p = uv(e);
+  if (S.armed) { const id = S.armed; S.armed = null; probeNext = null; renderItems(); hideTag(); $('libhint').textContent = LIBHINT; await place(id, p); return; }
+  const hit = await api('/pg/pick', {u: p.u, v: p.v});
+  S.sel = hit.kind === 'robot' ? 'robot' : hit.kind === 'object' ? hit.uid : S.sel;
+  render();
+});
+let camQ = null, camBusy = false;
+async function camera(delta) {
+  if (camQ) { for (const k of ['azimuth', 'elevation']) camQ[k] = (camQ[k] || 0) + (delta[k] || 0); if (delta.pan) camQ.pan = [(camQ.pan || [0, 0])[0] + delta.pan[0], (camQ.pan || [0, 0])[1] + delta.pan[1]]; if (delta.zoom) camQ.zoom = (camQ.zoom || 1) * delta.zoom; }
+  else camQ = {...delta};
+  if (camBusy) return; camBusy = true;
+  while (camQ) { const q = camQ; camQ = null; await api('/pg/camera', q); }
+  camBusy = false;
+}
+view.addEventListener('wheel', (e) => { e.preventDefault(); camera({zoom: Math.exp(e.deltaY * 0.0012)}); }, {passive: false});
+document.querySelectorAll('.bl button').forEach(b => b.onclick = () => api('/pg/camera', {preset: b.dataset.preset}));
+window.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+  if (e.key === 'Escape') { S.armed = null; renderItems(); hideTag(); api('/pg/ghost/clear', {}); }
+  if ((e.key === 'Delete' || e.key === 'Backspace') && S.sel && S.sel !== 'robot') removeSel();
+  if (e.key === 'r' && S.sel && S.sel !== 'robot') rotateSel();
+});
+
+// ---------------------------------------------------------------- object panel
+async function removeSel() { const r = await api('/pg/remove', {uid: S.sel}); if (!r.ok) toast(r.error); else S.sel = 'robot'; refresh(); }
+async function rotateSel() { const r = await api('/pg/rotate', {uid: S.sel, degrees: 90}); if (!r.ok) toast(r.error); refresh(); }
+$('delBtn').onclick = removeSel; $('rotBtn').onclick = rotateSel;
+$('robotBtn').onclick = () => { S.sel = 'robot'; api('/pg/select', {uid: 'robot'}); render(); };
+
+// ---------------------------------------------------------------- play, tasks, chat
+$('playBtn').onclick = async () => {
+  if (S.scene && !S.scene.paused) await api('/pg/pause', {}); else await api('/pg/play', {});
+  refresh();
+};
+$('resetBtn').onclick = async () => { const r = await api('/pg/reset', {}); if (!r.ok) toast(r.error); refresh(); };
+$('startBtn').onclick = async () => {
+  const task = $('task').value.trim();
+  if (!task) { toast('Type a task for the robot first'); $('task').focus(); return; }
+  const r = await api('/pg/play', {task, model: $('model').value});
+  if (!r.ok) { toast(r.error); return; }
+  S.traceN = 0; $('feed').innerHTML = ''; S.runTask = task;
+  refresh();
+};
+$('stopBtn').onclick = async () => { await api('/pg/stop', {}); refresh(); };
+$('newTaskBtn').onclick = () => { S.showChat = false; render(); };
+function esc(s) { return String(s).replace(/[&<>]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;'}[c])); }
+function addStep(st) {
+  const feed = $('feed'), li = document.createElement('li');
+  const k = st.kind, t = st.text || '';
+  if (k === 'says') li.innerHTML = `<div class="say">${esc(t)}</div>`;
+  else if (k === 'thinks') li.innerHTML = `<div class="think">${esc(t)}</div>`;
+  else if (k === 'runs' || k === 'writes') li.innerHTML = `<div class="code"><div class="h"><span style="color:#15803D">●</span> ${k === 'runs' ? 'Run robot code' : 'Write ' + esc(t.split('\n')[0])}</div><pre>${esc(k === 'runs' ? t : t.split('\n').slice(1).join('\n'))}</pre></div>`;
+  else if (k === 'output') { const last = feed.lastElementChild && feed.lastElementChild.querySelector('.code'); if (last) { const o = document.createElement('div'); o.className = 'o'; o.textContent = '⎿ ' + t.slice(0, 1500); last.appendChild(o); return; } li.innerHTML = `<div class="lite">${esc(t.slice(0, 400))}</div>`; }
+  else if (k === 'looks') li.innerHTML = `<div class="lite">Looks through the ${esc(t)}</div>`;
+  else li.innerHTML = `<div class="lite">${esc(k === 'reads' ? 'Reads ' + t : t)}</div>`;
+  const atBottom = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 60;
+  feed.appendChild(li); if (atBottom) feed.scrollTop = feed.scrollHeight;
+}
+async function pollTrace() {
+  const run = S.scene && S.scene.run;
+  if (!run || !run.started) return;
+  const key = run.started;
+  if (S.runKey !== key) { S.runKey = key; S.traceN = 0; $('feed').innerHTML = `<li class="you"><div class="small" style="text-align:right">Your task</div><div>${esc(run.task)}</div></li>`; }
+  const r = await api('/trace?since=' + S.traceN);
+  for (const st of r.steps) addStep(st);
+  S.traceN += r.steps.length;
+  const info = await api('/run');
+  if (info.cost_usd != null || info.tokens) $('chatCost').textContent = (info.cost_usd != null ? '$' + Number(info.cost_usd).toFixed(2) + ' · ' : '') + (info.tokens ? (info.tokens / 1000).toFixed(1) + 'k tokens' : '');
+  if (info.model_label) $('chatModel').textContent = info.model_label;
+}
+
+// ---------------------------------------------------------------- state
+function fmtClock(t) { const m = Math.floor(t / 60), s = t - m * 60; return String(m).padStart(2, '0') + ':' + s.toFixed(1).padStart(4, '0'); }
+function render() {
+  const sc = S.scene; if (!sc) return;
+  const run = sc.run || {}, active = !!run.active, playing = !sc.paused;
+  $('playBtn').classList.toggle('on', playing);
+  $('playLabel').textContent = playing ? 'Pause' : 'Play';
+  $('playIcon').innerHTML = playing ? '<rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/>' : '<path d="M3 1.5 L12.5 7 L3 12.5 Z"/>';
+  $('clock').textContent = fmtClock(sc.time);
+  $('rt').textContent = playing ? (sc.realtime_factor >= 0.97 ? 'real time' : (sc.realtime_factor * 100).toFixed(0) + '% of real time') : 'paused';
+  $('lockmsg').style.display = sc.locked ? '' : 'none'; $('lockmsg').textContent = active ? 'Scene locked while the AI runs' : 'Scene locked while playing · pause to edit';
+  $('right').classList.toggle('locked', !!sc.locked);
+  $('liveTag').style.display = playing ? '' : 'none';
+  $('hintTag').style.display = playing ? 'none' : '';
+  // robot card
+  const hasTask = $('task').value.trim().length > 0;
+  $('robotDot').style.background = active ? '#DC2626' : (hasTask ? '#16A34A' : '#9CA3AF');
+  $('robotStatus').textContent = active ? 'Working on its task' : (run.started ? 'Run ' + (run.status || 'finished') : (hasTask ? 'Task ready' : 'No task yet'));
+  $('robotBtn').setAttribute('aria-pressed', S.sel === 'robot');
+  const obj = sc.objects.find(o => o.uid === S.sel);
+  $('robotPanel').style.display = obj ? 'none' : 'flex';
+  $('objPanel').style.display = obj ? 'flex' : 'none';
+  if (obj) {
+    const it = S.cat.items.find(i => i.id === obj.item) || {};
+    $('objName').textContent = obj.label; $('objSize').textContent = it.size ? fmtSize(it.size) : '';
+    $('objMass').textContent = fmtMass(it.mass); $('objFric').textContent = it.friction != null ? it.friction : '';
+    $('objCol').textContent = it.collision || ''; $('delBtn').disabled = !obj.removable || sc.locked; $('rotBtn').disabled = sc.locked;
+    $('delBtn').textContent = obj.removable ? 'Remove' : 'Always here';
+  }
+  const showChat = active || (run.started && S.showChat !== false);
+  $('taskpane').style.display = showChat ? 'none' : 'flex';
+  $('chatpane').style.display = showChat ? 'flex' : 'none';
+  $('stopBtn').style.display = active ? '' : 'none';
+  $('newTaskBtn').style.display = active ? 'none' : '';
+  if (run.started) {
+    const left = Math.max(0, run.time_limit - run.elapsed);
+    $('runStatus').textContent = active ? `Working · ${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')} left` : ({finished: 'Finished', error: 'The AI stopped with an error', stopped: 'Stopped'}[run.status] || run.status);
+    const m = run.model || {}; $('chatLogo').src = m.provider === 'openai' ? '/static/openai.svg' : '/static/anthropic.svg';
+    if (!$('chatModel').dataset.set) $('chatModel').textContent = m.label || '';
+  }
+  $('startBtn').disabled = active;
+}
+async function refresh() {
+  S.scene = await api('/pg/scene');
+  if (S.sel !== 'robot' && !S.scene.objects.find(o => o.uid === S.sel)) S.sel = 'robot';
+  render();
+}
+async function loop() {
+  try { await refresh(); await pollTrace(); } catch (e) {}
+  setTimeout(loop, 500);
+}
+$('task').oninput = render;
+$('modeLibero').onclick = () => toast('LIBERO test mode is coming next');
+
+(async function init() {
+  S.cat = await api('/pg/catalog');
+  const items = S.cat.items;
+  for (const it of items) { it.collision = it.collision || ''; }
+  $('model').innerHTML = S.cat.models.map(m => `<option value="${m.id}">${m.label} · ${m.via}</option>`).join('');
+  $('limitTxt').textContent = Math.round(S.cat.time_limit / 60) + ' minutes';
+  renderTabs(); renderItems();
+  view.onload = () => $('loading').style.display = 'none';
+  view.src = '/pg/view.mjpg';
+  $('camOver').src = '/stream/overhead.mjpg?fps=4';
+  $('camWrist').src = '/stream/wrist.mjpg?fps=4';
+  setTimeout(() => $('loading').style.display = 'none', 8000);
+  loop();
+})();
+</script>
+</body>
+</html>

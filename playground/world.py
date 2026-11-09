@@ -63,13 +63,13 @@ def _world_xml() -> str:
   {defaults}
   <visual>
     <global offwidth="1920" offheight="1200" azimuth="150" elevation="-25"/>
-    <headlight ambient="0.35 0.35 0.35" diffuse="0.35 0.35 0.35" specular="0.05 0.05 0.05"/>
+    <headlight ambient="0.5 0.5 0.5" diffuse="0.3 0.3 0.3" specular="0.05 0.05 0.05"/>
     <quality shadowsize="4096"/>
     <map znear="0.01" zfar="50"/>
   </visual>
   <asset>
     <texture name="grid" type="2d" builtin="checker" mark="edge" rgb1="0.975 0.975 0.965"
-             rgb2="0.975 0.975 0.965" markrgb="0.80 0.83 0.87" width="48" height="48"/>
+             rgb2="0.975 0.975 0.965" markrgb="0.80 0.83 0.87" width="100" height="100"/>
     <texture name="sky" type="skybox" builtin="gradient" rgb1="0.99 0.99 0.985" rgb2="0.93 0.94 0.95"
              width="256" height="1536"/>
     <material name="grid" texture="grid" texrepeat="10 10" texuniform="true" reflectance="0"/>
@@ -77,7 +77,7 @@ def _world_xml() -> str:
   <worldbody>
     <light pos="0.5 -1.0 4" dir="-0.1 0.25 -1" diffuse="0.5 0.5 0.5" specular="0.1 0.1 0.1" castshadow="true"/>
     <light pos="-2 2 3" dir="0.5 -0.5 -1" diffuse="0.2 0.2 0.2" castshadow="false"/>
-    <geom name="floor" type="plane" size="4 4 0.1" material="grid" class="bench"/>
+    <geom name="floor" type="plane" size="10 10 0.1" material="grid" class="bench"/>
   </worldbody>
 </mujoco>
 """

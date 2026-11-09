@@ -65,5 +65,6 @@ def available() -> list[dict]:
         if f.exists():
             m = json.loads(f.read_text())
             out.append({"id": i, "tab": tab, "label": label, "fixed": fixed, "size": m["size"],
-                        "mass": m["mass"], "thumb": f"/pg/thumb/{i}.png"})
+                        "mass": m["mass"], "friction": m.get("friction"),
+                        "collision": m.get("collision", ""), "thumb": f"/pg/thumb/{i}.png"})
     return out

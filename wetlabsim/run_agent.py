@@ -88,7 +88,7 @@ DOCS_LEVELS = ("standard", "assisted")
 
 
 def prepare_workspace(workspace: pathlib.Path, client: pathlib.Path, robot: str, docs: str,
-                      task: str, info: dict) -> str:
+                      task: str, info: dict, site_file: pathlib.Path | None = None) -> str:
     """Put what the agent gets for this documentation level into its workspace and client
     folder. Returns the note added to the task prompt.
 
@@ -109,6 +109,8 @@ def prepare_workspace(workspace: pathlib.Path, client: pathlib.Path, robot: str,
         fetch()
         for f in ("AGENTS.md", "CLAUDE.md", "COMMANDS.md", "SITE.md"):
             shutil.copy(AGENT_DIR / "franka" / f, workspace / f)
+        if site_file:   # another installation of the same robot (e.g. the playground's table)
+            shutil.copy(site_file, workspace / "SITE.md")
         (workspace / "GOAL.md").write_text(task + "\n")
         (workspace / "cameras.json").write_text(json.dumps(info["camera_calibration"], indent=1))
         sheets = workspace / "datasheets"
@@ -213,6 +215,7 @@ def main(argv=None):
     ap.add_argument("--time-limit", type=float, default=900, help="seconds before the agent is stopped")
     ap.add_argument("--url", default=os.environ.get("WETLAB_ROBOT_URL", "http://127.0.0.1:8765"))
     ap.add_argument("--runs", default="runs")
+    ap.add_argument("--site-file", help="a site sheet to give the agent instead of the bench's SITE.md")
     ap.add_argument("--docs", choices=DOCS_LEVELS, default="standard",
                     help="what the agent is given: Franka's documents and a command reference "
                          "(standard), or our manual with tips and helpers (assisted)")
@@ -237,7 +240,8 @@ def main(argv=None):
     robot = info.get("robot_id", "ur5e")
     workspace = pathlib.Path(tempfile.mkdtemp(prefix=f"wetlab-{run_id}-"))
     client = pathlib.Path(tempfile.mkdtemp(prefix=f"wetlab-{run_id}-client-"))
-    note = prepare_workspace(workspace, client, robot, args.docs, task, info)
+    note = prepare_workspace(workspace, client, robot, args.docs, task, info,
+                             pathlib.Path(args.site_file) if args.site_file else None)
 
     _eval_call(args.url, token, "/eval/reset", {"run_dir": str(run_dir), "task": args.task_id})
     gt0 = _eval_call(args.url, token, "/eval/ground_truth")

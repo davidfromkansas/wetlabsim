@@ -33,7 +33,7 @@ class PlaygroundSim(Sim):
         cam = mujoco.MjvCamera()
         cam.type = mujoco.mjtCamera.mjCAMERA_FREE
         cam.lookat[:] = [0.0, 0.0, 0.85]
-        cam.distance, cam.azimuth, cam.elevation = 3.3, 145.0, -28.0
+        cam.distance, cam.azimuth, cam.elevation = 2.8, 145.0, -28.0
         self.view = cam
         self.overlay: list[dict] = []           # ghost and highlight shapes for the main view
         self.selected: str | None = None        # uid of the selected object, or "robot"
@@ -286,7 +286,7 @@ class PlaygroundSim(Sim):
                 with self.lock:
                     c = self.d.xpos[self.m.body(f"obj_{uid}").id]
                 hit = np.array([c[0], c[1], hit[2]])
-        if abs(hit[0]) > 3.8 or abs(hit[1]) > 3.8:
+        if abs(hit[0]) > 9.5 or abs(hit[1]) > 9.5:
             return {"valid": False, "reason": "off the floor"}
         out = self.support(item, float(hit[0]), float(hit[1]), yaw, exclude_uid=exclude_uid)
         self.set_ghost(item, out, yaw)
