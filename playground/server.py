@@ -261,71 +261,247 @@ td{{padding:9px 12px;border-bottom:1px solid #EEF0F3;vertical-align:top}}td.n,th
 <tbody>{body}</tbody></table></div></main></body></html>"""
 
 
+# ------------------------------------------------------------------ sessions
+# A session is one lab of its own: its own world (PlaygroundSim), stations, runs and chat. One
+# server keeps several. Each belongs to the browser that made it (a random id the page keeps in
+# localStorage, sent as X-Browser-Id; no sign-in): anyone can watch a session, only its owner
+# can change it. On the public site a visitor's sessions all live in their own lab.
+MAX_SESSIONS = 12           # worlds this server keeps at once (each is a full simulator)
+SID_RE = re.compile(r"^[A-Za-z0-9_-]{4,40}$")
+
+
+class Session:
+    def __init__(self, sid: str, name: str, owner: str, sim: PlaygroundSim, base_url: str, runs: pathlib.Path):
+        self.id, self.name, self.owner = sid, name, owner
+        self.created = self.used = time.time()
+        self.sim = sim
+        self.base_url, self.runs = base_url, runs
+        self.runner = Runner(f"{base_url}/s/{sid}", runs)      # LIBERO, Wet Lab: the scene's one robot
+        self.board = self.runner.board
+        self.runners: dict[str, Runner] = {}                     # free play: one per station
+        self.bench = Bench(sim, self.runner, self, runs / "libero_results.jsonl")
+        self.wetbench = WL.WetBench(sim, self.runner, self, runs / "wetlab_results.jsonl")
+
+    def station_runner(self, uid: str) -> Runner:
+        r = self.runners.get(uid)
+        st = self.sim.station(uid)
+        docs = "standard" if st is None or st.robot == "franka" else "assisted"
+        if r is None or r.docs != docs and not r.active():
+            r = self.runners[uid] = Runner(f"{self.base_url}/s/{self.id}/st/{uid}", self.runs, docs)
+        return r
+
+    def active(self) -> bool:
+        return (self.runner.active() or self.bench.active() or self.wetbench.active()
+                or any(r.active() for r in self.runners.values())
+                or any(q["session"] == self.id for q in QUEUE))
+
+    def status(self) -> str:
+        """working (an AI is running), finished (a run has ended) or empty (nothing run yet)."""
+        if self.active():
+            return "working"
+        if self.runner.info or any(r.info for r in self.runners.values()):
+            return "finished"
+        return "empty"
+
+    def summary(self) -> dict:
+        n = len(self.sim.stations) if self.sim.scene_mode == "free" else 1
+        task = next((r.info.get("task", "") for r in self.runners.values() if r.active()), "") or \
+            (self.runner.info.get("task", "") if self.runner.active() else "")
+        return {"id": self.id, "name": self.name, "stations": n, "used": self.used, "created": self.created,
+                "status": self.status(), "mode": self.sim.scene_mode, "task": task[:200]}
+
+    def layout(self) -> dict:
+        """The lab as built (stations and objects where they are now), for "Copy to my sessions"."""
+        s = self.sim
+        with s.lock:
+            if s.scene_mode == "free":
+                s._sync_placed()
+            return {"name": self.name,
+                    "stations": [{"uid": st.uid, "robot": st.robot, "pos": list(st.pos), "yaw": st.yaw, "name": st.name}
+                                 for st in s.stations],
+                    "objects": [{"uid": o.uid, "item": o.item, "pos": list(o.pos), "yaw": o.yaw,
+                                 "quat": list(o.quat) if o.quat is not None else None} for o in s.placed]}
+
+    def stop(self):
+        with QUEUE_LOCK:
+            QUEUE[:] = [q for q in QUEUE if q["session"] != self.id]
+        self.bench.stop()
+        self.wetbench.stop()
+        self.runner.stop()
+        for r in self.runners.values():
+            r.stop()
+
+
+SESSIONS: dict[str, Session] = {}
+SESSIONS_LOCK = threading.Lock()
+
+
+def _world_from_layout(layout: dict | None):
+    """Stations and objects from a layout (checked: known robots and objects only)."""
+    from wetlabsim import scene as WS
+    from . import world as W
+    if not layout:
+        return [], []
+    stations, placed = [], []
+    for st in (layout.get("stations") or [])[:12]:
+        if st.get("robot") not in WS.ROBOTS or not re.match(r"^st\d{1,3}$", str(st.get("uid", ""))):
+            continue
+        if any(x.uid == st["uid"] for x in stations):
+            continue
+        stations.append(W.Station(st["uid"], st["robot"], (float(st["pos"][0]), float(st["pos"][1])),
+                                  float(st.get("yaw", 0.0)), str(st.get("name") or "")[:40]))
+    known = {i["id"] for i in catalog.available()}
+    for o in (layout.get("objects") or [])[:200]:
+        if o.get("item") not in known or not re.match(r"^[\w.-]{1,80}$", str(o.get("uid", ""))):
+            continue
+        q = o.get("quat")
+        placed.append(W.Placed(o["uid"], o["item"], tuple(float(v) for v in o["pos"][:3]), float(o.get("yaw", 0.0)),
+                               tuple(float(v) for v in q[:4]) if q else None))
+    return stations, placed
+
+
+def new_session(owner: str, name: str | None = None, layout: dict | None = None, default: bool = False) -> Session:
+    """A new session for this browser: blank (no stations), the starter lab (default: one Franka),
+    or a copy of a layout. Named "Untitled lab", "Untitled lab 2", ... unless named."""
+    with SESSIONS_LOCK:
+        if len(SESSIONS) >= MAX_SESSIONS:
+            raise RobotError(f"this server holds {MAX_SESSIONS} sessions at most; none can be added now")
+        mine = {x.name for x in SESSIONS.values() if x.owner == owner}
+        if not name:
+            name, n = "Untitled lab", 1
+            while name in mine:
+                n += 1
+                name = f"Untitled lab {n}"
+        sid = secrets.token_urlsafe(6).replace("_", "x").replace("-", "y")
+        SESSIONS[sid] = None      # reserved while its world loads
+    try:
+        if default:
+            sim = PlaygroundSim()
+        else:
+            stations, placed = _world_from_layout(layout)
+            sim = PlaygroundSim(placed=placed, stations=stations)
+            nums = [int(m.group(1)) for o in placed for m in [re.search(r"_(\d+)$", o.uid)] if m]
+            sim._uid = max(nums, default=0)
+        log_root = pathlib.Path(os.environ.get("WETLAB_SESSION_DIR") or PGHandler.runs_dir)
+        sim.open_log(log_root / time.strftime(f"session-%Y%m%d-%H%M%S-{sid}"))
+        sim.start()
+        sim.frame_lab(glide=False)
+    except Exception:
+        with SESSIONS_LOCK:
+            SESSIONS.pop(sid, None)
+        raise
+    sess = Session(sid, name[:60], owner, sim, PGHandler.base_url, PGHandler.runs_dir)
+    with SESSIONS_LOCK:
+        SESSIONS[sid] = sess
+    return sess
+
+
+def get_session(sid: str | None) -> Session | None:
+    return SESSIONS.get(sid) if sid else None
+
+
+def first_session() -> Session | None:
+    """The oldest session: what a request that names none (an old link, a tool) talks to."""
+    live = [x for x in SESSIONS.values() if x is not None]
+    return min(live, key=lambda x: x.created) if live else None
+
+
 QUEUE: list[dict] = []          # free-play runs waiting for a free slot, oldest first
 QUEUE_LOCK = threading.Lock()
 
 
-def _queue_position(uid):
+def _queue_position(sid, uid):
     for i, q in enumerate(QUEUE):
-        if q["station"] == uid:
+        if q["session"] == sid and q["station"] == uid:
             return i + 1
     return None
 
 
-def _start_queued(cls):
+def _all_runners():
+    return [r for x in list(SESSIONS.values()) if x is not None for r in list(x.runners.values())]
+
+
+def _start_queued():
     """Start waiting runs while there is room (MAX_ACTIVE on the public site; no limit locally)."""
     with QUEUE_LOCK:
         while QUEUE:
             # Runs at once: across every lab on the shared site, else on this server.
-            active = LABS.slots_in_use() if LABS.shared() else sum(1 for r in cls.runners.values() if r.active())
+            active = LABS.slots_in_use() if LABS.shared() else sum(1 for r in _all_runners() if r.active())
             if PUBLIC and active >= MAX_ACTIVE:
                 return
             job = QUEUE.pop(0)
-            st = cls.sim.station(job["station"])
+            sess = get_session(job["session"])
+            st = sess.sim.station(job["station"]) if sess else None
             if st is None:
                 continue
             slot = LABS.take_slot() if LABS.shared() else None
             try:
-                r = cls.station_runner(job["station"])
+                r = sess.station_runner(job["station"])
                 r.slot = slot
-                r.start(job["task"], job["model"], site.site_sheet(cls.sim.placed, st, cls.sim.stations), job["limit"])
+                r.start(job["task"], job["model"], site.site_sheet(sess.sim.placed, st, sess.sim.stations), job["limit"])
             except Exception as e:  # noqa: BLE001
                 LABS.free_slot(slot)
                 print("could not start a queued run:", e)
 
 
 class PGHandler(Handler):
+    # Set for each request from its session (_bind_session): that session's world, runs and chat.
+    sess: Session
     sim: PlaygroundSim
     runner: Runner              # the scene's one robot (LIBERO, Wet Lab, and the robot cell's own URLs)
-    runners: dict = {}          # free play: one per station, by station id
+    runners: dict               # free play: one per station, by station id
     bench: Bench
     wetbench: WL.WetBench
     base_url = ""
+
+    def _bind_session(self) -> bool:
+        """Which session this request is for: /s/<id>/... (the robot API and the page's links),
+        else ?s=<id> or X-Session, else the oldest one. False (and an error sent) if it names
+        one that doesn't exist."""
+        sid = None
+        if self.path.startswith("/s/"):
+            _, _, sid, rest = (self.path.split("/", 3) + [""])[:4]
+            self.path = "/" + rest
+        else:
+            q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            sid = (q.get("s") or [None])[0] or self.headers.get("X-Session") or None
+        sess = get_session(sid) if sid else first_session()
+        if sess is None:
+            if sid:
+                self._err("no such session (it may have closed)", 404)
+            else:
+                self._err("no session yet", 503)
+            return False
+        self.sess = sess
+        self.sim, self.runner, self.runners = sess.sim, sess.runner, sess.runners
+        self.bench, self.wetbench, self.board = sess.bench, sess.wetbench, sess.board
+        return True
+
+    def _browser(self) -> str:
+        b = self.headers.get("X-Browser-Id", "")
+        return b if re.match(r"^[A-Za-z0-9_-]{8,64}$", b) else ""
+
+    def _owns(self) -> bool:
+        """Whether this request may change its session: the lab's owner key (public site), and
+        the session's own browser."""
+        if not LABS.owner_ok(self.headers):
+            return False
+        return bool(self.sess.owner) and secrets.compare_digest(self._browser(), self.sess.owner)
 
     def _busy(self) -> bool:
         return (self.runner.active() or self.bench.active() or self.wetbench.active()
                 or any(r.active() for r in self.runners.values()))
 
-    @classmethod
-    def station_runner(cls, uid: str) -> Runner:
-        r = cls.runners.get(uid)
-        st = cls.sim.station(uid)
-        docs = "standard" if st is None or st.robot == "franka" else "assisted"
-        if r is None or r.docs != docs and not r.active():
-            r = cls.runners[uid] = Runner(f"{cls.base_url}/st/{uid}", cls.runner.runs, docs)
-        return r
+    def station_runner(self, uid: str) -> Runner:
+        return self.sess.station_runner(uid)
 
     def _station_request(self) -> bool:
         """Requests to /st/<station>/...: that station's robot API (and its run), as if it were
         a robot cell of its own."""
-        # A kept-alive connection reuses this handler for its next request: drop the last
-        # station request's robot so a /pg/ request sees the whole lab again.
-        self.__dict__.pop("sim", None)
-        self.__dict__.pop("board", None)
         if not self.path.startswith("/st/"):
             return False
         _, _, uid, rest = (self.path.split("/", 3) + [""])[:4]
-        sim = PGHandler.sim
+        sim = self.sess.sim
         if sim.scene_mode != "free" or uid not in sim.arms:
             self._err("no such station", 404)
             return True
@@ -355,8 +531,43 @@ class PGHandler(Handler):
     def _runs_status(self) -> dict:
         out = {uid: self.runners[uid].status() for uid in list(self.runners)}
         for i, q in enumerate(list(QUEUE)):
-            out[q["station"]] = {"active": False, "queued": i + 1, "task": q["task"], "model": q["model"]}
+            if q["session"] == self.sess.id:
+                out[q["station"]] = {"active": False, "queued": i + 1, "task": q["task"], "model": q["model"]}
         return out
+
+    def _sessions(self, starter: bool = False) -> dict:
+        """This browser's sessions (asked with starter, a browser with none gets the starter
+        lab) and the others that are running now: here, and on the public site in other
+        visitors' labs."""
+        me = self._browser()
+        owner = LABS.owner_ok(self.headers)
+        if starter and me and owner and not any(x and x.owner == me for x in SESSIONS.values()):
+            free = next((x for x in SESSIONS.values() if x and not x.owner), None)
+            if free is not None:
+                free.owner = me           # the lab's starter session, not yet anyone's
+            elif len(SESSIONS) < MAX_SESSIONS:
+                new_session(me, default=True)
+        live = [x for x in SESSIONS.values() if x is not None]
+        mine = sorted((x.summary() for x in live if me and x.owner == me), key=lambda d: -d["used"])
+        others = [{**x.summary(), "url": ""} for x in live if x.owner != me and x.status() == "working"]
+        if LABS.shared():
+            try:
+                for lab, info in LABS.live_labs().items():
+                    if lab == LABS.LAB_ID or not info.get("url"):
+                        continue
+                    for r in info.get("runs", []):
+                        if r.get("session"):
+                            others.append({"id": r["session"], "name": r.get("session_name") or "A lab",
+                                           "stations": r.get("stations") or 1, "used": r.get("started") or 0,
+                                           "status": "working", "task": r.get("task", ""), "url": info["url"]})
+            except Exception as e:  # noqa: BLE001
+                print("could not list other labs:", e)
+        seen, uniq = set(), []
+        for o in others:
+            if (o["url"], o["id"]) not in seen:
+                seen.add((o["url"], o["id"]))
+                uniq.append(o)
+        return {"mine": mine, "live": uniq, "max": MAX_SESSIONS, "owner": owner}
 
     def _locked(self) -> str:
         if self.sim.scene_mode == "libero":
@@ -381,6 +592,16 @@ class PGHandler(Handler):
                 return self._send(200, (HERE / "static" / "front.html").read_bytes(), "text/html; charset=utf-8", hdr)
             if path == "/api/live":
                 return self._json(LABS.live_list())
+        p0 = urllib.parse.urlparse(self.path).path.rstrip("/") or "/"
+        if p0 in ("/", "/playground") or p0.startswith("/pg/static/"):
+            pass                          # the page itself needs no session
+        elif p0 == "/pg/sessions":
+            try:
+                return self._json(self._sessions("starter=1" in self.path))
+            except RobotError as e:
+                return self._err(str(e), 503)
+        elif not self._bind_session():
+            return None
         if self._station_request():
             if self.path.startswith("/pg/"):
                 return self._err("not found", 404)
@@ -391,6 +612,10 @@ class PGHandler(Handler):
         try:
             if p in ("/", "/playground"):
                 return self._send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
+            if p == "/pg/layout":
+                # Public (anyone may copy a lab they can watch), readable from another lab's page.
+                return self._send(200, json.dumps(self.sess.layout()).encode(), "application/json",
+                                  {"Access-Control-Allow-Origin": "*"})
             if p == "/pg/runs":
                 return self._send(200, _runs_page(self._list_runs(), self.runs_dir).encode(), "text/html; charset=utf-8")
             if p == "/viewer":
@@ -409,7 +634,8 @@ class PGHandler(Handler):
                                               for m in MODELS if not PUBLIC or m["agent"] == "claude"],
                                    "time_limit": TIME_LIMIT, "public": PUBLIC,
                                    "free_time_limit": FREE_TIME_LIMIT, "max_active": MAX_ACTIVE if PUBLIC else 0,
-                                   "owner": LABS.owner_ok(self.headers), "front": LABS.FRONT_URL})
+                                   "owner": LABS.owner_ok(self.headers), "front": LABS.FRONT_URL,
+                                   "lab_url": LABS.LAB_URL})
             if p.startswith("/pg/thumb/"):
                 f = catalog.ASSETS / pathlib.Path(p).stem / "thumb.png"
                 if f.is_file():
@@ -420,7 +646,9 @@ class PGHandler(Handler):
                 runs = self._runs_status() if info["mode"] == "free" else {}
                 run = runs.get(info["active"], {"active": False}) if info["mode"] == "free" else self.runner.status()
                 return self._json({**info, "run": run, "runs": runs, "locked": self._locked(),
-                                   "bench": self.bench.status(), "wetbench": self.wetbench.status()})
+                                   "bench": self.bench.status(), "wetbench": self.wetbench.status(),
+                                   "session": {"id": self.sess.id, "name": self.sess.name,
+                                               "mine": self._owns()}})
             if p == "/pg/wetlab":
                 return self._json({"tasks": [{"id": t.id, "title": t.title, "prompt": t.prompt,
                                               "needs_answer": t.needs_answer} for t in WT.TASKS.values()],
@@ -523,8 +751,19 @@ class PGHandler(Handler):
         if (urllib.parse.urlparse(self.path).path.startswith("/pg/") and not getattr(self, "robot_api", False)
                 and not LABS.owner_ok(self.headers)):
             return self._err("this lab is someone else's: you can watch it, not change it", 403)
+        if urllib.parse.urlparse(self.path).path.rstrip("/") == "/pg/sessions/new":
+            return self._new_session()
+        if not self._bind_session():
+            return None
+        # Someone else's session: watch only.
+        if (urllib.parse.urlparse(self.path).path.startswith("/pg/") and not getattr(self, "robot_api", False)
+                and not self._owns()):
+            self._body()
+            return self._err("this session is someone else's: you can watch it, not change it", 403)
+        if not getattr(self, "robot_api", False):
+            self.sess.used = time.time()
         # With a robot API running, robot commands are only taken there, with a run token.
-        tail = re.sub(r"^/st/[^/]+", "", urllib.parse.urlparse(self.path).path).rstrip("/")
+        tail = re.sub(r"^(/s/[^/]+)?(/st/[^/]+)?", "", urllib.parse.urlparse(self.path).path).rstrip("/")
         if ROBOT_API_URL and not getattr(self, "robot_api", False) and tail in RA.ROBOT_COMMANDS:
             return self._err("robot commands go through the robot API, with a run token", 403)
         if urllib.parse.urlparse(self.path).path.endswith("/eval/robot_token/revoke"):
@@ -636,6 +875,11 @@ class PGHandler(Handler):
                 s.remove_station(b["uid"])
                 self.runners.pop(b["uid"], None)
                 return self._json({"ok": True})
+            if p == "/pg/session/rename":
+                name = str(b.get("name", "")).strip()[:60]
+                if name:
+                    self.sess.name = name
+                return self._json({"ok": True, "name": self.sess.name})
             if p == "/pg/station/rename":
                 s.rename_station(b["uid"], b.get("name", ""))
                 return self._json({"ok": True})
@@ -735,7 +979,7 @@ class PGHandler(Handler):
                     if station is None:
                         return self._json({"ok": False, "error": "no such station"})
                     runner = self.station_runner(uid)
-                    if runner.active() or any(q["station"] == uid for q in QUEUE):
+                    if runner.active() or _queue_position(self.sess.id, uid):
                         return self._json({"ok": False, "error": f"{station.name} is already running a task"})
                     model = b.get("model", "claude")
                     if PUBLIC:
@@ -746,11 +990,12 @@ class PGHandler(Handler):
                         limit = float(b.get("time_limit", FREE_TIME_LIMIT))
                     s.selected = None
                     s.play()
-                    job = {"station": uid, "task": task[:4000], "model": model, "limit": limit, "queued": time.time()}
+                    job = {"session": self.sess.id, "station": uid, "task": task[:4000], "model": model,
+                           "limit": limit, "queued": time.time()}
                     with QUEUE_LOCK:
                         QUEUE.append(job)
-                    _start_queued(PGHandler)
-                    pos = _queue_position(uid)
+                    _start_queued()
+                    pos = _queue_position(self.sess.id, uid)
                     return self._json({"ok": True, "run": self.station_runner(uid).status() if pos is None
                                        else {"active": False, "queued": pos}})
                 s.play()
@@ -761,16 +1006,12 @@ class PGHandler(Handler):
             if p == "/pg/stop":
                 if b.get("station"):          # one station's run
                     with QUEUE_LOCK:
-                        QUEUE[:] = [q for q in QUEUE if q["station"] != b["station"]]
+                        QUEUE[:] = [q for q in QUEUE if not (q["session"] == self.sess.id and q["station"] == b["station"])]
                     r = self.runners.get(b["station"])
                     if r:
                         r.stop()
                     return self._json({"ok": True})
-                self.bench.stop()
-                self.wetbench.stop()
-                self.runner.stop()
-                for r in self.runners.values():
-                    r.stop()
+                self.sess.stop()
                 return self._json({"ok": True})
             if p == "/pg/reset":
                 if self._busy():
@@ -783,6 +1024,32 @@ class PGHandler(Handler):
             return self._json({"ok": False, "error": str(e)})
         except (KeyError, ValueError, TypeError) as e:
             return self._err(f"bad request: {e}")
+
+    def _new_session(self):
+        """A new session for this browser: blank, or a copy of another session's lab (its
+        stations and objects; never its tasks or runs)."""
+        b = self._body()
+        me = self._browser()
+        if not me:
+            return self._err("no browser id", 400)
+        layout = None
+        if b.get("from"):
+            src = get_session(b["from"])
+            if src is None:
+                return self._json({"ok": False, "error": "that session has closed"})
+            layout = src.layout()
+        elif isinstance(b.get("layout"), dict):
+            layout = b["layout"]      # copied from a lab elsewhere (its page fetched /pg/layout)
+        name = None
+        if layout and layout.get("name"):
+            name = f"{str(layout['name'])[:48]} (copy)"
+        try:
+            sess = new_session(me, name, layout)
+        except RobotError as e:
+            return self._json({"ok": False, "error": str(e)})
+        except (KeyError, ValueError, TypeError, IndexError) as e:
+            return self._json({"ok": False, "error": f"couldn't copy that lab: {e}"})
+        return self._json({"ok": True, "session": sess.summary()})
 
     def _camera_preset(self, name):
         s = self.sim
@@ -854,18 +1121,13 @@ def main(argv=None):
         print("Downloading LIBERO's objects in the background (one time, about 200 MB)...")
         threading.Thread(target=lambda: fetch_assets.ensure(), daemon=True).start()
     print("Loading the scene...")
-    sim = PlaygroundSim()
-    # The idle robot log stays off a shared volume (an open file there blocks saving the run
-    # records); WETLAB_SESSION_DIR points it elsewhere when hosted.
-    sim.open_log(pathlib.Path(os.environ.get("WETLAB_SESSION_DIR") or runs) / time.strftime("session-%Y%m%d-%H%M%S"))
-    sim.start()
     url = f"http://{args.host}:{args.port}"
-    PGHandler.sim, PGHandler.token, PGHandler.runs_dir = sim, token, runs
-    PGHandler.runner = Runner(url, runs)
+    PGHandler.token, PGHandler.runs_dir = token, runs
     PGHandler.base_url = url
-    PGHandler.board = PGHandler.runner.board
-    PGHandler.bench = Bench(sim, PGHandler.runner, PGHandler, runs / "libero_results.jsonl")
-    PGHandler.wetbench = WL.WetBench(sim, PGHandler.runner, PGHandler, runs / "wetlab_results.jsonl")
+    # The starter session: the first browser to open the page takes it. (The front keeps one
+    # too: the replay viewer draws past runs with its renderer. The idle robot log stays off a
+    # shared volume; WETLAB_SESSION_DIR points it elsewhere when hosted.)
+    new_session("", "Untitled lab", default=True)
     srv = ThreadingHTTPServer((args.host, args.port), PGHandler)
     srv.daemon_threads = True
 
@@ -873,19 +1135,22 @@ def main(argv=None):
         while True:
             time.sleep(2)
             if QUEUE:
-                _start_queued(PGHandler)
+                _start_queued()
     threading.Thread(target=_queue_loop, daemon=True, name="run-queue").start()
     if LABS.shared():
         def live_runs():
             out = []
-            for uid, r in list(PGHandler.runners.items()):
-                st = r.status()
-                if st.get("active"):
-                    out.append({"station": uid, "task": st.get("task", "")[:200],
-                                "model": (st.get("model") or {}).get("label", ""), "started": st.get("started")})
+            for sess in [x for x in list(SESSIONS.values()) if x is not None]:
+                for uid, r in list(sess.runners.items()):
+                    st = r.status()
+                    if st.get("active"):
+                        out.append({"station": uid, "task": st.get("task", "")[:200],
+                                    "model": (st.get("model") or {}).get("label", ""), "started": st.get("started"),
+                                    "session": sess.id, "session_name": sess.name,
+                                    "stations": len(sess.sim.stations)})
             return out
         LABS.start_reporting(live_runs, args.idle_minutes,
-                             lambda: bool(QUEUE) or any(r.active() for r in PGHandler.runners.values()))
+                             lambda: bool(QUEUE) or any(r.active() for r in _all_runners()))
     if args.robot_port:
         global ROBOT_API_URL
         rsrv = ThreadingHTTPServer((args.host, args.robot_port), RobotAPIHandler)
@@ -906,10 +1171,9 @@ def main(argv=None):
     except KeyboardInterrupt:
         pass
     finally:
-        PGHandler.runner.stop()
-        for r in PGHandler.runners.values():
-            r.stop()
-        sim.stop_threads()
+        for sess in [x for x in list(SESSIONS.values()) if x is not None]:
+            sess.stop()
+            sess.sim.stop_threads()
 
 
 if __name__ == "__main__":

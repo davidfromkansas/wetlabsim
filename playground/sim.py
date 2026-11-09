@@ -33,14 +33,14 @@ class PlaygroundSim(Sim):
     def __init__(self, placed: list[W.Placed] | None = None, robot: str = "franka",
                  stations: list[W.Station] | None = None, **kw):
         self.placed = placed if placed is not None else W.default_scene()
-        self.stations = stations or W.default_stations()
+        self.stations = stations if stations is not None else W.default_stations()
         self._uid = 0
         self.scene_mode = "free"                      # or "libero" or "wetlab"
         self.wetlab_task: str | None = None     # Wet Lab: the bench task (wetlabsim.tasks) laid out
         self.libero_task: LB.Task | None = None
         self.setup = 0                          # which of the task's 50 starting setups
         self.checker: LB.Checker | None = None
-        self.active_station = self.stations[0].uid   # the station the page is looking at
+        self.active_station = self.stations[0].uid if self.stations else None   # the station the page is looking at
         super().__init__(robot=robot, **kw)
         self.paused = True                      # start in build mode
         cam = mujoco.MjvCamera()
@@ -306,8 +306,6 @@ class PlaygroundSim(Sim):
         with self.lock:
             if self.station(uid) is None:
                 raise RobotError("no such station")
-            if len(self.stations) == 1:
-                raise RobotError("a lab needs at least one station")
             self._sync_placed()
             st = self.station(uid)
             riders = {p.uid for p in self._on_table(st)}
@@ -315,7 +313,7 @@ class PlaygroundSim(Sim):
             self.stations = [s for s in self.stations if s.uid != uid]
             self.arms.pop(uid, None)
             if self.active_station == uid:
-                self.active_station = self.stations[0].uid
+                self.active_station = self.stations[0].uid if self.stations else None
             self.rebuild()
 
     def rename_station(self, uid: str, name: str):
@@ -382,8 +380,8 @@ class PlaygroundSim(Sim):
 
     def frame_lab(self, glide: bool = True):
         """Pull back to show every station."""
-        xs = [p for st in self.stations for p in (st.pos[0],)]
-        ys = [st.pos[1] for st in self.stations]
+        xs = [st.pos[0] for st in self.stations] or [0.0]
+        ys = [st.pos[1] for st in self.stations] or [0.0]
         cx, cy = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
         span = max(max(xs) - min(xs), max(ys) - min(ys), 2.0)
         target = {"lookat": [cx, cy, 0.5], "distance": 2.2 + 1.3 * span, "azimuth": 145.0, "elevation": -35.0}

@@ -97,6 +97,8 @@ body.chatting #right .freeonly{display:none!important}
 .sidetabs .live{width:7px;height:7px;border-radius:50%;background:var(--red);padding:0;display:none}
 body.running .sidetabs .live{display:inline-block}
 body.fixed #tabObjects{display:none}
+body:not(.fixed) .fixedonly{display:none}
+body.watch header .seg{opacity:.6;pointer-events:none}
 /* watching someone else's hosted lab: nothing to edit or start */
 .watchtag{display:none;font-size:12px;font-weight:600;color:var(--amber);background:var(--amberBg);padding:4px 10px;border-radius:6px}
 body.watch .watchtag{display:inline}
@@ -109,7 +111,7 @@ body.filing #chatpane,body.filing #right .freeonly{display:none!important}
 #filespane h3{margin:0;font-size:14px;color:var(--ink)}
 #files{font-size:13px;overflow:auto;flex:1;min-height:0}
 #files .frow{display:grid;grid-template-columns:minmax(0,1fr) 70px;gap:8px;align-items:center;min-height:26px;padding:0 6px;border-radius:6px;color:var(--ink2);text-decoration:none}
-#files .frow:nth-child(even){background:#F7F8FA}#files .frow:hover{background:var(--blueBg)}
+#files .frow:nth-child(even){background:#F7F8FA}
 #files .frow .nm{display:flex;align-items:center;gap:6px;min-width:0}#files .frow .nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #files .frow .sz{text-align:right;color:var(--muted);font-size:12px}
 #files button.frow{width:100%;border:0;background:none;text-align:left;cursor:pointer;font:inherit}
@@ -153,15 +155,15 @@ body.filing #chatpane,body.filing #right .freeonly{display:none!important}
 .view3d{position:absolute;inset:0;display:block}
 body.v3 #view{position:relative;opacity:0}
 #view.dragging{cursor:grabbing}
-.tl{position:absolute;left:14px;top:12px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}
-.hint{font-size:12px;color:#374151;background:rgba(255,255,255,.9);border:1px solid var(--line);padding:4px 10px;border-radius:6px}
+.tl{position:absolute;left:14px;top:84px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}
+.hint{max-width:min(290px,28vw);font-size:12px;color:#374151;background:rgba(255,255,255,.9);border:1px solid var(--line);padding:4px 10px;border-radius:6px}
 .live{font-size:12px;font-weight:600;color:var(--red);background:#FEE2E2;padding:4px 10px;border-radius:6px}
-.bl{position:absolute;left:14px;bottom:12px;display:flex;gap:6px}
+.bl{position:absolute;right:14px;bottom:14px;display:flex;gap:6px;align-items:center;z-index:2}
 .bl button{height:32px;padding:0 10px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;font-weight:500;font-size:12px;color:var(--ink);cursor:pointer}
-.br{position:absolute;right:214px;bottom:16px}
-.camreset{position:absolute;right:14px;top:12px;width:38px;height:38px;border-radius:50%;border:0;background:#2B3140;box-shadow:0 3px 6px rgba(17,24,39,.25);cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
-.camreset:hover{filter:brightness(1.2)}.camreset:active{transform:translateY(1px)}
-.campad{position:absolute;right:18px;bottom:18px;display:flex;gap:14px;align-items:center;user-select:none}
+.br{position:absolute;right:14px;bottom:54px}
+.camreset{position:relative;flex:none;width:38px;height:38px;border-radius:50%;border:0;background:#2B3140;box-shadow:0 3px 6px rgba(17,24,39,.25);cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
+.camreset:active{transform:scale(.97)}
+.campad{position:absolute;right:18px;bottom:80px;display:flex;gap:14px;align-items:center;user-select:none}
 .dpad{position:relative;width:126px;height:126px;filter:drop-shadow(0 3px 6px rgba(17,24,39,.25))}
 .dpad .arm{position:absolute;background:#2B3140;border-radius:9px}
 .dpad .arm.v{left:42px;top:0;width:42px;height:126px}.dpad .arm.h{left:0;top:42px;width:126px;height:42px}
@@ -169,7 +171,7 @@ body.v3 #view{position:relative;opacity:0}
 .dk{position:absolute;width:42px;height:42px;border:0;background:transparent;border-radius:9px;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
 .rocker{width:46px;height:126px;border-radius:23px;background:#2B3140;display:flex;flex-direction:column;overflow:hidden;filter:drop-shadow(0 3px 6px rgba(17,24,39,.25))}
 .rk{flex:1;border:0;background:transparent;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
-.dk:hover,.rk:hover{background:rgba(255,255,255,.08)}.dk:active,.rk:active{background:rgba(0,0,0,.25)}
+.dk:active,.rk:active{background:rgba(0,0,0,.25)}
 .rkline{height:2px;margin:0 10px;background:#1F2430;border-radius:1px}
 .dk:focus-visible,.rk:focus-visible,.camreset:focus-visible{outline:2px solid #2563EB;outline-offset:2px}
 #droptag{position:absolute;transform:translate(-50%,-140%);white-space:nowrap;font-size:12px;font-weight:600;color:#fff;background:var(--blue);padding:3px 8px;border-radius:6px;box-shadow:0 2px 6px rgba(37,99,235,.3);pointer-events:none;display:none}
@@ -221,7 +223,7 @@ table.board{width:100%;border-collapse:collapse;font-size:12.5px}
 table.board th{text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:4px 4px;border-bottom:1px solid var(--line)}
 table.board td{padding:6px 4px;border-bottom:1px solid var(--line2);color:var(--ink)}
 table.board td.n{font-family:'JetBrains Mono',monospace;text-align:right}table.board th.n{text-align:right}
-#goalCard{position:absolute;right:64px;top:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;max-width:280px;font-size:12.5px;box-shadow:0 1px 3px rgba(17,24,39,.08);flex-direction:column;gap:2px}
+#goalCard{position:absolute;right:14px;top:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;max-width:280px;font-size:12.5px;box-shadow:0 1px 3px rgba(17,24,39,.08);flex-direction:column;gap:2px}
 #goalCard b{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 #goalState{font-weight:600}
 .suites{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
@@ -239,6 +241,118 @@ table.board.big th,table.board.big td{padding:12px 14px}
 .brand{white-space:nowrap}
 @media (max-width:1500px){#modechip{display:none}}
 .libtag{font-size:12px;font-weight:600;color:var(--blue2);background:var(--blueBg);padding:4px 10px;border-radius:6px}
+/* ---------------------------------------------------------------- sessions layout (board D) */
+#left{display:none}
+body.fixed #left{display:flex}
+body.fixed #left .stsec,body.fixed #left .camsec{display:none}
+.ease{--ease-out:cubic-bezier(.23,1,.32,1)}
+.sbtn{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex:none}
+.sbtn[aria-expanded=true]{background:var(--soft)}
+.crumb{color:#9CA3AF}
+header>.hgroup:first-child{flex:1 1 auto}header>.hgroup:last-child{flex:0 1 auto}
+.bl .camreset{background:#2B3140;border:0;padding:0;width:32px;display:flex;align-items:center;justify-content:center}
+.sessname{flex:0 1 auto;min-width:48px}
+.sessname{font-size:15px;font-weight:600;color:var(--ink);max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:0;background:none;padding:2px 4px;border-radius:6px;cursor:default;font-family:inherit}
+body:not(.watch) .sessname.can{cursor:text}
+#sessNav{width:248px;flex:none;overflow:hidden;border-right:1px solid var(--line);transition:width 200ms cubic-bezier(.23,1,.32,1);min-height:0;background:#FAFAFB}
+#sessNav.closed{width:0;border-right:0}
+#sessNav .in{width:248px;height:100%;display:flex;flex-direction:column;gap:18px;padding:14px 12px;min-height:0;overflow-y:auto}
+.newbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:38px;flex:none;border-radius:10px;border:0;background:var(--ink);color:#fff;font:600 13px Inter,sans-serif;cursor:pointer}
+.newbtn:disabled{opacity:.5;cursor:not-allowed}
+.slbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 10px 6px;display:block}
+.slist{display:flex;flex-direction:column;gap:2px}
+.srow{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:9px;border:0;background:transparent;cursor:pointer;font:13px Inter,sans-serif;color:var(--ink);text-align:left;line-height:1.3}
+.srow[aria-current=true]{background:#E8EEFC;box-shadow:inset 0 0 0 1px #BFD0F7}
+.srow .t{flex:1;min-width:0}.srow .t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.srow .sub{font-size:12px;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sico{width:30px;height:30px;border-radius:8px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex:none}
+.sdot{width:8px;height:8px;border-radius:50%;background:#D1D5DB;flex:none}.sdot.run{background:var(--red);box-shadow:0 0 0 3px #FEE2E2}.sdot.ok{background:var(--green)}.sdot.wait{background:#F59E0B}
+.snone{font-size:12.5px;color:#6B7280;padding:2px 10px}
+.snote{margin-top:auto;padding:0 10px;font-size:11.5px;line-height:1.45;color:#6B7280}
+/* the floating stations bar */
+.dock{position:absolute;left:14px;right:14px;top:12px;display:flex;justify-content:center;pointer-events:none;z-index:3}
+.dockin{pointer-events:auto;display:flex;gap:6px;align-items:center;max-width:100%;overflow-x:auto;padding:6px;border-radius:14px;background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);box-shadow:0 8px 24px rgba(17,24,39,.16),0 0 0 1px rgba(17,24,39,.06);scroll-snap-type:x proximity;scrollbar-width:thin}
+.schip{flex:none;display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:10px;border:0;background:transparent;cursor:pointer;font:13px Inter,sans-serif;color:var(--ink);text-align:left;line-height:1.25;scroll-snap-align:start}
+.schip img{width:40px;height:40px;border-radius:7px;object-fit:cover;background:var(--soft)}
+.schip b{font-weight:600;white-space:nowrap}.schip .sub{font-size:12px;color:#374151;white-space:nowrap}
+.schip[aria-pressed=true]{background:#fff;box-shadow:0 0 0 2px var(--blue)}
+.schip.add{padding:0 12px;height:50px;gap:6px;font-weight:600;border:1.5px dashed #9CA3AF}
+.schip.add.big{height:56px;padding:0 20px}
+body.fixed .dock,body.watch .schip.add{display:none}
+.stbar{position:absolute;left:50%;transform:translateX(-50%);top:84px;display:flex;gap:4px;padding:4px;border-radius:10px;z-index:3}
+.stbar button{height:28px;padding:0 10px;border-radius:7px;border:0;background:transparent;font:500 12.5px Inter,sans-serif;color:var(--ink);cursor:pointer}
+.stbar button:disabled{color:#9CA3AF;cursor:not-allowed}
+body.watch .stbar,body.fixed .stbar,body.watch #objPanel .acts{display:none!important}
+.glass{background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 0 0 1px rgba(17,24,39,.08),0 4px 14px rgba(17,24,39,.08)}
+.watchbanner{position:absolute;left:50%;transform:translateX(-50%);top:84px;display:none;align-items:center;gap:8px;font:500 12.5px Inter,sans-serif;color:var(--ink);padding:7px 8px 7px 12px;border-radius:10px;z-index:3;white-space:nowrap}
+body.watch .watchbanner{display:flex}
+.watchbanner .vb{height:28px}
+body.watch .tl{top:130px}
+.emptyfloor{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:none;flex-direction:column;align-items:center;gap:6px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:14px;padding:18px 24px;text-align:center;z-index:2;pointer-events:none}
+body.empty .emptyfloor{display:flex}
+.emptyfloor b{font-size:15px;color:var(--ink)}.emptyfloor span{font-size:13px;color:var(--muted);max-width:260px}
+/* the two cameras the AI sees, small in the lower left */
+.pips{position:absolute;left:14px;bottom:14px;display:flex;gap:10px;align-items:flex-end;z-index:2}
+body.empty .pips,body.empty .stbar{display:none}
+#stage{container-type:inline-size}
+body.fixed .tl{top:12px}
+.pip{width:220px;border-radius:10px;overflow:hidden;background:#111827;box-shadow:0 6px 18px rgba(17,24,39,.28);border:1px solid rgba(255,255,255,.6)}
+.pip img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#1F2937}
+.pcap{display:flex;align-items:center;gap:6px;padding:5px 6px 5px 9px;background:#fff;font:600 12px Inter,sans-serif;color:var(--ink)}
+.pcap span{font-size:10px;font-weight:700;color:var(--blue2);flex:1;white-space:nowrap}
+.exp{width:26px;height:26px;border-radius:6px;border:1px solid #D1D5DB;background:#fff;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;flex:none}
+.exp.wide{width:auto;padding:0 10px;gap:6px;height:30px;font:500 12px Inter,sans-serif;color:var(--ink)}
+#bigCamWrap{position:absolute;inset:0;background:rgba(17,24,39,.55);display:none;align-items:center;justify-content:center;z-index:6;opacity:0;transition:opacity 220ms cubic-bezier(.23,1,.32,1)}
+#bigCamWrap.on{display:flex}#bigCamWrap.open{opacity:1}
+.bigcam{width:min(78%,900px);border-radius:12px;overflow:hidden;background:#111827;box-shadow:0 20px 50px rgba(17,24,39,.4);transform-origin:bottom left;transform:scale(.3);transition:transform 220ms cubic-bezier(.23,1,.32,1)}
+#bigCamWrap.open .bigcam{transform:none}
+.bigcam img{display:block;width:100%;aspect-ratio:4/3;max-height:calc(100vh - 220px);object-fit:contain;background:#1F2937}
+.vb{height:32px;padding:0 10px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;font:500 12px Inter,sans-serif;color:var(--ink);cursor:pointer;white-space:nowrap}
+/* the selected object, floating at the top right */
+#objPanel{position:absolute;right:14px;top:84px;width:250px;border-radius:12px;padding:12px 14px;z-index:3}
+#objPanel dl{gap:4px 10px;font-size:12.5px}
+/* the right panel's Data tab: the robot's readings, as in the robot cell viewer */
+#datapane{flex:1;display:none;flex-direction:column;gap:12px;min-height:0;overflow:auto;padding:14px 16px}
+body.dataing #datapane{display:flex}
+body.dataing #chatpane,body.dataing #right .freeonly,body.dataing #filespane{display:none!important}
+.dhead{display:flex;align-items:center;gap:8px}.dhead b{flex:1;min-width:0;font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:6px;background:#DCFCE7;color:#166534;white-space:nowrap}
+.badge.stop{background:#FEE2E2;color:#991B1B}
+.fresh{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:7px 10px;border-radius:8px;background:var(--soft);color:#374151}
+.fresh.on{background:#FEF2F2;color:#991B1B}
+table.dt{width:100%;border-collapse:collapse;font-size:13px}
+.dt th{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right;padding:4px 0 6px}
+.dt th:first-child,.dt td:first-child{text-align:left}
+.dt td{padding:5px 0;border-top:1px solid #F3F4F6;text-align:right;font:12.5px 'JetBrains Mono',monospace;color:var(--ink)}
+.dt td:first-child{font:13px Inter,sans-serif;color:#374151}
+.kv{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 10px;font-size:12.5px;color:#374151;margin:0}
+.kv dt{color:#374151}.kv dd{margin:0;font:500 12px 'JetBrains Mono',monospace;color:var(--ink);text-align:right;white-space:nowrap}
+.dnote{margin:0;font-size:12px;color:var(--muted)}
+.dempty{color:#6B7280;font-size:13px;text-align:center;padding:40px 12px}
+.watchcard{display:none;align-items:center;gap:10px;margin:0 12px 12px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#F9FAFB;font-size:12.5px;color:var(--muted)}
+body.watch .watchcard{display:flex}
+.watchcard span{flex:1}
+/* feel: a press gives a little; enter and exit ease out fast; hover only with a real pointer */
+button{transition:transform 160ms ease-out}
+button:active:not(:disabled){transform:scale(.97)}
+.stbar,.watchbanner{transition:none}
+.watchbanner button:active:not(:disabled){transform:scale(.97)}
+@media (hover:hover) and (pointer:fine){
+  .srow:hover{background:var(--soft)}.srow[aria-current=true]:hover{background:#E1E9FB}
+  .schip:hover{background:rgba(17,24,39,.06)}.schip[aria-pressed=true]:hover{background:#fff}
+  .newbtn:hover{background:var(--ink2)}.sbtn:hover,.exp:hover,.vb:hover,.stbar button:hover:not(:disabled){background:var(--soft)}
+  .camreset:hover{filter:brightness(1.2)}.dk:hover,.rk:hover{background:rgba(255,255,255,.08)}
+  #files .frow:hover{background:var(--blueBg)}
+}
+@media (prefers-reduced-motion:reduce){
+  #sessNav{transition:none}
+  .bigcam{transform:none!important;transition:none}
+  #bigCamWrap{transition:opacity 150ms ease}
+  button{transition:none}button:active:not(:disabled){transform:none}
+}
+/* a narrow stage (LIBERO and Wet Lab show their left column too): smaller camera windows */
+@container (max-width:900px){.pip{width:160px}.campad{bottom:70px;transform:scale(.8);transform-origin:bottom right}}
+@container (max-width:700px){.pip{width:128px}.campad{display:none!important}.bl button:not(.camreset){padding:0 8px}}
 </style>
 </head>
 <body>
@@ -263,8 +377,9 @@ table.board.big th,table.board.big td{padding:12px 14px}
 <div class="app">
 <header>
   <div class="hgroup">
+    <button class="sbtn" id="navToggle" aria-controls="sessNav" aria-expanded="true" aria-label="Hide sessions" title="Hide sessions"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#374151" stroke-width="1.5"><rect x="1.75" y="2.75" width="14.5" height="12.5" rx="2.5"/><path d="M6.5 2.75 V15.25"/></svg></button>
     <svg aria-hidden="true" width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#2563EB" stroke-width="1.6"><path d="M13 3 L23 8.5 L13 14 L3 8.5 Z"/><path d="M3 8.5 V17.5 L13 23 V14"/><path d="M23 8.5 V17.5 L13 23"/></svg>
-    <span class="brand">MuJoCo Playground</span>
+    <span class="brand">MuJoCo Playground</span><span class="crumb" aria-hidden="true">/</span><button class="sessname" id="sessName" title="Rename this session"></button>
     <div class="seg" role="group" aria-label="Mode">
       <button id="modeFree" aria-pressed="true">Free play</button>
       <button id="modeLibero" aria-pressed="false">LIBERO test</button>
@@ -279,26 +394,30 @@ table.board.big th,table.board.big td{padding:12px 14px}
   </div>
   <div class="hgroup" style="justify-content:flex-end">
     <span class="lockmsg" id="lockmsg" style="display:none"></span>
-    <span class="watchtag" id="watchTag">Watching · read only · <a id="ownLab" href="/">Start your own lab</a></span>
+    <span class="watchtag" id="watchTag">Watching · read only</span>
     <a class="small" id="liveLink" href="/live" target="_blank" rel="noopener" style="color:var(--blue2);font-weight:600;text-decoration:none;display:none">Live now ↗</a>
     <a class="small" id="pastLink" href="/pg/runs" target="_blank" rel="noopener" style="color:var(--blue2);font-weight:600;text-decoration:none">Past runs ↗</a>
     <span class="small">MuJoCo 4.0</span>
   </div>
 </header>
 <main>
+  <nav id="sessNav" aria-label="Playground sessions"><div class="in">
+    <button class="newbtn" id="newSession"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg>New session</button>
+    <div><span class="slbl" id="mineLbl">Your sessions</span><div class="slist" id="mineList"></div></div>
+    <div><span class="slbl">Live now · watch others</span><div class="slist" id="liveList"></div></div>
+    <span class="snote">Every session is public. Anyone can watch it, but only you can change it.</span>
+  </div></nav>
   <aside id="left" aria-label="Robot and task">
-    <div class="sec">
+    <div class="sec stsec">
       <div class="sthead"><h2 class="cap" id="stCap">Stations in the lab</h2><button class="addst freeonly" id="addStationBtn" aria-label="Add a station" title="Add a station">+</button></div>
       <div id="stationList" role="list"></div>
     </div>
     <div id="robotPanel" style="display:flex;flex-direction:column;flex:1;min-height:0">
-      <div class="sec">
+      <div class="sec camsec">
         <div style="margin-bottom:8px"><h3 style="margin:0;font-size:15px;color:var(--ink)" id="stTitle">Franka Panda</h3><span class="small" id="stSub">on its table · Franka Hand</span></div>
         <div class="cams">
-          <figure><img id="camOver" alt="Overhead camera"><figcaption><b>Overhead</b><span>AI SEES</span></figcaption></figure>
-          <figure><img id="camWrist" alt="Wrist camera"><figcaption><b>Wrist</b><span>AI SEES</span></figcaption></figure>
+
         </div>
-        <div class="stacts freeonly"><button class="ghostbtn" id="stRename">Rename</button><button class="ghostbtn" id="stRotate">Turn 90°</button><button class="ghostbtn" id="stRemove">Remove</button></div>
       </div>
       <div id="liberoPane" class="sec libero">
         <div><h2 class="cap" style="margin-bottom:6px">Suite</h2>
@@ -340,20 +459,26 @@ table.board.big th,table.board.big td{padding:12px 14px}
           <p class="small" style="margin:6px 0 0">Same robot, physics and AI setup as the robot cell's evals. The latest result for each task counts. Up to 15 minutes per task.</p></div>
       </div>
     </div>
-    <div id="objPanel" class="sec" style="display:none;flex-direction:column;gap:12px;border:0">
-      <div><span class="cap" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Selected object</span><h3 id="objName" style="margin:2px 0 0;font-size:16px;color:var(--ink)"></h3><span class="small">NVIDIA SimReady · physics from the asset</span></div>
-      <dl><dt>Size</dt><dd id="objSize"></dd><dt>Mass</dt><dd id="objMass"></dd><dt>Friction</dt><dd id="objFric"></dd><dt>Collision</dt><dd id="objCol" style="font-family:Inter;font-size:12px"></dd></dl>
-      <div style="display:flex;gap:8px"><button class="ghostbtn" id="rotBtn">Rotate 90°</button><button class="ghostbtn" id="delBtn">Remove</button></div>
-      <p class="small" style="margin:0">Drag it in the scene to move it. Click a robot to give it a task.</p>
-    </div>
   </aside>
 
   <section id="stage" aria-label="3D scene">
     <img id="view" alt="3D scene rendered live by MuJoCo" draggable="false">
+    <div class="dock"><div class="dockin" id="dock" role="group" aria-label="Stations in the lab"></div></div>
+    <div class="stbar glass freeonly" id="stBar" role="group" aria-label="Selected station"><button id="stRename">Rename</button><button id="stRotate">Turn 90°</button><button id="stRemove">Remove</button></div>
+    <div class="watchbanner glass" id="watchBanner"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#111827" stroke-width="1.5"><path d="M1 8 C3 4 5.5 3 8 3 C10.5 3 13 4 15 8 C13 12 10.5 13 8 13 C5.5 13 3 12 1 8 Z"/><circle cx="8" cy="8" r="2.2"/></svg><span>Watching someone else's lab · view only</span><button class="vb copyLab">Copy to my sessions</button></div>
+    <div class="emptyfloor"><b>Empty lab floor</b><span id="emptyMsg">Press “Add your first station” above, then click the floor to place it.</span></div>
+    <div id="objPanel" class="glass" style="display:none;flex-direction:column;gap:10px">
+      <div><span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Selected object</span><h3 id="objName" style="margin:2px 0 0;font-size:15px;color:var(--ink)"></h3><span class="small">NVIDIA SimReady · physics from the asset</span></div>
+      <dl><dt>Size</dt><dd id="objSize"></dd><dt>Mass</dt><dd id="objMass"></dd><dt>Friction</dt><dd id="objFric"></dd><dt>Collision</dt><dd id="objCol" style="font-family:Inter;font-size:12px"></dd></dl>
+      <div class="acts" style="display:flex;gap:8px"><button class="ghostbtn" id="rotBtn">Rotate 90°</button><button class="ghostbtn" id="delBtn">Remove</button></div>
+    </div>
+    <div class="pips" id="pips">
+      <div class="pip"><img id="camOver" alt="Overhead camera, what the AI sees"><div class="pcap">Overhead<span>AI SEES</span><button class="exp" data-cam="overhead" aria-label="Expand overhead camera" title="Expand"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M7 1 H11 V5 M5 11 H1 V7 M11 1 L7 5 M1 11 L5 7"/></svg></button></div></div>
+      <div class="pip"><img id="camWrist" alt="Wrist camera, what the AI sees"><div class="pcap">Wrist<span>AI SEES</span><button class="exp" data-cam="wrist" aria-label="Expand wrist camera" title="Expand"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M7 1 H11 V5 M5 11 H1 V7 M11 1 L7 5 M1 11 L5 7"/></svg></button></div></div>
+    </div>
+    <div id="bigCamWrap" role="dialog" aria-modal="true" aria-label="Camera, large"><div class="bigcam"><img id="bigCam" alt=""><div class="pcap" style="padding:8px 10px 8px 14px;font-size:13px"><b id="bigName" style="font-weight:600"></b><span>AI SEES THIS</span><button class="exp wide" id="shrinkBtn" aria-label="Shrink camera"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M11 5 H7 V1 M1 7 H5 V11 M7 5 L11 1 M5 7 L1 11"/></svg>Shrink</button></div></div></div>
     <div class="tl"><span class="live" id="liveTag" style="display:none">● Running · real time</span><span class="libtag libero wetlab" id="libTag"></span><span class="hint" id="hintTag">Drag objects in from the right. Drag to orbit, right-drag to pan, scroll to zoom.</span></div>
-    <div class="bl"><button data-preset="lab" class="freeonly">Whole lab</button><button data-preset="top">Top view</button><button data-preset="robot">Robot close-up</button></div>
-    <span class="small br freeonly">1 grid square = 10 cm</span>
-    <button class="camreset" data-preset="home" aria-label="Reset view" title="Reset view (Home)"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#E5E7EB" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 8 a5 5 0 1 0 1.6 -3.7"/><path d="M3 2 V5 H6"/></svg></button>
+    <div class="bl"><button class="camreset" data-preset="home" aria-label="Reset view" title="Reset view (Home)" style="width:32px;height:32px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E5E7EB" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 8 a5 5 0 1 0 1.6 -3.7"/><path d="M3 2 V5 H6"/></svg></button><button data-preset="lab" class="freeonly">Whole lab</button><button data-preset="top">Top view</button><button data-preset="robot" class="fixedonly">Robot close-up</button></div>
     <div class="campad" role="group" aria-label="Camera">
       <div class="dpad"><div class="arm v"></div><div class="arm h"></div><div class="hub"></div>
         <button class="dk" style="left:42px;top:0" data-move="0,1,0" aria-label="Move forward" title="Forward (↑)"><svg width="12" height="12" viewBox="0 0 10 10" style="transform:rotate(0deg)" aria-hidden="true"><path d="M5 2 L9 8 H1 Z" fill="#E5E7EB"/></svg></button>
@@ -377,7 +502,18 @@ table.board.big th,table.board.big td{padding:12px 14px}
       <button role="tab" id="tabChat" aria-selected="false" aria-controls="chatpane">Chat <span class="live" aria-label="AI running"></span></button>
       <button role="tab" id="tabObjects" aria-selected="true" aria-controls="items">Objects</button>
       <button role="tab" id="tabFiles" aria-selected="false" aria-controls="filespane">Files</button>
+      <button role="tab" id="tabData" aria-selected="false" aria-controls="datapane">Data</button>
     </div>
+    <section id="datapane" aria-label="Robot readings">
+      <div class="dempty" id="dEmpty" style="display:none">Add a station to see its robot's readings here.</div>
+      <div id="dBody" style="display:flex;flex-direction:column;gap:12px">
+        <div class="dhead"><b id="dTitle">Robot readings</b><span class="badge" id="dSafety">No safety stop</span></div>
+        <div class="fresh" id="dFresh"><span class="sdot"></span><span id="dFreshText">Waiting for the robot…</span></div>
+        <table class="dt"><thead><tr><th scope="col">Joint</th><th scope="col">Angle (rad)</th><th scope="col">Speed (rad/s)</th></tr></thead><tbody id="dJoints"></tbody></table>
+        <dl class="kv" id="dTel"></dl>
+        <p class="dnote">This is what the AI reads from the robot. It is not told where any objects are; it finds them with the cameras.</p>
+      </div>
+    </section>
     <div class="lib-top freeonly">
       <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0;font-size:15px;color:var(--ink)">Objects</h2><span class="small">NVIDIA SimReady</span></div>
       <input id="search" type="search" placeholder="Search, e.g. mug, bowl, crate" aria-label="Search objects">
@@ -394,6 +530,7 @@ table.board.big th,table.board.big td{padding:12px 14px}
         <ol id="feed"></ol>
         <button id="jumpBtn">↓ Jump to latest</button>
         <div class="runbar" id="runbar"><span class="small" id="runStatus" style="flex:1"></span><button class="ghostbtn" id="stopBtn" style="flex:none;padding:0 12px">Stop</button></div>
+        <div class="watchcard" id="watchCard"><span>You're watching. Only the owner can give this robot tasks.</span><button class="vb copyLab">Copy to my sessions</button></div>
         <div class="taskcard" id="taskcard">
           <div class="tchead"><b id="taskFor">Task for Station 1 · Franka Panda</b><button class="infobtn" id="infoBtn" aria-label="What the AI gets" aria-expanded="false" aria-controls="infoPop">i</button></div>
           <div class="infopop" id="infoPop" role="note" hidden><b>What the AI gets</b><br><span id="infoText"></span></div>
@@ -417,17 +554,27 @@ const LAB_KEY = (() => {
     return k || localStorage.getItem('labKey') || '';
   } catch (e) { return k || ''; }
 })();
+// No sign-in: this browser has a random id of its own (kept in localStorage). The server makes
+// it the owner of the sessions it creates; only it can change them, anyone can watch.
+const BID = (() => {
+  const make = () => Array.from(crypto.getRandomValues(new Uint8Array(18)), b => 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_'[b & 63]).join('');
+  try { let b = localStorage.getItem('pgBrowser'); if (!b) { b = make(); localStorage.setItem('pgBrowser', b); } return b; } catch (e) { return make(); }
+})();
+// The session (one lab of its own) this page shows. Every /pg/ and /st/ request goes to it.
+let SID = '';
+const SESSIONLESS = /^\/pg\/(static\/|thumb\/|catalog$|sessions|runs$)/;
+const U = (path) => (path.startsWith('/pg/') && !SESSIONLESS.test(path) || path.startsWith('/st/')) && SID ? `/s/${SID}${path}` : path;
 const PICK_PATHS = new Set(['/pg/pick', '/pg/probe', '/pg/place', '/pg/move', '/pg/station/probe', '/pg/station/add', '/pg/station/move']);
 const api = async (path, body) => {
   if (body && window.V3 && PICK_PATHS.has(path)) body = {...body, cam: window.V3.camForServer()};
-  const headers = LAB_KEY ? {'X-Lab-Key': LAB_KEY} : {};
-  const r = await fetch(path, body === undefined ? {headers} : {method: 'POST', headers: {...headers, 'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+  const headers = {'X-Browser-Id': BID, ...(LAB_KEY ? {'X-Lab-Key': LAB_KEY} : {})};
+  const r = await fetch(U(path), body === undefined ? {headers} : {method: 'POST', headers: {...headers, 'Content-Type': 'application/json'}, body: JSON.stringify(body)});
   return r.json();
 };
 const S = {cat: null, tab: 'All', search: '', scene: null, armed: null, sel: 'robot', runKey: null, model: 'claude'};
 const view = $('view'), stage = $('stage');
 // In free play each station's robot has its own API under /st/<station>; the fixed scenes have one robot at /.
-const stBase = () => (S.scene && S.scene.mode === 'free' && S.scene.active) ? '/st/' + S.scene.active : '';
+const stBase = () => `/s/${SID}` + ((S.scene && S.scene.mode === 'free' && S.scene.active) ? '/st/' + S.scene.active : '');
 S.drafts = {}; S.stModels = {}; S.placing = null; S.placeYaw = 0;
 const LIBHINT = 'Drag an object onto the scene, or click it and then click where it should go. It lands on whatever is under it.';
 
@@ -545,7 +692,7 @@ let camQ = null, camBusy = false;
 async function camera(delta) {
   if (window.V3) {        // move the in-page view now; the server follows (for picking and glides)
     window.V3.applyDelta(delta);
-    if (S.cat && S.cat.public && !S.cat.owner) { window.V3.setFollow(false); return; }   // a watcher's own view
+    if (S.watch) { window.V3.setFollow(false); return; }   // a watcher's own view
   }
   if (camQ) { for (const k of ['azimuth', 'elevation']) camQ[k] = (camQ[k] || 0) + (delta[k] || 0); if (delta.pan) camQ.pan = [(camQ.pan || [0, 0])[0] + delta.pan[0], (camQ.pan || [0, 0])[1] + delta.pan[1]]; if (delta.zoom) camQ.zoom = (camQ.zoom || 1) * delta.zoom; if (delta.move) camQ.move = (camQ.move || [0, 0, 0]).map((v, i) => v + delta.move[i]); }
   else camQ = {...delta};
@@ -554,7 +701,7 @@ async function camera(delta) {
   camBusy = false;
 }
 view.addEventListener('wheel', (e) => { e.preventDefault(); camera({zoom: Math.exp(e.deltaY * 0.0012)}); }, {passive: false});
-document.querySelectorAll('.bl button, .camreset').forEach(b => b.onclick = () => { if (window.V3) window.V3.setFollow(true); api('/pg/camera', {preset: b.dataset.preset}); });
+document.querySelectorAll('.bl button').forEach(b => b.onclick = () => { if (S.watch) return; if (window.V3) window.V3.setFollow(true); api('/pg/camera', {preset: b.dataset.preset}); });
 // Camera pad: click for one step, hold to keep moving.
 let camHold = null;
 const camStep = (m) => camera({move: m});
@@ -595,7 +742,36 @@ function stationStatus(st) {
   if (draft.trim()) return {color: '#16A34A', text: 'Task ready'};
   return {color: '#9CA3AF', text: 'No task yet'};
 }
+const STATION_IMG = {franka: '/pg/static/station_franka.png', ur5e: '/pg/static/station_ur5e.png'};
+function chipDot(st) {
+  const sc = S.scene, run = (sc.runs || {})[st.id];
+  if (run && run.active) return ['run', 'Working on its task'];
+  if (run && run.queued) return ['wait', 'Waiting for a free slot'];
+  if (run && run.started) return ['ok', {finished: 'Finished', error: 'Stopped with an error', stopped: 'Stopped', time_limit: 'Time limit reached'}[run.status] || 'Finished'];
+  return ['', (S.drafts[st.id] || '').trim() ? 'Task ready' : 'No task yet'];
+}
+// The stations bar floating over the lab: one chip per station, the selected one ringed.
+function renderDock() {
+  const sc = S.scene, list = sc.mode === 'free' ? (sc.robots || []) : [];
+  const key = JSON.stringify([SID, list, sc.active, sc.runs, S.drafts, S.watch]);
+  if (key === S.dockKey) return; S.dockKey = key;
+  const chips = list.map(st => { const [d, t] = chipDot(st);
+    return `<button class="schip" data-st="${esc(st.id)}" aria-pressed="${st.id === sc.active}"><img src="${STATION_IMG[st.robot] || STATION_IMG.franka}" alt=""><span><b>${esc(st.name)}</b><br><span class="sub">${esc(st.label)}</span></span><span class="sdot ${d}" title="${esc(t)}"></span></button>`; });
+  const add = list.length ? `<button class="schip add" id="dockAdd" aria-label="Add a station"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 12 12" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg>${list.length > 3 ? '' : 'Add station'}</button>`
+    : `<button class="schip add big" id="dockAdd"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 12 12" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg>Add your first station</button>`;
+  $('dock').innerHTML = chips.join('') + (S.watch ? '' : add);
+  $('dock').parentElement.style.display = list.length || !S.watch ? '' : 'none';
+  $('dock').querySelectorAll('.schip[data-st]').forEach(b => b.onclick = async () => {
+    S.sel = 'robot'; if (S.sideTab === 'objects') S.sideTab = 'chat';
+    if (!S.watch) await api('/pg/station/select', {uid: b.dataset.st, frame: true});
+    else S.scene.active = b.dataset.st;      // a watcher just looks: the owner's view stays
+    S.taskFor = null; refresh();
+  });
+  if ($('dockAdd')) $('dockAdd').onclick = openAdd;
+  const on = $('dock').querySelector('[aria-pressed=true]'); if (on) on.scrollIntoView({block: 'nearest', inline: 'nearest'});
+}
 function renderStations() {
+  renderDock();
   const sc = S.scene, list = sc.robots || [];
   const key = JSON.stringify([list, sc.active, S.sel === 'robot', sc.runs, sc.run && sc.run.active, sc.run && sc.run.status, S.drafts]);
   if (key === S.stKey) return; S.stKey = key;
@@ -686,6 +862,7 @@ function setSideTab(t) { S.sideTab = t; render(); }
 $('tabChat').onclick = () => setSideTab('chat');
 $('tabObjects').onclick = () => setSideTab('objects');
 $('tabFiles').onclick = () => { setSideTab('files'); pollFiles(); };
+$('tabData').onclick = () => { setSideTab('data'); pollData(); };
 function esc(s) { return String(s).replace(/[&<>]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;'}[c])); }
 // The chat: the same rendering as the robot cell's viewer (wetlabsim/viewer.html), rebuilt
 // from the whole trace whenever it grows. It follows new items while you're at the bottom;
@@ -864,12 +1041,15 @@ function render() {
   $('infoText').textContent = `Your task, the ${st.label || 'robot'}'s manuals, a site sheet naming what's on its table (not where), its two cameras and its sensors. It writes code to move the robot. ` +
     (S.cat.public ? `It runs in its own locked-down cloud box. Each run stops at ${Math.round(S.cat.free_time_limit / 60)} minutes or about $3 of AI use, ${S.cat.max_active} runs go at a time (others wait in line), and every run is public: anyone can watch it live and look at it afterwards.`
       : `There's no time limit: it runs until it says it's done, or you press Stop. Runs use your own Claude Code or Codex login.`);
-  $('stRemove').disabled = sc.locked || (sc.robots || []).length < 2; $('stRotate').disabled = !!sc.locked;
+  $('stRemove').disabled = !!sc.locked; $('stRotate').disabled = !!sc.locked;
   $('addStationBtn').disabled = !!sc.locked;
+  const empty = free && !(sc.robots || []).length;
+  document.body.classList.toggle('empty', empty);
+  $('emptyMsg').textContent = S.watch ? 'Nobody has added a station to this lab yet.' : 'Press “Add your first station” above, then click the floor to place it.';
+  $('stBar').style.display = free && !empty && S.sel === 'robot' ? '' : 'none';
   const camKey = stBase() || '/';
   if (S.camFor !== camKey) { S.camFor = camKey; openCams(); }
   const obj = sc.objects.find(o => o.uid === S.sel);
-  $('robotPanel').style.display = obj ? 'none' : 'flex';
   $('objPanel').style.display = obj ? 'flex' : 'none';
   if (obj) {
     const it = S.cat.items.find(i => i.id === obj.item) || {};
@@ -881,16 +1061,18 @@ function render() {
   // In free play the chat takes the object library's place while a run is on, and stays
   // until "New task" brings the library back.
   if (active && S.seenRun !== run.started) { S.seenRun = run.started; S.sideTab = 'chat'; }
-  if (S.fixed && S.sideTab === 'objects') S.sideTab = 'chat';
+  if ((S.fixed || S.watch) && S.sideTab === 'objects') S.sideTab = 'chat';
   document.body.classList.toggle('chatting', !S.fixed && S.sideTab === 'chat');
   document.body.classList.toggle('filing', S.sideTab === 'files');
+  document.body.classList.toggle('dataing', S.sideTab === 'data');
   document.body.classList.toggle('running', active);
-  $('tabChat').setAttribute('aria-selected', S.sideTab === 'chat'); $('tabObjects').setAttribute('aria-selected', S.sideTab === 'objects'); $('tabFiles').setAttribute('aria-selected', S.sideTab === 'files');
+  for (const [id, t] of [['tabChat', 'chat'], ['tabObjects', 'objects'], ['tabFiles', 'files'], ['tabData', 'data']]) $(id).setAttribute('aria-selected', S.sideTab === t);
+  if (S.sideTab === 'data') renderData();
   $('libhint').textContent = sc.locked ? 'Pause the scene to add or move objects.' : (S.armed ? $('libhint').textContent : LIBHINT);
   $('task').readOnly = active;
   const queued = !!run.queued;     // public site: waiting for one of the few run slots
   $('stopBtn').style.display = active || queued ? '' : 'none';
-  $('taskcard').style.display = active || queued ? 'none' : '';
+  $('taskcard').style.display = active || queued || S.watch || empty ? 'none' : '';
   $('runbar').style.display = run.started || queued || S.fixed ? '' : 'none';
   if (queued) $('runStatus').textContent = `Waiting for a free slot · ${run.queued - 1} ahead (${S.cat.max_active} runs at a time)`;
   if (!run.started && !queued) { const m = modelInfo($('model').value); $('chatLogo').src = LOGOS[m.provider] || LOGOS.anthropic; $('chatModel').textContent = m.label || ''; $('runStatus').textContent = ''; }
@@ -902,12 +1084,24 @@ function render() {
     if (!$('chatModel').dataset.set) $('chatModel').textContent = m.label || '';
   }
   $('startBtn').disabled = active;
-  if (!S.placing) $('hintTag').textContent = S.fixed ? 'Drag to orbit, scroll to zoom.' : 'Drag objects in from the right. Click a robot to give it a task. Drag to orbit, right-drag to pan, scroll to zoom.';
+  if (!S.placing) $('hintTag').textContent = S.fixed || S.watch ? 'Drag to orbit, right-drag to pan, scroll to zoom.' : 'Drag objects in from the right. Click a robot to give it a task. Drag to orbit, right-drag to pan, scroll to zoom.';
   if (S.mode === 'libero') renderLiberoLive();
   if (S.mode === 'wetlab') renderWetLive();
 }
 async function refresh() {
-  S.scene = await api('/pg/scene');
+  const sid = SID, sc = await api('/pg/scene');
+  if (sid !== SID) return;                 // switched sessions meanwhile
+  if (sc.ok === false) {                   // the session closed (the server restarted, say)
+    await loadSessions();
+    const next = (S.sess.mine[0] || {}).id;
+    if (next && next !== SID) { switchSession(next); return; }
+    throw new Error(sc.error || 'no session');
+  }
+  S.scene = sc;
+  const watch = !(sc.session && sc.session.mine);
+  if (watch !== S.watch) { S.watch = watch; document.body.classList.toggle('watch', watch); S.dockKey = ''; if (watch && S.sideTab === 'objects') S.sideTab = 'chat'; }
+  $('sessName').classList.toggle('can', !watch);
+  if (sc.session && sc.session.name !== S.sessName) { S.sessName = sc.session.name; $('sessName').textContent = sc.session.name; document.title = sc.session.name + ' · MuJoCo Playground'; }
   if (S.sel !== 'robot' && !S.scene.objects.find(o => o.uid === S.sel)) S.sel = 'robot';
   render();
 }
@@ -915,17 +1109,36 @@ async function refresh() {
 // don't come back by themselves: once it answers again, reconnect them.
 // A stream that breaks while the server stays up (an error mid-stream) shows a broken picture:
 // try it again shortly.
-view.addEventListener('error', () => { if (window.V3) return; clearTimeout(view.retry); view.retry = setTimeout(() => { view.src = '/pg/view.mjpg?r=' + Date.now(); }, 1000); });
+view.addEventListener('error', () => { if (window.V3) return; clearTimeout(view.retry); view.retry = setTimeout(() => { view.src = U('/pg/view.mjpg') + '?r=' + Date.now(); }, 1000); });
 function openStreams() {
-  if (!window.V3) view.src = '/pg/view.mjpg?r=' + Date.now();
+  if (!window.V3) view.src = U('/pg/view.mjpg') + '?r=' + Date.now();
+  else window.V3.setBase(`/s/${SID}`);
   openCams();
 }
-// The selected station's two cameras (what its AI sees).
+// The selected station's two cameras (what its AI sees), small in the lower left.
 function openCams() {
-  const t = Date.now(), base = stBase();
-  $('camOver').src = base + '/stream/overhead.mjpg?fps=4&r=' + t;
-  $('camWrist').src = base + '/stream/wrist.mjpg?fps=4&r=' + t;
+  const t = Date.now(), base = stBase(), none = S.scene && S.scene.mode === 'free' && !S.scene.active;
+  $('camOver').src = none ? '' : base + '/stream/overhead.mjpg?fps=4&r=' + t;
+  $('camWrist').src = none ? '' : base + '/stream/wrist.mjpg?fps=4&r=' + t;
+  if (S.bigCam) $('bigCam').src = none ? '' : base + `/stream/${S.bigCam}.mjpg?fps=8&r=` + t;
 }
+// Expand a camera: it grows out of the lower-left corner into a large view; Shrink puts it back.
+S.bigCam = null;
+function expandCam(cam) {
+  S.bigCam = cam; const w = $('bigCamWrap');
+  $('bigName').textContent = (cam === 'wrist' ? 'Wrist' : 'Overhead') + ' camera · ' + (curStation().name || curStation().label || 'Robot');
+  $('bigCam').alt = $('bigName').textContent; openCams();
+  w.classList.add('on'); w.getBoundingClientRect(); w.classList.add('open'); $('shrinkBtn').focus();
+}
+function shrinkCam() {
+  if (!S.bigCam) return; S.bigCam = null; const w = $('bigCamWrap');
+  w.classList.remove('open');
+  clearTimeout(shrinkCam.h); shrinkCam.h = setTimeout(() => { if (!S.bigCam) { w.classList.remove('on'); $('bigCam').src = ''; } }, 230);
+}
+document.querySelectorAll('.pip .exp').forEach(b => b.onclick = () => expandCam(b.dataset.cam));
+$('shrinkBtn').onclick = shrinkCam;
+$('bigCamWrap').onclick = (e) => { if (e.target === $('bigCamWrap')) shrinkCam(); };
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.bigCam) shrinkCam(); });
 async function loop() {
   try {
     await refresh();
@@ -936,10 +1149,150 @@ async function loop() {
 }
 $('task').oninput = () => { if (S.scene) S.drafts[S.scene.active] = $('task').value; render(); };
 
+// ---------------------------------------------------------------- sessions
+// Each session is one lab of its own on the server. The panel on the left lists this browser's
+// sessions and the ones others are running now (watch only). Switching is instant: no animation.
+S.sess = {mine: [], live: []}; S.watch = false; S.draftsBy = {};
+const HOME = (() => { const h = new URLSearchParams(location.search).get('home'); return h && /^https:\/\//.test(h) ? h.replace(/\/$/, '') : ''; })();
+function ago(t) {
+  const x = Math.max(0, Date.now() / 1000 - t);
+  if (x < 45) return 'just now';
+  if (x < 3600) return Math.round(x / 60) + ' min ago';
+  if (x < 86400) return Math.round(x / 3600) + ' h ago';
+  const d = new Date(t * 1000); return d.toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
+}
+const nStations = (n) => `${n || 'No'} station${n === 1 ? '' : 's'}`;
+const CUBE = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 26 26" fill="none" stroke="#4B5563" stroke-width="2"><path d="M13 3 L23 8.5 L13 14 L3 8.5 Z"/><path d="M3 8.5 V17.5 L13 23 V14"/><path d="M23 8.5 V17.5 L13 23"/></svg>';
+const EYE = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#4B5563" stroke-width="1.5"><path d="M1 8 C3 4 5.5 3 8 3 C10.5 3 13 4 15 8 C13 12 10.5 13 8 13 C5.5 13 3 12 1 8 Z"/><circle cx="8" cy="8" r="2.2"/></svg>';
+async function loadSessions(starter = false) {
+  try { const r = await api('/pg/sessions' + (starter ? '?starter=1' : '')); if (r.mine) S.sess = r; } catch (e) {}
+  renderSessions();
+}
+function renderSessions() {
+  const {mine, live} = S.sess;
+  const key = JSON.stringify([SID, mine.map(x => [x.id, x.name, x.stations, x.status, Math.round((Date.now() / 1000 - x.used) / 60)]), live.map(x => [x.url, x.id, x.name, x.task])]);
+  if (key === S.sessKey) return; S.sessKey = key;
+  const dot = {working: ['run', 'Working'], finished: ['ok', 'Finished'], empty: ['', 'Nothing run yet']};
+  $('mineList').innerHTML = mine.map(x => { const [d, t] = dot[x.status] || dot.empty;
+    return `<button class="srow" data-sid="${esc(x.id)}" aria-current="${x.id === SID}"><span class="sico">${CUBE}</span><span class="t"><b>${esc(x.name)}</b><span class="sub">${x.mode === 'free' ? nStations(x.stations) : x.mode === 'libero' ? 'LIBERO test' : 'Wet Lab'} · ${ago(x.used)}</span></span><span class="sdot ${d}" title="${t}"></span></button>`; }).join('')
+    || '<span class="snone">None yet. Press New session.</span>';
+  $('liveList').innerHTML = live.map((x, i) => `<button class="srow" data-live="${i}" aria-current="${!x.url && x.id === SID}" title="${esc(x.task || '')}"><span class="sico">${EYE}</span><span class="t"><b>${esc(x.name)}</b><span class="sub">${esc(x.task || nStations(x.stations))}</span></span><span class="sdot run" title="Running now"></span></button>`).join('')
+    || '<span class="snone">Nobody else is running anything right now.</span>';
+  $('mineList').querySelectorAll('[data-sid]').forEach(b => b.onclick = () => switchSession(b.dataset.sid));
+  $('liveList').querySelectorAll('[data-live]').forEach(b => b.onclick = () => {
+    const x = S.sess.live[+b.dataset.live]; if (!x) return;
+    if (x.url) {     // someone else's lab on the public site: open it there, watch only
+      const home = S.cat.lab_url || location.origin;
+      location.href = `${x.url}/?watch=1&s=${encodeURIComponent(x.id)}&home=${encodeURIComponent(home)}`;
+    } else switchSession(x.id);
+  });
+  $('newSession').disabled = !S.sess.owner;
+}
+function switchSession(id) {
+  if (!id || id === SID) return;
+  SID = id;
+  try { localStorage.setItem('pgSession', id); } catch (e) {}
+  const q = new URLSearchParams(location.search); q.set('s', id); q.delete('watch'); q.delete('copy');
+  history.replaceState(null, '', location.pathname + '?' + q);
+  // A clean slate for the new lab (its chat, files and readings), drawn at once.
+  S.drafts = S.draftsBy[id] = S.draftsBy[id] || {};
+  Object.assign(S, {scene: null, sel: 'robot', runKey: null, trace: [], runInfo: {}, feedKey: '', stKey: '', dockKey: '', taskFor: null,
+                    camFor: null, seenRun: null, filesKey: '', filesJSON: '', placing: null, armed: null, data: null, dataAt: 0, liveAt: 0, sessKey: ''});
+  S.mode = null; shrinkCam(); hideTag(); $('feed').innerHTML = ''; $('files').innerHTML = '';
+  if (S.sideTab === 'objects') S.sideTab = 'chat';
+  openStreams(); renderSessions();
+  refresh().then(() => { if (S.sideTab === 'data') pollData(); }).catch(() => {});
+}
+$('newSession').onclick = async () => {
+  const r = await api('/pg/sessions/new', {});
+  if (!r.ok) { toast(r.error || "Couldn't start a session"); return; }
+  await loadSessions(); switchSession(r.session.id); S.sideTab = 'chat';
+};
+// Copy to my sessions: the lab's stations and objects, never its tasks or runs.
+async function copyLab() {
+  if (HOME && !S.sess.owner) {       // watching in another visitor's lab: copy into your own
+    location.href = `${HOME}/?copy=${encodeURIComponent(location.origin + '/pg/layout?s=' + SID)}`;
+    return;
+  }
+  if (!S.sess.owner) { toast('Start your own lab first to copy this one'); return; }
+  const r = await api('/pg/sessions/new', {from: SID});
+  if (!r.ok) { toast(r.error || "Couldn't copy this lab"); return; }
+  await loadSessions(); switchSession(r.session.id); toast('Copied to your sessions');
+}
+document.querySelectorAll('.copyLab').forEach(b => b.onclick = copyLab);
+$('sessName').onclick = async () => {
+  if (S.watch) return;
+  const name = prompt('Name for this session', S.sessName || ''); if (name == null || !name.trim()) return;
+  const r = await api('/pg/session/rename', {name: name.trim()}); if (r.ok === false) toast(r.error);
+  S.sessName = null; await refresh(); loadSessions();
+};
+// Hide or show the sessions panel (it slides; remembered in this browser).
+function setNav(open) {
+  $('sessNav').classList.toggle('closed', !open);
+  $('navToggle').setAttribute('aria-expanded', open);
+  const t = open ? 'Hide sessions' : 'Show sessions'; $('navToggle').setAttribute('aria-label', t); $('navToggle').title = t;
+  try { localStorage.setItem('pgNav', open ? '1' : '0'); } catch (e) {}
+}
+$('navToggle').onclick = () => setNav($('sessNav').classList.contains('closed'));
+setInterval(loadSessions, 3000);
+
+// ---------------------------------------------------------------- the Data tab
+// The selected station's robot readings: exactly what its robot reports (/state), the same as
+// the AI reads. Live while the world runs; when it stops, the last readings stay, marked as such.
+S.data = null; S.dataAt = 0; S.liveAt = 0;
+async function pollData() {
+  const sc = S.scene; if (!sc || S.sideTab !== 'data') return;
+  if (sc.mode === 'free' && !sc.active) { S.data = null; renderData(); return; }
+  const key = stBase();
+  try {
+    const st = await (await fetch(key + '/state', {headers: {'X-Browser-Id': BID}})).json();
+    if (key !== stBase() || !st.joint_positions) return;
+    S.data = {key, st}; S.dataAt = Date.now();
+    if (S.scene && !S.scene.paused) S.liveAt = Date.now();
+  } catch (e) {}
+  renderData();
+}
+setInterval(() => { if (S.sideTab === 'data') pollData(); }, 250);
+function renderData() {
+  const sc = S.scene; if (!sc) return;
+  const none = sc.mode === 'free' && !sc.active;
+  $('dEmpty').style.display = none ? '' : 'none'; $('dBody').style.display = none ? 'none' : 'flex';
+  $('dEmpty').textContent = S.watch ? 'This lab has no stations yet.' : "Add a station to see its robot's readings here.";
+  if (none) return;
+  const stn = curStation(); $('dTitle').textContent = 'Robot readings · ' + (sc.mode === 'free' ? stn.name : (stn.label || 'Robot'));
+  const d = S.data && S.data.key === stBase() ? S.data.st : null;
+  const live = !sc.paused;
+  $('dFresh').className = 'fresh' + (live ? ' on' : '');
+  $('dFresh').firstElementChild.className = 'sdot' + (live ? ' run' : '');
+  $('dFreshText').textContent = !d ? 'Waiting for the robot…' : live ? 'Live · the simulation is running'
+    : 'Simulation stopped · last readings' + (S.liveAt ? ' · ' + ago(S.liveAt / 1000) : ' from start-up');
+  if (!d) { $('dJoints').innerHTML = ''; $('dTel').innerHTML = ''; return; }
+  const f3 = (x) => (x > -0.0005 ? '' : '−') + Math.abs(x).toFixed(3), f2 = (x) => (x > -0.005 ? '' : '−') + Math.abs(x).toFixed(2);
+  const stop = d.mode === 'protective_stop';
+  $('dSafety').className = 'badge' + (stop ? ' stop' : ''); $('dSafety').textContent = stop ? 'Safety stop' : 'No safety stop';
+  $('dSafety').title = stop ? (d.protective_stop_reason || '') : '';
+  $('dJoints').innerHTML = d.joint_positions.map((q, i) => `<tr><td>Joint ${i + 1}</td><td>${f3(q)}</td><td>${f2((d.joint_velocities || [])[i] || 0)}</td></tr>`).join('');
+  const p = d.tcp_pose || [0, 0, 0, 0, 0, 0], f = d.tcp_force || [0, 0, 0, 0, 0, 0], g = d.gripper || {};
+  // Gripper opening from its 0-255 command, as the robot cell's viewer shows it.
+  const mm = stn.robot === 'ur5e' ? 85 * (1 - (g.position || 0) / 255) : 3 + 80 * (1 - (g.position || 0) / 255);
+  const rows = [
+    ['Hand position (x, y, z)', p.slice(0, 3).map(f3).join(', ') + ' m'],
+    ['Hand orientation (rotation vector)', p.slice(3).map(f3).join(', ') + ' rad'],
+    ['Wrist force (x, y, z)', f.slice(0, 3).map(f2).join(', ') + ' N'],
+    ['Wrist torque (x, y, z)', f.slice(3).map(f2).join(', ') + ' Nm'],
+    ['Arm moving', d.moving ? 'Yes' : 'No'],
+    ['Gripper opening', mm.toFixed(0) + ' mm (' + Math.round(g.position || 0) + '/255)'],
+    ['Holding something', g.object_detected ? 'Yes' : 'No'],
+    ['Robot clock', (d.time || 0).toFixed(3) + ' s'],
+  ];
+  if (stop) rows.unshift(['Stop reason', d.protective_stop_reason || '']);
+  $('dTel').innerHTML = rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+}
+
 // ---------------------------------------------------------------- LIBERO test mode
 S.mode = null; S.fixed = false; S.L = null; S.lDone = null; S.W = null; S.wDone = null;
 function applyMode() {
-  const mode = S.scene.mode;
+  const mode = S.scene.mode, prev = S.mode;
   if (mode === S.mode) return;
   S.mode = mode;
   const lib = mode === 'libero', wet = mode === 'wetlab';
@@ -952,7 +1305,7 @@ function applyMode() {
   S.feedKey = '';
   if (lib) loadLibero();
   else if (wet) loadWet();
-  else { S.sideTab = 'objects'; }
+  else if (prev) { S.sideTab = 'objects'; }
 }
 async function setMode(mode) {
   if (S.scene && S.scene.mode === mode) return;
@@ -1113,23 +1466,46 @@ $('wModel').onchange = renderWet;
     document.body.classList.add('public');
     if (S.cat.front) {   // a hosted lab: the front lists live and past runs
       $('pastLink').href = S.cat.front + '/pg/runs'; $('liveLink').href = S.cat.front + '/live';
-      $('liveLink').style.display = ''; $('ownLab').href = S.cat.front + '/';
+      $('liveLink').style.display = '';
     }
     // Someone else's lab (no owner key): watch only. The server refuses changes anyway.
-    if (!S.cat.owner) { document.body.classList.add('watch'); S.sideTab = 'chat'; }
+    if (!S.cat.owner) { document.body.classList.add('watch'); S.watch = true; S.sideTab = 'chat'; }
   }
   const items = S.cat.items;
   for (const it of items) { it.collision = it.collision || ''; }
   $('wModel').innerHTML = $('lModel').innerHTML = $('model').innerHTML = [...new Set(S.cat.models.map(m => m.via))].map(v => `<optgroup label="${v}">` + S.cat.models.filter(m => m.via === v).map(m => `<option value="${m.id}"${m.needs ? ' disabled' : ''}>${m.label}${m.needs ? ' · needs ' + m.needs : ''}</option>`).join('') + '</optgroup>').join('');
   renderTabs(); renderItems();
   view.onload = () => $('loading').style.display = 'none';
-  const sendAspect = () => { const r = stage.getBoundingClientRect(); if (r.width > 50 && r.height > 50) api('/pg/camera', {aspect: r.width / r.height}); };
+  try { setNav(localStorage.getItem('pgNav') !== '0'); } catch (e) {}
+  // Which session to show: the link's, else the last one here, else this browser's newest
+  // (its first visit gets the starter lab), else whatever this lab shows by default.
+  const q = new URLSearchParams(location.search);
+  await loadSessions(!q.get('s'));     // a first visit without a link gets the starter lab
+  if (q.get('copy') && S.sess.owner) {      // back from someone else's lab with "Copy to my sessions"
+    try {
+      const src = q.get('copy');
+      if (!/^https:\/\//.test(src) && !src.startsWith(location.origin)) throw new Error('bad link');
+      const layout = await (await fetch(src)).json();
+      const r = await api('/pg/sessions/new', {layout});
+      if (r.ok) { await loadSessions(); q.set('s', r.session.id); toast('Copied to your sessions'); } else toast(r.error);
+    } catch (e) { toast("Couldn't copy that lab"); }
+  }
+  let want = q.get('s');
+  try { want = want || localStorage.getItem('pgSession'); } catch (e) {}
+  const known = (id) => S.sess.mine.some(x => x.id === id) || S.sess.live.some(x => !x.url && x.id === id);
+  if (!want || (!q.get('s') && !known(want))) want = (S.sess.mine[0] || {}).id || '';
+  if (!want) { const sc = await api('/pg/scene'); want = sc.session ? sc.session.id : ''; }
+  SID = want;
+  S.drafts = S.draftsBy[SID] = {};
+  if (SID) { q.set('s', SID); q.delete('copy'); history.replaceState(null, '', location.pathname + '?' + q); try { localStorage.setItem('pgSession', SID); } catch (e) {} }
+  renderSessions();
+  const sendAspect = () => { const r = stage.getBoundingClientRect(); if (r.width > 50 && r.height > 50 && !S.watch) api('/pg/camera', {aspect: r.width / r.height}); };
   sendAspect(); new ResizeObserver(() => { clearTimeout(sendAspect.h); sendAspect.h = setTimeout(sendAspect, 150); }).observe(stage);
   $('modelLogo').src = LOGOS[modelInfo($('model').value).provider] || LOGOS.anthropic;
   // Draw the main view in the page (instant camera); fall back to the server's video.
   try {
-    const m = await import('/pg/static/view3d.js?v=2');
-    const v = m.start({stage, onReady: () => { $('loading').style.display = 'none'; }});
+    const m = await import('/pg/static/view3d.js?v=3');
+    const v = m.start({stage, base: `/s/${SID}`, onReady: () => { $('loading').style.display = 'none'; }});
     if (v) { window.V3 = v; document.body.classList.add('v3'); }
   } catch (e) { console.warn('3D view unavailable, using video', e); }
   openStreams();

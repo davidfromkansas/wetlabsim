@@ -166,11 +166,14 @@ export function start({stage, base = '', onReady}) {
     return obj;
   }
 
+  let gen = 0;     // bumped when the page switches to another session's world
   async function loadScene() {
     if (V.loading) return;
     V.loading = true;
+    const g0 = gen;
     try {
       const sc = await (await fetch(`${base}/pg/scene3d`)).json();
+      if (g0 !== gen) { V.loading = false; return loadScene(); }
       const next = new THREE.Group();
       const bodies = Array.from({length: sc.nbody}, () => { const b = new THREE.Group(); next.add(b); return b; });
       const objs = await Promise.all(sc.geoms.map(g => geomObject(g, sc.version, sc.meshhash).then(o => [g, o])));
@@ -190,6 +193,7 @@ export function start({stage, base = '', onReady}) {
         }
         next.add(L); next.add(L.target);
       }
+      if (g0 !== gen) { V.loading = false; return loadScene(); }
       scene.remove(root); root = next; scene.add(root); V.bodies = bodies; V.version = sc.version;
       if (floorFx) { scene.remove(floorFx); floorFx = null; }
       if (sc.floorfx) floorFx = makeFloorFx();
@@ -263,7 +267,8 @@ export function start({stage, base = '', onReady}) {
       // Follow the server's camera (glides, presets, other tabs) unless moved here just now.
       if (V.follow && performance.now() - V.lastLocal > 800) V.cam = f.cam;
     };
-    es.onerror = () => { es.close(); setTimeout(connect, 1500); };
+    const mine = es;
+    es.onerror = () => { mine.close(); if (es === mine) setTimeout(connect, 1500); };
   }
 
   function frame() {
@@ -278,6 +283,15 @@ export function start({stage, base = '', onReady}) {
   V.applyDelta = (d) => { V.cam = applyDelta(V.cam, d); V.lastLocal = performance.now(); };
   V.camForServer = () => ({...V.cam, aspect: camera.aspect});
   V.setFollow = (on) => { V.follow = on; if (on) V.lastLocal = 0; };
+  // Another session: its own world (scene, meshes, textures and pose stream), drawn at once.
+  V.setBase = (b) => {
+    if (b === base) return;
+    base = b; gen++; V.version = null; V.follow = true; V.lastLocal = 0;
+    texCache.clear(); meshCache.clear();
+    if (es) es.close();
+    scene.remove(root); root = new THREE.Group(); scene.add(root); V.bodies = [];
+    loadScene().then(connect);
+  };
   loadScene().then(connect);
   requestAnimationFrame(frame);
   return V;
