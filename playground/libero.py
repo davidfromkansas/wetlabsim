@@ -146,11 +146,7 @@ def build(t: Task, robot: str = "franka") -> mujoco.MjModel:
         FA.ensure()
     world = mujoco.MjSpec.from_string(_scene_xml(t))
     _hide_collision_shapes(world)
-    ft_site = S._franka(world)
-    world.add_sensor(name="ft_force", type=mujoco.mjtSensor.mjSENS_FORCE,
-                     objtype=mujoco.mjtObj.mjOBJ_SITE, objname=ft_site)
-    world.add_sensor(name="ft_torque", type=mujoco.mjtSensor.mjSENS_TORQUE,
-                     objtype=mujoco.mjtObj.mjOBJ_SITE, objname=ft_site)
+    S.add_robot(world, "franka")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         return world.compile()

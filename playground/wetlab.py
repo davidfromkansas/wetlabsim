@@ -62,7 +62,7 @@ class WetBench:
                 time.sleep(0.1)
             self.sim.pause()
             secs = round(time.time() - t0, 1)
-            info = dict(self.H.run)
+            info = dict(self.H.board.run)
             res = {}
             rid = info.get("run_id")
             if rid and (self.runner.runs / rid / "result.json").exists():

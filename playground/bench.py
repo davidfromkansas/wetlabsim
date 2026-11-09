@@ -79,7 +79,7 @@ class Bench:
                 time.sleep(0.1)
             time.sleep(0.5)
             self.sim.pause()
-            info = dict(self.H.run)
+            info = dict(self.H.board.run)
             row = {"task": task.id, "suite": task.suite, "language": task.language, "setup": k + 1,
                    "model": model_id, "model_label": info.get("model_label") or model_id, "passed": passed,
                    "how": how, "seconds": secs, "cost_usd": info.get("cost_usd"), "tokens": info.get("tokens"),

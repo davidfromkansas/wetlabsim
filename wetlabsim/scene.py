@@ -449,7 +449,7 @@ def _match_options(*specs):
             spec.option.enableflags |= mujoco.mjtEnableBit.mjENBL_SPECULATIVE
 
 
-def _franka(world):
+def _franka(world, mount="robot_mount", prefix=""):
     arm = mujoco.MjSpec.from_file(str(ASSETS / "franka_emika_panda" / "panda.xml"))
     # Fingertip pads are rubber; every other colliding shape is the robot's hard shell.
     for g in arm.geoms:
@@ -477,11 +477,11 @@ def _franka(world):
     _match_options(arm)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        world.site("robot_mount").attach_body(arm.body("link0"), "", "")
-    return "ft_site"
+        world.site(mount).attach_body(arm.body("link0"), prefix, "")
+    return prefix + "ft_site"
 
 
-def _ur5e(world):
+def _ur5e(world, mount_site="robot_mount", prefix=""):
     arm = mujoco.MjSpec.from_file(str(ASSETS / "universal_robots_ur5e" / "ur5e.xml"))
     grip = mujoco.MjSpec.from_file(str(ASSETS / "robotiq_2f85" / "2f85.xml"))
 
@@ -507,19 +507,42 @@ def _ur5e(world):
     arm.site("attachment_site").attach_body(mount, "gripper/", "")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        world.site("robot_mount").attach_body(arm.body("base"), "", "")
-    return "gripper/ft_site"
+        world.site(mount_site).attach_body(arm.body("base"), prefix, "")
+    return prefix + "gripper/ft_site"
+
+
+def add_robot(world, robot: str, mount: str = "robot_mount", prefix: str = ""):
+    """Attach a robot (with its wrist camera and wrist force/torque sensor) at a mount site.
+    prefix: put in front of every name the robot brings, so several robots fit in one scene."""
+    ft_site = _franka(world, mount, prefix) if robot == "franka" else _ur5e(world, mount, prefix)
+    # Wrist force/torque sensor (UR5e: built in at the flange; Panda: estimated from joint torques).
+    world.add_sensor(name=prefix + "ft_force", type=mujoco.mjtSensor.mjSENS_FORCE,
+                     objtype=mujoco.mjtObj.mjOBJ_SITE, objname=ft_site)
+    world.add_sensor(name=prefix + "ft_torque", type=mujoco.mjtSensor.mjSENS_TORQUE,
+                     objtype=mujoco.mjtObj.mjOBJ_SITE, objname=ft_site)
+
+
+def profile_for(robot: str, prefix: str = "", world_cameras: str | None = None) -> dict:
+    """A robot's profile with its model names as they are when it was attached with prefix.
+    world_cameras: prefix of the fixed (overhead, side) cameras that belong to this robot
+    (default: the same prefix)."""
+    P = dict(ROBOTS[robot_name(robot)])
+    if not prefix and world_cameras is None:
+        return P
+    wc = prefix if world_cameras is None else world_cameras
+    for k in ("arm_joints", "arm_actuators"):
+        P[k] = [prefix + n for n in P[k]]
+    for k in ("tcp_site", "ft_site", "ft_body", "base_body", "grip_actuator", "grip_joint"):
+        P[k] = prefix + P[k]
+    P["cameras"] = {k: (prefix + v if k == "wrist" else wc + v) for k, v in P["cameras"].items()}
+    P["sensors"] = (prefix + "ft_force", prefix + "ft_torque")
+    return P
 
 
 def build_model(robot: str | None = None) -> mujoco.MjModel:
     robot = robot_name(robot)
     world = mujoco.MjSpec.from_string(_world_xml(ROBOTS[robot]["mount_quat"]))
-    ft_site = _franka(world) if robot == "franka" else _ur5e(world)
-    # Wrist force/torque sensor (UR5e: built in at the flange; Panda: estimated from joint torques).
-    world.add_sensor(name="ft_force", type=mujoco.mjtSensor.mjSENS_FORCE,
-                     objtype=mujoco.mjtObj.mjOBJ_SITE, objname=ft_site)
-    world.add_sensor(name="ft_torque", type=mujoco.mjtSensor.mjSENS_TORQUE,
-                     objtype=mujoco.mjtObj.mjOBJ_SITE, objname=ft_site)
+    add_robot(world, robot)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         return world.compile()

@@ -117,14 +117,31 @@ def _encode_jpg(rgb: np.ndarray, q=80) -> bytes:
     return buf.getvalue()
 
 
+class RunBoard:
+    """The current run on one robot, for the live page: its details (task, prompt, model,
+    tokens, ... from run_agent) and the agent's steps so far."""
+
+    def __init__(self):
+        self.run: dict = {}
+        self.trace: list = []
+
+
 class Handler(BaseHTTPRequestHandler):
     sim: Sim
     token: str
     runs_dir: pathlib.Path
-    trace: list = []          # the current run's agent steps, for the live page
-    run: dict = {}            # the current run: task, prompt, model, tokens, ... (from run_agent)
+    board = RunBoard()        # the robot cell's one robot
     archives: dict = {}       # finished runs opened in the viewer, by run id
     protocol_version = "HTTP/1.1"
+
+    # The current run, as the page and the bench runners read it.
+    @property
+    def run(self) -> dict:
+        return self.board.run
+
+    @property
+    def trace(self) -> list:
+        return self.board.trace
 
     def log_message(self, *a):  # quiet
         pass
@@ -427,18 +444,18 @@ class Handler(BaseHTTPRequestHandler):
             if p == "/eval/run":
                 if not self._authed():
                     return self._err("evaluator token required", 403)
-                Handler.run = {**Handler.run, **b}
+                self.board.run = {**self.board.run, **b}
                 return self._json({"ok": True})
             if p == "/eval/trace":
                 if not self._authed():
                     return self._err("evaluator token required", 403)
-                Handler.trace.extend(b["steps"])
+                self.board.trace.extend(b["steps"])
                 return self._json({"ok": True})
             if p == "/eval/reset":
                 if not self._authed():
                     return self._err("evaluator token required", 403)
-                Handler.trace = []
-                Handler.run = {}
+                self.board.trace = []
+                self.board.run = {}
                 s.reset(b.get("task"))
                 if b.get("run_dir"):
                     s.open_log(b["run_dir"])

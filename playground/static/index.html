@@ -35,7 +35,7 @@ h2.cap{margin:0 0 8px;font-size:11px;font-weight:600;text-transform:uppercase;le
 .robotbtn{width:100%;text-align:left;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
 .robotbtn[aria-pressed=true]{border:2px solid var(--blue);background:var(--blueBg)}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#9CA3AF;margin-right:6px}
-.cams{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cams{display:grid;grid-template-columns:1fr;gap:8px}
 .cams figure{margin:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--soft)}
 .cams img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#E5E7EB}
 .cams figcaption{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:var(--blueBg);border-top:2px solid var(--blue);font-size:12px}
@@ -48,7 +48,44 @@ select{height:36px;padding:0 10px;border-radius:8px;border:1px solid #D1D5DB;bac
 .primary:disabled{opacity:.5;cursor:not-allowed}
 .ghostbtn{height:36px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;font-weight:500;font-size:13px;color:var(--ink);cursor:pointer;flex:1}
 .ghostbtn:disabled{background:var(--soft);color:#6B7280;cursor:not-allowed}
-#taskpane{display:flex;flex-direction:column;gap:10px;flex:1;overflow:auto}
+#robotPanel{overflow-y:auto}
+/* stations */
+.sthead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.sthead h2.cap{margin:0}
+.addst{height:28px;width:28px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;cursor:pointer;font-size:17px;line-height:1;color:var(--ink);display:flex;align-items:center;justify-content:center;padding:0}
+.addst:disabled{opacity:.4;cursor:not-allowed}
+#stationList{display:flex;flex-direction:column;gap:6px;max-height:210px;overflow-y:auto}
+.strow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+.strow[aria-pressed=true]{border:2px solid var(--blue);background:var(--blueBg);padding:6px 9px}
+.strow .nm{flex:1;min-width:0}.strow .nm b{display:block;font-weight:600;font-size:13.5px}
+.strow .dot{margin:0;flex:none;width:8px;height:8px}
+.stacts{display:flex;gap:6px;margin-top:10px}
+.stacts button{flex:1;height:30px;font-size:12.5px}
+/* the task card at the bottom of the chat */
+body.fixed .taskcard{display:none!important}
+.taskcard{margin:0 12px 12px;border:1px solid #D1D5DB;border-radius:12px;background:#fff;padding:10px 12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 1px 3px rgba(17,24,39,.06);position:relative}
+.taskcard textarea{border:0;padding:2px 0;resize:none;outline:none;min-height:60px}
+.tchead{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.tchead b{color:var(--ink);font-weight:600;flex:1}
+.infobtn{width:22px;height:22px;border-radius:50%;border:1px solid #D1D5DB;background:#fff;color:var(--muted);font:600 12px Inter,sans-serif;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
+.infobtn[aria-expanded=true]{border-color:var(--blue);color:var(--blue2);background:var(--blueBg)}
+.infopop{position:absolute;left:8px;right:8px;bottom:calc(100% + 6px);background:var(--ink);color:#F9FAFB;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;box-shadow:0 6px 18px rgba(17,24,39,.25);z-index:3}
+.infopop b{color:#fff}
+.tcrow{display:flex;align-items:center;gap:8px}
+.tcrow .mdl{flex:1;min-width:0;display:flex;align-items:center;gap:6px;height:36px;padding:0 0 0 8px;border:1px solid #D1D5DB;border-radius:8px}
+.tcrow .mdl img{width:16px;height:16px;flex:none}
+.tcrow .mdl select{border:0;height:34px;flex:1;min-width:0;padding:0 4px;background:transparent}
+.tcrow .primary{width:auto;height:36px;padding:0 16px;border-radius:8px;display:flex;align-items:center;gap:6px}
+/* add-a-station picker */
+#addModal{position:fixed;inset:0;background:rgba(17,24,39,.35);z-index:8;align-items:center;justify-content:center;padding:16px}
+#addModal .am{background:#fff;border-radius:14px;padding:22px 24px;max-width:640px;width:100%;display:flex;flex-direction:column;gap:14px;box-shadow:0 10px 30px rgba(17,24,39,.2)}
+.rcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.rcard{border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;background:#fff}
+.rcard img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--bg)}
+.rcard .rx{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px}
+.rcard .rx b{font-size:15px;color:var(--ink)}
+.rcard dl{font-size:12.5px;gap:3px 10px}
+.rcard .primary{height:36px;border-radius:8px;margin-top:4px}
 #chatpane{flex:1;display:none;flex-direction:column;min-height:0;position:relative}
 body.chatting #chatpane,body.fixed #chatpane{display:flex}
 body.chatting #right .freeonly{display:none!important}
@@ -190,6 +227,12 @@ table.board.big th,table.board.big td{padding:12px 14px}
     <p class="small" style="margin:0">Each cell is passed runs out of runs tried (the latest result for each setup counts). Study set = setups 1 to 5 of every task, the same 200 runs as Anthropic's study. The study's 5.5% used direct control (one move per turn), so it's a reference point, not a like-for-like score.</p>
   </div>
 </div>
+<div id="addModal" role="dialog" aria-modal="true" aria-labelledby="amTitle" style="display:none">
+  <div class="am">
+    <div style="display:flex;align-items:flex-start;gap:12px"><div style="flex:1"><h2 id="amTitle" style="margin:0;font-size:20px;color:var(--ink)">Add a station</h2><p class="small" style="margin:2px 0 0">Each robot comes on its own table. Pick one, then click the floor to place it.</p></div><button class="round" id="amClose" aria-label="Close">✕</button></div>
+    <div class="rcards" id="rcards"></div>
+  </div>
+</div>
 <div id="loading"><svg width="40" height="40" viewBox="0 0 26 26" fill="none" stroke="#2563EB" stroke-width="1.6"><path d="M13 3 L23 8.5 L13 14 L3 8.5 Z"/><path d="M3 8.5 V17.5 L13 23 V14"/><path d="M23 8.5 V17.5 L13 23"/></svg>Loading the playground…</div>
 <div class="app">
 <header>
@@ -216,25 +259,17 @@ table.board.big th,table.board.big td{padding:12px 14px}
 <main>
   <aside id="left" aria-label="Robot and task">
     <div class="sec">
-      <h2 class="cap">Robots in the scene</h2>
-      <button class="robotbtn" id="robotBtn" aria-pressed="true"><b style="display:block">Franka Panda</b><span class="small"><span class="dot" id="robotDot"></span><span id="robotStatus">No task yet</span></span></button>
-      <p class="small freeonly" style="margin:6px 0 0">Every scene starts with a Franka. Click it (here or in the scene) to give it a task.</p>
+      <div class="sthead"><h2 class="cap" id="stCap">Stations in the lab</h2><button class="addst freeonly" id="addStationBtn" aria-label="Add a station" title="Add a station">+</button></div>
+      <div id="stationList" role="list"></div>
     </div>
     <div id="robotPanel" style="display:flex;flex-direction:column;flex:1;min-height:0">
       <div class="sec">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px"><h3 style="margin:0;font-size:15px;color:var(--ink)">Franka Panda</h3><span class="small">on the table · Franka Hand</span></div>
+        <div style="margin-bottom:8px"><h3 style="margin:0;font-size:15px;color:var(--ink)" id="stTitle">Franka Panda</h3><span class="small" id="stSub">on its table · Franka Hand</span></div>
         <div class="cams">
           <figure><img id="camOver" alt="Overhead camera"><figcaption><b>Overhead</b><span>AI SEES</span></figcaption></figure>
           <figure><img id="camWrist" alt="Wrist camera"><figcaption><b>Wrist</b><span>AI SEES</span></figcaption></figure>
         </div>
-      </div>
-      <div id="taskpane" class="sec freeonly" style="border:0">
-        <label for="task" style="font-size:13px;font-weight:600;color:var(--ink)">Task for the Franka Panda</label>
-        <textarea id="task" rows="5" placeholder="Tell this robot what to do, in plain words. Example: put the apple in the bowl."></textarea>
-        <div style="display:flex;flex-direction:column;gap:4px"><label for="model" class="small" style="font-weight:600">AI model</label><select id="model"></select></div>
-        <div class="note"><b style="color:var(--ink)">What the AI gets</b><br>Your task, the Franka's manuals, a site sheet naming what's in the scene (not where), its two cameras and its sensors. It writes code to move the robot. There's no time limit: it runs until it says it's done, or you press Stop.</div>
-        <button class="primary" id="startBtn">Play · start the task</button>
-        <p class="small" style="margin:0">Pausing freezes physics; the robot waits. Runs use your own Claude Code or Codex login.</p>
+        <div class="stacts freeonly"><button class="ghostbtn" id="stRename">Rename</button><button class="ghostbtn" id="stRotate">Turn 90°</button><button class="ghostbtn" id="stRemove">Remove</button></div>
       </div>
       <div id="liberoPane" class="sec libero">
         <div><h2 class="cap" style="margin-bottom:6px">Suite</h2>
@@ -280,14 +315,14 @@ table.board.big th,table.board.big td{padding:12px 14px}
       <div><span class="cap" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Selected object</span><h3 id="objName" style="margin:2px 0 0;font-size:16px;color:var(--ink)"></h3><span class="small">NVIDIA SimReady · physics from the asset</span></div>
       <dl><dt>Size</dt><dd id="objSize"></dd><dt>Mass</dt><dd id="objMass"></dd><dt>Friction</dt><dd id="objFric"></dd><dt>Collision</dt><dd id="objCol" style="font-family:Inter;font-size:12px"></dd></dl>
       <div style="display:flex;gap:8px"><button class="ghostbtn" id="rotBtn">Rotate 90°</button><button class="ghostbtn" id="delBtn">Remove</button></div>
-      <p class="small" style="margin:0">Drag it in the scene to move it. Click the robot to give it a task.</p>
+      <p class="small" style="margin:0">Drag it in the scene to move it. Click a robot to give it a task.</p>
     </div>
   </aside>
 
   <section id="stage" aria-label="3D scene">
     <img id="view" alt="3D scene rendered live by MuJoCo" draggable="false">
     <div class="tl"><span class="live" id="liveTag" style="display:none">● Running · real time</span><span class="libtag libero wetlab" id="libTag"></span><span class="hint" id="hintTag">Drag objects in from the right. Drag to orbit, right-drag to pan, scroll to zoom.</span></div>
-    <div class="bl"><button data-preset="top">Top view</button><button data-preset="robot">Robot close-up</button></div>
+    <div class="bl"><button data-preset="lab" class="freeonly">Whole lab</button><button data-preset="top">Top view</button><button data-preset="robot">Robot close-up</button></div>
     <span class="small br freeonly">1 grid square = 10 cm</span>
     <button class="camreset" data-preset="home" aria-label="Reset view" title="Reset view (Home)"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#E5E7EB" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 8 a5 5 0 1 0 1.6 -3.7"/><path d="M3 2 V5 H6"/></svg></button>
     <div class="campad" role="group" aria-label="Camera">
@@ -323,7 +358,14 @@ table.board.big th,table.board.big td{padding:12px 14px}
         <div class="chathead"><img id="chatLogo" src="/static/anthropic.svg" alt=""><b id="chatModel" style="flex:1;color:var(--ink)">Claude Opus 5.5</b><span class="small" id="chatCost"></span></div>
         <ol id="feed"></ol>
         <button id="jumpBtn">↓ Jump to latest</button>
-        <div class="runbar"><span class="small" id="runStatus" style="flex:1"></span><button class="ghostbtn" id="stopBtn" style="flex:none;padding:0 12px">Stop run</button><button class="ghostbtn" id="newTaskBtn" style="flex:none;padding:0 12px;display:none">New task</button></div>
+        <div class="runbar" id="runbar"><span class="small" id="runStatus" style="flex:1"></span><button class="ghostbtn" id="stopBtn" style="flex:none;padding:0 12px">Stop</button></div>
+        <div class="taskcard" id="taskcard">
+          <div class="tchead"><b id="taskFor">Task for Station 1 · Franka Panda</b><button class="infobtn" id="infoBtn" aria-label="What the AI gets" aria-expanded="false" aria-controls="infoPop">i</button></div>
+          <div class="infopop" id="infoPop" role="note" hidden><b>What the AI gets</b><br><span id="infoText"></span></div>
+          <label for="task" class="small" style="position:absolute;left:-9999px">Task</label>
+          <textarea id="task" rows="3" placeholder="Tell this robot what to do, in plain words. Example: put the apple in the bowl."></textarea>
+          <div class="tcrow"><div class="mdl"><img id="modelLogo" src="/static/anthropic.svg" alt=""><select id="model" aria-label="AI model"></select></div><button class="primary" id="startBtn"><svg width="11" height="11" viewBox="0 0 14 14" fill="#fff" aria-hidden="true"><path d="M3 1.5 L12.5 7 L3 12.5 Z"/></svg>Play</button></div>
+        </div>
       </section>
     <p class="libhint freeonly" id="libhint">Drag an object onto the scene, or click it and then click where it should go. It lands on whatever is under it.</p>
   </aside>
@@ -337,6 +379,9 @@ const api = async (path, body) => {
 };
 const S = {cat: null, tab: 'All', search: '', scene: null, armed: null, sel: 'robot', runKey: null, model: 'claude'};
 const view = $('view'), stage = $('stage');
+// In free play each station's robot has its own API under /st/<station>; the fixed scenes have one robot at /.
+const stBase = () => (S.scene && S.scene.mode === 'free' && S.scene.active) ? '/st/' + S.scene.active : '';
+S.drafts = {}; S.placing = null; S.placeYaw = 0;
 const LIBHINT = 'Drag an object onto the scene, or click it and then click where it should go. It lands on whatever is under it.';
 
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast.h); toast.h = setTimeout(() => t.style.display = 'none', 2600); }
@@ -420,6 +465,7 @@ view.addEventListener('mousedown', async (e) => {
   }
 });
 window.addEventListener('mousemove', (e) => {
+  if (S.placing && e.target === view && !drag) probeStation(uv(e));
   if (S.armed && e.target === view) probe(S.armed, uv(e));
   if (!drag) return;
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
@@ -437,10 +483,12 @@ window.addEventListener('mouseup', async (e) => {
   if (d.moved && d.obj) { probeNext = null; hideTag(); const r = await api('/pg/move', {uid: d.obj.uid, u: uv(e).u, v: uv(e).v}); if (!r.ok) toast(r.error); S.sel = d.obj.uid; refresh(); return; }
   if (d.moved || e.target !== view) return;
   const p = uv(e);
+  if (S.placing) { await placeStation(p); return; }
   if (S.armed) { const id = S.armed; S.armed = null; probeNext = null; renderItems(); hideTag(); $('libhint').textContent = LIBHINT; await place(id, p); return; }
   const hit = await api('/pg/pick', {u: p.u, v: p.v});
-  S.sel = hit.kind === 'robot' ? 'robot' : hit.kind === 'object' ? hit.uid : S.sel;
-  render();
+  S.sel = hit.kind === 'robot' || hit.station ? 'robot' : hit.kind === 'object' ? hit.uid : S.sel;
+  if (hit.kind === 'robot' && S.scene && S.scene.mode === 'free') S.sideTab = 'chat';
+  refresh();
 });
 let camQ = null, camBusy = false;
 async function camera(delta) {
@@ -470,7 +518,8 @@ const CAM_KEYS = {ArrowUp: [0, 1, 0], ArrowDown: [0, -1, 0], ArrowLeft: [-1, 0, 
                   PageUp: [0, 0, 1], PageDown: [0, 0, -1], '+': [0, 0, 1], '=': [0, 0, 1], '-': [0, 0, -1]};
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
-  if (e.key === 'Escape') { S.armed = null; renderItems(); hideTag(); api('/pg/ghost/clear', {}); }
+  if (e.key === 'Escape') { if (S.placing) cancelPlacing(); S.armed = null; renderItems(); hideTag(); api('/pg/ghost/clear', {}); }
+  if (S.placing && (e.key === 'r' || e.key === 'R')) { S.placeYaw += Math.PI / 2; if (S.lastUV) probeStation(S.lastUV); return; }
   if ((e.key === 'Delete' || e.key === 'Backspace') && S.sel && S.sel !== 'robot') removeSel();
   if (e.key === 'r' && S.sel && S.sel !== 'robot') rotateSel();
   if (e.target.tagName === 'SELECT' || e.metaKey || e.ctrlKey || e.altKey) return;
@@ -480,9 +529,79 @@ window.addEventListener('keydown', (e) => {
 
 // ---------------------------------------------------------------- object panel
 async function removeSel() { const r = await api('/pg/remove', {uid: S.sel}); if (!r.ok) toast(r.error); else S.sel = 'robot'; refresh(); }
+
+// ---------------------------------------------------------------- stations
+function stationStatus(st) {
+  const sc = S.scene, run = sc.mode === 'free' ? (sc.runs || {})[st.id] : sc.run;
+  const draft = (sc.mode === 'free' ? S.drafts[st.id] : '') || '';
+  if (run && run.active) return {color: '#DC2626', text: 'Working on its task'};
+  if (run && run.started) return {color: run.status === 'error' ? '#F59E0B' : '#2563EB', text: {finished: 'Finished', error: 'Stopped with an error', stopped: 'Stopped'}[run.status] || run.status};
+  if (draft.trim()) return {color: '#16A34A', text: 'Task ready'};
+  return {color: '#9CA3AF', text: 'No task yet'};
+}
+function renderStations() {
+  const sc = S.scene, list = sc.robots || [];
+  const key = JSON.stringify([list, sc.active, S.sel === 'robot', sc.runs, sc.run && sc.run.active, sc.run && sc.run.status, S.drafts]);
+  if (key === S.stKey) return; S.stKey = key;
+  $('stCap').textContent = sc.mode === 'free' ? 'Stations in the lab' : 'Robot';
+  $('stationList').innerHTML = list.map(st => { const x = stationStatus(st);
+    return `<button class="strow" role="listitem" data-st="${st.id}" aria-pressed="${st.id === sc.active && S.sel === 'robot'}"><span class="dot" style="background:${x.color}"></span><span class="nm"><b>${esc(sc.mode === 'free' ? st.name : st.label)}</b><span class="small">${sc.mode === 'free' ? esc(st.label) + ' · ' : ''}${x.text}</span></span></button>`; }).join('');
+  $('stationList').querySelectorAll('.strow').forEach(b => b.onclick = async () => {
+    S.sel = 'robot'; if (S.scene.mode === 'free') S.sideTab = 'chat';
+    if (S.scene.mode === 'free') await api('/pg/station/select', {uid: b.dataset.st, frame: true});
+    else api('/pg/select', {uid: 'robot'});
+    refresh();
+  });
+}
+function curStation() { const sc = S.scene; return (sc.robots || []).find(r => r.id === sc.active) || (sc.robots || [])[0] || {}; }
+$('stRename').onclick = async () => {
+  const st = curStation(); const name = prompt('Name for this station', st.name || ''); if (name == null || !name.trim()) return;
+  const r = await api('/pg/station/rename', {uid: st.id, name: name.trim()}); if (r.ok === false) toast(r.error); refresh();
+};
+$('stRotate').onclick = async () => { const r = await api('/pg/station/rotate', {uid: curStation().id, degrees: 90}); if (!r.ok) toast(r.error); refresh(); };
+$('stRemove').onclick = async () => {
+  const st = curStation();
+  if (!confirm(`Remove ${st.name} (${st.label}) and everything on its table?`)) return;
+  const r = await api('/pg/station/remove', {uid: st.id}); if (!r.ok) toast(r.error); else delete S.drafts[st.id]; refresh();
+};
+// The picker: one card per robot. "Add to lab" then click the floor to place its station.
+function openAdd() {
+  if (S.scene && S.scene.locked) { toast(S.scene.locked); return; }
+  $('rcards').innerHTML = S.cat.robots.map(r => `<div class="rcard"><img src="${r.thumb}" alt="${esc(r.label)} on its table"><div class="rx"><div><b>${esc(r.label)}</b><div class="small">${esc(r.maker)}</div></div>
+    <dl><dt>Gripper</dt><dd>${esc(r.gripper)}</dd><dt>Reach</dt><dd>${r.reach_mm} mm</dd><dt>Lifts</dt><dd>${r.payload_kg} kg</dd><dt>Joints</dt><dd>${r.joints}</dd></dl>
+    <button class="primary" data-r="${r.id}">Add to lab</button></div></div>`).join('');
+  $('rcards').querySelectorAll('button').forEach(b => b.onclick = () => startPlacing(b.dataset.r));
+  $('addModal').style.display = 'flex';
+}
+function closeAdd() { $('addModal').style.display = 'none'; }
+$('addStationBtn').onclick = openAdd; $('amClose').onclick = closeAdd;
+$('addModal').onclick = (e) => { if (e.target === $('addModal')) closeAdd(); };
+function startPlacing(robot) {
+  closeAdd(); S.placing = robot; S.placeYaw = 0; S.armed = null; renderItems();
+  api('/pg/camera', {preset: 'lab'});
+  $('hintTag').textContent = 'Click the floor to place the station. R turns it, Esc cancels.';
+}
+function cancelPlacing() { S.placing = null; hideTag(); api('/pg/ghost/clear', {}); render(); }
+let stProbeBusy = false, stProbeNext = null;
+async function probeStation(p) {
+  S.lastUV = p;
+  if (stProbeBusy) { stProbeNext = p; return; }
+  stProbeBusy = true;
+  try {
+    const r = await api('/pg/station/probe', {u: p.u, v: p.v, yaw: S.placeYaw});
+    if (!S.placing) { hideTag(); api('/pg/ghost/clear', {}); return; }
+    const label = (S.cat.robots.find(x => x.id === S.placing) || {}).label || '';
+    showTag(p, r.valid ? `${label} station · click to place` : (r.reason || "can't go there"), !r.valid);
+  } finally { stProbeBusy = false; if (stProbeNext) { const n = stProbeNext; stProbeNext = null; probeStation(n); } }
+}
+async function placeStation(p) {
+  const r = await api('/pg/station/add', {robot: S.placing, u: p.u, v: p.v, yaw: S.placeYaw});
+  if (!r.ok) { toast(r.error || "Can't go there"); return; }
+  S.placing = null; hideTag(); S.sel = 'robot';
+  await refresh(); setSideTab('chat'); $('task').focus();
+}
 async function rotateSel() { const r = await api('/pg/rotate', {uid: S.sel, degrees: 90}); if (!r.ok) toast(r.error); refresh(); }
 $('delBtn').onclick = removeSel; $('rotBtn').onclick = rotateSel;
-$('robotBtn').onclick = () => { S.sel = 'robot'; api('/pg/select', {uid: 'robot'}); render(); };
 
 // ---------------------------------------------------------------- play, tasks, chat
 $('playBtn').onclick = async () => {
@@ -493,13 +612,17 @@ $('resetBtn').onclick = async () => { const r = await api('/pg/reset', {}); if (
 $('startBtn').onclick = async () => {
   const task = $('task').value.trim();
   if (!task) { toast('Type a task for the robot first'); $('task').focus(); return; }
-  const r = await api('/pg/play', {task, model: $('model').value});
+  const station = S.scene.active;
+  const r = await api('/pg/play', {task, model: $('model').value, station});
   if (!r.ok) { toast(r.error); return; }
-  S.runTask = task; S.follow = true; setSideTab('chat');
+  S.runTask = task; S.follow = true; S.feedKey = ''; setSideTab('chat');
   refresh();
 };
-$('stopBtn').onclick = async () => { await api('/pg/stop', {}); refresh(); };
-$('newTaskBtn').onclick = () => { setSideTab('objects'); $('task').focus(); };
+$('stopBtn').onclick = async () => { await api('/pg/stop', S.scene && S.scene.mode === 'free' ? {station: S.scene.active} : {}); refresh(); };
+$('infoBtn').onclick = (e) => { e.stopPropagation(); const open = $('infoPop').hidden; $('infoPop').hidden = !open; $('infoBtn').setAttribute('aria-expanded', open); };
+document.addEventListener('click', (e) => { if (!$('infoPop').hidden && !e.target.closest('#infoPop')) { $('infoPop').hidden = true; $('infoBtn').setAttribute('aria-expanded', false); } });
+function modelInfo(id) { return (S.cat.models.find(m => m.id === id) || {}); }
+$('model').onchange = () => { $('modelLogo').src = LOGOS[modelInfo($('model').value).provider] || LOGOS.anthropic; S.feedKey = ''; render(); };
 // Free play's right panel: Chat or Objects. A run switches it to Chat; either tab can be
 // picked at any time. Objects are greyed out while the scene is locked (running or playing).
 S.sideTab = 'objects';
@@ -518,7 +641,7 @@ $('feed').addEventListener('scroll', () => { S.follow = feedAtBottom(); $('jumpB
 $('jumpBtn').onclick = () => { S.follow = true; $('jumpBtn').style.display = 'none'; const f = $('feed'); f.scrollTop = f.scrollHeight; };
 function renderFeed() {
   const run = (S.scene && S.scene.run) || {}, info = S.runInfo, trace = S.trace, active = !!run.active;
-  const key = (run.started || '') + '|' + trace.length + '|' + active + '|' + S.mode;
+  const key = (S.scene && S.scene.active) + '|' + (run.started || '') + '|' + trace.length + '|' + active + '|' + S.mode;
   if (key === S.feedKey) return;
   S.feedKey = key;
   const m = run.model || {}, logo = LOGOS[m.provider] || '', who = esc(info.model_label || m.label || 'The AI');
@@ -544,8 +667,8 @@ function renderFeed() {
       let text = st.kind === 'writes' ? st.text.split('\n')[0] : st.text, img = '';
       if (st.kind === 'looks') {
         const c = /^(overhead|wrist|side) camera/.exec(st.text), f = /saved image (.+)$/.exec(st.text);
-        if (c) img = `<img src="/camera/${c[1]}.jpg?t=${st.t.toFixed(3)}" alt="What the ${c[1]} camera showed at ${mmss(st.t - start)}" loading="lazy">`;
-        else if (f) img = `<img src="/run/file?path=${encodeURIComponent(f[1])}" alt="${esc(f[1])}" loading="lazy" onerror="this.remove()">`;
+        if (c) img = `<img src="${stBase()}/camera/${c[1]}.jpg?t=${st.t.toFixed(3)}" alt="What the ${c[1]} camera showed at ${mmss(st.t - start)}" loading="lazy">`;
+        else if (f) img = `<img src="${stBase()}/run/file?path=${encodeURIComponent(f[1])}" alt="${esc(f[1])}" loading="lazy" onerror="this.remove()">`;
         text = c ? c[1] + ' camera' : f ? f[1] : text;
       }
       body = `<div class="lite"><div class="row"><span class="sdot">●</span><b>${label}</b><code title="${esc(st.text)}">${esc(text)}</code></div>${img}</div>`;
@@ -561,14 +684,16 @@ function renderFeed() {
 async function pollTrace() {
   const run = S.scene && S.scene.run;
   if (run && run.started) {
-    if (S.runKey !== run.started) { S.runKey = run.started; S.trace = []; S.runInfo = {}; S.follow = true; $('jumpBtn').style.display = 'none'; }
-    const r = await api('/trace?since=' + S.trace.length);
+    const base = stBase(), rk = base + '|' + run.started;
+    if (S.runKey !== rk) { S.runKey = rk; S.trace = []; S.runInfo = {}; S.follow = true; $('jumpBtn').style.display = 'none'; $('chatCost').textContent = ''; delete $('chatModel').dataset.set; }
+    const r = await api(base + '/trace?since=' + S.trace.length);
+    if (S.runKey !== rk) return;
     S.trace.push(...r.steps);
-    const info = await api('/run');
+    const info = await api(base + '/run');
     if (info.run_id) S.runInfo = info;
     if (info.cost_usd != null || info.tokens) $('chatCost').textContent = (info.cost_usd != null ? '$' + Number(info.cost_usd).toFixed(2) + ' · ' : '') + (info.tokens ? (info.tokens / 1000).toFixed(1) + 'k tokens' : '');
-    if (info.model_label) $('chatModel').textContent = info.model_label;
-  }
+    if (info.model_label) { $('chatModel').textContent = info.model_label; $('chatModel').dataset.set = 1; }
+  } else if (S.runKey) { S.runKey = null; S.trace = []; S.runInfo = {}; $('chatCost').textContent = ''; delete $('chatModel').dataset.set; }
   renderFeed();
 }
 
@@ -587,11 +712,18 @@ function render() {
   $('right').classList.toggle('locked', !!sc.locked);
   $('liveTag').style.display = playing ? '' : 'none';
   $('hintTag').style.display = playing ? 'none' : '';
-  // robot card
-  const hasTask = $('task').value.trim().length > 0;
-  $('robotDot').style.background = active ? '#DC2626' : (hasTask ? '#16A34A' : '#9CA3AF');
-  $('robotStatus').textContent = active ? 'Working on its task' : (run.started ? 'Run ' + (run.status || 'finished') : (hasTask ? 'Task ready' : 'No task yet'));
-  $('robotBtn').setAttribute('aria-pressed', S.sel === 'robot');
+  // stations: the list, and the selected one's cameras, task and chat
+  const st = curStation(), free = sc.mode === 'free';
+  if (S.taskFor !== sc.active) { S.taskFor = sc.active; $('task').value = S.drafts[sc.active] || ''; }
+  renderStations();
+  $('stTitle').textContent = free ? st.name : (st.label || 'Robot');
+  $('stSub').textContent = (free ? st.label + ' · ' : '') + (st.gripper || '');
+  $('taskFor').textContent = `Task for ${free ? st.name + ' · ' : ''}${st.label || 'the robot'}`;
+  $('infoText').textContent = `Your task, the ${st.label || 'robot'}'s manuals, a site sheet naming what's on its table (not where), its two cameras and its sensors. It writes code to move the robot. There's no time limit: it runs until it says it's done, or you press Stop. Runs use your own Claude Code or Codex login.`;
+  $('stRemove').disabled = sc.locked || (sc.robots || []).length < 2; $('stRotate').disabled = !!sc.locked;
+  $('addStationBtn').disabled = !!sc.locked;
+  const camKey = stBase() || '/';
+  if (S.camFor !== camKey) { S.camFor = camKey; openCams(); }
   const obj = sc.objects.find(o => o.uid === S.sel);
   $('robotPanel').style.display = obj ? 'none' : 'flex';
   $('objPanel').style.display = obj ? 'flex' : 'none';
@@ -611,7 +743,9 @@ function render() {
   $('libhint').textContent = sc.locked ? 'Pause the scene to add or move objects.' : (S.armed ? $('libhint').textContent : LIBHINT);
   $('task').readOnly = active;
   $('stopBtn').style.display = active ? '' : 'none';
-  $('newTaskBtn').style.display = active ? 'none' : '';
+  $('taskcard').style.display = active ? 'none' : '';
+  $('runbar').style.display = run.started || S.fixed ? '' : 'none';
+  if (!run.started) { const m = modelInfo($('model').value); $('chatLogo').src = LOGOS[m.provider] || LOGOS.anthropic; $('chatModel').textContent = m.label || ''; $('runStatus').textContent = ''; }
   if (run.started) {
     const left = Math.max(0, run.time_limit - run.elapsed);
     const mmss = (x) => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
@@ -620,6 +754,7 @@ function render() {
     if (!$('chatModel').dataset.set) $('chatModel').textContent = m.label || '';
   }
   $('startBtn').disabled = active;
+  if (!S.placing) $('hintTag').textContent = S.fixed ? 'Drag to orbit, scroll to zoom.' : 'Drag objects in from the right. Click a robot to give it a task. Drag to orbit, right-drag to pan, scroll to zoom.';
   if (S.mode === 'libero') renderLiberoLive();
   if (S.mode === 'wetlab') renderWetLive();
 }
@@ -631,10 +766,14 @@ async function refresh() {
 // If the server goes away (restarted, or stopped and started again), the live streams end and
 // don't come back by themselves: once it answers again, reconnect them.
 function openStreams() {
-  const t = Date.now();
-  view.src = '/pg/view.mjpg?r=' + t;
-  $('camOver').src = '/stream/overhead.mjpg?fps=4&r=' + t;
-  $('camWrist').src = '/stream/wrist.mjpg?fps=4&r=' + t;
+  view.src = '/pg/view.mjpg?r=' + Date.now();
+  openCams();
+}
+// The selected station's two cameras (what its AI sees).
+function openCams() {
+  const t = Date.now(), base = stBase();
+  $('camOver').src = base + '/stream/overhead.mjpg?fps=4&r=' + t;
+  $('camWrist').src = base + '/stream/wrist.mjpg?fps=4&r=' + t;
 }
 async function loop() {
   try {
@@ -644,7 +783,7 @@ async function loop() {
   } catch (e) { S.offline = true; }
   setTimeout(loop, 500);
 }
-$('task').oninput = render;
+$('task').oninput = () => { if (S.scene) S.drafts[S.scene.active] = $('task').value; render(); };
 
 // ---------------------------------------------------------------- LIBERO test mode
 S.mode = null; S.fixed = false; S.L = null; S.lDone = null; S.W = null; S.wDone = null;
@@ -659,7 +798,6 @@ function applyMode() {
   document.body.classList.toggle('fixed', S.fixed);
   $('modeFree').setAttribute('aria-pressed', mode === 'free'); $('modeLibero').setAttribute('aria-pressed', lib); $('modeWet').setAttribute('aria-pressed', wet);
   $('modechip').textContent = lib ? 'LIBERO · results saved' : wet ? 'Wet lab bench · results saved' : 'Free play · not saved';
-  $('hintTag').textContent = S.fixed ? 'Drag to orbit, scroll to zoom.' : 'Drag objects in from the right. Drag to orbit, right-drag to pan, scroll to zoom.';
   S.feedKey = '';
   if (lib) loadLibero();
   else if (wet) loadWet();
@@ -750,7 +888,6 @@ function renderLiberoLive() {
   if (b.active) { const c = b.current || {}; st = b.total > 1 ? `Running setup ${(c.setup ?? 0) + 1}${b.tasks.length > 1 ? ' of task ' + c.task.replaceAll('_', ' ') : ''} · ${b.done} of ${b.total} done, ${b.passed} passed` : `Running setup ${(c.setup ?? 0) + 1}…`; }
   else if (b.last) st = `Last: setup ${b.last.setup} ${b.last.passed ? 'passed' : 'failed'} (${b.last.how}, ${b.last.seconds}s)`;
   $('lStatus').textContent = st;
-  $('newTaskBtn').style.display = 'none';
   if (sc.run && sc.run.started && !sc.run.active && !b.active && b.last) $('runStatus').textContent = b.last.passed ? '✓ Passed · goal reached in ' + b.last.seconds + 's' : 'Failed · ' + b.last.how;
   const key = (b.done || 0) + ':' + !!b.active + ':' + sc.task;
   if (S.lDone !== key) { S.lDone = key; S.lSuite = sc.suite; loadLibero(); }
@@ -804,7 +941,6 @@ function renderWetLive() {
   if (b.active) st = b.total > 1 ? `Running ${b.current} · ${b.done} of ${b.total} done, ${b.passed} passed` : `Running ${b.current}…`;
   else if (b.last) st = `Last: ${b.last.task} ${b.last.passed ? 'passed' : 'failed'}${b.last.score != null ? ' (score ' + b.last.score + ')' : ''}, ${Math.round(b.last.seconds)}s`;
   $('wStatus').textContent = st;
-  $('newTaskBtn').style.display = 'none';
   if (sc.run && sc.run.started && !sc.run.active && !b.active && b.last) $('runStatus').textContent = b.last.passed ? '✓ Passed' : 'Failed · ' + (b.last.how || '');
   const key = (b.done || 0) + ':' + !!b.active + ':' + sc.task;
   if (S.wDone !== key) { S.wDone = key; loadWet(); }
@@ -828,6 +964,7 @@ $('wModel').onchange = renderWet;
   view.onload = () => $('loading').style.display = 'none';
   const sendAspect = () => { const r = stage.getBoundingClientRect(); if (r.width > 50 && r.height > 50) api('/pg/camera', {aspect: r.width / r.height}); };
   sendAspect(); new ResizeObserver(() => { clearTimeout(sendAspect.h); sendAspect.h = setTimeout(sendAspect, 150); }).observe(stage);
+  $('modelLogo').src = LOGOS[modelInfo($('model').value).provider] || LOGOS.anthropic;
   openStreams();
   setTimeout(() => $('loading').style.display = 'none', 8000);
   loop();

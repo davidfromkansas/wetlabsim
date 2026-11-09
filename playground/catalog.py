@@ -12,7 +12,7 @@ import pathlib
 
 ASSETS = pathlib.Path(__file__).parent / "assets"
 
-TABS = ["Furniture", "Lab & Medical", "Kitchen", "Bins & Trays", "Toys & Basics", "Robots"]
+TABS = ["Furniture", "Lab & Medical", "Kitchen", "Bins & Trays", "Toys & Basics"]
 
 # id, tab, label, Hugging Face folder, hollow, fixed
 ITEMS = [
@@ -38,10 +38,19 @@ ITEMS = [
     ("pong_ball", "Toys & Basics", "Ping-pong ball", "misc_toy_pongPaddle_ball_a01", False, False),
 ]
 
-# Robots: Menagerie models (wetlabsim/assets). The Franka is always in the scene.
+# Robot stations: a Menagerie arm (wetlabsim/assets) on its own packing table. Specs are the
+# makers' datasheet figures.
 ROBOTS = [
-    {"id": "franka", "tab": "Robots", "label": "Franka Panda", "gripper": "Franka Hand"},
+    {"id": "franka", "label": "Franka Panda", "maker": "Franka Robotics", "gripper": "Franka Hand",
+     "reach_mm": 855, "payload_kg": 3, "joints": 7, "thumb": "/pg/static/station_franka.png"},
+    {"id": "ur5e", "label": "UR5e", "maker": "Universal Robots", "gripper": "Robotiq 2F-85",
+     "reach_mm": 850, "payload_kg": 5, "joints": 6, "thumb": "/pg/static/station_ur5e.png"},
 ]
+
+
+def robots() -> list[dict]:
+    return ROBOTS
+
 
 DEFAULT_TABLE = "table_packing"
 

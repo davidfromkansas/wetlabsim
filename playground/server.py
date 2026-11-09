@@ -23,8 +23,8 @@ import time
 import urllib.parse
 from http.server import ThreadingHTTPServer
 
-from wetlabsim.server import Handler
-from wetlabsim.sim import RobotError
+from wetlabsim.server import Handler, RunBoard
+from wetlabsim.sim import RobotError, RobotView
 
 from . import catalog
 from . import libero as LB
@@ -99,10 +99,12 @@ MODELS = [
 
 
 class Runner:
-    """One agent run at a time: wetlabsim.run_agent in its own process, against this server."""
+    """One agent run at a time on one robot: wetlabsim.run_agent in its own process, against
+    this server (url: that robot's API)."""
 
-    def __init__(self, url: str, runs: pathlib.Path):
-        self.url, self.runs = url, runs
+    def __init__(self, url: str, runs: pathlib.Path, docs: str = "standard"):
+        self.url, self.runs, self.docs = url, runs, docs
+        self.board = RunBoard()
         self.proc: subprocess.Popen | None = None
         self.info: dict = {}
         self.lock = threading.Lock()
@@ -120,7 +122,7 @@ class Runner:
                 raise RobotError(f"unknown model {model_id!r}")
             cmd = [sys.executable, "-m", "wetlabsim.run_agent", "--agent", mdl["agent"], "--task", task,
                    "--url", self.url, "--runs", str(self.runs), "--time-limit", str(time_limit),
-                   "--docs", "standard", *(extra or [])]
+                   "--docs", self.docs, *(extra or [])]
             if site_text is not None:     # None: the bench's own site sheet (Wet Lab mode)
                 sitef = pathlib.Path(tempfile.mkdtemp(prefix="playground-site-")) / "SITE.md"
                 sitef.write_text(site_text)
@@ -158,25 +160,59 @@ class Runner:
 
 class PGHandler(Handler):
     sim: PlaygroundSim
-    runner: Runner
+    runner: Runner              # the scene's one robot (LIBERO, Wet Lab, and the robot cell's own URLs)
+    runners: dict = {}          # free play: one per station, by station id
     bench: Bench
     wetbench: WL.WetBench
+    base_url = ""
 
     def _busy(self) -> bool:
-        return self.runner.active() or self.bench.active() or self.wetbench.active()
+        return (self.runner.active() or self.bench.active() or self.wetbench.active()
+                or any(r.active() for r in self.runners.values()))
+
+    @classmethod
+    def station_runner(cls, uid: str) -> Runner:
+        r = cls.runners.get(uid)
+        st = cls.sim.station(uid)
+        docs = "standard" if st is None or st.robot == "franka" else "assisted"
+        if r is None or r.docs != docs and not r.active():
+            r = cls.runners[uid] = Runner(f"{cls.base_url}/st/{uid}", cls.runner.runs, docs)
+        return r
+
+    def _station_request(self) -> bool:
+        """Requests to /st/<station>/...: that station's robot API (and its run), as if it were
+        a robot cell of its own."""
+        if not self.path.startswith("/st/"):
+            return False
+        _, _, uid, rest = (self.path.split("/", 3) + [""])[:4]
+        sim = PGHandler.sim
+        if sim.scene_mode != "free" or uid not in sim.arms:
+            self._err("no such station", 404)
+            return True
+        self.sim = RobotView(sim, sim.arms[uid])
+        self.board = self.station_runner(uid).board
+        self.path = "/" + rest
+        return True
+
+    def _runs_status(self) -> dict:
+        return {uid: self.runners[uid].status() for uid in list(self.runners)}
 
     def _locked(self) -> str:
         if self.sim.scene_mode == "libero":
             return "LIBERO scenes are fixed: switch to Free play to build your own"
         if self.sim.scene_mode == "wetlab":
             return "the wet lab bench is fixed for a fair test: switch to Free play to build your own"
-        if self.runner.active():
-            return "the scene is locked while the AI is running; stop the run to edit"
+        if self.runner.active() or any(r.active() for r in self.runners.values()):
+            return "the scene is locked while an AI is running; stop the run to edit"
         if not self.sim.paused:
             return "the scene is locked while playing; pause to edit"
         return ""
 
     def do_GET(self):
+        if self._station_request():
+            if self.path.startswith("/pg/"):
+                return self._err("not found", 404)
+            return Handler.do_GET(self)
         url = urllib.parse.urlparse(self.path)
         qs = urllib.parse.parse_qs(url.query)
         p = url.path.rstrip("/") or "/"
@@ -194,7 +230,7 @@ class PGHandler(Handler):
                                       {"Cache-Control": "max-age=3600"})
                 return self._err("not found", 404)
             if p == "/pg/catalog":
-                return self._json({"tabs": catalog.TABS, "items": catalog.available(), "robots": catalog.ROBOTS,
+                return self._json({"tabs": catalog.TABS, "items": catalog.available(), "robots": catalog.robots(),
                                    "models": [{k: m[k] for k in ("id", "label", "via", "provider")} for m in MODELS],
                                    "time_limit": TIME_LIMIT})
             if p.startswith("/pg/thumb/"):
@@ -203,7 +239,10 @@ class PGHandler(Handler):
                     return self._send(200, f.read_bytes(), "image/png", {"Cache-Control": "max-age=86400"})
                 return self._err("not found", 404)
             if p == "/pg/scene":
-                return self._json({**self.sim.scene_info(), "run": self.runner.status(), "locked": self._locked(),
+                info = self.sim.scene_info()
+                runs = self._runs_status() if info["mode"] == "free" else {}
+                run = runs.get(info["active"], {"active": False}) if info["mode"] == "free" else self.runner.status()
+                return self._json({**info, "run": run, "runs": runs, "locked": self._locked(),
                                    "bench": self.bench.status(), "wetbench": self.wetbench.status()})
             if p == "/pg/wetlab":
                 return self._json({"tasks": [{"id": t.id, "title": t.title, "prompt": t.prompt,
@@ -251,6 +290,10 @@ class PGHandler(Handler):
             return
 
     def do_POST(self):
+        if self._station_request():
+            if self.path.startswith("/pg/"):
+                return self._err("not found", 404)
+            return Handler.do_POST(self)
         p = urllib.parse.urlparse(self.path).path.rstrip("/")
         if not p.startswith("/pg/"):
             return super().do_POST()
@@ -279,14 +322,72 @@ class PGHandler(Handler):
                 return self._json({"ok": True})
             if p == "/pg/pick":
                 out = s.pick(float(b["u"]), float(b["v"]))
-                s.selected = "robot" if out["kind"] == "robot" else (out.get("uid") if out["kind"] == "object" else None)
+                s.selected = out.get("uid") if out["kind"] == "object" else None
+                if out.get("station") and s.scene_mode == "free" and out["station"] != s.active_station:
+                    s.active_station = out["station"]
+                    s.frame_station()
                 return self._json(out)
             if p == "/pg/select":
-                s.selected = b.get("uid")
+                s.selected = b.get("uid") if b.get("uid") not in (None, "robot") else None
                 return self._json({"ok": True})
+            if p == "/pg/station/select":
+                if s.station(b["uid"]) is None:
+                    return self._json({"ok": False, "error": "no such station"})
+                s.active_station = b["uid"]
+                s.selected = None
+                if b.get("frame", True):
+                    s.frame_station()
+                return self._json({"ok": True})
+            if p == "/pg/station/probe":
+                lock = self._locked()
+                if lock:
+                    s.clear_ghost()
+                    return self._json({"valid": False, "reason": lock})
+                return self._json(s.probe_station(float(b["u"]), float(b["v"]), float(b.get("yaw", 0.0)), b.get("uid")))
             lock = self._locked()
-            if p in ("/pg/place", "/pg/move", "/pg/remove", "/pg/rotate", "/pg/clear") and lock:
-                return self._json({"ok": False, "error": lock})
+            if (p in ("/pg/place", "/pg/move", "/pg/remove", "/pg/rotate", "/pg/clear") or p.startswith("/pg/station/")) and lock:
+                if p != "/pg/station/rename":
+                    return self._json({"ok": False, "error": lock})
+            if p == "/pg/station/add":
+                spot = s.probe_station(float(b["u"]), float(b["v"]), float(b.get("yaw", 0.0)))
+                s.clear_ghost()
+                if not spot.get("valid"):
+                    return self._json({"ok": False, "error": spot.get("reason") or "can't go there"})
+                uid = s.add_station(b.get("robot", "franka"), spot["pos"], float(b.get("yaw", 0.0)))
+                s.frame_station(uid)
+                return self._json({"ok": True, "uid": uid})
+            if p == "/pg/station/move":
+                st = s.station(b["uid"])
+                if st is None:
+                    return self._json({"ok": False, "error": "no such station"})
+                yaw = float(b.get("yaw", st.yaw))
+                if "u" in b:
+                    spot = s.probe_station(float(b["u"]), float(b["v"]), yaw, st.uid)
+                else:
+                    spot = s.station_spot(st.pos[0], st.pos[1], yaw, st.uid)
+                s.clear_ghost()
+                if not spot.get("valid"):
+                    return self._json({"ok": False, "error": spot.get("reason") or "can't go there"})
+                s.move_station(st.uid, spot["pos"], yaw)
+                return self._json({"ok": True})
+            if p == "/pg/station/rotate":
+                st = s.station(b["uid"])
+                if st is None:
+                    return self._json({"ok": False, "error": "no such station"})
+                import math
+                yaw = st.yaw + math.radians(float(b.get("degrees", 90)))
+                spot = s.station_spot(st.pos[0], st.pos[1], yaw, st.uid)
+                if not spot.get("valid"):
+                    return self._json({"ok": False, "error": spot.get("reason") or "no room to turn it"})
+                s.move_station(st.uid, st.pos, yaw)
+                return self._json({"ok": True})
+            if p == "/pg/station/remove":
+                s.remove_station(b["uid"])
+                self.runners.pop(b["uid"], None)
+                return self._json({"ok": True})
+            if p == "/pg/station/rename":
+                s.rename_station(b["uid"], b.get("name", ""))
+                return self._json({"ok": True})
             if p == "/pg/place":
                 spot = b.get("spot") or s.probe(b["item"], float(b["u"]), float(b["v"]), float(b.get("yaw", 0.0)))
                 s.clear_ghost()
@@ -324,6 +425,8 @@ class PGHandler(Handler):
                     s.set_wetlab(b.get("task") or s.wetlab_task or WL.ORDER[0])
                 else:
                     s.set_free()
+                s._glide = None
+                self._camera_preset("home")
                 return self._json({"ok": True})
             if p == "/pg/wetlab/task":
                 if self._busy():
@@ -373,21 +476,35 @@ class PGHandler(Handler):
                     return self._json({"ok": False, "error": "in LIBERO mode, use Run this setup"})
                 if s.scene_mode == "wetlab" and task:
                     return self._json({"ok": False, "error": "in Wet Lab mode, use Run this task"})
-                if task and not self.runner.active():
+                if task:
+                    uid = b.get("station") or s.active_station
+                    station = s.station(uid)
+                    if station is None:
+                        return self._json({"ok": False, "error": "no such station"})
+                    runner = self.station_runner(uid)
+                    if runner.active():
+                        return self._json({"ok": False, "error": f"{station.name} is already running a task"})
                     s.selected = None
                     s.play()
-                    st = self.runner.start(task, b.get("model", "claude"), site.site_sheet(s.placed),
-                                           float(b.get("time_limit", FREE_TIME_LIMIT)))
+                    st = runner.start(task, b.get("model", "claude"), site.site_sheet(s.placed, station, s.stations),
+                                      float(b.get("time_limit", FREE_TIME_LIMIT)))
                     return self._json({"ok": True, "run": st})
                 s.play()
-                return self._json({"ok": True, "run": self.runner.status()})
+                return self._json({"ok": True})
             if p == "/pg/pause":
                 s.pause()
                 return self._json({"ok": True})
             if p == "/pg/stop":
+                if b.get("station"):          # one station's run
+                    r = self.runners.get(b["station"])
+                    if r:
+                        r.stop()
+                    return self._json({"ok": True})
                 self.bench.stop()
                 self.wetbench.stop()
                 self.runner.stop()
+                for r in self.runners.values():
+                    r.stop()
                 return self._json({"ok": True})
             if p == "/pg/reset":
                 if self._busy():
@@ -402,17 +519,26 @@ class PGHandler(Handler):
             return self._err(f"bad request: {e}")
 
     def _camera_preset(self, name):
-        c = self.sim.view
+        s = self.sim
+        free = s.scene_mode == "free"
+        st = s.station() if free else None
+        import math
+        yaw = math.degrees(st.yaw) if st else 0.0
+        if name == "lab" and free:
+            return s.frame_lab()
         if name == "top":
-            c.lookat[:] = [0.0, 0.0, 0.9]
-            c.distance, c.azimuth, c.elevation = 2.6, 180.0, -89.0
+            cx, cy = st.pos if st else (0.0, 0.0)
+            s._set_view({"lookat": [cx, cy, 0.9], "distance": 2.6, "azimuth": (180.0 + yaw) % 360,
+                         "elevation": -89.0}, free)
         elif name == "robot":
-            bp = self.sim.d.xpos[self.sim.base_body]
-            c.lookat[:] = [bp[0] + 0.35, bp[1], bp[2] + 0.1]
-            c.distance, c.azimuth, c.elevation = 1.6, 160.0, -30.0
+            bp = s.d.xpos[s.arm_of(s.active_station if free else None).base_body]
+            c, sn = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
+            s._set_view({"lookat": [bp[0] + 0.35 * c, bp[1] + 0.35 * sn, bp[2] + 0.1], "distance": 1.6,
+                         "azimuth": (160.0 + yaw) % 360, "elevation": -30.0}, free)
+        elif free:
+            s.frame_station()
         else:
-            c.lookat[:] = [0.0, 0.0, 0.85]
-            c.distance, c.azimuth, c.elevation = 2.8, 145.0, -28.0
+            s._set_view({"lookat": [0.0, 0.0, 0.85], "distance": 2.8, "azimuth": 145.0, "elevation": -28.0}, False)
 
 
 def main(argv=None):
@@ -441,6 +567,8 @@ def main(argv=None):
     url = f"http://{args.host}:{args.port}"
     PGHandler.sim, PGHandler.token, PGHandler.runs_dir = sim, token, runs
     PGHandler.runner = Runner(url, runs)
+    PGHandler.base_url = url
+    PGHandler.board = PGHandler.runner.board
     PGHandler.bench = Bench(sim, PGHandler.runner, PGHandler, runs / "libero_results.jsonl")
     PGHandler.wetbench = WL.WetBench(sim, PGHandler.runner, PGHandler, runs / "wetlab_results.jsonl")
     srv = ThreadingHTTPServer((args.host, args.port), PGHandler)
@@ -455,6 +583,8 @@ def main(argv=None):
         pass
     finally:
         PGHandler.runner.stop()
+        for r in PGHandler.runners.values():
+            r.stop()
         sim.stop_threads()
 
 

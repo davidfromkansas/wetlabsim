@@ -92,35 +92,48 @@ class Motion:
     result: str = "running"
 
 
-# ------------------------------------------------------------------ simulator
-class Sim:
-    def __init__(self, run_dir: str | pathlib.Path | None = None, realtime: float = 1.0,
-                 robot: str | None = None):
-        self.robot = S.robot_name(robot)
-        self.P = S.profile(self.robot)
-        self.lock = threading.RLock()
-        self.realtime = realtime
-        self.paused = False             # the playground can pause the world; the robot cell never does
-        self._model_ver = 0             # bumped when the scene is rebuilt (renderers follow)
-        self.m = self._make_model()
-        self.d = mujoco.MjData(self.m)
-        self._index()
-        self.rng = np.random.default_rng()
-        self.run_dir = pathlib.Path(run_dir) if run_dir else None
-        self._log_f = None
-        self._cap_rgba0 = {}
-        self.task = None
-        self.reset()
-        self._running = False
-        self._render_q: queue.PriorityQueue = queue.PriorityQueue()
-        self._render_seq = 0
+# ------------------------------------------------------------------- one robot
+class Arm:
+    """One robot in the world: its controller, gripper, wrist sensor and cameras.
 
-    def _make_model(self) -> mujoco.MjModel:
-        return S.build_model(self.robot)
+    A scene usually has one (the robot cell, LIBERO); the playground's lab can have several,
+    each attached with its own name prefix. The world (physics, time, rendering) is the Sim's.
+    """
+
+    def __init__(self, sim: "Sim", robot: str, prefix: str = "", uid: str = "robot",
+                 world_cameras: str | None = None):
+        self.sim = sim
+        self.uid = uid
+        self.prefix = prefix
+        self.robot = S.robot_name(robot)
+        self.P = S.profile_for(self.robot, prefix, world_cameras)
+        self.rng = np.random.default_rng()
+        self.events: list[dict] = []
+        self._log_f = None
+        self.run_dir = None
+        self.recording_from = 0.0
+        self.motion: Motion | None = None
+        self.mode = "running"
+        self.stop_reason = ""
+        self.state_log: list[dict] = []
+        self.task = None
+
+    # world shortcuts
+    @property
+    def m(self):
+        return self.sim.m
+
+    @property
+    def d(self):
+        return self.sim.d
+
+    @property
+    def lock(self):
+        return self.sim.lock
 
     def _index(self):
         """Look up the robot's joints, actuators, sites and bodies in the current model."""
-        P, m = self.P, self.m
+        P, m = self.P, self.sim.m
         self.n_arm = len(P["arm_joints"])
         self.arm_qadr = np.array([m.joint(j).qposadr[0] for j in P["arm_joints"]])
         self.arm_dadr = np.array([m.joint(j).dofadr[0] for j in P["arm_joints"]])
@@ -136,58 +149,70 @@ class Sim:
         self.joint_lo = m.jnt_range[[m.joint(j).id for j in P["arm_joints"]], 0]
         self.joint_hi = m.jnt_range[[m.joint(j).id for j in P["arm_joints"]], 1]
         self.grip_force_base = m.actuator_forcerange[self.grip_act].copy()
+        self.sensors = P.get("sensors", ("ft_force", "ft_torque"))
         self._ik_data = mujoco.MjData(m)
+        # this robot's own joints (arm, gripper, fingers): kept when the scene is rebuilt
+        root = self.base_body
+        self.bodies = {b for b in range(m.nbody) if self._in_subtree(b, root)}
+        self.own_joints = [m.joint(j).name for j in range(m.njnt) if m.jnt_bodyid[j] in self.bodies]
 
-    # ---------------------------------------------------------------- setup
-    def reset(self, task: str | None = None):
-        """Start over, with the bench laid out for a task (tasks.py), or the default bench."""
-        with self.lock:
-            m, d = self.m, self.d
-            mujoco.mj_resetData(m, d)
-            d.qpos[self.arm_qadr] = self.ready_q
-            d.ctrl[self.arm_act] = self.ready_q
-            d.ctrl[self.grip_act] = self._grip_ctrl(0.0)
-            self.task = task
-            self._lay_out(task)
-            mujoco.mj_forward(m, d)
-            for _ in range(250):            # let things settle
-                mujoco.mj_step(m, d)
-            self.motion: Motion | None = None
-            self.mode = "running"           # or "protective_stop"
-            self.stop_reason = ""
-            self.grip_target = 0.0
-            self.grip_cmd = 0.0
-            self.grip_rate = 255.0
-            self.ft_offset = np.zeros(6)
-            # A real wrist force estimate is off by up to its rated accuracy until it is tared.
-            fb, tb = self.P["ft_bias"]
-            self.ft_bias = np.concatenate([self.rng.uniform(-fb, fb, 3), self.rng.uniform(-tb, tb, 3)])
-            self.events: list[dict] = []
-            self._wall0 = time.perf_counter()
-            self._sim0 = self.d.time
-            self.rt_factor = 1.0
-            self.recording: list[tuple[float, np.ndarray]] = []   # (time, qpos) at 30 Hz for replay videos
-            self.state_log: list[dict] = []   # robot readings at 20 Hz, so the viewer can rewind
-            self._next_rec = self.d.time
+    def _in_subtree(self, b, root):
+        m = self.sim.m
+        while b > 0:
+            if b == root:
+                return True
+            b = m.body_parentid[b]
+        return False
 
-    def _set_free(self, name: str, pos_b, quat):
-        adr = self.m.jnt_qposadr[self.m.body_jntadr[self.m.body(name).id]]
-        self.d.qpos[adr:adr + 3] = np.asarray(pos_b) + np.array(S.ROBOT_BASE)
-        self.d.qpos[adr + 3:adr + 7] = quat
+    def reset_pose(self):
+        """Arm to its ready pose, gripper open (call with the lock held, before mj_forward)."""
+        d = self.sim.d
+        d.qpos[self.arm_qadr] = self.ready_q
+        d.ctrl[self.arm_act] = self.ready_q
+        d.ctrl[self.grip_act] = self._grip_ctrl(0.0)
 
-    def _lay_out(self, task):
-        poses, colours = T.layout_for(task)
-        m = self.m
-        for name, rgba in self._cap_rgba0.items():     # undo the last task's recolouring
-            m.geom_rgba[m.geom(name).id] = rgba
-        for body, rgba in colours.items():
-            g = m.geom(f"{body}_capvis").id
-            self._cap_rgba0.setdefault(f"{body}_capvis", m.geom_rgba[g].copy())
-            m.geom_rgba[g] = rgba
-        for name, (pos, quat) in poses.items():
-            self._set_free(name, pos, quat)
+    def reset_state(self):
+        """Controller state back to power-on (motion, protective stop, gripper, wrist sensor)."""
+        self.motion = None
+        self.mode = "running"           # or "protective_stop"
+        self.stop_reason = ""
+        self.grip_target = 0.0
+        self.grip_cmd = 0.0
+        self.grip_rate = 255.0
+        self.ft_offset = np.zeros(6)
+        # A real wrist force estimate is off by up to its rated accuracy until it is tared.
+        fb, tb = self.P["ft_bias"]
+        self.ft_bias = np.concatenate([self.rng.uniform(-fb, fb, 3), self.rng.uniform(-tb, tb, 3)])
+        self.events = []
+        self.state_log = []
+        self.recording_from = self.sim.d.time
 
-    def open_log(self, run_dir: str | pathlib.Path):
+    def snapshot(self) -> dict:
+        """This robot's joint positions and commands by name, to carry over a scene rebuild."""
+        m, d = self.sim.m, self.sim.d
+        q = {n: d.qpos[m.joint(n).qposadr[0]] for n in self.own_joints}
+        return {"q": q, "arm_ctrl": d.ctrl[self.arm_act].copy(), "grip_ctrl": d.ctrl[self.grip_act]}
+
+    def restore(self, snap: dict):
+        m, d = self.sim.m, self.sim.d
+        for n, v in snap["q"].items():
+            j = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, n)
+            if j >= 0:
+                d.qpos[m.jnt_qposadr[j]] = v
+        d.ctrl[self.arm_act] = snap["arm_ctrl"]
+        d.ctrl[self.grip_act] = snap["grip_ctrl"]
+
+    def log_event(self, event: str, **kw):
+        ev = {"t": round(self.sim.d.time, 4), "event": event, **kw}
+        if self.uid != "robot":
+            ev["robot"] = self.uid
+        self.events.append(ev)
+        f = self._log_f or self.sim._log_f
+        if f:
+            f.write(json.dumps(ev) + "\n")
+            f.flush()
+
+    def open_log(self, run_dir):
         with self.lock:
             if self._log_f:
                 self._log_f.close()
@@ -195,57 +220,15 @@ class Sim:
             self.run_dir.mkdir(parents=True, exist_ok=True)
             self._log_f = open(self.run_dir / "states.jsonl", "a")
 
-    def log_event(self, event: str, **kw):
-        ev = {"t": round(self.d.time, 4), "event": event, **kw}
-        self.events.append(ev)
-        if self._log_f:
-            self._log_f.write(json.dumps(ev) + "\n")
-            self._log_f.flush()
-
-    # ------------------------------------------------------------ threads
-    def start(self):
-        self._running = True
-        threading.Thread(target=self._physics_loop, daemon=True, name="physics").start()
-        threading.Thread(target=self._render_loop, daemon=True, name="render").start()
-        threading.Thread(target=self._log_loop, daemon=True, name="logger").start()
-
-    def stop_threads(self):
-        self._running = False
-
-    def _physics_loop(self):
-        m, d = self.m, self.d
-        last_check = time.perf_counter()
-        sim_done = 0.0
-        while self._running:
-            wall = time.perf_counter()
-            if self.paused:
-                with self.lock:
-                    self._wall0, self._sim0 = wall, self.d.time   # time stands still
-                last_check, sim_done = wall, 0.0
-                time.sleep(0.005)
-                continue
-            with self.lock:
-                m, d = self.m, self.d          # the scene may have been rebuilt
-                target = self._sim0 + (wall - self._wall0) * self.realtime
-                n = 0
-                while d.time < target and n < 100:
-                    self._control()
-                    mujoco.mj_step(m, d)
-                    n += 1
-                    if d.time >= self._next_rec:
-                        self.recording.append((d.time, d.qpos.copy()))
-                        self._next_rec += 1 / 30
-                sim_done += n * m.opt.timestep
-                if target - d.time > 0.25:  # can't keep up: let time slip, like a dropped frame
-                    self._wall0 += (target - d.time) / self.realtime
-            if wall - last_check > 1.0:
-                self.rt_factor = sim_done / (wall - last_check)
-                sim_done, last_check = 0.0, wall
-            time.sleep(0.0005)
+    def close_log(self):
+        with self.lock:
+            if self._log_f:
+                self._log_f.close()
+            self._log_f = None
 
     # ---------------------------------------------------------- controller
     def _control(self):
-        d = self.d
+        d = self.sim.d
         mo = self.motion
         if mo is not None:
             t = d.time - mo.t0
@@ -260,11 +243,11 @@ class Sim:
                 a = (t - mo.times[i - 1]) / (mo.times[i] - mo.times[i - 1])
                 d.ctrl[self.arm_act] = mo.qs[i - 1] + a * (mo.qs[i] - mo.qs[i - 1])
         # Gripper: ramp the command at the requested speed (Robotiq-style).
-        step = self.grip_rate * self.m.opt.timestep
+        step = self.grip_rate * self.sim.m.opt.timestep
         self.grip_cmd += np.clip(self.grip_target - self.grip_cmd, -step, step)
         d.ctrl[self.grip_act] = self._grip_ctrl(self.grip_cmd)
         # Safety checks (every 10 steps).
-        if self.mode == "running" and int(d.time / self.m.opt.timestep) % 10 == 0:
+        if self.mode == "running" and int(d.time / self.sim.m.opt.timestep) % 10 == 0:
             err = np.max(np.abs(d.ctrl[self.arm_act] - d.qpos[self.arm_qadr]))
             reflex = self._reflex(self._ft_external())
             if reflex:
@@ -275,7 +258,7 @@ class Sim:
     def _protective_stop(self, reason: str):
         self.mode = "protective_stop"
         self.stop_reason = reason
-        self.d.ctrl[self.arm_act] = self.d.qpos[self.arm_qadr]
+        self.sim.d.ctrl[self.arm_act] = self.sim.d.qpos[self.arm_qadr]
         if self.motion:
             self.motion.result = "protective_stop: " + reason
             self.motion.done.set()
@@ -286,15 +269,16 @@ class Sim:
     def _fk(self, q):
         dd = self._ik_data
         dd.qpos[self.arm_qadr] = q
-        mujoco.mj_kinematics(self.m, dd)
-        mujoco.mj_comPos(self.m, dd)
+        mujoco.mj_kinematics(self.sim.m, dd)
+        mujoco.mj_comPos(self.sim.m, dd)
         return dd.site_xpos[self.tcp_site].copy(), dd.site_xmat[self.tcp_site].reshape(3, 3).copy()
 
     def ik(self, pos_w, quat_w, q0, iters=200, tol_p=2e-4, tol_r=2e-3):
         """Damped least squares IK for the TCP. Returns joint angles or None."""
         q = np.array(q0, float)
-        jacp = np.zeros((3, self.m.nv))
-        jacr = np.zeros((3, self.m.nv))
+        m = self.sim.m
+        jacp = np.zeros((3, m.nv))
+        jacr = np.zeros((3, m.nv))
         R_goal = mat_from_quat(quat_w)
         for _ in range(iters):
             p, R = self._fk(q)
@@ -304,7 +288,7 @@ class Sim:
             mujoco.mju_quat2Vel(e_r, quat_from_mat(R_err), 1.0)
             if np.linalg.norm(e_p) < tol_p and np.linalg.norm(e_r) < tol_r:
                 return q
-            mujoco.mj_jacSite(self.m, self._ik_data, jacp, jacr, self.tcp_site)
+            mujoco.mj_jacSite(m, self._ik_data, jacp, jacr, self.tcp_site)
             J = np.vstack([jacp[:, self.arm_dadr], jacr[:, self.arm_dadr]])
             e = np.concatenate([e_p, e_r])
             lam = 1e-3
@@ -318,7 +302,8 @@ class Sim:
     # ------------------------------------------------------- base frame
     def base_tf(self):
         """Robot base frame (world) position and rotation."""
-        return self.d.xpos[self.base_body].copy(), self.d.xmat[self.base_body].reshape(3, 3).copy()
+        d = self.sim.d
+        return d.xpos[self.base_body].copy(), d.xmat[self.base_body].reshape(3, 3).copy()
 
     def to_world(self, p_b, R_b=None):
         bp, bR = self.base_tf()
@@ -343,7 +328,7 @@ class Sim:
         speed = float(np.clip(speed, 0.001, self.P["cart_vmax"]))
         with self.lock:
             self._check_running()
-            q_start = self.d.ctrl[self.arm_act].copy()
+            q_start = self.sim.d.ctrl[self.arm_act].copy()
             p0, R0 = self._fk(q_start)
             p1, R1 = self.to_world(pose[:3], mat_from_quat(quat_from_rotvec(pose[3:])))
         q0, q1 = quat_from_mat(R0), quat_from_mat(R1)
@@ -373,7 +358,7 @@ class Sim:
         speed = float(np.clip(speed, 0.01, float(np.max(self.P["joint_vmax"]))))
         with self.lock:
             self._check_running()
-            q0 = self.d.ctrl[self.arm_act].copy()
+            q0 = self.sim.d.ctrl[self.arm_act].copy()
         T = max(1.875 * np.max(np.abs(q1 - q0)) / speed, 0.2)
         times = np.arange(0.0, T + CTRL_DT, CTRL_DT)
         times[-1] = T
@@ -385,7 +370,7 @@ class Sim:
         """Joint-space move to a tool pose (path is not a straight line)."""
         pose = np.asarray(pose, float)
         with self.lock:
-            q0 = self.d.ctrl[self.arm_act].copy()
+            q0 = self.sim.d.ctrl[self.arm_act].copy()
             pw, Rw = self.to_world(pose[:3], mat_from_quat(quat_from_rotvec(pose[3:])))
         sol = self.ik(pw, quat_from_mat(Rw), q0)
         if sol is None:
@@ -398,7 +383,7 @@ class Sim:
             if self.motion:
                 self.motion.result = "replaced by a new command"
                 self.motion.done.set()
-            mo = Motion(self.d.time, times, qs)
+            mo = Motion(self.sim.d.time, times, qs)
             self.motion = mo
             self.log_event("command", **info)
             return mo
@@ -409,12 +394,12 @@ class Sim:
                 self.motion.result = "stopped"
                 self.motion.done.set()
                 self.motion = None
-            self.d.ctrl[self.arm_act] = self.d.qpos[self.arm_qadr]
+            self.sim.d.ctrl[self.arm_act] = self.sim.d.qpos[self.arm_qadr]
             self.log_event("command", kind="stop")
 
     def unlock(self):
         with self.lock:
-            self.d.ctrl[self.arm_act] = self.d.qpos[self.arm_qadr]
+            self.sim.d.ctrl[self.arm_act] = self.sim.d.qpos[self.arm_qadr]
             self.mode = "running"
             self.stop_reason = ""
             self.log_event("command", kind="unlock_protective_stop")
@@ -434,6 +419,7 @@ class Sim:
     def gripper_move(self, position, speed=255, force=150):
         position = float(np.clip(position, 0, 255))
         P = self.P
+        m = self.sim.m
         with self.lock:
             self.grip_target = position
             sp = float(np.clip(speed, 0, 255)) / 255.0
@@ -445,10 +431,10 @@ class Sim:
                 lo, hi = P["grip_force_n"]
                 # The tendon force splits over both fingers, so it is twice the squeeze.
                 f = 2 * (lo + (hi - lo) * fo)
-                self.m.actuator_forcerange[self.grip_act] = [-f, f]
+                m.actuator_forcerange[self.grip_act] = [-f, f]
             else:
                 self.grip_rate = 40.0 + 360.0 * sp
-                self.m.actuator_forcerange[self.grip_act] = self.grip_force_base * (0.2 + 0.8 * fo)
+                m.actuator_forcerange[self.grip_act] = self.grip_force_base * (0.2 + 0.8 * fo)
             self.log_event("command", kind="gripper", position=position, speed=speed, force=force)
 
     def zero_ft(self):
@@ -477,9 +463,9 @@ class Sim:
     def _ft_compensated(self, offset=True) -> np.ndarray:
         """Wrist force/torque in the tool flange frame, with the gripper's weight removed,
         as the sensor reports it (including its bias)."""
-        d, m = self.d, self.m
-        raw_f = d.sensor("ft_force").data.copy()
-        raw_t = d.sensor("ft_torque").data.copy()
+        d, m = self.sim.d, self.sim.m
+        raw_f = d.sensor(self.sensors[0]).data.copy()
+        raw_t = d.sensor(self.sensors[1]).data.copy()
         R = d.site_xmat[self.ft_site].reshape(3, 3)
         mass = m.body_subtreemass[self.ft_body]
         Fg = R.T @ (mass * m.opt.gravity)
@@ -495,7 +481,7 @@ class Sim:
         return o + (255.0 - 2 * o) * position / 255.0   # o=0: same scale; o=255: reversed
 
     def gripper_status(self):
-        d, P = self.d, self.P
+        d, P = self.sim.d, self.P
         q_open, q_closed = P["grip_open"], P.get("grip_closed", 0.0)
         pos = float(np.clip((d.qpos[self.grip_qadr] - q_open) / (q_closed - q_open) * 255.0, 0, 255))
         vel = abs(float(d.qvel[self.grip_dadr]))
@@ -513,7 +499,7 @@ class Sim:
 
     def state(self) -> dict:
         with self.lock:
-            d = self.d
+            d = self.sim.d
             q = d.qpos[self.arm_qadr] + self.rng.normal(0, 2e-5, self.n_arm)
             qd = d.qvel[self.arm_dadr].copy()
             pw, Rw = d.site_xpos[self.tcp_site].copy(), d.site_xmat[self.tcp_site].reshape(3, 3).copy()
@@ -530,62 +516,40 @@ class Sim:
                 "tcp_pose": np.concatenate([pb, rotvec_from_quat(quat_from_mat(Rb))]).round(5).tolist(),
                 "tcp_force": ft.round(3).tolist(),
                 "gripper": self.gripper_status(),
-                "realtime_factor": round(self.rt_factor, 3),
+                "realtime_factor": round(self.sim.rt_factor, 3),
             }
 
     def ground_truth(self) -> dict:
-        """Object poses for scoring only. Never exposed through the robot API."""
+        """Object poses (in this robot's base frame) for scoring only. Never exposed through
+        the robot API."""
         with self.lock:
+            m, d = self.sim.m, self.sim.d
             out = {}
-            for i in range(self.m.nbody):
-                name = self.m.body(i).name
-                j = self.m.body_jntadr[i]
-                if j >= 0 and self.m.jnt_type[j] == mujoco.mjtJoint.mjJNT_FREE:
-                    p = self.to_base(self.d.xpos[i])
-                    out[name] = {"pos": p.round(5).tolist(), "quat": self.d.xquat[i].round(5).tolist()}
-            return {"time": round(self.d.time, 4), "task": self.task, "objects": out}
+            for i in range(m.nbody):
+                name = m.body(i).name
+                j = m.body_jntadr[i]
+                if j >= 0 and m.jnt_type[j] == mujoco.mjtJoint.mjJNT_FREE:
+                    p = self.to_base(d.xpos[i])
+                    out[name] = {"pos": p.round(5).tolist(), "quat": d.xquat[i].round(5).tolist()}
+            return {"time": round(d.time, 4), "task": self.task, "objects": out}
 
-    def save_recording(self, path):
-        with self.lock:
-            rec = list(self.recording)
-        np.savez_compressed(path, time=np.array([t for t, _ in rec]), qpos=np.array([q for _, q in rec]))
-        return len(rec)
-
-    def _log_loop(self):
-        while self._running:
-            time.sleep(0.05)
-            if not self._log_f:
-                continue
-            s = self.state()
-            self.state_log.append(dict(s))
-            # Keep memory bounded when the cell idles for hours between runs (a run resets both).
-            if len(self.state_log) > 2 * 3600 * 20:
-                del self.state_log[:3600 * 20]
-            if len(self.recording) > 2 * 3600 * 30:
-                with self.lock:
-                    del self.recording[:3600 * 30]
-            s["ground_truth"] = self.ground_truth()["objects"]
-            with self.lock:
-                if self._log_f:
-                    self._log_f.write(json.dumps(s) + "\n")
-
-    # ------------------------------------------------------------- cameras
     def calibration(self) -> dict:
         """Camera calibration as a lab would have it after a hand-eye calibration: intrinsics,
         the fixed camera's pose in the base frame, and the wrist camera's pose in the TCP frame.
         Poses use OpenCV camera axes (x right, y down, z forward)."""
+        m = self.sim.m
         with self.lock:
-            d = mujoco.MjData(self.m)
-            d.qpos[:] = self.d.qpos
-        mujoco.mj_forward(self.m, d)
+            d = mujoco.MjData(m)
+            d.qpos[:] = self.sim.d.qpos
+        mujoco.mj_forward(m, d)
         bp, bR = d.xpos[self.base_body], d.xmat[self.base_body].reshape(3, 3)
         tp, tR = d.site_xpos[self.tcp_site], d.site_xmat[self.tcp_site].reshape(3, 3)
         out = {}
         for name, cam in self.P["cameras"].items():
             if name == "side":
                 continue
-            cid = self.m.camera(cam).id
-            f = (CAM_H / 2) / np.tan(np.deg2rad(self.m.cam_fovy[cid]) / 2)
+            cid = m.camera(cam).id
+            f = (CAM_H / 2) / np.tan(np.deg2rad(m.cam_fovy[cid]) / 2)
             Rw = d.cam_xmat[cid].reshape(3, 3) @ np.diag([1.0, -1.0, -1.0])
             pw = d.cam_xpos[cid]
             if name == "wrist":
@@ -604,6 +568,257 @@ class Sim:
         i = bisect.bisect_right([s["time"] for s in log], t) - 1
         return log[max(i, 0)] if log else None
 
+    def render(self, camera: str, **kw) -> dict:
+        return self.sim.render(camera, arm=self, **kw)
+
+
+class RobotView:
+    """What the robot API sees of one robot in a world with several (the playground's lab):
+    the robot's own commands, sensors and cameras, with the world's time and recording.
+    Used by the HTTP handler in place of the Sim for that robot's requests."""
+
+    def __init__(self, sim: "Sim", arm: Arm):
+        self.sim, self.arm = sim, arm
+
+    def __getattr__(self, k):
+        return getattr(self.arm, k)
+
+    @property
+    def events(self):
+        return self.arm.events
+
+    def qpos_at(self, t):
+        return self.sim.qpos_at(t)
+
+    def reset(self, task=None):
+        """A run starting on this robot: only this robot starts over (the others keep going)."""
+        with self.sim.lock:
+            self.arm.reset_state()
+            self.arm.task = task
+
+    def open_log(self, run_dir):
+        # A run's log goes to its own folder. When the run ends the robot cell opens a fresh
+        # session log; here this robot just stops logging (the world's session log goes on).
+        if pathlib.Path(run_dir).name.startswith("session-"):
+            self.arm.close_log()
+        else:
+            self.arm.open_log(run_dir)
+
+    def save_model(self, run_dir):
+        self.sim.save_model(run_dir)
+
+    def save_recording(self, path):
+        return self.sim.save_recording(path, since=self.arm.recording_from)
+
+
+# ------------------------------------------------------------------ simulator
+class Sim:
+    def __init__(self, run_dir: str | pathlib.Path | None = None, realtime: float = 1.0,
+                 robot: str | None = None):
+        self.robot = S.robot_name(robot)
+        self.lock = threading.RLock()
+        self.realtime = realtime
+        self.paused = False             # the playground can pause the world; the robot cell never does
+        self._model_ver = 0             # bumped when the scene is rebuilt (renderers follow)
+        self.rt_factor = 1.0
+        self.arms: dict[str, Arm] = {}
+        self.m = self._make_model()
+        self.d = mujoco.MjData(self.m)
+        self._index()
+        self.rng = np.random.default_rng()
+        self.run_dir = pathlib.Path(run_dir) if run_dir else None
+        self._log_f = None
+        self._cap_rgba0 = {}
+        self.task = None
+        self.reset()
+        self._running = False
+        self._render_q: queue.PriorityQueue = queue.PriorityQueue()
+        self._render_seq = 0
+
+    def _make_model(self) -> mujoco.MjModel:
+        return S.build_model(self.robot)
+
+    def _make_arms(self) -> dict[str, Arm]:
+        """The robots in the current model (one, unprefixed, in the robot cell)."""
+        return {"robot": Arm(self, self.robot)}
+
+    def _index(self):
+        """Look up every robot's joints, actuators, sites and bodies in the current model.
+        Robots that were there before keep their controller state."""
+        old = self.arms
+        new = self._make_arms()
+        for uid, a in new.items():
+            if uid in old and old[uid].robot == a.robot and old[uid].prefix == a.prefix:
+                new[uid] = old[uid]
+            new[uid]._index()
+        self.arms = new
+
+    # The first robot is the robot of a one-robot scene: the robot cell's API addresses it.
+    @property
+    def arm(self) -> Arm:
+        return next(iter(self.arms.values()))
+
+    def __getattr__(self, k):
+        # Robot-level readings and commands (P, ready_q, move_l, state, ...) of the scene's robot.
+        if k in ("arms", "m", "d") or k.startswith("__"):
+            raise AttributeError(k)
+        arms = self.__dict__.get("arms")
+        if not arms:
+            raise AttributeError(k)
+        return getattr(next(iter(arms.values())), k)
+
+    @property
+    def P(self):
+        return self.arm.P
+
+    @property
+    def mode(self):
+        return self.arm.mode
+
+    @property
+    def motion(self):
+        return self.arm.motion
+
+    # ---------------------------------------------------------------- setup
+    def reset(self, task: str | None = None):
+        """Start over, with the bench laid out for a task (tasks.py), or the default bench."""
+        with self.lock:
+            m, d = self.m, self.d
+            mujoco.mj_resetData(m, d)
+            for a in self.arms.values():
+                a.reset_pose()
+            self.task = task
+            self._lay_out(task)
+            mujoco.mj_forward(m, d)
+            for _ in range(250):            # let things settle
+                mujoco.mj_step(m, d)
+            for a in self.arms.values():
+                a.reset_state()
+                a.task = task
+            self.events: list[dict] = []
+            self._wall0 = time.perf_counter()
+            self._sim0 = self.d.time
+            self.rt_factor = 1.0
+            self.recording: list[tuple[float, np.ndarray]] = []   # (time, qpos) at 30 Hz for replay videos
+            self._next_rec = self.d.time
+
+    @property
+    def state_log(self):
+        return self.arm.state_log
+
+    def _set_free(self, name: str, pos_b, quat):
+        adr = self.m.jnt_qposadr[self.m.body_jntadr[self.m.body(name).id]]
+        self.d.qpos[adr:adr + 3] = np.asarray(pos_b) + np.array(S.ROBOT_BASE)
+        self.d.qpos[adr + 3:adr + 7] = quat
+
+    def _lay_out(self, task):
+        poses, colours = T.layout_for(task)
+        m = self.m
+        for name, rgba in self._cap_rgba0.items():     # undo the last task's recolouring
+            m.geom_rgba[m.geom(name).id] = rgba
+        for body, rgba in colours.items():
+            g = m.geom(f"{body}_capvis").id
+            self._cap_rgba0.setdefault(f"{body}_capvis", m.geom_rgba[g].copy())
+            m.geom_rgba[g] = rgba
+        for name, (pos, quat) in poses.items():
+            self._set_free(name, pos, quat)
+
+    def open_log(self, run_dir: str | pathlib.Path):
+        with self.lock:
+            if self._log_f:
+                self._log_f.close()
+            self.run_dir = pathlib.Path(run_dir)
+            self.run_dir.mkdir(parents=True, exist_ok=True)
+            self._log_f = open(self.run_dir / "states.jsonl", "a")
+
+    def log_event(self, event: str, **kw):
+        self.arm.log_event(event, **kw)
+
+    @property
+    def events(self):
+        return self.arm.events
+
+    @events.setter
+    def events(self, v):
+        pass   # each robot keeps its own (reset clears them)
+
+    # ------------------------------------------------------------ threads
+    def start(self):
+        self._running = True
+        threading.Thread(target=self._physics_loop, daemon=True, name="physics").start()
+        threading.Thread(target=self._render_loop, daemon=True, name="render").start()
+        threading.Thread(target=self._log_loop, daemon=True, name="logger").start()
+
+    def stop_threads(self):
+        self._running = False
+
+    def _physics_loop(self):
+        m, d = self.m, self.d
+        last_check = time.perf_counter()
+        sim_done = 0.0
+        while self._running:
+            wall = time.perf_counter()
+            if self.paused:
+                with self.lock:
+                    self._wall0, self._sim0 = wall, self.d.time   # time stands still
+                last_check, sim_done = wall, 0.0
+                time.sleep(0.005)
+                continue
+            with self.lock:
+                m, d = self.m, self.d          # the scene may have been rebuilt
+                arms = list(self.arms.values())
+                target = self._sim0 + (wall - self._wall0) * self.realtime
+                n = 0
+                while d.time < target and n < 100:
+                    for a in arms:
+                        a._control()
+                    mujoco.mj_step(m, d)
+                    n += 1
+                    if d.time >= self._next_rec:
+                        self.recording.append((d.time, d.qpos.copy()))
+                        self._next_rec += 1 / 30
+                sim_done += n * m.opt.timestep
+                if target - d.time > 0.25:  # can't keep up: let time slip, like a dropped frame
+                    self._wall0 += (target - d.time) / self.realtime
+            if wall - last_check > 1.0:
+                self.rt_factor = sim_done / (wall - last_check)
+                sim_done, last_check = 0.0, wall
+            time.sleep(0.0005)
+
+    def ground_truth(self) -> dict:
+        """Object poses for scoring only. Never exposed through the robot API."""
+        out = self.arm.ground_truth()
+        out["task"] = self.task
+        return out
+
+    def save_recording(self, path, since: float | None = None):
+        with self.lock:
+            rec = [r for r in self.recording if since is None or r[0] >= since - 1e-9]
+        np.savez_compressed(path, time=np.array([t for t, _ in rec]), qpos=np.array([q for _, q in rec]))
+        return len(rec)
+
+    def _log_loop(self):
+        while self._running:
+            time.sleep(0.05)
+            for a in list(self.arms.values()):
+                f = a._log_f or (self._log_f if a is self.arm else None)
+                if not f:
+                    continue
+                s = a.state()
+                a.state_log.append(dict(s))
+                # Keep memory bounded when the cell idles for hours between runs (a run resets both).
+                if len(a.state_log) > 2 * 3600 * 20:
+                    del a.state_log[:3600 * 20]
+                s["ground_truth"] = a.ground_truth()["objects"]
+                with self.lock:
+                    f = a._log_f or (self._log_f if a is self.arm else None)
+                    if f:
+                        f.write(json.dumps(s) + "\n")
+            if len(self.recording) > 2 * 3600 * 30:
+                with self.lock:
+                    del self.recording[:3600 * 30]
+
+    # ------------------------------------------------------------- cameras
     def qpos_at(self, t: float):
         rec = self.recording
         if not rec:
@@ -628,18 +843,20 @@ class Sim:
         (run_dir / "model.ref").write_text(name + "\n")
 
     def render(self, camera: str, depth: bool = False, priority: int = 0, timeout=30.0,
-               qpos=None, at_time: float | None = None, model: mujoco.MjModel | None = None) -> dict:
-        """Render a camera now, or (qpos given) the scene as it was at at_time. model: an
-        older run's own scene, to replay it."""
-        if camera not in self.P["cameras"]:
-            raise RobotError(f"unknown camera '{camera}', choose from {list(self.P['cameras'])}")
+               qpos=None, at_time: float | None = None, model: mujoco.MjModel | None = None,
+               arm: Arm | None = None) -> dict:
+        """Render a robot's camera now, or (qpos given) the scene as it was at at_time. model:
+        an older run's own scene, to replay it. arm: whose camera (default: the scene's robot)."""
+        arm = arm or self.arm
+        if camera not in arm.P["cameras"]:
+            raise RobotError(f"unknown camera '{camera}', choose from {list(arm.P['cameras'])}")
         if priority == 0 and qpos is None:
             with self.lock:
-                self.log_event("camera", camera=camera)
+                arm.log_event("camera", camera=camera)
         box: dict = {}
         ev = threading.Event()
         self._render_seq += 1
-        self._render_q.put((priority, self._render_seq, camera, depth, box, ev, qpos, at_time, model))
+        self._render_q.put((priority, self._render_seq, camera, depth, box, ev, qpos, at_time, model, arm))
         if not ev.wait(timeout):
             raise RobotError("camera timed out")
         if "error" in box:
@@ -651,7 +868,7 @@ class Sim:
         other: dict[int, tuple] = {}     # renderers for older runs' scenes
         while self._running:
             try:
-                _, _, camera, depth, box, ev, qpos, at_time, model = self._render_q.get(timeout=0.2)
+                _, _, camera, depth, box, ev, qpos, at_time, model, arm = self._render_q.get(timeout=0.2)
             except queue.Empty:
                 continue
             if ver != self._model_ver:   # first frame, or the scene was rebuilt
@@ -673,7 +890,7 @@ class Sim:
                     om, od, orr = other[id(model)]
                     od.qpos[:] = qpos
                     mujoco.mj_forward(om, od)
-                    orr.update_scene(od, camera=self.P["cameras"][camera])
+                    orr.update_scene(od, camera=arm.P["cameras"][camera])
                     box["rgb"] = orr.render().copy()
                     box["time"] = round(at_time or 0.0, 4)
                 except Exception as e:  # noqa: BLE001
@@ -683,7 +900,7 @@ class Sim:
             try:
                 with self.lock:
                     if self._model_ver != ver:   # rebuilt since this frame was asked for
-                        self._render_q.put((0, -1, camera, depth, box, ev, qpos, at_time, model))
+                        self._render_q.put((0, -1, camera, depth, box, ev, qpos, at_time, model, arm))
                         continue
                     if qpos is None:
                         rd.qpos[:] = self.d.qpos
@@ -693,9 +910,9 @@ class Sim:
                         rd.qpos[:] = qpos
                         rd.qvel[:] = 0
                         rd.time = at_time or 0.0
-                    bp, bR = self.base_tf()
+                    bp, bR = arm.base_tf()
+                    cam_name = arm.P["cameras"][camera]
                 mujoco.mj_forward(m, rd)
-                cam_name = self.P["cameras"][camera]
                 cid = m.camera(cam_name).id
                 rgb_r.update_scene(rd, camera=cam_name)
                 box["rgb"] = rgb_r.render().copy()

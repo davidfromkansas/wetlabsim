@@ -1,5 +1,6 @@
-"""Builds the playground scene: a graph-paper floor, NVIDIA's packing table, the Franka on
-it, and whatever the user has dropped in.
+"""Builds the playground's lab: a graph-paper floor, the robot stations on it (each a robot
+arm on its own NVIDIA packing table, with its own overhead and side cameras), and whatever
+the user has dropped in.
 
 Every library item comes from playground/assets/<id>/ (see tools/convert_simready.py):
 visual meshes with their textures, collision meshes, and the mass the asset states.
@@ -18,9 +19,10 @@ from wetlabsim import scene as S
 
 from . import catalog
 
-TABLE_UID = "table"
-# The Franka stands on the table, near one long edge, facing across it (+x).
+TABLE_UID = "table"     # (older saved scenes) the one table a robot stood on
+# A station's robot stands on its table, near one long edge, facing across it (+x).
 ROBOT_XY = (-0.42, 0.0)
+STATION_TABLE = "table_packing"
 
 # Contact properties for library items, as a MuJoCo default class like the cell's
 # materials. Sliding friction comes from each asset's own physics material.
@@ -43,6 +45,51 @@ class Placed:
 
 def yaw_quat(yaw: float):
     return (math.cos(yaw / 2), 0.0, 0.0, math.sin(yaw / 2))
+
+
+@dataclass
+class Station:
+    """A robot arm on its own table: the unit a lab is built from."""
+    uid: str              # "st1", "st2", ...: also the prefix of the robot's names ("st1/joint1")
+    robot: str            # "franka" or "ur5e"
+    pos: tuple            # world (x, y) of the table's centre (m)
+    yaw: float = 0.0      # rotation about the vertical (rad)
+    name: str = ""        # what the user calls it ("Station 1")
+
+    @property
+    def prefix(self) -> str:
+        return self.uid + "/"
+
+    def to_world(self, x: float, y: float, z: float = 0.0):
+        """A point given in the station's own frame (table centre, robot along -x) in the world."""
+        c, s = math.cos(self.yaw), math.sin(self.yaw)
+        return (self.pos[0] + c * x - s * y, self.pos[1] + s * x + c * y, z)
+
+    def to_local(self, x: float, y: float):
+        c, s = math.cos(self.yaw), math.sin(self.yaw)
+        dx, dy = x - self.pos[0], y - self.pos[1]
+        return (c * dx + s * dy, -s * dx + c * dy)
+
+    def footprint(self):
+        sx, sy, _ = catalog.meta(STATION_TABLE)["size"]
+        return sx, sy
+
+    def holds(self, x: float, y: float, margin: float = 0.0) -> bool:
+        """Whether a point is over this station's table."""
+        sx, sy = self.footprint()
+        lx, ly = self.to_local(x, y)
+        return abs(lx) <= sx / 2 + margin and abs(ly) <= sy / 2 + margin
+
+    def as_dict(self):
+        from wetlabsim import scene as WS
+        P = WS.ROBOTS[self.robot]
+        return {"id": self.uid, "robot": self.robot, "name": self.name, "label": P["name"],
+                "gripper": P["gripper"], "pos": [round(float(v), 4) for v in self.pos],
+                "yaw": round(float(self.yaw), 4)}
+
+
+def table_uid(st: Station) -> str:
+    return f"{st.uid}-table"
 
 
 def _xml_attrs(d):
@@ -123,35 +170,52 @@ def table_top(meta: dict) -> float:
     return float(meta["size"][2])
 
 
-def build(placed: list[Placed], robot: str = "franka") -> mujoco.MjModel:
-    """Compile the scene: the fixed table (placed[0]), the robot on it, and every item."""
+def _quat_mul(a, b):
+    q = np.zeros(4)
+    mujoco.mju_mulQuat(q, np.asarray(a, float), np.asarray(b, float))
+    return q
+
+
+def _camera(world, name, pos, target, fovy, up=(0, 0, 1)):
+    cam = world.worldbody.add_camera(name=name, pos=list(pos), fovy=fovy)
+    cam.alt.type = mujoco.mjtOrientation.mjORIENTATION_XYAXES
+    cam.alt.xyaxes = [float(v) for v in S._look_at_axes(pos, target, up=up).split()]
+
+
+def add_station(world: mujoco.MjSpec, st: Station, cache: set):
+    """A station's table, its robot on it, and the robot's overhead and side cameras."""
+    tmeta = catalog.meta(STATION_TABLE)
+    top = table_top(tmeta)
+    _add_item(world, Placed(table_uid(st), STATION_TABLE, (st.pos[0], st.pos[1], 0.0), st.yaw), tmeta, True, cache)
+    rx, ry = ROBOT_XY
+    mount = _quat_mul(yaw_quat(st.yaw), [float(v) for v in S.ROBOTS[st.robot]["mount_quat"].split()])
+    world.worldbody.add_site(name=st.prefix + "robot_mount", pos=list(st.to_world(rx, ry, top)),
+                             quat=list(mount))
+    c, s_ = math.cos(st.yaw), math.sin(st.yaw)
+    _camera(world, st.prefix + "overhead", st.to_world(rx + 0.75, ry, top + 1.0),
+            st.to_world(rx + 0.42, ry, top), 55, up=(-c, -s_, 0))
+    _camera(world, st.prefix + "side", st.to_world(rx + 1.75, ry - 1.3, top + 0.8),
+            st.to_world(rx + 0.4, ry, top + 0.1), 45)
+    S.add_robot(world, st.robot, st.prefix + "robot_mount", st.prefix)
+
+
+def build(placed: list[Placed], stations: list[Station]) -> mujoco.MjModel:
+    """Compile the lab: every station (table, robot, cameras) and every placed item."""
     world = mujoco.MjSpec.from_string(_world_xml())
     cache: set = set()
-    tmeta = catalog.meta(catalog.DEFAULT_TABLE)
-    top = table_top(tmeta)
+    for st in stations:
+        add_station(world, st, cache)
     for p in placed:
         it = catalog.item(p.item)
         _add_item(world, p, catalog.meta(p.item), it["fixed"], cache)
-    # Robot mount on the table top, and the robot's cameras.
-    rx, ry = ROBOT_XY
-    world.worldbody.add_site(name="robot_mount", pos=[rx, ry, top], quat=[1, 0, 0, 0])
-    over = (rx + 0.75, ry, top + 1.0)
-    cam = world.worldbody.add_camera(name="overhead", pos=list(over), fovy=55)
-    cam.alt.type = mujoco.mjtOrientation.mjORIENTATION_XYAXES
-    cam.alt.xyaxes = [float(v) for v in S._look_at_axes(over, (rx + 0.42, ry, top), up=(-1, 0, 0)).split()]
-    side = (rx + 1.75, ry - 1.3, top + 0.8)
-    cam = world.worldbody.add_camera(name="side", pos=list(side), fovy=45)
-    cam.alt.type = mujoco.mjtOrientation.mjORIENTATION_XYAXES
-    cam.alt.xyaxes = [float(v) for v in S._look_at_axes(side, (rx + 0.4, ry, top + 0.1)).split()]
-    ft_site = S._franka(world) if robot == "franka" else S._ur5e(world)
-    world.add_sensor(name="ft_force", type=mujoco.mjtSensor.mjSENS_FORCE,
-                     objtype=mujoco.mjtObj.mjOBJ_SITE, objname=ft_site)
-    world.add_sensor(name="ft_torque", type=mujoco.mjtSensor.mjSENS_TORQUE,
-                     objtype=mujoco.mjtObj.mjOBJ_SITE, objname=ft_site)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         return world.compile()
 
 
 def default_scene() -> list[Placed]:
-    return [Placed(TABLE_UID, catalog.DEFAULT_TABLE, (0.0, 0.0, 0.0))]
+    return []
+
+
+def default_stations() -> list[Station]:
+    return [Station("st1", "franka", (0.0, 0.0), 0.0, "Station 1")]

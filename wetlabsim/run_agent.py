@@ -102,6 +102,11 @@ def prepare_workspace(workspace: pathlib.Path, client: pathlib.Path, robot: str,
         for f in ("CLAUDE.md", "AGENTS.md"):
             shutil.copy(AGENT_DIR / f, workspace / f)
         note = "The robot manual is in ROBOT_MANUAL.md."
+        if site_file:   # this installation (e.g. a playground station): it overrides the manual's bench
+            shutil.copy(site_file, workspace / "SITE.md")
+            (workspace / "cameras.json").write_text(json.dumps(info["camera_calibration"], indent=1))
+            note += (" SITE.md describes this installation (its table, cameras and what is on it);"
+                     " where it differs from the manual's lab bench, SITE.md is right.")
     else:
         if robot != "franka":
             raise SystemExit("the standard docs level exists only for the Franka; use --docs assisted")
