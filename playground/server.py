@@ -39,7 +39,8 @@ PAGE = HERE / "static" / "index.html"
 TIME_LIMIT = 180.0     # seconds: a LIBERO test run that hasn't finished by then is stopped
 FREE_TIME_LIMIT = 0.0  # free play: no limit, the run goes until the AI finishes or you stop it
 
-# Every model the agent runner can drive, by the CLI that runs it. The ids "claude" and "codex"
+# Every model the agent runner can drive, by the CLI that runs it (for Devin, Cognition's own
+# models; Devin's Claude and GPT models are here through Claude Code and Codex). The ids "claude" and "codex"
 # are kept from the first two entries so earlier results stay on the scoreboards.
 MODELS = [
     {"id": "claude", "label": "Claude Opus 5.5", "via": "Claude Code", "agent": "claude", "model": "opus",
@@ -70,9 +71,29 @@ MODELS = [
      "provider": "cognition"},
     {"id": "swe-2-high", "label": "SWE-2 High", "via": "Devin", "agent": "devin", "model": "swe-2-high",
      "provider": "cognition"},
-    {"id": "swe-2-flash-medium", "label": "SWE-2 Flash Medium", "via": "Devin", "agent": "devin",
-     "model": "swe-2-flash-medium", "provider": "cognition"},
+    {"id": "swe-2-medium", "label": "SWE-2 Medium", "via": "Devin", "agent": "devin", "model": "swe-2-medium",
+     "provider": "cognition"},
+    {"id": "swe-2-max-lightning", "label": "SWE-2 Max Lightning", "via": "Devin", "agent": "devin", "model": "swe-2-max-lightning",
+     "provider": "cognition"},
+    {"id": "swe-2-high-lightning", "label": "SWE-2 High Lightning", "via": "Devin", "agent": "devin", "model": "swe-2-high-lightning",
+     "provider": "cognition"},
+    {"id": "swe-2-medium-lightning", "label": "SWE-2 Medium Lightning", "via": "Devin", "agent": "devin", "model": "swe-2-medium-lightning",
+     "provider": "cognition"},
+    {"id": "swe-2-flash-max", "label": "SWE-2 Flash Max", "via": "Devin", "agent": "devin", "model": "swe-2-flash-max",
+     "provider": "cognition"},
+    {"id": "swe-2-flash-high", "label": "SWE-2 Flash High", "via": "Devin", "agent": "devin", "model": "swe-2-flash-high",
+     "provider": "cognition"},
+    {"id": "swe-2-flash-medium", "label": "SWE-2 Flash Medium", "via": "Devin", "agent": "devin", "model": "swe-2-flash-medium",
+     "provider": "cognition"},
+    {"id": "swe-1-7", "label": "SWE-1.7 Max", "via": "Devin", "agent": "devin", "model": "swe-1-7",
+     "provider": "cognition"},
+    {"id": "swe-1-7-medium", "label": "SWE-1.7 Medium", "via": "Devin", "agent": "devin", "model": "swe-1-7-medium",
+     "provider": "cognition"},
+    {"id": "swe-1-6", "label": "SWE-1.6", "via": "Devin", "agent": "devin", "model": "swe-1-6",
+     "provider": "cognition"},
     {"id": "swe-1-6-slow", "label": "SWE-1.6 Slow", "via": "Devin", "agent": "devin", "model": "swe-1-6-slow",
+     "provider": "cognition"},
+    {"id": "adaptive", "label": "Adaptive", "via": "Devin", "agent": "devin", "model": "adaptive",
      "provider": "cognition"},
 ]
 
