@@ -280,8 +280,8 @@ body:not(.watch) .sessname.can{cursor:text}
 .schip.add.big{height:56px;padding:0 20px}
 body.fixed .dock,body.watch .schip.add{display:none}
 .schipw{position:relative;flex:none;display:flex;scroll-snap-align:start}
-.schipw .schip{padding-right:34px}
-.smore{position:absolute;right:4px;top:50%;margin-top:-13px;width:26px;height:26px;border-radius:7px;border:0;background:transparent;color:#374151;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0}
+.schipw .schip{padding-right:26px}
+.smore{position:absolute;right:3px;top:50%;margin-top:-13px;width:18px;height:26px;border-radius:7px;border:0;background:transparent;color:#374151;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0}
 .schipw.on .smore,.smore[aria-expanded=true],.smore:focus-visible{opacity:1}
 @media (hover:none){.smore{opacity:1}}
 body.watch .smore{display:none}body.watch .schipw .schip{padding-right:10px}
@@ -784,7 +784,7 @@ function renderDock() {
   const key = JSON.stringify([SID, list, sc.active, sc.runs, S.drafts, S.watch]);
   if (key === S.dockKey) return; S.dockKey = key;
   const chips = list.map(st => { const [d, t] = chipDot(st);
-    return `<div class="schipw${st.id === sc.active ? ' on' : ''}"><button class="schip" data-st="${esc(st.id)}" aria-pressed="${st.id === sc.active}"><img src="${STATION_IMG[st.robot] || STATION_IMG.franka}" alt=""><span><b>${esc(st.name)}</b><br><span class="sub">${esc(st.label)}</span></span><span class="sdot ${d}" title="${esc(t)}"></span></button>${S.watch ? '' : `<button class="smore" data-more="${esc(st.id)}" aria-label="More actions for ${esc(st.name)}" aria-haspopup="menu" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="13" cy="8" r="1.5"/></svg></button>`}</div>`; });
+    return `<div class="schipw${st.id === sc.active ? ' on' : ''}"><button class="schip" data-st="${esc(st.id)}" aria-pressed="${st.id === sc.active}"><img src="${STATION_IMG[st.robot] || STATION_IMG.franka}" alt=""><span><b>${esc(st.name)}</b><br><span class="sub">${esc(st.label)}</span></span><span class="sdot ${d}" title="${esc(t)}"></span></button>${S.watch ? '' : `<button class="smore" data-more="${esc(st.id)}" aria-label="More actions for ${esc(st.name)}" aria-haspopup="menu" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg></button>`}</div>`; });
   const add = list.length ? `<button class="schip add" id="dockAdd" aria-label="Add a station"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 12 12" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg>${list.length > 3 ? '' : 'Add station'}</button>`
     : `<button class="schip add big" id="dockAdd"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 12 12" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg>Add your first station</button>`;
   $('dock').innerHTML = chips.join('') + (S.watch ? '' : add);
