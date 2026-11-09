@@ -97,12 +97,30 @@ class Sim:
     def __init__(self, run_dir: str | pathlib.Path | None = None, realtime: float = 1.0,
                  robot: str | None = None):
         self.robot = S.robot_name(robot)
-        self.P = P = S.profile(self.robot)
-        self.m = S.build_model(self.robot)
-        self.d = mujoco.MjData(self.m)
+        self.P = S.profile(self.robot)
         self.lock = threading.RLock()
         self.realtime = realtime
-        m = self.m
+        self.paused = False             # the playground can pause the world; the robot cell never does
+        self._model_ver = 0             # bumped when the scene is rebuilt (renderers follow)
+        self.m = self._make_model()
+        self.d = mujoco.MjData(self.m)
+        self._index()
+        self.rng = np.random.default_rng()
+        self.run_dir = pathlib.Path(run_dir) if run_dir else None
+        self._log_f = None
+        self._cap_rgba0 = {}
+        self.task = None
+        self.reset()
+        self._running = False
+        self._render_q: queue.PriorityQueue = queue.PriorityQueue()
+        self._render_seq = 0
+
+    def _make_model(self) -> mujoco.MjModel:
+        return S.build_model(self.robot)
+
+    def _index(self):
+        """Look up the robot's joints, actuators, sites and bodies in the current model."""
+        P, m = self.P, self.m
         self.n_arm = len(P["arm_joints"])
         self.arm_qadr = np.array([m.joint(j).qposadr[0] for j in P["arm_joints"]])
         self.arm_dadr = np.array([m.joint(j).dofadr[0] for j in P["arm_joints"]])
@@ -119,15 +137,6 @@ class Sim:
         self.joint_hi = m.jnt_range[[m.joint(j).id for j in P["arm_joints"]], 1]
         self.grip_force_base = m.actuator_forcerange[self.grip_act].copy()
         self._ik_data = mujoco.MjData(m)
-        self.rng = np.random.default_rng()
-        self.run_dir = pathlib.Path(run_dir) if run_dir else None
-        self._log_f = None
-        self._cap_rgba0 = {}
-        self.task = None
-        self.reset()
-        self._running = False
-        self._render_q: queue.PriorityQueue = queue.PriorityQueue()
-        self._render_seq = 0
 
     # ---------------------------------------------------------------- setup
     def reset(self, task: str | None = None):
@@ -209,7 +218,14 @@ class Sim:
         sim_done = 0.0
         while self._running:
             wall = time.perf_counter()
+            if self.paused:
+                with self.lock:
+                    self._wall0, self._sim0 = wall, self.d.time   # time stands still
+                last_check, sim_done = wall, 0.0
+                time.sleep(0.005)
+                continue
             with self.lock:
+                m, d = self.m, self.d          # the scene may have been rebuilt
                 target = self._sim0 + (wall - self._wall0) * self.realtime
                 n = 0
                 while d.time < target and n < 100:
@@ -631,16 +647,23 @@ class Sim:
         return box
 
     def _render_loop(self):
-        rd = mujoco.MjData(self.m)
-        rgb_r = mujoco.Renderer(self.m, CAM_H, CAM_W)
-        dep_r = mujoco.Renderer(self.m, CAM_H, CAM_W)
-        dep_r.enable_depth_rendering()
+        ver = None
         other: dict[int, tuple] = {}     # renderers for older runs' scenes
         while self._running:
             try:
                 _, _, camera, depth, box, ev, qpos, at_time, model = self._render_q.get(timeout=0.2)
             except queue.Empty:
                 continue
+            if ver != self._model_ver:   # first frame, or the scene was rebuilt
+                with self.lock:
+                    ver, m = self._model_ver, self.m
+                    rd = mujoco.MjData(m)
+                if "rgb_r" in locals():
+                    rgb_r.close()
+                    dep_r.close()
+                rgb_r = mujoco.Renderer(m, CAM_H, CAM_W)
+                dep_r = mujoco.Renderer(m, CAM_H, CAM_W)
+                dep_r.enable_depth_rendering()
             if model is not None:
                 try:
                     if id(model) not in other:
@@ -659,6 +682,9 @@ class Sim:
                 continue
             try:
                 with self.lock:
+                    if self._model_ver != ver:   # rebuilt since this frame was asked for
+                        self._render_q.put((0, -1, camera, depth, box, ev, qpos, at_time, model))
+                        continue
                     if qpos is None:
                         rd.qpos[:] = self.d.qpos
                         rd.qvel[:] = self.d.qvel
@@ -668,15 +694,15 @@ class Sim:
                         rd.qvel[:] = 0
                         rd.time = at_time or 0.0
                     bp, bR = self.base_tf()
-                mujoco.mj_forward(self.m, rd)
+                mujoco.mj_forward(m, rd)
                 cam_name = self.P["cameras"][camera]
-                cid = self.m.camera(cam_name).id
+                cid = m.camera(cam_name).id
                 rgb_r.update_scene(rd, camera=cam_name)
                 box["rgb"] = rgb_r.render().copy()
                 if depth:
                     dep_r.update_scene(rd, camera=cam_name)
                     box["depth"] = dep_r.render().astype(np.float32)
-                fovy = np.deg2rad(self.m.cam_fovy[cid])
+                fovy = np.deg2rad(m.cam_fovy[cid])
                 f = (CAM_H / 2) / np.tan(fovy / 2)
                 box["intrinsics"] = {"fx": f, "fy": f, "cx": CAM_W / 2, "cy": CAM_H / 2,
                                      "width": CAM_W, "height": CAM_H}

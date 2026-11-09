@@ -1,0 +1,59 @@
+{
+ "source": "medicine_b01",
+ "usd": "sm_medicine_b01_01.usd",
+ "mass": 0.11358,
+ "com": [
+  -0.0012,
+  0.0,
+  0.08734
+ ],
+ "size": [
+  0.0803,
+  0.0804,
+  0.15
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.1311,
+    0.0154,
+    0.0228,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    0.6096,
+    0.6096,
+    0.6096,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_2.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_2.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.0007354151528616131
+  }
+ ],
+ "friction": 0.5
+}

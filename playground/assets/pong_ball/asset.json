@@ -1,0 +1,37 @@
+{
+ "source": "misc_toy_pongPaddle_ball_a01",
+ "usd": "sm_misc_toy_pongPaddle_ball_a01_01.usd",
+ "mass": 0.01037,
+ "com": [
+  0.0,
+  0.0,
+  0.0
+ ],
+ "size": [
+  0.0381,
+  0.0381,
+  0.038
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 2.8827638571983523e-05
+  }
+ ],
+ "friction": 0.4
+}

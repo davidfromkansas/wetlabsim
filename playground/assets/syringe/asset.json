@@ -1,0 +1,105 @@
+{
+ "source": "syringe_a01",
+ "usd": "sm_syringe_a01_01.usd",
+ "mass": 0.06391,
+ "com": [
+  -0.04453,
+  5e-05,
+  0.01259
+ ],
+ "size": [
+  0.1751,
+  0.0353,
+  0.0252
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.6654,
+    0.6654,
+    0.6654,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    0.6654,
+    0.6654,
+    0.6654,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_2.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_2.png"
+  },
+  {
+   "mesh": "vis_3.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_3.png"
+  },
+  {
+   "mesh": "vis_4.obj",
+   "rgba": [
+    0.4179,
+    0.6308,
+    0.3419,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_5.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_5.png"
+  },
+  {
+   "mesh": "vis_6.obj",
+   "rgba": [
+    0.4179,
+    0.6308,
+    0.3419,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 6.460509534469734e-05
+  }
+ ],
+ "friction": 0.8
+}
