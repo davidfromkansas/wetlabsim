@@ -213,7 +213,11 @@ def build_command(agent: str, task: str, model: str | None, workspace: pathlib.P
                                            "Exec(ls)", "Exec(cat)", "mcp__wetlab__*"],
                                  # The folder above the cell's, so this file doesn't name the cell's
                                  # own folder (the workspace leak check refuses files that do).
-                                 "deny": [f"Read({ROOT.parent}/**)", f"Write({ROOT.parent}/**)"]}}
+                                 # Not when that is / (the hosted image keeps the cell in /app):
+                                 # it would deny the workspace too. The bridge still refuses
+                                 # anything outside the workspace.
+                                 "deny": [] if ROOT.parent == ROOT.parent.parent else
+                                         [f"Read({ROOT.parent}/**)", f"Write({ROOT.parent}/**)"]}}
         (workspace / ".devin").mkdir(exist_ok=True)
         (workspace / ".devin" / "config.json").write_text(json.dumps(perms, indent=2))
         # The bridge runs by file path: the agent's PYTHONPATH only has the robot client.
