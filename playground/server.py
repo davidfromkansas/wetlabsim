@@ -153,7 +153,11 @@ class Runner:
         out["active"] = self.active()
         out["elapsed"] = round(time.time() - self.info["started"], 1)
         if not out["active"] and self.proc is not None and out["status"] not in ("stopped",):
-            out["status"] = "finished" if self.proc.returncode == 0 else "error"
+            # The runner exits cleanly even when the agent itself failed (it couldn't reach its
+            # API, say); the run's own status says so.
+            rs = (getattr(self, "board", None) and self.board.run.get("status")) or ""
+            out["status"] = ("error" if self.proc.returncode != 0 or rs == "agent_error"
+                             else "time_limit" if rs == "time_limit" else "finished")
             out["exit_code"] = self.proc.returncode
         return out
 
@@ -182,6 +186,10 @@ class PGHandler(Handler):
     def _station_request(self) -> bool:
         """Requests to /st/<station>/...: that station's robot API (and its run), as if it were
         a robot cell of its own."""
+        # A kept-alive connection reuses this handler for its next request: drop the last
+        # station request's robot so a /pg/ request sees the whole lab again.
+        self.__dict__.pop("sim", None)
+        self.__dict__.pop("board", None)
         if not self.path.startswith("/st/"):
             return False
         _, _, uid, rest = (self.path.split("/", 3) + [""])[:4]

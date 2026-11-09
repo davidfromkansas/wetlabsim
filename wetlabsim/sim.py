@@ -804,7 +804,12 @@ class Sim:
                 f = a._log_f or (self._log_f if a is self.arm else None)
                 if not f:
                     continue
-                s = a.state()
+                try:
+                    s = a.state()
+                except (KeyError, ValueError):
+                    # The world was rebuilt under us (the playground switching scenes) and this
+                    # arm's sensors are gone: skip it this tick rather than end the logger.
+                    continue
                 a.state_log.append(dict(s))
                 # Keep memory bounded when the cell idles for hours between runs (a run resets both).
                 if len(a.state_log) > 2 * 3600 * 20:

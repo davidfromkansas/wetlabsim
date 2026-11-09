@@ -381,7 +381,7 @@ const S = {cat: null, tab: 'All', search: '', scene: null, armed: null, sel: 'ro
 const view = $('view'), stage = $('stage');
 // In free play each station's robot has its own API under /st/<station>; the fixed scenes have one robot at /.
 const stBase = () => (S.scene && S.scene.mode === 'free' && S.scene.active) ? '/st/' + S.scene.active : '';
-S.drafts = {}; S.placing = null; S.placeYaw = 0;
+S.drafts = {}; S.stModels = {}; S.placing = null; S.placeYaw = 0;
 const LIBHINT = 'Drag an object onto the scene, or click it and then click where it should go. It lands on whatever is under it.';
 
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast.h); toast.h = setTimeout(() => t.style.display = 'none', 2600); }
@@ -535,7 +535,7 @@ function stationStatus(st) {
   const sc = S.scene, run = sc.mode === 'free' ? (sc.runs || {})[st.id] : sc.run;
   const draft = (sc.mode === 'free' ? S.drafts[st.id] : '') || '';
   if (run && run.active) return {color: '#DC2626', text: 'Working on its task'};
-  if (run && run.started) return {color: run.status === 'error' ? '#F59E0B' : '#2563EB', text: {finished: 'Finished', error: 'Stopped with an error', stopped: 'Stopped'}[run.status] || run.status};
+  if (run && run.started) return {color: run.status === 'error' ? '#F59E0B' : '#2563EB', text: {finished: 'Finished', error: 'Stopped with an error', stopped: 'Stopped', time_limit: 'Time limit reached'}[run.status] || run.status};
   if (draft.trim()) return {color: '#16A34A', text: 'Task ready'};
   return {color: '#9CA3AF', text: 'No task yet'};
 }
@@ -622,7 +622,7 @@ $('stopBtn').onclick = async () => { await api('/pg/stop', S.scene && S.scene.mo
 $('infoBtn').onclick = (e) => { e.stopPropagation(); const open = $('infoPop').hidden; $('infoPop').hidden = !open; $('infoBtn').setAttribute('aria-expanded', open); };
 document.addEventListener('click', (e) => { if (!$('infoPop').hidden && !e.target.closest('#infoPop')) { $('infoPop').hidden = true; $('infoBtn').setAttribute('aria-expanded', false); } });
 function modelInfo(id) { return (S.cat.models.find(m => m.id === id) || {}); }
-$('model').onchange = () => { $('modelLogo').src = LOGOS[modelInfo($('model').value).provider] || LOGOS.anthropic; S.feedKey = ''; render(); };
+$('model').onchange = () => { if (S.scene) S.stModels[S.scene.active] = $('model').value; $('modelLogo').src = LOGOS[modelInfo($('model').value).provider] || LOGOS.anthropic; S.feedKey = ''; render(); };
 // Free play's right panel: Chat or Objects. A run switches it to Chat; either tab can be
 // picked at any time. Objects are greyed out while the scene is locked (running or playing).
 S.sideTab = 'objects';
@@ -714,7 +714,14 @@ function render() {
   $('hintTag').style.display = playing ? 'none' : '';
   // stations: the list, and the selected one's cameras, task and chat
   const st = curStation(), free = sc.mode === 'free';
-  if (S.taskFor !== sc.active) { S.taskFor = sc.active; $('task').value = S.drafts[sc.active] || ''; }
+  if (S.taskFor !== sc.active) {
+    // Each station keeps its own task draft and model: the one chosen for it, else the one
+    // its last run used, else the first in the menu.
+    S.taskFor = sc.active; $('task').value = S.drafts[sc.active] || '';
+    const runModel = run.model && run.model.id;
+    $('model').value = S.stModels[sc.active] || runModel || (S.cat.models[0] || {}).id;
+    $('modelLogo').src = LOGOS[modelInfo($('model').value).provider] || LOGOS.anthropic;
+  }
   renderStations();
   $('stTitle').textContent = free ? st.name : (st.label || 'Robot');
   $('stSub').textContent = (free ? st.label + ' · ' : '') + (st.gripper || '');
@@ -749,7 +756,7 @@ function render() {
   if (run.started) {
     const left = Math.max(0, run.time_limit - run.elapsed);
     const mmss = (x) => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
-    $('runStatus').textContent = active ? (run.time_limit ? `Working · ${mmss(left)} left` : `Working · ${mmss(run.elapsed)}`) : ({finished: 'Finished', error: 'The AI stopped with an error', stopped: 'Stopped'}[run.status] || run.status);
+    $('runStatus').textContent = active ? (run.time_limit ? `Working · ${mmss(left)} left` : `Working · ${mmss(run.elapsed)}`) : ({finished: 'Finished', error: 'The AI stopped with an error', stopped: 'Stopped', time_limit: 'Time limit reached'}[run.status] || run.status);
     const m = run.model || {}; $('chatLogo').src = LOGOS[m.provider] || LOGOS.anthropic;
     if (!$('chatModel').dataset.set) $('chatModel').textContent = m.label || '';
   }
@@ -765,6 +772,9 @@ async function refresh() {
 }
 // If the server goes away (restarted, or stopped and started again), the live streams end and
 // don't come back by themselves: once it answers again, reconnect them.
+// A stream that breaks while the server stays up (an error mid-stream) shows a broken picture:
+// try it again shortly.
+view.addEventListener('error', () => { clearTimeout(view.retry); view.retry = setTimeout(() => { view.src = '/pg/view.mjpg?r=' + Date.now(); }, 1000); });
 function openStreams() {
   view.src = '/pg/view.mjpg?r=' + Date.now();
   openCams();
