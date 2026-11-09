@@ -39,11 +39,41 @@ PAGE = HERE / "static" / "index.html"
 TIME_LIMIT = 180.0     # seconds: a LIBERO test run that hasn't finished by then is stopped
 FREE_TIME_LIMIT = 0.0  # free play: no limit, the run goes until the AI finishes or you stop it
 
+# Every model the agent runner can drive, by the CLI that runs it. The ids "claude" and "codex"
+# are kept from the first two entries so earlier results stay on the scoreboards.
 MODELS = [
     {"id": "claude", "label": "Claude Opus 5.5", "via": "Claude Code", "agent": "claude", "model": "opus",
      "provider": "anthropic"},
-    {"id": "codex", "label": "Codex", "via": "OpenAI Codex CLI", "agent": "codex", "model": None,
+    {"id": "claude-fable-5-1", "label": "Claude Fable 5.1", "via": "Claude Code", "agent": "claude",
+     "model": "claude-fable-5-1", "provider": "anthropic"},
+    {"id": "claude-sonnet-5-5", "label": "Claude Sonnet 5.5", "via": "Claude Code", "agent": "claude",
+     "model": "claude-sonnet-5-5", "provider": "anthropic"},
+    {"id": "claude-haiku-5-5", "label": "Claude Haiku 5.5", "via": "Claude Code", "agent": "claude",
+     "model": "claude-haiku-5-5", "provider": "anthropic"},
+    {"id": "codex", "label": "GPT-6 Astra", "via": "Codex CLI", "agent": "codex", "model": "gpt-6-astra",
      "provider": "openai"},
+    {"id": "gpt-6.1-sol", "label": "GPT-6.1 Sol", "via": "Codex CLI", "agent": "codex", "model": "gpt-6.1-sol",
+     "provider": "openai"},
+    {"id": "gpt-6.1-terra", "label": "GPT-6.1 Terra", "via": "Codex CLI", "agent": "codex", "model": "gpt-6.1-terra",
+     "provider": "openai"},
+    {"id": "gpt-6-sol", "label": "GPT-6 Sol", "via": "Codex CLI", "agent": "codex", "model": "gpt-6-sol",
+     "provider": "openai"},
+    {"id": "gpt-6-luna", "label": "GPT-6 Luna", "via": "Codex CLI", "agent": "codex", "model": "gpt-6-luna",
+     "provider": "openai"},
+    {"id": "gpt-5.6-sol", "label": "GPT-5.6 Sol", "via": "Codex CLI", "agent": "codex", "model": "gpt-5.6-sol",
+     "provider": "openai"},
+    {"id": "gpt-5.6-terra", "label": "GPT-5.6 Terra", "via": "Codex CLI", "agent": "codex", "model": "gpt-5.6-terra",
+     "provider": "openai"},
+    {"id": "gpt-5.6-luna", "label": "GPT-5.6 Luna", "via": "Codex CLI", "agent": "codex", "model": "gpt-5.6-luna",
+     "provider": "openai"},
+    {"id": "swe-2-max", "label": "SWE-2 Max", "via": "Devin", "agent": "devin", "model": "swe-2-max",
+     "provider": "cognition"},
+    {"id": "swe-2-high", "label": "SWE-2 High", "via": "Devin", "agent": "devin", "model": "swe-2-high",
+     "provider": "cognition"},
+    {"id": "swe-2-flash-medium", "label": "SWE-2 Flash Medium", "via": "Devin", "agent": "devin",
+     "model": "swe-2-flash-medium", "provider": "cognition"},
+    {"id": "swe-1-6-slow", "label": "SWE-1.6 Slow", "via": "Devin", "agent": "devin", "model": "swe-1-6-slow",
+     "provider": "cognition"},
 ]
 
 

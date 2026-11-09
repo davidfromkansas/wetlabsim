@@ -510,7 +510,7 @@ function esc(s) { return String(s).replace(/[&<>]/g, c => ({'&': '&amp;', '<': '
 // The chat: the same rendering as the robot cell's viewer (wetlabsim/viewer.html), rebuilt
 // from the whole trace whenever it grows. It follows new items while you're at the bottom;
 // scroll up and it stops, with a button to jump back to the latest.
-const LOGOS = {anthropic: '/static/anthropic.svg', openai: '/static/openai.svg'};
+const LOGOS = {anthropic: '/static/anthropic.svg', openai: '/static/openai.svg', cognition: '/static/cognition.svg'};
 S.trace = []; S.runInfo = {}; S.follow = true; S.feedKey = '';
 function mmss(x) { x = Math.max(0, x); return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(Math.floor(x % 60)).padStart(2, '0'); }
 function feedAtBottom() { const f = $('feed'); return f.scrollHeight - f.scrollTop - f.clientHeight < 40; }
@@ -616,7 +616,7 @@ function render() {
     const left = Math.max(0, run.time_limit - run.elapsed);
     const mmss = (x) => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
     $('runStatus').textContent = active ? (run.time_limit ? `Working · ${mmss(left)} left` : `Working · ${mmss(run.elapsed)}`) : ({finished: 'Finished', error: 'The AI stopped with an error', stopped: 'Stopped'}[run.status] || run.status);
-    const m = run.model || {}; $('chatLogo').src = m.provider === 'openai' ? '/static/openai.svg' : '/static/anthropic.svg';
+    const m = run.model || {}; $('chatLogo').src = LOGOS[m.provider] || LOGOS.anthropic;
     if (!$('chatModel').dataset.set) $('chatModel').textContent = m.label || '';
   }
   $('startBtn').disabled = active;
@@ -811,7 +811,7 @@ $('wModel').onchange = renderWet;
   S.cat = await api('/pg/catalog');
   const items = S.cat.items;
   for (const it of items) { it.collision = it.collision || ''; }
-  $('wModel').innerHTML = $('lModel').innerHTML = $('model').innerHTML = S.cat.models.map(m => `<option value="${m.id}">${m.label} · ${m.via}</option>`).join('');
+  $('wModel').innerHTML = $('lModel').innerHTML = $('model').innerHTML = [...new Set(S.cat.models.map(m => m.via))].map(v => `<optgroup label="${v}">` + S.cat.models.filter(m => m.via === v).map(m => `<option value="${m.id}">${m.label}</option>`).join('') + '</optgroup>').join('');
   renderTabs(); renderItems();
   view.onload = () => $('loading').style.display = 'none';
   const sendAspect = () => { const r = stage.getBoundingClientRect(); if (r.width > 50 && r.height > 50) api('/pg/camera', {aspect: r.width / r.height}); };
