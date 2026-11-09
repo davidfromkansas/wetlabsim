@@ -1,0 +1,263 @@
+{
+ "suite": "libero_10",
+ "index": 8,
+ "name": "KITCHEN_SCENE8_put_both_moka_pots_on_the_stove",
+ "language": "put both moka pots on the stove",
+ "problem": "libero_kitchen_tabletop_manipulation",
+ "goal": [
+  [
+   "on",
+   "moka_pot_1",
+   "flat_stove_1_cook_region"
+  ],
+  [
+   "on",
+   "moka_pot_2",
+   "flat_stove_1_cook_region"
+  ],
+  [
+   "turnon",
+   "flat_stove_1"
+  ]
+ ],
+ "obj_of_interest": [
+  "moka_pot_1",
+  "moka_pot_2",
+  "flat_stove_1"
+ ],
+ "objects": {
+  "moka_pot_1": {
+   "kind": "object",
+   "category": "moka_pot",
+   "root_body": "moka_pot_1_main",
+   "contact_geoms": [
+    "moka_pot_1_g2",
+    "moka_pot_1_g3",
+    "moka_pot_1_g4",
+    "moka_pot_1_g5",
+    "moka_pot_1_g6",
+    "moka_pot_1_g7",
+    "moka_pot_1_g8",
+    "moka_pot_1_g9",
+    "moka_pot_1_g10",
+    "moka_pot_1_g11",
+    "moka_pot_1_g12",
+    "moka_pot_1_g13",
+    "moka_pot_1_g14",
+    "moka_pot_1_g15",
+    "moka_pot_1_g16"
+   ],
+   "joints": [
+    "moka_pot_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "moka_pot_2": {
+   "kind": "object",
+   "category": "moka_pot",
+   "root_body": "moka_pot_2_main",
+   "contact_geoms": [
+    "moka_pot_2_g2",
+    "moka_pot_2_g3",
+    "moka_pot_2_g4",
+    "moka_pot_2_g5",
+    "moka_pot_2_g6",
+    "moka_pot_2_g7",
+    "moka_pot_2_g8",
+    "moka_pot_2_g9",
+    "moka_pot_2_g10",
+    "moka_pot_2_g11",
+    "moka_pot_2_g12",
+    "moka_pot_2_g13",
+    "moka_pot_2_g14",
+    "moka_pot_2_g15",
+    "moka_pot_2_g16"
+   ],
+   "joints": [
+    "moka_pot_2_joint0"
+   ],
+   "articulation": {}
+  },
+  "flat_stove_1": {
+   "kind": "fixture",
+   "category": "flat_stove",
+   "root_body": "flat_stove_1_main",
+   "contact_geoms": [
+    "flat_stove_1_base",
+    "flat_stove_1_collision_burner",
+    "flat_stove_1_g5",
+    "flat_stove_1_g6",
+    "flat_stove_1_g7",
+    "flat_stove_1_g8",
+    "flat_stove_1_g9",
+    "flat_stove_1_g10",
+    "flat_stove_1_g11",
+    "flat_stove_1_g12",
+    "flat_stove_1_g13",
+    "flat_stove_1_g14",
+    "flat_stove_1_g15",
+    "flat_stove_1_g16",
+    "flat_stove_1_g17",
+    "flat_stove_1_g18",
+    "flat_stove_1_g19",
+    "flat_stove_1_g20",
+    "flat_stove_1_g21",
+    "flat_stove_1_g22"
+   ],
+   "joints": [
+    "flat_stove_1_button"
+   ],
+   "articulation": {
+    "turn_on": [
+     [
+      0.5,
+      99.0
+     ]
+    ],
+    "turn_off": [
+     [
+      -99.0,
+      0.0
+     ]
+    ]
+   }
+  }
+ },
+ "sites": {
+  "kitchen_table_flat_stove_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.010000000000000009,
+    0.010000000000000009,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "kitchen_table_moka_pot_right_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.025000000000000005,
+    0.02500000000000001,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "kitchen_table_moka_pot_left_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.025000000000000005,
+    0.025000000000000005,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "flat_stove_1_cook_region": {
+   "parent": "flat_stove_1",
+   "joints": [],
+   "size": [
+    0.075,
+    0.075,
+    0.0025
+   ],
+   "under": true,
+   "class": "SiteObject"
+  }
+ },
+ "joints": [
+  {
+   "name": "robot0_joint1",
+   "type": 3,
+   "qposadr": 0
+  },
+  {
+   "name": "robot0_joint2",
+   "type": 3,
+   "qposadr": 1
+  },
+  {
+   "name": "robot0_joint3",
+   "type": 3,
+   "qposadr": 2
+  },
+  {
+   "name": "robot0_joint4",
+   "type": 3,
+   "qposadr": 3
+  },
+  {
+   "name": "robot0_joint5",
+   "type": 3,
+   "qposadr": 4
+  },
+  {
+   "name": "robot0_joint6",
+   "type": 3,
+   "qposadr": 5
+  },
+  {
+   "name": "robot0_joint7",
+   "type": 3,
+   "qposadr": 6
+  },
+  {
+   "name": "gripper0_finger_joint1",
+   "type": 2,
+   "qposadr": 7
+  },
+  {
+   "name": "gripper0_finger_joint2",
+   "type": 2,
+   "qposadr": 8
+  },
+  {
+   "name": "moka_pot_1_joint0",
+   "type": 0,
+   "qposadr": 9
+  },
+  {
+   "name": "moka_pot_2_joint0",
+   "type": 0,
+   "qposadr": 16
+  },
+  {
+   "name": "flat_stove_1_button",
+   "type": 3,
+   "qposadr": 23
+  }
+ ],
+ "nq": 24,
+ "nv": 22,
+ "robot_base": {
+  "pos": [
+   -0.66,
+   0.0,
+   0.912
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "agentview": {
+  "pos": [
+   0.6586131746834771,
+   0.0,
+   1.6103500240372424
+  ],
+  "quat": [
+   0.6380177212293417,
+   0.30484971880648903,
+   0.30484983801576876,
+   0.6380177212293417
+  ],
+  "fovy": 45.0
+ }
+}

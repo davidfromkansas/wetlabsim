@@ -1,4 +1,5 @@
-"""LIBERO test runs: one setup or all 50, each graded by LIBERO's own success check.
+"""LIBERO test runs: one setup, all 50, or a whole study set across suites, each graded by
+LIBERO's own success check.
 
 A run passes the moment the goal holds (LIBERO ends an episode on success) and fails if the
 AI finishes, errors or reaches the time limit without it. Results are kept in
@@ -25,28 +26,31 @@ class Bench:
     def active(self) -> bool:
         return self.thread is not None and self.thread.is_alive()
 
-    def start(self, model_id: str, setups: list[int], time_limit: float):
+    def start(self, model_id: str, jobs: list[tuple[str, int]], time_limit: float):
+        """Run (task id, setup index) pairs one after another."""
         if self.active() or self.runner.active():
             raise RuntimeError("a run is already going")
-        task = self.sim.libero_task
         self.cancel.clear()
-        self.state = {"task": task.id, "model": model_id, "queue": setups, "done": 0, "passed": 0,
-                      "current": None, "last": None}
-        self.thread = threading.Thread(target=self._loop, args=(task, model_id, setups, time_limit), daemon=True)
+        self.state = {"model": model_id, "total": len(jobs), "done": 0, "passed": 0,
+                      "current": None, "last": None, "tasks": sorted({j[0] for j in jobs})}
+        self.thread = threading.Thread(target=self._loop, args=(model_id, jobs, time_limit), daemon=True)
         self.thread.start()
 
     def stop(self):
         self.cancel.set()
         self.runner.stop()
 
-    def _loop(self, task: LB.Task, model_id: str, setups: list[int], time_limit: float):
-        for k in setups:
+    def _loop(self, model_id: str, jobs: list[tuple[str, int]], time_limit: float):
+        for task_id, k in jobs:
             if self.cancel.is_set():
                 break
-            self.state["current"] = k
+            task = LB.task(task_id)
+            self.state["current"] = {"task": task.id, "suite": task.suite, "setup": k}
             self.sim.set_libero(task.id, k)
             self.sim.play()
-            self.runner.start(task.language, model_id, LB.site_sheet(), time_limit)
+            with self.sim.lock:
+                sheet = LB.site_sheet(task, self.sim.m, self.sim.d)
+            self.runner.start(task.language, model_id, sheet, time_limit)
             t0 = time.time()
             passed, how = False, ""
             while True:
@@ -76,9 +80,9 @@ class Bench:
             time.sleep(0.5)
             self.sim.pause()
             info = dict(self.H.run)
-            row = {"task": task.id, "language": task.language, "setup": k + 1, "model": model_id,
-                   "model_label": info.get("model_label") or model_id, "passed": passed, "how": how,
-                   "seconds": secs, "cost_usd": info.get("cost_usd"), "tokens": info.get("tokens"),
+            row = {"task": task.id, "suite": task.suite, "language": task.language, "setup": k + 1,
+                   "model": model_id, "model_label": info.get("model_label") or model_id, "passed": passed,
+                   "how": how, "seconds": secs, "cost_usd": info.get("cost_usd"), "tokens": info.get("tokens"),
                    "run_id": info.get("run_id"), "when": time.strftime("%Y-%m-%d %H:%M:%S")}
             if how != "stopped":
                 with open(self.results, "a") as f:
@@ -97,10 +101,49 @@ class Bench:
         out = []
         for line in self.results.read_text().splitlines():
             try:
-                out.append(json.loads(line))
+                r = json.loads(line)
             except ValueError:
-                pass
+                continue
+            if "suite" not in r:          # rows from before the other suites existed
+                try:
+                    r["suite"] = LB.task(r["task"]).suite
+                except KeyError:
+                    continue
+            out.append(r)
         return out
+
+    def suite_board(self, study: bool = True) -> dict:
+        """Passed / tried per model and suite. study=True counts only setups 1-5 (Anthropic's
+        study set); the latest result for each (task, setup) counts."""
+        latest: dict = {}
+        for r in self.rows():
+            if study and r["setup"] > LB.STUDY_SETUPS:
+                continue
+            latest[(r["model"], r["task"], r["setup"])] = r
+        by: dict[str, dict] = {}
+        for (model, _, _), r in latest.items():
+            b = by.setdefault(model, {"model": model, "label": r.get("model_label") or model,
+                                      "suites": {k: {"tried": 0, "passed": 0} for k, _, _ in LB.SUITES},
+                                      "secs": [], "costs": []})
+            c = b["suites"].setdefault(r["suite"], {"tried": 0, "passed": 0})
+            c["tried"] += 1
+            c["passed"] += int(r["passed"])
+            if r["passed"]:
+                b["secs"].append(r["seconds"])
+            if r.get("cost_usd") is not None:
+                b["costs"].append(r["cost_usd"])
+        board = []
+        per_suite = LB.STUDY_SETUPS if study else None
+        for b in by.values():
+            tried = sum(c["tried"] for c in b["suites"].values())
+            passed = sum(c["passed"] for c in b["suites"].values())
+            board.append({"model": b["model"], "label": b["label"], "suites": b["suites"],
+                          "tried": tried, "passed": passed, "rate": round(passed / tried, 3) if tried else 0,
+                          "avg_seconds": round(sum(b["secs"]) / len(b["secs"]), 1) if b["secs"] else None,
+                          "total_cost": round(sum(b["costs"]), 2) if b["costs"] else None})
+        board.sort(key=lambda b: -b["rate"])
+        sizes = {k: len(LB.tasks(k)) * (per_suite or 50) for k, _, _ in LB.SUITES}
+        return {"board": board, "sizes": sizes, "study": study}
 
     def scoreboard(self, task_id: str | None) -> dict:
         rows = [r for r in self.rows() if task_id is None or r["task"] == task_id]

@@ -1,0 +1,158 @@
+<mujoco model="base">
+  <compiler angle="radian" autolimits="true" />
+  <visual>
+    <map znear="0.001" />
+  </visual>
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.9 0.9 1" rgb2="0.2 0.3 0.4" width="256" height="1536" />
+    <texture type="2d" name="texplane" file="{FILES}/textures/light-gray-floor-tile.png" />
+    <texture type="cube" name="tex-table" file="{FILES}/textures/martin_novak_wood_table.png" />
+    <texture type="cube" name="tex-table-legs" file="{FILES}/textures/martin_novak_wood_table.png" />
+    <texture type="2d" name="tex-wall" file="{FILES}/textures/light-gray-plaster.png" />
+    <texture type="cube" name="textable" builtin="flat" rgb1="0.5 0.5 0.5" width="512" height="3072" />
+    <texture type="2d" name="tex-study_wall_painting" file="{FILES}/scenes/study_wall_painting/study_wall_painting.png" />
+    <texture type="2d" name="tex-office_book_shelf" file="{FILES}/scenes/office_book_shelf/ceramic.png" />
+    <texture type="2d" name="tex-plant" file="{FILES}/scenes/plant/plant_texture.png" />
+    <texture type="2d" name="tex-black-book" file="{FILES}/scenes/black_book/black_book_texture.png" />
+    <texture type="2d" name="tex-desk" file="{FILES}/scenes/desk/desk_texture.png" />
+    <texture type="2d" name="tex-floor_lamp" file="{FILES}/scenes/floor_lamp/lamp_texture.png" />
+    <texture type="2d" name="black_book_1_tex-black_book" file="{FILES}/turbosquid_objects/black_book/black_book_texture.png" />
+    <texture type="2d" name="white_yellow_mug_1_tex-white_yellow_mug" file="{FILES}/turbosquid_objects/white_yellow_mug/white_yellow_mug_texture.png" />
+    <texture type="2d" name="desk_caddy_1_tex-desk_caddy" file="{FILES}/turbosquid_objects/desk_caddy/desk_caddy_texture.png" />
+    <material name="floorplane" texture="texplane" texuniform="true" texrepeat="3 3" specular="0" shininess="0" />
+    <material name="table_texture" texture="tex-table" specular="0.2" shininess="0" />
+    <material name="table_legs" texture="tex-table-legs" shininess="0.8" reflectance="0.8" />
+    <material name="walls_mat" texture="tex-wall" texuniform="true" texrepeat="3 3" specular="0.8" shininess="0.1" />
+    <material name="table_mat" texture="textable" />
+    <material name="study_wall_painting" texture="tex-study_wall_painting" reflectance="0.5" />
+    <material name="office_book_shelf" texture="tex-office_book_shelf" reflectance="0.5" />
+    <material name="plant" texture="tex-plant" reflectance="0.5" />
+    <material name="black_book" texture="tex-black-book" reflectance="0.5" />
+    <material name="desk" texture="tex-desk" reflectance="0.5" />
+    <material name="floor_lamp" texture="tex-floor_lamp" reflectance="0.5" />
+    <material name="black_book_1_black_book" texture="black_book_1_tex-black_book" reflectance="0.5" />
+    <material name="white_yellow_mug_1_white_yellow_mug" texture="white_yellow_mug_1_tex-white_yellow_mug" reflectance="0.5" />
+    <material name="desk_caddy_1_desk_caddy" texture="desk_caddy_1_tex-desk_caddy" reflectance="0.5" />
+    <mesh name="study_wall_painting_vis" file="{FILES}/scenes/study_wall_painting/visual/study_wall_painting_vis.msh" />
+    <mesh name="office_book_shelf_vis" file="{FILES}/scenes/office_book_shelf/visual/office_book_shelf_vis.msh" scale="0.7 0.7 0.7" />
+    <mesh name="plant_vis" file="{FILES}/scenes/plant/visual/plant_vis.msh" scale="0.7 0.7 0.7" />
+    <mesh name="black_book_vis" file="{FILES}/scenes/black_book/visual/black_book_vis.msh" scale="0.7 0.7 0.7" />
+    <mesh name="desk_vis" file="{FILES}/scenes/desk/visual/desk_vis.msh" />
+    <mesh name="floor_lamp_vis" file="{FILES}/scenes/floor_lamp/visual/floor_lamp_vis.msh" />
+    <mesh name="black_book_1_black_book_vis" file="{FILES}/turbosquid_objects/black_book/visual/black_book_vis.msh" scale="0.4 0.4 0.4" />
+    <mesh name="white_yellow_mug_1_white_yellow_mug_vis" file="{FILES}/turbosquid_objects/white_yellow_mug/visual/white_yellow_mug_vis.msh" />
+    <mesh name="desk_caddy_1_desk_caddy_vis" file="{FILES}/turbosquid_objects/desk_caddy/visual/desk_caddy_vis.msh" scale="1.5 1.5 1.5" />
+  </asset>
+  <worldbody>
+    <geom name="floor" size="3 3 0.125" type="plane" group="1" material="floorplane" />
+    <geom name="study_wall_painging" pos="-1.9 0.5 1" quat="0.707107 0 0 -0.707107" type="mesh" contype="0" conaffinity="0" group="1" material="study_wall_painting" mesh="study_wall_painting_vis" />
+    <geom pos="0.3 -0.6 0.9" quat="0.707107 0 0 -0.707107" type="mesh" contype="0" conaffinity="0" group="1" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" material="floor_lamp" mesh="floor_lamp_vis" />
+    <geom name="plant" pos="-1.85 0.5 0" quat="0.707107 0 0 0.707107" type="mesh" contype="0" conaffinity="0" group="1" material="plant" mesh="plant_vis" />
+    <geom name="office_book_shelf" pos="-1.7 -1 0" quat="0.707107 0 0 -0.707107" type="mesh" contype="0" conaffinity="0" group="1" material="office_book_shelf" mesh="office_book_shelf_vis" />
+    <geom name="black_book_1" pos="-1.7 -0.5 0.9" quat="0.707107 0 0 -0.707107" type="mesh" contype="0" conaffinity="0" group="1" material="black_book" mesh="black_book_vis" />
+    <geom name="black_book_2" pos="-1.7 -0.45 0.9" quat="0.707107 0 0 -0.707107" type="mesh" contype="0" conaffinity="0" group="1" material="black_book" mesh="black_book_vis" />
+    <geom name="wall_leftcorner_visual" size="1.06 1.5 0.01" pos="-1.25 2.25 1.5" quat="0.653281 0.653281 0.270598 0.270598" type="box" contype="0" conaffinity="0" group="1" material="walls_mat" />
+    <geom name="wall_rightcorner_visual" size="1.06 1.5 0.01" pos="-1.25 -2.25 1.5" quat="0.653281 0.653281 -0.270598 -0.270598" type="box" contype="0" conaffinity="0" group="1" material="walls_mat" />
+    <geom name="wall_left_visual" size="1.75 1.5 0.01" pos="1.25 3 1.5" quat="0.707107 0.707107 0 0" type="box" contype="0" conaffinity="0" group="1" material="walls_mat" />
+    <geom name="wall_right_visual" size="1.75 1.5 0.01" pos="1.25 -3 1.5" quat="0.707107 -0.707107 0 0" type="box" contype="0" conaffinity="0" group="1" material="walls_mat" />
+    <geom name="wall_rear_visual" size="1.5 1.5 0.01" pos="-2 0 1.5" quat="0.5 0.5 0.5 0.5" type="box" contype="0" conaffinity="0" group="1" material="walls_mat" />
+    <geom name="wall_front_visual" size="3 1.5 0.01" pos="3 0 1.5" quat="0.5 0.5 -0.5 -0.5" type="box" contype="0" conaffinity="0" group="1" material="walls_mat" />
+    <camera name="frontview" pos="1 0 1.48" quat="0.560842 0.430646 0.430646 0.560842" />
+    <camera name="birdview" pos="-0.2 0 3" quat="0.707107 0 0 0.707107" />
+    <camera name="agentview" pos="0.458613 0 1.61035" quat="0.638018 0.30485 0.30485 0.638018" />
+    <camera name="sideview" pos="-0.0565177 1.27612 1.48796" quat="0.00990507 0.00687796 0.591223 0.806418" />
+    <camera name="galleryview" pos="2.84455 2.12797 3.12862" quat="0.422614 0.233744 0.416469 0.770269" />
+    <camera name="paperview" pos="2.1 0.535 2.075" quat="0.512987 0.352991 0.442988 0.644983" />
+    <light name="light1" pos="1 1 4" dir="0 -0.14834 -0.988936" castshadow="false" diffuse="0.8 0.8 0.8" />
+    <light name="light2" pos="-3 -3 4" dir="0 -0.14834 -0.988936" castshadow="false" diffuse="0.8 0.8 0.8" />
+    <body name="study_table">
+      <geom type="mesh" contype="0" conaffinity="0" group="1" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" material="desk" mesh="desk_vis" />
+      <geom size="0.03584 0.68946 1.39273" pos="0 0 0.84929" quat="0.5 -0.5 0.5 0.5" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.5 0.5 0 1" />
+      <geom size="0.02002 0.05031 0.39407" pos="-0.50048 -0.69064 0.39431" quat="0 0 1 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.5 0.5 0 1" />
+      <geom size="0.02002 0.05031 0.39407" pos="0.49617 -0.69064 0.39431" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.5 0.5 0 1" />
+      <geom size="0.02002 0.05032 0.39407" pos="0.49617 0.70968 0.39431" quat="0 0 1 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.5 0.5 0 1" />
+      <geom size="0.02002 0.05031 0.39407" pos="-0.50048 0.71473 0.39431" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.5 0.5 0 1" />
+      <geom size="0.02002 0.05031 0.51262" pos="-0.00488 0.71473 0.02528" quat="0.708111 0 -0.706101 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.5 0.5 0 1" />
+      <geom size="0.02002 0.05032 0.51262" pos="-0.00488 -0.69765 0.02528" quat="0.708111 0 -0.706101 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.5 0.5 0 1" />
+      <site name="study_table_desk_caddy_init_region" pos="-0.4 -0.14 0.867" size="0.01 0.01 0.007" type="box" rgba="0 0 1 0" />
+      <site name="study_table_black_book_init_region" pos="-0.2 0.15 0.867" size="0.025 0.025 0.007" type="box" rgba="0 0 1 0" />
+      <site name="study_table_white_yellow_mug_init_region" pos="-0.1 0 0.867" size="0.025 0.025 0.007" type="box" rgba="0 0 1 0" />
+      <site name="study_table_desk_caddy_right_region" pos="-0.4 0.15 0.867" size="0.05 0.05 0.007" type="box" rgba="0 0 1 0" />
+    </body>
+    <body name="black_book_1_main">
+      <joint name="black_book_1_joint0" type="free" damping="0.0005" />
+      <geom name="black_book_1_g0" type="mesh" contype="0" conaffinity="0" group="1" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" material="black_book_1_black_book" mesh="black_book_1_black_book_vis" />
+      <geom name="black_book_1_g1" size="0.01434 0.05519 0.0672" pos="-0.00047 -0.01215 0.06937" quat="0 0 1 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <site name="black_book_1_default_site" pos="0 0 0" size="0.002" rgba="1 0 0 0" />
+    </body>
+    <body name="white_yellow_mug_1_main">
+      <joint name="white_yellow_mug_1_joint0" type="free" damping="0.0005" />
+      <geom name="white_yellow_mug_1_g0" type="mesh" contype="0" conaffinity="0" group="1" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" material="white_yellow_mug_1_white_yellow_mug" mesh="white_yellow_mug_1_white_yellow_mug_vis" />
+      <geom name="white_yellow_mug_1_g1" size="0.00412 0.00876 0.02924" pos="0.06406 0 0.05598" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g2" size="0.00413 0.00876 0.02493" pos="0.04022 0 0.02629" quat="0.63072 0 -0.77601 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g3" size="0.00411 0.00876 0.02172" pos="0.04641 0 0.07965" quat="0.744728 0 0.667368 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g4" size="0.00412 0.00876 0.04361" pos="0.02428 -0.001 0.05934" quat="0.997858 0 0.0654099 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g5" size="0.00412 0.00876 0.04361" pos="0.02168 0.01468 0.05934" quat="0.0122299 0.980266 0.186549 -0.0642597" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g6" size="0.00412 0.00876 0.04361" pos="0.01459 0.02702 0.05934" quat="0.02282 0.93515 0.34816 -0.0613" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g7" size="0.00413 0.00876 0.04361" pos="0.00383 0.03634 0.05934" quat="0.0566099 0.499919 -0.863598 0.0327699" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g8" size="0.00412 0.00876 0.04361" pos="-0.00868 0.04141 0.05934" quat="0.0413402 0.773263 0.630703 -0.0506902" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g9" size="0.00412 0.00876 0.04361" pos="-0.02322 0.04219 0.05934" quat="0.0494198 0.653728 0.753898 -0.0428499" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g10" size="0.00412 0.00876 0.04361" pos="-0.03613 0.03851 0.05934" quat="0.526399 -0.0555699 0.0345099 0.847718" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g11" size="0.00413 0.00876 0.04361" pos="-0.04594 0.03217 0.05934" quat="0.0597801 0.404871 0.912032 -0.02654" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g12" size="0.00412 0.00876 0.04361" pos="-0.05444 0.02216 0.05934" quat="0.259 -0.06317 0.01698 0.96366" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g13" size="0.00412 0.00876 0.04361" pos="-0.05951 0.00987 0.05934" quat="0.0650497 0.10512 0.992306 -0.00688997" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g14" size="0.00413 0.00876 0.04361" pos="-0.06044 -0.0045 0.05934" quat="0.0646601 0.0652701 0.00424001 -0.995761" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g15" size="0.00412 0.00876 0.04361" pos="-0.05654 -0.0183 0.05934" quat="0.0636197 -0.231699 0.970586 0.0151899" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g16" size="0.00413 0.00876 0.04361" pos="-0.04863 -0.02964 0.05934" quat="0.386511 0.0603002 0.0253301 -0.919963" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g17" size="0.00412 0.00876 0.04361" pos="-0.03703 -0.03808 0.05934" quat="0.0551598 -0.536318 0.841477 0.0351599" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g18" size="0.00413 0.00876 0.04361" pos="-0.0222 -0.0423 0.05934" quat="0.680041 0.04787 0.04458 -0.730251" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g19" size="0.00412 0.00876 0.04361" pos="-0.00773 -0.04118 0.05934" quat="0.0395498 -0.794776 0.603367 0.0520998" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g20" size="0.00412 0.00876 0.04361" pos="0.00471 -0.03578 0.05934" quat="0.03072 -0.880921 0.468721 0.0577501" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g21" size="0.00412 0.00876 0.04361" pos="0.01547 -0.02593 0.05934" quat="0.0203499 -0.948318 0.310509 0.0621598" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g22" size="0.00412 0.00876 0.04361" pos="0.02184 -0.01422 0.05934" quat="0.01035 -0.985278 0.15795 0.0645899" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g23" size="0.00407 0.00876 0.01028" pos="0.01284 -0.001 0.0106" quat="0.950387 0 0.311069 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g24" size="0.00407 0.00876 0.01028" pos="0.00804 0.01661 0.0106" quat="0.0914002 0.908432 0.27925 -0.297351" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g25" size="0.00407 0.00876 0.01028" pos="-0.00359 0.0274 0.0106" quat="0.806911 -0.16435 0.26412 0.50212" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g26" size="0.00407 0.00876 0.01028" pos="-0.02029 0.03097 0.0106" quat="0.637708 -0.230629 0.208729 0.704678" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g27" size="0.00407 0.00876 0.01028" pos="-0.034 0.02672 0.0106" quat="0.14973 0.83305 -0.45745 0.27267" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g28" size="0.00407 0.00876 0.01028" pos="-0.04548 0.0148 0.0106" quat="0.21896 -0.302709 0.0716599 0.924818" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g29" size="0.00407 0.00876 0.01028" pos="-0.04922 -0.0011 0.0106" quat="0.01047 -0.949846 -0.0319999 -0.310899" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g30" size="0.00407 0.00876 0.01028" pos="-0.04438 -0.01667 0.0106" quat="0.280291 0.297241 0.0917502 -0.908112" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g31" size="0.00407 0.00876 0.01028" pos="-0.03258 -0.02751 0.0106" quat="0.263461 -0.505291 0.804932 0.16539" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g32" size="0.00407 0.00876 0.01028" pos="-0.0177 -0.03104 0.0106" quat="0.21464 -0.687908 0.655748 0.225179" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g33" size="0.00407 0.00876 0.01028" pos="-0.00302 -0.02709 0.0106" quat="0.827539 0.15297 0.27086 -0.467349" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g34" size="0.00407 0.00876 0.01028" pos="0.00801 -0.01666 0.0106" quat="0.91668 0.08211 0.30004 -0.25086" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g35" size="0.0025 0.01861 0.01861" pos="-0.01819 0 0.00274" quat="0.5 0.5 -0.5 0.5" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g36" size="0.0025 0.00383 0.01861" pos="-0.01819 -0.0221 0.00274" quat="0.707107 0 0.707107 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g37" size="0.0025 0.00383 0.01861" pos="-0.01819 0.0221 0.00274" quat="0.707107 0 0.707107 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g38" size="0.0025 0.00383 0.0186" pos="-0.0412 0 0.00274" quat="0.503589 -0.496379 0.503599 0.496379" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="white_yellow_mug_1_g39" size="0.0025 0.00383 0.0186" pos="0.0046 0 0.00274" quat="0.503589 -0.496379 0.503599 0.496379" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <site name="white_yellow_mug_1_default_site" pos="0 0 0" size="0.002" rgba="1 0 0 0" />
+    </body>
+    <body name="desk_caddy_1_main" pos="-0.390727 -0.142331 0.887" quat="0 0 0 1">
+      <geom name="desk_caddy_1_g0" type="mesh" contype="0" conaffinity="0" group="1" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" material="desk_caddy_1_desk_caddy" mesh="desk_caddy_1_desk_caddy_vis" />
+      <geom name="desk_caddy_1_g1" size="0.00621 0.0755 0.21688" pos="0 0 0.0076" quat="0.5 -0.5 0.5 0.5" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="desk_caddy_1_g2" size="0.0062 0.07062 0.08239" pos="0 -0.06804 0.08502" quat="0 0.707107 0.707107 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="desk_caddy_1_g3" size="0.0062 0.07062 0.08239" pos="0 -0.2094 0.08502" quat="0.707107 0 0 -0.707107" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="desk_caddy_1_g4" size="0.00403 0.08152 0.2098" pos="0.0668 0 0.08677" quat="0.707107 0.707107 0 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="desk_caddy_1_g5" size="0.00403 0.04341 0.06684" pos="-0.00156 0 0.05524" quat="0.707107 0.707107 0 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="desk_caddy_1_g6" size="0.00359 0.0333 0.07062" pos="0 0.20861 0.04523" quat="0.5 0.5 -0.5 -0.5" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="desk_caddy_1_g7" size="0.00359 0.02992 0.03675" pos="0.03452 0.07058 0.07485" quat="0 0.707107 0.707107 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="desk_caddy_1_g8" size="0.00403 0.03455 0.2098" pos="-0.06687 0 0.03952" quat="0.707107 0.707107 0 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="desk_caddy_1_g9" size="0.00403 0.07663 0.07961" pos="-0.06687 -0.13977 0.08769" quat="0 0 1 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="desk_caddy_1_g10" size="0.00359 0.02094 0.07062" pos="0 0.07058 0.09451" quat="0.626922 0.327061 0.327061 0.626922" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="desk_caddy_1_g11" size="0.00359 0.01135 0.02792" pos="0.04227 0.07058 0.13866" quat="0.627558 -0.325829 0.325829 -0.627568" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="desk_caddy_1_g12" size="0.00359 0.0333 0.07062" pos="0 0.07073 0.04523" quat="0.5 0.5 -0.5 -0.5" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="desk_caddy_1_g13" size="0.00359 0.01135 0.02792" pos="0.04179 0.20821 0.13866" quat="0.627558 -0.325829 0.325829 -0.627568" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="desk_caddy_1_g14" size="0.00359 0.02094 0.07062" pos="0 0.20821 0.09451" quat="0.327061 0.626922 -0.626922 -0.327061" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="desk_caddy_1_g15" size="0.00359 0.02992 0.03675" pos="0.03452 0.20821 0.07485" quat="0 -0.707107 0.707107 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="desk_caddy_1_g16" size="0.00359 0.01135 0.01882" pos="0.05494 0.20821 0.12363" quat="0.707091 0.00466001 -0.00466001 -0.707091" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="desk_caddy_1_g17" size="0.00359 0.01135 0.01882" pos="0.05494 0.07035 0.12363" quat="0.707091 0.00466001 -0.00466001 -0.707091" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <site name="desk_caddy_1_right_contain_region" pos="0.00631 -0.14339 0.06558" quat="0 0 1 0" size="0.06196 0.06216 0.06046" type="box" rgba="0.8 0.8 0.8 0" />
+      <site name="desk_caddy_1_left_contain_region" pos="0.00631 0.14551 0.06558" quat="0 0 1 0" size="0.06196 0.06216 0.06046" type="box" rgba="0.8 0.8 0.8 0" />
+      <site name="desk_caddy_1_back_contain_region" pos="0.03364 -0.00064 0.08558" quat="0 0 1 0" size="0.02775 0.06216 0.06046" type="box" rgba="0.8 0.8 0.8 0" />
+      <site name="desk_caddy_1_front_contain_region" pos="-0.03102 -0.00064 0.04054" quat="0 0 0.707107 -0.707107" size="0.02775 0.03595 0.06216" type="box" rgba="0.8 0.8 0.8 0" />
+      <site name="desk_caddy_1_default_site" pos="0 0 0" size="0.002" rgba="1 0 0 0" />
+    </body>
+  </worldbody>
+  </mujoco>

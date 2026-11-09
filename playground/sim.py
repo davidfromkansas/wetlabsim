@@ -15,6 +15,8 @@ import mujoco
 import numpy as np
 from PIL import Image
 
+from wetlabsim import scene as WS
+from wetlabsim import tasks as WT
 from wetlabsim.sim import RobotError, Sim
 
 from . import catalog
@@ -31,7 +33,8 @@ class PlaygroundSim(Sim):
     def __init__(self, placed: list[W.Placed] | None = None, robot: str = "franka", **kw):
         self.placed = placed or W.default_scene()
         self._uid = 0
-        self.scene_mode = "free"                      # or "libero"
+        self.scene_mode = "free"                      # or "libero" or "wetlab"
+        self.wetlab_task: str | None = None     # Wet Lab: the bench task (wetlabsim.tasks) laid out
         self.libero_task: LB.Task | None = None
         self.setup = 0                          # which of the task's 50 starting setups
         self.checker: LB.Checker | None = None
@@ -53,7 +56,13 @@ class PlaygroundSim(Sim):
     # ------------------------------------------------------------- scene
     def _make_model(self) -> mujoco.MjModel:
         if self.scene_mode == "libero":
-            return LB.build(self.robot)
+            return LB.build(self.libero_task, self.robot)
+        if self.scene_mode == "wetlab":
+            m = WS.build_model(self.robot)          # the robot cell's own bench
+            # Room for the main view's largest size (offscreen buffer only; physics unchanged).
+            m.vis.global_.offwidth = max(m.vis.global_.offwidth, MAX_W)
+            m.vis.global_.offheight = max(m.vis.global_.offheight, MAX_H)
+            return m
         return W.build(self.placed, self.robot)
 
     def _index(self):
@@ -63,10 +72,17 @@ class PlaygroundSim(Sim):
         self.robot_bodies = {b for b in range(m.nbody) if self._in_subtree(b, root)}
         self.body_uid = {}
         self.checker = None
+        if self.scene_mode == "wetlab":
+            return
         if self.scene_mode == "libero":
-            self.checker = LB.Checker(m)
-            self._burner = m.site("flat_stove_1_burner").id
-            m.site_rgba[self._burner, 3] = 0.0     # the burner glows only when the stove is on
+            self.checker = LB.Checker(m, self.libero_task)
+            # A stove's burner glows only while the stove is on (LIBERO's visual cue).
+            self._burners = {}
+            for n in self.checker.lit_burners(self.d):
+                sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, n + "_burner")
+                if sid >= 0:
+                    self._burners[n] = sid
+                    m.site_rgba[sid, 3] = 0.0
             return
         for p in self.placed:
             self.body_uid[m.body(f"obj_{p.uid}").id] = p.uid
@@ -76,6 +92,7 @@ class PlaygroundSim(Sim):
         with self.lock:
             self.m = self._make_model()
             self.d = mujoco.MjData(self.m)
+            self._cap_rgba0 = {}                # a fresh model has its own colours
             self._index()
             self.selected = None
             self._model_ver += 1
@@ -87,7 +104,7 @@ class PlaygroundSim(Sim):
         if not 0 <= setup < len(t.states):
             raise RobotError(f"setup must be 1..{len(t.states)}")
         with self.lock:
-            switching = self.scene_mode != "libero"
+            switching = self.scene_mode != "libero" or self.libero_task is None or self.libero_task.id != t.id
             self.scene_mode, self.libero_task, self.setup = "libero", t, setup
             if switching:
                 self._swap_model()
@@ -98,16 +115,29 @@ class PlaygroundSim(Sim):
     def set_free(self):
         with self.lock:
             if self.scene_mode != "free":
-                self.scene_mode, self.libero_task = "free", None
+                self.scene_mode, self.libero_task, self.wetlab_task = "free", None, None
                 self._swap_model()
+
+    def set_wetlab(self, task_id: str):
+        if task_id not in WT.TASKS:
+            raise RobotError(f"unknown wet lab task {task_id!r}")
+        with self.lock:
+            switching = self.scene_mode != "wetlab"
+            self.scene_mode, self.libero_task, self.wetlab_task = "wetlab", None, task_id
+            if switching:
+                self._swap_model()
+            else:
+                self.reset()
+                self.paused = True
 
     def goal_met(self) -> bool:
         if self.scene_mode != "libero" or self.checker is None:
             return False
         with self.lock:
-            ok = self.checker.check(self.d, self.libero_task.goal)
-            on = self.checker.turned_on(self.d, "flat_stove_1")
-            self.m.site_rgba[self._burner, 3] = 1.0 if on else 0.0
+            ok = self.checker.check(self.d)
+            lit = self.checker.lit_burners(self.d)
+            for n, sid in self._burners.items():
+                self.m.site_rgba[sid, 3] = 1.0 if lit.get(n) else 0.0
         return ok
 
     def _in_subtree(self, b, root):
@@ -121,8 +151,13 @@ class PlaygroundSim(Sim):
     def _lay_out(self, task):
         """Free play: nothing to do, every object starts where the user put it (the model's own
         pose). LIBERO: the task's official starting setup."""
+        if self.scene_mode == "wetlab":
+            # The bench laid out for its task, as in the robot cell's evals. An eval reset names
+            # the task itself; a plain reset keeps the chosen one.
+            super()._lay_out(task or self.wetlab_task)
+            return
         if self.scene_mode == "libero" and self.libero_task is not None:
-            arm = LB.apply_setup(self.m, self.d, self.libero_task.states[self.setup], self.arm_qadr)
+            arm = LB.apply_setup(self.m, self.d, self.libero_task, self.setup, self.arm_qadr)
             self.d.ctrl[self.arm_act] = arm
 
     def new_uid(self, item: str) -> str:
@@ -144,7 +179,7 @@ class PlaygroundSim(Sim):
     def rebuild(self):
         """Recompile the scene after an edit. The robot keeps its pose; objects stay put."""
         if self.scene_mode != "free":
-            raise RobotError("the LIBERO scene can't be edited")
+            raise RobotError("this scene can't be edited")
         with self.lock:
             self._sync_placed()
             old_m, old_d = self.m, self.d
@@ -207,11 +242,17 @@ class PlaygroundSim(Sim):
             self.reset()
 
     def scene_info(self) -> dict:
+        if self.scene_mode == "wetlab":
+            t = WT.TASKS[self.wetlab_task]
+            return {"mode": "wetlab", "objects": [], "paused": self.paused, "selected": self.selected,
+                    "time": round(self.d.time, 3), "realtime_factor": round(self.rt_factor, 3),
+                    "task": t.id, "title": t.title, "language": t.prompt,
+                    "robots": [{"id": "robot", "label": self.P["name"], "gripper": self.P["gripper"]}]}
         if self.scene_mode == "libero":
             t = self.libero_task
             return {"mode": "libero", "objects": [], "paused": self.paused, "selected": self.selected,
                     "time": round(self.d.time, 3), "realtime_factor": round(self.rt_factor, 3),
-                    "task": t.id, "language": t.language, "setup": self.setup, "setups": len(t.states),
+                    "task": t.id, "suite": t.suite, "language": t.language, "setup": self.setup, "setups": len(t.states),
                     "goal_met": self.goal_met(),
                     "robots": [{"id": "robot", "label": self.P["name"], "gripper": self.P["gripper"]}]}
         with self.lock:

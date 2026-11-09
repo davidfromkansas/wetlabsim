@@ -1,0 +1,166 @@
+<mujoco model="base">
+  <compiler angle="radian" autolimits="true" />
+  <visual>
+    <map znear="0.001" />
+  </visual>
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.9 0.9 1" rgb2="0.2 0.3 0.4" width="256" height="1536" />
+    <texture type="2d" name="texplane" file="{FILES}/textures/gray_ceramic_tile.png" />
+    <texture type="cube" name="tex-table" file="{FILES}/textures/martin_novak_wood_table.png" />
+    <texture type="cube" name="tex-table-legs" file="{FILES}/textures/martin_novak_wood_table.png" />
+    <texture type="2d" name="tex-wall" file="{FILES}/textures/yellow_linen_wall_texture.png" />
+    <texture type="cube" name="textable" builtin="flat" rgb2="0.8 0.8 0.8" width="512" height="3072" />
+    <texture type="2d" name="tex-kitchen_background" file="{FILES}/scenes/kitchen_background/kitchen_background.png" />
+    <texture type="2d" name="tex-kitchen_background_pot" file="{FILES}/scenes/kitchen_background_pot/kitchen_background_pot.png" />
+    <texture type="2d" name="tex-kitchen_background_stove" file="{FILES}/scenes/kitchen_background_stove/kitchen_background_stove.png" />
+    <texture type="2d" name="tex-kitchen_background_fridge" file="{FILES}/scenes/fridge/metal.png" />
+    <texture type="2d" name="moka_pot_1_tex-moka_pot_body" file="{FILES}/turbosquid_objects/moka_pot/metal_diff.png" />
+    <texture type="2d" name="moka_pot_1_tex-moka_pot_handle" file="{FILES}/turbosquid_objects/moka_pot/rubber_black.png" />
+    <texture type="2d" name="moka_pot_2_tex-moka_pot_body" file="{FILES}/turbosquid_objects/moka_pot/metal_diff.png" />
+    <texture type="2d" name="moka_pot_2_tex-moka_pot_handle" file="{FILES}/turbosquid_objects/moka_pot/rubber_black.png" />
+    <texture type="2d" name="flat_stove_1_tex-stove_knob" file="{FILES}/articulated_objects/flat_stove/metal.png" />
+    <texture type="2d" name="flat_stove_1_tex-stove_metal" file="{FILES}/articulated_objects/flat_stove/metal.png" />
+    <material name="floorplane" texture="texplane" texuniform="true" texrepeat="3 3" specular="0" shininess="0" />
+    <material name="table_texture" texture="tex-table" specular="0.2" shininess="0" />
+    <material name="table_legs" texture="tex-table-legs" shininess="0.8" reflectance="0.8" />
+    <material name="walls_mat" texture="tex-wall" texuniform="true" texrepeat="3 3" specular="0.8" shininess="0.3" />
+    <material name="table_mat" texture="textable" />
+    <material name="kitchen_background" texture="tex-kitchen_background" reflectance="0.5" />
+    <material name="kitchen_background_pot" texture="tex-kitchen_background_pot" reflectance="0.5" />
+    <material name="kitchen_background_hot_pot" reflectance="0.5" rgba="0.4 0.4 0.4 1" />
+    <material name="kitchen_background_stove" texture="tex-kitchen_background_stove" reflectance="0.5" />
+    <material name="kitchen_background_fridge" texture="tex-kitchen_background_fridge" reflectance="0.9" />
+    <material name="moka_pot_1_moka_pot_body" texture="moka_pot_1_tex-moka_pot_body" reflectance="0.5" />
+    <material name="moka_pot_1_moka_pot_handle" texture="moka_pot_1_tex-moka_pot_handle" reflectance="0.5" />
+    <material name="moka_pot_2_moka_pot_body" texture="moka_pot_2_tex-moka_pot_body" reflectance="0.5" />
+    <material name="moka_pot_2_moka_pot_handle" texture="moka_pot_2_tex-moka_pot_handle" reflectance="0.5" />
+    <material name="flat_stove_1_stove_knob_base" texture="flat_stove_1_tex-stove_knob" reflectance="0.5" />
+    <material name="flat_stove_1_stove_knob_button" texture="flat_stove_1_tex-stove_knob" reflectance="0.5" />
+    <material name="flat_stove_1_stove_knob_metal" texture="flat_stove_1_tex-stove_metal" shininess="1" reflectance="0.5" />
+    <mesh name="kitchen_background_vis" file="{FILES}/scenes/kitchen_background/visual/kitchen_background_vis.msh" scale="0.01 0.01 0.01" />
+    <mesh name="kitchen_background_pot_vis" file="{FILES}/scenes/kitchen_background_pot/visual/kitchen_background_pot_vis.msh" scale="0.01 0.01 0.01" />
+    <mesh name="kitchen_background_hot_pot_vis" file="{FILES}/scenes/kitchen_background_hot_pot/visual/kitchen_background_hot_pot_vis.msh" scale="0.01 0.01 0.01" />
+    <mesh name="kitchen_background_stove_vis" file="{FILES}/scenes/kitchen_background_stove/visual/kitchen_background_stove_vis.msh" scale="0.01 0.01 0.01" />
+    <mesh name="kitchen_background_fridge_vis" file="{FILES}/scenes/fridge/visual/fridge_vis.msh" scale="0.01 0.01 0.01" />
+    <mesh name="moka_pot_1_moka_pot_body_vis" file="{FILES}/turbosquid_objects/moka_pot/visual/moka_pot_body_vis.msh" scale="0.025 0.025 0.025" />
+    <mesh name="moka_pot_1_moka_pot_handle_vis" file="{FILES}/turbosquid_objects/moka_pot/visual/moka_pot_handle_vis.msh" scale="0.025 0.025 0.025" />
+    <mesh name="moka_pot_2_moka_pot_body_vis" file="{FILES}/turbosquid_objects/moka_pot/visual/moka_pot_body_vis.msh" scale="0.025 0.025 0.025" />
+    <mesh name="moka_pot_2_moka_pot_handle_vis" file="{FILES}/turbosquid_objects/moka_pot/visual/moka_pot_handle_vis.msh" scale="0.025 0.025 0.025" />
+    <mesh name="flat_stove_1_stove_knob_base_vis" file="{FILES}/articulated_objects/flat_stove/stove_knob_base/visual/stove_knob_base_vis.msh" />
+    <mesh name="flat_stove_1_stove_knob_button_vis" file="{FILES}/articulated_objects/flat_stove/stove_knob_button/visual/stove_knob_button_vis.msh" />
+    <mesh name="flat_stove_1_burnerplate" file="{FILES}/articulated_objects/flat_stove/stove_burner/burnerplate.stl" scale="0.55 0.55 0.45" />
+  </asset>
+  <worldbody>
+    <geom name="floor" size="3 3 0.125" type="plane" group="1" material="floorplane" />
+    <geom pos="-1.65 0 0.9" quat="0 0 0 1" type="mesh" contype="0" conaffinity="0" group="1" material="kitchen_background_stove" mesh="kitchen_background_stove_vis" />
+    <geom pos="-1.5 0.23 0.93" quat="0.316228 0 0 0.948683" type="mesh" contype="0" conaffinity="0" group="1" material="kitchen_background_hot_pot" mesh="kitchen_background_hot_pot_vis" />
+    <geom pos="-1.85 -0.85 0.9" quat="0 0 0 1" type="mesh" contype="0" conaffinity="0" group="1" material="kitchen_background_pot" mesh="kitchen_background_pot_vis" />
+    <geom pos="-1.75 -2.4 0" quat="0 0 0 1" type="mesh" contype="0" conaffinity="0" group="1" material="kitchen_background_fridge" mesh="kitchen_background_fridge_vis" />
+    <geom pos="-1.65 0 0" quat="0 0 0 1" type="mesh" contype="0" conaffinity="0" group="1" material="kitchen_background" mesh="kitchen_background_vis" />
+    <geom name="wall_left_visual" size="2.5 1.5 0.01" pos="0.5 3 1.5" quat="0.707107 0.707107 0 0" type="box" contype="0" conaffinity="0" group="1" material="walls_mat" />
+    <geom name="wall_right_visual" size="2.5 1.5 0.01" pos="0.5 -3 1.5" quat="0.707107 -0.707107 0 0" type="box" contype="0" conaffinity="0" group="1" material="walls_mat" />
+    <geom name="wall_rear_visual" size="3 1.5 0.01" pos="-2 0 1.5" quat="0.5 0.5 0.5 0.5" type="box" contype="0" conaffinity="0" group="1" material="walls_mat" />
+    <geom name="wall_front_visual" size="3 1.5 0.01" pos="3 0 1.5" quat="0.5 0.5 -0.5 -0.5" type="box" contype="0" conaffinity="0" group="1" material="walls_mat" />
+    <camera name="frontview" pos="1 0 1.48" quat="0.560842 0.430646 0.430646 0.560842" />
+    <camera name="birdview" pos="-0.2 0 3" quat="0.707107 0 0 0.707107" />
+    <camera name="agentview" pos="0.658613 0 1.61035" quat="0.638018 0.30485 0.30485 0.638018" />
+    <camera name="sideview" pos="-0.0565177 1.27612 1.48796" quat="0.00990507 0.00687796 0.591223 0.806418" />
+    <camera name="galleryview" pos="2.84455 2.12797 3.12862" quat="0.422614 0.233744 0.416469 0.770269" />
+    <camera name="paperview" pos="2.1 0.535 2.075" quat="0.512987 0.352991 0.442988 0.644983" />
+    <light name="light_kitchen" pos="-1.75 0 1.6" dir="0 0 -1" directional="true" castshadow="false" diffuse="0.8 0.8 0.8" specular="0.8 0.8 0.8" />
+    <light name="light1" pos="1 1 4" dir="0 -0.14834 -0.988936" castshadow="false" diffuse="0.8 0.8 0.8" />
+    <light name="light2" pos="-3 -3 4" dir="0 -0.14834 -0.988936" castshadow="false" diffuse="0.8 0.8 0.8" />
+    <body name="table" pos="0 0 0.875">
+      <geom name="table_collision" size="0.5 0.6 0.025" type="box" rgba="0.5 0.5 0 1" />
+      <geom name="table_visual" size="0.5 0.6 0.025" type="box" contype="0" conaffinity="0" group="1" material="table_texture" />
+      <geom name="table_leg1_visual" size="0.025 0.4375" pos="0.4 0.5 -0.4375" type="cylinder" contype="0" conaffinity="0" group="1" material="table_legs" />
+      <geom name="table_leg2_visual" size="0.025 0.4375" pos="-0.4 0.5 -0.4375" type="cylinder" contype="0" conaffinity="0" group="1" material="table_legs" />
+      <geom name="table_leg3_visual" size="0.025 0.4375" pos="-0.4 -0.5 -0.4375" type="cylinder" contype="0" conaffinity="0" group="1" material="table_legs" />
+      <geom name="table_leg4_visual" size="0.025 0.4375" pos="0.4 -0.5 -0.4375" type="cylinder" contype="0" conaffinity="0" group="1" material="table_legs" />
+      <site name="table_top" pos="0 0 0.025" size="0.001" rgba="0 0 0 0" />
+      <site name="kitchen_table_flat_stove_init_region" pos="-0.2 -0.2 0" size="0.01 0.01 0.007" type="box" rgba="0 0 1 0" />
+      <site name="kitchen_table_moka_pot_right_init_region" pos="-0.05 0.25 0" size="0.025 0.025 0.007" type="box" rgba="0 0 1 0" />
+      <site name="kitchen_table_moka_pot_left_init_region" pos="0.05 0.05 0" size="0.025 0.025 0.007" type="box" rgba="0 0 1 0" />
+    </body>
+    <body name="moka_pot_1_main">
+      <joint name="moka_pot_1_joint0" type="free" damping="0.0005" />
+      <geom name="moka_pot_1_g0" type="mesh" contype="0" conaffinity="0" group="1" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" material="moka_pot_1_moka_pot_body" mesh="moka_pot_1_moka_pot_body_vis" />
+      <geom name="moka_pot_1_g1" type="mesh" contype="0" conaffinity="0" group="1" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" material="moka_pot_1_moka_pot_handle" mesh="moka_pot_1_moka_pot_handle_vis" />
+      <geom name="moka_pot_1_g2" size="0.025 0.025 0.06655" pos="0 0 0.00044" quat="0 0 0 1" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_1_g3" size="0.00505 0.025 0.06655" pos="0 -0.02594 0.00044" quat="0 0.707107 0.707107 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_1_g4" size="0.00505 0.025 0.06655" pos="0 0.02955 0.00044" quat="0 0.707107 0.707107 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_1_g5" size="0.0042 0.01719 0.06655" pos="0.03017 0.01254 0.00044" quat="0 -0.193719 0.981057 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_1_g6" size="0.0042 0.01719 0.06655" pos="-0.02934 -0.01403 0.00044" quat="0 -0.981057 -0.193719 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_1_g7" size="0.0042 0.01719 0.06655" pos="0.02962 -0.01403 0.00044" quat="0 -0.975045 0.222009 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_1_g8" size="0.0042 0.01719 0.06655" pos="-0.02934 0.01509 0.00044" quat="0 -0.975045 0.222009 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_1_g9" size="0.00577 0.01762 0.02451" pos="0 -0.03591 0.0426" quat="0 0.707107 0.707107 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_1_g10" size="0.00721 0.00802 0.01374" pos="0 -0.0491 0.04619" quat="0 0.707107 0.707107 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_1_g11" size="0.00721 0.01021 0.01374" pos="0 0.04159 0.05249" quat="0 0.707107 0.707107 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_1_g12" size="0.00655 0.00697 0.01409" pos="0 0.05829 0.06027" quat="0 0 0.707107 -0.707107" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_1_g13" size="0.00655 0.00697 0.01409" pos="0 0.07546 0.05391" quat="0 0 -0.909191 -0.41638" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_1_g14" size="0.00655 0.0071 0.0275" pos="0 0.07247 0.02824" quat="0 0 -0.23224 -0.972659" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_1_g15" size="0.00655 0.00707 0.01007" pos="0.00013 0.05763 0.0023" quat="0 0 0.925139 -0.379629" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_1_g16" size="0.00524 0.00598 0.0114" pos="0 -0.00134 0.07429" quat="0 0 1 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <site name="moka_pot_1_default_site" pos="0 0 0" size="0.002" rgba="1 0 0 0" />
+    </body>
+    <body name="moka_pot_2_main">
+      <joint name="moka_pot_2_joint0" type="free" damping="0.0005" />
+      <geom name="moka_pot_2_g0" type="mesh" contype="0" conaffinity="0" group="1" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" material="moka_pot_2_moka_pot_body" mesh="moka_pot_2_moka_pot_body_vis" />
+      <geom name="moka_pot_2_g1" type="mesh" contype="0" conaffinity="0" group="1" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" material="moka_pot_2_moka_pot_handle" mesh="moka_pot_2_moka_pot_handle_vis" />
+      <geom name="moka_pot_2_g2" size="0.025 0.025 0.06655" pos="0 0 0.00044" quat="0 0 0 1" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_2_g3" size="0.00505 0.025 0.06655" pos="0 -0.02594 0.00044" quat="0 0.707107 0.707107 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_2_g4" size="0.00505 0.025 0.06655" pos="0 0.02955 0.00044" quat="0 0.707107 0.707107 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_2_g5" size="0.0042 0.01719 0.06655" pos="0.03017 0.01254 0.00044" quat="0 -0.193719 0.981057 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_2_g6" size="0.0042 0.01719 0.06655" pos="-0.02934 -0.01403 0.00044" quat="0 -0.981057 -0.193719 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_2_g7" size="0.0042 0.01719 0.06655" pos="0.02962 -0.01403 0.00044" quat="0 -0.975045 0.222009 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_2_g8" size="0.0042 0.01719 0.06655" pos="-0.02934 0.01509 0.00044" quat="0 -0.975045 0.222009 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_2_g9" size="0.00577 0.01762 0.02451" pos="0 -0.03591 0.0426" quat="0 0.707107 0.707107 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_2_g10" size="0.00721 0.00802 0.01374" pos="0 -0.0491 0.04619" quat="0 0.707107 0.707107 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_2_g11" size="0.00721 0.01021 0.01374" pos="0 0.04159 0.05249" quat="0 0.707107 0.707107 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_2_g12" size="0.00655 0.00697 0.01409" pos="0 0.05829 0.06027" quat="0 0 0.707107 -0.707107" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_2_g13" size="0.00655 0.00697 0.01409" pos="0 0.07546 0.05391" quat="0 0 -0.909191 -0.41638" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_2_g14" size="0.00655 0.0071 0.0275" pos="0 0.07247 0.02824" quat="0 0 -0.23224 -0.972659" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_2_g15" size="0.00655 0.00707 0.01007" pos="0.00013 0.05763 0.0023" quat="0 0 0.925139 -0.379629" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <geom name="moka_pot_2_g16" size="0.00524 0.00598 0.0114" pos="0 -0.00134 0.07429" quat="0 0 1 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+      <site name="moka_pot_2_default_site" pos="0 0 0" size="0.002" rgba="1 0 0 0" />
+    </body>
+    <body name="flat_stove_1_main" pos="-0.194165 -0.199422 0.905">
+      <site name="flat_stove_1_default_site" pos="0 0 0" size="0.002" rgba="1 0 0 0" />
+      <body name="flat_stove_1_base">
+        <body name="flat_stove_1_burner" pos="0.15 0 0">
+          <geom name="flat_stove_1_base_vis" size="0.095 0.095 0.02" type="box" group="1" material="flat_stove_1_stove_knob_metal" />
+          <geom name="flat_stove_1_base" size="0.095 0.095 0.02" type="box" material="flat_stove_1_stove_knob_metal" />
+          <geom name="flat_stove_1_collision_burner" size="0.095 0.095 0.0005" pos="0 0 0.025" type="box" rgba="0 0 0 0" />
+          <site name="flat_stove_1_cook_region" pos="0 0 0" size="0.075 0.075 0.0025" type="box" rgba="0.8 0.8 0 0" />
+          <site name="flat_stove_1_burner" pos="0 0 0.022" size="0.0625 0.0005" type="cylinder" rgba="0.9 0.05 0.05 -1" />
+          <body name="flat_stove_1_burner_plate">
+            <geom name="flat_stove_1_burner" pos="0 0 0.025" type="mesh" contype="0" conaffinity="0" group="1" material="flat_stove_1_stove_knob_metal" mesh="flat_stove_1_burnerplate" />
+          </body>
+        </body>
+        <body name="flat_stove_1_button" quat="0.707107 0 0 0.707107">
+          <inertial pos="0 0 0" mass="3" diaginertia="1 1 1" />
+          <joint name="flat_stove_1_button" pos="0 0 0" axis="0 0 1" range="-0.005 2.1" damping="1" />
+          <geom name="flat_stove_1_g4" type="mesh" contype="0" conaffinity="0" group="1" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.1 0.1 0.1 1" mesh="flat_stove_1_stove_knob_button_vis" />
+          <geom name="flat_stove_1_g5" size="0.00621 0.03396 0.03396" pos="0.00132 0.00458 0.00657" quat="0.00206001 -0.707104 0.00206001 0.707104" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+          <geom name="flat_stove_1_g6" size="0.00296 0.00621 0.02939" pos="0.00111 -0.03234 0.00657" quat="0.498543 0.498543 -0.501453 -0.501453" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+          <geom name="flat_stove_1_g7" size="0.00296 0.00621 0.02939" pos="0.00111 -0.03234 0.00657" quat="0.498543 0.498543 -0.501453 -0.501453" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+          <geom name="flat_stove_1_g8" size="0.00211 0.00621 0.02497" pos="0.00108 -0.0365 0.00657" quat="0.498548 -0.498548 0.501448 -0.501448" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+          <geom name="flat_stove_1_g9" size="0.00211 0.00621 0.01416" pos="0.00105 -0.04112 0.00657" quat="0.498543 0.498543 -0.501453 -0.501453" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+          <geom name="flat_stove_1_g10" size="0.00211 0.00621 0.01416" pos="0.00158 0.04983 0.00657" quat="0.498548 0.498548 -0.501448 -0.501448" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+          <geom name="flat_stove_1_g11" size="0.00211 0.00621 0.02497" pos="0.00156 0.0464 0.00657" quat="0.501448 0.501448 0.498548 0.498548" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+          <geom name="flat_stove_1_g12" size="0.00296 0.00621 0.02939" pos="0.00154 0.04175 0.00657" quat="0.501453 0.501453 0.498543 0.498543" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+          <geom name="flat_stove_1_g13" size="0.00296 0.00621 0.02939" pos="0.0385 0.00412 0.00657" quat="0.707094 0.707094 -0.00429002 -0.00429002" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+          <geom name="flat_stove_1_g14" size="0.00211 0.00621 0.02497" pos="0.04314 0.00407 0.00657" quat="0.00429002 0.00429002 0.707094 0.707094" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+          <geom name="flat_stove_1_g15" size="0.00211 0.00621 0.01416" pos="0.04657 0.00403 0.00657" quat="0.707094 0.707094 -0.00431002 -0.00431002" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+          <geom name="flat_stove_1_g16" size="0.00211 0.00621 0.01416" pos="-0.04392 0.00544 0.00657" quat="0.707075 0.707075 -0.00674004 -0.00674004" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+          <geom name="flat_stove_1_g17" size="0.00211 0.00621 0.02497" pos="-0.04049 0.00537 0.00657" quat="0.00673005 0.00673005 0.707075 0.707075" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+          <geom name="flat_stove_1_g18" size="0.00296 0.00621 0.02939" pos="-0.03585 0.00528 0.00657" quat="0.707075 -0.707075 0.00674004 -0.00674004" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+          <geom name="flat_stove_1_g19" size="0.01214 0.02432 0.03454" pos="0.00139 0.01737 0.0257" quat="0.00205001 0.00205001 0.707104 0.707104" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+          <geom name="flat_stove_1_g20" size="0.00776 0.01214 0.02048" pos="0.00118 -0.02003 0.02439" quat="0 -0.709159 -0.705049 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+          <geom name="flat_stove_1_g21" size="0.00776 0.01214 0.01739" pos="0.00115 -0.02496 0.02505" quat="0 -0.705049 0.709159 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+          <geom name="flat_stove_1_g22" size="0.00415 0.01214 0.01661" pos="0.00108 -0.03643 0.01715" quat="0 -0.705049 0.709159 0" type="box" friction="0.95 0.3 0.1" solref="0.001 1" solimp="0.998 0.998 0.001 0.5 2" density="100" rgba="0.8 0.8 0.8 0.3" />
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  </mujoco>

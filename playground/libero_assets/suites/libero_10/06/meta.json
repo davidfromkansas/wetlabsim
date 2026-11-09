@@ -1,0 +1,278 @@
+{
+ "suite": "libero_10",
+ "index": 6,
+ "name": "LIVING_ROOM_SCENE6_put_the_white_mug_on_the_plate_and_put_the_chocolate_pudding_to_the_right_of_the_plate",
+ "language": "put the white mug on the plate and put the chocolate pudding to the right of the plate",
+ "problem": "libero_living_room_tabletop_manipulation",
+ "goal": [
+  [
+   "on",
+   "porcelain_mug_1",
+   "plate_1"
+  ],
+  [
+   "on",
+   "chocolate_pudding_1",
+   "living_room_table_plate_right_region"
+  ]
+ ],
+ "obj_of_interest": [
+  "plate_1",
+  "chocolate_pudding_1",
+  "porcelain_mug_1"
+ ],
+ "objects": {
+  "porcelain_mug_1": {
+   "kind": "object",
+   "category": "porcelain_mug",
+   "root_body": "porcelain_mug_1_main",
+   "contact_geoms": [
+    "porcelain_mug_1_g1",
+    "porcelain_mug_1_g2",
+    "porcelain_mug_1_g3",
+    "porcelain_mug_1_g4",
+    "porcelain_mug_1_g5",
+    "porcelain_mug_1_g6",
+    "porcelain_mug_1_g7",
+    "porcelain_mug_1_g8",
+    "porcelain_mug_1_g9",
+    "porcelain_mug_1_g10",
+    "porcelain_mug_1_g11",
+    "porcelain_mug_1_g12",
+    "porcelain_mug_1_g13",
+    "porcelain_mug_1_g14",
+    "porcelain_mug_1_g15",
+    "porcelain_mug_1_g16",
+    "porcelain_mug_1_g17",
+    "porcelain_mug_1_g18",
+    "porcelain_mug_1_g19",
+    "porcelain_mug_1_g20",
+    "porcelain_mug_1_g21",
+    "porcelain_mug_1_g22"
+   ],
+   "joints": [
+    "porcelain_mug_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "red_coffee_mug_1": {
+   "kind": "object",
+   "category": "red_coffee_mug",
+   "root_body": "red_coffee_mug_1_main",
+   "contact_geoms": [
+    "red_coffee_mug_1_g1",
+    "red_coffee_mug_1_g2",
+    "red_coffee_mug_1_g3",
+    "red_coffee_mug_1_g4",
+    "red_coffee_mug_1_g5",
+    "red_coffee_mug_1_g6",
+    "red_coffee_mug_1_g7",
+    "red_coffee_mug_1_g8",
+    "red_coffee_mug_1_g9",
+    "red_coffee_mug_1_g10",
+    "red_coffee_mug_1_g11"
+   ],
+   "joints": [
+    "red_coffee_mug_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "plate_1": {
+   "kind": "object",
+   "category": "plate",
+   "root_body": "plate_1_main",
+   "contact_geoms": [
+    "plate_1_g1",
+    "plate_1_g2",
+    "plate_1_g3",
+    "plate_1_g4",
+    "plate_1_g5",
+    "plate_1_g6",
+    "plate_1_g7",
+    "plate_1_g8",
+    "plate_1_g9",
+    "plate_1_g10"
+   ],
+   "joints": [
+    "plate_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "chocolate_pudding_1": {
+   "kind": "object",
+   "category": "chocolate_pudding",
+   "root_body": "chocolate_pudding_1_main",
+   "contact_geoms": [
+    "chocolate_pudding_1_g1"
+   ],
+   "joints": [
+    "chocolate_pudding_1_joint0"
+   ],
+   "articulation": {}
+  }
+ },
+ "sites": {
+  "living_room_table_plate_left_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.05000000000000001,
+    0.05000000000000001,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "living_room_table_plate_right_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.05000000000000001,
+    0.05000000000000001,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "living_room_table_plate_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.024999999999999994,
+    0.025,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "living_room_table_porcelain_mug_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.024999999999999994,
+    0.024999999999999994,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "living_room_table_chocolate_pudding_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.025000000000000005,
+    0.024999999999999994,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "living_room_table_red_coffee_mug_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.024999999999999994,
+    0.025,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  }
+ },
+ "joints": [
+  {
+   "name": "robot0_joint1",
+   "type": 3,
+   "qposadr": 0
+  },
+  {
+   "name": "robot0_joint2",
+   "type": 3,
+   "qposadr": 1
+  },
+  {
+   "name": "robot0_joint3",
+   "type": 3,
+   "qposadr": 2
+  },
+  {
+   "name": "robot0_joint4",
+   "type": 3,
+   "qposadr": 3
+  },
+  {
+   "name": "robot0_joint5",
+   "type": 3,
+   "qposadr": 4
+  },
+  {
+   "name": "robot0_joint6",
+   "type": 3,
+   "qposadr": 5
+  },
+  {
+   "name": "robot0_joint7",
+   "type": 3,
+   "qposadr": 6
+  },
+  {
+   "name": "gripper0_finger_joint1",
+   "type": 2,
+   "qposadr": 7
+  },
+  {
+   "name": "gripper0_finger_joint2",
+   "type": 2,
+   "qposadr": 8
+  },
+  {
+   "name": "porcelain_mug_1_joint0",
+   "type": 0,
+   "qposadr": 9
+  },
+  {
+   "name": "red_coffee_mug_1_joint0",
+   "type": 0,
+   "qposadr": 16
+  },
+  {
+   "name": "plate_1_joint0",
+   "type": 0,
+   "qposadr": 23
+  },
+  {
+   "name": "chocolate_pudding_1_joint0",
+   "type": 0,
+   "qposadr": 30
+  }
+ ],
+ "nq": 37,
+ "nv": 33,
+ "robot_base": {
+  "pos": [
+   -0.51,
+   0.0,
+   0.42
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "agentview": {
+  "pos": [
+   0.6065773716836134,
+   0.0,
+   0.96
+  ],
+  "quat": [
+   0.6182166363517068,
+   0.3432307224633757,
+   0.3432314079167274,
+   0.6182176496305745
+  ],
+  "fovy": 45.0
+ }
+}

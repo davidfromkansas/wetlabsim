@@ -30,6 +30,8 @@ from . import catalog
 from . import libero as LB
 from . import site
 from .bench import Bench
+from . import wetlab as WL
+from wetlabsim import tasks as WT
 from .sim import PlaygroundSim
 
 HERE = pathlib.Path(__file__).parent
@@ -57,7 +59,7 @@ class Runner:
     def active(self) -> bool:
         return self.proc is not None and self.proc.poll() is None
 
-    def start(self, task: str, model_id: str, site_text: str, time_limit: float = TIME_LIMIT,
+    def start(self, task: str, model_id: str, site_text: str | None, time_limit: float = TIME_LIMIT,
               extra: list[str] | None = None) -> dict:
         with self.lock:
             if self.active():
@@ -65,11 +67,13 @@ class Runner:
             mdl = next((m for m in MODELS if m["id"] == model_id), None)
             if mdl is None:
                 raise RobotError(f"unknown model {model_id!r}")
-            sitef = pathlib.Path(tempfile.mkdtemp(prefix="playground-site-")) / "SITE.md"
-            sitef.write_text(site_text)
             cmd = [sys.executable, "-m", "wetlabsim.run_agent", "--agent", mdl["agent"], "--task", task,
                    "--url", self.url, "--runs", str(self.runs), "--time-limit", str(time_limit),
-                   "--docs", "standard", "--site-file", str(sitef), *(extra or [])]
+                   "--docs", "standard", *(extra or [])]
+            if site_text is not None:     # None: the bench's own site sheet (Wet Lab mode)
+                sitef = pathlib.Path(tempfile.mkdtemp(prefix="playground-site-")) / "SITE.md"
+                sitef.write_text(site_text)
+                cmd += ["--site-file", str(sitef)]
             if mdl["model"]:
                 cmd += ["--model", mdl["model"]]
             self.runs.mkdir(parents=True, exist_ok=True)
@@ -105,10 +109,16 @@ class PGHandler(Handler):
     sim: PlaygroundSim
     runner: Runner
     bench: Bench
+    wetbench: WL.WetBench
+
+    def _busy(self) -> bool:
+        return self.runner.active() or self.bench.active() or self.wetbench.active()
 
     def _locked(self) -> str:
         if self.sim.scene_mode == "libero":
             return "LIBERO scenes are fixed: switch to Free play to build your own"
+        if self.sim.scene_mode == "wetlab":
+            return "the wet lab bench is fixed for a fair test: switch to Free play to build your own"
         if self.runner.active():
             return "the scene is locked while the AI is running; stop the run to edit"
         if not self.sim.paused:
@@ -143,13 +153,25 @@ class PGHandler(Handler):
                 return self._err("not found", 404)
             if p == "/pg/scene":
                 return self._json({**self.sim.scene_info(), "run": self.runner.status(), "locked": self._locked(),
-                                   "bench": self.bench.status()})
+                                   "bench": self.bench.status(), "wetbench": self.wetbench.status()})
+            if p == "/pg/wetlab":
+                return self._json({"tasks": [{"id": t.id, "title": t.title, "prompt": t.prompt,
+                                              "needs_answer": t.needs_answer} for t in WT.TASKS.values()],
+                                   "task": self.sim.wetlab_task, "time_limit": WL.TIME_LIMIT,
+                                   "scores": self.wetbench.scoreboard()})
             if p == "/pg/libero":
                 cur = self.sim.libero_task.id if self.sim.libero_task else None
-                return self._json({"tasks": [{"id": t.id, "language": t.language, "goal": list(t.goal),
-                                              "done_when": LB.done_when(t.goal), "setups": len(t.states)} for t in LB.tasks()],
-                                   "task": cur, "setup": self.sim.setup,
-                                   "scores": self.bench.scoreboard(qs.get("task", [cur])[0])})
+                suites = [{"id": k, "name": n, "blurb": bl,
+                           "tasks": [{"id": t.id, "index": t.index, "language": t.language,
+                                      "goal": [list(g) for g in t.goal], "done_when": LB.done_when(t),
+                                      "setups": len(t.states)} for t in LB.tasks(k)]}
+                          for k, n, bl in LB.SUITES]
+                study = qs.get("study", ["1"])[0] != "0"
+                return self._json({"suites": suites, "task": cur, "setup": self.sim.setup,
+                                   "suite": self.sim.libero_task.suite if self.sim.libero_task else None,
+                                   "study_setups": LB.STUDY_SETUPS,
+                                   "scores": self.bench.scoreboard(qs.get("task", [cur])[0]),
+                                   "suite_board": self.bench.suite_board(study)})
             if p == "/pg/view.mjpg":
                 return self._view_stream()
             if p == "/pg/view.jpg":
@@ -240,25 +262,51 @@ class PGHandler(Handler):
                 s.clear()
                 return self._json({"ok": True})
             if p == "/pg/mode":
-                if self.runner.active() or self.bench.active():
+                if self._busy():
                     return self._json({"ok": False, "error": "stop the run first"})
                 if b.get("mode") == "libero":
                     s.set_libero(b.get("task") or LB.tasks()[0].id, int(b.get("setup", 0)))
+                elif b.get("mode") == "wetlab":
+                    s.set_wetlab(b.get("task") or s.wetlab_task or WL.ORDER[0])
                 else:
                     s.set_free()
                 return self._json({"ok": True})
+            if p == "/pg/wetlab/task":
+                if self._busy():
+                    return self._json({"ok": False, "error": "stop the run first"})
+                s.set_wetlab(b["task"])
+                return self._json({"ok": True})
+            if p == "/pg/wetlab/run":
+                if s.scene_mode != "wetlab":
+                    return self._json({"ok": False, "error": "switch to Wet Lab first"})
+                ids = list(WL.ORDER) if b.get("all") else [s.wetlab_task]
+                try:
+                    self.wetbench.start(b.get("model", "claude"), ids, float(b.get("time_limit", WL.TIME_LIMIT)))
+                except RuntimeError as e:
+                    return self._json({"ok": False, "error": str(e)})
+                return self._json({"ok": True})
+            if p == "/pg/wetlab/stop":
+                self.wetbench.stop()
+                return self._json({"ok": True})
             if p == "/pg/libero/setup":
-                if self.runner.active() or self.bench.active():
+                if self._busy():
                     return self._json({"ok": False, "error": "stop the run first"})
                 s.set_libero(b.get("task") or s.libero_task.id, int(b.get("setup", 0)))
                 return self._json({"ok": True})
             if p == "/pg/libero/run":
                 if s.scene_mode != "libero":
                     return self._json({"ok": False, "error": "load a LIBERO task first"})
-                n = len(s.libero_task.states)
-                setups = list(range(n)) if b.get("all") else [s.setup]
+                t = s.libero_task
+                if b.get("study"):
+                    # The study set: setups 1-5 of every task in the chosen suites (all four by default).
+                    chosen = b.get("suites") or [k for k, _, _ in LB.SUITES]
+                    jobs = [(x.id, k) for suite in chosen for x in LB.tasks(suite) for k in range(LB.STUDY_SETUPS)]
+                elif b.get("all"):
+                    jobs = [(t.id, k) for k in range(len(t.states))]
+                else:
+                    jobs = [(t.id, s.setup)]
                 try:
-                    self.bench.start(b.get("model", "claude"), setups, float(b.get("time_limit", TIME_LIMIT)))
+                    self.bench.start(b.get("model", "claude"), jobs, float(b.get("time_limit", TIME_LIMIT)))
                 except RuntimeError as e:
                     return self._json({"ok": False, "error": str(e)})
                 return self._json({"ok": True})
@@ -269,6 +317,8 @@ class PGHandler(Handler):
                 task = (b.get("task") or "").strip()
                 if s.scene_mode == "libero" and task:
                     return self._json({"ok": False, "error": "in LIBERO mode, use Run this setup"})
+                if s.scene_mode == "wetlab" and task:
+                    return self._json({"ok": False, "error": "in Wet Lab mode, use Run this task"})
                 if task and not self.runner.active():
                     s.selected = None
                     s.play()
@@ -282,10 +332,11 @@ class PGHandler(Handler):
                 return self._json({"ok": True})
             if p == "/pg/stop":
                 self.bench.stop()
+                self.wetbench.stop()
                 self.runner.stop()
                 return self._json({"ok": True})
             if p == "/pg/reset":
-                if self.runner.active() or self.bench.active():
+                if self._busy():
                     return self._json({"ok": False, "error": "stop the run first"})
                 s.reset()
                 s.pause()
@@ -325,6 +376,10 @@ def main(argv=None):
         token = secrets.token_hex(16)
         tok_file.write_text(token)
     os.chmod(tok_file, 0o600)
+    from .tools import fetch_libero as fetch_assets
+    if fetch_assets.missing():    # LIBERO's objects, one time (~200 MB), while free play loads
+        print("Downloading LIBERO's objects in the background (one time, about 200 MB)...")
+        threading.Thread(target=lambda: fetch_assets.ensure(), daemon=True).start()
     print("Loading the scene...")
     sim = PlaygroundSim()
     sim.open_log(runs / time.strftime("session-%Y%m%d-%H%M%S"))
@@ -333,6 +388,7 @@ def main(argv=None):
     PGHandler.sim, PGHandler.token, PGHandler.runs_dir = sim, token, runs
     PGHandler.runner = Runner(url, runs)
     PGHandler.bench = Bench(sim, PGHandler.runner, PGHandler, runs / "libero_results.jsonl")
+    PGHandler.wetbench = WL.WetBench(sim, PGHandler.runner, PGHandler, runs / "wetlab_results.jsonl")
     srv = ThreadingHTTPServer((args.host, args.port), PGHandler)
     srv.daemon_threads = True
     print(f"MuJoCo Playground is running at {url}")

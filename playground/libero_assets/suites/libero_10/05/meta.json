@@ -1,0 +1,284 @@
+{
+ "suite": "libero_10",
+ "index": 5,
+ "name": "STUDY_SCENE1_pick_up_the_book_and_place_it_in_the_back_compartment_of_the_caddy",
+ "language": "pick up the book and place it in the back compartment of the caddy",
+ "problem": "libero_study_tabletop_manipulation",
+ "goal": [
+  [
+   "in",
+   "black_book_1",
+   "desk_caddy_1_back_contain_region"
+  ]
+ ],
+ "obj_of_interest": [
+  "black_book_1",
+  "desk_caddy_1"
+ ],
+ "objects": {
+  "black_book_1": {
+   "kind": "object",
+   "category": "black_book",
+   "root_body": "black_book_1_main",
+   "contact_geoms": [
+    "black_book_1_g1"
+   ],
+   "joints": [
+    "black_book_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "white_yellow_mug_1": {
+   "kind": "object",
+   "category": "white_yellow_mug",
+   "root_body": "white_yellow_mug_1_main",
+   "contact_geoms": [
+    "white_yellow_mug_1_g1",
+    "white_yellow_mug_1_g2",
+    "white_yellow_mug_1_g3",
+    "white_yellow_mug_1_g4",
+    "white_yellow_mug_1_g5",
+    "white_yellow_mug_1_g6",
+    "white_yellow_mug_1_g7",
+    "white_yellow_mug_1_g8",
+    "white_yellow_mug_1_g9",
+    "white_yellow_mug_1_g10",
+    "white_yellow_mug_1_g11",
+    "white_yellow_mug_1_g12",
+    "white_yellow_mug_1_g13",
+    "white_yellow_mug_1_g14",
+    "white_yellow_mug_1_g15",
+    "white_yellow_mug_1_g16",
+    "white_yellow_mug_1_g17",
+    "white_yellow_mug_1_g18",
+    "white_yellow_mug_1_g19",
+    "white_yellow_mug_1_g20",
+    "white_yellow_mug_1_g21",
+    "white_yellow_mug_1_g22",
+    "white_yellow_mug_1_g23",
+    "white_yellow_mug_1_g24",
+    "white_yellow_mug_1_g25",
+    "white_yellow_mug_1_g26",
+    "white_yellow_mug_1_g27",
+    "white_yellow_mug_1_g28",
+    "white_yellow_mug_1_g29",
+    "white_yellow_mug_1_g30",
+    "white_yellow_mug_1_g31",
+    "white_yellow_mug_1_g32",
+    "white_yellow_mug_1_g33",
+    "white_yellow_mug_1_g34",
+    "white_yellow_mug_1_g35",
+    "white_yellow_mug_1_g36",
+    "white_yellow_mug_1_g37",
+    "white_yellow_mug_1_g38",
+    "white_yellow_mug_1_g39"
+   ],
+   "joints": [
+    "white_yellow_mug_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "desk_caddy_1": {
+   "kind": "fixture",
+   "category": "desk_caddy",
+   "root_body": "desk_caddy_1_main",
+   "contact_geoms": [
+    "desk_caddy_1_g1",
+    "desk_caddy_1_g2",
+    "desk_caddy_1_g3",
+    "desk_caddy_1_g4",
+    "desk_caddy_1_g5",
+    "desk_caddy_1_g6",
+    "desk_caddy_1_g7",
+    "desk_caddy_1_g8",
+    "desk_caddy_1_g9",
+    "desk_caddy_1_g10",
+    "desk_caddy_1_g11",
+    "desk_caddy_1_g12",
+    "desk_caddy_1_g13",
+    "desk_caddy_1_g14",
+    "desk_caddy_1_g15",
+    "desk_caddy_1_g16",
+    "desk_caddy_1_g17"
+   ],
+   "joints": [],
+   "articulation": {}
+  }
+ },
+ "sites": {
+  "study_table_desk_caddy_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.010000000000000009,
+    0.010000000000000009,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "study_table_black_book_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.025,
+    0.024999999999999994,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "study_table_white_yellow_mug_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.024999999999999994,
+    0.025,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "study_table_desk_caddy_right_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.04999999999999999,
+    0.05000000000000001,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "desk_caddy_1_right_contain_region": {
+   "parent": "desk_caddy_1",
+   "joints": [],
+   "size": [
+    0.06196,
+    0.06216,
+    0.06046
+   ],
+   "under": true,
+   "class": "SiteObject"
+  },
+  "desk_caddy_1_left_contain_region": {
+   "parent": "desk_caddy_1",
+   "joints": [],
+   "size": [
+    0.06196,
+    0.06216,
+    0.06046
+   ],
+   "under": true,
+   "class": "SiteObject"
+  },
+  "desk_caddy_1_back_contain_region": {
+   "parent": "desk_caddy_1",
+   "joints": [],
+   "size": [
+    0.02775,
+    0.06216,
+    0.06046
+   ],
+   "under": true,
+   "class": "SiteObject"
+  },
+  "desk_caddy_1_front_contain_region": {
+   "parent": "desk_caddy_1",
+   "joints": [],
+   "size": [
+    0.02775,
+    0.03595,
+    0.06216
+   ],
+   "under": true,
+   "class": "SiteObject"
+  }
+ },
+ "joints": [
+  {
+   "name": "robot0_joint1",
+   "type": 3,
+   "qposadr": 0
+  },
+  {
+   "name": "robot0_joint2",
+   "type": 3,
+   "qposadr": 1
+  },
+  {
+   "name": "robot0_joint3",
+   "type": 3,
+   "qposadr": 2
+  },
+  {
+   "name": "robot0_joint4",
+   "type": 3,
+   "qposadr": 3
+  },
+  {
+   "name": "robot0_joint5",
+   "type": 3,
+   "qposadr": 4
+  },
+  {
+   "name": "robot0_joint6",
+   "type": 3,
+   "qposadr": 5
+  },
+  {
+   "name": "robot0_joint7",
+   "type": 3,
+   "qposadr": 6
+  },
+  {
+   "name": "gripper0_finger_joint1",
+   "type": 2,
+   "qposadr": 7
+  },
+  {
+   "name": "gripper0_finger_joint2",
+   "type": 2,
+   "qposadr": 8
+  },
+  {
+   "name": "black_book_1_joint0",
+   "type": 0,
+   "qposadr": 9
+  },
+  {
+   "name": "white_yellow_mug_1_joint0",
+   "type": 0,
+   "qposadr": 16
+  }
+ ],
+ "nq": 23,
+ "nv": 21,
+ "robot_base": {
+  "pos": [
+   -0.75,
+   0.0,
+   0.912
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "agentview": {
+  "pos": [
+   0.4586131746834771,
+   0.0,
+   1.6103500240372424
+  ],
+  "quat": [
+   0.6380177212293417,
+   0.30484971880648903,
+   0.30484983801576876,
+   0.6380177212293417
+  ],
+  "fovy": 45.0
+ }
+}

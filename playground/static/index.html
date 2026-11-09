@@ -50,7 +50,7 @@ select{height:36px;padding:0 10px;border-radius:8px;border:1px solid #D1D5DB;bac
 .ghostbtn:disabled{background:var(--soft);color:#6B7280;cursor:not-allowed}
 #taskpane{display:flex;flex-direction:column;gap:10px;flex:1;overflow:auto}
 #chatpane{flex:1;display:none;flex-direction:column;min-height:0;position:relative}
-body.chatting #chatpane,body.lib #chatpane{display:flex}
+body.chatting #chatpane,body.fixed #chatpane{display:flex}
 body.chatting #right .freeonly{display:none!important}
 /* free play: the right panel's two tabs, Chat and Objects */
 .sidetabs{display:flex;gap:2px;margin:12px 16px 0;padding:3px;border-radius:10px;background:var(--soft)}
@@ -58,7 +58,7 @@ body.chatting #right .freeonly{display:none!important}
 .sidetabs button[aria-selected=true]{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(17,24,39,.12)}
 .sidetabs .live{width:7px;height:7px;border-radius:50%;background:var(--red);padding:0;display:none}
 body.running .sidetabs .live{display:inline-block}
-body.lib .sidetabs{display:none}
+body.fixed .sidetabs{display:none}
 .chathead{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
 .chathead img{width:22px;height:22px}
 .chathead b{font-size:14px;font-weight:600}
@@ -120,7 +120,9 @@ dt{color:var(--muted)}dd{margin:0;text-align:right;font-family:'JetBrains Mono',
 #loading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;z-index:9;font-size:15px;color:var(--muted)}
 .libero{display:none}
 body.lib .libero{display:flex}
-body.lib .freeonly{display:none!important}
+body.fixed .freeonly{display:none!important}
+.wetlab{display:none}
+body.wet .wetlab{display:flex}
 #liberoPane{flex-direction:column;gap:12px;flex:1;overflow:auto;border:0}
 .official{font-size:15px;font-weight:600;color:var(--ink);line-height:1.35}
 .setrow{display:flex;align-items:center;gap:8px}
@@ -129,6 +131,13 @@ body.lib .freeonly{display:none!important}
 #lDots{display:grid;grid-template-columns:repeat(25,1fr);gap:3px}
 #lDots button{aspect-ratio:1;border-radius:50%;border:0;padding:0;background:#D1D5DB;cursor:pointer}
 #lDots button.p{background:var(--blue)}#lDots button.f{background:#F59E0B}
+.wtask{display:flex;align-items:center;gap:8px;min-height:40px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;font:500 13px Inter,sans-serif;color:var(--ink);cursor:pointer;text-align:left}
+.wtask[aria-pressed=true]{border:2px solid var(--blue);background:var(--blueBg)}
+.wtask:disabled{cursor:not-allowed;opacity:.6}
+.wtask .id{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);width:32px}
+.wtask .t{flex:1}
+.wtask .d{width:8px;height:8px;border-radius:50%;background:#D1D5DB}
+.wtask .d.p{background:var(--blue)}.wtask .d.f{background:#F59E0B}
 #lDots button.cur{outline:2px solid var(--ink);outline-offset:1px}
 .legend{display:flex;gap:12px;font-size:11.5px;color:var(--muted)}
 .legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:0}
@@ -139,10 +148,35 @@ table.board td.n{font-family:'JetBrains Mono',monospace;text-align:right}table.b
 #goalCard{position:absolute;right:14px;top:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;max-width:280px;font-size:12.5px;box-shadow:0 1px 3px rgba(17,24,39,.08);flex-direction:column;gap:2px}
 #goalCard b{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 #goalState{font-weight:600}
+.suites{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.suites button{min-height:44px;padding:4px 6px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;text-align:center;font:600 13px Inter,sans-serif}
+.suites button span{display:block;font-size:11px;font-weight:500;color:var(--muted)}
+.suites button[aria-pressed=true]{border:2px solid var(--blue);background:var(--blueBg);color:var(--blue2)}
+.suites button:disabled{opacity:.5;cursor:not-allowed}
+.studybtn{height:42px;border-radius:10px;border:1px solid var(--blue);background:var(--blueBg);color:var(--blue2);font:600 13px Inter,sans-serif;cursor:pointer}
+.studybtn:disabled{opacity:.5;cursor:not-allowed}
+.linkbtn{border:0;background:none;padding:6px 0 0;color:var(--blue2);font:500 12.5px Inter,sans-serif;cursor:pointer}
+#boardModal{position:fixed;inset:0;background:rgba(17,24,39,.35);z-index:8;align-items:center;justify-content:center;padding:16px}
+#boardModal .bm{background:var(--bg);border-radius:14px;padding:28px 32px;max-width:1100px;width:100%;display:flex;flex-direction:column;gap:18px;box-shadow:0 10px 30px rgba(17,24,39,.2)}
+table.board.big{background:#fff;border:1px solid var(--line);border-radius:12px;font-size:14px}
+table.board.big th,table.board.big td{padding:12px 14px}
+.brand{white-space:nowrap}
+@media (max-width:1500px){#modechip{display:none}}
 .libtag{font-size:12px;font-weight:600;color:var(--blue2);background:var(--blueBg);padding:4px 10px;border-radius:6px}
 </style>
 </head>
 <body>
+<div id="boardModal" role="dialog" aria-modal="true" aria-labelledby="bmTitle" style="display:none">
+  <div class="bm">
+    <div style="display:flex;align-items:flex-end;gap:16px">
+      <div style="flex:1"><span class="cap" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">LIBERO test · all suites</span><h2 id="bmTitle" style="margin:2px 0 0;font-size:24px;color:var(--ink)">Scoreboard</h2></div>
+      <div class="seg" role="group" aria-label="Which runs"><button id="bmStudy" aria-pressed="true">Study set (5 setups)</button><button id="bmAll" aria-pressed="false">All 50 setups</button></div>
+      <button class="round" id="bmClose" aria-label="Close">✕</button>
+    </div>
+    <table class="board big"><thead><tr><th>Model</th><th class="n">Goal</th><th class="n">Spatial</th><th class="n">Object</th><th class="n">Long</th><th class="n" style="color:var(--ink)">LIBERO-40</th><th class="n">Avg time</th><th class="n">Cost</th></tr></thead><tbody id="bmBody"></tbody></table>
+    <p class="small" style="margin:0">Each cell is passed runs out of runs tried (the latest result for each setup counts). Study set = setups 1 to 5 of every task, the same 200 runs as Anthropic's study. The study's 5.5% used direct control (one move per turn), so it's a reference point, not a like-for-like score.</p>
+  </div>
+</div>
 <div id="loading"><svg width="40" height="40" viewBox="0 0 26 26" fill="none" stroke="#2563EB" stroke-width="1.6"><path d="M13 3 L23 8.5 L13 14 L3 8.5 Z"/><path d="M3 8.5 V17.5 L13 23 V14"/><path d="M23 8.5 V17.5 L13 23"/></svg>Loading the playground…</div>
 <div class="app">
 <header>
@@ -152,6 +186,7 @@ table.board td.n{font-family:'JetBrains Mono',monospace;text-align:right}table.b
     <div class="seg" role="group" aria-label="Mode">
       <button id="modeFree" aria-pressed="true">Free play</button>
       <button id="modeLibero" aria-pressed="false">LIBERO test</button>
+      <button id="modeWet" aria-pressed="false">Wet Lab</button>
     </div>
     <span class="chip" id="modechip">Free play · not saved</span>
   </div>
@@ -189,7 +224,10 @@ table.board td.n{font-family:'JetBrains Mono',monospace;text-align:right}table.b
         <p class="small" style="margin:0">Pausing freezes physics; the robot waits. Runs use your own Claude Code or Codex login.</p>
       </div>
       <div id="liberoPane" class="sec libero">
-        <div><h2 class="cap" style="margin-bottom:6px">Official task · LIBERO-Goal</h2>
+        <div><h2 class="cap" style="margin-bottom:6px">Suite</h2>
+          <div id="lSuites" class="suites" role="group" aria-label="LIBERO suite"></div>
+          <p class="small" id="lSuiteWhat" style="margin:6px 0 0;color:#374151"></p></div>
+        <div><h2 class="cap" style="margin-bottom:6px">Official task</h2>
           <select id="lTask" aria-label="LIBERO task" style="width:100%"></select></div>
         <div class="official" id="lLang"></div>
         <div class="note"><b style="color:var(--ink)">Done when</b><br><span id="lDone"></span><br><span class="small">Checked live by LIBERO's own rule. The task text can't be edited.</span></div>
@@ -199,12 +237,30 @@ table.board td.n{font-family:'JetBrains Mono',monospace;text-align:right}table.b
           <div class="legend"><span><i style="background:var(--blue)"></i>passed</span><span><i style="background:#F59E0B"></i>failed</span><span><i style="background:#D1D5DB"></i>not run</span><span style="flex:1;text-align:right" id="lDotsFor"></span></div>
         </div>
         <div style="display:flex;flex-direction:column;gap:4px"><label for="lModel" class="small" style="font-weight:600">AI model</label><select id="lModel"></select></div>
-        <div style="display:flex;gap:8px"><button class="primary" id="lRun1">Run this setup</button><button class="ghostbtn" id="lRunAll" style="height:42px;flex:none;padding:0 14px;white-space:nowrap">Run all 50</button></div>
+        <div style="display:flex;gap:8px"><button class="primary" id="lRun1">Run this setup</button><button class="ghostbtn" id="lRunAll" style="height:42px;flex:none;padding:0 14px;white-space:nowrap">All 50 setups</button></div>
+        <button class="studybtn" id="lStudy">Run the study set: 40 tasks × 5 setups</button>
+        <span class="small" style="margin-top:-6px">The same 200 runs as Anthropic's study: setups 1 to 5 of every task in all four suites. Up to about 10 hours at 3 minutes each.</span>
         <button class="ghostbtn" id="lStop" style="display:none;flex:none">Stop</button>
         <span class="small" id="lStatus"></span>
         <div><h2 class="cap">Scoreboard · this task</h2>
           <table class="board"><thead><tr><th>Model</th><th class="n">Passed</th><th class="n">Avg time</th><th class="n">Cost</th></tr></thead><tbody id="lBoard"></tbody></table>
           <p class="small" style="margin:6px 0 0">Our Franka controller and AI setup, so scores aren't comparable with LIBERO's published leaderboard. Avg time counts passed runs only.</p></div>
+        <div><div style="display:flex;align-items:baseline;justify-content:space-between"><h2 class="cap">By suite · study set</h2><span class="small" id="lSuiteFor"></span></div>
+          <table class="board"><thead><tr><th>Suite</th><th class="n">Passed</th><th class="n">Runs</th></tr></thead><tbody id="lSuiteBoard"></tbody></table>
+          <button class="linkbtn" id="lFullBoard">Full scoreboard, all models →</button></div>
+      </div>
+      <div id="wetPane" class="sec wetlab" style="flex-direction:column;gap:12px;flex:1;overflow:auto;border:0">
+        <h2 class="cap" style="margin:0">Wet lab tasks · <span id="wCount">8</span></h2>
+        <div id="wTasks" style="display:flex;flex-direction:column;gap:6px"></div>
+        <div class="official" id="wPrompt"></div>
+        <div class="note"><b style="color:var(--ink)">Scored by</b><br><span id="wScored">The bench's own check for this task, from the true end state (positions, wells, what fell over).</span></div>
+        <div style="display:flex;flex-direction:column;gap:4px"><label for="wModel" class="small" style="font-weight:600">AI model</label><select id="wModel"></select></div>
+        <div style="display:flex;gap:8px"><button class="primary" id="wRun1">Run this task</button><button class="ghostbtn" id="wRunAll" style="height:42px;flex:none;padding:0 14px;white-space:nowrap">Run all 8</button></div>
+        <button class="ghostbtn" id="wStop" style="display:none;flex:none">Stop</button>
+        <span class="small" id="wStatus"></span>
+        <div><h2 class="cap">Scoreboard · all 8 tasks</h2>
+          <table class="board"><thead><tr><th>Model</th><th class="n">Passed</th><th class="n">Cost</th></tr></thead><tbody id="wBoard"></tbody></table>
+          <p class="small" style="margin:6px 0 0">Same robot, physics and AI setup as the robot cell's evals. The latest result for each task counts. Up to 15 minutes per task.</p></div>
       </div>
     </div>
     <div id="objPanel" class="sec" style="display:none;flex-direction:column;gap:12px;border:0">
@@ -217,10 +273,10 @@ table.board td.n{font-family:'JetBrains Mono',monospace;text-align:right}table.b
 
   <section id="stage" aria-label="3D scene">
     <img id="view" alt="3D scene rendered live by MuJoCo" draggable="false">
-    <div class="tl"><span class="live" id="liveTag" style="display:none">● Running · real time</span><span class="libtag libero" id="libTag"></span><span class="hint" id="hintTag">Drag objects in from the right. Drag to orbit, right-drag to pan, scroll to zoom.</span></div>
+    <div class="tl"><span class="live" id="liveTag" style="display:none">● Running · real time</span><span class="libtag libero wetlab" id="libTag"></span><span class="hint" id="hintTag">Drag objects in from the right. Drag to orbit, right-drag to pan, scroll to zoom.</span></div>
     <div class="bl"><button data-preset="home">Reset view</button><button data-preset="top">Top view</button><button data-preset="robot">Robot close-up</button></div>
     <span class="small br freeonly">1 grid square = 10 cm</span>
-    <div id="goalCard" class="libero"><b>Goal check</b><span id="goalState"></span><span class="small" id="goalText"></span></div>
+    <div id="goalCard" class="libero wetlab"><b>Goal check</b><span id="goalState"></span><span class="small" id="goalText"></span></div>
     <div id="droptag"></div>
     <div id="toast"></div>
   </section>
@@ -416,12 +472,12 @@ $('feed').addEventListener('scroll', () => { S.follow = feedAtBottom(); $('jumpB
 $('jumpBtn').onclick = () => { S.follow = true; $('jumpBtn').style.display = 'none'; const f = $('feed'); f.scrollTop = f.scrollHeight; };
 function renderFeed() {
   const run = (S.scene && S.scene.run) || {}, info = S.runInfo, trace = S.trace, active = !!run.active;
-  const key = (run.started || '') + '|' + trace.length + '|' + active + '|' + S.lib;
+  const key = (run.started || '') + '|' + trace.length + '|' + active + '|' + S.mode;
   if (key === S.feedKey) return;
   S.feedKey = key;
   const m = run.model || {}, logo = LOGOS[m.provider] || '', who = esc(info.model_label || m.label || 'The AI');
   const start = info.sim_start || 0, out = [];
-  if (!run.started) out.push(`<li class="empty">${S.lib ? 'Press “Run this setup” and the AI\'s messages show up here.' : 'Nothing yet. The AI\'s thoughts, code and replies appear here as it works.'}</li>`);
+  if (!run.started) out.push(`<li class="empty">${S.mode === 'libero' ? 'Press “Run this setup” and the AI\'s messages show up here.' : S.mode === 'wetlab' ? 'Press “Run this task” and the AI\'s messages show up here.' : 'Nothing yet. The AI\'s thoughts, code and replies appear here as it works.'}</li>`);
   else out.push(`<li class="prompt"><div class="lbl">Your task</div><div class="bub">${esc(run.task || '')}</div></li>`);
   let prevT = null, prevKind = null;
   for (let i = 0; i < trace.length; i++) {
@@ -481,7 +537,7 @@ function render() {
   $('playIcon').innerHTML = playing ? '<rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/>' : '<path d="M3 1.5 L12.5 7 L3 12.5 Z"/>';
   $('clock').textContent = fmtClock(sc.time);
   $('rt').textContent = playing ? (sc.realtime_factor >= 0.97 ? 'real time' : (sc.realtime_factor * 100).toFixed(0) + '% of real time') : 'paused';
-  $('lockmsg').style.display = sc.locked ? '' : 'none'; $('lockmsg').textContent = S.lib ? 'Scene locked for a fair test' : active ? 'Scene locked while the AI runs' : 'Scene locked while playing · pause to edit';
+  $('lockmsg').style.display = sc.locked ? '' : 'none'; $('lockmsg').textContent = S.fixed ? 'Scene locked for a fair test' : active ? 'Scene locked while the AI runs' : 'Scene locked while playing · pause to edit';
   $('right').classList.toggle('locked', !!sc.locked);
   $('liveTag').style.display = playing ? '' : 'none';
   $('hintTag').style.display = playing ? 'none' : '';
@@ -503,7 +559,7 @@ function render() {
   // In free play the chat takes the object library's place while a run is on, and stays
   // until "New task" brings the library back.
   if (active && S.seenRun !== run.started) { S.seenRun = run.started; S.sideTab = 'chat'; }
-  document.body.classList.toggle('chatting', !S.lib && S.sideTab === 'chat');
+  document.body.classList.toggle('chatting', !S.fixed && S.sideTab === 'chat');
   document.body.classList.toggle('running', active);
   $('tabChat').setAttribute('aria-selected', S.sideTab === 'chat'); $('tabObjects').setAttribute('aria-selected', S.sideTab !== 'chat');
   $('libhint').textContent = sc.locked ? 'Pause the scene to add or move objects.' : (S.armed ? $('libhint').textContent : LIBHINT);
@@ -518,7 +574,8 @@ function render() {
     if (!$('chatModel').dataset.set) $('chatModel').textContent = m.label || '';
   }
   $('startBtn').disabled = active;
-  if (S.lib) renderLiberoLive();
+  if (S.mode === 'libero') renderLiberoLive();
+  if (S.mode === 'wetlab') renderWetLive();
 }
 async function refresh() {
   S.scene = await api('/pg/scene');
@@ -532,40 +589,53 @@ async function loop() {
 $('task').oninput = render;
 
 // ---------------------------------------------------------------- LIBERO test mode
-S.lib = null; S.L = null; S.lDone = null;
+S.mode = null; S.fixed = false; S.L = null; S.lDone = null; S.W = null; S.wDone = null;
 function applyMode() {
-  const lib = S.scene.mode === 'libero';
-  if (lib === S.lib) return;
-  S.lib = lib;
+  const mode = S.scene.mode;
+  if (mode === S.mode) return;
+  S.mode = mode;
+  const lib = mode === 'libero', wet = mode === 'wetlab';
+  S.fixed = lib || wet;
   document.body.classList.toggle('lib', lib);
-  $('modeFree').setAttribute('aria-pressed', !lib); $('modeLibero').setAttribute('aria-pressed', lib);
-  $('modechip').textContent = lib ? 'LIBERO-Goal · results saved' : 'Free play · not saved';
-  $('hintTag').textContent = lib ? 'Drag to orbit, scroll to zoom.' : 'Drag objects in from the right. Drag to orbit, right-drag to pan, scroll to zoom.';
+  document.body.classList.toggle('wet', wet);
+  document.body.classList.toggle('fixed', S.fixed);
+  $('modeFree').setAttribute('aria-pressed', mode === 'free'); $('modeLibero').setAttribute('aria-pressed', lib); $('modeWet').setAttribute('aria-pressed', wet);
+  $('modechip').textContent = lib ? 'LIBERO · results saved' : wet ? 'Wet lab bench · results saved' : 'Free play · not saved';
+  $('hintTag').textContent = S.fixed ? 'Drag to orbit, scroll to zoom.' : 'Drag objects in from the right. Drag to orbit, right-drag to pan, scroll to zoom.';
   S.feedKey = '';
   if (lib) loadLibero();
+  else if (wet) loadWet();
   else { S.sideTab = 'objects'; }
 }
 async function setMode(mode) {
   if (S.scene && S.scene.mode === mode) return;
-  toast(mode === 'libero' ? 'Loading LIBERO-Goal…' : 'Back to your own scene…');
+  toast(mode === 'libero' ? 'Loading LIBERO… (the first time it downloads LIBERO\'s objects, about 200 MB)' : mode === 'wetlab' ? 'Loading the wet lab bench…' : 'Back to your own scene…');
   const r = await api('/pg/mode', {mode});
   if (!r.ok) { toast(r.error); return; }
   S.sel = 'robot'; S.runKey = null; refresh();
 }
 $('modeFree').onclick = () => setMode('free');
 $('modeLibero').onclick = () => setMode('libero');
+$('modeWet').onclick = () => setMode('wetlab');
 async function loadLibero() {
   const sc = S.scene, task = sc && sc.task;
   S.L = await api('/pg/libero' + (task ? '?task=' + encodeURIComponent(task) : ''));
   renderLibero();
 }
 function fmtSecs(x) { return x == null ? '–' : x >= 60 ? Math.floor(x / 60) + 'm ' + Math.round(x % 60) + 's' : x.toFixed(0) + 's'; }
+function curSuite() { const L = S.L; return L.suites.find(x => x.id === (S.lSuite || L.suite)) || L.suites[0]; }
+function allTasks() { return S.L.suites.flatMap(x => x.tasks); }
 function renderLibero() {
   const L = S.L; if (!L) return;
+  if (!S.lSuite) S.lSuite = L.suite;
+  const su = curSuite();
+  $('lSuites').innerHTML = L.suites.map(x => `<button data-s="${x.id}" aria-pressed="${x.id === su.id}">${x.name}<span>${x.tasks.length} tasks</span></button>`).join('');
+  $('lSuites').querySelectorAll('button').forEach(b => b.onclick = () => { const x = L.suites.find(y => y.id === b.dataset.s); S.lSuite = x.id; if (x.id !== L.suite) loadSetup(0, x.tasks[0].id); else renderLibero(); });
+  $('lSuiteWhat').textContent = su.blurb;
   const sel = $('lTask');
-  if (sel.options.length !== L.tasks.length) sel.innerHTML = L.tasks.map((t, i) => `<option value="${t.id}">${i + 1}. ${esc(t.language)}</option>`).join('');
-  sel.value = L.task;
-  const t = L.tasks.find(x => x.id === L.task) || L.tasks[0];
+  if (sel.dataset.suite !== su.id) { sel.innerHTML = su.tasks.map((t, i) => `<option value="${t.id}">${i + 1}. ${esc(t.language)}</option>`).join(''); sel.dataset.suite = su.id; }
+  const t = allTasks().find(x => x.id === L.task) || su.tasks[0];
+  sel.value = t.id;
   $('lLang').textContent = '“' + t.language + '”'; $('lDone').textContent = t.done_when;
   $('goalText').textContent = t.done_when;
   $('lSetupTotal').textContent = t.setups;
@@ -577,27 +647,55 @@ function renderLibero() {
   $('lDots').querySelectorAll('button').forEach(b => b.onclick = () => loadSetup(+b.dataset.k));
   $('lBoard').innerHTML = board.length ? board.map(b => `<tr><td>${esc(b.label)}</td><td class="n">${b.passed}/${b.tried}</td><td class="n">${fmtSecs(b.avg_seconds)}</td><td class="n">${b.avg_cost == null ? '–' : '$' + b.avg_cost.toFixed(2)}</td></tr>`).join('')
     : '<tr><td colspan="4" class="small" style="color:var(--muted)">No runs yet for this task.</td></tr>';
+  // By suite, for the chosen model: study set (setups 1-5) only
+  const sb = L.suite_board, me = sb.board.find(b => b.model === $('lModel').value);
+  $('lSuiteFor').textContent = $('lModel').selectedOptions[0] ? $('lModel').selectedOptions[0].textContent.split(' · ')[0] : '';
+  let tp = 0, tt = 0;
+  const rows = L.suites.map(x => { const c = me ? me.suites[x.id] || {tried: 0, passed: 0} : {tried: 0, passed: 0}; tp += c.passed; tt += c.tried;
+    return `<tr><td>${x.name}</td><td class="n">${c.tried ? c.passed : '–'}</td><td class="n">${c.tried} / ${sb.sizes[x.id]}</td></tr>`; });
+  const all = Object.values(sb.sizes).reduce((a, b) => a + b, 0);
+  rows.push(`<tr><td style="font-weight:600">LIBERO-40</td><td class="n" style="font-weight:600">${tt ? (100 * tp / tt).toFixed(1) + '%' : '–'}</td><td class="n" style="font-weight:600">${tt} / ${all}</td></tr>`);
+  $('lSuiteBoard').innerHTML = rows.join('');
   renderLiberoLive();
 }
+async function openBoard(study) {
+  S.bmStudy = study;
+  const L = await api('/pg/libero?study=' + (study ? 1 : 0));
+  const sb = L.suite_board;
+  $('bmStudy').setAttribute('aria-pressed', study); $('bmAll').setAttribute('aria-pressed', !study);
+  const cell = c => c && c.tried ? `${c.passed} / ${c.tried}` : '–';
+  const rows = sb.board.map(b => `<tr><td style="font-weight:600">${esc(b.label)}</td>${L.suites.map(x => `<td class="n">${cell(b.suites[x.id])}</td>`).join('')}<td class="n" style="font-weight:700">${b.tried ? (100 * b.rate).toFixed(1) + '%' : '–'}</td><td class="n">${fmtSecs(b.avg_seconds)}</td><td class="n">${b.total_cost == null ? '–' : '$' + b.total_cost.toFixed(2)}</td></tr>`);
+  if (!rows.length) rows.push('<tr><td colspan="8" class="small" style="color:var(--muted)">No runs yet.</td></tr>');
+  rows.push(`<tr style="background:#F9FAFB"><td style="color:#374151">Anthropic study, best model · direct control <span class="small">(for reference)</span></td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n" style="font-weight:700;color:#374151">5.5%</td><td class="n">–</td><td class="n">–</td></tr>`);
+  $('bmBody').innerHTML = rows.join('');
+  $('boardModal').style.display = 'flex';
+}
+$('lFullBoard').onclick = () => openBoard(true);
+$('bmStudy').onclick = () => openBoard(true); $('bmAll').onclick = () => openBoard(false);
+$('bmClose').onclick = () => $('boardModal').style.display = 'none';
+$('boardModal').onclick = (e) => { if (e.target === $('boardModal')) $('boardModal').style.display = 'none'; };
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('boardModal').style.display = 'none'; });
 function renderLiberoLive() {
   const sc = S.scene, b = sc.bench || {}, busy = !!b.active || !!(sc.run && sc.run.active);
   const k = sc.setup || 0, n = sc.setups || 50;
   $('lSetupN').textContent = k + 1;
-  $('libTag').textContent = 'LIBERO-Goal · Setup ' + (k + 1);
+  const sn = S.L && S.L.suites.find(x => x.id === sc.suite);
+  $('libTag').textContent = 'LIBERO-' + (sn ? sn.name : '') + ' · Setup ' + (k + 1);
   $('lDots').querySelectorAll('button').forEach(d => { d.classList.toggle('cur', +d.dataset.k === k); d.disabled = busy; });
-  for (const id of ['lPrev', 'lNext', 'lRun1', 'lRunAll', 'lTask', 'lModel', 'modeFree']) $(id).disabled = busy;
+  for (const id of ['lPrev', 'lNext', 'lRun1', 'lRunAll', 'lStudy', 'lTask', 'lModel', 'modeFree', 'modeWet']) $(id).disabled = busy;
+  $('lSuites').querySelectorAll('button').forEach(x => x.disabled = busy);
   $('lPrev').disabled = busy || k === 0; $('lNext').disabled = busy || k === n - 1;
   $('lStop').style.display = b.active ? '' : 'none';
   $('goalState').textContent = sc.goal_met ? '✓ Goal reached' : 'Not yet';
   $('goalState').style.color = sc.goal_met ? 'var(--green)' : 'var(--muted)';
   let st = '';
-  if (b.active) st = b.queue.length > 1 ? `Running setup ${(b.current ?? 0) + 1} · ${b.done} of ${b.queue.length} done, ${b.passed} passed` : `Running setup ${(b.current ?? 0) + 1}…`;
+  if (b.active) { const c = b.current || {}; st = b.total > 1 ? `Running setup ${(c.setup ?? 0) + 1}${b.tasks.length > 1 ? ' of task ' + c.task.replaceAll('_', ' ') : ''} · ${b.done} of ${b.total} done, ${b.passed} passed` : `Running setup ${(c.setup ?? 0) + 1}…`; }
   else if (b.last) st = `Last: setup ${b.last.setup} ${b.last.passed ? 'passed' : 'failed'} (${b.last.how}, ${b.last.seconds}s)`;
   $('lStatus').textContent = st;
   $('newTaskBtn').style.display = 'none';
   if (sc.run && sc.run.started && !sc.run.active && !b.active && b.last) $('runStatus').textContent = b.last.passed ? '✓ Passed · goal reached in ' + b.last.seconds + 's' : 'Failed · ' + b.last.how;
-  const key = (b.done || 0) + ':' + !!b.active;
-  if (S.lDone !== key) { S.lDone = key; loadLibero(); }
+  const key = (b.done || 0) + ':' + !!b.active + ':' + sc.task;
+  if (S.lDone !== key) { S.lDone = key; S.lSuite = sc.suite; loadLibero(); }
 }
 async function loadSetup(k, task) {
   const r = await api('/pg/libero/setup', {task: task || S.scene.task, setup: k});
@@ -608,20 +706,66 @@ $('lPrev').onclick = () => loadSetup(Math.max(0, S.scene.setup - 1));
 $('lNext').onclick = () => loadSetup(Math.min(S.scene.setups - 1, S.scene.setup + 1));
 $('lTask').onchange = () => loadSetup(0, $('lTask').value);
 $('lModel').onchange = renderLibero;
-async function runBench(all) {
-  const r = await api('/pg/libero/run', {model: $('lModel').value, all});
+async function runBench(all, study) {
+  const r = await api('/pg/libero/run', {model: $('lModel').value, all, study});
   if (!r.ok) { toast(r.error); return; }
   refresh();
 }
 $('lRun1').onclick = () => runBench(false);
 $('lRunAll').onclick = () => { if (confirm('Run all 50 setups one after another? Each can take up to 3 minutes, so this can take about 2½ hours.')) runBench(true); };
+$('lStudy').onclick = () => { if (confirm('Run the study set? That is 200 runs (40 tasks × setups 1 to 5), one after another. Each can take up to 3 minutes, so this can take about 10 hours. You can stop it at any time; finished runs are kept.')) runBench(false, true); };
 $('lStop').onclick = async () => { await api('/pg/libero/stop', {}); refresh(); };
+
+// ---------------------------------------------------------------- Wet Lab mode
+async function loadWet() { S.W = await api('/pg/wetlab'); renderWet(); }
+function renderWet() {
+  const W = S.W; if (!W) return;
+  const cur = W.tasks.find(t => t.id === W.task) || W.tasks[0];
+  const me = W.scores.board.find(b => b.model === $('wModel').value);
+  const res = me ? me.tasks : {};
+  $('wCount').textContent = W.tasks.length;
+  $('wTasks').innerHTML = W.tasks.map(t => { const r = res[t.id]; return `<button class="wtask" data-t="${t.id}" aria-pressed="${t.id === cur.id}"><span class="id">${t.id}</span><span class="t">${esc(t.title)}</span><span class="d ${r === true ? 'p' : r === false ? 'f' : ''}" title="${r === true ? 'passed' : r === false ? 'failed' : 'not run'}"></span></button>`; }).join('');
+  $('wTasks').querySelectorAll('button').forEach(b => b.onclick = async () => { const r = await api('/pg/wetlab/task', {task: b.dataset.t}); if (!r.ok) { toast(r.error); return; } await refresh(); loadWet(); });
+  $('wPrompt').textContent = '“' + cur.prompt + '”';
+  $('wScored').textContent = cur.needs_answer ? 'A judge model reads the AI\'s final answer next to the true state of the bench. Moving anything fails the task.' : 'The bench\'s own check for this task, from the true end state (positions, wells, what fell over).';
+  $('goalText').textContent = 'Scored when the AI finishes, from the true end state of the bench.';
+  const board = W.scores.board;
+  $('wBoard').innerHTML = board.length ? board.map(b => `<tr><td>${esc(b.label)}</td><td class="n">${b.passed} / ${W.scores.total}${b.tried < W.scores.total ? ` <span class="small">(${b.tried} tried)</span>` : ''}</td><td class="n">${b.total_cost == null ? '–' : '$' + b.total_cost.toFixed(2)}</td></tr>`).join('')
+    : '<tr><td colspan="3" class="small" style="color:var(--muted)">No runs yet.</td></tr>';
+  renderWetLive();
+}
+function renderWetLive() {
+  const sc = S.scene, b = sc.wetbench || {}, busy = !!b.active || !!(sc.run && sc.run.active);
+  $('libTag').textContent = 'Wet Lab · ' + sc.task + ' ' + (sc.title || '');
+  for (const id of ['wRun1', 'wRunAll', 'wModel', 'modeFree', 'modeLibero']) $(id).disabled = busy;
+  $('wTasks').querySelectorAll('button').forEach(x => x.disabled = busy);
+  $('wStop').style.display = b.active ? '' : 'none';
+  $('goalState').textContent = b.active ? 'Running…' : b.last ? (b.last.passed ? '✓ Passed' : 'Failed') : 'Not run yet';
+  $('goalState').style.color = b.last && !b.active && b.last.passed ? 'var(--green)' : 'var(--muted)';
+  let st = '';
+  if (b.active) st = b.total > 1 ? `Running ${b.current} · ${b.done} of ${b.total} done, ${b.passed} passed` : `Running ${b.current}…`;
+  else if (b.last) st = `Last: ${b.last.task} ${b.last.passed ? 'passed' : 'failed'}${b.last.score != null ? ' (score ' + b.last.score + ')' : ''}, ${Math.round(b.last.seconds)}s`;
+  $('wStatus').textContent = st;
+  $('newTaskBtn').style.display = 'none';
+  if (sc.run && sc.run.started && !sc.run.active && !b.active && b.last) $('runStatus').textContent = b.last.passed ? '✓ Passed' : 'Failed · ' + (b.last.how || '');
+  const key = (b.done || 0) + ':' + !!b.active + ':' + sc.task;
+  if (S.wDone !== key) { S.wDone = key; loadWet(); }
+}
+async function runWet(all) {
+  const r = await api('/pg/wetlab/run', {model: $('wModel').value, all});
+  if (!r.ok) { toast(r.error); return; }
+  refresh();
+}
+$('wRun1').onclick = () => runWet(false);
+$('wRunAll').onclick = () => { if (confirm('Run all 8 wet lab tasks one after another? Each can take up to 15 minutes.')) runWet(true); };
+$('wStop').onclick = async () => { await api('/pg/wetlab/stop', {}); refresh(); };
+$('wModel').onchange = renderWet;
 
 (async function init() {
   S.cat = await api('/pg/catalog');
   const items = S.cat.items;
   for (const it of items) { it.collision = it.collision || ''; }
-  $('lModel').innerHTML = $('model').innerHTML = S.cat.models.map(m => `<option value="${m.id}">${m.label} · ${m.via}</option>`).join('');
+  $('wModel').innerHTML = $('lModel').innerHTML = $('model').innerHTML = S.cat.models.map(m => `<option value="${m.id}">${m.label} · ${m.via}</option>`).join('');
   renderTabs(); renderItems();
   view.onload = () => $('loading').style.display = 'none';
   const sendAspect = () => { const r = stage.getBoundingClientRect(); if (r.width > 50 && r.height > 50) api('/pg/camera', {aspect: r.width / r.height}); };

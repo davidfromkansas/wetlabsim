@@ -96,7 +96,7 @@ In the code, contact properties are set per material (MuJoCo default classes) in
 `MATERIALS` in `wetlabsim/scene.py`, and solver options in `OPTION` and `FLAGS` there.
 `scripts/physics_checks.py` measures grip creep, release, sinking and speed after a change.
 
-## Playground (drag and drop, plus LIBERO tests)
+## Playground (free play, LIBERO tests, Wet Lab tests)
 
 A web page for building a scene and giving the Franka a task, running on your Mac:
 
@@ -105,18 +105,36 @@ pip install -e .
 python -m playground.server        # opens http://localhost:8780
 ```
 
+Three modes, picked in the header:
+
 - **Free play**: drag NVIDIA SimReady objects (with their own MuJoCo physics) onto the
   packing table, click the robot, type a task, pick Claude Code or Codex, and press Play.
-  The AI writes code to move the robot and its chat shows live. Nothing is graded or saved.
-- **LIBERO test**: LIBERO-Goal's own room, table and objects, its 10 tasks and its 50
-  official starting setups. LIBERO's own success rule decides pass or fail. Results go to
-  `runs/playground/libero_results.jsonl` and a scoreboard (passed, average time, cost).
-  We use our Franka controller, not LIBERO's, so scores don't compare with LIBERO's leaderboard.
+  The AI writes code to move the robot and its chat shows live. Nothing is graded or saved,
+  and there's no time limit.
+- **LIBERO test**: the four suites Anthropic's study used (LIBERO-40): Goal, Spatial, Object
+  and Long, 10 tasks each, each in LIBERO's own room with its own objects and its 50 official
+  starting setups. LIBERO's own success rule decides pass or fail, live. Run one setup, all
+  50, or the study set (setups 1 to 5 of all 40 tasks, the same 200 runs as the study).
+  Results go to `runs/playground/libero_results.jsonl`, with a scoreboard per task, per suite
+  and across models. We use our Franka controller, not LIBERO's, so scores don't compare
+  with LIBERO's leaderboard. 3 minutes per run.
+- **Wet Lab**: the robot cell's own bench and its 8 tasks (`wetlabsim/tasks.py`), each scored
+  at the end by the task's own check, as in the robot cell's evals. Results go to
+  `runs/playground/wetlab_results.jsonl`. 15 minutes per run.
 
-Runs use your existing Claude Code or Codex login, with a 3 minute limit.
-The object files are already in `playground/assets` and `playground/libero_assets`.
-To rebuild them: `python -m playground.tools.build_assets` (SimReady, from Hugging Face) and
-`python -m playground.tools.import_libero <LIBERO checkout>`.
+Runs use your existing Claude Code or Codex login.
+
+The SimReady objects are in `playground/assets` (to rebuild: `python -m playground.tools.build_assets`, from Hugging Face).
+
+LIBERO's scenes are LIBERO's own: every task was built once in LIBERO's stack (robosuite 1.4,
+MuJoCo 2.3) and its compiled model saved (`playground/tools/libero_export.py`), then
+made loadable in MuJoCo 4 with our Franka in place of robosuite's Panda
+(`playground/tools/import_libero.py`). The scenes, goals and starting setups are in
+`playground/libero_assets/suites`. LIBERO's meshes and textures (about 200 MB) are downloaded
+from LIBERO's GitHub on first use, checked against `playground/libero_assets/manifest.json`;
+to fetch them ahead of time: `python -m playground.tools.fetch_libero`. Our success
+checks were compared with LIBERO's own on test scenes recorded in its stack
+(`playground/tools/libero_crosscheck.py`, checked by `tests/test_libero.py`).
 
 ## Notes
 
@@ -127,7 +145,7 @@ To rebuild them: `python -m playground.tools.build_assets` (SimReady, from Huggi
 ## Credits
 
 The playground's objects are NVIDIA SimReady assets (Hugging Face `nvidia/simready-assets`).
-The LIBERO-Goal scene, objects, tasks and starting setups come from
+LIBERO's scenes, objects, tasks and starting setups come from
 [LIBERO](https://github.com/Lifelong-Robot-Learning/LIBERO) (licence in `playground/libero_assets/LICENSE`).
 
 The tubes, tube racks, 60-well rack and petri dish are 3D models from **AutoBio**, used
