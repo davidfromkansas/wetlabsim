@@ -52,6 +52,13 @@ select{height:36px;padding:0 10px;border-radius:8px;border:1px solid #D1D5DB;bac
 #chatpane{flex:1;display:none;flex-direction:column;min-height:0;position:relative}
 body.chatting #chatpane,body.lib #chatpane{display:flex}
 body.chatting #right .freeonly{display:none!important}
+/* free play: the right panel's two tabs, Chat and Objects */
+.sidetabs{display:flex;gap:2px;margin:12px 16px 0;padding:3px;border-radius:10px;background:var(--soft)}
+.sidetabs button{flex:1;height:30px;border-radius:8px;border:0;background:transparent;color:#374151;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.sidetabs button[aria-selected=true]{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(17,24,39,.12)}
+.sidetabs .live{width:7px;height:7px;border-radius:50%;background:var(--red);padding:0;display:none}
+body.running .sidetabs .live{display:inline-block}
+body.lib .sidetabs{display:none}
 .chathead{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
 .chathead img{width:22px;height:22px}
 .chathead b{font-size:14px;font-weight:600}
@@ -106,7 +113,8 @@ input[type=search]{height:36px;padding:0 12px;border-radius:8px;border:1px solid
 .card .n{font-size:13px;font-weight:600;color:var(--ink);line-height:1.3}
 .card .s{font-size:11.5px;color:var(--muted)}
 .libhint{margin:0;padding:10px 16px 14px;border-top:1px solid var(--line2);font-size:12px;color:var(--muted)}
-#right.locked #items{opacity:.45;pointer-events:none}
+#right.locked #items{opacity:.4;filter:grayscale(1);pointer-events:none}
+#right.locked .lib-top{opacity:.6;pointer-events:none}
 dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13px}
 dt{color:var(--muted)}dd{margin:0;text-align:right;font-family:'JetBrains Mono',monospace}
 #loading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;z-index:9;font-size:15px;color:var(--muted)}
@@ -217,7 +225,11 @@ table.board td.n{font-family:'JetBrains Mono',monospace;text-align:right}table.b
     <div id="toast"></div>
   </section>
 
-  <aside id="right" aria-label="Object library">
+  <aside id="right" aria-label="Chat and object library">
+    <div class="sidetabs" role="tablist" aria-label="Side panel">
+      <button role="tab" id="tabChat" aria-selected="false" aria-controls="chatpane">Chat <span class="live" aria-label="AI running"></span></button>
+      <button role="tab" id="tabObjects" aria-selected="true" aria-controls="items">Objects</button>
+    </div>
     <div class="lib-top freeonly">
       <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0;font-size:15px;color:var(--ink)">Objects</h2><span class="small">NVIDIA SimReady</span></div>
       <input id="search" type="search" placeholder="Search, e.g. mug, bowl, crate" aria-label="Search objects">
@@ -381,11 +393,17 @@ $('startBtn').onclick = async () => {
   if (!task) { toast('Type a task for the robot first'); $('task').focus(); return; }
   const r = await api('/pg/play', {task, model: $('model').value});
   if (!r.ok) { toast(r.error); return; }
-  S.runTask = task; S.follow = true; S.showChat = true;
+  S.runTask = task; S.follow = true; setSideTab('chat');
   refresh();
 };
 $('stopBtn').onclick = async () => { await api('/pg/stop', {}); refresh(); };
-$('newTaskBtn').onclick = () => { S.showChat = false; render(); };
+$('newTaskBtn').onclick = () => { setSideTab('objects'); $('task').focus(); };
+// Free play's right panel: Chat or Objects. A run switches it to Chat; either tab can be
+// picked at any time. Objects are greyed out while the scene is locked (running or playing).
+S.sideTab = 'objects';
+function setSideTab(t) { S.sideTab = t; render(); }
+$('tabChat').onclick = () => setSideTab('chat');
+$('tabObjects').onclick = () => setSideTab('objects');
 function esc(s) { return String(s).replace(/[&<>]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;'}[c])); }
 // The chat: the same rendering as the robot cell's viewer (wetlabsim/viewer.html), rebuilt
 // from the whole trace whenever it grows. It follows new items while you're at the bottom;
@@ -484,8 +502,11 @@ function render() {
   }
   // In free play the chat takes the object library's place while a run is on, and stays
   // until "New task" brings the library back.
-  const showChat = active || (run.started && S.showChat !== false);
-  document.body.classList.toggle('chatting', !S.lib && !!showChat);
+  if (active && S.seenRun !== run.started) { S.seenRun = run.started; S.sideTab = 'chat'; }
+  document.body.classList.toggle('chatting', !S.lib && S.sideTab === 'chat');
+  document.body.classList.toggle('running', active);
+  $('tabChat').setAttribute('aria-selected', S.sideTab === 'chat'); $('tabObjects').setAttribute('aria-selected', S.sideTab !== 'chat');
+  $('libhint').textContent = sc.locked ? 'Pause the scene to add or move objects.' : (S.armed ? $('libhint').textContent : LIBHINT);
   $('task').readOnly = active;
   $('stopBtn').style.display = active ? '' : 'none';
   $('newTaskBtn').style.display = active ? 'none' : '';
@@ -522,7 +543,7 @@ function applyMode() {
   $('hintTag').textContent = lib ? 'Drag to orbit, scroll to zoom.' : 'Drag objects in from the right. Drag to orbit, right-drag to pan, scroll to zoom.';
   S.feedKey = '';
   if (lib) loadLibero();
-  else { S.showChat = false; }
+  else { S.sideTab = 'objects'; }
 }
 async function setMode(mode) {
   if (S.scene && S.scene.mode === mode) return;
