@@ -33,7 +33,20 @@ class _SandboxRun:
 
     def __init__(self, sb, proc):
         self.sb, self.proc = sb, proc
-        self.stdout = (line for line in proc.stdout)
+        self.stdout = self._lines(proc.stdout)
+
+    @staticmethod
+    def _lines(stream):
+        """The sandbox's output arrives in chunks of any size: hand it on one whole line at a time,
+        as a local process's stdout would."""
+        buf = ""
+        for chunk in stream:
+            buf += chunk
+            while "\n" in buf:
+                line, buf = buf.split("\n", 1)
+                yield line + "\n"
+        if buf:
+            yield buf
 
     @property
     def returncode(self):

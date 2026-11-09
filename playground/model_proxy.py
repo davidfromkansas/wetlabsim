@@ -18,10 +18,11 @@ from wetlabsim import robot_api as RA
 
 UPSTREAM = "api.anthropic.com"
 BUDGET_USD = float(os.environ.get("WETLAB_RUN_BUDGET_USD", "3"))
-# Dollars per million tokens (input, output, cache read, cache write), by model family: rough
-# figures for the budget cap only, to be checked against Anthropic's price list.
-PRICES = {"opus": (5.0, 25.0, 0.5, 6.25), "sonnet": (3.0, 15.0, 0.3, 3.75), "haiku": (1.0, 5.0, 0.1, 1.25),
-          "fable": (10.0, 50.0, 1.0, 12.5)}
+# Dollars per million tokens (input, output, cache read, cache write), by model family: Anthropic's
+# list prices for the current models (Opus 5.5, Sonnet 5.5, Haiku 5.5, Fable 5.1). Cache writes are
+# taken as 1.25x input (5-minute cache); Haiku's cache read as 0.1x input.
+PRICES = {"opus": (4.0, 20.0, 0.20, 5.0), "sonnet": (2.0, 10.0, 0.20, 2.5), "haiku": (0.10, 0.50, 0.01, 0.125),
+          "fable": (10.0, 50.0, 0.25, 12.5)}
 _spent: dict[str, float] = {}
 _lock = threading.Lock()
 

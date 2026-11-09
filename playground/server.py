@@ -40,6 +40,12 @@ HERE = pathlib.Path(__file__).parent
 PAGE = HERE / "static" / "index.html"
 ROBOT_API_URL = ""      # set when the robot API listener is running (main)
 TIME_LIMIT = 180.0     # seconds: a LIBERO test run that hasn't finished by then is stopped
+# The public site (main --public): Claude only, free play only, every run capped, the AI in
+# a cloud sandbox, a few runs at once with a queue.
+PUBLIC = False
+MAX_ACTIVE = 4              # runs at once on the public site; more wait in a queue
+RUN_LAUNCHER = "local"      # where agents run (wetlabsim.launchers)
+AGENT_ROBOT_URL = ""        # the robot API as agents outside this machine reach it ("" = ROBOT_API_URL)
 FREE_TIME_LIMIT = 0.0  # free play: no limit, the run goes until the AI finishes or you stop it
 
 # Every model the agent runner can drive, by the CLI that runs it (for Devin, Cognition's own
@@ -157,7 +163,7 @@ class Runner:
                 # The agent gets the robot API and a token for this robot, for this run only.
                 self.token = RA.TOKENS.issue(urllib.parse.urlparse(self.url).path, run=task[:60])
                 env["WETLAB_ROBOT_TOKEN"] = self.token
-                cmd += ["--robot-url", ROBOT_API_URL]
+                cmd += ["--robot-url", AGENT_ROBOT_URL or ROBOT_API_URL, "--launcher", RUN_LAUNCHER]
             self.proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
                                          start_new_session=True, cwd=str(HERE.parent), env=env)
             proc, tok = self.proc, getattr(self, "token", None)
@@ -219,6 +225,67 @@ class Runner:
         return "\n".join(lines[-6:])[:600]
 
 
+def _runs_page(runs: list[dict], runs_dir: pathlib.Path) -> str:
+    """Every finished run, newest first, each opening the replay viewer (chat, files, rewind)."""
+    import html
+    rows = []
+    for r in runs:
+        try:
+            res = json.loads((runs_dir / r["run_id"] / "result.json").read_text())
+        except (OSError, ValueError):
+            res = {}
+        cost = res.get("cost_usd")
+        when = r["run_id"][:8]
+        when = f"{when[:4]}-{when[4:6]}-{when[6:8]} {r['run_id'][9:11]}:{r['run_id'][11:13]}"
+        rows.append(
+            f'<tr><td><a href="/viewer?run={html.escape(r["run_id"])}">{html.escape((r["task"] or "")[:140])}</a></td>'
+            f'<td>{html.escape(str(r.get("model") or ""))}</td><td>{html.escape(str(r.get("status") or ""))}</td>'
+            f'<td class="n">{r.get("wall_seconds") or "–"}</td><td class="n">{"–" if cost is None else f"${cost:.2f}"}</td>'
+            f'<td class="n">{when} UTC</td></tr>')
+    body = "".join(rows) or '<tr><td colspan="6" class="empty">No finished runs yet.</td></tr>'
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Past runs · MuJoCo Playground</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>body{{margin:0;background:#F6F7F9;color:#1F2937;font:14px/1.5 Inter,system-ui,sans-serif}}
+main{{max-width:1100px;margin:0 auto;padding:24px 16px}}h1{{font-size:20px;margin:0 0 4px;color:#111827}}
+p{{margin:0 0 16px;color:#4B5563}}a{{color:#1D4ED8}}.wrap{{overflow-x:auto;background:#fff;border:1px solid #E5E7EB;border-radius:10px}}
+table{{width:100%;border-collapse:collapse;font-size:13.5px}}th{{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#4B5563;padding:10px 12px;border-bottom:1px solid #E5E7EB}}
+td{{padding:9px 12px;border-bottom:1px solid #EEF0F3;vertical-align:top}}td.n,th.n{{text-align:right;white-space:nowrap}}.empty{{color:#4B5563}}</style></head>
+<body><main><h1>Past runs</h1><p><a href="/">← Back to the Playground</a> · Every run is public: open one to watch its replay, read the AI's chat and look at its files.</p>
+<div class="wrap"><table><thead><tr><th>Task</th><th>Model</th><th>Result</th><th class="n">Seconds</th><th class="n">Cost</th><th class="n">Started</th></tr></thead>
+<tbody>{body}</tbody></table></div></main></body></html>"""
+
+
+QUEUE: list[dict] = []          # free-play runs waiting for a free slot, oldest first
+QUEUE_LOCK = threading.Lock()
+
+
+def _queue_position(uid):
+    for i, q in enumerate(QUEUE):
+        if q["station"] == uid:
+            return i + 1
+    return None
+
+
+def _start_queued(cls):
+    """Start waiting runs while there is room (MAX_ACTIVE on the public site; no limit locally)."""
+    with QUEUE_LOCK:
+        while QUEUE:
+            active = sum(1 for r in cls.runners.values() if r.active())
+            if PUBLIC and active >= MAX_ACTIVE:
+                return
+            job = QUEUE.pop(0)
+            st = cls.sim.station(job["station"])
+            if st is None:
+                continue
+            try:
+                cls.station_runner(job["station"]).start(job["task"], job["model"],
+                                                         site.site_sheet(cls.sim.placed, st, cls.sim.stations),
+                                                         job["limit"])
+            except Exception as e:  # noqa: BLE001
+                print("could not start a queued run:", e)
+
+
 class PGHandler(Handler):
     sim: PlaygroundSim
     runner: Runner              # the scene's one robot (LIBERO, Wet Lab, and the robot cell's own URLs)
@@ -260,7 +327,10 @@ class PGHandler(Handler):
         return True
 
     def _runs_status(self) -> dict:
-        return {uid: self.runners[uid].status() for uid in list(self.runners)}
+        out = {uid: self.runners[uid].status() for uid in list(self.runners)}
+        for i, q in enumerate(list(QUEUE)):
+            out[q["station"]] = {"active": False, "queued": i + 1, "task": q["task"], "model": q["model"]}
+        return out
 
     def _locked(self) -> str:
         if self.sim.scene_mode == "libero":
@@ -284,6 +354,8 @@ class PGHandler(Handler):
         try:
             if p in ("/", "/playground"):
                 return self._send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
+            if p == "/pg/runs":
+                return self._send(200, _runs_page(self._list_runs(), self.runs_dir).encode(), "text/html; charset=utf-8")
             if p == "/viewer":
                 from wetlabsim.server import VIEWER_PATH
                 return self._send(200, VIEWER_PATH.read_bytes(), "text/html; charset=utf-8")
@@ -296,8 +368,10 @@ class PGHandler(Handler):
                 return self._err("not found", 404)
             if p == "/pg/catalog":
                 return self._json({"tabs": catalog.TABS, "items": catalog.available(), "robots": catalog.robots(),
-                                   "models": [{k: m[k] for k in ("id", "label", "via", "provider", "needs") if k in m} for m in MODELS],
-                                   "time_limit": TIME_LIMIT})
+                                   "models": [{k: m[k] for k in ("id", "label", "via", "provider", "needs") if k in m}
+                                              for m in MODELS if not PUBLIC or m["agent"] == "claude"],
+                                   "time_limit": TIME_LIMIT, "public": PUBLIC,
+                                   "free_time_limit": FREE_TIME_LIMIT, "max_active": MAX_ACTIVE if PUBLIC else 0})
             if p.startswith("/pg/thumb/"):
                 f = catalog.ASSETS / pathlib.Path(p).stem / "thumb.png"
                 if f.is_file():
@@ -499,6 +573,8 @@ class PGHandler(Handler):
                 s.clear()
                 return self._json({"ok": True})
             if p == "/pg/mode":
+                if PUBLIC and b.get("mode") in ("libero", "wetlab"):
+                    return self._json({"ok": False, "error": "this site runs free play only"})
                 if self._busy():
                     return self._json({"ok": False, "error": "stop the run first"})
                 if b.get("mode") == "libero":
@@ -564,13 +640,24 @@ class PGHandler(Handler):
                     if station is None:
                         return self._json({"ok": False, "error": "no such station"})
                     runner = self.station_runner(uid)
-                    if runner.active():
+                    if runner.active() or any(q["station"] == uid for q in QUEUE):
                         return self._json({"ok": False, "error": f"{station.name} is already running a task"})
+                    model = b.get("model", "claude")
+                    if PUBLIC:
+                        if not any(m["id"] == model and m["agent"] == "claude" for m in MODELS):
+                            return self._json({"ok": False, "error": "this site runs Claude models only"})
+                        limit = FREE_TIME_LIMIT          # the site's cap, not the page's say
+                    else:
+                        limit = float(b.get("time_limit", FREE_TIME_LIMIT))
                     s.selected = None
                     s.play()
-                    st = runner.start(task, b.get("model", "claude"), site.site_sheet(s.placed, station, s.stations),
-                                      float(b.get("time_limit", FREE_TIME_LIMIT)))
-                    return self._json({"ok": True, "run": st})
+                    job = {"station": uid, "task": task[:4000], "model": model, "limit": limit, "queued": time.time()}
+                    with QUEUE_LOCK:
+                        QUEUE.append(job)
+                    _start_queued(PGHandler)
+                    pos = _queue_position(uid)
+                    return self._json({"ok": True, "run": self.station_runner(uid).status() if pos is None
+                                       else {"active": False, "queued": pos}})
                 s.play()
                 return self._json({"ok": True})
             if p == "/pg/pause":
@@ -578,6 +665,8 @@ class PGHandler(Handler):
                 return self._json({"ok": True})
             if p == "/pg/stop":
                 if b.get("station"):          # one station's run
+                    with QUEUE_LOCK:
+                        QUEUE[:] = [q for q in QUEUE if q["station"] != b["station"]]
                     r = self.runners.get(b["station"])
                     if r:
                         r.stop()
@@ -632,6 +721,14 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="MuJoCo Playground")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8780)
+    ap.add_argument("--public", action="store_true",
+                    help="the public site: Claude only, free play only, runs capped at --run-minutes, "
+                         "at most --max-active at once, agents in cloud sandboxes (--launcher)")
+    ap.add_argument("--run-minutes", type=float, default=5.0)
+    ap.add_argument("--max-active", type=int, default=4)
+    ap.add_argument("--launcher", default="local", help="where agents run (wetlabsim.launchers)")
+    ap.add_argument("--agent-robot-url", default="",
+                    help="the robot API's address as agents elsewhere reach it (a public tunnel)")
     ap.add_argument("--model-proxy-port", type=int, default=0,
                     help="serve the model proxy (agents' Anthropic calls, with run tokens) on this port")
     ap.add_argument("--robot-port", type=int, default=8781,
@@ -639,6 +736,10 @@ def main(argv=None):
     ap.add_argument("--runs", default="runs/playground")
     ap.add_argument("--no-browser", action="store_true")
     args = ap.parse_args(argv)
+    global PUBLIC, MAX_ACTIVE, RUN_LAUNCHER, AGENT_ROBOT_URL, FREE_TIME_LIMIT
+    PUBLIC, MAX_ACTIVE, RUN_LAUNCHER, AGENT_ROBOT_URL = args.public, args.max_active, args.launcher, args.agent_robot_url
+    if PUBLIC:
+        FREE_TIME_LIMIT = args.run_minutes * 60
     runs = pathlib.Path(args.runs).resolve()
     runs.mkdir(parents=True, exist_ok=True)
     tok_file = runs / ".eval_token"
@@ -649,7 +750,7 @@ def main(argv=None):
     if tok_file.exists():
         os.chmod(tok_file, 0o600)
     from .tools import fetch_libero as fetch_assets
-    if fetch_assets.missing():    # LIBERO's objects, one time (~200 MB), while free play loads
+    if fetch_assets.missing() and not PUBLIC:    # LIBERO's objects, one time (~200 MB), while free play loads
         print("Downloading LIBERO's objects in the background (one time, about 200 MB)...")
         threading.Thread(target=lambda: fetch_assets.ensure(), daemon=True).start()
     print("Loading the scene...")
@@ -665,6 +766,13 @@ def main(argv=None):
     PGHandler.wetbench = WL.WetBench(sim, PGHandler.runner, PGHandler, runs / "wetlab_results.jsonl")
     srv = ThreadingHTTPServer((args.host, args.port), PGHandler)
     srv.daemon_threads = True
+
+    def _queue_loop():               # start waiting runs as running ones finish
+        while True:
+            time.sleep(2)
+            if QUEUE:
+                _start_queued(PGHandler)
+    threading.Thread(target=_queue_loop, daemon=True, name="run-queue").start()
     if args.robot_port:
         global ROBOT_API_URL
         rsrv = ThreadingHTTPServer((args.host, args.robot_port), RobotAPIHandler)
