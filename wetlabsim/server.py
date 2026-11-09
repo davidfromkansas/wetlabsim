@@ -439,7 +439,8 @@ class Handler(BaseHTTPRequestHandler):
                 # The run is over: later readings go to a fresh session log, not the run's folder.
                 if not self._authed():
                     return self._err("evaluator token required", 403)
-                s.open_log(self.runs_dir / time.strftime("session-%Y%m%d-%H%M%S"))
+                s.open_log(pathlib.Path(os.environ.get("WETLAB_SESSION_DIR") or self.runs_dir)
+                           / time.strftime("session-%Y%m%d-%H%M%S"))
                 return self._json({"ok": True})
             if p == "/eval/run":
                 if not self._authed():

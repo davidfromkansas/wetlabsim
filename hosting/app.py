@@ -59,7 +59,8 @@ def _commit_loop(every=30):
 @modal.web_server(8780, startup_timeout=300)
 def web():
     subprocess.Popen(["python", "-m", "playground.server", "--host", "0.0.0.0", "--port", "8780", "--no-browser",
-                      "--front", "--public", "--robot-port", "0", "--runs", "/data/runs"], cwd="/app")
+                      "--front", "--public", "--robot-port", "0", "--runs", "/data/runs"], cwd="/app",
+                     env=dict(os.environ, WETLAB_SESSION_DIR="/tmp/sessions"))
     _commit_loop()
 
 
@@ -68,7 +69,7 @@ def web():
 def lab(lab_id: str, owner_key: str):
     """One visitor's lab, for as long as it is in use (its server exits after 15 idle minutes)."""
     with modal.forward(8780) as page, modal.forward(8781) as robot, modal.forward(8782) as proxy:
-        env = dict(os.environ, WETLAB_LAB_ID=lab_id, WETLAB_OWNER_KEY=owner_key, WETLAB_LAB_URL=page.url,
+        env = dict(os.environ, WETLAB_SESSION_DIR="/tmp/sessions", WETLAB_LAB_ID=lab_id, WETLAB_OWNER_KEY=owner_key, WETLAB_LAB_URL=page.url,
                    WETLAB_RUN_TAG=lab_id, WETLAB_MODEL_PROXY_URL=proxy.url, WETLAB_RUN_BUDGET_USD="3")
         _commit_loop()
         proc = subprocess.Popen(

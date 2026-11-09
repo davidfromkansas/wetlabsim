@@ -855,7 +855,9 @@ def main(argv=None):
         threading.Thread(target=lambda: fetch_assets.ensure(), daemon=True).start()
     print("Loading the scene...")
     sim = PlaygroundSim()
-    sim.open_log(runs / time.strftime("session-%Y%m%d-%H%M%S"))
+    # The idle robot log stays off a shared volume (an open file there blocks saving the run
+    # records); WETLAB_SESSION_DIR points it elsewhere when hosted.
+    sim.open_log(pathlib.Path(os.environ.get("WETLAB_SESSION_DIR") or runs) / time.strftime("session-%Y%m%d-%H%M%S"))
     sim.start()
     url = f"http://{args.host}:{args.port}"
     PGHandler.sim, PGHandler.token, PGHandler.runs_dir = sim, token, runs
