@@ -27,7 +27,7 @@ import threading
 import time
 import urllib.request
 
-from . import launchers, storage, traces
+from . import devin_auth, launchers, storage, traces
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 AGENT_DIR = ROOT / "agent"
@@ -308,6 +308,15 @@ def main(argv=None):
     _eval_call(args.url, token, "/eval/run", run_info)
     last_meta_post = [0.0]
     env = dict(os.environ, PYTHONPATH=str(client), WETLAB_ROBOT_URL=robot_url, WETLAB_ROBOT_TOKEN=robot_token)
+    env.pop("DEVIN_API_KEY", None)
+    devin_home = None
+    if args.agent == "devin" and devin_auth.key() and launcher.name == "local":
+        # Devin logs in with the organization's key (a login of its own for this run, outside
+        # the workspace), not this machine's own Devin login. The modal launcher does this in
+        # its sandbox.
+        devin_home = pathlib.Path(tempfile.mkdtemp(prefix=f"wetlab-{run_id}-devin-"))
+        devin_auth.write_login(devin_home, devin_auth.key())
+        env["XDG_DATA_HOME"] = str(devin_home)
 
     print(f"Run {run_id}: {args.agent} is working. Watch at {args.url}")
     t0 = time.time()
@@ -448,6 +457,8 @@ def main(argv=None):
     if own_token:
         _eval_call(args.url, token, "/eval/robot_token/revoke", {"token": robot_token})
     store.copy_tree(run_id, "workspace", workspace)
+    if devin_home:
+        shutil.rmtree(devin_home, ignore_errors=True)
     store.finish(run_id)
     print(f"Done in {elapsed:.0f} s ({status}). Results in {run_dir}")
     if peeks:

@@ -12,6 +12,9 @@ lab (one container per visitor): a playground server in public mode (free play o
   API and the model proxy leave through tunnels of their own, for the agents only: each run's
   Claude Code runs in a Modal Sandbox that can reach those two and nothing else, and the
   Anthropic key ("anthropic-secret") stays in the lab container.
+Devin: with the Modal secret "DEVIN_API_KEY" (holding DEVIN_API_KEY, a Devin organization's
+service-user key), labs also offer Devin's models, each run's Devin CLI in a Sandbox that can reach
+the robot and Devin's own servers only. Without that secret the site is Claude only.
 Run records go to the "wetlab-playground-runs" volume, shared by every lab and the front.
 """
 import os
@@ -38,6 +41,20 @@ image = (
     .add_local_dir(str(ROOT), "/app", ignore=IGNORE)
 )
 runs = modal.Volume.from_name("wetlab-playground-runs", create_if_missing=True)
+DEVIN_SECRET = "DEVIN_API_KEY"
+
+
+def _optional_secret(name: str) -> list:
+    """The secret if it exists (looked up when deploying), else none."""
+    try:
+        s = modal.Secret.from_name(name)
+        s.hydrate()
+        return [s]
+    except Exception:  # noqa: BLE001
+        return []
+
+
+lab_secrets = [modal.Secret.from_name("anthropic-secret"), *_optional_secret(DEVIN_SECRET)]
 app = modal.App("wetlab-playground", image=image)
 
 
@@ -64,7 +81,7 @@ def web():
     _commit_loop()
 
 
-@app.function(cpu=4.0, memory=6144, secrets=[modal.Secret.from_name("anthropic-secret")],
+@app.function(cpu=4.0, memory=6144, secrets=lab_secrets,
               volumes={"/data": runs}, max_containers=MAX_LABS, timeout=12 * 3600)
 def lab(lab_id: str, owner_key: str):
     """One visitor's lab, for as long as it is in use (its server exits after 15 idle minutes)."""

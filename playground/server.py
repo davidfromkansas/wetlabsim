@@ -42,8 +42,8 @@ HERE = pathlib.Path(__file__).parent
 PAGE = HERE / "static" / "index.html"
 ROBOT_API_URL = ""      # set when the robot API listener is running (main)
 TIME_LIMIT = 180.0     # seconds: a LIBERO test run that hasn't finished by then is stopped
-# The public site (main --public): Claude only, free play only, every run capped, the AI in
-# a cloud sandbox, a few runs at once with a queue.
+# The public site (main --public): Claude (and Devin, with an org key) only, free play only,
+# every run capped, the AI in a cloud sandbox, a few runs at once with a queue.
 PUBLIC = False
 FRONT = False               # the public site's front: hands out labs, lists live runs and past runs
 MAX_ACTIVE = 4              # runs at once on the public site; more wait in a queue
@@ -123,6 +123,18 @@ MODELS = [
      "provider": "cognition",
      "needs": "Devin Pro"},
 ]
+# A Devin organization's API key (a service user's, in DEVIN_API_KEY) runs every Devin model.
+# Without one, Devin runs as this machine's own login, with that plan's limits ("needs").
+DEVIN_ORG = bool(os.environ.get("DEVIN_API_KEY"))
+
+
+def _needs(m: dict) -> str:
+    return "" if m["agent"] == "devin" and DEVIN_ORG else m.get("needs", "")
+
+
+def _site_agents() -> set:
+    """The agents the public site runs: Claude, and Devin once its organization key is set."""
+    return {"claude"} | ({"devin"} if DEVIN_ORG else set())
 
 
 class Runner:
@@ -147,8 +159,8 @@ class Runner:
             mdl = next((m for m in MODELS if m["id"] == model_id), None)
             if mdl is None:
                 raise RobotError(f"unknown model {model_id!r}")
-            if mdl.get("needs"):
-                raise RobotError(f"{mdl['label']} needs {mdl['needs']} on this machine's account")
+            if _needs(mdl):
+                raise RobotError(f"{mdl['label']} needs {_needs(mdl)} on this machine's account")
             cmd = [sys.executable, "-m", "wetlabsim.run_agent", "--agent", mdl["agent"], "--task", task,
                    "--url", self.url, "--runs", str(self.runs), "--time-limit", str(time_limit),
                    "--docs", self.docs, *(extra or [])]
@@ -630,8 +642,9 @@ class PGHandler(Handler):
                 return self._err("not found", 404)
             if p == "/pg/catalog":
                 return self._json({"tabs": catalog.TABS, "items": catalog.available(), "robots": catalog.robots(),
-                                   "models": [{k: m[k] for k in ("id", "label", "via", "provider", "needs") if k in m}
-                                              for m in MODELS if not PUBLIC or m["agent"] == "claude"],
+                                   "models": [{**{k: m[k] for k in ("id", "label", "via", "provider") if k in m},
+                                               **({"needs": _needs(m)} if _needs(m) else {})}
+                                              for m in MODELS if not PUBLIC or m["agent"] in _site_agents()],
                                    "time_limit": TIME_LIMIT, "public": PUBLIC,
                                    "free_time_limit": FREE_TIME_LIMIT, "max_active": MAX_ACTIVE if PUBLIC else 0,
                                    "owner": LABS.owner_ok(self.headers), "front": LABS.FRONT_URL,
@@ -987,8 +1000,8 @@ class PGHandler(Handler):
                         return self._json({"ok": False, "error": f"{station.name} is already running a task"})
                     model = b.get("model", "claude")
                     if PUBLIC:
-                        if not any(m["id"] == model and m["agent"] == "claude" for m in MODELS):
-                            return self._json({"ok": False, "error": "this site runs Claude models only"})
+                        if not any(m["id"] == model and m["agent"] in _site_agents() for m in MODELS):
+                            return self._json({"ok": False, "error": "this site doesn't run that model"})
                         limit = FREE_TIME_LIMIT          # the site's cap, not the page's say
                     else:
                         limit = float(b.get("time_limit", FREE_TIME_LIMIT))
