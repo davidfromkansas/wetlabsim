@@ -218,4 +218,4 @@ def default_scene() -> list[Placed]:
 
 
 def default_stations() -> list[Station]:
-    return [Station("st1", "franka", (0.0, 0.0), 0.0, "Station 1")]
+    return [Station("st1", "franka", (0.0, 0.0), 0.0, "Robot 1")]

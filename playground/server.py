@@ -1132,6 +1132,10 @@ class PGHandler(Handler):
                 uid = s.duplicate_station(b["uid"])
                 s.frame_station(uid)
                 return self._json({"ok": True, "uid": uid})
+            if p == "/pg/station/swap":
+                s.swap_robot(b["uid"], str(b.get("robot", "")))
+                s.frame_station(b["uid"])
+                return self._json({"ok": True})
             if p == "/pg/station/remove":
                 s.remove_station(b["uid"])
                 self.runners.pop(b["uid"], None)

@@ -276,7 +276,7 @@ class PlaygroundSim(Sim):
         with self.lock:
             uid = self._new_station_uid()
             n = int(uid[2:])
-            self.stations.append(W.Station(uid, robot, (float(pos[0]), float(pos[1])), float(yaw), f"Station {n}"))
+            self.stations.append(W.Station(uid, robot, (float(pos[0]), float(pos[1])), float(yaw), f"Robot {n}"))
             self.rebuild()
             self.active_station = uid
         return uid
@@ -302,14 +302,20 @@ class PlaygroundSim(Sim):
                     p.quat = tuple(q)
             self.rebuild()
 
-    def remove_station(self, uid: str):
+    def remove_station(self, uid: str, keep_table: bool = True):
+        """Remove a robot. A station is only a starting template, so by default its table
+        (and whatever is on it) stays in the lab as an ordinary object."""
         with self.lock:
             if self.station(uid) is None:
                 raise RobotError("no such station")
             self._sync_placed()
             st = self.station(uid)
-            riders = {p.uid for p in self._on_table(st)}
-            self.placed = [p for p in self.placed if p.uid not in riders]
+            if keep_table:
+                self.placed.append(W.Placed(self.new_uid(W.STATION_TABLE), W.STATION_TABLE,
+                                            (st.pos[0], st.pos[1], 0.0), st.yaw))
+            else:
+                riders = {p.uid for p in self._on_table(st)}
+                self.placed = [p for p in self.placed if p.uid not in riders]
             self.stations = [s for s in self.stations if s.uid != uid]
             self.arms.pop(uid, None)
             if self.active_station == uid:
@@ -343,7 +349,7 @@ class PlaygroundSim(Sim):
             dx, dy = spot
             riders = self._on_table(st)
             new = self._new_station_uid()
-            base = (st.name or f"Station {uid[2:]}").strip()
+            base = (st.name or f"Robot {uid[2:]}").strip()
             self.stations.append(W.Station(new, st.robot, (st.pos[0] + dx, st.pos[1] + dy), st.yaw,
                                            f"{base} copy"[:40]))
             for p in riders:
@@ -352,6 +358,20 @@ class PlaygroundSim(Sim):
             self.rebuild()
             self.active_station = new
         return new
+
+    def swap_robot(self, uid: str, robot: str):
+        """Put a different robot arm on a station's table. The table and objects stay put."""
+        if robot not in WS.ROBOTS:
+            raise RobotError(f"unknown robot {robot!r}")
+        with self.lock:
+            st = self.station(uid)
+            if st is None:
+                raise RobotError("no such station")
+            if st.robot == robot:
+                return
+            st.robot = robot
+            self.arms.pop(uid, None)
+            self.rebuild()
 
     def rename_station(self, uid: str, name: str):
         st = self.station(uid)
