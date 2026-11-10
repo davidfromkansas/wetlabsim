@@ -42,7 +42,7 @@ class PlaygroundSim(Sim):
         self.checker: LB.Checker | None = None
         self.active_station = self.stations[0].uid if self.stations else None   # the station the page is looking at
         super().__init__(robot=robot, **kw)
-        self.paused = True                      # start in build mode
+        self.paused = False                     # the world plays unless someone pauses it
         cam = mujoco.MjvCamera()
         cam.type = mujoco.mjtCamera.mjCAMERA_FREE
         cam.lookat[:] = [0.0, 0.0, 0.85]

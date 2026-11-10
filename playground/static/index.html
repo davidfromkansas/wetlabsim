@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/pg/static/generative-loaders.css">
 <style>
-:root{--bg:#F6F7F9;--panel:#FFFFFF;--line:#E5E7EB;--line2:#EEF0F3;--ink:#111827;--ink2:#1F2937;--muted:#4B5563;--soft:#F3F4F6;--blue:#2563EB;--blue2:#1D4ED8;--blueBg:#EFF4FF;--green:#16A34A;--red:#DC2626;--amber:#92400E;--amberBg:#FEF3C7}
+:root{--bg:#F3F4F6;--panel:#FFFFFF;--line:#E5E7EB;--line2:#E5E7EB;--ink:#111827;--ink2:#1F2937;--muted:#4B5563;--soft:#F3F4F6;--blue:#2563EB;--blue2:#1D4ED8;--blueBg:#EFF4FF;--green:#16A34A;--red:#DC2626;--amber:#92400E;--amberBg:#FEF3C7}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink2);font:14px/1.5 Inter,system-ui,sans-serif}
@@ -111,7 +111,7 @@ body.filing #chatpane,body.filing #right .freeonly{display:none!important}
 #filespane h3{margin:0;font-size:14px;color:var(--ink)}
 #files{font-size:13px;overflow:auto;flex:1;min-height:0}
 #files .frow{display:grid;grid-template-columns:minmax(0,1fr) 70px;gap:8px;align-items:center;min-height:26px;padding:0 6px;border-radius:6px;color:var(--ink2);text-decoration:none}
-#files .frow:nth-child(even){background:#F7F8FA}
+#files .frow:nth-child(even){background:var(--soft)}
 #files .frow .nm{display:flex;align-items:center;gap:6px;min-width:0}#files .frow .nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #files .frow .sz{text-align:right;color:var(--muted);font-size:12px}
 #files button.frow{width:100%;border:0;background:none;text-align:left;cursor:pointer;font:inherit}
@@ -147,8 +147,8 @@ body.filing #chatpane,body.filing #right .freeonly{display:none!important}
 #feed .runerr{border:1px solid #FCA5A5;background:#FEF2F2;color:#991B1B;border-radius:8px;padding:8px 10px;font-size:13px}
 #feed .runerr pre{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font:12px 'JetBrains Mono',monospace;color:#7F1D1D}
 #jumpBtn{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);display:none;height:30px;padding:0 12px;border-radius:999px;border:1px solid #D1D5DB;background:#fff;color:var(--ink);font-size:12.5px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(17,24,39,.15)}
-.runbar{padding:10px 16px;border-top:1px solid var(--line2);display:flex;gap:8px;align-items:center}
-#stage{flex:1;min-width:0;position:relative;background:#FBFBF9;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.runbar{padding:10px 16px;display:flex;gap:8px;align-items:center}
+#stage{flex:1;min-width:0;position:relative;background:#FAFBFC;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #view{display:block;width:100%;height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;cursor:grab}
 /* the 3D view drawn in the page (view3d.js): the canvas sits under the (now see-through) video
    element, which still takes the mouse, so every drag, click and drop works as before */
@@ -397,8 +397,8 @@ button:active:not(:disabled){transform:scale(.97)}
 
 /* ---- Layout v3 (Nov 10): no top bar, full-height side panels, the scene as a rounded card ---- */
 header{display:none!important}
-body{background:#F4F5F7}
-#sessNav{background:#F4F5F7!important;border-right:0!important}
+body{background:var(--bg)}
+#sessNav{background:var(--bg)!important;border-right:0!important}
 #sessNav .in{gap:16px}
 .ptitle{display:flex;align-items:center;justify-content:space-between;padding:2px 0 0 6px}
 .ptitle b{font:700 18px Inter,sans-serif;color:var(--ink);letter-spacing:-.01em}
@@ -406,7 +406,7 @@ body{background:#F4F5F7}
 .iconbtn:hover{background:rgba(17,24,39,.06)}
 .snote,.livelbl{display:none!important}
 #stage{margin:8px;border-radius:14px;overflow:hidden;box-shadow:0 0 0 1px rgba(17,24,39,.07),0 1px 3px rgba(17,24,39,.06)}
-#right{background:#F4F5F7;border-left:0!important;width:340px;display:flex;flex-direction:column;transition:width 200ms cubic-bezier(.23,1,.32,1)}
+#right{background:var(--bg);border-left:0!important;width:340px;display:flex;flex-direction:column;transition:width 200ms cubic-bezier(.23,1,.32,1)}
 body.rclosed #right{display:none}
 #tabObjects,.dock{display:none!important}
 .tl{top:60px}
@@ -478,6 +478,124 @@ body.objopen.dragging #objTab{display:flex}
 .tcard .tag{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:6px;background:var(--soft);color:#374151}
 .tcard .primary{height:36px;border-radius:8px;margin-top:auto}
 .tcard.soon{opacity:.75}.tcard.soon .primary{background:var(--soft);color:var(--muted);cursor:not-allowed}
+
+/* ---------- robot panel v4: robot rail + the selected robot's page ---------- */
+#right{background:#fff!important;width:auto!important;flex-direction:row!important;transition:none!important;box-shadow:-1px 0 0 var(--line)}
+body.rclosed #right{display:flex!important}
+#openRight,#rhead{display:none!important}
+#rrail{width:64px;flex:none;background:var(--bg);display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 0;overflow-y:auto;overflow-x:hidden}
+body.rclosed #rrail{border-right:0}
+#rrail .sep{width:28px;height:1px;background:var(--line);flex:none;margin:2px 0}
+.rbot{position:relative;width:44px;height:44px;flex:none;border-radius:12px;border:0;padding:0;background:#fff;box-shadow:0 0 0 1px var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:box-shadow 120ms}
+.rbot:hover{box-shadow:0 0 0 2px #93B4FF}
+.rbot img{width:36px;height:36px;object-fit:contain;pointer-events:none}
+.rbot[aria-current=true]{box-shadow:0 0 0 2px var(--blue)}
+.rbot .bdg{position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:50%;border:2px solid var(--bg);background:#9CA3AF}
+.rbot .bdg.run{background:var(--green)}.rbot .bdg.wait{background:#D97706}
+.radd{width:44px;height:44px;flex:none;border-radius:12px;border:1.5px dashed #C3C8D0;background:transparent;color:var(--muted);font:400 20px Inter,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.radd:hover{border-color:#9CA3AF;color:var(--ink)}
+body.watch .radd{display:none}
+#rrail .rpast{margin-top:auto;flex:none;width:44px;height:44px;border-radius:12px;background:#fff;box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(17,24,39,.06);transition:box-shadow 120ms}
+#rrail .rpast:hover{background:#fff;box-shadow:0 0 0 2px #93B4FF}
+#pastLink{display:none!important}
+#rtip{position:fixed;z-index:80;background:var(--ink);color:#fff;border-radius:8px;padding:7px 11px;font:12px/1.4 Inter,sans-serif;white-space:nowrap;pointer-events:none}
+#rtip[hidden]{display:none}
+#rtip .s{color:#D1D5DB}#rtip .s.run{color:#86EFAC}
+#rmain{width:356px;flex:none;overflow:hidden;transition:width 200ms cubic-bezier(.23,1,.32,1)}
+body.rclosed #rmain{width:0}
+#rinner{width:356px;height:100%;display:flex;flex-direction:column;min-height:0}
+#rtitle{padding:14px 16px 8px;flex:none}
+#rtitle b{display:block;font:650 16px Inter,sans-serif;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rtitle .sub{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);margin-top:2px;white-space:nowrap}
+#rtitle .sdot{width:7px;height:7px;border-radius:50%;background:#9CA3AF;flex:none}
+#rtitle .sdot.run{background:var(--green)}#rtitle .sdot.wait{background:#D97706}
+.sidetabs{margin:0!important;padding:0 16px!important;gap:22px!important;background:transparent!important;border-radius:0!important;border-bottom:1px solid var(--line)}
+.sidetabs button{flex:none!important;height:auto!important;padding:8px 0 10px!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:#6B7280!important;border-bottom:2px solid transparent!important;margin-bottom:-1px}
+.sidetabs button[aria-selected=true]{color:var(--ink)!important;font-weight:600;border-bottom-color:var(--ink)!important}
+.chathead{border-bottom:0!important;padding:10px 16px 4px!important}
+.chathead b{font-size:13px!important}
+#feed .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:100%;padding:24px 28px;line-height:1.5;color:var(--muted)}
+#feed .empty b{color:var(--ink);font-size:14px;margin-bottom:4px}
+.taskcard{margin:0 14px 14px!important;padding:0!important;gap:0!important;border-radius:14px!important;border:1px solid #D1D5DB!important;box-shadow:0 1px 2px rgba(17,24,39,.05),0 4px 14px -6px rgba(17,24,39,.12)!important;transition:border-color 120ms,box-shadow 120ms}
+.taskcard:focus-within{border-color:#9DB7F5!important;box-shadow:0 0 0 3px #E0E9FF!important}
+.taskcard .tchead{position:absolute;right:8px;top:8px;z-index:1}
+.taskcard .tchead b{display:none}
+.taskcard textarea{padding:12px 40px 4px 14px!important;min-height:64px!important;font:13px/1.5 Inter,sans-serif;background:transparent}
+.taskcard .infopop{margin:0 12px}
+.tcrow{padding:6px 8px 8px 8px;align-items:center}
+.tcrow .mdl{border:0!important;background:transparent!important}
+.tcrow .mdl:hover{background:var(--soft)!important}
+#startBtn{margin-left:auto;border-radius:9px;background:var(--blue);border-color:var(--blue);white-space:nowrap;flex:none}
+#startBtn:hover:not(.blank){background:var(--blue2)}
+.tcrow .mdl{flex:none!important}
+.tcrow .mdl select{flex:none!important;width:auto;field-sizing:content;padding-right:2px}
+.taskcard .tchead{display:none}
+.tcrow .infobtn{flex:none}
+.taskcard textarea{padding-right:14px!important}
+#startBtn.blank{background:#E5E7EB;color:#9CA3AF;border-color:#E5E7EB}
+#startBtn.blank svg{fill:#9CA3AF}
+
+/* ---------- colors: one gray frame, white cards ---------- */
+#right{background:var(--bg)!important;box-shadow:none!important}
+#rmain{margin:8px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(17,24,39,.07),0 1px 3px rgba(17,24,39,.06);transition:width 200ms cubic-bezier(.23,1,.32,1),margin 200ms cubic-bezier(.23,1,.32,1)}
+body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
+#rinner{background:#fff}
+#rrail{padding-top:16px}
+.rbot{box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(17,24,39,.06)}
+#rrail .iconbtn:hover,.ptitle .iconbtn:hover{background:rgba(17,24,39,.06)}
+
+/* ---------- play/pause = the physics world ---------- */
+#playBtn:disabled{opacity:.45;cursor:not-allowed}
+.cdlg{position:fixed;inset:0;z-index:120;background:rgba(17,24,39,.32);display:flex;align-items:center;justify-content:center}
+.cdlg[hidden]{display:none}
+.cdlg .bx{width:380px;max-width:calc(100vw - 32px);background:#fff;border-radius:14px;box-shadow:0 24px 60px rgba(17,24,39,.3);padding:20px 20px 16px;font:13px/1.5 Inter,sans-serif;color:var(--muted)}
+.cdlg h3{margin:0 0 6px;font-size:16px;color:var(--ink)}
+.cdlg .act{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.cdlg button{height:36px;padding:0 14px;border-radius:9px;font:600 13px Inter,sans-serif;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink)}
+.cdlg button.ok{background:var(--blue);border-color:var(--blue);color:#fff}
+@container (max-width:1060px){#playpill{left:auto;right:14px;transform:none}}
+
+/* ---------- the robot picker: one card for Add and Swap ---------- */
+#rpk{position:fixed;z-index:90;width:420px;max-width:calc(100vw - 24px);background:#fff;border-radius:16px;box-shadow:0 24px 60px -12px rgba(17,24,39,.35),0 0 0 1px rgba(17,24,39,.08);font:13px Inter,sans-serif;color:var(--ink);transform-origin:var(--o,right top);animation:rpkIn 160ms cubic-bezier(.23,1,.32,1)}
+#rpk[hidden]{display:none}
+@keyframes rpkIn{from{opacity:0;transform:scale(.97)}}
+#rpk .caret{position:absolute;right:-7px;width:14px;height:14px;background:#fff;transform:rotate(45deg);box-shadow:1px -1px 0 rgba(17,24,39,.08)}
+#rpk .ph{padding:16px 16px 10px;display:flex;align-items:flex-start;gap:10px}
+#rpk h3{margin:0;font-size:16px;font-weight:650}
+#rpk .ph p{margin:3px 0 0;font-size:12.5px;color:var(--muted);line-height:1.45}
+#rpk .x{margin-left:auto;width:28px;height:28px;border-radius:7px;border:0;background:none;color:#6B7280;cursor:pointer;flex:none;font-size:13px}
+#rpk .x:hover{background:#F3F4F6;color:var(--ink)}
+#rpk .grid{padding:4px 16px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#rpk .ri{position:relative;border-radius:14px;border:1px solid var(--line);background:#fff;padding:8px 8px 12px;display:flex;flex-direction:column;text-align:left;cursor:pointer;font:inherit;color:inherit;transition:border-color 120ms,background 120ms}
+#rpk .ri:hover:not(:disabled){border-color:#C3C8D0}
+#rpk .ri .th{height:118px;border-radius:10px;background:#F3F4F6;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+#rpk .ri .th img{width:104px;height:104px;object-fit:contain}
+#rpk .ri .nm{font-weight:650;font-size:14px;padding:0 4px}
+#rpk .ri .sp{margin-top:3px;font-size:12px;color:var(--muted);padding:0 4px}
+#rpk .ri .tag{position:absolute;top:14px;left:14px;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:6px;background:#fff;color:#374151;box-shadow:0 0 0 1px var(--line)}
+#rpk .ri[aria-checked=true]{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue);background:#F5F8FF}
+#rpk .ri[aria-checked=true] .th{background:#E8EFFF}
+#rpk .ri .ck{position:absolute;top:14px;right:14px;width:20px;height:20px;border-radius:50%;background:var(--blue);color:#fff;font-size:12px;font-weight:700;display:none;align-items:center;justify-content:center}
+#rpk .ri[aria-checked=true] .ck{display:flex}
+#rpk .ri:disabled{cursor:default}
+#rpk .ri.soon{opacity:.55}
+#rpk .ri.soon .tag{color:#6B7280}
+#rpk .pf{border-top:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;justify-content:flex-end;gap:8px;background:#FAFAFB;border-radius:0 0 16px 16px}
+#rpk .pf .n{font-size:12px;color:var(--muted);margin-right:auto;white-space:nowrap}
+#rpk .pf button{height:36px;padding:0 14px;border-radius:9px;font:600 13px Inter,sans-serif;cursor:pointer;white-space:nowrap;border:1px solid var(--line);background:#fff;color:var(--ink)}
+#rpk .pf .go{background:var(--blue);border-color:var(--blue);color:#fff}
+#rpk .pf .go:disabled{opacity:.45;cursor:not-allowed}
+.radd.on{border-style:solid;border-color:var(--blue);color:var(--blue);background:#EFF4FF}
+#rtitle{display:flex;align-items:flex-start;gap:8px}
+#rtitle .tt{flex:1;min-width:0}
+#rSwap{height:30px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;gap:6px;font:600 12.5px Inter,sans-serif;color:#1F2937;cursor:pointer;flex:none}
+#rSwap:hover:not(:disabled){border-color:#C3C8D0}
+#rSwap.on{border-color:var(--blue);color:#1D4ED8;box-shadow:0 0 0 3px #E0E9FF}
+#rSwap:disabled{opacity:.45;cursor:not-allowed}
+#utoast{position:absolute;bottom:196px;left:50%;transform:translateX(-50%);z-index:30;background:var(--ink);color:#fff;border-radius:10px;padding:6px 6px 6px 14px;font-size:13px;display:flex;align-items:center;gap:10px;white-space:nowrap;box-shadow:0 8px 20px rgba(17,24,39,.25)}
+#utoast[hidden]{display:none}
+#utoast button{border:0;background:none;color:#93B4FF;font:600 13px Inter,sans-serif;padding:4px 8px;border-radius:6px;cursor:pointer}
+#utoast button:hover{background:rgba(255,255,255,.1)}
 </style>
 </head>
 <body>
@@ -623,7 +741,7 @@ body.objopen.dragging #objTab{display:flex}
     </div>
     <div id="bigCamWrap" role="dialog" aria-modal="true" aria-label="Camera, large"><div class="bigcam"><img id="bigCam" alt=""><div class="pcap" style="padding:8px 10px 8px 14px;font-size:13px"><b id="bigName" style="font-weight:600"></b><span>AI SEES THIS</span><button class="exp wide" id="shrinkBtn" aria-label="Shrink camera"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M11 5 H7 V1 M1 7 H5 V11 M7 5 L11 1 M5 7 L1 11"/></svg>Shrink</button></div></div></div>
     <div class="tl"><span class="live" id="liveTag" style="display:none">● Running · real time</span><span class="libtag libero wetlab" id="libTag"></span><span class="hint" id="hintTag"></span></div>
-    <div class="bl"><button class="fbtn" id="openRight" aria-label="Show robot panel" title="Show robot panel"><img id="openRightImg" alt=""><span id="openRightName">Robot</span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#374151" stroke-width="1.5"><rect x="1.75" y="2.75" width="14.5" height="12.5" rx="2.5"/><path d="M11.5 2.75 V15.25"/></svg></button><button class="camreset" data-preset="home" aria-label="Reset view" title="Reset view (Home)" style="width:36px;height:36px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E5E7EB" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 8 a5 5 0 1 0 1.6 -3.7"/><path d="M3 2 V5 H6"/></svg></button></div>
+    <div class="bl"><button class="fbtn" id="openRight" aria-label="Show robot panel" title="Show robot panel"><img id="openRightImg" alt=""><span id="openRightName">Robot</span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#374151" stroke-width="1.5"><rect x="1.75" y="2.75" width="14.5" height="12.5" rx="2.5"/><path d="M11.5 2.75 V15.25"/></svg></button></div>
     <div class="campad" role="group" aria-label="Camera">
       <div class="joy" id="joy" tabindex="0" role="application" aria-label="Camera joystick: drag to slide the view, or use the arrow keys" title="Drag to slide the view (arrow keys too)">
         <svg class="tick" style="left:59px;top:8px" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 2 L9 8 H1 Z"/></svg>
@@ -702,7 +820,7 @@ body.objopen.dragging #objTab{display:flex}
           <div class="infopop" id="infoPop" role="note" hidden><b>What the AI gets</b><br><span id="infoText"></span></div>
           <label for="task" class="small" style="position:absolute;left:-9999px">Task</label>
           <textarea id="task" rows="3" placeholder="Tell this robot what to do, in plain words. Example: put the apple in the bowl."></textarea>
-          <div class="tcrow"><div class="mdl"><img id="modelLogo" src="/static/anthropic.svg" alt=""><select id="model" aria-label="AI model"></select></div><button class="primary" id="startBtn"><svg width="11" height="11" viewBox="0 0 14 14" fill="#fff" aria-hidden="true"><path d="M3 1.5 L12.5 7 L3 12.5 Z"/></svg>Play</button></div>
+          <div class="tcrow"><div class="mdl"><img id="modelLogo" src="/static/anthropic.svg" alt=""><select id="model" aria-label="AI model"></select></div><button class="primary" id="startBtn"><svg width="11" height="11" viewBox="0 0 14 14" fill="#fff" aria-hidden="true"><path d="M3 1.5 L12.5 7 L3 12.5 Z"/></svg>Run task</button></div>
         </div>
       </section>
     <p class="libhint freeonly" id="libhint">Drag an object onto the scene, or click it and then click where it should go. It lands on whatever is under it.</p>
@@ -948,7 +1066,7 @@ function chipDot(st) {
 }
 // The stations bar floating over the lab: one chip per station, the selected one ringed.
 function renderDock() {
-  renderRobots();
+  renderRobots(); renderRail();
   const sc = S.scene, list = sc.mode === 'free' ? (sc.robots || []) : [];
   const key = JSON.stringify([SID, list, sc.active, sc.runs, S.drafts, S.watch]);
   if (key === S.dockKey) return; S.dockKey = key;
@@ -978,7 +1096,8 @@ function renderDock() {
 
 // ---------------------------------------------------------------- layout v3: robots are the unit
 // The lab's robots, listed under the open session in the sidebar, and the robot panel's header.
-const ROBOT_IMG = (r) => STATION_IMG[r] || STATION_IMG.franka;
+const ROBOT_PIC = {franka: '/pg/static/robot_franka.png', ur5e: '/pg/static/robot_ur5e.png'};
+const ROBOT_IMG = (r) => ROBOT_PIC[r] || ROBOT_PIC.franka;
 async function pickRobot(id) {
   $('rmenu').hidden = true; $('rpick').setAttribute('aria-expanded', 'false');
   S.sel = 'robot';
@@ -1022,9 +1141,64 @@ $('rpick').onclick = (e) => {
   $('rmenu').hidden = !open; $('rpick').setAttribute('aria-expanded', String(open));
 };
 document.addEventListener('mousedown', (e) => { if (!e.target.closest('#rhead')) { $('rmenu').hidden = true; $('rpick').setAttribute('aria-expanded', 'false'); } }, true);
+
+// ---------------------------------------------------------------- robot panel v4: the robot rail
+// A thin strip of robot pictures down the panel's left edge. It stays when the panel closes.
+(() => {
+  const right = $('right');
+  const rail = document.createElement('div'); rail.id = 'rrail'; rail.setAttribute('aria-label', 'Robots in this lab');
+  const main = document.createElement('div'); main.id = 'rmain';
+  const inner = document.createElement('div'); inner.id = 'rinner';
+  while (right.firstChild) inner.appendChild(right.firstChild);
+  const title = document.createElement('div'); title.id = 'rtitle';
+  title.innerHTML = '<div class="tt"><b id="rtName">Robot</b><span class="sub"><span class="sdot" id="rtDot"></span><span id="rtSub"></span></span></div>'
+    + '<button id="rSwap" aria-haspopup="dialog" aria-expanded="false" title="Swap this robot for another arm"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-3.5-3.5"/><path d="M20 16H6l3.5 3.5"/></svg>Swap</button>';
+  inner.insertBefore(title, inner.firstChild);
+  main.appendChild(inner); right.appendChild(rail); right.appendChild(main);
+  const tip = document.createElement('div'); tip.id = 'rtip'; tip.hidden = true; document.body.appendChild(tip);
+})();
+function showRtip(btn, html) {
+  const t = $('rtip'), r = btn.getBoundingClientRect(); t.innerHTML = html; t.hidden = false;
+  const closed = document.body.classList.contains('rclosed');
+  t.style.top = (r.top + r.height / 2 - t.offsetHeight / 2) + 'px';
+  t.style.left = closed ? (r.left - t.offsetWidth - 10) + 'px' : (r.right + 10) + 'px';
+}
+function renderRail() {
+  const sc = S.scene; if (!sc) return;
+  const list = sc.mode === 'free' ? (sc.robots || []) : [];
+  const open = !document.body.classList.contains('rclosed');
+  const key = JSON.stringify([list.map(r => [r.id, r.name, r.label, r.robot, chipDot(r)]), sc.active, open]);
+  const on = list.find(r => r.id === sc.active) || list[0];
+  if (on) { const [d, t] = chipDot(on); $('rtName').textContent = on.name; $('rtSub').textContent = `${on.label} · ${t}`; $('rtDot').className = 'sdot ' + d; }
+  else { $('rtName').textContent = 'No robot yet'; $('rtSub').textContent = 'Press + to add a robot'; $('rtDot').className = 'sdot'; }
+  $('rSwap').hidden = !on || !!S.watch;
+  $('rSwap').disabled = !!runLock(sc);
+  $('rSwap').title = runLock(sc) ? 'A robot is working on a task. Stop it to swap.' : 'Swap this robot for another arm';
+  if (key === S.railKey) return; S.railKey = key;
+  const tog = `<button class="iconbtn" id="rToggle" aria-label="${open ? 'Hide' : 'Show'} robot panel" title="${open ? 'Hide' : 'Show'} robot panel" aria-expanded="${open}"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#374151" stroke-width="1.5"><rect x="1.75" y="2.75" width="14.5" height="12.5" rx="2.5"/><path d="M11.5 2.75 V15.25"/></svg></button>`;
+  $('rrail').innerHTML = tog + '<span class="sep"></span>' + list.map(st => { const [d] = chipDot(st);
+    return `<button class="rbot" data-st="${esc(st.id)}" aria-current="${!!on && st.id === on.id}" aria-label="${esc(st.name)}, ${esc(st.label)}"><img src="${ROBOT_IMG(st.robot)}" alt=""><span class="bdg ${d}"></span></button>`; }).join('')
+    + `<button class="radd${S.pick && S.pick.mode === 'add' ? ' on' : ''}" id="rAdd" aria-label="Add a robot" aria-haspopup="dialog">+</button>`
+    + `<a class="iconbtn rpast" id="rPast" href="${esc($('pastLink').href)}" target="_blank" rel="noopener" aria-label="Past runs" title="Past runs"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h11M6.5 21h11"/><path d="M7.5 3c0 4.5 4.5 6 4.5 9s-4.5 4.5-4.5 9"/><path d="M16.5 3c0 4.5-4.5 6-4.5 9s4.5 4.5 4.5 9"/><path d="M9.2 19.5c.8-1.6 1.8-2.3 2.8-2.3s2 .7 2.8 2.3z" fill="#374151" stroke-width="1"/></svg></a>`;
+  $('rToggle').onclick = () => setRight(document.body.classList.contains('rclosed'));
+  $('rAdd').onclick = () => { $('rtip').hidden = true; S.pick && S.pick.mode === 'add' ? closePicker() : openPicker('add'); };
+  $('rAdd').onmouseenter = () => { if (!S.pick) showRtip($('rAdd'), '<b>Add a robot</b>'); };
+  $('rAdd').onmouseleave = () => { $('rtip').hidden = true; };
+  $('rPast').onmouseenter = () => showRtip($('rPast'), '<b>Past runs</b><br><span class="s">Replays of every finished run</span>');
+  $('rPast').onmouseleave = () => { $('rtip').hidden = true; };
+  $('rrail').querySelectorAll('.rbot').forEach(b => {
+    const st = list.find(r => r.id === b.dataset.st);
+    b.onmouseenter = () => { const [d, t] = chipDot(st); showRtip(b, `<b>${esc(st.name)} · ${esc(st.label)}</b><br><span class="s ${d}">● ${esc(t)}</span>${document.body.classList.contains('rclosed') ? '<br><span class="s">Click to open its panel</span>' : ''}`); };
+    b.onmouseleave = () => { $('rtip').hidden = true; };
+    b.onclick = () => { $('rtip').hidden = true; if (document.body.classList.contains('rclosed')) setRight(true); pickRobot(st.id); };
+    b.oncontextmenu = (e) => { if (S.watch) return; e.preventDefault(); openStMenu(st.id, e.clientX, e.clientY, b); };
+  });
+}
+$('task').addEventListener('input', () => $('startBtn').classList.toggle('blank', !$('task').value.trim()));
+$('startBtn').before($('infoBtn'));
 // side panels open and close
 function setRight(open) {
-  document.body.classList.toggle('rclosed', !open);
+  document.body.classList.toggle('rclosed', !open); S.railKey = null; if (S.scene) renderRail();
   try { localStorage.setItem('pgRight', open ? '1' : '0'); } catch (e) {}
 }
 $('rClose').onclick = () => setRight(false);
@@ -1138,15 +1312,123 @@ function openAdd() {
   $('rcards').querySelectorAll('button[data-r]').forEach(b => b.onclick = () => startPlacing(b.dataset.r));
   $('addModal').style.display = 'flex';
 }
+
+// ---------------------------------------------------------------- the robot picker (Add and Swap share it)
+// A lock only because physics is playing can be lifted for a moment; a robot at work can't.
+const runLock = (sc) => sc && sc.locked && !/while playing/.test(String(sc.locked)) ? (typeof sc.locked === 'string' ? sc.locked : 'A robot is running a task.') : '';
+async function holdPhysics() { if (S.scene && !S.scene.paused) { await api('/pg/pause', {}); S.resumeAfter = true; } }
+async function resumePhysics() { if (S.resumeAfter) { S.resumeAfter = false; await api('/pg/play', {}); } }
+const SOON_ROBOTS = [
+  {label: 'Kinova Gen3', joints: '7 joints', gripper: 'Robotiq 2F-85'},
+  {label: 'ALOHA (two arms)', joints: '2 × 6 joints', gripper: '2 grippers'},
+];
+(() => {
+  const d = document.createElement('div'); d.id = 'rpk'; d.hidden = true; d.setAttribute('role', 'dialog'); d.setAttribute('aria-labelledby', 'rpkTitle');
+  document.body.appendChild(d);
+  const u = document.createElement('div'); u.id = 'utoast'; u.hidden = true; u.setAttribute('role', 'status'); $('stage').appendChild(u);
+})();
+function openPicker(mode, uid) {
+  const sc = S.scene; if (!sc || sc.mode !== 'free' || S.watch || !S.cat) return;
+  if (runLock(sc)) { toast(runLock(sc)); return; }
+  if (S.placing) cancelPlacing();
+  const st = mode === 'swap' ? (sc.robots || []).find(r => r.id === uid) : null;
+  if (mode === 'swap' && !st) return;
+  const robots = S.cat.robots || [];
+  const cur = st ? st.robot : null;
+  const first = robots.find(r => r.id !== cur) || robots[0];
+  S.pick = {mode, uid: st && st.id, sel: first && first.id};
+  const n = (sc.robots || []).length + 1;
+  $('rpk').innerHTML = `${mode === 'add' ? '<span class="caret"></span>' : ''}<div class="ph"><div><h3 id="rpkTitle">${mode === 'add' ? 'Add a robot' : 'Swap ' + esc(st.name)}</h3>
+    <p>${mode === 'add' ? 'Pick an arm, then click the floor to place it.' : 'Replace the arm. It keeps its spot, its table and whatever is on it.'}</p></div>
+    <button class="x" aria-label="Close">✕</button></div>
+    <div class="grid" role="radiogroup" aria-label="Robots">${robots.map(r => `<button class="ri" role="radio" data-r="${esc(r.id)}" aria-checked="false" ${r.id === cur ? 'disabled' : ''}>
+      ${r.id === cur ? '<span class="tag">Current</span>' : ''}<span class="ck">✓</span><span class="th"><img src="${ROBOT_IMG(r.id)}" alt=""></span>
+      <span class="nm">${esc(r.label)}</span><span class="sp">${r.joints} joints · ${esc(r.gripper)}</span></button>`).join('')}
+      ${SOON_ROBOTS.map(r => `<button class="ri soon" disabled aria-disabled="true"><span class="tag">Coming soon</span><span class="th"><span style="color:#C3C8D0;font-size:34px">◌</span></span>
+      <span class="nm">${esc(r.label)}</span><span class="sp">${esc(r.joints)} · ${esc(r.gripper)}</span></button>`).join('')}</div>
+    <div class="pf">${mode === 'swap' ? '<span class="n">Name and chats stay.</span>' : ''}<button class="no">Cancel</button><button class="go"></button></div>`;
+  const pk = $('rpk');
+  const paint = () => {
+    pk.querySelectorAll('.ri[data-r]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.r === S.pick.sel)));
+    const r = robots.find(x => x.id === S.pick.sel);
+    pk.querySelector('.go').disabled = !r;
+    pk.querySelector('.go').textContent = !r ? (mode === 'add' ? 'Add' : 'Swap') : mode === 'add' ? `Add ${r.label}` : `Swap to ${r.label}`;
+  };
+  pk.querySelectorAll('.ri[data-r]').forEach(b => {
+    b.onclick = () => { S.pick.sel = b.dataset.r; paint(); };
+    b.ondblclick = () => { S.pick.sel = b.dataset.r; paint(); pickerGo(); };
+  });
+  pk.querySelector('.x').onclick = () => closePicker(true);
+  pk.querySelector('.no').onclick = () => closePicker(true);
+  pk.querySelector('.go').onclick = pickerGo;
+  paint(); pk.hidden = false;
+  // place it next to what opened it
+  if (mode === 'add') {
+    const a = $('rAdd').getBoundingClientRect(), h = pk.offsetHeight;
+    const top = Math.max(8, Math.min(a.top + a.height / 2 - 40, innerHeight - h - 8));
+    pk.style.left = (a.left - pk.offsetWidth - 12) + 'px'; pk.style.top = top + 'px';
+    pk.querySelector('.caret').style.top = (a.top + a.height / 2 - top - 7) + 'px';
+    pk.style.setProperty('--o', `right ${a.top + a.height / 2 - top}px`);
+    $('rAdd').classList.add('on'); $('rAdd').setAttribute('aria-expanded', 'true');
+  } else {
+    const a = $('rSwap').getBoundingClientRect();
+    pk.style.left = Math.max(8, a.right - pk.offsetWidth) + 'px'; pk.style.top = (a.bottom + 8) + 'px';
+    pk.style.setProperty('--o', 'right top');
+    $('rSwap').classList.add('on'); $('rSwap').setAttribute('aria-expanded', 'true');
+  }
+  const sel = pk.querySelector('.ri[aria-checked=true]'); (sel || pk.querySelector('.go')).focus({preventScroll: true});
+}
+function closePicker(refocus) {
+  if (!S.pick) return;
+  const mode = S.pick.mode; S.pick = null; $('rpk').hidden = true;
+  if ($('rAdd')) { $('rAdd').classList.remove('on'); $('rAdd').setAttribute('aria-expanded', 'false'); }
+  $('rSwap').classList.remove('on'); $('rSwap').setAttribute('aria-expanded', 'false');
+  if (refocus) (mode === 'add' ? $('rAdd') : $('rSwap')).focus({preventScroll: true});
+}
+async function pickerGo() {
+  const p = S.pick; if (!p || !p.sel) return;
+  closePicker();
+  if (runLock(S.scene)) { toast(runLock(S.scene)); return; }
+  await holdPhysics();
+  if (p.mode === 'add') { startPlacing(p.sel); return; }
+  const st = (S.scene.robots || []).find(r => r.id === p.uid); if (!st) { resumePhysics(); return; }
+  const from = st.robot, to = p.sel;
+  const r = await api('/pg/station/swap', {uid: p.uid, robot: to});
+  await resumePhysics();
+  if (!r.ok) { toast(r.error || "Couldn't swap it"); return; }
+  await refresh();
+  const lab = (S.cat.robots.find(x => x.id === to) || {}).label || to;
+  undoToast(`${st.name} is now a ${lab}`, async () => {
+    if (runLock(S.scene)) { toast(runLock(S.scene)); return; }
+    await holdPhysics();
+    const b = await api('/pg/station/swap', {uid: p.uid, robot: from});
+    await resumePhysics();
+    if (!b.ok) toast(b.error || "Couldn't undo it"); refresh();
+  });
+}
+function undoToast(msg, undo) {
+  const u = $('utoast'); u.innerHTML = `<span>${esc(msg)}</span><button>Undo</button>`; u.hidden = false;
+  u.querySelector('button').onclick = () => { u.hidden = true; undo(); };
+  clearTimeout(undoToast.h); undoToast.h = setTimeout(() => { u.hidden = true; }, 6000);
+}
+$('rSwap').onclick = () => { if (S.pick && S.pick.mode === 'swap') { closePicker(); return; } openPicker('swap', curStation().id); };
+document.addEventListener('keydown', (e) => {
+  if (!S.pick) return;
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closePicker(true); }
+  else if (e.key === 'Enter' && e.target.closest && e.target.closest('#rpk') && !e.target.classList.contains('no') && !e.target.classList.contains('x')) { e.preventDefault(); pickerGo(); }
+}, true);
+document.addEventListener('mousedown', (e) => { if (S.pick && !e.target.closest('#rpk, #rAdd, #rSwap')) closePicker(); }, true);
+window.addEventListener('resize', () => closePicker());
 function closeAdd() { $('addModal').style.display = 'none'; }
 $('addStationBtn').onclick = openAdd; $('amClose').onclick = closeAdd;
 $('addModal').onclick = (e) => { if (e.target === $('addModal')) closeAdd(); };
 function startPlacing(robot) {
   closeAdd(); S.placing = robot; S.placeYaw = 0; S.armed = null; renderItems();
   api('/pg/camera', {preset: 'lab'});
-  $('hintTag').textContent = 'Click the floor to place the station. R turns it, Esc cancels.';
+  const lab = ((S.cat.robots || []).find(x => x.id === robot) || {}).label || 'the robot';
+  $('hintTag').textContent = `Click the floor to place the ${lab}. R turns it, Esc cancels.`;
 }
-function cancelPlacing() { S.placing = null; hideTag(); api('/pg/ghost/clear', {}); render(); }
+function cancelPlacing() { S.placing = null; hideTag(); api('/pg/ghost/clear', {}); resumePhysics(); render(); }
 let stProbeBusy = false, stProbeNext = null;
 async function probeStation(p) {
   S.lastUV = p;
@@ -1163,6 +1445,7 @@ async function placeStation(p) {
   const r = await api('/pg/station/add', {robot: S.placing, u: p.u, v: p.v, yaw: S.placeYaw});
   if (!r.ok) { toast(r.error || "Can't go there"); return; }
   S.placing = null; hideTag(); S.sel = 'robot';
+  await resumePhysics();
   await refresh(); setSideTab('chat'); $('task').focus();
 }
 async function rotateSel() { const r = await api('/pg/rotate', {uid: S.sel, degrees: 90}); if (!r.ok) toast(r.error); refresh(); }
@@ -1170,14 +1453,37 @@ $('delBtn').onclick = removeSel; $('rotBtn').onclick = rotateSel;
 
 // ---------------------------------------------------------------- play, tasks, chat
 $('playBtn').onclick = async () => {
+  if ($('playBtn').disabled) return;
   if (S.scene && !S.scene.paused) await api('/pg/pause', {}); else await api('/pg/play', {});
   refresh();
 };
 $('resetBtn').onclick = async () => { const r = await api('/pg/reset', {}); if (!r.ok) toast(r.error); refresh(); };
+
+// A small "are you sure" card. Resolves true when confirmed.
+function askConfirm(title, text, okLabel) {
+  return new Promise(res => {
+    let d = $('cdlg');
+    if (!d) { d = document.createElement('div'); d.id = 'cdlg'; d.className = 'cdlg'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); document.body.appendChild(d); }
+    d.innerHTML = `<div class="bx"><h3>${esc(title)}</h3><div>${esc(text)}</div><div class="act"><button class="no">Cancel</button><button class="ok">${esc(okLabel)}</button></div></div>`;
+    d.hidden = false;
+    const done = (v) => { d.hidden = true; document.removeEventListener('keydown', key, true); res(v); };
+    const key = (e) => { if (e.key === 'Escape') { e.preventDefault(); done(false); } else if (e.key === 'Enter') { e.preventDefault(); done(true); } };
+    document.addEventListener('keydown', key, true);
+    d.querySelector('.no').onclick = () => done(false);
+    d.querySelector('.ok').onclick = () => done(true);
+    d.onclick = (e) => { if (e.target === d) done(false); };
+    d.querySelector('.ok').focus();
+  });
+}
 $('startBtn').onclick = async () => {
   const task = $('task').value.trim();
   if (!task) { toast('Type a task for the robot first'); $('task').focus(); return; }
   const station = S.scene.active;
+  if (S.scene.paused && S.scene.mode === 'free') {
+    const n = (S.scene.robots || []).length;
+    const ok = await askConfirm('Resume the physics world?', `The world is paused. Starting this task will resume physics for the whole lab${n > 1 ? `, so all ${n} robots and every object start moving again` : ''}.`, 'Resume and run task');
+    if (!ok) return;
+  }
   const r = await api('/pg/play', {task, model: $('model').value, station});
   if (!r.ok) { toast(r.error); return; }
   S.runTask = task; S.follow = true; S.feedKey = ''; setSideTab('chat');
@@ -1219,7 +1525,7 @@ function renderFeed() {
   S.feedKey = key;
   const m = run.model || {}, logo = LOGOS[m.provider] || '', who = esc(info.model_label || m.label || 'The AI');
   const start = info.sim_start || 0, out = [];
-  if (!run.started) out.push(`<li class="empty">${S.mode === 'libero' ? 'Press “Run this setup” and the AI\'s messages show up here.' : S.mode === 'wetlab' ? 'Press “Run this task” and the AI\'s messages show up here.' : 'Nothing yet. The AI\'s thoughts, code and replies appear here as it works.'}</li>`);
+  if (!run.started) out.push(`<li class="empty">${S.mode === 'libero' ? 'Press “Run this setup” and the AI\'s messages show up here.' : S.mode === 'wetlab' ? 'Press “Run this task” and the AI\'s messages show up here.' : `<b>No messages yet</b>Give ${esc(curStation().name || 'this robot')} a task below. The AI\'s thinking, code and replies show up here.`}</li>`);
   else out.push(`<li class="prompt"><div class="lbl">Your task</div><div class="bub">${esc(run.task || '')}</div></li>`);
   let prevT = null, prevKind = null;
   for (let i = 0; i < trace.length; i++) {
@@ -1349,11 +1655,15 @@ function render() {
   applyMode();
   const run = sc.run || {}, active = !!run.active, playing = !sc.paused;
   $('playBtn').classList.toggle('on', playing);
-  $('playLabel').textContent = playing ? 'Pause' : 'Play';
+  $('playLabel').textContent = playing ? 'Pause physics' : 'Play physics';
+  { const working = Object.values(sc.runs || {}).filter(r => r && (r.active || r.queued)).length;
+    $('playBtn').disabled = playing && working > 0 && !S.fixed;
+    $('playBtn').title = $('playBtn').disabled ? `${working === 1 ? 'A robot is' : working + ' robots are'} working. Stop ${working === 1 ? 'it' : 'them'} from the chat to pause the world.`
+      : playing ? 'Freeze the physics world: every robot and object stops' : 'Run the physics world'; }
   $('playIcon').innerHTML = playing ? '<rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/>' : '<path d="M3 1.5 L12.5 7 L3 12.5 Z"/>';
   $('clock').textContent = fmtClock(sc.time);
-  $('rt').textContent = playing ? (sc.realtime_factor >= 0.97 ? 'real time' : (sc.realtime_factor * 100).toFixed(0) + '% of real time') : 'paused';
-  $('lockmsg').style.display = sc.locked ? '' : 'none'; $('lockmsg').textContent = S.fixed ? 'Scene locked for a fair test' : active ? 'Scene locked while the AI runs' : 'Scene locked while playing · pause to edit';
+  $('rt').textContent = playing ? 'World running' + (sc.realtime_factor >= 0.97 ? '' : ' · ' + (sc.realtime_factor * 100).toFixed(0) + '% speed') : 'World paused';
+  $('lockmsg').style.display = sc.locked && (active || S.fixed) ? '' : 'none'; $('lockmsg').textContent = S.fixed ? 'Scene locked for a fair test' : active ? 'Scene locked while a robot works' : 'Pause physics to edit the scene';
   $('right').classList.toggle('locked', !!sc.locked);
   $('liveTag').style.display = playing ? '' : 'none';
   $('hintTag').style.display = playing ? 'none' : '';
@@ -1371,6 +1681,8 @@ function render() {
   $('stTitle').textContent = free ? st.name : (st.label || 'Robot');
   $('stSub').textContent = (free ? st.label + ' · ' : '') + (st.gripper || '');
   $('taskFor').textContent = `Task for ${free ? st.name + ' · ' : ''}${st.label || 'the robot'}`;
+  $('task').placeholder = `Tell ${free ? st.name : 'the robot'} what to do. For example: put the apple in the bowl.`;
+  $('startBtn').classList.toggle('blank', !$('task').value.trim());
   $('infoText').textContent = `Your task, the ${st.label || 'robot'}'s manuals, a site sheet naming what's on its table (not where), its two cameras and its sensors. It writes code to move the robot. ` +
     (S.cat.public ? `It runs in its own locked-down cloud box. Each run stops at ${Math.round(S.cat.free_time_limit / 60)} minutes or about $3 of AI use, ${S.cat.max_active} runs go at a time (others wait in line), and every run is public: anyone can watch it live and look at it afterwards.`
       : `There's no time limit: it runs until it says it's done, or you press Stop. Runs use your own Claude Code or Codex login.`);
@@ -1399,12 +1711,12 @@ function render() {
   document.body.classList.toggle('running', active);
   for (const [id, t] of [['tabChat', 'chat'], ['tabObjects', 'objects'], ['tabFiles', 'files'], ['tabData', 'data']]) $(id).setAttribute('aria-selected', S.sideTab === t);
   if (S.sideTab === 'data') renderData();
-  $('libhint').textContent = sc.locked ? 'Pause the scene to add or move objects.' : (S.armed ? $('libhint').textContent : LIBHINT);
+  $('libhint').textContent = sc.locked ? 'Pause physics to add or move objects.' : (S.armed ? $('libhint').textContent : LIBHINT);
   $('task').readOnly = active;
   const queued = !!run.queued;     // public site: waiting for one of the few run slots
   $('stopBtn').style.display = active || queued ? '' : 'none';
   $('taskcard').style.display = active || queued || S.watch || empty ? 'none' : '';
-  $('runbar').style.display = run.started || queued || S.fixed ? '' : 'none';
+  $('runbar').style.display = active || queued || S.fixed ? '' : 'none';
   if (queued) $('runStatus').textContent = `Waiting for a free slot · ${run.queued - 1} ahead (${S.cat.max_active} runs at a time)`;
   if (!run.started && !queued) { const m = modelInfo($('model').value); $('chatLogo').src = LOGOS[m.provider] || LOGOS.anthropic; $('chatModel').textContent = m.label || ''; $('runStatus').textContent = ''; }
   if (run.started) {
@@ -1856,7 +2168,7 @@ $('wModel').onchange = renderWet;
     $('modeLibero').style.display = $('modeWet').style.display = 'none';
     document.body.classList.add('public');
     if (S.cat.front) {   // a hosted lab: the front lists live and past runs
-      $('pastLink').href = S.cat.front + '/pg/runs'; $('liveLink').href = S.cat.front + '/live';
+      $('pastLink').href = S.cat.front + '/pg/runs'; S.railKey = null; $('liveLink').href = S.cat.front + '/live';
       $('liveLink').style.display = '';
     }
     // Someone else's lab (no owner key): watch only. The server refuses changes anyway.
