@@ -478,6 +478,54 @@ body.objopen.dragging #objTab{display:flex}
 .tcard .tag{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:6px;background:var(--soft);color:#374151}
 .tcard .primary{height:36px;border-radius:8px;margin-top:auto}
 .tcard.soon{opacity:.75}.tcard.soon .primary{background:var(--soft);color:var(--muted);cursor:not-allowed}
+
+/* ---------- robot panel v4: robot rail + the selected robot's page ---------- */
+#right{background:#fff!important;width:auto!important;flex-direction:row!important;transition:none!important;box-shadow:-1px 0 0 var(--line)}
+body.rclosed #right{display:flex!important}
+#openRight,#rhead{display:none!important}
+#rrail{width:64px;flex:none;background:#F7F8FA;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 0;overflow-y:auto;overflow-x:hidden}
+body.rclosed #rrail{border-right:0}
+#rrail .sep{width:28px;height:1px;background:var(--line);flex:none;margin:2px 0}
+.rbot{position:relative;width:44px;height:44px;flex:none;border-radius:12px;border:0;padding:0;background:#fff;box-shadow:0 0 0 1px var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:box-shadow 120ms}
+.rbot:hover{box-shadow:0 0 0 2px #93B4FF}
+.rbot img{width:36px;height:36px;object-fit:contain;pointer-events:none}
+.rbot[aria-current=true]{box-shadow:0 0 0 2px var(--ink)}
+.rbot[aria-current=true]:before{content:"";position:absolute;left:-12px;top:10px;width:4px;height:24px;border-radius:0 3px 3px 0;background:var(--ink)}
+.rbot .bdg{position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:50%;border:2px solid #F7F8FA;background:#9CA3AF}
+.rbot .bdg.run{background:var(--green)}.rbot .bdg.wait{background:#D97706}
+.radd{width:44px;height:44px;flex:none;border-radius:12px;border:1.5px dashed #C3C8D0;background:transparent;color:var(--muted);font:400 20px Inter,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.radd:hover{border-color:#9CA3AF;color:var(--ink)}
+body.watch .radd{display:none}
+#rtip{position:fixed;z-index:80;background:var(--ink);color:#fff;border-radius:8px;padding:7px 11px;font:12px/1.4 Inter,sans-serif;white-space:nowrap;pointer-events:none}
+#rtip[hidden]{display:none}
+#rtip .s{color:#D1D5DB}#rtip .s.run{color:#86EFAC}
+#rmain{width:356px;flex:none;overflow:hidden;transition:width 200ms cubic-bezier(.23,1,.32,1)}
+body.rclosed #rmain{width:0}
+#rinner{width:356px;height:100%;display:flex;flex-direction:column;min-height:0}
+#rtitle{padding:14px 16px 8px;flex:none}
+#rtitle b{display:block;font:650 16px Inter,sans-serif;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rtitle .sub{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);margin-top:2px;white-space:nowrap}
+#rtitle .sdot{width:7px;height:7px;border-radius:50%;background:#9CA3AF;flex:none}
+#rtitle .sdot.run{background:var(--green)}#rtitle .sdot.wait{background:#D97706}
+.sidetabs{margin:0!important;padding:0 16px!important;gap:22px!important;background:transparent!important;border-radius:0!important;border-bottom:1px solid var(--line)}
+.sidetabs button{flex:none!important;height:auto!important;padding:8px 0 10px!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:#6B7280!important;border-bottom:2px solid transparent!important;margin-bottom:-1px}
+.sidetabs button[aria-selected=true]{color:var(--ink)!important;font-weight:600;border-bottom-color:var(--ink)!important}
+.chathead{border-bottom:0!important;padding:10px 16px 4px!important}
+.chathead b{font-size:13px!important}
+#feed .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:100%;padding:24px 28px;line-height:1.5;color:var(--muted)}
+#feed .empty b{color:var(--ink);font-size:14px;margin-bottom:4px}
+.taskcard{margin:0 14px 14px!important;padding:0!important;gap:0!important;border-radius:14px!important;border:1px solid #D1D5DB!important;box-shadow:0 1px 2px rgba(17,24,39,.05),0 4px 14px -6px rgba(17,24,39,.12)!important;transition:border-color 120ms,box-shadow 120ms}
+.taskcard:focus-within{border-color:#9DB7F5!important;box-shadow:0 0 0 3px #E0E9FF!important}
+.taskcard .tchead{position:absolute;right:8px;top:8px;z-index:1}
+.taskcard .tchead b{display:none}
+.taskcard textarea{padding:12px 40px 4px 14px!important;min-height:64px!important;font:13px/1.5 Inter,sans-serif;background:transparent}
+.taskcard .infopop{margin:0 12px}
+.tcrow{padding:6px 8px 8px 8px;align-items:center}
+.tcrow .mdl{border:0!important;background:transparent!important}
+.tcrow .mdl:hover{background:var(--soft)!important}
+#startBtn{margin-left:auto;border-radius:9px}
+#startBtn.blank{background:#E5E7EB;color:#9CA3AF;border-color:#E5E7EB}
+#startBtn.blank svg{fill:#9CA3AF}
 </style>
 </head>
 <body>
@@ -702,7 +750,7 @@ body.objopen.dragging #objTab{display:flex}
           <div class="infopop" id="infoPop" role="note" hidden><b>What the AI gets</b><br><span id="infoText"></span></div>
           <label for="task" class="small" style="position:absolute;left:-9999px">Task</label>
           <textarea id="task" rows="3" placeholder="Tell this robot what to do, in plain words. Example: put the apple in the bowl."></textarea>
-          <div class="tcrow"><div class="mdl"><img id="modelLogo" src="/static/anthropic.svg" alt=""><select id="model" aria-label="AI model"></select></div><button class="primary" id="startBtn"><svg width="11" height="11" viewBox="0 0 14 14" fill="#fff" aria-hidden="true"><path d="M3 1.5 L12.5 7 L3 12.5 Z"/></svg>Play</button></div>
+          <div class="tcrow"><div class="mdl"><img id="modelLogo" src="/static/anthropic.svg" alt=""><select id="model" aria-label="AI model"></select></div><button class="primary" id="startBtn"><svg width="11" height="11" viewBox="0 0 14 14" fill="#fff" aria-hidden="true"><path d="M3 1.5 L12.5 7 L3 12.5 Z"/></svg>Run task</button></div>
         </div>
       </section>
     <p class="libhint freeonly" id="libhint">Drag an object onto the scene, or click it and then click where it should go. It lands on whatever is under it.</p>
@@ -948,7 +996,7 @@ function chipDot(st) {
 }
 // The stations bar floating over the lab: one chip per station, the selected one ringed.
 function renderDock() {
-  renderRobots();
+  renderRobots(); renderRail();
   const sc = S.scene, list = sc.mode === 'free' ? (sc.robots || []) : [];
   const key = JSON.stringify([SID, list, sc.active, sc.runs, S.drafts, S.watch]);
   if (key === S.dockKey) return; S.dockKey = key;
@@ -978,7 +1026,8 @@ function renderDock() {
 
 // ---------------------------------------------------------------- layout v3: robots are the unit
 // The lab's robots, listed under the open session in the sidebar, and the robot panel's header.
-const ROBOT_IMG = (r) => STATION_IMG[r] || STATION_IMG.franka;
+const ROBOT_PIC = {franka: '/pg/static/robot_franka.png', ur5e: '/pg/static/robot_ur5e.png'};
+const ROBOT_IMG = (r) => ROBOT_PIC[r] || ROBOT_PIC.franka;
 async function pickRobot(id) {
   $('rmenu').hidden = true; $('rpick').setAttribute('aria-expanded', 'false');
   S.sel = 'robot';
@@ -1022,9 +1071,54 @@ $('rpick').onclick = (e) => {
   $('rmenu').hidden = !open; $('rpick').setAttribute('aria-expanded', String(open));
 };
 document.addEventListener('mousedown', (e) => { if (!e.target.closest('#rhead')) { $('rmenu').hidden = true; $('rpick').setAttribute('aria-expanded', 'false'); } }, true);
+
+// ---------------------------------------------------------------- robot panel v4: the robot rail
+// A thin strip of robot pictures down the panel's left edge. It stays when the panel closes.
+(() => {
+  const right = $('right');
+  const rail = document.createElement('div'); rail.id = 'rrail'; rail.setAttribute('aria-label', 'Robots in this lab');
+  const main = document.createElement('div'); main.id = 'rmain';
+  const inner = document.createElement('div'); inner.id = 'rinner';
+  while (right.firstChild) inner.appendChild(right.firstChild);
+  const title = document.createElement('div'); title.id = 'rtitle';
+  title.innerHTML = '<b id="rtName">Robot</b><span class="sub"><span class="sdot" id="rtDot"></span><span id="rtSub"></span></span>';
+  inner.insertBefore(title, inner.firstChild);
+  main.appendChild(inner); right.appendChild(rail); right.appendChild(main);
+  const tip = document.createElement('div'); tip.id = 'rtip'; tip.hidden = true; document.body.appendChild(tip);
+})();
+function showRtip(btn, html) {
+  const t = $('rtip'), r = btn.getBoundingClientRect(); t.innerHTML = html; t.hidden = false;
+  const closed = document.body.classList.contains('rclosed');
+  t.style.top = (r.top + r.height / 2 - t.offsetHeight / 2) + 'px';
+  t.style.left = closed ? (r.left - t.offsetWidth - 10) + 'px' : (r.right + 10) + 'px';
+}
+function renderRail() {
+  const sc = S.scene; if (!sc) return;
+  const list = sc.mode === 'free' ? (sc.robots || []) : [];
+  const open = !document.body.classList.contains('rclosed');
+  const key = JSON.stringify([list.map(r => [r.id, r.name, r.label, r.robot, chipDot(r)]), sc.active, open]);
+  const on = list.find(r => r.id === sc.active) || list[0];
+  if (on) { const [d, t] = chipDot(on); $('rtName').textContent = on.name; $('rtSub').textContent = `${on.label} · ${t}`; $('rtDot').className = 'sdot ' + d; }
+  else { $('rtName').textContent = 'No robot yet'; $('rtSub').textContent = 'Press + to add a station'; $('rtDot').className = 'sdot'; }
+  if (key === S.railKey) return; S.railKey = key;
+  const tog = `<button class="iconbtn" id="rToggle" aria-label="${open ? 'Hide' : 'Show'} robot panel" title="${open ? 'Hide' : 'Show'} robot panel" aria-expanded="${open}"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#374151" stroke-width="1.5"><rect x="1.75" y="2.75" width="14.5" height="12.5" rx="2.5"/><path d="M11.5 2.75 V15.25"/></svg></button>`;
+  $('rrail').innerHTML = tog + '<span class="sep"></span>' + list.map(st => { const [d] = chipDot(st);
+    return `<button class="rbot" data-st="${esc(st.id)}" aria-current="${!!on && st.id === on.id}" aria-label="${esc(st.name)}, ${esc(st.label)}"><img src="${ROBOT_IMG(st.robot)}" alt=""><span class="bdg ${d}"></span></button>`; }).join('')
+    + '<button class="radd" id="rAdd" aria-label="Add station" title="Add station">+</button>';
+  $('rToggle').onclick = () => setRight(document.body.classList.contains('rclosed'));
+  $('rAdd').onclick = () => openAdd();
+  $('rrail').querySelectorAll('.rbot').forEach(b => {
+    const st = list.find(r => r.id === b.dataset.st);
+    b.onmouseenter = () => { const [d, t] = chipDot(st); showRtip(b, `<b>${esc(st.name)} · ${esc(st.label)}</b><br><span class="s ${d}">● ${esc(t)}</span>${document.body.classList.contains('rclosed') ? '<br><span class="s">Click to open its panel</span>' : ''}`); };
+    b.onmouseleave = () => { $('rtip').hidden = true; };
+    b.onclick = () => { $('rtip').hidden = true; if (document.body.classList.contains('rclosed')) setRight(true); pickRobot(st.id); };
+    b.oncontextmenu = (e) => { if (S.watch) return; e.preventDefault(); openStMenu(st.id, e.clientX, e.clientY, b); };
+  });
+}
+$('task').addEventListener('input', () => $('startBtn').classList.toggle('blank', !$('task').value.trim()));
 // side panels open and close
 function setRight(open) {
-  document.body.classList.toggle('rclosed', !open);
+  document.body.classList.toggle('rclosed', !open); S.railKey = null; if (S.scene) renderRail();
   try { localStorage.setItem('pgRight', open ? '1' : '0'); } catch (e) {}
 }
 $('rClose').onclick = () => setRight(false);
@@ -1219,7 +1313,7 @@ function renderFeed() {
   S.feedKey = key;
   const m = run.model || {}, logo = LOGOS[m.provider] || '', who = esc(info.model_label || m.label || 'The AI');
   const start = info.sim_start || 0, out = [];
-  if (!run.started) out.push(`<li class="empty">${S.mode === 'libero' ? 'Press “Run this setup” and the AI\'s messages show up here.' : S.mode === 'wetlab' ? 'Press “Run this task” and the AI\'s messages show up here.' : 'Nothing yet. The AI\'s thoughts, code and replies appear here as it works.'}</li>`);
+  if (!run.started) out.push(`<li class="empty">${S.mode === 'libero' ? 'Press “Run this setup” and the AI\'s messages show up here.' : S.mode === 'wetlab' ? 'Press “Run this task” and the AI\'s messages show up here.' : `<b>No messages yet</b>Give ${esc(curStation().name || 'this robot')} a task below. The AI\'s thinking, code and replies show up here.`}</li>`);
   else out.push(`<li class="prompt"><div class="lbl">Your task</div><div class="bub">${esc(run.task || '')}</div></li>`);
   let prevT = null, prevKind = null;
   for (let i = 0; i < trace.length; i++) {
@@ -1371,6 +1465,8 @@ function render() {
   $('stTitle').textContent = free ? st.name : (st.label || 'Robot');
   $('stSub').textContent = (free ? st.label + ' · ' : '') + (st.gripper || '');
   $('taskFor').textContent = `Task for ${free ? st.name + ' · ' : ''}${st.label || 'the robot'}`;
+  $('task').placeholder = `Tell ${free ? st.name : 'the robot'} what to do. For example: put the apple in the bowl.`;
+  $('startBtn').classList.toggle('blank', !$('task').value.trim());
   $('infoText').textContent = `Your task, the ${st.label || 'robot'}'s manuals, a site sheet naming what's on its table (not where), its two cameras and its sensors. It writes code to move the robot. ` +
     (S.cat.public ? `It runs in its own locked-down cloud box. Each run stops at ${Math.round(S.cat.free_time_limit / 60)} minutes or about $3 of AI use, ${S.cat.max_active} runs go at a time (others wait in line), and every run is public: anyone can watch it live and look at it afterwards.`
       : `There's no time limit: it runs until it says it's done, or you press Stop. Runs use your own Claude Code or Codex login.`);
