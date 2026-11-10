@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MuJoCo Playground</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/pg/static/generative-loaders.css">
+<style>
+:root{--bg:#F6F7F9;--panel:#FFFFFF;--line:#E5E7EB;--ink:#111827;--ink2:#1F2937;--muted:#4B5563;--blue:#2563EB;--blue2:#1D4ED8;--red:#DC2626}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink2);font:14px/1.5 Inter,system-ui,sans-serif}
+main{max-width:760px;margin:0 auto;padding:48px 16px}
+h1{font-size:22px;margin:0 0 4px;color:var(--ink)}
+.sub{margin:0 0 28px;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:16px}
+.status{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--ink)}
+.primary{display:inline-flex;align-items:center;height:40px;padding:0 16px;border-radius:10px;border:0;background:var(--ink);color:#fff;font:600 14px Inter,sans-serif;cursor:pointer;text-decoration:none}
+.small{font-size:12.5px;color:var(--muted)}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 10px}
+ul{list-style:none;margin:0;padding:0}
+li{display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid #EEF0F3}
+li:first-child{border-top:0}
+li .t{flex:1;min-width:0}
+li .t b{display:block;color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--red);flex:none}
+a{color:var(--blue2)}
+.links{display:flex;gap:16px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<main>
+  <h1>MuJoCo Playground</h1>
+  <p class="sub">Build a robot lab, give a Claude model a task, and watch it work. Every run is public.</p>
+
+  <div class="card" id="mine">
+    <div class="status" id="status"><span id="loader"></span><span id="statusText">Starting your lab…</span></div>
+    <p class="small" id="statusNote" style="margin:8px 0 0">Your own lab, just for you. This takes about half a minute the first time.</p>
+  </div>
+
+  <div class="card">
+    <h2>Live now</h2>
+    <ul id="live"><li class="small">Nothing is running right now.</li></ul>
+  </div>
+
+  <div class="links small"><a href="/pg/runs">Past runs: replays, chat and files of every finished run</a></div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+// generative-loaders' InlineLoader, variant "snake" (its markup; styles in generative-loaders.css)
+const snake = (size) => `<span class="il-loader" data-variant="snake" data-speed="1" data-paused="false" aria-hidden="true" style="--il-color:#2563EB;--il-size:${size}px;--il-duration:1.2s"><span class="il-snake">${Array.from({length: 7}, (_, i) => `<i style="--il-i:${i};--il-scale:${(1 - i * .075).toFixed(3)}"></i>`).join('')}<b></b></span></span>`;
+const watchOnly = new URLSearchParams(location.search).has('watch') || location.pathname === '/live';
+
+async function claim() {
+  if (watchOnly) { $('mine').innerHTML = '<a class="primary" href="/">Start your own lab</a>'; return; }
+  $('loader').innerHTML = snake(22);
+  for (let i = 0; i < 120; i++) {
+    let r;
+    try { r = await (await fetch('/api/lab', {method: 'POST'})).json(); } catch (e) { r = {}; }
+    if (r.url && r.key) { location.href = r.url + '/?key=' + encodeURIComponent(r.key); return; }
+    if (r.full) {
+      $('loader').innerHTML = '';
+      $('statusText').textContent = `All ${r.max} labs are in use right now.`;
+      $('statusNote').innerHTML = 'Please try again in a few minutes. Meanwhile you can watch the runs below. <a href="/">Try again</a>';
+      return;
+    }
+    if (r.error) { $('statusText').textContent = "Couldn't start a lab: " + r.error; $('loader').innerHTML = ''; return; }
+    await new Promise(res => setTimeout(res, 2000));
+  }
+  $('statusText').textContent = 'Your lab is taking longer than usual.'; $('loader').innerHTML = '';
+  $('statusNote').innerHTML = '<a href="/">Try again</a>';
+}
+async function live() {
+  try {
+    const d = await (await fetch('/api/live')).json();
+    const rows = [];
+    for (const lab of d.labs) for (const r of lab.runs) rows.push(`<li><span class="dot"></span><span class="t"><b>${esc(r.task)}</b><span class="small">${esc(r.model)} · ${esc(r.session_name || 'lab ' + lab.lab)}</span></span><a href="${esc(lab.url)}/?watch=1${r.session ? '&s=' + encodeURIComponent(r.session) : ''}">Watch</a></li>`);
+    $('live').innerHTML = rows.join('') || '<li class="small">Nothing is running right now.</li>';
+  } catch (e) {}
+  setTimeout(live, 4000);
+}
+claim(); live();
+</script>
+</body>
+</html>

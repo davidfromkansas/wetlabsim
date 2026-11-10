@@ -1,0 +1,538 @@
+{
+ "suite": "libero_goal",
+ "index": 2,
+ "name": "put_the_wine_bottle_on_top_of_the_cabinet",
+ "language": "put the wine bottle on top of the cabinet",
+ "problem": "libero_tabletop_manipulation",
+ "goal": [
+  [
+   "on",
+   "wine_bottle_1",
+   "wooden_cabinet_1_top_side"
+  ]
+ ],
+ "obj_of_interest": [
+  "wine_bottle_1",
+  "wooden_cabinet_1_top_side"
+ ],
+ "objects": {
+  "akita_black_bowl_1": {
+   "kind": "object",
+   "category": "akita_black_bowl",
+   "root_body": "akita_black_bowl_1_main",
+   "contact_geoms": [
+    "akita_black_bowl_1_g1",
+    "akita_black_bowl_1_g2",
+    "akita_black_bowl_1_g3",
+    "akita_black_bowl_1_g4",
+    "akita_black_bowl_1_g5",
+    "akita_black_bowl_1_g6",
+    "akita_black_bowl_1_g7",
+    "akita_black_bowl_1_g8",
+    "akita_black_bowl_1_g9",
+    "akita_black_bowl_1_g10",
+    "akita_black_bowl_1_g11",
+    "akita_black_bowl_1_g12",
+    "akita_black_bowl_1_g13",
+    "akita_black_bowl_1_g14",
+    "akita_black_bowl_1_g15",
+    "akita_black_bowl_1_g16",
+    "akita_black_bowl_1_g17",
+    "akita_black_bowl_1_g18",
+    "akita_black_bowl_1_g19",
+    "akita_black_bowl_1_g20",
+    "akita_black_bowl_1_g21",
+    "akita_black_bowl_1_g22",
+    "akita_black_bowl_1_g23",
+    "akita_black_bowl_1_g24",
+    "akita_black_bowl_1_g25",
+    "akita_black_bowl_1_g26",
+    "akita_black_bowl_1_g27",
+    "akita_black_bowl_1_g28",
+    "akita_black_bowl_1_g29",
+    "akita_black_bowl_1_g30",
+    "akita_black_bowl_1_g31",
+    "akita_black_bowl_1_g32",
+    "akita_black_bowl_1_g33",
+    "akita_black_bowl_1_g34",
+    "akita_black_bowl_1_g35",
+    "akita_black_bowl_1_g36",
+    "akita_black_bowl_1_g37",
+    "akita_black_bowl_1_g38",
+    "akita_black_bowl_1_g39",
+    "akita_black_bowl_1_g40"
+   ],
+   "joints": [
+    "akita_black_bowl_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "cream_cheese_1": {
+   "kind": "object",
+   "category": "cream_cheese",
+   "root_body": "cream_cheese_1_main",
+   "contact_geoms": [
+    "cream_cheese_1_g1"
+   ],
+   "joints": [
+    "cream_cheese_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "wine_bottle_1": {
+   "kind": "object",
+   "category": "wine_bottle",
+   "root_body": "wine_bottle_1_main",
+   "contact_geoms": [
+    "wine_bottle_1_g3",
+    "wine_bottle_1_g4",
+    "wine_bottle_1_g5",
+    "wine_bottle_1_g6",
+    "wine_bottle_1_g7",
+    "wine_bottle_1_g8",
+    "wine_bottle_1_g9",
+    "wine_bottle_1_g10",
+    "wine_bottle_1_g11",
+    "wine_bottle_1_g12",
+    "wine_bottle_1_g13",
+    "wine_bottle_1_g14",
+    "wine_bottle_1_g15",
+    "wine_bottle_1_g16",
+    "wine_bottle_1_g17",
+    "wine_bottle_1_g18",
+    "wine_bottle_1_g19",
+    "wine_bottle_1_g20",
+    "wine_bottle_1_g21",
+    "wine_bottle_1_g22",
+    "wine_bottle_1_g23"
+   ],
+   "joints": [
+    "wine_bottle_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "plate_1": {
+   "kind": "object",
+   "category": "plate",
+   "root_body": "plate_1_main",
+   "contact_geoms": [
+    "plate_1_g1",
+    "plate_1_g2",
+    "plate_1_g3",
+    "plate_1_g4",
+    "plate_1_g5",
+    "plate_1_g6",
+    "plate_1_g7",
+    "plate_1_g8",
+    "plate_1_g9",
+    "plate_1_g10"
+   ],
+   "joints": [
+    "plate_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "wooden_cabinet_1": {
+   "kind": "fixture",
+   "category": "wooden_cabinet",
+   "root_body": "wooden_cabinet_1_main",
+   "contact_geoms": [
+    "wooden_cabinet_1_g1",
+    "wooden_cabinet_1_g2",
+    "wooden_cabinet_1_g3",
+    "wooden_cabinet_1_g4",
+    "wooden_cabinet_1_g5",
+    "wooden_cabinet_1_g6",
+    "wooden_cabinet_1_g7",
+    "wooden_cabinet_1_g8",
+    "wooden_cabinet_1_g9",
+    "wooden_cabinet_1_g11",
+    "wooden_cabinet_1_g12",
+    "wooden_cabinet_1_g13",
+    "wooden_cabinet_1_g14",
+    "wooden_cabinet_1_g15",
+    "wooden_cabinet_1_g16",
+    "wooden_cabinet_1_g18",
+    "wooden_cabinet_1_g19",
+    "wooden_cabinet_1_g20",
+    "wooden_cabinet_1_g22",
+    "wooden_cabinet_1_g23",
+    "wooden_cabinet_1_g24",
+    "wooden_cabinet_1_g25",
+    "wooden_cabinet_1_g26",
+    "wooden_cabinet_1_g27",
+    "wooden_cabinet_1_g29",
+    "wooden_cabinet_1_g30",
+    "wooden_cabinet_1_g31",
+    "wooden_cabinet_1_g33",
+    "wooden_cabinet_1_g34",
+    "wooden_cabinet_1_g35",
+    "wooden_cabinet_1_g36",
+    "wooden_cabinet_1_g37",
+    "wooden_cabinet_1_g38",
+    "wooden_cabinet_1_g40",
+    "wooden_cabinet_1_g41",
+    "wooden_cabinet_1_g42"
+   ],
+   "joints": [
+    "wooden_cabinet_1_top_level",
+    "wooden_cabinet_1_middle_level",
+    "wooden_cabinet_1_bottom_level"
+   ],
+   "articulation": {
+    "is_open": [
+     [
+      -99.0,
+      -0.14
+     ]
+    ],
+    "is_close": [
+     [
+      0.0005,
+      99.0
+     ]
+    ]
+   }
+  },
+  "flat_stove_1": {
+   "kind": "fixture",
+   "category": "flat_stove",
+   "root_body": "flat_stove_1_main",
+   "contact_geoms": [
+    "flat_stove_1_base",
+    "flat_stove_1_collision_burner",
+    "flat_stove_1_g5",
+    "flat_stove_1_g6",
+    "flat_stove_1_g7",
+    "flat_stove_1_g8",
+    "flat_stove_1_g9",
+    "flat_stove_1_g10",
+    "flat_stove_1_g11",
+    "flat_stove_1_g12",
+    "flat_stove_1_g13",
+    "flat_stove_1_g14",
+    "flat_stove_1_g15",
+    "flat_stove_1_g16",
+    "flat_stove_1_g17",
+    "flat_stove_1_g18",
+    "flat_stove_1_g19",
+    "flat_stove_1_g20",
+    "flat_stove_1_g21",
+    "flat_stove_1_g22"
+   ],
+   "joints": [
+    "flat_stove_1_button"
+   ],
+   "articulation": {
+    "turn_on": [
+     [
+      0.5,
+      99.0
+     ]
+    ],
+    "turn_off": [
+     [
+      -99.0,
+      0.0
+     ]
+    ]
+   }
+  },
+  "wine_rack_1": {
+   "kind": "fixture",
+   "category": "wine_rack",
+   "root_body": "wine_rack_1_main",
+   "contact_geoms": [
+    "wine_rack_1_g1",
+    "wine_rack_1_g2",
+    "wine_rack_1_g4",
+    "wine_rack_1_g5",
+    "wine_rack_1_g7",
+    "wine_rack_1_g8",
+    "wine_rack_1_g9",
+    "wine_rack_1_g10",
+    "wine_rack_1_g11"
+   ],
+   "joints": [],
+   "articulation": {}
+  }
+ },
+ "sites": {
+  "main_table_plate_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.010000000000000002,
+    0.009999999999999998,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "main_table_akita_black_bowl_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.009999999999999995,
+    0.01,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "main_table_wine_bottle_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.010000000000000009,
+    0.010000000000000002,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "main_table_cream_cheese_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.010000000000000002,
+    0.010000000000000002,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "main_table_stove_front_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.039999999999999994,
+    0.04000000000000001,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "main_table_cabinet_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.01,
+    0.009999999999999995,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "main_table_stove_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.009999999999999981,
+    0.009999999999999995,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "main_table_wine_rack_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.010000000000000009,
+    0.010000000000000009,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "wooden_cabinet_1_top_region": {
+   "parent": "wooden_cabinet_1",
+   "joints": [
+    "wooden_cabinet_1_top_level"
+   ],
+   "size": [
+    0.02993,
+    0.07561,
+    0.10224
+   ],
+   "under": true,
+   "class": "SiteObject"
+  },
+  "wooden_cabinet_1_middle_region": {
+   "parent": "wooden_cabinet_1",
+   "joints": [
+    "wooden_cabinet_1_middle_level"
+   ],
+   "size": [
+    0.02993,
+    0.07561,
+    0.10224
+   ],
+   "under": true,
+   "class": "SiteObject"
+  },
+  "wooden_cabinet_1_bottom_region": {
+   "parent": "wooden_cabinet_1",
+   "joints": [
+    "wooden_cabinet_1_bottom_level"
+   ],
+   "size": [
+    0.02993,
+    0.07561,
+    0.10224
+   ],
+   "under": true,
+   "class": "SiteObject"
+  },
+  "wooden_cabinet_1_top_side": {
+   "parent": "wooden_cabinet_1",
+   "joints": [],
+   "size": [
+    0.12534,
+    0.09438,
+    0.00147
+   ],
+   "under": true,
+   "class": "SiteObject"
+  },
+  "flat_stove_1_cook_region": {
+   "parent": "flat_stove_1",
+   "joints": [],
+   "size": [
+    0.075,
+    0.075,
+    0.0025
+   ],
+   "under": true,
+   "class": "SiteObject"
+  },
+  "wine_rack_1_top_region": {
+   "parent": "wine_rack_1",
+   "joints": [],
+   "size": [
+    0.10087,
+    0.022,
+    0.00251
+   ],
+   "under": true,
+   "class": "SiteObject"
+  }
+ },
+ "joints": [
+  {
+   "name": "robot0_joint1",
+   "type": 3,
+   "qposadr": 0
+  },
+  {
+   "name": "robot0_joint2",
+   "type": 3,
+   "qposadr": 1
+  },
+  {
+   "name": "robot0_joint3",
+   "type": 3,
+   "qposadr": 2
+  },
+  {
+   "name": "robot0_joint4",
+   "type": 3,
+   "qposadr": 3
+  },
+  {
+   "name": "robot0_joint5",
+   "type": 3,
+   "qposadr": 4
+  },
+  {
+   "name": "robot0_joint6",
+   "type": 3,
+   "qposadr": 5
+  },
+  {
+   "name": "robot0_joint7",
+   "type": 3,
+   "qposadr": 6
+  },
+  {
+   "name": "gripper0_finger_joint1",
+   "type": 2,
+   "qposadr": 7
+  },
+  {
+   "name": "gripper0_finger_joint2",
+   "type": 2,
+   "qposadr": 8
+  },
+  {
+   "name": "akita_black_bowl_1_joint0",
+   "type": 0,
+   "qposadr": 9
+  },
+  {
+   "name": "cream_cheese_1_joint0",
+   "type": 0,
+   "qposadr": 16
+  },
+  {
+   "name": "wine_bottle_1_joint0",
+   "type": 0,
+   "qposadr": 23
+  },
+  {
+   "name": "plate_1_joint0",
+   "type": 0,
+   "qposadr": 30
+  },
+  {
+   "name": "wooden_cabinet_1_top_level",
+   "type": 2,
+   "qposadr": 37
+  },
+  {
+   "name": "wooden_cabinet_1_middle_level",
+   "type": 2,
+   "qposadr": 38
+  },
+  {
+   "name": "wooden_cabinet_1_bottom_level",
+   "type": 2,
+   "qposadr": 39
+  },
+  {
+   "name": "flat_stove_1_button",
+   "type": 3,
+   "qposadr": 40
+  }
+ ],
+ "nq": 41,
+ "nv": 37,
+ "robot_base": {
+  "pos": [
+   -0.66,
+   0.0,
+   0.912
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "agentview": {
+  "pos": [
+   0.6586131746834771,
+   0.0,
+   1.6103500240372424
+  ],
+  "quat": [
+   0.6380177212293417,
+   0.30484971880648903,
+   0.30484983801576876,
+   0.6380177212293417
+  ],
+  "fovy": 45.0
+ }
+}

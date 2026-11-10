@@ -1,0 +1,403 @@
+{
+ "suite": "libero_10",
+ "index": 1,
+ "name": "LIVING_ROOM_SCENE2_put_both_the_cream_cheese_box_and_the_butter_in_the_basket",
+ "language": "put both the cream cheese box and the butter in the basket",
+ "problem": "libero_living_room_tabletop_manipulation",
+ "goal": [
+  [
+   "in",
+   "cream_cheese_1",
+   "basket_1_contain_region"
+  ],
+  [
+   "in",
+   "butter_1",
+   "basket_1_contain_region"
+  ]
+ ],
+ "obj_of_interest": [
+  "cream_cheese_1",
+  "butter_1",
+  "basket_1"
+ ],
+ "objects": {
+  "alphabet_soup_1": {
+   "kind": "object",
+   "category": "alphabet_soup",
+   "root_body": "alphabet_soup_1_main",
+   "contact_geoms": [
+    "alphabet_soup_1_g1",
+    "alphabet_soup_1_g2",
+    "alphabet_soup_1_g3",
+    "alphabet_soup_1_g4",
+    "alphabet_soup_1_g5",
+    "alphabet_soup_1_g6",
+    "alphabet_soup_1_g7",
+    "alphabet_soup_1_g8",
+    "alphabet_soup_1_g9",
+    "alphabet_soup_1_g10",
+    "alphabet_soup_1_g11",
+    "alphabet_soup_1_g12",
+    "alphabet_soup_1_g13",
+    "alphabet_soup_1_g14",
+    "alphabet_soup_1_g15",
+    "alphabet_soup_1_g16",
+    "alphabet_soup_1_g17",
+    "alphabet_soup_1_g18",
+    "alphabet_soup_1_g19",
+    "alphabet_soup_1_g20",
+    "alphabet_soup_1_g21"
+   ],
+   "joints": [
+    "alphabet_soup_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "cream_cheese_1": {
+   "kind": "object",
+   "category": "cream_cheese",
+   "root_body": "cream_cheese_1_main",
+   "contact_geoms": [
+    "cream_cheese_1_g1"
+   ],
+   "joints": [
+    "cream_cheese_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "tomato_sauce_1": {
+   "kind": "object",
+   "category": "tomato_sauce",
+   "root_body": "tomato_sauce_1_main",
+   "contact_geoms": [
+    "tomato_sauce_1_g1",
+    "tomato_sauce_1_g2",
+    "tomato_sauce_1_g3",
+    "tomato_sauce_1_g4",
+    "tomato_sauce_1_g5",
+    "tomato_sauce_1_g6",
+    "tomato_sauce_1_g7",
+    "tomato_sauce_1_g8",
+    "tomato_sauce_1_g9",
+    "tomato_sauce_1_g10",
+    "tomato_sauce_1_g11",
+    "tomato_sauce_1_g12",
+    "tomato_sauce_1_g13",
+    "tomato_sauce_1_g14",
+    "tomato_sauce_1_g15",
+    "tomato_sauce_1_g16",
+    "tomato_sauce_1_g17",
+    "tomato_sauce_1_g18",
+    "tomato_sauce_1_g19",
+    "tomato_sauce_1_g20",
+    "tomato_sauce_1_g21",
+    "tomato_sauce_1_g22",
+    "tomato_sauce_1_g23",
+    "tomato_sauce_1_g24"
+   ],
+   "joints": [
+    "tomato_sauce_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "ketchup_1": {
+   "kind": "object",
+   "category": "ketchup",
+   "root_body": "ketchup_1_main",
+   "contact_geoms": [
+    "ketchup_1_g1",
+    "ketchup_1_g2",
+    "ketchup_1_g3",
+    "ketchup_1_g4",
+    "ketchup_1_g5",
+    "ketchup_1_g6",
+    "ketchup_1_g7",
+    "ketchup_1_g8",
+    "ketchup_1_g9",
+    "ketchup_1_g10",
+    "ketchup_1_g11",
+    "ketchup_1_g12"
+   ],
+   "joints": [
+    "ketchup_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "orange_juice_1": {
+   "kind": "object",
+   "category": "orange_juice",
+   "root_body": "orange_juice_1_main",
+   "contact_geoms": [
+    "orange_juice_1_g1",
+    "orange_juice_1_g2",
+    "orange_juice_1_g3",
+    "orange_juice_1_g4"
+   ],
+   "joints": [
+    "orange_juice_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "milk_1": {
+   "kind": "object",
+   "category": "milk",
+   "root_body": "milk_1_main",
+   "contact_geoms": [
+    "milk_1_g1",
+    "milk_1_g2",
+    "milk_1_g3",
+    "milk_1_g4"
+   ],
+   "joints": [
+    "milk_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "butter_1": {
+   "kind": "object",
+   "category": "butter",
+   "root_body": "butter_1_main",
+   "contact_geoms": [
+    "butter_1_g1"
+   ],
+   "joints": [
+    "butter_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "basket_1": {
+   "kind": "object",
+   "category": "basket",
+   "root_body": "basket_1_main",
+   "contact_geoms": [
+    "basket_1_g1",
+    "basket_1_g2",
+    "basket_1_g3",
+    "basket_1_g4",
+    "basket_1_g5"
+   ],
+   "joints": [
+    "basket_1_joint0"
+   ],
+   "articulation": {}
+  }
+ },
+ "sites": {
+  "living_room_table_basket_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.01,
+    0.010000000000000009,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "living_room_table_milk_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.025000000000000005,
+    0.024999999999999994,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "living_room_table_cream_cheese_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.024999999999999994,
+    0.024999999999999994,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "living_room_table_orange_juice_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.025,
+    0.02500000000000001,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "living_room_table_tomato_sauce_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.024999999999999994,
+    0.025000000000000005,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "living_room_table_alphabet_soup_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.024999999999999994,
+    0.024999999999999994,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "living_room_table_butter_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.025000000000000005,
+    0.025000000000000005,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "living_room_table_ketchup_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.02500000000000001,
+    0.024999999999999994,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "basket_1_contain_region": {
+   "parent": "basket_1",
+   "joints": [],
+   "size": [
+    0.06108,
+    0.06108,
+    0.06949
+   ],
+   "under": true,
+   "class": "SiteObject"
+  }
+ },
+ "joints": [
+  {
+   "name": "robot0_joint1",
+   "type": 3,
+   "qposadr": 0
+  },
+  {
+   "name": "robot0_joint2",
+   "type": 3,
+   "qposadr": 1
+  },
+  {
+   "name": "robot0_joint3",
+   "type": 3,
+   "qposadr": 2
+  },
+  {
+   "name": "robot0_joint4",
+   "type": 3,
+   "qposadr": 3
+  },
+  {
+   "name": "robot0_joint5",
+   "type": 3,
+   "qposadr": 4
+  },
+  {
+   "name": "robot0_joint6",
+   "type": 3,
+   "qposadr": 5
+  },
+  {
+   "name": "robot0_joint7",
+   "type": 3,
+   "qposadr": 6
+  },
+  {
+   "name": "gripper0_finger_joint1",
+   "type": 2,
+   "qposadr": 7
+  },
+  {
+   "name": "gripper0_finger_joint2",
+   "type": 2,
+   "qposadr": 8
+  },
+  {
+   "name": "alphabet_soup_1_joint0",
+   "type": 0,
+   "qposadr": 9
+  },
+  {
+   "name": "cream_cheese_1_joint0",
+   "type": 0,
+   "qposadr": 16
+  },
+  {
+   "name": "tomato_sauce_1_joint0",
+   "type": 0,
+   "qposadr": 23
+  },
+  {
+   "name": "ketchup_1_joint0",
+   "type": 0,
+   "qposadr": 30
+  },
+  {
+   "name": "orange_juice_1_joint0",
+   "type": 0,
+   "qposadr": 37
+  },
+  {
+   "name": "milk_1_joint0",
+   "type": 0,
+   "qposadr": 44
+  },
+  {
+   "name": "butter_1_joint0",
+   "type": 0,
+   "qposadr": 51
+  },
+  {
+   "name": "basket_1_joint0",
+   "type": 0,
+   "qposadr": 58
+  }
+ ],
+ "nq": 65,
+ "nv": 57,
+ "robot_base": {
+  "pos": [
+   -0.51,
+   0.0,
+   0.42
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "agentview": {
+  "pos": [
+   0.6065773716836134,
+   0.0,
+   0.96
+  ],
+  "quat": [
+   0.6182166363517068,
+   0.3432307224633757,
+   0.3432314079167274,
+   0.6182176496305745
+  ],
+  "fovy": 45.0
+ }
+}

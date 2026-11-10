@@ -1,0 +1,300 @@
+{
+ "suite": "libero_10",
+ "index": 9,
+ "name": "KITCHEN_SCENE6_put_the_yellow_and_white_mug_in_the_microwave_and_close_it",
+ "language": "put the yellow and white mug in the microwave and close it",
+ "problem": "libero_kitchen_tabletop_manipulation",
+ "goal": [
+  [
+   "in",
+   "white_yellow_mug_1",
+   "microwave_1_heating_region"
+  ],
+  [
+   "close",
+   "microwave_1"
+  ]
+ ],
+ "obj_of_interest": [
+  "white_yellow_mug_1",
+  "microwave_1"
+ ],
+ "objects": {
+  "porcelain_mug_1": {
+   "kind": "object",
+   "category": "porcelain_mug",
+   "root_body": "porcelain_mug_1_main",
+   "contact_geoms": [
+    "porcelain_mug_1_g1",
+    "porcelain_mug_1_g2",
+    "porcelain_mug_1_g3",
+    "porcelain_mug_1_g4",
+    "porcelain_mug_1_g5",
+    "porcelain_mug_1_g6",
+    "porcelain_mug_1_g7",
+    "porcelain_mug_1_g8",
+    "porcelain_mug_1_g9",
+    "porcelain_mug_1_g10",
+    "porcelain_mug_1_g11",
+    "porcelain_mug_1_g12",
+    "porcelain_mug_1_g13",
+    "porcelain_mug_1_g14",
+    "porcelain_mug_1_g15",
+    "porcelain_mug_1_g16",
+    "porcelain_mug_1_g17",
+    "porcelain_mug_1_g18",
+    "porcelain_mug_1_g19",
+    "porcelain_mug_1_g20",
+    "porcelain_mug_1_g21",
+    "porcelain_mug_1_g22"
+   ],
+   "joints": [
+    "porcelain_mug_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "white_yellow_mug_1": {
+   "kind": "object",
+   "category": "white_yellow_mug",
+   "root_body": "white_yellow_mug_1_main",
+   "contact_geoms": [
+    "white_yellow_mug_1_g1",
+    "white_yellow_mug_1_g2",
+    "white_yellow_mug_1_g3",
+    "white_yellow_mug_1_g4",
+    "white_yellow_mug_1_g5",
+    "white_yellow_mug_1_g6",
+    "white_yellow_mug_1_g7",
+    "white_yellow_mug_1_g8",
+    "white_yellow_mug_1_g9",
+    "white_yellow_mug_1_g10",
+    "white_yellow_mug_1_g11",
+    "white_yellow_mug_1_g12",
+    "white_yellow_mug_1_g13",
+    "white_yellow_mug_1_g14",
+    "white_yellow_mug_1_g15",
+    "white_yellow_mug_1_g16",
+    "white_yellow_mug_1_g17",
+    "white_yellow_mug_1_g18",
+    "white_yellow_mug_1_g19",
+    "white_yellow_mug_1_g20",
+    "white_yellow_mug_1_g21",
+    "white_yellow_mug_1_g22",
+    "white_yellow_mug_1_g23",
+    "white_yellow_mug_1_g24",
+    "white_yellow_mug_1_g25",
+    "white_yellow_mug_1_g26",
+    "white_yellow_mug_1_g27",
+    "white_yellow_mug_1_g28",
+    "white_yellow_mug_1_g29",
+    "white_yellow_mug_1_g30",
+    "white_yellow_mug_1_g31",
+    "white_yellow_mug_1_g32",
+    "white_yellow_mug_1_g33",
+    "white_yellow_mug_1_g34",
+    "white_yellow_mug_1_g35",
+    "white_yellow_mug_1_g36",
+    "white_yellow_mug_1_g37",
+    "white_yellow_mug_1_g38",
+    "white_yellow_mug_1_g39"
+   ],
+   "joints": [
+    "white_yellow_mug_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "microwave_1": {
+   "kind": "fixture",
+   "category": "microwave",
+   "root_body": "microwave_1_main",
+   "contact_geoms": [
+    "microwave_1_g3",
+    "microwave_1_g4",
+    "microwave_1_g5",
+    "microwave_1_g6",
+    "microwave_1_g7",
+    "microwave_1_g8",
+    "microwave_1_g14",
+    "microwave_1_g15",
+    "microwave_1_g16",
+    "microwave_1_g17"
+   ],
+   "joints": [
+    "microwave_1_microjoint"
+   ],
+   "articulation": {
+    "is_open": [
+     [
+      -99.0,
+      -1.3
+     ]
+    ],
+    "is_close": [
+     [
+      -0.0045,
+      99.0
+     ]
+    ]
+   }
+  }
+ },
+ "sites": {
+  "kitchen_table_microwave_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.01,
+    0.010000000000000009,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "kitchen_table_white_yellow_mug_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.025,
+    0.025,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "kitchen_table_porcelain_mug_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.024999999999999994,
+    0.02500000000000001,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "kitchen_table_porcelain_mug_front_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.05,
+    0.04999999999999999,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "microwave_1_top_side": {
+   "parent": "microwave_1",
+   "joints": [],
+   "size": [
+    0.12,
+    0.0835,
+    0.005
+   ],
+   "under": true,
+   "class": "SiteObject"
+  },
+  "microwave_1_heating_region": {
+   "parent": "microwave_1",
+   "joints": [],
+   "size": [
+    0.12,
+    0.0835,
+    0.08
+   ],
+   "under": true,
+   "class": "SiteObject"
+  }
+ },
+ "joints": [
+  {
+   "name": "robot0_joint1",
+   "type": 3,
+   "qposadr": 0
+  },
+  {
+   "name": "robot0_joint2",
+   "type": 3,
+   "qposadr": 1
+  },
+  {
+   "name": "robot0_joint3",
+   "type": 3,
+   "qposadr": 2
+  },
+  {
+   "name": "robot0_joint4",
+   "type": 3,
+   "qposadr": 3
+  },
+  {
+   "name": "robot0_joint5",
+   "type": 3,
+   "qposadr": 4
+  },
+  {
+   "name": "robot0_joint6",
+   "type": 3,
+   "qposadr": 5
+  },
+  {
+   "name": "robot0_joint7",
+   "type": 3,
+   "qposadr": 6
+  },
+  {
+   "name": "gripper0_finger_joint1",
+   "type": 2,
+   "qposadr": 7
+  },
+  {
+   "name": "gripper0_finger_joint2",
+   "type": 2,
+   "qposadr": 8
+  },
+  {
+   "name": "porcelain_mug_1_joint0",
+   "type": 0,
+   "qposadr": 9
+  },
+  {
+   "name": "white_yellow_mug_1_joint0",
+   "type": 0,
+   "qposadr": 16
+  },
+  {
+   "name": "microwave_1_microjoint",
+   "type": 3,
+   "qposadr": 23
+  }
+ ],
+ "nq": 24,
+ "nv": 22,
+ "robot_base": {
+  "pos": [
+   -0.66,
+   0.0,
+   0.912
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "agentview": {
+  "pos": [
+   0.6586131746834771,
+   0.0,
+   1.6103500240372424
+  ],
+  "quat": [
+   0.6380177212293417,
+   0.30484971880648903,
+   0.30484983801576876,
+   0.6380177212293417
+  ],
+  "fovy": 45.0
+ }
+}

@@ -1,0 +1,17 @@
+runs/
+__pycache__/
+*.egg-info/
+*.png
+!docs/*.png
+.venv/
+MUJOCO_LOG.TXT
+
+!playground/assets/**/*.png
+playground/libero_assets/files/
+build/
+
+.vercel
+
+# The website's pages and routes named runs/ (the line above is for run records)
+!/web/app/runs/
+!/web/app/api/runs/

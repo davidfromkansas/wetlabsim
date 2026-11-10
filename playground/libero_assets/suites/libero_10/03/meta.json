@@ -1,0 +1,395 @@
+{
+ "suite": "libero_10",
+ "index": 3,
+ "name": "KITCHEN_SCENE4_put_the_black_bowl_in_the_bottom_drawer_of_the_cabinet_and_close_it",
+ "language": "put the black bowl in the bottom drawer of the cabinet and close it",
+ "problem": "libero_kitchen_tabletop_manipulation",
+ "goal": [
+  [
+   "close",
+   "white_cabinet_1_bottom_region"
+  ],
+  [
+   "in",
+   "akita_black_bowl_1",
+   "white_cabinet_1_bottom_region"
+  ]
+ ],
+ "obj_of_interest": [
+  "akita_black_bowl_1",
+  "white_cabinet_1"
+ ],
+ "objects": {
+  "akita_black_bowl_1": {
+   "kind": "object",
+   "category": "akita_black_bowl",
+   "root_body": "akita_black_bowl_1_main",
+   "contact_geoms": [
+    "akita_black_bowl_1_g1",
+    "akita_black_bowl_1_g2",
+    "akita_black_bowl_1_g3",
+    "akita_black_bowl_1_g4",
+    "akita_black_bowl_1_g5",
+    "akita_black_bowl_1_g6",
+    "akita_black_bowl_1_g7",
+    "akita_black_bowl_1_g8",
+    "akita_black_bowl_1_g9",
+    "akita_black_bowl_1_g10",
+    "akita_black_bowl_1_g11",
+    "akita_black_bowl_1_g12",
+    "akita_black_bowl_1_g13",
+    "akita_black_bowl_1_g14",
+    "akita_black_bowl_1_g15",
+    "akita_black_bowl_1_g16",
+    "akita_black_bowl_1_g17",
+    "akita_black_bowl_1_g18",
+    "akita_black_bowl_1_g19",
+    "akita_black_bowl_1_g20",
+    "akita_black_bowl_1_g21",
+    "akita_black_bowl_1_g22",
+    "akita_black_bowl_1_g23",
+    "akita_black_bowl_1_g24",
+    "akita_black_bowl_1_g25",
+    "akita_black_bowl_1_g26",
+    "akita_black_bowl_1_g27",
+    "akita_black_bowl_1_g28",
+    "akita_black_bowl_1_g29",
+    "akita_black_bowl_1_g30",
+    "akita_black_bowl_1_g31",
+    "akita_black_bowl_1_g32",
+    "akita_black_bowl_1_g33",
+    "akita_black_bowl_1_g34",
+    "akita_black_bowl_1_g35",
+    "akita_black_bowl_1_g36",
+    "akita_black_bowl_1_g37",
+    "akita_black_bowl_1_g38",
+    "akita_black_bowl_1_g39",
+    "akita_black_bowl_1_g40"
+   ],
+   "joints": [
+    "akita_black_bowl_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "wine_bottle_1": {
+   "kind": "object",
+   "category": "wine_bottle",
+   "root_body": "wine_bottle_1_main",
+   "contact_geoms": [
+    "wine_bottle_1_g3",
+    "wine_bottle_1_g4",
+    "wine_bottle_1_g5",
+    "wine_bottle_1_g6",
+    "wine_bottle_1_g7",
+    "wine_bottle_1_g8",
+    "wine_bottle_1_g9",
+    "wine_bottle_1_g10",
+    "wine_bottle_1_g11",
+    "wine_bottle_1_g12",
+    "wine_bottle_1_g13",
+    "wine_bottle_1_g14",
+    "wine_bottle_1_g15",
+    "wine_bottle_1_g16",
+    "wine_bottle_1_g17",
+    "wine_bottle_1_g18",
+    "wine_bottle_1_g19",
+    "wine_bottle_1_g20",
+    "wine_bottle_1_g21",
+    "wine_bottle_1_g22",
+    "wine_bottle_1_g23"
+   ],
+   "joints": [
+    "wine_bottle_1_joint0"
+   ],
+   "articulation": {}
+  },
+  "white_cabinet_1": {
+   "kind": "fixture",
+   "category": "white_cabinet",
+   "root_body": "white_cabinet_1_main",
+   "contact_geoms": [
+    "white_cabinet_1_g1",
+    "white_cabinet_1_g2",
+    "white_cabinet_1_g3",
+    "white_cabinet_1_g4",
+    "white_cabinet_1_g5",
+    "white_cabinet_1_g6",
+    "white_cabinet_1_g7",
+    "white_cabinet_1_g8",
+    "white_cabinet_1_g9",
+    "white_cabinet_1_g11",
+    "white_cabinet_1_g12",
+    "white_cabinet_1_g13",
+    "white_cabinet_1_g14",
+    "white_cabinet_1_g15",
+    "white_cabinet_1_g16",
+    "white_cabinet_1_g18",
+    "white_cabinet_1_g19",
+    "white_cabinet_1_g20",
+    "white_cabinet_1_g22",
+    "white_cabinet_1_g23",
+    "white_cabinet_1_g24",
+    "white_cabinet_1_g25",
+    "white_cabinet_1_g26",
+    "white_cabinet_1_g27",
+    "white_cabinet_1_g29",
+    "white_cabinet_1_g30",
+    "white_cabinet_1_g31",
+    "white_cabinet_1_g33",
+    "white_cabinet_1_g34",
+    "white_cabinet_1_g35",
+    "white_cabinet_1_g36",
+    "white_cabinet_1_g37",
+    "white_cabinet_1_g38",
+    "white_cabinet_1_g40",
+    "white_cabinet_1_g41",
+    "white_cabinet_1_g42"
+   ],
+   "joints": [
+    "white_cabinet_1_top_level",
+    "white_cabinet_1_middle_level",
+    "white_cabinet_1_bottom_level"
+   ],
+   "articulation": {
+    "is_open": [
+     [
+      -99.0,
+      -0.14
+     ]
+    ],
+    "is_close": [
+     [
+      0.0005,
+      99.0
+     ]
+    ]
+   }
+  },
+  "wine_rack_1": {
+   "kind": "fixture",
+   "category": "wine_rack",
+   "root_body": "wine_rack_1_main",
+   "contact_geoms": [
+    "wine_rack_1_g1",
+    "wine_rack_1_g2",
+    "wine_rack_1_g4",
+    "wine_rack_1_g5",
+    "wine_rack_1_g7",
+    "wine_rack_1_g8",
+    "wine_rack_1_g9",
+    "wine_rack_1_g10",
+    "wine_rack_1_g11"
+   ],
+   "joints": [],
+   "articulation": {}
+  }
+ },
+ "sites": {
+  "kitchen_table_white_cabinet_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.01,
+    0.010000000000000009,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "kitchen_table_wine_rack_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.009999999999999995,
+    0.010000000000000009,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "kitchen_table_akita_black_bowl_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.025,
+    0.025000000000000005,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "kitchen_table_wine_bottle_init_region": {
+   "parent": null,
+   "joints": [],
+   "size": [
+    0.024999999999999994,
+    0.025000000000000005,
+    0.007
+   ],
+   "under": true,
+   "class": "TargetZone"
+  },
+  "white_cabinet_1_top_side": {
+   "parent": "white_cabinet_1",
+   "joints": [],
+   "size": [
+    0.12534,
+    0.09438,
+    0.00147
+   ],
+   "under": true,
+   "class": "SiteObject"
+  },
+  "white_cabinet_1_top_region": {
+   "parent": "white_cabinet_1",
+   "joints": [
+    "white_cabinet_1_top_level"
+   ],
+   "size": [
+    0.02993,
+    0.07561,
+    0.10224
+   ],
+   "under": true,
+   "class": "SiteObject"
+  },
+  "white_cabinet_1_middle_region": {
+   "parent": "white_cabinet_1",
+   "joints": [
+    "white_cabinet_1_middle_level"
+   ],
+   "size": [
+    0.02993,
+    0.07561,
+    0.10224
+   ],
+   "under": true,
+   "class": "SiteObject"
+  },
+  "white_cabinet_1_bottom_region": {
+   "parent": "white_cabinet_1",
+   "joints": [
+    "white_cabinet_1_bottom_level"
+   ],
+   "size": [
+    0.02993,
+    0.07561,
+    0.10224
+   ],
+   "under": true,
+   "class": "SiteObject"
+  },
+  "wine_rack_1_top_region": {
+   "parent": "wine_rack_1",
+   "joints": [],
+   "size": [
+    0.10087,
+    0.022,
+    0.00251
+   ],
+   "under": true,
+   "class": "SiteObject"
+  }
+ },
+ "joints": [
+  {
+   "name": "robot0_joint1",
+   "type": 3,
+   "qposadr": 0
+  },
+  {
+   "name": "robot0_joint2",
+   "type": 3,
+   "qposadr": 1
+  },
+  {
+   "name": "robot0_joint3",
+   "type": 3,
+   "qposadr": 2
+  },
+  {
+   "name": "robot0_joint4",
+   "type": 3,
+   "qposadr": 3
+  },
+  {
+   "name": "robot0_joint5",
+   "type": 3,
+   "qposadr": 4
+  },
+  {
+   "name": "robot0_joint6",
+   "type": 3,
+   "qposadr": 5
+  },
+  {
+   "name": "robot0_joint7",
+   "type": 3,
+   "qposadr": 6
+  },
+  {
+   "name": "gripper0_finger_joint1",
+   "type": 2,
+   "qposadr": 7
+  },
+  {
+   "name": "gripper0_finger_joint2",
+   "type": 2,
+   "qposadr": 8
+  },
+  {
+   "name": "akita_black_bowl_1_joint0",
+   "type": 0,
+   "qposadr": 9
+  },
+  {
+   "name": "wine_bottle_1_joint0",
+   "type": 0,
+   "qposadr": 16
+  },
+  {
+   "name": "white_cabinet_1_top_level",
+   "type": 2,
+   "qposadr": 23
+  },
+  {
+   "name": "white_cabinet_1_middle_level",
+   "type": 2,
+   "qposadr": 24
+  },
+  {
+   "name": "white_cabinet_1_bottom_level",
+   "type": 2,
+   "qposadr": 25
+  }
+ ],
+ "nq": 26,
+ "nv": 24,
+ "robot_base": {
+  "pos": [
+   -0.66,
+   0.0,
+   0.912
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "agentview": {
+  "pos": [
+   0.6586131746834771,
+   0.0,
+   1.6103500240372424
+  ],
+  "quat": [
+   0.6380177212293417,
+   0.30484971880648903,
+   0.30484983801576876,
+   0.6380177212293417
+  ],
+  "fovy": 45.0
+ }
+}

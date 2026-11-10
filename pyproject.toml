@@ -1,0 +1,20 @@
+[project]
+name = "wetlabsim"
+version = "0.1.0"
+description = "Real-time MuJoCo wet lab robot cell for evaluating AI agents that control robot arms"
+requires-python = ">=3.11"
+dependencies = ["mujoco>=4.0,<5", "numpy", "pillow", "mcp"]
+
+[project.scripts]
+wetlab-server = "wetlabsim.server:main"
+wetlab-run-agent = "wetlabsim.run_agent:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["wetlabsim"]
+
+[tool.setuptools.package-data]
+wetlabsim = ["viewer.html", "assets/**/*"]

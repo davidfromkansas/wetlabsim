@@ -1,0 +1,1729 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MuJoCo Playground</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/pg/static/generative-loaders.css">
+<style>
+:root{--bg:#F6F7F9;--panel:#FFFFFF;--line:#E5E7EB;--line2:#EEF0F3;--ink:#111827;--ink2:#1F2937;--muted:#4B5563;--soft:#F3F4F6;--blue:#2563EB;--blue2:#1D4ED8;--blueBg:#EFF4FF;--green:#16A34A;--red:#DC2626;--amber:#92400E;--amberBg:#FEF3C7}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink2);font:14px/1.5 Inter,system-ui,sans-serif}
+button{font:inherit}
+.app{height:100vh;display:flex;flex-direction:column}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;padding:10px 20px;background:var(--panel);border-bottom:1px solid var(--line)}
+.hgroup{display:flex;align-items:center;gap:10px;flex:1 1 220px;min-width:0}
+.brand{font-size:16px;font-weight:700;color:var(--ink)}
+.seg{display:flex;padding:3px;border-radius:10px;background:var(--soft);gap:2px}
+.seg button{white-space:nowrap;height:30px;padding:0 12px;border-radius:8px;border:0;background:transparent;color:#374151;font-size:13px;font-weight:500;cursor:pointer}
+.seg button[aria-pressed=true]{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(17,24,39,.12)}
+.chip{white-space:nowrap;font-size:12px;color:var(--muted);padding:2px 8px;border-radius:999px;background:var(--soft)}
+.play{height:40px;padding:0 18px 0 14px;display:flex;align-items:center;gap:8px;border-radius:999px;border:0;background:var(--blue);color:#fff;font-weight:600;cursor:pointer}
+.play.on{background:var(--red)}
+.round{height:40px;width:40px;border-radius:999px;border:1px solid #D1D5DB;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.clock{font:500 15px 'JetBrains Mono',monospace;color:var(--ink)}
+.small{font-size:12px;color:var(--muted)}
+.lockmsg{font-size:12px;font-weight:600;color:var(--amber);background:var(--amberBg);padding:4px 10px;border-radius:6px}
+main{flex:1;display:flex;min-height:0}
+aside{background:var(--panel);display:flex;flex-direction:column;min-height:0}
+#left{width:360px;flex:none;border-right:1px solid var(--line);overflow:hidden}
+#right{width:320px;flex:none;border-left:1px solid var(--line)}
+h2.cap{margin:0 0 8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.sec{padding:14px 16px;border-bottom:1px solid var(--line2)}
+.robotbtn{width:100%;text-align:left;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+.robotbtn[aria-pressed=true]{border:2px solid var(--blue);background:var(--blueBg)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#9CA3AF;margin-right:6px}
+.cams{display:grid;grid-template-columns:1fr;gap:8px}
+.cams figure{margin:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--soft)}
+.cams img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#E5E7EB}
+.cams figcaption{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:var(--blueBg);border-top:2px solid var(--blue);font-size:12px}
+.cams figcaption b{font-weight:600;color:var(--ink)}
+.cams figcaption span{font-size:10px;font-weight:700;color:var(--blue2)}
+textarea{width:100%;resize:vertical;padding:10px 12px;border-radius:10px;border:1px solid #D1D5DB;font:14px/1.5 Inter,sans-serif;color:var(--ink)}
+select{height:36px;padding:0 10px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;font:14px Inter,sans-serif;color:var(--ink)}
+.note{background:var(--bg);border-radius:8px;padding:10px 12px;font-size:12.5px;color:#374151}
+.primary{height:42px;border-radius:10px;border:0;background:var(--ink);color:#fff;font-weight:600;cursor:pointer;width:100%}
+.primary:disabled{opacity:.5;cursor:not-allowed}
+.ghostbtn{height:36px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;font-weight:500;font-size:13px;color:var(--ink);cursor:pointer;flex:1}
+.ghostbtn:disabled{background:var(--soft);color:#6B7280;cursor:not-allowed}
+#robotPanel{overflow-y:auto}
+/* stations */
+.sthead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.sthead h2.cap{margin:0}
+.addst{height:28px;width:28px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;cursor:pointer;font-size:17px;line-height:1;color:var(--ink);display:flex;align-items:center;justify-content:center;padding:0}
+.addst:disabled{opacity:.4;cursor:not-allowed}
+#stationList{display:flex;flex-direction:column;gap:6px;max-height:210px;overflow-y:auto}
+.strow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+.strow[aria-pressed=true]{border:2px solid var(--blue);background:var(--blueBg);padding:6px 9px}
+.strow .nm{flex:1;min-width:0}.strow .nm b{display:block;font-weight:600;font-size:13.5px}
+.strow .dot{margin:0;flex:none;width:8px;height:8px}
+.stacts{display:flex;gap:6px;margin-top:10px}
+.stacts button{flex:1;height:30px;font-size:12.5px}
+/* the task card at the bottom of the chat */
+body.fixed .taskcard{display:none!important}
+.taskcard{margin:0 12px 12px;border:1px solid #D1D5DB;border-radius:12px;background:#fff;padding:10px 12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 1px 3px rgba(17,24,39,.06);position:relative}
+.taskcard textarea{border:0;padding:2px 0;resize:none;outline:none;min-height:60px}
+.tchead{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.tchead b{color:var(--ink);font-weight:600;flex:1}
+.infobtn{width:22px;height:22px;border-radius:50%;border:1px solid #D1D5DB;background:#fff;color:var(--muted);font:600 12px Inter,sans-serif;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
+.infobtn[aria-expanded=true]{border-color:var(--blue);color:var(--blue2);background:var(--blueBg)}
+.infopop{position:absolute;left:8px;right:8px;bottom:calc(100% + 6px);background:var(--ink);color:#F9FAFB;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;box-shadow:0 6px 18px rgba(17,24,39,.25);z-index:3}
+.infopop b{color:#fff}
+.tcrow{display:flex;align-items:center;gap:8px}
+.tcrow .mdl{flex:1;min-width:0;display:flex;align-items:center;gap:6px;height:36px;padding:0 0 0 8px;border:1px solid #D1D5DB;border-radius:8px}
+.tcrow .mdl img{width:16px;height:16px;flex:none}
+.tcrow .mdl select{border:0;height:34px;flex:1;min-width:0;padding:0 4px;background:transparent}
+.tcrow .primary{width:auto;height:36px;padding:0 16px;border-radius:8px;display:flex;align-items:center;gap:6px}
+/* add-a-station picker */
+#addModal{position:fixed;inset:0;background:rgba(17,24,39,.35);z-index:8;align-items:center;justify-content:center;padding:16px}
+#addModal .am{background:#fff;border-radius:14px;padding:22px 24px;max-width:640px;width:100%;display:flex;flex-direction:column;gap:14px;box-shadow:0 10px 30px rgba(17,24,39,.2)}
+.rcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.rcard{border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;background:#fff}
+.rcard img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--bg)}
+.rcard .rx{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px}
+.rcard .rx b{font-size:15px;color:var(--ink)}
+.rcard dl{font-size:12.5px;gap:3px 10px}
+.rcard .primary{height:36px;border-radius:8px;margin-top:4px}
+#chatpane{flex:1;display:none;flex-direction:column;min-height:0;position:relative}
+body.chatting #chatpane,body.fixed #chatpane{display:flex}
+body.chatting #right .freeonly{display:none!important}
+/* free play: the right panel's two tabs, Chat and Objects */
+.sidetabs{display:flex;gap:2px;margin:12px 16px 0;padding:3px;border-radius:10px;background:var(--soft)}
+.sidetabs button{flex:1;height:30px;border-radius:8px;border:0;background:transparent;color:#374151;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.sidetabs button[aria-selected=true]{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(17,24,39,.12)}
+.sidetabs .live{width:7px;height:7px;border-radius:50%;background:var(--red);padding:0;display:none}
+body.running .sidetabs .live{display:inline-block}
+body.fixed #tabObjects{display:none}
+body:not(.fixed) .fixedonly{display:none}
+body.watch header .seg{opacity:.6;pointer-events:none}
+/* watching someone else's hosted lab: nothing to edit or start */
+.watchtag{display:none;font-size:12px;font-weight:600;color:var(--amber);background:var(--amberBg);padding:4px 10px;border-radius:6px}
+body.watch .watchtag{display:inline}
+body.watch #tabObjects,body.watch #addStationBtn,body.watch .stacts,body.watch #playBtn,body.watch #resetBtn,
+body.watch .taskcard,body.watch #stopBtn,body.watch .bl,body.watch #lockmsg,body.watch .campad,body.watch .camreset{display:none!important}
+/* the Files tab: the AI's work folder, in the robot cell viewer's "Sandbox Workspace" style */
+#filespane{flex:1;display:none;flex-direction:column;min-height:0;padding:12px 16px 14px;gap:8px}
+body.filing #filespane{display:flex}
+body.filing #chatpane,body.filing #right .freeonly{display:none!important}
+#filespane h3{margin:0;font-size:14px;color:var(--ink)}
+#files{font-size:13px;overflow:auto;flex:1;min-height:0}
+#files .frow{display:grid;grid-template-columns:minmax(0,1fr) 70px;gap:8px;align-items:center;min-height:26px;padding:0 6px;border-radius:6px;color:var(--ink2);text-decoration:none}
+#files .frow:nth-child(even){background:#F7F8FA}
+#files .frow .nm{display:flex;align-items:center;gap:6px;min-width:0}#files .frow .nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#files .frow .sz{text-align:right;color:var(--muted);font-size:12px}
+#files button.frow{width:100%;border:0;background:none;text-align:left;cursor:pointer;font:inherit}
+#files .frow.new .nm span:last-child{font-weight:600;color:var(--ink)}
+#files .caret{width:8px;flex:none;color:var(--muted);font-size:9px}
+#files .empty{color:var(--muted);font-size:13px;padding:6px 0}
+.chathead{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.chathead img{width:22px;height:22px}
+.chathead b{font-size:14px;font-weight:600}
+/* chat items: the same look as the robot cell's viewer (wetlabsim/viewer.html) */
+#feed{list-style:none;margin:0;padding:16px 16px 16px 14px;overflow-y:auto;flex:1;display:flex;flex-direction:column}
+#feed .prompt{align-self:flex-end;max-width:88%;margin-bottom:8px}
+#feed .prompt .lbl{font-size:11px;color:var(--muted);text-align:right;margin-bottom:4px}
+#feed .prompt .bub{background:#EEF2F7;color:var(--ink);border-radius:14px 14px 4px 14px;padding:10px 12px;white-space:pre-wrap}
+#feed .it{padding-left:24px;min-width:0;margin-top:8px}
+#feed .it.turn{margin-top:24px}
+#feed .who{display:flex;align-items:center;gap:8px;margin:0 0 4px -24px;font-size:12px}
+#feed .who img{width:16px;height:16px}#feed .who strong{color:var(--ink);font-weight:600}#feed .who span{color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums}
+#feed .it p{margin:0;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+#feed .it p.think{color:var(--muted);font-style:italic;font-size:13px}
+#feed .lite{font-size:13px;color:#374151}
+#feed .lite .row{display:flex;gap:6px;align-items:baseline;min-width:0}
+#feed .lite .row b{font-weight:600;flex:none}#feed .lite code{font:12.5px 'JetBrains Mono',monospace;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#feed .sdot{font-size:10px;color:var(--green);flex:none}
+#feed .lite img{display:block;margin:6px 0 0 14px;width:150px;aspect-ratio:4/3;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+#feed .codecard{border:1px solid #D1D5DB;border-radius:8px;overflow:hidden;font:12.5px 'JetBrains Mono',monospace}
+#feed .codecard .bar{display:flex;justify-content:space-between;gap:8px;padding:5px 8px;background:#F3F4F6;color:var(--muted);font:12px Inter,sans-serif}
+#feed .codecard pre{margin:0;padding:8px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink2);max-height:240px;overflow:auto;font:inherit}
+#feed .codecard .out{padding:6px 8px;border-top:1px solid var(--line);color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto}
+#feed .codecard .out.err{color:var(--red)}
+#feed .thinking{margin-top:20px;display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px}
+#feed .empty{color:var(--muted);font-size:13px}
+#feed .runerr{border:1px solid #FCA5A5;background:#FEF2F2;color:#991B1B;border-radius:8px;padding:8px 10px;font-size:13px}
+#feed .runerr pre{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font:12px 'JetBrains Mono',monospace;color:#7F1D1D}
+#jumpBtn{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);display:none;height:30px;padding:0 12px;border-radius:999px;border:1px solid #D1D5DB;background:#fff;color:var(--ink);font-size:12.5px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(17,24,39,.15)}
+.runbar{padding:10px 16px;border-top:1px solid var(--line2);display:flex;gap:8px;align-items:center}
+#stage{flex:1;min-width:0;position:relative;background:#FBFBF9;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#view{display:block;width:100%;height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;cursor:grab}
+/* the 3D view drawn in the page (view3d.js): the canvas sits under the (now see-through) video
+   element, which still takes the mouse, so every drag, click and drop works as before */
+.view3d{position:absolute;inset:0;display:block}
+body.v3 #view{position:relative;opacity:0}
+#view.dragging{cursor:grabbing}
+.tl{position:absolute;left:14px;top:84px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}
+.hint:empty{display:none!important}
+.hint{max-width:min(290px,28vw);font-size:12px;color:#374151;background:rgba(255,255,255,.9);border:1px solid var(--line);padding:4px 10px;border-radius:6px}
+.live{font-size:12px;font-weight:600;color:var(--red);background:#FEE2E2;padding:4px 10px;border-radius:6px}
+.bl{position:absolute;right:14px;top:12px;display:flex;gap:6px;align-items:center;z-index:2}
+.bl button{height:32px;padding:0 10px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;font-weight:500;font-size:12px;color:var(--ink);cursor:pointer}
+.br{position:absolute;right:14px;bottom:54px}
+.camreset{position:relative;flex:none;width:38px;height:38px;border-radius:50%;border:0;background:#2B3140;box-shadow:0 3px 6px rgba(17,24,39,.25);cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
+.camreset:active{transform:scale(.97)}
+.campad{position:absolute;right:18px;bottom:18px;display:flex;gap:14px;align-items:center;user-select:none}
+.joy{position:relative;width:126px;height:126px;border-radius:50%;background:#2B3140;box-shadow:0 3px 6px rgba(17,24,39,.25),inset 0 2px 6px rgba(0,0,0,.35);touch-action:none;cursor:grab}
+.joy:active{cursor:grabbing}
+.joy .tick{position:absolute;width:8px;height:8px;fill:#6B7280}
+.joy .knob{position:absolute;left:37px;top:37px;width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#4B5366,#262B37 70%);box-shadow:0 4px 10px rgba(0,0,0,.45),inset 0 1px 1px rgba(255,255,255,.15);transition:transform 220ms cubic-bezier(.2,.9,.3,1.2);pointer-events:none}
+.joy.held .knob{transition:none}
+.joy:focus-visible{outline:2px solid #2563EB;outline-offset:3px}
+.rocker{width:46px;height:126px;border-radius:23px;background:#2B3140;display:flex;flex-direction:column;overflow:hidden;filter:drop-shadow(0 3px 6px rgba(17,24,39,.25))}
+.rk{flex:1;border:0;background:transparent;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
+.rk:active{background:rgba(0,0,0,.25)}
+.rkline{height:2px;margin:0 10px;background:#1F2430;border-radius:1px}
+.rk:focus-visible,.camreset:focus-visible{outline:2px solid #2563EB;outline-offset:2px}
+.idlecard{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;width:min(320px,calc(100% - 32px));display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:14px;background:#fff;box-shadow:0 16px 40px rgba(17,24,39,.22),0 0 0 1px rgba(17,24,39,.08);font-size:13.5px;color:var(--ink);text-align:center;animation:idleIn 160ms ease-out}
+@keyframes idleIn{from{opacity:0;transform:translate(-50%,-50%) scale(.96)}to{opacity:1;transform:translate(-50%,-50%)}}
+.idlecard[hidden]{display:none}
+.idlecard b{font-size:15px}
+.idlecard span{color:#374151;line-height:1.45}
+.idlecard button{margin-top:4px;height:36px;border:0;border-radius:9px;background:var(--blue);color:#fff;font:600 13.5px Inter,sans-serif;cursor:pointer}
+#droptag{position:absolute;transform:translate(-50%,-140%);white-space:nowrap;font-size:12px;font-weight:600;color:#fff;background:var(--blue);padding:3px 8px;border-radius:6px;box-shadow:0 2px 6px rgba(37,99,235,.3);pointer-events:none;display:none}
+#droptag.bad{background:var(--red)}
+.sharewrap{position:relative}
+.sharebtn{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:8px;border:1px solid #1D4ED8;background:#1D4ED8;color:#fff;font:600 14px Inter,sans-serif;cursor:pointer}
+.sharepop{position:absolute;right:0;top:46px;z-index:60;width:400px;box-sizing:border-box;padding:20px;background:#fff;border:1px solid #DCDCD6;border-radius:12px;box-shadow:0 12px 32px rgba(20,20,19,.14);display:flex;flex-direction:column;gap:16px}
+.sharepop[hidden]{display:none}
+.sharetitle{font-size:16px;font-weight:700;color:var(--ink)}
+.sharerow{display:flex;align-items:flex-start;gap:12px}
+.sharelabel{font-size:14px;font-weight:600;color:var(--ink)}
+.sharedesc{margin-top:4px;font-size:13px;line-height:1.45;color:#55554F}
+.switch{flex:none;position:relative;width:48px;height:28px;margin-top:2px;border-radius:999px;border:0;padding:0;cursor:pointer;background:#C9C8C0}
+.switch span{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:left .15s}
+.switch[aria-pressed=true]{background:#1D4ED8}.switch[aria-pressed=true] span{left:23px}
+.sharelink{display:flex;gap:8px}
+.sharelink input{flex:1;min-width:0;height:44px;padding:0 12px;border:1px solid #DCDCD6;border-radius:8px;background:#F6F6F3;font:13px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink)}
+.sharelink button{height:44px;padding:0 16px;border-radius:8px;border:1px solid #DCDCD6;background:#fff;font:600 14px Inter,sans-serif;cursor:pointer}
+.sharenote{font-size:12.5px;color:#55554F;margin-top:10px}
+#shareOffNote{margin-top:0}
+.sharedtag{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:#E0E7FF;color:#1E3A8A;margin-left:8px}
+.sharedmini{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:#1D4ED8;color:#fff;margin-left:6px}
+#toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:6px 12px;border-radius:8px;font-size:13px;display:none}
+.lib-top{padding:14px 16px 10px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line2)}
+input[type=search]{height:36px;padding:0 12px;border-radius:8px;border:1px solid #D1D5DB;font:14px Inter,sans-serif;color:var(--ink);background:#F9FAFB}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tabs button{height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--line);background:#fff;color:#374151;font-size:12.5px;font-weight:500;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+#items{padding:12px 16px;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:max-content;gap:10px;align-content:start;overflow-y:auto;flex:1}
+.card{border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden;cursor:grab;text-align:left;padding:0}
+.card.armed{border:2px solid var(--blue)}
+.card .th{height:84px;background:var(--bg);display:flex;align-items:center;justify-content:center}
+.card .th img{max-height:80px;max-width:100%}
+.card .tx{padding:6px 8px 8px}
+.card .n{font-size:13px;font-weight:600;color:var(--ink);line-height:1.3}
+.card .s{font-size:11.5px;color:var(--muted)}
+.libhint{margin:0;padding:10px 16px 14px;border-top:1px solid var(--line2);font-size:12px;color:var(--muted)}
+#right.locked #items{opacity:.4;filter:grayscale(1);pointer-events:none}
+#right.locked .lib-top{opacity:.6;pointer-events:none}
+dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13px}
+dt{color:var(--muted)}dd{margin:0;text-align:right;font-family:'JetBrains Mono',monospace}
+#loading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;z-index:9;font-size:15px;color:var(--muted)}
+.libero{display:none}
+body.lib .libero{display:flex}
+body.fixed .freeonly{display:none!important}
+.wetlab{display:none}
+body.wet .wetlab{display:flex}
+#liberoPane{flex-direction:column;gap:12px;flex:1;overflow:auto;border:0}
+.official{font-size:15px;font-weight:600;color:var(--ink);line-height:1.35}
+.setrow{display:flex;align-items:center;gap:8px}
+.setrow button{height:30px;width:30px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;cursor:pointer;font-size:15px;color:var(--ink)}
+.setrow button:disabled{opacity:.4;cursor:not-allowed}
+#lDots{display:grid;grid-template-columns:repeat(25,1fr);gap:3px}
+#lDots button{aspect-ratio:1;border-radius:50%;border:0;padding:0;background:#D1D5DB;cursor:pointer}
+#lDots button.p{background:var(--blue)}#lDots button.f{background:#F59E0B}
+.wtask{display:flex;align-items:center;gap:8px;min-height:40px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;font:500 13px Inter,sans-serif;color:var(--ink);cursor:pointer;text-align:left}
+.wtask[aria-pressed=true]{border:2px solid var(--blue);background:var(--blueBg)}
+.wtask:disabled{cursor:not-allowed;opacity:.6}
+.wtask .id{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);width:32px}
+.wtask .t{flex:1}
+.wtask .d{width:8px;height:8px;border-radius:50%;background:#D1D5DB}
+.wtask .d.p{background:var(--blue)}.wtask .d.f{background:#F59E0B}
+#lDots button.cur{outline:2px solid var(--ink);outline-offset:1px}
+.legend{display:flex;gap:12px;font-size:11.5px;color:var(--muted)}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:0}
+table.board{width:100%;border-collapse:collapse;font-size:12.5px}
+table.board th{text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:4px 4px;border-bottom:1px solid var(--line)}
+table.board td{padding:6px 4px;border-bottom:1px solid var(--line2);color:var(--ink)}
+table.board td.n{font-family:'JetBrains Mono',monospace;text-align:right}table.board th.n{text-align:right}
+#goalCard{position:absolute;right:58px;top:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;max-width:280px;font-size:12.5px;box-shadow:0 1px 3px rgba(17,24,39,.08);flex-direction:column;gap:2px}
+#goalCard b{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+#goalState{font-weight:600}
+.suites{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.suites button{min-height:44px;padding:4px 6px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;text-align:center;font:600 13px Inter,sans-serif}
+.suites button span{display:block;font-size:11px;font-weight:500;color:var(--muted)}
+.suites button[aria-pressed=true]{border:2px solid var(--blue);background:var(--blueBg);color:var(--blue2)}
+.suites button:disabled{opacity:.5;cursor:not-allowed}
+.studybtn{height:42px;border-radius:10px;border:1px solid var(--blue);background:var(--blueBg);color:var(--blue2);font:600 13px Inter,sans-serif;cursor:pointer}
+.studybtn:disabled{opacity:.5;cursor:not-allowed}
+.linkbtn{border:0;background:none;padding:6px 0 0;color:var(--blue2);font:500 12.5px Inter,sans-serif;cursor:pointer}
+#boardModal{position:fixed;inset:0;background:rgba(17,24,39,.35);z-index:8;align-items:center;justify-content:center;padding:16px}
+#boardModal .bm{background:var(--bg);border-radius:14px;padding:28px 32px;max-width:1100px;width:100%;display:flex;flex-direction:column;gap:18px;box-shadow:0 10px 30px rgba(17,24,39,.2)}
+table.board.big{background:#fff;border:1px solid var(--line);border-radius:12px;font-size:14px}
+table.board.big th,table.board.big td{padding:12px 14px}
+.brand{white-space:nowrap}
+@media (max-width:1500px){#modechip{display:none}}
+.libtag{font-size:12px;font-weight:600;color:var(--blue2);background:var(--blueBg);padding:4px 10px;border-radius:6px}
+/* ---------------------------------------------------------------- sessions layout (board D) */
+#left{display:none}
+body.fixed #left{display:flex}
+body.fixed #left .stsec,body.fixed #left .camsec{display:none}
+.ease{--ease-out:cubic-bezier(.23,1,.32,1)}
+.sbtn{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex:none}
+.sbtn[aria-expanded=true]{background:var(--soft)}
+.crumb{color:#9CA3AF}
+header>.hgroup:first-child{flex:1 1 auto}header>.hgroup:last-child{flex:0 1 auto}
+.bl .camreset{background:#2B3140;border:0;padding:0;width:32px;display:flex;align-items:center;justify-content:center}
+.sessname{flex:0 1 auto;min-width:48px}
+.sessname{font-size:15px;font-weight:600;color:var(--ink);max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:0;background:none;padding:2px 4px;border-radius:6px;cursor:default;font-family:inherit}
+body:not(.watch) .sessname.can{cursor:text}
+#sessNav{width:248px;flex:none;overflow:hidden;border-right:1px solid var(--line);transition:width 200ms cubic-bezier(.23,1,.32,1);min-height:0;background:#FAFAFB}
+#sessNav.closed{width:0;border-right:0}
+#sessNav .in{width:248px;height:100%;display:flex;flex-direction:column;gap:18px;padding:14px 12px;min-height:0;overflow-y:auto}
+.newbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:38px;flex:none;border-radius:10px;border:0;background:var(--ink);color:#fff;font:600 13px Inter,sans-serif;cursor:pointer}
+.newbtn:disabled{opacity:.5;cursor:not-allowed}
+.slbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 10px 6px;display:block}
+.slist{display:flex;flex-direction:column;gap:2px}
+.srow{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:9px;border:0;background:transparent;cursor:pointer;font:13px Inter,sans-serif;color:var(--ink);text-align:left;line-height:1.3}
+.srow[aria-current=true]{background:#E8EEFC;box-shadow:inset 0 0 0 1px #BFD0F7}
+.srow .t{flex:1;min-width:0}.srow .t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.srow .sub{font-size:12px;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sico{width:30px;height:30px;border-radius:8px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex:none}
+.sdot{width:8px;height:8px;border-radius:50%;background:#D1D5DB;flex:none}.sdot.run{background:var(--red);box-shadow:0 0 0 3px #FEE2E2}.sdot.ok{background:var(--green)}.sdot.wait{background:#F59E0B}
+.snone{font-size:12.5px;color:#6B7280;padding:2px 10px}
+.snote{margin-top:auto;padding:0 10px;font-size:11.5px;line-height:1.45;color:#6B7280}
+/* the floating stations bar */
+.dock{position:absolute;left:58px;right:58px;top:12px;display:flex;justify-content:center;pointer-events:none;z-index:3}
+.dockin{pointer-events:auto;display:flex;gap:6px;align-items:center;max-width:100%;overflow-x:auto;padding:6px;border-radius:14px;background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);box-shadow:0 8px 24px rgba(17,24,39,.16),0 0 0 1px rgba(17,24,39,.06);scroll-snap-type:x proximity;scrollbar-width:thin}
+.schip{flex:none;display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:10px;border:0;background:transparent;cursor:pointer;font:13px Inter,sans-serif;color:var(--ink);text-align:left;line-height:1.25;scroll-snap-align:start}
+.schip img{width:40px;height:40px;border-radius:7px;object-fit:cover;background:var(--soft)}
+.schip b{font-weight:600;white-space:nowrap}.schip .sub{font-size:12px;color:#374151;white-space:nowrap}
+.schip[aria-pressed=true]{background:#fff;box-shadow:0 0 0 2px var(--blue)}
+.schip.add{padding:0 12px;height:50px;gap:6px;font-weight:600;border:1.5px dashed #9CA3AF}
+.schip.add.big{height:56px;padding:0 20px}
+body.fixed .dock,body.watch .schip.add{display:none}
+.schipw{position:relative;flex:none;display:flex;scroll-snap-align:start}
+.schipw .schip{padding-right:26px}
+.smore{position:absolute;right:3px;top:50%;margin-top:-13px;width:18px;height:26px;border-radius:7px;border:0;background:transparent;color:#374151;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0}
+.schipw.on .smore,.smore[aria-expanded=true],.smore:focus-visible{opacity:1}
+@media (hover:none){.smore{opacity:1}}
+body.watch .smore{display:none}body.watch .schipw .schip{padding-right:10px}
+.stmenu{position:fixed;z-index:40;min-width:184px;padding:5px;border-radius:11px;background:#fff;box-shadow:0 12px 32px rgba(17,24,39,.18),0 0 0 1px rgba(17,24,39,.08);display:none;transform-origin:top left;animation:menuIn 140ms ease-out}
+.stmenu.open{display:block}
+@keyframes menuIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.stmenu button{display:flex;align-items:center;gap:10px;width:100%;height:32px;padding:0 10px;border:0;border-radius:7px;background:transparent;font:500 13px Inter,sans-serif;color:var(--ink);text-align:left;cursor:pointer}
+.stmenu button svg{flex:none;color:#4B5563}
+.stmenu button:focus-visible{outline:none;background:var(--soft)}
+.stmenu button:disabled{color:#9CA3AF;cursor:not-allowed}.stmenu button:disabled svg{color:#C4C9D1}
+.stmenu .danger{color:#B91C1C}.stmenu .danger svg{color:#B91C1C}
+.stmenu hr{border:0;height:1px;background:var(--line);margin:4px 2px}
+.stmenu .why{font-size:11.5px;color:#6B7280;padding:4px 10px 3px;line-height:1.35}
+body.watch #objPanel .acts{display:none!important}
+.glass{background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 0 0 1px rgba(17,24,39,.08),0 4px 14px rgba(17,24,39,.08)}
+.watchbanner{position:absolute;left:50%;transform:translateX(-50%);top:84px;display:none;align-items:center;gap:8px;font:500 12.5px Inter,sans-serif;color:var(--ink);padding:7px 8px 7px 12px;border-radius:10px;z-index:3;white-space:nowrap}
+body.watch .watchbanner{display:flex}
+.watchbanner .vb{height:28px}
+body.watch .tl{top:130px}
+.emptyfloor{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:none;flex-direction:column;align-items:center;gap:6px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:14px;padding:18px 24px;text-align:center;z-index:2;pointer-events:none}
+body.empty .emptyfloor{display:flex}
+.emptyfloor b{font-size:15px;color:var(--ink)}.emptyfloor span{font-size:13px;color:var(--muted);max-width:260px}
+/* the two cameras the AI sees, small in the lower left */
+.pips{position:absolute;left:14px;bottom:14px;display:flex;gap:10px;align-items:flex-end;z-index:2}
+body.empty .pips{display:none}
+#stage{container-type:inline-size}
+body.fixed .tl{top:12px}
+.pip{width:220px;border-radius:10px;overflow:hidden;background:#111827;box-shadow:0 6px 18px rgba(17,24,39,.28);border:1px solid rgba(255,255,255,.6)}
+.pip img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#1F2937}
+.pcap{display:flex;align-items:center;gap:6px;padding:5px 6px 5px 9px;background:#fff;font:600 12px Inter,sans-serif;color:var(--ink)}
+.pcap span{font-size:10px;font-weight:700;color:var(--blue2);flex:1;white-space:nowrap}
+.exp{width:26px;height:26px;border-radius:6px;border:1px solid #D1D5DB;background:#fff;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;flex:none}
+.exp.wide{width:auto;padding:0 10px;gap:6px;height:30px;font:500 12px Inter,sans-serif;color:var(--ink)}
+#bigCamWrap{position:absolute;inset:0;background:rgba(17,24,39,.55);display:none;align-items:center;justify-content:center;z-index:6;opacity:0;transition:opacity 220ms cubic-bezier(.23,1,.32,1)}
+#bigCamWrap.on{display:flex}#bigCamWrap.open{opacity:1}
+.bigcam{width:min(78%,900px);border-radius:12px;overflow:hidden;background:#111827;box-shadow:0 20px 50px rgba(17,24,39,.4);transform-origin:bottom left;transform:scale(.3);transition:transform 220ms cubic-bezier(.23,1,.32,1)}
+#bigCamWrap.open .bigcam{transform:none}
+.bigcam img{display:block;width:100%;aspect-ratio:4/3;max-height:calc(100vh - 220px);object-fit:contain;background:#1F2937}
+.vb{height:32px;padding:0 10px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;font:500 12px Inter,sans-serif;color:var(--ink);cursor:pointer;white-space:nowrap}
+/* the selected object, floating at the top right */
+#objPanel{position:absolute;right:14px;top:84px;width:250px;border-radius:12px;padding:12px 14px;z-index:3}
+#objPanel dl{gap:4px 10px;font-size:12.5px}
+/* the right panel's Data tab: the robot's readings, as in the robot cell viewer */
+#datapane{flex:1;display:none;flex-direction:column;gap:12px;min-height:0;overflow:auto;padding:14px 16px}
+body.dataing #datapane{display:flex}
+body.dataing #chatpane,body.dataing #right .freeonly,body.dataing #filespane{display:none!important}
+.dhead{display:flex;align-items:center;gap:8px}.dhead b{flex:1;min-width:0;font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:6px;background:#DCFCE7;color:#166534;white-space:nowrap}
+.badge.stop{background:#FEE2E2;color:#991B1B}
+.fresh{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:7px 10px;border-radius:8px;background:var(--soft);color:#374151}
+.fresh.on{background:#FEF2F2;color:#991B1B}
+table.dt{width:100%;border-collapse:collapse;font-size:13px}
+.dt th{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right;padding:4px 0 6px}
+.dt th:first-child,.dt td:first-child{text-align:left}
+.dt td{padding:5px 0;border-top:1px solid #F3F4F6;text-align:right;font:12.5px 'JetBrains Mono',monospace;color:var(--ink)}
+.dt td:first-child{font:13px Inter,sans-serif;color:#374151}
+.kv{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 10px;font-size:12.5px;color:#374151;margin:0}
+.kv dt{color:#374151}.kv dd{margin:0;font:500 12px 'JetBrains Mono',monospace;color:var(--ink);text-align:right;white-space:nowrap}
+.dnote{margin:0;font-size:12px;color:var(--muted)}
+.dempty{color:#6B7280;font-size:13px;text-align:center;padding:40px 12px}
+.watchcard{display:none;align-items:center;gap:10px;margin:0 12px 12px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#F9FAFB;font-size:12.5px;color:var(--muted)}
+body.watch .watchcard{display:flex}
+.watchcard span{flex:1}
+/* feel: a press gives a little; enter and exit ease out fast; hover only with a real pointer */
+button{transition:transform 160ms ease-out}
+button:active:not(:disabled){transform:scale(.97)}
+.watchbanner{transition:none}
+.watchbanner button:active:not(:disabled){transform:scale(.97)}
+@media (hover:hover) and (pointer:fine){
+  .srow:hover{background:var(--soft)}.srow[aria-current=true]:hover{background:#E1E9FB}
+  .schip:hover{background:rgba(17,24,39,.06)}.schip[aria-pressed=true]:hover{background:#fff}
+  .newbtn:hover{background:var(--ink2)}.sbtn:hover,.exp:hover,.vb:hover,.smore:hover,.stmenu button:hover:not(:disabled){background:var(--soft)}
+  .schipw:hover .smore{opacity:1}
+  .camreset:hover{filter:brightness(1.2)}.rk:hover{background:rgba(255,255,255,.08)}
+  #files .frow:hover{background:var(--blueBg)}
+}
+@media (prefers-reduced-motion:reduce){
+  #sessNav{transition:none}
+  .stmenu{animation:none}
+  .bigcam{transform:none!important;transition:none}
+  #bigCamWrap{transition:opacity 150ms ease}
+  button{transition:none}button:active:not(:disabled){transform:none}
+}
+/* a narrow stage (LIBERO and Wet Lab show their left column too): smaller camera windows */
+@container (max-width:900px){.pip{width:160px}.campad{bottom:14px;transform:scale(.8);transform-origin:bottom right}}
+@container (max-width:700px){.pip{width:128px}.campad{display:none!important}.bl button:not(.camreset){padding:0 8px}}
+</style>
+</head>
+<body>
+<div id="boardModal" role="dialog" aria-modal="true" aria-labelledby="bmTitle" style="display:none">
+  <div class="bm">
+    <div style="display:flex;align-items:flex-end;gap:16px">
+      <div style="flex:1"><span class="cap" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">LIBERO test · all suites</span><h2 id="bmTitle" style="margin:2px 0 0;font-size:24px;color:var(--ink)">Scoreboard</h2></div>
+      <div class="seg" role="group" aria-label="Which runs"><button id="bmStudy" aria-pressed="true">Study set (5 setups)</button><button id="bmAll" aria-pressed="false">All 50 setups</button></div>
+      <button class="round" id="bmClose" aria-label="Close">✕</button>
+    </div>
+    <table class="board big"><thead><tr><th>Model</th><th class="n">Goal</th><th class="n">Spatial</th><th class="n">Object</th><th class="n">Long</th><th class="n" style="color:var(--ink)">LIBERO-40</th><th class="n">Avg time</th><th class="n">Cost</th></tr></thead><tbody id="bmBody"></tbody></table>
+    <p class="small" style="margin:0">Each cell is passed runs out of runs tried (the latest result for each setup counts). Study set = setups 1 to 5 of every task, the same 200 runs as Anthropic's study. The study's 5.5% used direct control (one move per turn), so it's a reference point, not a like-for-like score.</p>
+  </div>
+</div>
+<div id="addModal" role="dialog" aria-modal="true" aria-labelledby="amTitle" style="display:none">
+  <div class="am">
+    <div style="display:flex;align-items:flex-start;gap:12px"><div style="flex:1"><h2 id="amTitle" style="margin:0;font-size:20px;color:var(--ink)">Add a station</h2><p class="small" style="margin:2px 0 0">Each robot comes on its own table. Pick one, then click the floor to place it.</p></div><button class="round" id="amClose" aria-label="Close">✕</button></div>
+    <div class="rcards" id="rcards"></div>
+  </div>
+</div>
+<div id="loading"><span class="il-loader" data-variant="snake" data-speed="1" data-paused="false" aria-hidden="true" style="--il-color:#2563EB;--il-size:24px;--il-duration:1.2s"><span class="il-snake"><i style="--il-i:0;--il-scale:1"></i><i style="--il-i:1;--il-scale:.925"></i><i style="--il-i:2;--il-scale:.85"></i><i style="--il-i:3;--il-scale:.775"></i><i style="--il-i:4;--il-scale:.7"></i><i style="--il-i:5;--il-scale:.625"></i><i style="--il-i:6;--il-scale:.55"></i><b></b></span></span>Loading the playground…</div>
+<div class="app">
+<header>
+  <div class="hgroup">
+    <button class="sbtn" id="navToggle" aria-controls="sessNav" aria-expanded="true" aria-label="Hide sessions" title="Hide sessions"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#374151" stroke-width="1.5"><rect x="1.75" y="2.75" width="14.5" height="12.5" rx="2.5"/><path d="M6.5 2.75 V15.25"/></svg></button>
+    <svg aria-hidden="true" width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#2563EB" stroke-width="1.6"><path d="M13 3 L23 8.5 L13 14 L3 8.5 Z"/><path d="M3 8.5 V17.5 L13 23 V14"/><path d="M23 8.5 V17.5 L13 23"/></svg>
+    <span class="brand">MuJoCo Playground</span><span class="crumb" aria-hidden="true">/</span><button class="sessname" id="sessName" title="Rename this session"></button><span class="sharedtag" id="sharedTag" style="display:none">Shared</span>
+    <div class="seg" role="group" aria-label="Mode">
+      <button id="modeFree" aria-pressed="true">Free play</button>
+      <button id="modeLibero" aria-pressed="false">LIBERO test</button>
+      <button id="modeWet" aria-pressed="false">Wet Lab</button>
+    </div>
+    <span class="chip" id="modechip">Free play · not saved</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="play" id="playBtn" aria-label="Play"><svg id="playIcon" width="14" height="14" viewBox="0 0 14 14" fill="#fff"><path d="M3 1.5 L12.5 7 L3 12.5 Z"/></svg><span id="playLabel">Play</span></button>
+    <button class="round" id="resetBtn" title="Put everything back where it started" aria-label="Reset"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#374151" stroke-width="1.6" stroke-linecap="round"><path d="M3 8 a5 5 0 1 0 1.6 -3.7"/><path d="M3 2 V5 H6"/></svg></button>
+    <div style="display:flex;flex-direction:column;line-height:1.25;margin-left:4px"><span class="clock" id="clock">00:00.0</span><span class="small" id="rt">paused</span></div>
+  </div>
+  <div class="hgroup" style="justify-content:flex-end">
+    <span class="lockmsg" id="lockmsg" style="display:none"></span>
+    <div class="sharewrap" id="shareWrap" style="display:none">
+      <button class="sharebtn" id="shareBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="sharePop"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Share</button>
+      <div class="sharepop" id="sharePop" role="dialog" aria-label="Share this session" hidden>
+        <div class="sharetitle">Share this session</div>
+        <div class="sharerow">
+          <div style="flex:1"><label for="shareOn" class="sharelabel">Anyone with the link can watch</label>
+            <div class="sharedesc">They can watch live and see past runs, but can't change anything. No sign-in needed.</div></div>
+          <button id="shareOn" class="switch" type="button" aria-pressed="false"><span></span></button>
+        </div>
+        <div id="shareLinkRow" hidden>
+          <div class="sharelink"><input id="shareLink" readonly aria-label="Share link"><button id="shareCopy" type="button">Copy</button></div>
+          <div class="sharenote">Turning this off stops the link working right away.</div>
+        </div>
+        <div class="sharenote" id="shareOffNote">Only you can see this session.</div>
+      </div>
+    </div>
+    <span class="watchtag" id="watchTag">Watching · read only</span>
+    <a class="small" id="liveLink" href="/live" target="_blank" rel="noopener" style="color:var(--blue2);font-weight:600;text-decoration:none;display:none">Live now ↗</a>
+    <a class="small" id="pastLink" href="/pg/runs" target="_blank" rel="noopener" style="color:var(--blue2);font-weight:600;text-decoration:none">Past runs ↗</a>
+    <span class="small">MuJoCo 4.0</span>
+  </div>
+</header>
+<main>
+  <nav id="sessNav" aria-label="Playground sessions"><div class="in">
+    <button class="newbtn" id="newSession"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg>New session</button>
+    <div><span class="slbl" id="mineLbl">Your sessions</span><div class="slist" id="mineList"></div></div>
+    <div><span class="slbl">Live now · watch others</span><div class="slist" id="liveList"></div></div>
+    <span class="snote">Every session is public. Anyone can watch it, but only you can change it.</span>
+  </div></nav>
+  <aside id="left" aria-label="Robot and task">
+    <div class="sec stsec">
+      <div class="sthead"><h2 class="cap" id="stCap">Stations in the lab</h2><button class="addst freeonly" id="addStationBtn" aria-label="Add a station" title="Add a station">+</button></div>
+      <div id="stationList" role="list"></div>
+    </div>
+    <div id="robotPanel" style="display:flex;flex-direction:column;flex:1;min-height:0">
+      <div class="sec camsec">
+        <div style="margin-bottom:8px"><h3 style="margin:0;font-size:15px;color:var(--ink)" id="stTitle">Franka Panda</h3><span class="small" id="stSub">on its table · Franka Hand</span></div>
+        <div class="cams">
+
+        </div>
+      </div>
+      <div id="liberoPane" class="sec libero">
+        <div><h2 class="cap" style="margin-bottom:6px">Suite</h2>
+          <div id="lSuites" class="suites" role="group" aria-label="LIBERO suite"></div>
+          <p class="small" id="lSuiteWhat" style="margin:6px 0 0;color:#374151"></p></div>
+        <div><h2 class="cap" style="margin-bottom:6px">Official task</h2>
+          <select id="lTask" aria-label="LIBERO task" style="width:100%"></select></div>
+        <div class="official" id="lLang"></div>
+        <div class="note"><b style="color:var(--ink)">Done when</b><br><span id="lDone"></span><br><span class="small">Checked live by LIBERO's own rule. The task text can't be edited.</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div class="setrow"><button id="lPrev" aria-label="Previous setup">‹</button><span style="flex:1;text-align:center;font-weight:600;color:var(--ink)">Setup <span id="lSetupN">1</span> of <span id="lSetupTotal">50</span></span><button id="lNext" aria-label="Next setup">›</button></div>
+          <div id="lDots" aria-label="The 50 starting setups"></div>
+          <div class="legend"><span><i style="background:var(--blue)"></i>passed</span><span><i style="background:#F59E0B"></i>failed</span><span><i style="background:#D1D5DB"></i>not run</span><span style="flex:1;text-align:right" id="lDotsFor"></span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px"><label for="lModel" class="small" style="font-weight:600">AI model</label><select id="lModel"></select></div>
+        <div style="display:flex;gap:8px"><button class="primary" id="lRun1">Run this setup</button><button class="ghostbtn" id="lRunAll" style="height:42px;flex:none;padding:0 14px;white-space:nowrap">All 50 setups</button></div>
+        <button class="studybtn" id="lStudy">Run the study set: 40 tasks × 5 setups</button>
+        <span class="small" style="margin-top:-6px">The same 200 runs as Anthropic's study: setups 1 to 5 of every task in all four suites. Up to about 10 hours at 3 minutes each.</span>
+        <button class="ghostbtn" id="lStop" style="display:none;flex:none">Stop</button>
+        <span class="small" id="lStatus"></span>
+        <div><h2 class="cap">Scoreboard · this task</h2>
+          <table class="board"><thead><tr><th>Model</th><th class="n">Passed</th><th class="n">Avg time</th><th class="n">Cost</th></tr></thead><tbody id="lBoard"></tbody></table>
+          <p class="small" style="margin:6px 0 0">Our Franka controller and AI setup, so scores aren't comparable with LIBERO's published leaderboard. Avg time counts passed runs only.</p></div>
+        <div><div style="display:flex;align-items:baseline;justify-content:space-between"><h2 class="cap">By suite · study set</h2><span class="small" id="lSuiteFor"></span></div>
+          <table class="board"><thead><tr><th>Suite</th><th class="n">Passed</th><th class="n">Runs</th></tr></thead><tbody id="lSuiteBoard"></tbody></table>
+          <button class="linkbtn" id="lFullBoard">Full scoreboard, all models →</button></div>
+      </div>
+      <div id="wetPane" class="sec wetlab" style="flex-direction:column;gap:12px;flex:1;overflow:auto;border:0">
+        <h2 class="cap" style="margin:0">Wet lab tasks · <span id="wCount">8</span></h2>
+        <div id="wTasks" style="display:flex;flex-direction:column;gap:6px"></div>
+        <div class="official" id="wPrompt"></div>
+        <div class="note"><b style="color:var(--ink)">Scored by</b><br><span id="wScored">The bench's own check for this task, from the true end state (positions, wells, what fell over).</span></div>
+        <div style="display:flex;flex-direction:column;gap:4px"><label for="wModel" class="small" style="font-weight:600">AI model</label><select id="wModel"></select></div>
+        <div style="display:flex;gap:8px"><button class="primary" id="wRun1">Run this task</button><button class="ghostbtn" id="wRunAll" style="height:42px;flex:none;padding:0 14px;white-space:nowrap">Run all 8</button></div>
+        <button class="ghostbtn" id="wStop" style="display:none;flex:none">Stop</button>
+        <span class="small" id="wStatus"></span>
+        <div><h2 class="cap">Scoreboard · all 8 tasks</h2>
+          <table class="board"><thead><tr><th>Model</th><th class="n">Passed</th><th class="n">Cost</th></tr></thead><tbody id="wBoard"></tbody></table>
+          <p class="small" style="margin:6px 0 0">Same robot, physics and AI setup as the robot cell's evals. The latest result for each task counts. Up to 15 minutes per task.</p></div>
+      </div>
+    </div>
+  </aside>
+
+  <section id="stage" aria-label="3D scene">
+    <img id="view" alt="3D scene rendered live by MuJoCo" draggable="false">
+    <div class="dock"><div class="dockin" id="dock" role="group" aria-label="Stations in the lab"></div></div>
+    <div class="watchbanner glass" id="watchBanner"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#111827" stroke-width="1.5"><path d="M1 8 C3 4 5.5 3 8 3 C10.5 3 13 4 15 8 C13 12 10.5 13 8 13 C5.5 13 3 12 1 8 Z"/><circle cx="8" cy="8" r="2.2"/></svg><span>Watching someone else's lab · view only</span><button class="vb copyLab">Copy to my sessions</button></div>
+    <div class="emptyfloor"><b>Empty lab floor</b><span id="emptyMsg">Press “Add your first station” above, then click the floor to place it.</span></div>
+    <div id="objPanel" class="glass" style="display:none;flex-direction:column;gap:10px">
+      <div><span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Selected object</span><h3 id="objName" style="margin:2px 0 0;font-size:15px;color:var(--ink)"></h3><span class="small">NVIDIA SimReady · physics from the asset</span></div>
+      <dl><dt>Size</dt><dd id="objSize"></dd><dt>Mass</dt><dd id="objMass"></dd><dt>Friction</dt><dd id="objFric"></dd><dt>Collision</dt><dd id="objCol" style="font-family:Inter;font-size:12px"></dd></dl>
+      <div class="acts" style="display:flex;gap:8px"><button class="ghostbtn" id="rotBtn">Rotate 90°</button><button class="ghostbtn" id="delBtn">Remove</button></div>
+    </div>
+    <div class="pips" id="pips">
+      <div class="pip"><img id="camOver" alt="Overhead camera, what the AI sees"><div class="pcap">Overhead<span>AI SEES</span><button class="exp" data-cam="overhead" aria-label="Expand overhead camera" title="Expand"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M7 1 H11 V5 M5 11 H1 V7 M11 1 L7 5 M1 11 L5 7"/></svg></button></div></div>
+      <div class="pip"><img id="camWrist" alt="Wrist camera, what the AI sees"><div class="pcap">Wrist<span>AI SEES</span><button class="exp" data-cam="wrist" aria-label="Expand wrist camera" title="Expand"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M7 1 H11 V5 M5 11 H1 V7 M11 1 L7 5 M1 11 L5 7"/></svg></button></div></div>
+    </div>
+    <div id="bigCamWrap" role="dialog" aria-modal="true" aria-label="Camera, large"><div class="bigcam"><img id="bigCam" alt=""><div class="pcap" style="padding:8px 10px 8px 14px;font-size:13px"><b id="bigName" style="font-weight:600"></b><span>AI SEES THIS</span><button class="exp wide" id="shrinkBtn" aria-label="Shrink camera"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M11 5 H7 V1 M1 7 H5 V11 M7 5 L11 1 M5 7 L1 11"/></svg>Shrink</button></div></div></div>
+    <div class="tl"><span class="live" id="liveTag" style="display:none">● Running · real time</span><span class="libtag libero wetlab" id="libTag"></span><span class="hint" id="hintTag"></span></div>
+    <div class="bl"><button class="camreset" data-preset="home" aria-label="Reset view" title="Reset view (Home)" style="width:36px;height:36px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E5E7EB" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 8 a5 5 0 1 0 1.6 -3.7"/><path d="M3 2 V5 H6"/></svg></button></div>
+    <div class="campad" role="group" aria-label="Camera">
+      <div class="joy" id="joy" tabindex="0" role="application" aria-label="Camera joystick: drag to slide the view, or use the arrow keys" title="Drag to slide the view (arrow keys too)">
+        <svg class="tick" style="left:59px;top:8px" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 2 L9 8 H1 Z"/></svg>
+        <svg class="tick" style="left:59px;bottom:8px;transform:rotate(180deg)" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 2 L9 8 H1 Z"/></svg>
+        <svg class="tick" style="left:8px;top:59px;transform:rotate(-90deg)" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 2 L9 8 H1 Z"/></svg>
+        <svg class="tick" style="right:8px;top:59px;transform:rotate(90deg)" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 2 L9 8 H1 Z"/></svg>
+        <div class="knob"></div>
+      </div>
+      <div class="rocker">
+        <button class="rk" data-move="0,0,1" aria-label="Raise camera" title="Raise (+ or Page Up)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#E5E7EB" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 8 H13"/><path d="M8 3 V13"/></svg></button>
+        <div class="rkline"></div>
+        <button class="rk" data-move="0,0,-1" aria-label="Lower camera" title="Lower (− or Page Down)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#E5E7EB" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 8 H13"/></svg></button>
+      </div>
+    </div>
+    <div id="goalCard" class="libero wetlab"><b>Goal check</b><span id="goalState"></span><span class="small" id="goalText"></span></div>
+    <div id="droptag"></div>
+    <div id="toast"></div>
+    <div class="idlecard" id="idleCard" role="alertdialog" aria-live="assertive" aria-labelledby="idleTitle" hidden>
+      <b id="idleTitle">Still there?</b>
+      <span>No activity for a while. This lab closes in <span id="idleLeft">60</span> s.</span>
+      <button id="idleStay">I'm still here</button>
+    </div>
+    <div class="idlecard closed" id="closedCard" role="alertdialog" aria-labelledby="closedTitle" hidden>
+      <b id="closedTitle">This lab closed</b>
+      <span>It shut down after 5 minutes with no activity. Its sessions weren't saved.</span>
+      <button id="closedOpen">Open a new lab</button>
+    </div>
+    <div class="stmenu" id="stMenu" role="menu" aria-label="Station actions">
+      <button role="menuitem" data-act="duplicate"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5" y="5" width="9" height="9" rx="2"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/></svg>Duplicate</button>
+      <button role="menuitem" data-act="rename"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 2.5l3 3L6 13H3v-3z"/></svg>Rename</button>
+      <button role="menuitem" data-act="rotate"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v2.5h-2.5"/></svg>Turn 90°</button>
+      <hr>
+      <button role="menuitem" data-act="remove" class="danger"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5"/></svg>Remove</button>
+      <div class="why" id="stMenuWhy" hidden></div>
+    </div>
+  </section>
+
+  <aside id="right" aria-label="Chat and object library">
+    <div class="sidetabs" role="tablist" aria-label="Side panel">
+      <button role="tab" id="tabChat" aria-selected="false" aria-controls="chatpane">Chat <span class="live" aria-label="AI running"></span></button>
+      <button role="tab" id="tabObjects" aria-selected="true" aria-controls="items">Objects</button>
+      <button role="tab" id="tabFiles" aria-selected="false" aria-controls="filespane">Files</button>
+      <button role="tab" id="tabData" aria-selected="false" aria-controls="datapane">Data</button>
+    </div>
+    <section id="datapane" aria-label="Robot readings">
+      <div class="dempty" id="dEmpty" style="display:none">Add a station to see its robot's readings here.</div>
+      <div id="dBody" style="display:flex;flex-direction:column;gap:12px">
+        <div class="dhead"><b id="dTitle">Robot readings</b><span class="badge" id="dSafety">No safety stop</span></div>
+        <div class="fresh" id="dFresh"><span class="sdot"></span><span id="dFreshText">Waiting for the robot…</span></div>
+        <table class="dt"><thead><tr><th scope="col">Joint</th><th scope="col">Angle (rad)</th><th scope="col">Speed (rad/s)</th></tr></thead><tbody id="dJoints"></tbody></table>
+        <dl class="kv" id="dTel"></dl>
+        <p class="dnote">This is what the AI reads from the robot. It is not told where any objects are; it finds them with the cameras.</p>
+      </div>
+    </section>
+    <div class="lib-top freeonly">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0;font-size:15px;color:var(--ink)">Objects</h2><span class="small">NVIDIA SimReady</span></div>
+      <input id="search" type="search" placeholder="Search, e.g. mug, bowl, crate" aria-label="Search objects">
+      <div class="tabs" role="tablist" id="tabs"></div>
+    </div>
+    <div id="items" class="freeonly" role="tabpanel"></div>
+    <section id="filespane" aria-label="The AI's work folder">
+      <h3>Sandbox Workspace</h3>
+      <p class="small" style="margin:0">Everything this station's AI can read, plus what it writes while it works (notes, code, saved images). New files are in bold. Click a file to open it.</p>
+      <div id="files"><div class="empty">Files appear here when a run starts.</div></div>
+    </section>
+    <section id="chatpane" aria-label="AI chat">
+        <div class="chathead"><img id="chatLogo" src="/static/anthropic.svg" alt=""><b id="chatModel" style="flex:1;color:var(--ink)">Claude Opus 5.5</b><span class="small" id="chatCost"></span></div>
+        <ol id="feed"></ol>
+        <button id="jumpBtn">↓ Jump to latest</button>
+        <div class="runbar" id="runbar"><span class="small" id="runStatus" style="flex:1"></span><button class="ghostbtn" id="stopBtn" style="flex:none;padding:0 12px">Stop</button></div>
+        <div class="watchcard" id="watchCard"><span>You're watching. Only the owner can give this robot tasks.</span><button class="vb copyLab">Copy to my sessions</button></div>
+        <div class="taskcard" id="taskcard">
+          <div class="tchead"><b id="taskFor">Task for Station 1 · Franka Panda</b><button class="infobtn" id="infoBtn" aria-label="What the AI gets" aria-expanded="false" aria-controls="infoPop">i</button></div>
+          <div class="infopop" id="infoPop" role="note" hidden><b>What the AI gets</b><br><span id="infoText"></span></div>
+          <label for="task" class="small" style="position:absolute;left:-9999px">Task</label>
+          <textarea id="task" rows="3" placeholder="Tell this robot what to do, in plain words. Example: put the apple in the bowl."></textarea>
+          <div class="tcrow"><div class="mdl"><img id="modelLogo" src="/static/anthropic.svg" alt=""><select id="model" aria-label="AI model"></select></div><button class="primary" id="startBtn"><svg width="11" height="11" viewBox="0 0 14 14" fill="#fff" aria-hidden="true"><path d="M3 1.5 L12.5 7 L3 12.5 Z"/></svg>Play</button></div>
+        </div>
+      </section>
+    <p class="libhint freeonly" id="libhint">Drag an object onto the scene, or click it and then click where it should go. It lands on whatever is under it.</p>
+  </aside>
+</main>
+</div>
+<script>
+const $ = (id) => document.getElementById(id);
+// A hosted lab: the owner's link carries ?key=; keep it (not in the address bar, so a shared
+// link only lets others watch) and send it with every request.
+const LAB_KEY = (() => {
+  const q = new URLSearchParams(location.search), k = q.get('key');
+  try {
+    if (k) { localStorage.setItem('labKey', k); q.delete('key'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '')); }
+    return k || localStorage.getItem('labKey') || '';
+  } catch (e) { return k || ''; }
+})();
+// No sign-in: this browser has a random id of its own (kept in localStorage). The server makes
+// it the owner of the sessions it creates; only it can change them, anyone can watch.
+const BID = (() => {
+  const make = () => Array.from(crypto.getRandomValues(new Uint8Array(18)), b => 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_'[b & 63]).join('');
+  try { let b = localStorage.getItem('pgBrowser'); if (!b) { b = make(); localStorage.setItem('pgBrowser', b); } return b; } catch (e) { return make(); }
+})();
+// The session (one lab of its own) this page shows. Every /pg/ and /st/ request goes to it.
+let SID = '';
+const SESSIONLESS = /^\/pg\/(static\/|thumb\/|catalog$|sessions|runs$)/;
+const U = (path) => (path.startsWith('/pg/') && !SESSIONLESS.test(path) || path.startsWith('/st/')) && SID ? `/s/${SID}${path}` : path;
+const PICK_PATHS = new Set(['/pg/pick', '/pg/probe', '/pg/place', '/pg/move', '/pg/station/probe', '/pg/station/add', '/pg/station/move']);
+const api = async (path, body) => {
+  if (body && window.V3 && PICK_PATHS.has(path)) body = {...body, cam: window.V3.camForServer()};
+  const headers = {'X-Browser-Id': BID, ...(LAB_KEY ? {'X-Lab-Key': LAB_KEY} : {})};
+  const r = await fetch(U(path), body === undefined ? {headers} : {method: 'POST', headers: {...headers, 'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+  return r.json();
+};
+const S = {cat: null, tab: 'All', search: '', scene: null, armed: null, sel: 'robot', runKey: null, model: 'claude'};
+const view = $('view'), stage = $('stage');
+// In free play each station's robot has its own API under /st/<station>; the fixed scenes have one robot at /.
+const stBase = () => `/s/${SID}` + ((S.scene && S.scene.mode === 'free' && S.scene.active) ? '/st/' + S.scene.active : '');
+S.drafts = {}; S.stModels = {}; S.placing = null; S.placeYaw = 0;
+const LIBHINT = 'Drag an object onto the scene, or click it and then click where it should go. It lands on whatever is under it.';
+
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast.h); toast.h = setTimeout(() => t.style.display = 'none', 2600); }
+function uv(e) {
+  if (window.V3) {   // the in-page view fills the box exactly
+    const r = view.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+    return {u: (e.clientX - r.left) / r.width, v: (e.clientY - r.top) / r.height, x: e.clientX - sr.left, y: e.clientY - sr.top};
+  }
+  // image is object-fit: contain; map to the rendered frame
+  const r = view.getBoundingClientRect(), ar = (view.naturalWidth && view.naturalHeight) ? view.naturalWidth / view.naturalHeight : 1.6;
+  let w = r.width, h = r.height, ox = 0, oy = 0;
+  if (w / h > ar) { w = h * ar; ox = (r.width - w) / 2; } else { h = w / ar; oy = (r.height - h) / 2; }
+  return {u: (e.clientX - r.left - ox) / w, v: (e.clientY - r.top - oy) / h, x: e.clientX - stage.getBoundingClientRect().left, y: e.clientY - stage.getBoundingClientRect().top};
+}
+
+// ---------------------------------------------------------------- library
+function fmtSize(s) { return s.map(v => (v * 100).toFixed(v < 0.1 ? 1 : 0)).join(' × ') + ' cm'; }
+function fmtMass(m) { return m == null ? '' : (m < 1 ? Math.round(m * 1000) + ' g' : m.toFixed(1) + ' kg'); }
+function renderTabs() {
+  const tabs = $('tabs'); tabs.innerHTML = '';
+  for (const t of ['All', ...S.cat.tabs]) {
+    if (t === 'Robots') continue;
+    const n = S.cat.items.filter(i => t === 'All' ? i.tab !== 'Robots' : i.tab === t).length;
+    const b = document.createElement('button'); b.role = 'tab'; b.setAttribute('aria-selected', S.tab === t && !S.search);
+    b.innerHTML = `${t} <span style="opacity:.7">${n}</span>`; b.onclick = () => { S.tab = t; S.search = ''; $('search').value = ''; renderTabs(); renderItems(); };
+    tabs.appendChild(b);
+  }
+}
+function renderItems() {
+  const box = $('items'); box.innerHTML = '';
+  const q = S.search.toLowerCase();
+  const list = S.cat.items.filter(i => q ? (i.label + ' ' + i.tab).toLowerCase().includes(q) : (S.tab === 'All' ? i.tab !== 'Robots' : i.tab === S.tab));
+  for (const it of list) {
+    const c = document.createElement('button'); c.className = 'card' + (S.armed === it.id ? ' armed' : ''); c.draggable = true;
+    c.title = 'Drag onto the scene, or click and then click in the scene';
+    c.innerHTML = `<div class="th"><img src="${it.thumb}" alt=""></div><div class="tx"><div class="n">${it.label}</div><div class="s">${fmtSize(it.size)}${it.mass ? ' · ' + fmtMass(it.mass) : ''}</div></div>`;
+    c.ondragstart = (e) => { e.dataTransfer.setData('text/plain', it.id); e.dataTransfer.effectAllowed = 'copy'; S.dragItem = it; const img = new Image(); img.src = it.thumb; e.dataTransfer.setDragImage(c.querySelector('img'), 30, 30); };
+    c.ondragend = () => { S.dragItem = null; hideTag(); api('/pg/ghost/clear', {}); };
+    c.onclick = () => { S.armed = S.armed === it.id ? null : it.id; renderItems(); $('libhint').textContent = S.armed ? `Now click in the scene to place the ${it.label.toLowerCase()}. Esc to cancel.` : LIBHINT; };
+    box.appendChild(c);
+  }
+  if (!list.length) box.innerHTML = '<p class="small">Nothing matches.</p>';
+}
+$('search').oninput = (e) => { S.search = e.target.value; renderTabs(); renderItems(); };
+
+// ---------------------------------------------------------------- dropping
+let probeBusy = false, probeNext = null;
+async function probe(item, p, uid) {
+  if (probeBusy) { probeNext = [item, p, uid]; return; }
+  probeBusy = true;
+  try {
+    const r = await api('/pg/probe', {item, u: p.u, v: p.v, uid});
+    S.lastSpot = r;
+    if (!S.dragItem && !S.armed && !(drag && drag.obj)) { hideTag(); api('/pg/ghost/clear', {}); return; }
+    const label = (S.cat.items.find(i => i.id === item) || {}).label || '';
+    showTag(p, r.valid ? `${label} · lands on ${r.surface.toLowerCase().startsWith('the') ? r.surface : 'the ' + r.surface.toLowerCase()}` : (r.reason || "can't go there"), !r.valid);
+  } finally {
+    probeBusy = false;
+    if (probeNext) { const n = probeNext; probeNext = null; probe(...n); }
+  }
+}
+function showTag(p, text, bad) { const t = $('droptag'); t.style.display = 'block'; t.style.left = p.x + 'px'; t.style.top = p.y + 'px'; t.textContent = text; t.classList.toggle('bad', !!bad); }
+function hideTag() { $('droptag').style.display = 'none'; }
+stage.addEventListener('dragover', (e) => { if (!S.dragItem) return; e.preventDefault(); probe(S.dragItem.id, uv(e)); });
+stage.addEventListener('dragleave', (e) => { if (e.target === stage || e.target === view) { hideTag(); api('/pg/ghost/clear', {}); } });
+stage.addEventListener('drop', async (e) => {
+  e.preventDefault(); const id = e.dataTransfer.getData('text/plain') || (S.dragItem && S.dragItem.id); if (!id) return;
+  S.dragItem = null; probeNext = null; hideTag(); await place(id, uv(e));
+});
+async function place(id, p) {
+  const r = await api('/pg/place', {item: id, u: p.u, v: p.v});
+  if (!r.ok) toast(r.error || "Can't go there"); else { S.sel = r.uid; }
+  refresh();
+}
+
+// ---------------------------------------------------------------- mouse in the scene
+let drag = null;
+view.addEventListener('contextmenu', e => e.preventDefault());
+view.addEventListener('mousedown', async (e) => {
+  const p = uv(e);
+  drag = {x: e.clientX, y: e.clientY, btn: e.button, shift: e.shiftKey, moved: false, p0: p, obj: null};
+  if (e.button === 0 && !S.armed && S.scene && !S.scene.locked) {
+    const hit = await api('/pg/pick', {u: p.u, v: p.v});
+    if (drag && hit.kind === 'object' && hit.removable) drag.obj = hit;
+  }
+});
+window.addEventListener('mousemove', (e) => {
+  if (S.placing && e.target === view && !drag) probeStation(uv(e));
+  if (S.armed && e.target === view) probe(S.armed, uv(e));
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+  if (!drag.moved) return;
+  view.classList.add('dragging');
+  if (drag.obj) { probe(drag.obj.item, uv(e), drag.obj.uid); return; }
+  drag.x = e.clientX; drag.y = e.clientY;
+  if (drag.btn === 2 || drag.shift) camera({pan: [-dx / 900, dy / 900]});
+  else camera({azimuth: -dx * 0.3, elevation: -dy * 0.3});
+});
+window.addEventListener('mouseup', async (e) => {
+  if (!drag) return;
+  const d = drag; drag = null; view.classList.remove('dragging');
+  if (d.moved && d.obj) { probeNext = null; hideTag(); const r = await api('/pg/move', {uid: d.obj.uid, u: uv(e).u, v: uv(e).v}); if (!r.ok) toast(r.error); S.sel = d.obj.uid; refresh(); return; }
+  if (d.moved || e.target !== view) return;
+  const p = uv(e);
+  if (d.btn === 2) {     // a right-click (no drag) on a station opens its menu
+    if (S.watch || S.placing || S.armed || !S.scene || S.scene.mode !== 'free') return;
+    const hit = await api('/pg/pick', {u: p.u, v: p.v});
+    if (hit.station && hit.kind !== 'object') { S.sel = 'robot'; refresh(); openStMenu(hit.station, e.clientX, e.clientY); }
+    return;
+  }
+  if (S.placing) { await placeStation(p); return; }
+  if (S.armed) { const id = S.armed; S.armed = null; probeNext = null; renderItems(); hideTag(); $('libhint').textContent = LIBHINT; await place(id, p); return; }
+  const hit = await api('/pg/pick', {u: p.u, v: p.v});
+  S.sel = hit.kind === 'robot' || hit.station ? 'robot' : hit.kind === 'object' ? hit.uid : S.sel;
+  if (hit.kind === 'robot' && S.scene && S.scene.mode === 'free') S.sideTab = 'chat';
+  refresh();
+});
+let camQ = null, camBusy = false;
+async function camera(delta) {
+  if (window.V3) {        // move the in-page view now; the server follows (for picking and glides)
+    window.V3.applyDelta(delta);
+    if (S.watch) { window.V3.setFollow(false); return; }   // a watcher's own view
+  }
+  if (camQ) { for (const k of ['azimuth', 'elevation']) camQ[k] = (camQ[k] || 0) + (delta[k] || 0); if (delta.pan) camQ.pan = [(camQ.pan || [0, 0])[0] + delta.pan[0], (camQ.pan || [0, 0])[1] + delta.pan[1]]; if (delta.zoom) camQ.zoom = (camQ.zoom || 1) * delta.zoom; if (delta.move) camQ.move = (camQ.move || [0, 0, 0]).map((v, i) => v + delta.move[i]); }
+  else camQ = {...delta};
+  if (camBusy) return; camBusy = true;
+  while (camQ) { const q = camQ; camQ = null; await api('/pg/camera', q); }
+  camBusy = false;
+}
+view.addEventListener('wheel', (e) => { e.preventDefault(); camera({zoom: Math.exp(e.deltaY * 0.0012)}); }, {passive: false});
+document.querySelectorAll('.bl button').forEach(b => b.onclick = () => { if (S.watch) return; if (window.V3) window.V3.setFollow(true); api('/pg/camera', {preset: b.dataset.preset}); });
+// Camera pad: click for one step, hold to keep moving.
+let camHold = null;
+const camStep = (m) => camera({move: m});
+const camStop = () => { clearTimeout(camHold); clearInterval(camHold); camHold = null; };
+document.querySelectorAll('.campad [data-move]').forEach(b => {
+  const m = b.dataset.move.split(',').map(Number);
+  b.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return; e.preventDefault(); camStop(); camStep(m);
+    camHold = setTimeout(() => { camHold = setInterval(() => camStep(m.map(v => v * 0.35)), 50); }, 300);
+  });
+  b.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); camStep(m); } });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => b.addEventListener(t, camStop));
+});
+// Joystick: drag the knob; the further from the middle, the faster the view slides. Let go and it springs back.
+(() => {
+  const joy = $('joy'), knob = joy.querySelector('.knob'), R = 40;
+  let vec = null, tick = null, pid = null;
+  const set = (e) => {
+    const r = joy.getBoundingClientRect();
+    let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+    const d = Math.hypot(dx, dy); if (d > R) { dx *= R / d; dy *= R / d; }
+    knob.style.transform = `translate(${dx}px,${dy}px)`;
+    vec = [dx / R, -dy / R];
+  };
+  const end = () => {
+    if (pid === null) return; pid = null; vec = null; clearInterval(tick); tick = null;
+    joy.classList.remove('held'); knob.style.transform = '';
+  };
+  joy.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || S.watch) return; e.preventDefault();
+    pid = e.pointerId; joy.setPointerCapture(pid); joy.classList.add('held'); set(e);
+    tick = setInterval(() => { if (vec && Math.hypot(vec[0], vec[1]) > 0.12) camStep([vec[0] * 0.4, vec[1] * 0.4, 0]); }, 50);
+  });
+  joy.addEventListener('pointermove', (e) => { if (e.pointerId === pid) set(e); });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => joy.addEventListener(t, end));
+  window.addEventListener('blur', end);
+})();
+window.addEventListener('blur', camStop);
+const CAM_KEYS = {ArrowUp: [0, 1, 0], ArrowDown: [0, -1, 0], ArrowLeft: [-1, 0, 0], ArrowRight: [1, 0, 0],
+                  PageUp: [0, 0, 1], PageDown: [0, 0, -1], '+': [0, 0, 1], '=': [0, 0, 1], '-': [0, 0, -1]};
+window.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+  if (e.key === 'Escape') { if (S.placing) cancelPlacing(); S.armed = null; renderItems(); hideTag(); api('/pg/ghost/clear', {}); }
+  if (S.placing && (e.key === 'r' || e.key === 'R')) { S.placeYaw += Math.PI / 2; if (S.lastUV) probeStation(S.lastUV); return; }
+  if ((e.key === 'Delete' || e.key === 'Backspace') && S.sel && S.sel !== 'robot') removeSel();
+  if (e.key === 'r' && S.sel && S.sel !== 'robot') rotateSel();
+  if (e.target.tagName === 'SELECT' || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (CAM_KEYS[e.key]) { e.preventDefault(); camStep(e.repeat ? CAM_KEYS[e.key].map(v => v * 0.5) : CAM_KEYS[e.key]); }
+  if (e.key === 'Home') { e.preventDefault(); if (window.V3) window.V3.setFollow(true); api('/pg/camera', {preset: 'home'}); }
+});
+
+// ---------------------------------------------------------------- object panel
+async function removeSel() { const r = await api('/pg/remove', {uid: S.sel}); if (!r.ok) toast(r.error); else S.sel = 'robot'; refresh(); }
+
+// ---------------------------------------------------------------- stations
+function stationStatus(st) {
+  const sc = S.scene, run = sc.mode === 'free' ? (sc.runs || {})[st.id] : sc.run;
+  const draft = (sc.mode === 'free' ? S.drafts[st.id] : '') || '';
+  if (run && run.active) return {color: '#DC2626', text: 'Working on its task'};
+  if (run && run.queued) return {color: '#F59E0B', text: `Waiting for a free slot · ${run.queued - 1} ahead`};
+  if (run && run.started) return {color: run.status === 'error' ? '#F59E0B' : '#2563EB', text: {finished: 'Finished', error: 'Stopped with an error', stopped: 'Stopped', time_limit: 'Time limit reached'}[run.status] || run.status};
+  if (draft.trim()) return {color: '#16A34A', text: 'Task ready'};
+  return {color: '#9CA3AF', text: 'No task yet'};
+}
+const STATION_IMG = {franka: '/pg/static/station_franka.png', ur5e: '/pg/static/station_ur5e.png'};
+function chipDot(st) {
+  const sc = S.scene, run = (sc.runs || {})[st.id];
+  if (run && run.active) return ['run', 'Working on its task'];
+  if (run && run.queued) return ['wait', 'Waiting for a free slot'];
+  if (run && run.started) return ['ok', {finished: 'Finished', error: 'Stopped with an error', stopped: 'Stopped', time_limit: 'Time limit reached'}[run.status] || 'Finished'];
+  return ['', (S.drafts[st.id] || '').trim() ? 'Task ready' : 'No task yet'];
+}
+// The stations bar floating over the lab: one chip per station, the selected one ringed.
+function renderDock() {
+  const sc = S.scene, list = sc.mode === 'free' ? (sc.robots || []) : [];
+  const key = JSON.stringify([SID, list, sc.active, sc.runs, S.drafts, S.watch]);
+  if (key === S.dockKey) return; S.dockKey = key;
+  const chips = list.map(st => { const [d, t] = chipDot(st);
+    return `<div class="schipw${st.id === sc.active ? ' on' : ''}"><button class="schip" data-st="${esc(st.id)}" aria-pressed="${st.id === sc.active}"><img src="${STATION_IMG[st.robot] || STATION_IMG.franka}" alt=""><span><b>${esc(st.name)}</b><br><span class="sub">${esc(st.label)}</span></span><span class="sdot ${d}" title="${esc(t)}"></span></button>${S.watch ? '' : `<button class="smore" data-more="${esc(st.id)}" aria-label="More actions for ${esc(st.name)}" aria-haspopup="menu" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg></button>`}</div>`; });
+  const add = list.length ? `<button class="schip add" id="dockAdd" aria-label="Add a station"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 12 12" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg>${list.length > 3 ? '' : 'Add station'}</button>`
+    : `<button class="schip add big" id="dockAdd"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 12 12" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg>Add your first station</button>`;
+  $('dock').innerHTML = chips.join('') + (S.watch ? '' : add);
+  $('dock').parentElement.style.display = list.length || !S.watch ? '' : 'none';
+  $('dock').querySelectorAll('.schip[data-st]').forEach(b => b.onclick = async () => {
+    S.sel = 'robot'; if (S.sideTab === 'objects') S.sideTab = 'chat';
+    if (!S.watch) await api('/pg/station/select', {uid: b.dataset.st, frame: true});
+    else S.scene.active = b.dataset.st;      // a watcher just looks: the owner's view stays
+    S.taskFor = null; refresh();
+  });
+  $('dock').querySelectorAll('.smore').forEach(b => b.onclick = (e) => {
+    e.stopPropagation();
+    if (S.menu && S.menu.btn === b) { closeStMenu(); return; }
+    const r = b.getBoundingClientRect(); openStMenu(b.dataset.more, r.left, r.bottom + 6, b);
+  });
+  $('dock').querySelectorAll('.schip[data-st]').forEach(b => b.oncontextmenu = (e) => {
+    if (S.watch) return; e.preventDefault(); openStMenu(b.dataset.st, e.clientX, e.clientY);
+  });
+  if ($('dockAdd')) $('dockAdd').onclick = openAdd;
+  const on = $('dock').querySelector('[aria-pressed=true]'); if (on) on.scrollIntoView({block: 'nearest', inline: 'nearest'});
+}
+function renderStations() {
+  renderDock();
+  const sc = S.scene, list = sc.robots || [];
+  const key = JSON.stringify([list, sc.active, S.sel === 'robot', sc.runs, sc.run && sc.run.active, sc.run && sc.run.status, S.drafts]);
+  if (key === S.stKey) return; S.stKey = key;
+  $('stCap').textContent = sc.mode === 'free' ? 'Stations in the lab' : 'Robot';
+  $('stationList').innerHTML = list.map(st => { const x = stationStatus(st);
+    return `<button class="strow" role="listitem" data-st="${st.id}" aria-pressed="${st.id === sc.active && S.sel === 'robot'}"><span class="dot" style="background:${x.color}"></span><span class="nm"><b>${esc(sc.mode === 'free' ? st.name : st.label)}</b><span class="small">${sc.mode === 'free' ? esc(st.label) + ' · ' : ''}${x.text}</span></span></button>`; }).join('');
+  $('stationList').querySelectorAll('.strow').forEach(b => b.onclick = async () => {
+    S.sel = 'robot'; if (S.scene.mode === 'free') S.sideTab = 'chat';
+    if (S.scene.mode === 'free') await api('/pg/station/select', {uid: b.dataset.st, frame: true});
+    else api('/pg/select', {uid: 'robot'});
+    refresh();
+  });
+}
+function curStation() { const sc = S.scene; return (sc.robots || []).find(r => r.id === sc.active) || (sc.robots || [])[0] || {}; }
+// The station menu: from a chip's "⋯" button, or a right-click on a chip or on a station in the view.
+function openStMenu(uid, x, y, btn) {
+  closeStMenu();
+  const sc = S.scene; if (!sc || sc.mode !== 'free' || S.watch) return;
+  const st = (sc.robots || []).find(r => r.id === uid); if (!st) return;
+  const m = $('stMenu'), lock = sc.locked ? (typeof sc.locked === 'string' ? sc.locked : 'A robot is running a task.') : '';
+  m.querySelectorAll('button').forEach(b => b.disabled = !!lock && b.dataset.act !== 'rename');
+  $('stMenuWhy').hidden = !lock; $('stMenuWhy').textContent = lock ? `${lock} Stop it to change the lab.` : '';
+  m.classList.add('open');
+  const w = m.offsetWidth, h = m.offsetHeight;
+  m.style.left = Math.max(8, Math.min(x, innerWidth - w - 8)) + 'px';
+  m.style.top = Math.max(8, Math.min(y, innerHeight - h - 8)) + 'px';
+  S.menu = {uid, btn: btn || null};
+  if (btn) btn.setAttribute('aria-expanded', 'true');
+  const first = m.querySelector('button:not(:disabled)'); if (first) first.focus({preventScroll: true});
+}
+function closeStMenu(refocus) {
+  if (!S.menu) return;
+  const {btn} = S.menu; S.menu = null; $('stMenu').classList.remove('open');
+  if (btn) { btn.setAttribute('aria-expanded', 'false'); if (refocus) btn.focus(); }
+}
+async function stAction(act, uid) {
+  const st = (S.scene.robots || []).find(r => r.id === uid); if (!st) return;
+  if (act === 'rename') {
+    const name = prompt('Name for this station', st.name || ''); if (name == null || !name.trim()) return;
+    const r = await api('/pg/station/rename', {uid, name: name.trim()}); if (r.ok === false) toast(r.error);
+  } else if (act === 'rotate') {
+    const r = await api('/pg/station/rotate', {uid, degrees: 90}); if (!r.ok) toast(r.error);
+  } else if (act === 'duplicate') {
+    const r = await api('/pg/station/duplicate', {uid});
+    if (!r.ok) toast(r.error || "Couldn't copy it");
+    else { if (S.drafts[uid]) S.drafts[r.uid] = S.drafts[uid]; S.sel = 'robot'; toast(`Copied ${st.name}`); }
+  } else if (act === 'remove') {
+    if (!confirm(`Remove ${st.name} (${st.label}) and everything on its table?`)) return;
+    const r = await api('/pg/station/remove', {uid}); if (!r.ok) toast(r.error); else delete S.drafts[uid];
+  }
+  refresh();
+}
+$('stMenu').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-act]'); if (!b || b.disabled || !S.menu) return;
+  const uid = S.menu.uid; closeStMenu(); stAction(b.dataset.act, uid);
+});
+$('stMenu').addEventListener('keydown', (e) => {
+  const items = [...$('stMenu').querySelectorAll('button:not(:disabled)')], i = items.indexOf(document.activeElement);
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const n = items.length; if (n) items[((i < 0 ? -1 : i) + (e.key === 'ArrowDown' ? 1 : -1) + n) % n].focus(); }
+  else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); if (items.length) items[e.key === 'Home' ? 0 : items.length - 1].focus(); }
+  else if (e.key === 'Tab') closeStMenu();
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.menu) { e.stopPropagation(); closeStMenu(true); } }, true);
+document.addEventListener('mousedown', (e) => { if (S.menu && !e.target.closest('#stMenu, .smore')) closeStMenu(); }, true);
+window.addEventListener('resize', () => closeStMenu());
+// The picker: one card per robot. "Add to lab" then click the floor to place its station.
+function openAdd() {
+  if (S.scene && S.scene.locked) { toast(S.scene.locked); return; }
+  $('rcards').innerHTML = S.cat.robots.map(r => `<div class="rcard"><img src="${r.thumb}" alt="${esc(r.label)} on its table"><div class="rx"><div><b>${esc(r.label)}</b><div class="small">${esc(r.maker)}</div></div>
+    <dl><dt>Gripper</dt><dd>${esc(r.gripper)}</dd><dt>Reach</dt><dd>${r.reach_mm} mm</dd><dt>Lifts</dt><dd>${r.payload_kg} kg</dd><dt>Joints</dt><dd>${r.joints}</dd></dl>
+    <button class="primary" data-r="${r.id}">Add to lab</button></div></div>`).join('');
+  $('rcards').querySelectorAll('button').forEach(b => b.onclick = () => startPlacing(b.dataset.r));
+  $('addModal').style.display = 'flex';
+}
+function closeAdd() { $('addModal').style.display = 'none'; }
+$('addStationBtn').onclick = openAdd; $('amClose').onclick = closeAdd;
+$('addModal').onclick = (e) => { if (e.target === $('addModal')) closeAdd(); };
+function startPlacing(robot) {
+  closeAdd(); S.placing = robot; S.placeYaw = 0; S.armed = null; renderItems();
+  api('/pg/camera', {preset: 'lab'});
+  $('hintTag').textContent = 'Click the floor to place the station. R turns it, Esc cancels.';
+}
+function cancelPlacing() { S.placing = null; hideTag(); api('/pg/ghost/clear', {}); render(); }
+let stProbeBusy = false, stProbeNext = null;
+async function probeStation(p) {
+  S.lastUV = p;
+  if (stProbeBusy) { stProbeNext = p; return; }
+  stProbeBusy = true;
+  try {
+    const r = await api('/pg/station/probe', {u: p.u, v: p.v, yaw: S.placeYaw});
+    if (!S.placing) { hideTag(); api('/pg/ghost/clear', {}); return; }
+    const label = (S.cat.robots.find(x => x.id === S.placing) || {}).label || '';
+    showTag(p, r.valid ? `${label} station · click to place` : (r.reason || "can't go there"), !r.valid);
+  } finally { stProbeBusy = false; if (stProbeNext) { const n = stProbeNext; stProbeNext = null; probeStation(n); } }
+}
+async function placeStation(p) {
+  const r = await api('/pg/station/add', {robot: S.placing, u: p.u, v: p.v, yaw: S.placeYaw});
+  if (!r.ok) { toast(r.error || "Can't go there"); return; }
+  S.placing = null; hideTag(); S.sel = 'robot';
+  await refresh(); setSideTab('chat'); $('task').focus();
+}
+async function rotateSel() { const r = await api('/pg/rotate', {uid: S.sel, degrees: 90}); if (!r.ok) toast(r.error); refresh(); }
+$('delBtn').onclick = removeSel; $('rotBtn').onclick = rotateSel;
+
+// ---------------------------------------------------------------- play, tasks, chat
+$('playBtn').onclick = async () => {
+  if (S.scene && !S.scene.paused) await api('/pg/pause', {}); else await api('/pg/play', {});
+  refresh();
+};
+$('resetBtn').onclick = async () => { const r = await api('/pg/reset', {}); if (!r.ok) toast(r.error); refresh(); };
+$('startBtn').onclick = async () => {
+  const task = $('task').value.trim();
+  if (!task) { toast('Type a task for the robot first'); $('task').focus(); return; }
+  const station = S.scene.active;
+  const r = await api('/pg/play', {task, model: $('model').value, station});
+  if (!r.ok) { toast(r.error); return; }
+  S.runTask = task; S.follow = true; S.feedKey = ''; setSideTab('chat');
+  refresh();
+};
+$('stopBtn').onclick = async () => { await api('/pg/stop', S.scene && S.scene.mode === 'free' ? {station: S.scene.active} : {}); refresh(); };
+$('infoBtn').onclick = (e) => { e.stopPropagation(); const open = $('infoPop').hidden; $('infoPop').hidden = !open; $('infoBtn').setAttribute('aria-expanded', open); };
+document.addEventListener('click', (e) => { if (!$('infoPop').hidden && !e.target.closest('#infoPop')) { $('infoPop').hidden = true; $('infoBtn').setAttribute('aria-expanded', false); } });
+function modelInfo(id) { return (S.cat.models.find(m => m.id === id) || {}); }
+$('model').onchange = () => { if (S.scene) S.stModels[S.scene.active] = $('model').value; saveDrafts(); $('modelLogo').src = LOGOS[modelInfo($('model').value).provider] || LOGOS.anthropic; S.feedKey = ''; render(); };
+// Free play's right panel: Chat or Objects. A run switches it to Chat; either tab can be
+// picked at any time. Objects are greyed out while the scene is locked (running or playing).
+S.sideTab = 'objects';
+function setSideTab(t) { S.sideTab = t; render(); }
+$('tabChat').onclick = () => setSideTab('chat');
+$('tabObjects').onclick = () => setSideTab('objects');
+$('tabFiles').onclick = () => { setSideTab('files'); pollFiles(); };
+$('tabData').onclick = () => { setSideTab('data'); pollData(); };
+function esc(s) { return String(s).replace(/[&<>]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;'}[c])); }
+// The chat: the same rendering as the robot cell's viewer (wetlabsim/viewer.html), rebuilt
+// from the whole trace whenever it grows. It follows new items while you're at the bottom;
+// scroll up and it stops, with a button to jump back to the latest.
+const LOGOS = {anthropic: '/static/anthropic.svg', openai: '/static/openai.svg', cognition: '/static/cognition.svg'};
+S.trace = []; S.runInfo = {}; S.follow = true; S.feedKey = '';
+// generative-loaders' InlineLoader variant="snake" (the markup its React component renders;
+// the styles are vendored in /pg/static/generative-loaders.css).
+function snake(size = 24) {
+  const dots = Array.from({length: 7}, (_, i) => `<i style="--il-i:${i};--il-scale:${(1 - i * .075).toFixed(3)}"></i>`).join('');
+  return `<span class="il-loader" data-variant="snake" data-speed="1" data-paused="false" aria-hidden="true" style="--il-size:${size}px;--il-duration:1.2s"><span class="il-snake">${dots}<b></b></span></span>`;
+}
+function mmss(x) { x = Math.max(0, x); return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(Math.floor(x % 60)).padStart(2, '0'); }
+function feedAtBottom() { const f = $('feed'); return f.scrollHeight - f.scrollTop - f.clientHeight < 40; }
+$('feed').addEventListener('scroll', () => { S.follow = feedAtBottom(); $('jumpBtn').style.display = S.follow ? 'none' : 'block'; });
+$('jumpBtn').onclick = () => { S.follow = true; $('jumpBtn').style.display = 'none'; const f = $('feed'); f.scrollTop = f.scrollHeight; };
+function renderFeed() {
+  const run = (S.scene && S.scene.run) || {}, info = S.runInfo, trace = S.trace, active = !!run.active;
+  const key = (S.scene && S.scene.active) + '|' + (run.started || '') + '|' + trace.length + '|' + active + '|' + (run.status || '') + '|' + S.mode;
+  if (key === S.feedKey) return;
+  S.feedKey = key;
+  const m = run.model || {}, logo = LOGOS[m.provider] || '', who = esc(info.model_label || m.label || 'The AI');
+  const start = info.sim_start || 0, out = [];
+  if (!run.started) out.push(`<li class="empty">${S.mode === 'libero' ? 'Press “Run this setup” and the AI\'s messages show up here.' : S.mode === 'wetlab' ? 'Press “Run this task” and the AI\'s messages show up here.' : 'Nothing yet. The AI\'s thoughts, code and replies appear here as it works.'}</li>`);
+  else out.push(`<li class="prompt"><div class="lbl">Your task</div><div class="bub">${esc(run.task || '')}</div></li>`);
+  let prevT = null, prevKind = null;
+  for (let i = 0; i < trace.length; i++) {
+    const st = trace[i];
+    if (st.kind === 'output') continue;       // shown with the code that produced it
+    const next = trace[i + 1], outText = next && next.kind === 'output' ? next.text : null;
+    const turn = prevT === null || st.t - prevT > 30 || ((st.kind === 'says' || st.kind === 'thinks') && !['says', 'thinks'].includes(prevKind));
+    const head = turn ? `<div class="who">${logo ? `<img src="${logo}" alt="">` : ''}<strong>${who}</strong><span>${mmss(st.t - start)}</span></div>` : '';
+    let body = '';
+    if (st.kind === 'says') body = `<p>${esc(st.text)}</p>`;
+    else if (st.kind === 'thinks') body = `<p class="think">${esc(st.text)}</p>`;
+    else if (st.kind === 'runs') {
+      const err = outText && /Error|Traceback|refused|protective stop/i.test(outText);
+      body = `<div class="codecard"><div class="bar"><span><span class="sdot" style="color:${err ? 'var(--red)' : 'var(--green)'}">●</span> Run code</span><span>${mmss(st.t - start)}</span></div><pre>${esc(st.text)}</pre>` +
+        (outText != null ? `<div class="out${err ? ' err' : ''}">⎿ ${esc(outText)}</div>` : '') + '</div>';
+    } else {
+      const label = st.kind === 'reads' ? 'Read file' : st.kind === 'writes' ? 'Wrote file' : st.kind === 'looks' ? 'Look' : 'Tool';
+      let text = st.kind === 'writes' ? st.text.split('\n')[0] : st.text, img = '';
+      if (st.kind === 'looks') {
+        const c = /^(overhead|wrist|side) camera/.exec(st.text), f = /saved image (.+)$/.exec(st.text);
+        if (c) img = `<img src="${stBase()}/camera/${c[1]}.jpg?t=${st.t.toFixed(3)}" alt="What the ${c[1]} camera showed at ${mmss(st.t - start)}" loading="lazy">`;
+        else if (f) img = `<img src="${stBase()}/run/file?path=${encodeURIComponent(f[1])}" alt="${esc(f[1])}" loading="lazy" onerror="this.remove()">`;
+        text = c ? c[1] + ' camera' : f ? f[1] : text;
+      }
+      body = `<div class="lite"><div class="row"><span class="sdot">●</span><b>${label}</b><code title="${esc(st.text)}">${esc(text)}</code></div>${img}</div>`;
+    }
+    out.push(`<li class="it${turn ? ' turn' : ''}">${head}${body}</li>`);
+    prevT = st.t; prevKind = st.kind;
+  }
+  // A run that failed before saying anything: show why, instead of an empty chat.
+  if (!active && run.status === 'error' && !trace.some(st => st.kind === 'says')) out.push(`<li class="it turn"><div class="who">${logo ? `<img src="${logo}" alt="">` : ''}<strong>${who}</strong></div><div class="runerr"><b>The run stopped before the AI could start.</b>${run.error_text ? `<pre>${esc(run.error_text)}</pre>` : ''}</div></li>`);
+  if (active) out.push(`<li class="thinking">${snake(16)} Thinking…</li>`);
+  const f = $('feed');
+  f.innerHTML = out.join('');
+  if (S.follow) f.scrollTop = f.scrollHeight;
+}
+// ---------------------------------------------------------------- files
+// The selected station's work folder (the robot cell's /run/files): what the AI was given
+// and what it has written since. Ported from the robot cell viewer's Sandbox Workspace.
+S.openDirs = new Set(); S.filesJSON = ''; S.filesKey = ''; S.filesSince = Infinity;
+function sizeText(f) { return f.dir ? f.items + ' items' : f.size >= 1e6 ? (f.size / 1e6).toFixed(1) + ' MB' : f.size >= 1e3 ? Math.round(f.size / 1e3) + ' KB' : f.size + ' bytes'; }
+function renderFiles() {
+  const list = S.filesJSON ? (JSON.parse(S.filesJSON).files || []) : [], rows = [], base = stBase();
+  const walk = (items, depth) => {
+    for (const f of items) {
+      const pad = `padding-left:${6 + depth * 16}px`, isNew = !f.dir && f.mtime > S.filesSince ? ' new' : '';
+      if (f.dir) {
+        const open = S.openDirs.has(f.path);
+        rows.push(`<button class="frow${isNew}" data-dir="${esc(f.path)}" aria-expanded="${open}" style="${pad}"><span class="nm"><span class="caret">${open ? '▼' : '▶'}</span><svg width="16" height="13" viewBox="0 0 18 14" aria-hidden="true" style="flex:none"><path d="M1 2.2C1 1.5 1.5 1 2.2 1h4.3l1.6 1.8h7.7c.7 0 1.2.5 1.2 1.2V12c0 .7-.5 1.2-1.2 1.2H2.2C1.5 13.2 1 12.7 1 12z" fill="#62AEF7"/></svg><span>${esc(f.name)}</span></span><span class="sz">${sizeText(f)}</span></button>`);
+        if (open && f.children) walk(f.children, depth + 1);
+      } else {
+        rows.push(`<a class="frow${isNew}" href="${base}/run/file?path=${encodeURIComponent(f.path)}" target="_blank" rel="noopener" style="${pad}"><span class="nm"><span class="caret"></span><svg width="12" height="15" viewBox="0 0 14 17" aria-hidden="true" style="flex:none"><path d="M1.5 1h7.2L12.5 4.8v10.7c0 .3-.2.5-.5.5H1.5c-.3 0-.5-.2-.5-.5v-14c0-.3.2-.5.5-.5z" fill="#fff" stroke="#9CA3AF"/><path d="M8.7 1v3.8h3.8" fill="none" stroke="#9CA3AF"/></svg><span>${esc(f.name)}</span></span><span class="sz">${sizeText(f)}</span></a>`);
+      }
+    }
+  };
+  walk(list, 0);
+  // Code the AI ran inline (python -c, heredocs) never becomes a file in its folder: list each
+  // run from the transcript as a view-only file in a "Code runs" folder of its own.
+  const runs = codeRuns();
+  if (runs.length) {
+    const open = S.openDirs.has('__code');
+    rows.push(`<button class="frow" data-dir="__code" aria-expanded="${open}" style="padding-left:6px"><span class="nm"><span class="caret">${open ? '▼' : '▶'}</span><svg width="16" height="13" viewBox="0 0 18 14" aria-hidden="true" style="flex:none"><path d="M1 2.2C1 1.5 1.5 1 2.2 1h4.3l1.6 1.8h7.7c.7 0 1.2.5 1.2 1.2V12c0 .7-.5 1.2-1.2 1.2H2.2C1.5 13.2 1 12.7 1 12z" fill="#A78BFA"/></svg><span>Code runs</span></span><span class="sz">${runs.length} items</span></button>`);
+    if (open) runs.forEach((r, i) => rows.push(`<button class="frow" data-code="${i}" style="padding-left:22px"><span class="nm"><span class="caret"></span><svg width="12" height="15" viewBox="0 0 14 17" aria-hidden="true" style="flex:none"><path d="M1.5 1h7.2L12.5 4.8v10.7c0 .3-.2.5-.5.5H1.5c-.3 0-.5-.2-.5-.5v-14c0-.3.2-.5.5-.5z" fill="#fff" stroke="#9CA3AF"/><path d="M8.7 1v3.8h3.8" fill="none" stroke="#9CA3AF"/></svg><span>${r.name}</span></span><span class="sz">${mmss(r.t)}</span></button>`));
+  }
+  $('files').innerHTML = rows.length ? rows.join('') : '<div class="empty">Files appear here when a run starts.</div>';
+}
+function codeRuns() {
+  const out = [], tr = S.trace || [], start = (S.runInfo && S.runInfo.sim_start) || 0;
+  tr.forEach((st, i) => {
+    if (st.kind !== 'runs') return;
+    const next = tr[i + 1];
+    // Python (a python -c / heredoc call, or Python itself) is .py; other shell commands .sh.
+    const py = /(^|\s)python3?\b|from wetlabsim|import \w/.test(st.text);
+    out.push({name: `code-${String(out.length + 1).padStart(2, '0')}.${py ? 'py' : 'sh'}`, t: st.t - start, code: st.text,
+              output: next && next.kind === 'output' ? next.text : null});
+  });
+  return out;
+}
+$('files').addEventListener('click', (e) => {
+  const c = e.target.closest('[data-code]');
+  if (c) {   // view-only: shown from the transcript in a new tab, never written anywhere
+    const r = codeRuns()[+c.dataset.code]; if (!r) return;
+    const text = `# ${r.name} · run at ${mmss(r.t)} · from the run's transcript (the AI ran this inline; view only)\n\n${r.code}\n` + (r.output != null ? `\n# --- output ---\n${r.output.split('\n').map(l => '# ' + l).join('\n')}\n` : '');
+    window.open(URL.createObjectURL(new Blob([text], {type: 'text/plain;charset=utf-8'})), '_blank', 'noopener');
+    return;
+  }
+  const b = e.target.closest('[data-dir]'); if (!b) return;
+  const p = b.dataset.dir; S.openDirs.has(p) ? S.openDirs.delete(p) : S.openDirs.add(p);
+  renderFiles();
+});
+async function pollFiles() {
+  const run = S.scene && S.scene.run, key = stBase() + '|' + ((run && run.started) || '');
+  // Written by the AI = changed more than 10 s after the run started (its folder is set up first).
+  if (key !== S.filesKey) { S.filesKey = key; S.filesJSON = ''; S.filesSince = run && run.started ? run.started + 10 : Infinity; renderFiles(); }
+  if (!run || !run.started) return;
+  try {
+    const j = await api(stBase() + '/run/files'), txt = JSON.stringify(j);
+    if (S.filesKey !== key) return;
+    if (txt !== S.filesJSON) { S.filesJSON = txt; renderFiles(); }
+  } catch (e) {}
+}
+setInterval(() => { if (S.sideTab === 'files') pollFiles(); }, 2000);
+
+S.codeCount = 0;
+async function pollTrace() {
+  const run = S.scene && S.scene.run;
+  if (run && run.started) {
+    const base = stBase(), rk = base + '|' + run.started;
+    if (S.runKey !== rk) { S.runKey = rk; S.trace = []; S.runInfo = {}; S.follow = true; $('jumpBtn').style.display = 'none'; $('chatCost').textContent = ''; delete $('chatModel').dataset.set; }
+    const r = await api(base + '/trace?since=' + S.trace.length);
+    if (S.runKey !== rk) return;
+    S.trace.push(...r.steps);
+    const info = await api(base + '/run');
+    if (info.run_id) S.runInfo = info;
+    if (info.cost_usd != null || info.tokens) $('chatCost').textContent = (info.cost_usd != null ? '$' + Number(info.cost_usd).toFixed(2) + ' · ' : '') + (info.tokens ? (info.tokens / 1000).toFixed(1) + 'k tokens' : '');
+    if (info.model_label) { $('chatModel').textContent = info.model_label; $('chatModel').dataset.set = 1; }
+  } else if (S.runKey) { S.runKey = null; S.trace = []; S.runInfo = {}; $('chatCost').textContent = ''; delete $('chatModel').dataset.set; }
+  renderFeed();
+  const n = codeRuns().length;      // new inline code: refresh the Files tab's "Code runs" folder
+  if (n !== S.codeCount) { S.codeCount = n; if (S.sideTab === 'files') renderFiles(); }
+}
+
+// ---------------------------------------------------------------- state
+function fmtClock(t) { const m = Math.floor(t / 60), s = t - m * 60; return String(m).padStart(2, '0') + ':' + s.toFixed(1).padStart(4, '0'); }
+function render() {
+  const sc = S.scene; if (!sc) return;
+  applyMode();
+  const run = sc.run || {}, active = !!run.active, playing = !sc.paused;
+  $('playBtn').classList.toggle('on', playing);
+  $('playLabel').textContent = playing ? 'Pause' : 'Play';
+  $('playIcon').innerHTML = playing ? '<rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/>' : '<path d="M3 1.5 L12.5 7 L3 12.5 Z"/>';
+  $('clock').textContent = fmtClock(sc.time);
+  $('rt').textContent = playing ? (sc.realtime_factor >= 0.97 ? 'real time' : (sc.realtime_factor * 100).toFixed(0) + '% of real time') : 'paused';
+  $('lockmsg').style.display = sc.locked ? '' : 'none'; $('lockmsg').textContent = S.fixed ? 'Scene locked for a fair test' : active ? 'Scene locked while the AI runs' : 'Scene locked while playing · pause to edit';
+  $('right').classList.toggle('locked', !!sc.locked);
+  $('liveTag').style.display = playing ? '' : 'none';
+  $('hintTag').style.display = playing ? 'none' : '';
+  // stations: the list, and the selected one's cameras, task and chat
+  const st = curStation(), free = sc.mode === 'free';
+  if (S.taskFor !== sc.active) {
+    // Each station keeps its own task draft and model: the one chosen for it, else the one
+    // its last run used, else the first in the menu.
+    S.taskFor = sc.active; $('task').value = S.drafts[sc.active] || '';
+    const runModel = run.model && run.model.id;
+    $('model').value = S.stModels[sc.active] || runModel || (S.cat.models[0] || {}).id;
+    $('modelLogo').src = LOGOS[modelInfo($('model').value).provider] || LOGOS.anthropic;
+  }
+  renderStations();
+  $('stTitle').textContent = free ? st.name : (st.label || 'Robot');
+  $('stSub').textContent = (free ? st.label + ' · ' : '') + (st.gripper || '');
+  $('taskFor').textContent = `Task for ${free ? st.name + ' · ' : ''}${st.label || 'the robot'}`;
+  $('infoText').textContent = `Your task, the ${st.label || 'robot'}'s manuals, a site sheet naming what's on its table (not where), its two cameras and its sensors. It writes code to move the robot. ` +
+    (S.cat.public ? `It runs in its own locked-down cloud box. Each run stops at ${Math.round(S.cat.free_time_limit / 60)} minutes or about $3 of AI use, ${S.cat.max_active} runs go at a time (others wait in line), and every run is public: anyone can watch it live and look at it afterwards.`
+      : `There's no time limit: it runs until it says it's done, or you press Stop. Runs use your own Claude Code or Codex login.`);
+  $('addStationBtn').disabled = !!sc.locked;
+  const empty = free && !(sc.robots || []).length;
+  document.body.classList.toggle('empty', empty);
+  $('emptyMsg').textContent = S.watch ? 'Nobody has added a station to this lab yet.' : 'Press “Add your first station” above, then click the floor to place it.';
+  const camKey = stBase() || '/';
+  if (S.camFor !== camKey) { S.camFor = camKey; openCams(); }
+  const obj = sc.objects.find(o => o.uid === S.sel);
+  $('objPanel').style.display = obj ? 'flex' : 'none';
+  if (obj) {
+    const it = S.cat.items.find(i => i.id === obj.item) || {};
+    $('objName').textContent = obj.label; $('objSize').textContent = it.size ? fmtSize(it.size) : '';
+    $('objMass').textContent = fmtMass(it.mass); $('objFric').textContent = it.friction != null ? it.friction : '';
+    $('objCol').textContent = it.collision || ''; $('delBtn').disabled = !obj.removable || sc.locked; $('rotBtn').disabled = sc.locked;
+    $('delBtn').textContent = obj.removable ? 'Remove' : 'Always here';
+  }
+  // In free play the chat takes the object library's place while a run is on, and stays
+  // until "New task" brings the library back.
+  if (active && S.seenRun !== run.started) { S.seenRun = run.started; S.sideTab = 'chat'; }
+  if ((S.fixed || S.watch) && S.sideTab === 'objects') S.sideTab = 'chat';
+  document.body.classList.toggle('chatting', !S.fixed && S.sideTab === 'chat');
+  document.body.classList.toggle('filing', S.sideTab === 'files');
+  document.body.classList.toggle('dataing', S.sideTab === 'data');
+  document.body.classList.toggle('running', active);
+  for (const [id, t] of [['tabChat', 'chat'], ['tabObjects', 'objects'], ['tabFiles', 'files'], ['tabData', 'data']]) $(id).setAttribute('aria-selected', S.sideTab === t);
+  if (S.sideTab === 'data') renderData();
+  $('libhint').textContent = sc.locked ? 'Pause the scene to add or move objects.' : (S.armed ? $('libhint').textContent : LIBHINT);
+  $('task').readOnly = active;
+  const queued = !!run.queued;     // public site: waiting for one of the few run slots
+  $('stopBtn').style.display = active || queued ? '' : 'none';
+  $('taskcard').style.display = active || queued || S.watch || empty ? 'none' : '';
+  $('runbar').style.display = run.started || queued || S.fixed ? '' : 'none';
+  if (queued) $('runStatus').textContent = `Waiting for a free slot · ${run.queued - 1} ahead (${S.cat.max_active} runs at a time)`;
+  if (!run.started && !queued) { const m = modelInfo($('model').value); $('chatLogo').src = LOGOS[m.provider] || LOGOS.anthropic; $('chatModel').textContent = m.label || ''; $('runStatus').textContent = ''; }
+  if (run.started) {
+    const left = Math.max(0, run.time_limit - run.elapsed);
+    const mmss = (x) => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+    $('runStatus').textContent = active ? (run.time_limit ? `Working · ${mmss(left)} left` : `Working · ${mmss(run.elapsed)}`) : ({finished: 'Finished', error: 'The AI stopped with an error', stopped: 'Stopped', time_limit: 'Time limit reached'}[run.status] || run.status);
+    const m = run.model || {}; $('chatLogo').src = LOGOS[m.provider] || LOGOS.anthropic;
+    if (!$('chatModel').dataset.set) $('chatModel').textContent = m.label || '';
+  }
+  $('startBtn').disabled = active;
+  if (!S.placing) $('hintTag').textContent = '';   // the scene hint only shows while placing a station
+  if (S.mode === 'libero') renderLiberoLive();
+  if (S.mode === 'wetlab') renderWetLive();
+}
+// A hosted lab closes after 5 minutes without real use (clicks, typing, scrolling, a run).
+// The page polling doesn't count; this tells the lab when its owner does something.
+let lastActive = 0, idleEnd = null;
+function markActive() {
+  if (S.watch || !S.cat || !S.cat.front) return;
+  const now = Date.now(); if (now - lastActive < 15000) return; lastActive = now;
+  api('/pg/active', {});
+}
+['pointerdown', 'keydown', 'wheel'].forEach(t => window.addEventListener(t, markActive, {capture: true, passive: true}));
+function idleCheck(left) {
+  if (left == null || S.watch) return;
+  idleEnd = Date.now() + left * 1000;
+  $('idleCard').hidden = left > 60;
+}
+setInterval(() => {
+  if (idleEnd == null || $('idleCard').hidden) return;
+  const s = Math.max(0, Math.round((idleEnd - Date.now()) / 1000));
+  $('idleLeft').textContent = s;
+  if (s <= 0) { $('idleCard').hidden = true; $('closedCard').hidden = false; idleEnd = null; }
+}, 500);
+$('idleStay').onclick = () => { lastActive = 0; markActive(); $('idleCard').hidden = true; };
+$('closedOpen').onclick = () => { location.href = (S.cat.front || '') + '/'; };
+async function refresh() {
+  const sid = SID, sc = await api('/pg/scene');
+  if (sid !== SID) return;                 // switched sessions meanwhile
+  if (JSON.stringify(sc.share) !== S.shareKey) { S.shareKey = JSON.stringify(sc.share); renderShare(sc.share); }
+  if (sc.unsent && !(S.unsentFor || {})[sid]) {   // a saved session's unsent tasks, once per session
+    S.unsentFor = {...(S.unsentFor || {}), [sid]: true};
+    for (const [k, v] of Object.entries(sc.unsent)) { if (v.task && !S.drafts[k]) S.drafts[k] = v.task; if (v.model && !S.stModels[k]) S.stModels[k] = v.model; }
+    S.taskFor = null;
+  }
+  // A hosted lab from before the site was updated: back to the front, which opens a new one.
+  if (sc.stale && S.cat.front && !S.watch && !Object.values(sc.runs || {}).some(r => r.active || r.queued)) { location.href = S.cat.front + '/'; return; }
+  idleCheck(sc.idle_left);
+  if (sc.ok === false) {                   // the session closed (the server restarted, say)
+    await loadSessions();
+    const next = (S.sess.mine[0] || {}).id;
+    if (next && next !== SID) { switchSession(next); return; }
+    throw new Error(sc.error || 'no session');
+  }
+  S.scene = sc;
+  const watch = !(sc.session && sc.session.mine);
+  if (watch !== S.watch) { S.watch = watch; document.body.classList.toggle('watch', watch); S.dockKey = ''; if (watch && S.sideTab === 'objects') S.sideTab = 'chat'; }
+  $('sessName').classList.toggle('can', !watch);
+  if (sc.session && sc.session.name !== S.sessName) { S.sessName = sc.session.name; $('sessName').textContent = sc.session.name; document.title = sc.session.name + ' · MuJoCo Playground'; }
+  if (S.sel !== 'robot' && !S.scene.objects.find(o => o.uid === S.sel)) S.sel = 'robot';
+  render();
+}
+// If the server goes away (restarted, or stopped and started again), the live streams end and
+// don't come back by themselves: once it answers again, reconnect them.
+// A stream that breaks while the server stays up (an error mid-stream) shows a broken picture:
+// try it again shortly.
+view.addEventListener('error', () => { if (window.V3) return; clearTimeout(view.retry); view.retry = setTimeout(() => { view.src = U('/pg/view.mjpg') + '?r=' + Date.now(); }, 1000); });
+function openStreams() {
+  if (!window.V3) view.src = U('/pg/view.mjpg') + '?r=' + Date.now();
+  else window.V3.setBase(`/s/${SID}`);
+  openCams();
+}
+// The selected station's two cameras (what its AI sees), small in the lower left.
+function openCams() {
+  const t = Date.now(), base = stBase(), none = S.scene && S.scene.mode === 'free' && !S.scene.active;
+  $('camOver').src = none ? '' : base + '/stream/overhead.mjpg?fps=4&r=' + t;
+  $('camWrist').src = none ? '' : base + '/stream/wrist.mjpg?fps=4&r=' + t;
+  if (S.bigCam) $('bigCam').src = none ? '' : base + `/stream/${S.bigCam}.mjpg?fps=8&r=` + t;
+}
+// Expand a camera: it grows out of the lower-left corner into a large view; Shrink puts it back.
+S.bigCam = null;
+function expandCam(cam) {
+  S.bigCam = cam; const w = $('bigCamWrap');
+  $('bigName').textContent = (cam === 'wrist' ? 'Wrist' : 'Overhead') + ' camera · ' + (curStation().name || curStation().label || 'Robot');
+  $('bigCam').alt = $('bigName').textContent; openCams();
+  w.classList.add('on'); w.getBoundingClientRect(); w.classList.add('open'); $('shrinkBtn').focus();
+}
+function shrinkCam() {
+  if (!S.bigCam) return; S.bigCam = null; const w = $('bigCamWrap');
+  w.classList.remove('open');
+  clearTimeout(shrinkCam.h); shrinkCam.h = setTimeout(() => { if (!S.bigCam) { w.classList.remove('on'); $('bigCam').src = ''; } }, 230);
+}
+document.querySelectorAll('.pip .exp').forEach(b => b.onclick = () => expandCam(b.dataset.cam));
+$('shrinkBtn').onclick = shrinkCam;
+$('bigCamWrap').onclick = (e) => { if (e.target === $('bigCamWrap')) shrinkCam(); };
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.bigCam) shrinkCam(); });
+// Share: the session's link, view only, off by default. Off revokes it at once; on again makes a
+// new link. Only on a signed-in account's lab (the scene says so with "share").
+function renderShare(info) {
+  $('shareWrap').style.display = info && !S.watch ? '' : 'none';
+  $('sharedTag').style.display = info && info.on ? '' : 'none';
+  if (!info) return;
+  $('shareOn').setAttribute('aria-pressed', String(info.on));
+  $('shareLinkRow').hidden = !info.on;
+  $('shareOffNote').hidden = info.on;
+  $('shareLink').value = (info.link || '').replace(/^https?:\/\//, '');
+  S.shareLink = info.link || '';
+  $('shareCopy').textContent = 'Copy';
+}
+$('shareBtn').onclick = () => { const p = $('sharePop'); p.hidden = !p.hidden; $('shareBtn').setAttribute('aria-expanded', String(!p.hidden)); };
+document.addEventListener('pointerdown', (e) => { if (!$('shareWrap').contains(e.target)) { $('sharePop').hidden = true; $('shareBtn').setAttribute('aria-expanded', 'false'); } });
+$('shareOn').onclick = async () => {
+  const on = $('shareOn').getAttribute('aria-pressed') !== 'true';
+  const r = await api('/pg/session/share', {on});
+  if (r.ok) { S.shareKey = JSON.stringify({on: r.on, link: r.link}); renderShare(r); } else toast(r.error);
+};
+$('shareCopy').onclick = async () => { try { await navigator.clipboard.writeText(S.shareLink); $('shareCopy').textContent = 'Copied'; } catch (e) { $('shareLink').select(); } };
+
+async function loop() {
+  try {
+    await refresh();
+    if (S.offline) { S.offline = false; openStreams(); toast('Reconnected to the simulator'); }
+    await pollTrace();
+  } catch (e) { S.offline = true; }
+  setTimeout(loop, 500);
+}
+$('task').oninput = () => { if (S.scene) S.drafts[S.scene.active] = $('task').value; render(); saveDrafts(); };
+// Typed-but-unsent tasks and chosen models go to the lab, which keeps them with the session
+// (and, signed in on the website, saves them to your account).
+function saveDrafts() {
+  if (S.watch) return;
+  clearTimeout(saveDrafts.t);
+  saveDrafts.t = setTimeout(() => api('/pg/drafts', {tasks: S.drafts, models: S.stModels}), 800);
+}
+
+// ---------------------------------------------------------------- sessions
+// Each session is one lab of its own on the server. The panel on the left lists this browser's
+// sessions and the ones others are running now (watch only). Switching is instant: no animation.
+S.sess = {mine: [], live: []}; S.watch = false; S.draftsBy = {};
+const HOME = (() => { const h = new URLSearchParams(location.search).get('home'); return h && /^https:\/\//.test(h) ? h.replace(/\/$/, '') : ''; })();
+function ago(t) {
+  const x = Math.max(0, Date.now() / 1000 - t);
+  if (x < 45) return 'just now';
+  if (x < 3600) return Math.round(x / 60) + ' min ago';
+  if (x < 86400) return Math.round(x / 3600) + ' h ago';
+  const d = new Date(t * 1000); return d.toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
+}
+const nStations = (n) => `${n || 'No'} station${n === 1 ? '' : 's'}`;
+const CUBE = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 26 26" fill="none" stroke="#4B5563" stroke-width="2"><path d="M13 3 L23 8.5 L13 14 L3 8.5 Z"/><path d="M3 8.5 V17.5 L13 23 V14"/><path d="M23 8.5 V17.5 L13 23"/></svg>';
+const EYE = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#4B5563" stroke-width="1.5"><path d="M1 8 C3 4 5.5 3 8 3 C10.5 3 13 4 15 8 C13 12 10.5 13 8 13 C5.5 13 3 12 1 8 Z"/><circle cx="8" cy="8" r="2.2"/></svg>';
+async function loadSessions(starter = false) {
+  try { const r = await api('/pg/sessions' + (starter ? '?starter=1' : '')); if (r.mine) S.sess = r; } catch (e) {}
+  renderSessions();
+}
+function renderSessions() {
+  const {mine, live} = S.sess;
+  const key = JSON.stringify([SID, mine.map(x => [x.id, x.name, x.stations, x.status, Math.round((Date.now() / 1000 - x.used) / 60)]), live.map(x => [x.url, x.id, x.name, x.task])]);
+  if (key === S.sessKey) return; S.sessKey = key;
+  const dot = {working: ['run', 'Working'], finished: ['ok', 'Finished'], empty: ['', 'Nothing run yet']};
+  $('mineList').innerHTML = mine.map(x => { const [d, t] = dot[x.status] || dot.empty;
+    return `<button class="srow" data-sid="${esc(x.id)}" aria-current="${x.id === SID}"><span class="sico">${CUBE}</span><span class="t"><b>${esc(x.name)}${x.shared ? '<span class="sharedmini">Shared</span>' : ''}</b><span class="sub">${x.mode === 'free' ? nStations(x.stations) : x.mode === 'libero' ? 'LIBERO test' : 'Wet Lab'} · ${ago(x.used)}</span></span><span class="sdot ${d}" title="${t}"></span></button>`; }).join('')
+    || '<span class="snone">None yet. Press New session.</span>';
+  $('liveList').innerHTML = live.map((x, i) => `<button class="srow" data-live="${i}" aria-current="${!x.url && x.id === SID}" title="${esc(x.task || '')}"><span class="sico">${EYE}</span><span class="t"><b>${esc(x.name)}</b><span class="sub">${esc(x.task || nStations(x.stations))}</span></span><span class="sdot run" title="Running now"></span></button>`).join('')
+    || '<span class="snone">Nobody else is running anything right now.</span>';
+  $('mineList').querySelectorAll('[data-sid]').forEach(b => b.onclick = () => switchSession(b.dataset.sid));
+  $('liveList').querySelectorAll('[data-live]').forEach(b => b.onclick = () => {
+    const x = S.sess.live[+b.dataset.live]; if (!x) return;
+    if (x.url) {     // someone else's lab on the public site: open it there, watch only
+      const home = S.cat.lab_url || location.origin;
+      location.href = `${x.url}/?watch=1&s=${encodeURIComponent(x.id)}&home=${encodeURIComponent(home)}`;
+    } else switchSession(x.id);
+  });
+  $('newSession').disabled = !S.sess.owner;
+}
+function switchSession(id) {
+  if (!id || id === SID) return;
+  SID = id;
+  try { localStorage.setItem('pgSession', id); } catch (e) {}
+  const q = new URLSearchParams(location.search); q.set('s', id); q.delete('watch'); q.delete('copy');
+  history.replaceState(null, '', location.pathname + '?' + q);
+  // A clean slate for the new lab (its chat, files and readings), drawn at once.
+  S.drafts = S.draftsBy[id] = S.draftsBy[id] || {};
+  Object.assign(S, {scene: null, sel: 'robot', runKey: null, trace: [], runInfo: {}, feedKey: '', stKey: '', dockKey: '', taskFor: null,
+                    camFor: null, seenRun: null, filesKey: '', filesJSON: '', placing: null, armed: null, data: null, dataAt: 0, liveAt: 0, sessKey: ''});
+  S.mode = null; shrinkCam(); hideTag(); $('feed').innerHTML = ''; $('files').innerHTML = '';
+  if (S.sideTab === 'objects') S.sideTab = 'chat';
+  openStreams(); renderSessions();
+  refresh().then(() => { if (S.sideTab === 'data') pollData(); }).catch(() => {});
+}
+$('newSession').onclick = async () => {
+  const r = await api('/pg/sessions/new', {});
+  if (!r.ok) { toast(r.error || "Couldn't start a session"); return; }
+  await loadSessions(); switchSession(r.session.id); S.sideTab = 'chat';
+};
+// Copy to my sessions: the lab's stations and objects, never its tasks or runs.
+async function copyLab() {
+  if (HOME && !S.sess.owner) {       // watching in another visitor's lab: copy into your own
+    location.href = `${HOME}/?copy=${encodeURIComponent(location.origin + '/pg/layout?s=' + SID)}`;
+    return;
+  }
+  if (!S.sess.owner) { toast('Start your own lab first to copy this one'); return; }
+  const r = await api('/pg/sessions/new', {from: SID});
+  if (!r.ok) { toast(r.error || "Couldn't copy this lab"); return; }
+  await loadSessions(); switchSession(r.session.id); toast('Copied to your sessions');
+}
+document.querySelectorAll('.copyLab').forEach(b => b.onclick = copyLab);
+$('sessName').onclick = async () => {
+  if (S.watch) return;
+  const name = prompt('Name for this session', S.sessName || ''); if (name == null || !name.trim()) return;
+  const r = await api('/pg/session/rename', {name: name.trim()}); if (r.ok === false) toast(r.error);
+  S.sessName = null; await refresh(); loadSessions();
+};
+// Hide or show the sessions panel (it slides; remembered in this browser).
+function setNav(open) {
+  $('sessNav').classList.toggle('closed', !open);
+  $('navToggle').setAttribute('aria-expanded', open);
+  const t = open ? 'Hide sessions' : 'Show sessions'; $('navToggle').setAttribute('aria-label', t); $('navToggle').title = t;
+  try { localStorage.setItem('pgNav', open ? '1' : '0'); } catch (e) {}
+}
+$('navToggle').onclick = () => setNav($('sessNav').classList.contains('closed'));
+setInterval(loadSessions, 3000);
+
+// ---------------------------------------------------------------- the Data tab
+// The selected station's robot readings: exactly what its robot reports (/state), the same as
+// the AI reads. Live while the world runs; when it stops, the last readings stay, marked as such.
+S.data = null; S.dataAt = 0; S.liveAt = 0;
+async function pollData() {
+  const sc = S.scene; if (!sc || S.sideTab !== 'data') return;
+  if (sc.mode === 'free' && !sc.active) { S.data = null; renderData(); return; }
+  const key = stBase();
+  try {
+    const st = await (await fetch(key + '/state', {headers: {'X-Browser-Id': BID}})).json();
+    if (key !== stBase() || !st.joint_positions) return;
+    S.data = {key, st}; S.dataAt = Date.now();
+    if (S.scene && !S.scene.paused) S.liveAt = Date.now();
+  } catch (e) {}
+  renderData();
+}
+setInterval(() => { if (S.sideTab === 'data') pollData(); }, 250);
+function renderData() {
+  const sc = S.scene; if (!sc) return;
+  const none = sc.mode === 'free' && !sc.active;
+  $('dEmpty').style.display = none ? '' : 'none'; $('dBody').style.display = none ? 'none' : 'flex';
+  $('dEmpty').textContent = S.watch ? 'This lab has no stations yet.' : "Add a station to see its robot's readings here.";
+  if (none) return;
+  const stn = curStation(); $('dTitle').textContent = 'Robot readings · ' + (sc.mode === 'free' ? stn.name : (stn.label || 'Robot'));
+  const d = S.data && S.data.key === stBase() ? S.data.st : null;
+  const live = !sc.paused;
+  $('dFresh').className = 'fresh' + (live ? ' on' : '');
+  $('dFresh').firstElementChild.className = 'sdot' + (live ? ' run' : '');
+  $('dFreshText').textContent = !d ? 'Waiting for the robot…' : live ? 'Live · the simulation is running'
+    : 'Simulation stopped · last readings' + (S.liveAt ? ' · ' + ago(S.liveAt / 1000) : ' from start-up');
+  if (!d) { $('dJoints').innerHTML = ''; $('dTel').innerHTML = ''; return; }
+  const f3 = (x) => (x > -0.0005 ? '' : '−') + Math.abs(x).toFixed(3), f2 = (x) => (x > -0.005 ? '' : '−') + Math.abs(x).toFixed(2);
+  const stop = d.mode === 'protective_stop';
+  $('dSafety').className = 'badge' + (stop ? ' stop' : ''); $('dSafety').textContent = stop ? 'Safety stop' : 'No safety stop';
+  $('dSafety').title = stop ? (d.protective_stop_reason || '') : '';
+  $('dJoints').innerHTML = d.joint_positions.map((q, i) => `<tr><td>Joint ${i + 1}</td><td>${f3(q)}</td><td>${f2((d.joint_velocities || [])[i] || 0)}</td></tr>`).join('');
+  const p = d.tcp_pose || [0, 0, 0, 0, 0, 0], f = d.tcp_force || [0, 0, 0, 0, 0, 0], g = d.gripper || {};
+  // Gripper opening from its 0-255 command, as the robot cell's viewer shows it.
+  const mm = stn.robot === 'ur5e' ? 85 * (1 - (g.position || 0) / 255) : 3 + 80 * (1 - (g.position || 0) / 255);
+  const rows = [
+    ['Hand position (x, y, z)', p.slice(0, 3).map(f3).join(', ') + ' m'],
+    ['Hand orientation (rotation vector)', p.slice(3).map(f3).join(', ') + ' rad'],
+    ['Wrist force (x, y, z)', f.slice(0, 3).map(f2).join(', ') + ' N'],
+    ['Wrist torque (x, y, z)', f.slice(3).map(f2).join(', ') + ' Nm'],
+    ['Arm moving', d.moving ? 'Yes' : 'No'],
+    ['Gripper opening', mm.toFixed(0) + ' mm (' + Math.round(g.position || 0) + '/255)'],
+    ['Holding something', g.object_detected ? 'Yes' : 'No'],
+    ['Robot clock', (d.time || 0).toFixed(3) + ' s'],
+  ];
+  if (stop) rows.unshift(['Stop reason', d.protective_stop_reason || '']);
+  $('dTel').innerHTML = rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+}
+
+// ---------------------------------------------------------------- LIBERO test mode
+S.mode = null; S.fixed = false; S.L = null; S.lDone = null; S.W = null; S.wDone = null;
+function applyMode() {
+  const mode = S.scene.mode, prev = S.mode;
+  if (mode === S.mode) return;
+  S.mode = mode;
+  const lib = mode === 'libero', wet = mode === 'wetlab';
+  S.fixed = lib || wet;
+  document.body.classList.toggle('lib', lib);
+  document.body.classList.toggle('wet', wet);
+  document.body.classList.toggle('fixed', S.fixed);
+  $('modeFree').setAttribute('aria-pressed', mode === 'free'); $('modeLibero').setAttribute('aria-pressed', lib); $('modeWet').setAttribute('aria-pressed', wet);
+  $('modechip').textContent = lib ? 'LIBERO · results saved' : wet ? 'Wet lab bench · results saved' : 'Free play · not saved';
+  S.feedKey = '';
+  if (lib) loadLibero();
+  else if (wet) loadWet();
+  else if (prev) { S.sideTab = 'objects'; }
+}
+async function setMode(mode) {
+  if (S.scene && S.scene.mode === mode) return;
+  toast(mode === 'libero' ? 'Loading LIBERO… (the first time it downloads LIBERO\'s objects, about 200 MB)' : mode === 'wetlab' ? 'Loading the wet lab bench…' : 'Back to your own scene…');
+  const r = await api('/pg/mode', {mode});
+  if (!r.ok) { toast(r.error); return; }
+  S.sel = 'robot'; S.runKey = null; refresh();
+}
+$('modeFree').onclick = () => setMode('free');
+$('modeLibero').onclick = () => setMode('libero');
+$('modeWet').onclick = () => setMode('wetlab');
+async function loadLibero() {
+  const sc = S.scene, task = sc && sc.task;
+  S.L = await api('/pg/libero' + (task ? '?task=' + encodeURIComponent(task) : ''));
+  renderLibero();
+}
+function fmtSecs(x) { return x == null ? '–' : x >= 60 ? Math.floor(x / 60) + 'm ' + Math.round(x % 60) + 's' : x.toFixed(0) + 's'; }
+function curSuite() { const L = S.L; return L.suites.find(x => x.id === (S.lSuite || L.suite)) || L.suites[0]; }
+function allTasks() { return S.L.suites.flatMap(x => x.tasks); }
+function renderLibero() {
+  const L = S.L; if (!L) return;
+  if (!S.lSuite) S.lSuite = L.suite;
+  const su = curSuite();
+  $('lSuites').innerHTML = L.suites.map(x => `<button data-s="${x.id}" aria-pressed="${x.id === su.id}">${x.name}<span>${x.tasks.length} tasks</span></button>`).join('');
+  $('lSuites').querySelectorAll('button').forEach(b => b.onclick = () => { const x = L.suites.find(y => y.id === b.dataset.s); S.lSuite = x.id; if (x.id !== L.suite) loadSetup(0, x.tasks[0].id); else renderLibero(); });
+  $('lSuiteWhat').textContent = su.blurb;
+  const sel = $('lTask');
+  if (sel.dataset.suite !== su.id) { sel.innerHTML = su.tasks.map((t, i) => `<option value="${t.id}">${i + 1}. ${esc(t.language)}</option>`).join(''); sel.dataset.suite = su.id; }
+  const t = allTasks().find(x => x.id === L.task) || su.tasks[0];
+  sel.value = t.id;
+  $('lLang').textContent = '“' + t.language + '”'; $('lDone').textContent = t.done_when;
+  $('goalText').textContent = t.done_when;
+  $('lSetupTotal').textContent = t.setups;
+  const board = L.scores.board;
+  const mine = board.find(b => b.model === $('lModel').value);
+  $('lDotsFor').textContent = mine ? 'for ' + mine.label : '';
+  const res = mine ? mine.setups : {};
+  $('lDots').innerHTML = Array.from({length: t.setups}, (_, i) => { const r = res[i + 1]; return `<button data-k="${i}" class="${r === true ? 'p' : r === false ? 'f' : ''}" title="Setup ${i + 1}${r === true ? ' · passed' : r === false ? ' · failed' : ''}"></button>`; }).join('');
+  $('lDots').querySelectorAll('button').forEach(b => b.onclick = () => loadSetup(+b.dataset.k));
+  $('lBoard').innerHTML = board.length ? board.map(b => `<tr><td>${esc(b.label)}</td><td class="n">${b.passed}/${b.tried}</td><td class="n">${fmtSecs(b.avg_seconds)}</td><td class="n">${b.avg_cost == null ? '–' : '$' + b.avg_cost.toFixed(2)}</td></tr>`).join('')
+    : '<tr><td colspan="4" class="small" style="color:var(--muted)">No runs yet for this task.</td></tr>';
+  // By suite, for the chosen model: study set (setups 1-5) only
+  const sb = L.suite_board, me = sb.board.find(b => b.model === $('lModel').value);
+  $('lSuiteFor').textContent = $('lModel').selectedOptions[0] ? $('lModel').selectedOptions[0].textContent.split(' · ')[0] : '';
+  let tp = 0, tt = 0;
+  const rows = L.suites.map(x => { const c = me ? me.suites[x.id] || {tried: 0, passed: 0} : {tried: 0, passed: 0}; tp += c.passed; tt += c.tried;
+    return `<tr><td>${x.name}</td><td class="n">${c.tried ? c.passed : '–'}</td><td class="n">${c.tried} / ${sb.sizes[x.id]}</td></tr>`; });
+  const all = Object.values(sb.sizes).reduce((a, b) => a + b, 0);
+  rows.push(`<tr><td style="font-weight:600">LIBERO-40</td><td class="n" style="font-weight:600">${tt ? (100 * tp / tt).toFixed(1) + '%' : '–'}</td><td class="n" style="font-weight:600">${tt} / ${all}</td></tr>`);
+  $('lSuiteBoard').innerHTML = rows.join('');
+  renderLiberoLive();
+}
+async function openBoard(study) {
+  S.bmStudy = study;
+  const L = await api('/pg/libero?study=' + (study ? 1 : 0));
+  const sb = L.suite_board;
+  $('bmStudy').setAttribute('aria-pressed', study); $('bmAll').setAttribute('aria-pressed', !study);
+  const cell = c => c && c.tried ? `${c.passed} / ${c.tried}` : '–';
+  const rows = sb.board.map(b => `<tr><td style="font-weight:600">${esc(b.label)}</td>${L.suites.map(x => `<td class="n">${cell(b.suites[x.id])}</td>`).join('')}<td class="n" style="font-weight:700">${b.tried ? (100 * b.rate).toFixed(1) + '%' : '–'}</td><td class="n">${fmtSecs(b.avg_seconds)}</td><td class="n">${b.total_cost == null ? '–' : '$' + b.total_cost.toFixed(2)}</td></tr>`);
+  if (!rows.length) rows.push('<tr><td colspan="8" class="small" style="color:var(--muted)">No runs yet.</td></tr>');
+  rows.push(`<tr style="background:#F9FAFB"><td style="color:#374151">Anthropic study, best model · direct control <span class="small">(for reference)</span></td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n" style="font-weight:700;color:#374151">5.5%</td><td class="n">–</td><td class="n">–</td></tr>`);
+  $('bmBody').innerHTML = rows.join('');
+  $('boardModal').style.display = 'flex';
+}
+$('lFullBoard').onclick = () => openBoard(true);
+$('bmStudy').onclick = () => openBoard(true); $('bmAll').onclick = () => openBoard(false);
+$('bmClose').onclick = () => $('boardModal').style.display = 'none';
+$('boardModal').onclick = (e) => { if (e.target === $('boardModal')) $('boardModal').style.display = 'none'; };
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('boardModal').style.display = 'none'; });
+function renderLiberoLive() {
+  const sc = S.scene, b = sc.bench || {}, busy = !!b.active || !!(sc.run && sc.run.active);
+  const k = sc.setup || 0, n = sc.setups || 50;
+  $('lSetupN').textContent = k + 1;
+  const sn = S.L && S.L.suites.find(x => x.id === sc.suite);
+  $('libTag').textContent = 'LIBERO-' + (sn ? sn.name : '') + ' · Setup ' + (k + 1);
+  $('lDots').querySelectorAll('button').forEach(d => { d.classList.toggle('cur', +d.dataset.k === k); d.disabled = busy; });
+  for (const id of ['lPrev', 'lNext', 'lRun1', 'lRunAll', 'lStudy', 'lTask', 'lModel', 'modeFree', 'modeWet']) $(id).disabled = busy;
+  $('lSuites').querySelectorAll('button').forEach(x => x.disabled = busy);
+  $('lPrev').disabled = busy || k === 0; $('lNext').disabled = busy || k === n - 1;
+  $('lStop').style.display = b.active ? '' : 'none';
+  $('goalState').textContent = sc.goal_met ? '✓ Goal reached' : 'Not yet';
+  $('goalState').style.color = sc.goal_met ? 'var(--green)' : 'var(--muted)';
+  let st = '';
+  if (b.active) { const c = b.current || {}; st = b.total > 1 ? `Running setup ${(c.setup ?? 0) + 1}${b.tasks.length > 1 ? ' of task ' + c.task.replaceAll('_', ' ') : ''} · ${b.done} of ${b.total} done, ${b.passed} passed` : `Running setup ${(c.setup ?? 0) + 1}…`; }
+  else if (b.last) st = `Last: setup ${b.last.setup} ${b.last.passed ? 'passed' : 'failed'} (${b.last.how}, ${b.last.seconds}s)`;
+  $('lStatus').textContent = st;
+  if (sc.run && sc.run.started && !sc.run.active && !b.active && b.last) $('runStatus').textContent = b.last.passed ? '✓ Passed · goal reached in ' + b.last.seconds + 's' : 'Failed · ' + b.last.how;
+  const key = (b.done || 0) + ':' + !!b.active + ':' + sc.task;
+  if (S.lDone !== key) { S.lDone = key; S.lSuite = sc.suite; loadLibero(); }
+}
+async function loadSetup(k, task) {
+  const r = await api('/pg/libero/setup', {task: task || S.scene.task, setup: k});
+  if (!r.ok) { toast(r.error); return; }
+  await refresh(); loadLibero();
+}
+$('lPrev').onclick = () => loadSetup(Math.max(0, S.scene.setup - 1));
+$('lNext').onclick = () => loadSetup(Math.min(S.scene.setups - 1, S.scene.setup + 1));
+$('lTask').onchange = () => loadSetup(0, $('lTask').value);
+$('lModel').onchange = renderLibero;
+async function runBench(all, study) {
+  const r = await api('/pg/libero/run', {model: $('lModel').value, all, study});
+  if (!r.ok) { toast(r.error); return; }
+  refresh();
+}
+$('lRun1').onclick = () => runBench(false);
+$('lRunAll').onclick = () => { if (confirm('Run all 50 setups one after another? Each can take up to 3 minutes, so this can take about 2½ hours.')) runBench(true); };
+$('lStudy').onclick = () => { if (confirm('Run the study set? That is 200 runs (40 tasks × setups 1 to 5), one after another. Each can take up to 3 minutes, so this can take about 10 hours. You can stop it at any time; finished runs are kept.')) runBench(false, true); };
+$('lStop').onclick = async () => { await api('/pg/libero/stop', {}); refresh(); };
+
+// ---------------------------------------------------------------- Wet Lab mode
+async function loadWet() { S.W = await api('/pg/wetlab'); renderWet(); }
+function renderWet() {
+  const W = S.W; if (!W) return;
+  const cur = W.tasks.find(t => t.id === W.task) || W.tasks[0];
+  const me = W.scores.board.find(b => b.model === $('wModel').value);
+  const res = me ? me.tasks : {};
+  $('wCount').textContent = W.tasks.length;
+  $('wTasks').innerHTML = W.tasks.map(t => { const r = res[t.id]; return `<button class="wtask" data-t="${t.id}" aria-pressed="${t.id === cur.id}"><span class="id">${t.id}</span><span class="t">${esc(t.title)}</span><span class="d ${r === true ? 'p' : r === false ? 'f' : ''}" title="${r === true ? 'passed' : r === false ? 'failed' : 'not run'}"></span></button>`; }).join('');
+  $('wTasks').querySelectorAll('button').forEach(b => b.onclick = async () => { const r = await api('/pg/wetlab/task', {task: b.dataset.t}); if (!r.ok) { toast(r.error); return; } await refresh(); loadWet(); });
+  $('wPrompt').textContent = '“' + cur.prompt + '”';
+  $('wScored').textContent = cur.needs_answer ? 'A judge model reads the AI\'s final answer next to the true state of the bench. Moving anything fails the task.' : 'The bench\'s own check for this task, from the true end state (positions, wells, what fell over).';
+  $('goalText').textContent = 'Scored when the AI finishes, from the true end state of the bench.';
+  const board = W.scores.board;
+  $('wBoard').innerHTML = board.length ? board.map(b => `<tr><td>${esc(b.label)}</td><td class="n">${b.passed} / ${W.scores.total}${b.tried < W.scores.total ? ` <span class="small">(${b.tried} tried)</span>` : ''}</td><td class="n">${b.total_cost == null ? '–' : '$' + b.total_cost.toFixed(2)}</td></tr>`).join('')
+    : '<tr><td colspan="3" class="small" style="color:var(--muted)">No runs yet.</td></tr>';
+  renderWetLive();
+}
+function renderWetLive() {
+  const sc = S.scene, b = sc.wetbench || {}, busy = !!b.active || !!(sc.run && sc.run.active);
+  $('libTag').textContent = 'Wet Lab · ' + sc.task + ' ' + (sc.title || '');
+  for (const id of ['wRun1', 'wRunAll', 'wModel', 'modeFree', 'modeLibero']) $(id).disabled = busy;
+  $('wTasks').querySelectorAll('button').forEach(x => x.disabled = busy);
+  $('wStop').style.display = b.active ? '' : 'none';
+  $('goalState').textContent = b.active ? 'Running…' : b.last ? (b.last.passed ? '✓ Passed' : 'Failed') : 'Not run yet';
+  $('goalState').style.color = b.last && !b.active && b.last.passed ? 'var(--green)' : 'var(--muted)';
+  let st = '';
+  if (b.active) st = b.total > 1 ? `Running ${b.current} · ${b.done} of ${b.total} done, ${b.passed} passed` : `Running ${b.current}…`;
+  else if (b.last) st = `Last: ${b.last.task} ${b.last.passed ? 'passed' : 'failed'}${b.last.score != null ? ' (score ' + b.last.score + ')' : ''}, ${Math.round(b.last.seconds)}s`;
+  $('wStatus').textContent = st;
+  if (sc.run && sc.run.started && !sc.run.active && !b.active && b.last) $('runStatus').textContent = b.last.passed ? '✓ Passed' : 'Failed · ' + (b.last.how || '');
+  const key = (b.done || 0) + ':' + !!b.active + ':' + sc.task;
+  if (S.wDone !== key) { S.wDone = key; loadWet(); }
+}
+async function runWet(all) {
+  const r = await api('/pg/wetlab/run', {model: $('wModel').value, all});
+  if (!r.ok) { toast(r.error); return; }
+  refresh();
+}
+$('wRun1').onclick = () => runWet(false);
+$('wRunAll').onclick = () => { if (confirm('Run all 8 wet lab tasks one after another? Each can take up to 15 minutes.')) runWet(true); };
+$('wStop').onclick = async () => { await api('/pg/wetlab/stop', {}); refresh(); };
+$('wModel').onchange = renderWet;
+
+(async function init() {
+  S.cat = await api('/pg/catalog');
+  if (S.cat.public) {   // the public site: free play only, every run capped
+    $('modeLibero').style.display = $('modeWet').style.display = 'none';
+    document.body.classList.add('public');
+    if (S.cat.front) {   // a hosted lab: the front lists live and past runs
+      $('pastLink').href = S.cat.front + '/pg/runs'; $('liveLink').href = S.cat.front + '/live';
+      $('liveLink').style.display = '';
+    }
+    // Someone else's lab (no owner key): watch only. The server refuses changes anyway.
+    if (!S.cat.owner) { document.body.classList.add('watch'); S.watch = true; S.sideTab = 'chat'; }
+  }
+  const items = S.cat.items;
+  for (const it of items) { it.collision = it.collision || ''; }
+  $('wModel').innerHTML = $('lModel').innerHTML = $('model').innerHTML = [...new Set(S.cat.models.map(m => m.via))].map(v => `<optgroup label="${v}">` + S.cat.models.filter(m => m.via === v).map(m => `<option value="${m.id}"${m.needs ? ' disabled' : ''}>${m.label}${m.needs ? ' · needs ' + m.needs : ''}</option>`).join('') + '</optgroup>').join('');
+  renderTabs(); renderItems();
+  view.onload = () => $('loading').style.display = 'none';
+  try { setNav(localStorage.getItem('pgNav') !== '0'); } catch (e) {}
+  // Which session to show: the link's, else the last one here, else this browser's newest
+  // (its first visit gets the starter lab), else whatever this lab shows by default.
+  const q = new URLSearchParams(location.search);
+  await loadSessions(!q.get('s'));     // a first visit without a link gets the starter lab
+  if (q.get('copy') && S.sess.owner) {      // back from someone else's lab with "Copy to my sessions"
+    try {
+      const src = q.get('copy');
+      if (!/^https:\/\//.test(src) && !src.startsWith(location.origin)) throw new Error('bad link');
+      const layout = await (await fetch(src)).json();
+      const r = await api('/pg/sessions/new', {layout});
+      if (r.ok) { await loadSessions(); q.set('s', r.session.id); toast('Copied to your sessions'); } else toast(r.error);
+    } catch (e) { toast("Couldn't copy that lab"); }
+  }
+  let want = q.get('s');
+  try { want = want || localStorage.getItem('pgSession'); } catch (e) {}
+  const known = (id) => S.sess.mine.some(x => x.id === id) || S.sess.live.some(x => !x.url && x.id === id);
+  if (!want || (!q.get('s') && !known(want))) want = (S.sess.mine[0] || {}).id || '';
+  if (!want) { const sc = await api('/pg/scene'); want = sc.session ? sc.session.id : ''; }
+  SID = want;
+  S.drafts = S.draftsBy[SID] = {};
+  if (SID) { q.set('s', SID); q.delete('copy'); history.replaceState(null, '', location.pathname + '?' + q); try { localStorage.setItem('pgSession', SID); } catch (e) {} }
+  renderSessions();
+  const sendAspect = () => { const r = stage.getBoundingClientRect(); if (r.width > 50 && r.height > 50 && !S.watch) api('/pg/camera', {aspect: r.width / r.height}); };
+  sendAspect(); new ResizeObserver(() => { clearTimeout(sendAspect.h); sendAspect.h = setTimeout(sendAspect, 150); }).observe(stage);
+  $('modelLogo').src = LOGOS[modelInfo($('model').value).provider] || LOGOS.anthropic;
+  // Draw the main view in the page (instant camera); fall back to the server's video.
+  try {
+    const m = await import('/pg/static/view3d.js?v=3');
+    const v = m.start({stage, base: `/s/${SID}`, onReady: () => { $('loading').style.display = 'none'; }});
+    if (v) { window.V3 = v; document.body.classList.add('v3'); }
+  } catch (e) { console.warn('3D view unavailable, using video', e); }
+  openStreams();
+  setTimeout(() => $('loading').style.display = 'none', 8000);
+  loop();
+})();
+</script>
+</body>
+</html>
