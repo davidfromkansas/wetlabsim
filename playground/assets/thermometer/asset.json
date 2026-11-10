@@ -1,0 +1,82 @@
+{
+ "source": "thermometer_fever_a01",
+ "usd": "sm_thermometer_fever_a01_01.usd",
+ "mass": 0.05713,
+ "friction": 0.4,
+ "com": [
+  -0.03745,
+  -3e-05,
+  0.0427
+ ],
+ "size": [
+  0.1496,
+  0.0375,
+  0.0487
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    0.0529,
+    0.0529,
+    0.0529,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_2.obj",
+   "rgba": [
+    0.5271,
+    0.5271,
+    0.5271,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_3.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_3.png"
+  },
+  {
+   "mesh": "vis_4.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_4.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00014818516605817533
+  }
+ ]
+}

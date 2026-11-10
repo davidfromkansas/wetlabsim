@@ -1,0 +1,71 @@
+{
+ "source": "bottle_laboratory_a03",
+ "usd": "sm_bottle_laboratory_a03_01.usd",
+ "mass": 1.40092,
+ "friction": 0.4,
+ "com": [
+  -4e-05,
+  0.0,
+  0.20709
+ ],
+ "size": [
+  0.0832,
+  0.0831,
+  0.2139
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    0.0595,
+    0.0595,
+    0.0595,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_2.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_2.png"
+  },
+  {
+   "mesh": "vis_3.obj",
+   "rgba": [
+    0.8469,
+    0.8469,
+    0.8469,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.0010478270084404338
+  }
+ ]
+}

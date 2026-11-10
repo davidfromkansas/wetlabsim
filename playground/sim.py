@@ -195,13 +195,14 @@ class PlaygroundSim(Sim):
                 p.pos = tuple(float(v) for v in d.xpos[b])
                 p.quat = tuple(float(v) for v in d.xquat[b])
 
-    def rebuild(self):
+    def rebuild(self, sync: bool = True):
         """Recompile the lab after an edit. Every robot keeps its pose and controller state;
-        objects stay put."""
+        objects stay put (sync=False: where self.placed now says, for an edit that moved them)."""
         if self.scene_mode != "free":
             raise RobotError("this scene can't be edited")
         with self.lock:
-            self._sync_placed()
+            if sync:
+                self._sync_placed()
             old_d = self.d
             snaps = {uid: a.snapshot() for uid, a in self.arms.items()}
             m = W.build(self.placed, self.stations)
@@ -266,17 +267,25 @@ class PlaygroundSim(Sim):
 
     def _on_table(self, st: W.Station) -> list[W.Placed]:
         """Objects resting on a station's table (they move with it)."""
-        top = W.table_top(catalog.meta(W.STATION_TABLE))
+        top = st.top
         return [p for p in self.placed if not catalog.item(p.item)["fixed"]
                 and st.holds(p.pos[0], p.pos[1]) and p.pos[2] > top - 0.05]
 
-    def add_station(self, robot: str, pos, yaw: float = 0.0) -> str:
+    def add_station(self, robot: str, pos, yaw: float = 0.0, kind: str = "table") -> str:
         if robot not in WS.ROBOTS:
             raise RobotError(f"unknown robot {robot!r}")
+        if kind not in W.KINDS:
+            raise RobotError(f"unknown kind of station {kind!r}")
         with self.lock:
+            self._sync_placed()
             uid = self._new_station_uid()
             n = int(uid[2:])
-            self.stations.append(W.Station(uid, robot, (float(pos[0]), float(pos[1])), float(yaw), f"Robot {n}"))
+            st = W.Station(uid, robot, (float(pos[0]), float(pos[1])), float(yaw), f"Robot {n}", kind)
+            self.stations.append(st)
+            top = st.top
+            for item, lx, ly, iyaw in st.spec["layout"]:     # what the station starts with
+                x, y, _ = st.to_world(lx, ly)
+                self.placed.append(W.Placed(self.new_uid(item), item, (x, y, top), st.yaw + iyaw))
             self.rebuild()
             self.active_station = uid
         return uid
@@ -300,7 +309,7 @@ class PlaygroundSim(Sim):
                     q = np.zeros(4)
                     mujoco.mju_mulQuat(q, np.array(W.yaw_quat(dyaw)), np.array(p.quat))
                     p.quat = tuple(q)
-            self.rebuild()
+            self.rebuild(sync=False)     # synced above; the riders' new places stand
 
     def remove_station(self, uid: str, keep_table: bool = True):
         """Remove a robot. A station is only a starting template, so by default its table
@@ -311,8 +320,8 @@ class PlaygroundSim(Sim):
             self._sync_placed()
             st = self.station(uid)
             if keep_table:
-                self.placed.append(W.Placed(self.new_uid(W.STATION_TABLE), W.STATION_TABLE,
-                                            (st.pos[0], st.pos[1], 0.0), st.yaw))
+                self.placed.append(W.Placed(self.new_uid(st.table_item), st.table_item,
+                                            (st.pos[0], st.pos[1], 0.0), st.table_yaw))
             else:
                 riders = {p.uid for p in self._on_table(st)}
                 self.placed = [p for p in self.placed if p.uid not in riders]
@@ -338,7 +347,7 @@ class PlaygroundSim(Sim):
                 for lx, ly in ((k * (sx + 0.4), 0), (-k * (sx + 0.4), 0),
                                (0, -k * (sy + 0.5)), (0, k * (sy + 0.5))):
                     dx, dy = c * lx - s * ly, s * lx + c * ly
-                    out = self.station_spot(st.pos[0] + dx, st.pos[1] + dy, st.yaw)
+                    out = self.station_spot(st.pos[0] + dx, st.pos[1] + dy, st.yaw, kind=st.kind)
                     if out["valid"]:
                         spot = (dx, dy)
                         break
@@ -351,7 +360,7 @@ class PlaygroundSim(Sim):
             new = self._new_station_uid()
             base = (st.name or f"Robot {uid[2:]}").strip()
             self.stations.append(W.Station(new, st.robot, (st.pos[0] + dx, st.pos[1] + dy), st.yaw,
-                                           f"{base} copy"[:40]))
+                                           f"{base} copy"[:40], st.kind))
             for p in riders:
                 self.placed.append(W.Placed(self.new_uid(p.item), p.item,
                                             (p.pos[0] + dx, p.pos[1] + dy, p.pos[2]), p.yaw, p.quat))
@@ -379,10 +388,13 @@ class PlaygroundSim(Sim):
             raise RobotError("no such station")
         st.name = name.strip()[:40] or st.name
 
-    def station_spot(self, x: float, y: float, yaw: float = 0.0, exclude: str | None = None) -> dict:
+    def station_spot(self, x: float, y: float, yaw: float = 0.0, exclude: str | None = None,
+                     kind: str | None = None) -> dict:
         """Whether a station's table fits with its centre at (x, y): on the floor, clear of
-        the other stations and of furniture."""
-        probe = W.Station("probe", "franka", (x, y), yaw)
+        the other stations and of furniture. The kind is the moved station's own (else a table)."""
+        if kind is None:
+            kind = self.station(exclude).kind if exclude and self.station(exclude) else "table"
+        probe = W.Station("probe", "franka", (x, y), yaw, kind=kind)
         sx, sy = probe.footprint()
         pts = [probe.to_world(fx * sx / 2, fy * sy / 2) for fx in (-1, -0.5, 0, 0.5, 1) for fy in (-1, 0, 1)]
         for st in self.stations:
@@ -401,19 +413,22 @@ class PlaygroundSim(Sim):
             return {"pos": [round(x, 4), round(y, 4)], "yaw": yaw, "valid": False, "reason": "off the floor"}
         return {"pos": [round(x, 4), round(y, 4)], "yaw": yaw, "valid": True, "reason": ""}
 
-    def probe_station(self, u: float, v: float, yaw: float = 0.0, exclude: str | None = None) -> dict:
+    def probe_station(self, u: float, v: float, yaw: float = 0.0, exclude: str | None = None,
+                      kind: str | None = None) -> dict:
         """Where a station dragged over the view at (u, v) would stand (on the floor)."""
         p0, d = self.pixel_ray(u, v)
         if d[2] >= -1e-6:
             self.overlay = []
             return {"valid": False, "reason": "off the floor"}
+        if kind is None:
+            kind = self.station(exclude).kind if exclude and self.station(exclude) else "table"
         hit = p0 + (-p0[2] / d[2]) * d
-        out = self.station_spot(float(hit[0]), float(hit[1]), yaw, exclude)
-        sx, sy = W.Station("probe", "franka", (0, 0)).footprint()
-        top = W.table_top(catalog.meta(W.STATION_TABLE))
+        out = self.station_spot(float(hit[0]), float(hit[1]), yaw, exclude, kind)
+        ghost = W.Station("probe", "franka", tuple(out["pos"]), yaw, kind=kind)
+        sx, sy = ghost.footprint()
+        top = ghost.top
         col = [0.25, 0.55, 1.0] if out["valid"] else [1.0, 0.3, 0.25]
-        ghost = W.Station("probe", "franka", tuple(out["pos"]), yaw)
-        rx, ry, _ = ghost.to_world(*W.ROBOT_XY)
+        rx, ry, _ = ghost.to_world(*ghost.robot_xy)
         self.overlay = [
             {"type": "box", "size": [sx / 2 + 0.03, sy / 2 + 0.03, 0.002], "pos": [hit[0], hit[1], 0.002],
              "yaw": yaw, "rgba": [*col, 0.45]},
@@ -429,7 +444,7 @@ class PlaygroundSim(Sim):
         st = self.station(uid)
         if st is None:
             return
-        top = W.table_top(catalog.meta(W.STATION_TABLE))
+        top = st.top
         cx, cy, _ = st.to_world(0.0, 0.0)
         target = {"lookat": [cx, cy, top - 0.15], "distance": 2.8,
                   "azimuth": (145.0 + np.degrees(st.yaw)) % 360, "elevation": -28.0}
