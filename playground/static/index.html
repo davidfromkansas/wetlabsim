@@ -147,7 +147,7 @@ body.filing #chatpane,body.filing #right .freeonly{display:none!important}
 #feed .runerr{border:1px solid #FCA5A5;background:#FEF2F2;color:#991B1B;border-radius:8px;padding:8px 10px;font-size:13px}
 #feed .runerr pre{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font:12px 'JetBrains Mono',monospace;color:#7F1D1D}
 #jumpBtn{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);display:none;height:30px;padding:0 12px;border-radius:999px;border:1px solid #D1D5DB;background:#fff;color:var(--ink);font-size:12.5px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(17,24,39,.15)}
-.runbar{padding:10px 16px;border-top:1px solid var(--line2);display:flex;gap:8px;align-items:center}
+.runbar{padding:10px 16px;display:flex;gap:8px;align-items:center}
 #stage{flex:1;min-width:0;position:relative;background:#FAFBFC;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #view{display:block;width:100%;height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;cursor:grab}
 /* the 3D view drawn in the page (view3d.js): the canvas sits under the (now see-through) video
@@ -490,7 +490,6 @@ body.rclosed #rrail{border-right:0}
 .rbot:hover{box-shadow:0 0 0 2px #93B4FF}
 .rbot img{width:36px;height:36px;object-fit:contain;pointer-events:none}
 .rbot[aria-current=true]{box-shadow:0 0 0 2px var(--ink)}
-.rbot[aria-current=true]:before{content:"";position:absolute;left:-12px;top:10px;width:4px;height:24px;border-radius:0 3px 3px 0;background:var(--ink)}
 .rbot .bdg{position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:50%;border:2px solid var(--bg);background:#9CA3AF}
 .rbot .bdg.run{background:var(--green)}.rbot .bdg.wait{background:#D97706}
 .radd{width:44px;height:44px;flex:none;border-radius:12px;border:1.5px dashed #C3C8D0;background:transparent;color:var(--muted);font:400 20px Inter,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center}
@@ -1509,7 +1508,7 @@ function render() {
   const queued = !!run.queued;     // public site: waiting for one of the few run slots
   $('stopBtn').style.display = active || queued ? '' : 'none';
   $('taskcard').style.display = active || queued || S.watch || empty ? 'none' : '';
-  $('runbar').style.display = run.started || queued || S.fixed ? '' : 'none';
+  $('runbar').style.display = active || queued || S.fixed ? '' : 'none';
   if (queued) $('runStatus').textContent = `Waiting for a free slot · ${run.queued - 1} ahead (${S.cat.max_active} runs at a time)`;
   if (!run.started && !queued) { const m = modelInfo($('model').value); $('chatLogo').src = LOGOS[m.provider] || LOGOS.anthropic; $('chatModel').textContent = m.label || ''; $('runStatus').textContent = ''; }
   if (run.started) {
