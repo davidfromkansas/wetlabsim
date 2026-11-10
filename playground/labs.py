@@ -256,7 +256,9 @@ def claim_lab(owner: str, user: str = "") -> dict:
     owners, keys, labs = _dict("wetlab-owners"), _dict("wetlab-lab-keys"), _dict("wetlab-labs")
     live = live_labs()
     lab = owners.get(owner)
-    if lab and lab in live and not older(live[lab].get("build", ""), BUILD):
+    # A lab still starting is the account's lab whichever build it was asked for (during a deploy
+    # the old and new fronts both answer); once up, one from an older build is replaced.
+    if lab and lab in live and (not live[lab].get("url") or not older(live[lab].get("build", ""), BUILD)):
         info = live[lab]
         return {"url": info["url"], "key": keys.get(lab), "lab": lab} if info.get("url") else {"pending": True}
     # An older build's lab with nothing running is on its way out: it doesn't take a place.
