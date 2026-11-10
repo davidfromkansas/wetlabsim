@@ -15,7 +15,7 @@ What the datasheets can't tell you: how this particular robot is set up.
 
 ## Mounting
 
-- {robot_name}, mounted upright on a heavy-duty packing table (187 x 122 cm, top
+- {robot_name}, mounted upright on {table} ({w_cm:.0f} x {d_cm:.0f} cm, top
   {top_cm:.1f} cm above the floor), on its base flange, near the middle of one long edge.
 - The robot base frame has its origin at the centre of the base flange, on the table top.
   x points forward across the table, y to the robot's left, z up. All positions and poses
@@ -68,6 +68,7 @@ TOOL = {
   gripper straight down with the fingers closing along the base y axis.""",
 }
 HAND = {"franka": "hand", "ur5e": "tool"}
+TABLES = {"table": "a heavy-duty packing table", "wetlab": "a stainless steel lab bench"}
 
 
 def site_sheet(placed: list[W.Placed], station: W.Station | None = None,
@@ -77,9 +78,9 @@ def site_sheet(placed: list[W.Placed], station: W.Station | None = None,
     from wetlabsim import scene as WS
     station = station or W.default_stations()[0]
     stations = stations or [station]
-    tm = catalog.meta(W.STATION_TABLE)
-    sx, sy, top = tm["size"]
-    rx, ry = W.ROBOT_XY
+    sx, sy = station.footprint()
+    top = station.top
+    rx, ry = station.robot_xy
     P = WS.ROBOTS[station.robot]
     lines = []
     counts: dict[str, int] = {}
@@ -102,7 +103,9 @@ def site_sheet(placed: list[W.Placed], station: W.Station | None = None,
         other = (f"\nThis room has {len(others)} other robot station(s) ({names}), each on its own table. "
                  "Other agents may be working at them at the same time. Your robot can only be "
                  "commanded through your own interface.\n")
-    return TEMPLATE.format(top_cm=top * 100, x0=-sx / 2 - rx, x1=sx / 2 - rx, y0=-sy / 2 - ry,
+    tw, td, _ = catalog.meta(station.table_item)["size"]
+    return TEMPLATE.format(top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100,
+                           d_cm=min(tw, td) * 100, x0=-sx / 2 - rx, x1=sx / 2 - rx, y0=-sy / 2 - ry,
                            y1=sy / 2 - ry, items=items, others=other, robot_name=P["name"],
                            tool=TOOL[station.robot], hand=HAND[station.robot],
                            ready="[" + ", ".join(f"{v:g}" for v in P["ready_q"]) + "]")

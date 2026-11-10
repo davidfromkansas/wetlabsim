@@ -565,6 +565,13 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
 #rpk .ph p{margin:3px 0 0;font-size:12.5px;color:var(--muted);line-height:1.45}
 #rpk .x{margin-left:auto;width:28px;height:28px;border-radius:7px;border:0;background:none;color:#6B7280;cursor:pointer;flex:none;font-size:13px}
 #rpk .x:hover{background:#F3F4F6;color:var(--ink)}
+#rpk .sh{display:block;padding:2px 16px 6px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+#rpk .kinds{padding:0 16px 12px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#rpk .kd{border-radius:10px;border:1px solid var(--line);background:#fff;padding:8px 10px;text-align:left;cursor:pointer;font:inherit;color:inherit;display:flex;flex-direction:column;gap:1px}
+#rpk .kd:hover{border-color:#C3C8D0}
+#rpk .kd b{font-size:13px;font-weight:650}
+#rpk .kd span{font-size:11.5px;color:var(--muted)}
+#rpk .kd[aria-checked=true]{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue);background:#F5F8FF}
 #rpk .grid{padding:4px 16px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
 #rpk .ri{position:relative;border-radius:14px;border:1px solid var(--line);background:#fff;padding:8px 8px 12px;display:flex;flex-direction:column;text-align:left;cursor:pointer;font:inherit;color:inherit;transition:border-color 120ms,background 120ms}
 #rpk .ri:hover:not(:disabled){border-color:#C3C8D0}
@@ -1306,10 +1313,10 @@ function openAdd() {
   $('rcards').innerHTML = `<div class="tcard"><img src="/pg/static/station_franka.png" alt="A robot arm on a packing table"><div class="rx"><div><b>Table with arm</b><div class="small">A robot arm on a packing table. Put objects on it and give the robot a task.</div></div>
     <div class="tags"><span class="tag">1 robot · Franka Emika Panda</span></div>
     <button class="primary" data-r="franka">Add to lab</button></div></div>
-    <div class="tcard soon"><img src="/pg/static/station_wetlab.jpg" alt="A robot arm at a wet lab bench"><div class="rx"><div><b>Wet lab bench</b><div class="small">A lab bench with tubes, racks and lab machines, built from NVIDIA SimReady models and AutoBio lab gear.</div></div>
+    <div class="tcard"><img src="/pg/static/station_wetlab.jpg" alt="A robot arm at a wet lab bench"><div class="rx"><div><b>Wet lab bench</b><div class="small">A stainless lab bench with lab bottles, vials, a glass jar, syringes, forceps, a sterilising tray and more, all NVIDIA SimReady models with real physics.</div></div>
     <div class="tags"><span class="tag">1 robot · Franka Emika Panda</span></div>
-    <button class="primary" disabled aria-disabled="true">Coming soon</button></div></div>`;
-  $('rcards').querySelectorAll('button[data-r]').forEach(b => b.onclick = () => startPlacing(b.dataset.r));
+    <button class="primary" data-r="franka" data-kind="wetlab">Add to lab</button></div></div>`;
+  $('rcards').querySelectorAll('button[data-r]').forEach(b => b.onclick = () => startPlacing(b.dataset.r, b.dataset.kind || 'table'));
   $('addModal').style.display = 'flex';
 }
 
@@ -1336,12 +1343,16 @@ function openPicker(mode, uid) {
   const robots = S.cat.robots || [];
   const cur = st ? st.robot : null;
   const first = robots.find(r => r.id !== cur) || robots[0];
-  S.pick = {mode, uid: st && st.id, sel: first && first.id};
+  S.pick = {mode, uid: st && st.id, sel: first && first.id, kind: 'table'};
   const n = (sc.robots || []).length + 1;
   $('rpk').innerHTML = `${mode === 'add' ? '<span class="caret"></span>' : ''}<div class="ph"><div><h3 id="rpkTitle">${mode === 'add' ? 'Add a robot' : 'Swap ' + esc(st.name)}</h3>
     <p>${mode === 'add' ? 'Pick an arm, then click the floor to place it.' : 'Replace the arm. It keeps its spot, its table and whatever is on it.'}</p></div>
     <button class="x" aria-label="Close">✕</button></div>
-    <div class="grid" role="radiogroup" aria-label="Robots">${robots.map(r => `<button class="ri" role="radio" data-r="${esc(r.id)}" aria-checked="false" ${r.id === cur ? 'disabled' : ''}>
+    ${mode === 'add' ? `<span class="sh" id="rpkKinds">Station</span><div class="kinds" role="radiogroup" aria-labelledby="rpkKinds">
+      <button class="kd" role="radio" data-k="table" aria-checked="true"><b>Table</b><span>An empty packing table</span></button>
+      <button class="kd" role="radio" data-k="wetlab" aria-checked="false"><b>Wet lab bench</b><span>Stainless bench with ${STATION_KINDS.wetlab.items} lab items</span></button></div>
+      <span class="sh" id="rpkArms">Arm</span>` : ''}
+    <div class="grid" role="radiogroup" aria-label="Robots"${mode === 'add' ? ' aria-labelledby="rpkArms"' : ''}>${robots.map(r => `<button class="ri" role="radio" data-r="${esc(r.id)}" aria-checked="false" ${r.id === cur ? 'disabled' : ''}>
       ${r.id === cur ? '<span class="tag">Current</span>' : ''}<span class="ck">✓</span><span class="th"><img src="${ROBOT_IMG(r.id)}" alt=""></span>
       <span class="nm">${esc(r.label)}</span><span class="sp">${r.joints} joints · ${esc(r.gripper)}</span></button>`).join('')}
       ${SOON_ROBOTS.map(r => `<button class="ri soon" disabled aria-disabled="true"><span class="tag">Coming soon</span><span class="th"><span style="color:#C3C8D0;font-size:34px">◌</span></span>
@@ -1352,8 +1363,15 @@ function openPicker(mode, uid) {
     pk.querySelectorAll('.ri[data-r]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.r === S.pick.sel)));
     const r = robots.find(x => x.id === S.pick.sel);
     pk.querySelector('.go').disabled = !r;
-    pk.querySelector('.go').textContent = !r ? (mode === 'add' ? 'Add' : 'Swap') : mode === 'add' ? `Add ${r.label}` : `Swap to ${r.label}`;
+    pk.querySelectorAll('.kd').forEach(b => b.setAttribute('aria-checked', String(b.dataset.k === S.pick.kind)));
+    pk.querySelector('.go').textContent = !r ? (mode === 'add' ? 'Add' : 'Swap') : mode === 'add'
+      ? (S.pick.kind === 'wetlab' ? `Add wet lab bench · ${r.label}` : `Add ${r.label}`) : `Swap to ${r.label}`;
   };
+  pk.querySelectorAll('.kd').forEach(b => b.onclick = () => {
+    S.pick.kind = b.dataset.k;
+    if (b.dataset.k === 'wetlab' && robots.some(x => x.id === 'franka')) S.pick.sel = 'franka';   // the bench's default arm
+    paint();
+  });
   pk.querySelectorAll('.ri[data-r]').forEach(b => {
     b.onclick = () => { S.pick.sel = b.dataset.r; paint(); };
     b.ondblclick = () => { S.pick.sel = b.dataset.r; paint(); pickerGo(); };
@@ -1390,7 +1408,7 @@ async function pickerGo() {
   closePicker();
   if (runLock(S.scene)) { toast(runLock(S.scene)); return; }
   await holdPhysics();
-  if (p.mode === 'add') { startPlacing(p.sel); return; }
+  if (p.mode === 'add') { startPlacing(p.sel, p.kind); return; }
   const st = (S.scene.robots || []).find(r => r.id === p.uid); if (!st) { resumePhysics(); return; }
   const from = st.robot, to = p.sel;
   const r = await api('/pg/station/swap', {uid: p.uid, robot: to});
@@ -1422,11 +1440,14 @@ window.addEventListener('resize', () => closePicker());
 function closeAdd() { $('addModal').style.display = 'none'; }
 $('addStationBtn').onclick = openAdd; $('amClose').onclick = closeAdd;
 $('addModal').onclick = (e) => { if (e.target === $('addModal')) closeAdd(); };
-function startPlacing(robot) {
-  closeAdd(); S.placing = robot; S.placeYaw = 0; S.armed = null; renderItems();
+// What each kind of station starts as (the server's world.KINDS).
+const STATION_KINDS = {table: {label: 'Table', items: 0}, wetlab: {label: 'Wet lab bench', items: 18}};
+function startPlacing(robot, kind = 'table') {
+  closeAdd(); S.placing = robot; S.placeKind = kind; S.placeYaw = 0; S.armed = null; renderItems();
   api('/pg/camera', {preset: 'lab'});
   const lab = ((S.cat.robots || []).find(x => x.id === robot) || {}).label || 'the robot';
-  $('hintTag').textContent = `Click the floor to place the ${lab}. R turns it, Esc cancels.`;
+  $('hintTag').textContent = kind === 'wetlab' ? `Click the floor to place the wet lab bench with the ${lab}. R turns it, Esc cancels.`
+    : `Click the floor to place the ${lab}. R turns it, Esc cancels.`;
 }
 function cancelPlacing() { S.placing = null; hideTag(); api('/pg/ghost/clear', {}); resumePhysics(); render(); }
 let stProbeBusy = false, stProbeNext = null;
@@ -1435,14 +1456,15 @@ async function probeStation(p) {
   if (stProbeBusy) { stProbeNext = p; return; }
   stProbeBusy = true;
   try {
-    const r = await api('/pg/station/probe', {u: p.u, v: p.v, yaw: S.placeYaw});
+    const r = await api('/pg/station/probe', {u: p.u, v: p.v, yaw: S.placeYaw, kind: S.placeKind});
     if (!S.placing) { hideTag(); api('/pg/ghost/clear', {}); return; }
     const label = (S.cat.robots.find(x => x.id === S.placing) || {}).label || '';
-    showTag(p, r.valid ? `${label} station · click to place` : (r.reason || "can't go there"), !r.valid);
+    const what = S.placeKind === 'wetlab' ? `Wet lab bench · ${label}` : `${label} station`;
+    showTag(p, r.valid ? `${what} · click to place` : (r.reason || "can't go there"), !r.valid);
   } finally { stProbeBusy = false; if (stProbeNext) { const n = stProbeNext; stProbeNext = null; probeStation(n); } }
 }
 async function placeStation(p) {
-  const r = await api('/pg/station/add', {robot: S.placing, u: p.u, v: p.v, yaw: S.placeYaw});
+  const r = await api('/pg/station/add', {robot: S.placing, kind: S.placeKind, u: p.u, v: p.v, yaw: S.placeYaw});
   if (!r.ok) { toast(r.error || "Can't go there"); return; }
   S.placing = null; hideTag(); S.sel = 'robot';
   await resumePhysics();

@@ -24,6 +24,37 @@ TABLE_UID = "table"     # (older saved scenes) the one table a robot stood on
 ROBOT_XY = (-0.42, 0.0)
 STATION_TABLE = "table_packing"
 
+# The kinds of station: which table the robot stands on, how that table is turned in the
+# station's frame (the robot always faces +x), where the robot stands, and what starts on it.
+# The wet lab bench is a stainless lab table, turned so its long side runs beside the arm,
+# with lab glassware and instruments laid out within reach (item, x, y, yaw in the
+# station's frame, on the table top).
+KINDS = {
+    "table": {"label": "Table with arm", "table": STATION_TABLE, "turn": 0.0, "robot_xy": ROBOT_XY,
+              "layout": []},
+    "wetlab": {"label": "Wet lab bench", "table": "lab_bench", "turn": math.pi / 2, "robot_xy": (-0.2, 0.0),
+               "layout": [
+                   ("sterilising_tray", 0.12, -0.5, 0.0),
+                   ("syringe", 0.17, -0.27, 0.0),
+                   ("syringe_small", 0.24, -0.2, 0.0),
+                   ("forceps", 0.05, -0.24, 0.0),
+                   ("thermometer", -0.14, -0.33, math.pi / 2),
+                   ("medicine", -0.12, -0.72, 0.0),
+                   ("glass_vial", 0.24, -0.06, 0.0),
+                   ("glass_vial", 0.24, 0.0, 0.0),
+                   ("glass_vial", 0.24, 0.06, 0.0),
+                   ("lab_bottle_small", 0.1, 0.2, 0.0),
+                   ("lab_bottle_small", 0.1, 0.26, 0.0),
+                   ("lab_bottle", 0.2, 0.3, 0.0),
+                   ("lab_bottle_m", 0.2, 0.42, 0.0),
+                   ("lab_bottle_l", 0.2, 0.56, 0.0),
+                   ("lab_bottle_xl", 0.2, 0.72, 0.0),
+                   ("glass_jar", -0.05, 0.5, 0.0),
+                   ("disinfectant", -0.12, 0.7, 0.0),
+                   ("glove_box", 0.0, 0.8, math.pi / 2),
+               ]},
+}
+
 # Contact properties for library items, as a MuJoCo default class like the cell's
 # materials. Sliding friction comes from each asset's own physics material.
 PROP = dict(condim=6, friction=(1, 0.005, 0.0001), solref=(0.005, 1))
@@ -55,10 +86,31 @@ class Station:
     pos: tuple            # world (x, y) of the table's centre (m)
     yaw: float = 0.0      # rotation about the vertical (rad)
     name: str = ""        # what the user calls it ("Station 1")
+    kind: str = "table"   # a key of KINDS
 
     @property
     def prefix(self) -> str:
         return self.uid + "/"
+
+    @property
+    def spec(self) -> dict:
+        return KINDS.get(self.kind, KINDS["table"])
+
+    @property
+    def table_item(self) -> str:
+        return self.spec["table"]
+
+    @property
+    def table_yaw(self) -> float:
+        return self.yaw + self.spec["turn"]
+
+    @property
+    def robot_xy(self) -> tuple:
+        return self.spec["robot_xy"]
+
+    @property
+    def top(self) -> float:
+        return table_top(catalog.meta(self.table_item))
 
     def to_world(self, x: float, y: float, z: float = 0.0):
         """A point given in the station's own frame (table centre, robot along -x) in the world."""
@@ -71,8 +123,10 @@ class Station:
         return (c * dx + s * dy, -s * dx + c * dy)
 
     def footprint(self):
-        sx, sy, _ = catalog.meta(STATION_TABLE)["size"]
-        return sx, sy
+        """The table's size along the station's own x and y."""
+        sx, sy, _ = catalog.meta(self.table_item)["size"]
+        c, s = abs(math.cos(self.spec["turn"])), abs(math.sin(self.spec["turn"]))
+        return c * sx + s * sy, s * sx + c * sy
 
     def holds(self, x: float, y: float, margin: float = 0.0) -> bool:
         """Whether a point is over this station's table."""
@@ -83,7 +137,7 @@ class Station:
     def as_dict(self):
         from wetlabsim import scene as WS
         P = WS.ROBOTS[self.robot]
-        return {"id": self.uid, "robot": self.robot, "name": self.name, "label": P["name"],
+        return {"id": self.uid, "robot": self.robot, "name": self.name, "label": P["name"], "kind": self.kind,
                 "gripper": P["gripper"], "pos": [round(float(v), 4) for v in self.pos],
                 "yaw": round(float(self.yaw), 4)}
 
@@ -184,10 +238,11 @@ def _camera(world, name, pos, target, fovy, up=(0, 0, 1)):
 
 def add_station(world: mujoco.MjSpec, st: Station, cache: set):
     """A station's table, its robot on it, and the robot's overhead and side cameras."""
-    tmeta = catalog.meta(STATION_TABLE)
+    tmeta = catalog.meta(st.table_item)
     top = table_top(tmeta)
-    _add_item(world, Placed(table_uid(st), STATION_TABLE, (st.pos[0], st.pos[1], 0.0), st.yaw), tmeta, True, cache)
-    rx, ry = ROBOT_XY
+    _add_item(world, Placed(table_uid(st), st.table_item, (st.pos[0], st.pos[1], 0.0), st.table_yaw),
+              tmeta, True, cache)
+    rx, ry = st.robot_xy
     mount = _quat_mul(yaw_quat(st.yaw), [float(v) for v in S.ROBOTS[st.robot]["mount_quat"].split()])
     world.worldbody.add_site(name=st.prefix + "robot_mount", pos=list(st.to_world(rx, ry, top)),
                              quat=list(mount))

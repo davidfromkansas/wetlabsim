@@ -370,7 +370,8 @@ class Session:
             if s.scene_mode == "free":
                 s._sync_placed()
             return {"name": self.name,
-                    "stations": [{"uid": st.uid, "robot": st.robot, "pos": list(st.pos), "yaw": st.yaw, "name": st.name}
+                    "stations": [{"uid": st.uid, "robot": st.robot, "pos": list(st.pos), "yaw": st.yaw, "name": st.name,
+                                  "kind": st.kind}
                                  for st in s.stations],
                     "objects": [{"uid": o.uid, "item": o.item, "pos": list(o.pos), "yaw": o.yaw,
                                  "quat": list(o.quat) if o.quat is not None else None} for o in s.placed],
@@ -449,7 +450,8 @@ def _world_from_layout(layout: dict | None):
         if any(x.uid == st["uid"] for x in stations):
             continue
         stations.append(W.Station(st["uid"], st["robot"], (float(st["pos"][0]), float(st["pos"][1])),
-                                  float(st.get("yaw", 0.0)), str(st.get("name") or "")[:40]))
+                                  float(st.get("yaw", 0.0)), str(st.get("name") or "")[:40],
+                                  st.get("kind") if st.get("kind") in W.KINDS else "table"))
     known = {i["id"] for i in catalog.available()}
     for o in (layout.get("objects") or [])[:200]:
         if o.get("item") not in known or not re.match(r"^[\w.-]{1,80}$", str(o.get("uid", ""))):
@@ -1093,17 +1095,19 @@ class PGHandler(Handler):
                 if lock:
                     s.clear_ghost()
                     return self._json({"valid": False, "reason": lock})
-                return self._json(s.probe_station(float(b["u"]), float(b["v"]), float(b.get("yaw", 0.0)), b.get("uid")))
+                return self._json(s.probe_station(float(b["u"]), float(b["v"]), float(b.get("yaw", 0.0)), b.get("uid"),
+                                                  b.get("kind")))
             lock = self._locked()
             if (p in ("/pg/place", "/pg/move", "/pg/remove", "/pg/rotate", "/pg/clear") or p.startswith("/pg/station/")) and lock:
                 if p != "/pg/station/rename":
                     return self._json({"ok": False, "error": lock})
             if p == "/pg/station/add":
-                spot = s.probe_station(float(b["u"]), float(b["v"]), float(b.get("yaw", 0.0)))
+                kind = b.get("kind", "table")
+                spot = s.probe_station(float(b["u"]), float(b["v"]), float(b.get("yaw", 0.0)), kind=kind)
                 s.clear_ghost()
                 if not spot.get("valid"):
                     return self._json({"ok": False, "error": spot.get("reason") or "can't go there"})
-                uid = s.add_station(b.get("robot", "franka"), spot["pos"], float(b.get("yaw", 0.0)))
+                uid = s.add_station(b.get("robot", "franka"), spot["pos"], float(b.get("yaw", 0.0)), kind)
                 s.frame_station(uid)
                 return self._json({"ok": True, "uid": uid})
             if p == "/pg/station/move":
