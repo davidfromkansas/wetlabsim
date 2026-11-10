@@ -36,6 +36,7 @@ from wetlabsim import tasks as WT
 from .sim import PlaygroundSim
 from wetlabsim import robot_api as RA
 from . import labs as LABS
+from . import savestore as SAVE
 from . import scene3d as S3
 
 HERE = pathlib.Path(__file__).parent
@@ -147,6 +148,7 @@ class Runner:
         self.proc: subprocess.Popen | None = None
         self.info: dict = {}
         self.lock = threading.Lock()
+        self.on_done = None        # called with this runner once a run's process has ended
 
     def active(self) -> bool:
         return self.proc is not None and self.proc.poll() is None
@@ -183,8 +185,16 @@ class Runner:
                                          start_new_session=True, cwd=str(HERE.parent), env=env)
             proc, tok = self.proc, getattr(self, "token", None)
             slot = getattr(self, "slot", None)
-            threading.Thread(target=lambda: (proc.wait(), RA.TOKENS.revoke(tok), LABS.free_slot(slot)),
-                             daemon=True).start()
+            def _ended():
+                proc.wait()
+                RA.TOKENS.revoke(tok)
+                LABS.free_slot(slot)
+                if self.on_done:
+                    try:
+                        self.on_done(self)
+                    except Exception as e:  # noqa: BLE001
+                        print("could not record the run:", e)
+            threading.Thread(target=_ended, daemon=True).start()
             self.info = {"model": mdl, "task": task, "started": time.time(), "time_limit": time_limit,
                          "status": "starting"}
             return self.status()
@@ -286,6 +296,8 @@ class Session:
     def __init__(self, sid: str, name: str, owner: str, sim: PlaygroundSim, base_url: str, runs: pathlib.Path):
         self.id, self.name, self.owner = sid, name, owner
         self.created = self.used = time.time()
+        self.db_id: str | None = None          # its row in the website's database (signed-in owner)
+        self.unsent: dict = {}                  # station -> {"task", "model"}: typed but not run yet
         self.sim = sim
         self.base_url, self.runs = base_url, runs
         self.runner = Runner(f"{base_url}/s/{sid}", runs)      # LIBERO, Wet Lab: the scene's one robot
@@ -300,7 +312,33 @@ class Session:
         docs = "standard" if st is None or st.robot == "franka" else "assisted"
         if r is None or r.docs != docs and not r.active():
             r = self.runners[uid] = Runner(f"{self.base_url}/s/{self.id}/st/{uid}", self.runs, docs)
+            r.on_done = lambda runner, uid=uid: self.record_run(uid, runner)
         return r
+
+    def record_run(self, uid: str, runner: "Runner"):
+        """A finished run, into the website's database: its runs row (which robot, starter kit,
+        model, task, outcome, cost) and a run_files row per file the agent wrote or changed."""
+        if not (SAVE.enabled() and self.db_id):
+            return
+        run_id = runner.board.run.get("run_id")
+        if not run_id:
+            return
+        run_dir = runner.runs / run_id
+        def read(name):
+            try:
+                return json.loads((run_dir / name).read_text())
+            except (OSError, ValueError):
+                return {}
+        start, result, st, mdl = read("workspace_start.json"), read("result.json"), runner.status(), runner.info.get("model") or {}
+        station = self.sim.station(uid)
+        SAVE.record_run({"run_id": run_id, "session_id": self.db_id, "robot_station_id": uid,
+                         "robot_type": start.get("robot_type") or (station.robot if station else None),
+                         "robot_kit_version": start.get("robot_kit_version"), "started_by_user_id": SAVE.OWNER_USER,
+                         "ai_provider": mdl.get("agent"), "ai_model": mdl.get("model") or mdl.get("id"),
+                         "task_prompt": runner.info.get("task"), "run_outcome": st.get("status"),
+                         "started_at": runner.info.get("started"), "ended_at": time.time(),
+                         "cost_usd": result.get("cost_usd"), "blob_folder_path": None})
+        SAVE.record_files(run_id, SAVE.ai_files(run_dir))
 
     def active(self) -> bool:
         return (self.runner.active() or self.bench.active() or self.wetbench.active()
@@ -346,6 +384,51 @@ class Session:
 
 SESSIONS: dict[str, Session] = {}
 SESSIONS_LOCK = threading.Lock()
+ACCOUNT_OWNER = "account-owner"     # a signed-in account's lab: its owner, on any browser
+SAVED_AT_START = 4                  # saved sessions a lab opens with; older ones open on request
+
+
+def _snapshot(sess: Session):
+    """What autosave keeps of a session: (db id, name, layout, unsent tasks)."""
+    layout = sess.layout()
+    layout.pop("name", None)
+    return sess.db_id, sess.name, layout, sess.unsent
+
+
+def open_saved(db_id: str) -> Session | None:
+    """A saved session of the owner's, open in this lab (loaded from the database if needed)."""
+    for x in list(SESSIONS.values()):
+        if x is not None and x.db_id == db_id:
+            return x
+    row = SAVE.load_session(db_id)
+    return _from_row(row) if row else None
+
+
+def _from_row(row: dict) -> Session:
+    sess = new_session(ACCOUNT_OWNER, row["session_name"], layout=row["scene_layout"] or {}, db_id=row["session_id"])
+    sess.unsent = row["unsent_tasks"] or {}
+    if AUTOSAVE:
+        AUTOSAVE.seed(*_snapshot(sess))
+    return sess
+
+
+def _load_saved() -> int:
+    """At start: the owner's most recently saved sessions, and autosave from then on."""
+    global AUTOSAVE
+    AUTOSAVE = SAVE.Autosaver(lambda: [x for x in list(SESSIONS.values()) if x is not None and x.db_id
+                                       and x.owner == ACCOUNT_OWNER and x.sim.scene_mode == "free"], _snapshot)
+    n = 0
+    try:
+        for row in SAVE.load_sessions(SAVED_AT_START):
+            _from_row(row)
+            n += 1
+    except Exception as e:  # noqa: BLE001
+        print("could not load saved sessions:", e)
+    AUTOSAVE.start()
+    return n
+
+
+AUTOSAVE = None
 
 
 def _world_from_layout(layout: dict | None):
@@ -372,7 +455,8 @@ def _world_from_layout(layout: dict | None):
     return stations, placed
 
 
-def new_session(owner: str, name: str | None = None, layout: dict | None = None, default: bool = False) -> Session:
+def new_session(owner: str, name: str | None = None, layout: dict | None = None, default: bool = False,
+                db_id: str | None = None) -> Session:
     """A new session for this browser: blank (no stations), the starter lab (default: one Franka),
     or a copy of a layout. Named "Untitled lab", "Untitled lab 2", ... unless named."""
     with SESSIONS_LOCK:
@@ -403,6 +487,9 @@ def new_session(owner: str, name: str | None = None, layout: dict | None = None,
             SESSIONS.pop(sid, None)
         raise
     sess = Session(sid, name[:60], owner, sim, PGHandler.base_url, PGHandler.runs_dir)
+    if SAVE.enabled():
+        import uuid
+        sess.db_id = db_id or str(uuid.uuid4())
     with SESSIONS_LOCK:
         SESSIONS[sid] = sess
     return sess
@@ -492,7 +579,7 @@ class PGHandler(Handler):
     def _browser(self) -> str:
         # A lab owned by a signed-in account: its owner is the same person on any browser.
         if LABS.OWNER_USER and LABS.OWNER_KEY and LABS.owner_ok(self.headers):
-            return "account-owner"
+            return ACCOUNT_OWNER
         b = self.headers.get("X-Browser-Id", "")
         return b if re.match(r"^[A-Za-z0-9_-]{8,64}$", b) else ""
 
@@ -531,9 +618,19 @@ class PGHandler(Handler):
         if not LABS.pass_ok((q.get("pass") or [""])[0]):
             return self._send(403, b"This link has expired or isn't yours. Open your lab from the website again.",
                               "text/plain; charset=utf-8")
+        dest = "/"
+        want = (q.get("open") or [""])[0]
+        if SAVE.enabled() and re.match(r"^[0-9a-f-]{36}$", want):
+            try:
+                sess = open_saved(want)
+                if sess:
+                    SAVE.opened(want)
+                    dest = f"/?s={sess.id}"
+            except Exception as e:  # noqa: BLE001
+                print("could not open a saved session:", e)
         self.send_response(303)
         self.send_header("Set-Cookie", f"wl_lab={LABS.OWNER_KEY}; Path=/; Max-Age=43200; HttpOnly; Secure; SameSite=Lax")
-        self.send_header("Location", "/")
+        self.send_header("Location", dest)
         self.send_header("Content-Length", "0")
         self.end_headers()
 
@@ -694,6 +791,7 @@ class PGHandler(Handler):
                                    "bench": self.bench.status(), "wetbench": self.wetbench.status(),
                                    "session": {"id": self.sess.id, "name": self.sess.name,
                                                "mine": self._owns()}, "stale": LABS.stale(),
+                                   "unsent": self.sess.unsent,
                                    "idle_left": LABS.idle_left()})
             if p == "/pg/wetlab":
                 return self._json({"tasks": [{"id": t.id, "title": t.title, "prompt": t.prompt,
@@ -931,6 +1029,11 @@ class PGHandler(Handler):
             if p == "/pg/station/remove":
                 s.remove_station(b["uid"])
                 self.runners.pop(b["uid"], None)
+                return self._json({"ok": True})
+            if p == "/pg/drafts":      # typed-but-unsent tasks and chosen models, kept with the session
+                tasks, models = b.get("tasks") or {}, b.get("models") or {}
+                self.sess.unsent = {str(k): {"task": str(tasks.get(k, ""))[:8000], "model": str(models.get(k, ""))[:80]}
+                                    for k in set(tasks) | set(models) if re.match(r"^st\d{1,3}$", str(k))}
                 return self._json({"ok": True})
             if p == "/pg/session/rename":
                 name = str(b.get("name", "")).strip()[:60]
@@ -1184,7 +1287,8 @@ def main(argv=None):
     # The starter session: the first browser to open the page takes it. (The front keeps one
     # too: the replay viewer draws past runs with its renderer. The idle robot log stays off a
     # shared volume; WETLAB_SESSION_DIR points it elsewhere when hosted.)
-    new_session("", "Untitled lab", default=True)
+    if not (_load_saved() if SAVE.enabled() else 0):
+        new_session("", "Untitled lab", default=True)
     srv = ThreadingHTTPServer((args.host, args.port), PGHandler)
     srv.daemon_threads = True
 

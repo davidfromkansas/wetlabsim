@@ -974,7 +974,7 @@ $('stopBtn').onclick = async () => { await api('/pg/stop', S.scene && S.scene.mo
 $('infoBtn').onclick = (e) => { e.stopPropagation(); const open = $('infoPop').hidden; $('infoPop').hidden = !open; $('infoBtn').setAttribute('aria-expanded', open); };
 document.addEventListener('click', (e) => { if (!$('infoPop').hidden && !e.target.closest('#infoPop')) { $('infoPop').hidden = true; $('infoBtn').setAttribute('aria-expanded', false); } });
 function modelInfo(id) { return (S.cat.models.find(m => m.id === id) || {}); }
-$('model').onchange = () => { if (S.scene) S.stModels[S.scene.active] = $('model').value; $('modelLogo').src = LOGOS[modelInfo($('model').value).provider] || LOGOS.anthropic; S.feedKey = ''; render(); };
+$('model').onchange = () => { if (S.scene) S.stModels[S.scene.active] = $('model').value; saveDrafts(); $('modelLogo').src = LOGOS[modelInfo($('model').value).provider] || LOGOS.anthropic; S.feedKey = ''; render(); };
 // Free play's right panel: Chat or Objects. A run switches it to Chat; either tab can be
 // picked at any time. Objects are greyed out while the scene is locked (running or playing).
 S.sideTab = 'objects';
@@ -1231,6 +1231,11 @@ $('closedOpen').onclick = () => { location.href = (S.cat.front || '') + '/'; };
 async function refresh() {
   const sid = SID, sc = await api('/pg/scene');
   if (sid !== SID) return;                 // switched sessions meanwhile
+  if (sc.unsent && !(S.unsentFor || {})[sid]) {   // a saved session's unsent tasks, once per session
+    S.unsentFor = {...(S.unsentFor || {}), [sid]: true};
+    for (const [k, v] of Object.entries(sc.unsent)) { if (v.task && !S.drafts[k]) S.drafts[k] = v.task; if (v.model && !S.stModels[k]) S.stModels[k] = v.model; }
+    S.taskFor = null;
+  }
   // A hosted lab from before the site was updated: back to the front, which opens a new one.
   if (sc.stale && S.cat.front && !S.watch && !Object.values(sc.runs || {}).some(r => r.active || r.queued)) { location.href = S.cat.front + '/'; return; }
   idleCheck(sc.idle_left);
@@ -1290,7 +1295,14 @@ async function loop() {
   } catch (e) { S.offline = true; }
   setTimeout(loop, 500);
 }
-$('task').oninput = () => { if (S.scene) S.drafts[S.scene.active] = $('task').value; render(); };
+$('task').oninput = () => { if (S.scene) S.drafts[S.scene.active] = $('task').value; render(); saveDrafts(); };
+// Typed-but-unsent tasks and chosen models go to the lab, which keeps them with the session
+// (and, signed in on the website, saves them to your account).
+function saveDrafts() {
+  if (S.watch) return;
+  clearTimeout(saveDrafts.t);
+  saveDrafts.t = setTimeout(() => api('/pg/drafts', {tasks: S.drafts, models: S.stModels}), 800);
+}
 
 // ---------------------------------------------------------------- sessions
 // Each session is one lab of its own on the server. The panel on the left lists this browser's

@@ -18,3 +18,6 @@ li .t b{display:block;color:var(--ink);font-weight:600;overflow:hidden;text-over
 .dot{width:8px;height:8px;border-radius:50%;background:var(--red);flex:none}
 a{color:var(--blue2)}
 .links{display:flex;gap:16px;flex-wrap:wrap}
+.secondary{display:inline-flex;align-items:center;height:34px;padding:0 12px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;color:var(--ink);font:600 13px var(--font-inter),sans-serif;cursor:pointer}
+.link{border:0;background:none;color:var(--muted);font:500 13px var(--font-inter),sans-serif;cursor:pointer;padding:6px;text-decoration:underline}
+li .secondary{flex:none}

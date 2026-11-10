@@ -67,7 +67,10 @@ def _optional_secret(name: str) -> list:
 # LAB_LINK_SECRET, shared with the website (Vercel): its "lab for user" requests and the
 # one-time passes it hands signed-in owners. Without it the site works as before, no sign-in.
 LINK_SECRET = "wetlab-link"
-lab_secrets = [modal.Secret.from_name("anthropic-secret"), *_optional_secret(DEVIN_SECRET), *_optional_secret(LINK_SECRET)]
+# DATABASE_URL (the website's Neon database): a signed-in owner's lab saves its sessions and runs there.
+DB_SECRET = "wetlab-db"
+lab_secrets = [modal.Secret.from_name("anthropic-secret"), *_optional_secret(DEVIN_SECRET), *_optional_secret(LINK_SECRET),
+               *_optional_secret(DB_SECRET)]
 app = modal.App(APP, image=image)
 
 

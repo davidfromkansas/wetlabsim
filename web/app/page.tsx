@@ -1,9 +1,10 @@
 import { SignInButton, UserButton } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
-import { upsertUser } from "@/lib/db";
+import { mySessions, upsertUser } from "@/lib/db";
 import { MODAL_FRONT_URL } from "@/lib/modal";
 import { LiveNow } from "./live";
 import { OpenLab } from "./open-lab";
+import { MySessions } from "./my-sessions";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ export default async function Home() {
       name: [user.firstName, user.lastName].filter(Boolean).join(" "),
     });
   }
+  const sessions = user ? await mySessions(user.id).catch(() => []) : [];
   return (
     <main>
       <div className="top">
@@ -39,6 +41,13 @@ export default async function Home() {
           </>
         )}
       </div>
+
+      {user && (
+        <div className="card">
+          <h2>My sessions</h2>
+          <MySessions initial={sessions} />
+        </div>
+      )}
 
       <div className="card">
         <h2>Live now</h2>

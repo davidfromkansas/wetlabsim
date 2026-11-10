@@ -101,6 +101,24 @@ def workspace_leaks(*dirs: pathlib.Path) -> list[pathlib.Path]:
 DOCS_LEVELS = ("standard", "assisted")
 
 
+# Written per run from the task and the station's site, not part of the robot's starter kit.
+PER_RUN_FILES = {"GOAL.md", "SITE.md", "cameras.json"}
+
+
+def workspace_manifest(workspace: pathlib.Path, robot: str, docs: str) -> dict:
+    """What the agent started with: every file's SHA-256, and the starter kit's version (the
+    robot's model, manuals and docs at this docs level; the same for every run of that robot
+    until they change). The run's record keeps only what the agent wrote or changed."""
+    import hashlib
+    files = {}
+    for p in sorted(workspace.rglob("*")):
+        if p.is_file():
+            files[str(p.relative_to(workspace))] = hashlib.sha256(p.read_bytes()).hexdigest()
+    kit = hashlib.sha256(json.dumps({k: v for k, v in files.items() if k not in PER_RUN_FILES},
+                                    sort_keys=True).encode()).hexdigest()[:12]
+    return {"robot_type": robot, "docs": docs, "robot_kit_version": f"{robot}-{docs}-{kit}", "files": files}
+
+
 def prepare_workspace(workspace: pathlib.Path, client: pathlib.Path, robot: str, docs: str,
                       task: str, info: dict, site_file: pathlib.Path | None = None) -> str:
     """Put what the agent gets for this documentation level into its workspace and client
@@ -287,6 +305,7 @@ def main(argv=None):
     client = pathlib.Path(tempfile.mkdtemp(prefix=f"wetlab-{run_id}-client-"))
     note = prepare_workspace(workspace, client, robot, args.docs, task, info,
                              pathlib.Path(args.site_file) if args.site_file else None)
+    store.write_json(run_id, "workspace_start.json", workspace_manifest(workspace, robot, args.docs))
 
     _eval_call(args.url, token, "/eval/reset", {"run_dir": str(run_dir), "task": args.task_id})
     gt0 = _eval_call(args.url, token, "/eval/ground_truth")

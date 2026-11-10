@@ -12,7 +12,7 @@ function pass(secret: string, user: string, lab: string): string {
   return `${body}.${createHmac("sha256", secret).update(body).digest("base64url")}`;
 }
 
-export async function POST() {
+export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) return Response.json({ error: "sign in first" }, { status: 401 });
   const secret = process.env.LAB_LINK_SECRET;
@@ -30,6 +30,9 @@ export async function POST() {
   } catch {
     return Response.json({ pending: true });     // the Modal front is waking up: ask again
   }
-  if (r.url && r.lab) return Response.json({ go: `${r.url}/auth?pass=${pass(secret, userId, r.lab)}` });
+  // A saved session to open in the lab (it loads it from the database if it isn't open yet).
+  const body = await req.json().catch(() => ({}));
+  const open = typeof body.session === "string" && /^[0-9a-f-]{36}$/.test(body.session) ? `&open=${body.session}` : "";
+  if (r.url && r.lab) return Response.json({ go: `${r.url}/auth?pass=${pass(secret, userId, r.lab)}${open}` });
   return Response.json({ pending: r.pending, full: r.full, max: r.max, error: r.error });
 }
