@@ -646,11 +646,12 @@ class PGHandler(Handler):
         when it is ready (no key: the website hands the owner a one-time pass instead)."""
         if not LABS.link_ok(self.headers.get("X-Link-Secret", "")):
             return self._err("not found", 404)
-        user = str((self._body() or {}).get("user", ""))
+        body = self._body() or {}         # read once: a second read would wait for bytes that never come
+        user = str(body.get("user", ""))
         if not re.match(r"^[A-Za-z0-9_-]{1,64}$", user):
             return self._err("bad user", 400)
         try:
-            out = LABS.lab_of_user(user) if (self._body() or {}).get("find_only") else LABS.claim_lab("user:" + user, user)
+            out = LABS.lab_of_user(user) if body.get("find_only") else LABS.claim_lab("user:" + user, user)
         except Exception as e:  # noqa: BLE001
             return self._err(f"could not start a lab: {e}", 503)
         out.pop("key", None)
