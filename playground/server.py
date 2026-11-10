@@ -373,7 +373,8 @@ class Session:
                     "stations": [{"uid": st.uid, "robot": st.robot, "pos": list(st.pos), "yaw": st.yaw, "name": st.name}
                                  for st in s.stations],
                     "objects": [{"uid": o.uid, "item": o.item, "pos": list(o.pos), "yaw": o.yaw,
-                                 "quat": list(o.quat) if o.quat is not None else None} for o in s.placed]}
+                                 "quat": list(o.quat) if o.quat is not None else None} for o in s.placed],
+                    "paused": bool(s.paused)}
 
     def stop(self):
         with QUEUE_LOCK:
@@ -484,6 +485,8 @@ def new_session(owner: str, name: str | None = None, layout: dict | None = None,
             sim._uid = max(nums, default=0)
         log_root = pathlib.Path(os.environ.get("WETLAB_SESSION_DIR") or PGHandler.runs_dir)
         sim.open_log(log_root / time.strftime(f"session-%Y%m%d-%H%M%S-{sid}"))
+        if layout and layout.get("paused"):
+            sim.pause()                    # the world comes back the way it was left
         sim.start()
         sim.frame_lab(glide=False)
     except Exception:
@@ -1279,6 +1282,10 @@ class PGHandler(Handler):
                 s.play()
                 return self._json({"ok": True})
             if p == "/pg/pause":
+                with QUEUE_LOCK:
+                    waiting = any(q["session"] == self.sess.id for q in QUEUE)
+                if self._busy() or waiting:
+                    return self._json({"ok": False, "error": "A robot is working on a task. Stop it first to pause the world."})
                 s.pause()
                 return self._json({"ok": True})
             if p == "/pg/stop":
@@ -1294,8 +1301,12 @@ class PGHandler(Handler):
             if p == "/pg/reset":
                 if self._busy():
                     return self._json({"ok": False, "error": "stop the run first"})
+                was = s.paused
                 s.reset()
-                s.pause()
+                if was:
+                    s.pause()
+                else:
+                    s.play()
                 return self._json({"ok": True})
             return self._err("not found", 404)
         except RobotError as e:

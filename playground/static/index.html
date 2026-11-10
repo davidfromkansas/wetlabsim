@@ -540,6 +540,17 @@ body.rclosed #rmain{margin:8px 0;box-shadow:none}
 #rrail{padding-top:16px}
 .rbot{box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(17,24,39,.06)}
 #rrail .iconbtn:hover,.ptitle .iconbtn:hover{background:rgba(17,24,39,.06)}
+
+/* ---------- play/pause = the physics world ---------- */
+#playBtn:disabled{opacity:.45;cursor:not-allowed}
+.cdlg{position:fixed;inset:0;z-index:120;background:rgba(17,24,39,.32);display:flex;align-items:center;justify-content:center}
+.cdlg[hidden]{display:none}
+.cdlg .bx{width:380px;max-width:calc(100vw - 32px);background:#fff;border-radius:14px;box-shadow:0 24px 60px rgba(17,24,39,.3);padding:20px 20px 16px;font:13px/1.5 Inter,sans-serif;color:var(--muted)}
+.cdlg h3{margin:0 0 6px;font-size:16px;color:var(--ink)}
+.cdlg .act{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.cdlg button{height:36px;padding:0 14px;border-radius:9px;font:600 13px Inter,sans-serif;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink)}
+.cdlg button.ok{background:var(--blue);border-color:var(--blue);color:#fff}
+@container (max-width:1060px){#playpill{left:auto;right:14px;transform:none}}
 </style>
 </head>
 <body>
@@ -1279,14 +1290,37 @@ $('delBtn').onclick = removeSel; $('rotBtn').onclick = rotateSel;
 
 // ---------------------------------------------------------------- play, tasks, chat
 $('playBtn').onclick = async () => {
+  if ($('playBtn').disabled) return;
   if (S.scene && !S.scene.paused) await api('/pg/pause', {}); else await api('/pg/play', {});
   refresh();
 };
 $('resetBtn').onclick = async () => { const r = await api('/pg/reset', {}); if (!r.ok) toast(r.error); refresh(); };
+
+// A small "are you sure" card. Resolves true when confirmed.
+function askConfirm(title, text, okLabel) {
+  return new Promise(res => {
+    let d = $('cdlg');
+    if (!d) { d = document.createElement('div'); d.id = 'cdlg'; d.className = 'cdlg'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); document.body.appendChild(d); }
+    d.innerHTML = `<div class="bx"><h3>${esc(title)}</h3><div>${esc(text)}</div><div class="act"><button class="no">Cancel</button><button class="ok">${esc(okLabel)}</button></div></div>`;
+    d.hidden = false;
+    const done = (v) => { d.hidden = true; document.removeEventListener('keydown', key, true); res(v); };
+    const key = (e) => { if (e.key === 'Escape') { e.preventDefault(); done(false); } else if (e.key === 'Enter') { e.preventDefault(); done(true); } };
+    document.addEventListener('keydown', key, true);
+    d.querySelector('.no').onclick = () => done(false);
+    d.querySelector('.ok').onclick = () => done(true);
+    d.onclick = (e) => { if (e.target === d) done(false); };
+    d.querySelector('.ok').focus();
+  });
+}
 $('startBtn').onclick = async () => {
   const task = $('task').value.trim();
   if (!task) { toast('Type a task for the robot first'); $('task').focus(); return; }
   const station = S.scene.active;
+  if (S.scene.paused && S.scene.mode === 'free') {
+    const n = (S.scene.robots || []).length;
+    const ok = await askConfirm('Resume the physics world?', `The world is paused. Starting this task will resume physics for the whole lab${n > 1 ? `, so all ${n} robots and every object start moving again` : ''}.`, 'Resume and run task');
+    if (!ok) return;
+  }
   const r = await api('/pg/play', {task, model: $('model').value, station});
   if (!r.ok) { toast(r.error); return; }
   S.runTask = task; S.follow = true; S.feedKey = ''; setSideTab('chat');
@@ -1458,11 +1492,15 @@ function render() {
   applyMode();
   const run = sc.run || {}, active = !!run.active, playing = !sc.paused;
   $('playBtn').classList.toggle('on', playing);
-  $('playLabel').textContent = playing ? 'Pause' : 'Play';
+  $('playLabel').textContent = playing ? 'Pause physics' : 'Play physics';
+  { const working = Object.values(sc.runs || {}).filter(r => r && (r.active || r.queued)).length;
+    $('playBtn').disabled = playing && working > 0 && !S.fixed;
+    $('playBtn').title = $('playBtn').disabled ? `${working === 1 ? 'A robot is' : working + ' robots are'} working. Stop ${working === 1 ? 'it' : 'them'} from the chat to pause the world.`
+      : playing ? 'Freeze the physics world: every robot and object stops' : 'Run the physics world'; }
   $('playIcon').innerHTML = playing ? '<rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/>' : '<path d="M3 1.5 L12.5 7 L3 12.5 Z"/>';
   $('clock').textContent = fmtClock(sc.time);
-  $('rt').textContent = playing ? (sc.realtime_factor >= 0.97 ? 'real time' : (sc.realtime_factor * 100).toFixed(0) + '% of real time') : 'paused';
-  $('lockmsg').style.display = sc.locked ? '' : 'none'; $('lockmsg').textContent = S.fixed ? 'Scene locked for a fair test' : active ? 'Scene locked while the AI runs' : 'Scene locked while playing · pause to edit';
+  $('rt').textContent = playing ? 'World running' + (sc.realtime_factor >= 0.97 ? '' : ' · ' + (sc.realtime_factor * 100).toFixed(0) + '% speed') : 'World paused';
+  $('lockmsg').style.display = sc.locked && (active || S.fixed) ? '' : 'none'; $('lockmsg').textContent = S.fixed ? 'Scene locked for a fair test' : active ? 'Scene locked while a robot works' : 'Pause physics to edit the scene';
   $('right').classList.toggle('locked', !!sc.locked);
   $('liveTag').style.display = playing ? '' : 'none';
   $('hintTag').style.display = playing ? 'none' : '';
@@ -1510,7 +1548,7 @@ function render() {
   document.body.classList.toggle('running', active);
   for (const [id, t] of [['tabChat', 'chat'], ['tabObjects', 'objects'], ['tabFiles', 'files'], ['tabData', 'data']]) $(id).setAttribute('aria-selected', S.sideTab === t);
   if (S.sideTab === 'data') renderData();
-  $('libhint').textContent = sc.locked ? 'Pause the scene to add or move objects.' : (S.armed ? $('libhint').textContent : LIBHINT);
+  $('libhint').textContent = sc.locked ? 'Pause physics to add or move objects.' : (S.armed ? $('libhint').textContent : LIBHINT);
   $('task').readOnly = active;
   const queued = !!run.queued;     // public site: waiting for one of the few run slots
   $('stopBtn').style.display = active || queued ? '' : 'none';
