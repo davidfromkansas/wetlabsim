@@ -554,6 +554,48 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
 .cdlg button{height:36px;padding:0 14px;border-radius:9px;font:600 13px Inter,sans-serif;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink)}
 .cdlg button.ok{background:var(--blue);border-color:var(--blue);color:#fff}
 @container (max-width:1060px){#playpill{left:auto;right:14px;transform:none}}
+
+/* ---------- the robot picker: one card for Add and Swap ---------- */
+#rpk{position:fixed;z-index:90;width:420px;max-width:calc(100vw - 24px);background:#fff;border-radius:16px;box-shadow:0 24px 60px -12px rgba(17,24,39,.35),0 0 0 1px rgba(17,24,39,.08);font:13px Inter,sans-serif;color:var(--ink);transform-origin:var(--o,right top);animation:rpkIn 160ms cubic-bezier(.23,1,.32,1)}
+#rpk[hidden]{display:none}
+@keyframes rpkIn{from{opacity:0;transform:scale(.97)}}
+#rpk .caret{position:absolute;right:-7px;width:14px;height:14px;background:#fff;transform:rotate(45deg);box-shadow:1px -1px 0 rgba(17,24,39,.08)}
+#rpk .ph{padding:16px 16px 10px;display:flex;align-items:flex-start;gap:10px}
+#rpk h3{margin:0;font-size:16px;font-weight:650}
+#rpk .ph p{margin:3px 0 0;font-size:12.5px;color:var(--muted);line-height:1.45}
+#rpk .x{margin-left:auto;width:28px;height:28px;border-radius:7px;border:0;background:none;color:#6B7280;cursor:pointer;flex:none;font-size:13px}
+#rpk .x:hover{background:#F3F4F6;color:var(--ink)}
+#rpk .grid{padding:4px 16px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#rpk .ri{position:relative;border-radius:14px;border:1px solid var(--line);background:#fff;padding:8px 8px 12px;display:flex;flex-direction:column;text-align:left;cursor:pointer;font:inherit;color:inherit;transition:border-color 120ms,background 120ms}
+#rpk .ri:hover:not(:disabled){border-color:#C3C8D0}
+#rpk .ri .th{height:118px;border-radius:10px;background:#F3F4F6;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+#rpk .ri .th img{width:104px;height:104px;object-fit:contain}
+#rpk .ri .nm{font-weight:650;font-size:14px;padding:0 4px}
+#rpk .ri .sp{margin-top:3px;font-size:12px;color:var(--muted);padding:0 4px}
+#rpk .ri .tag{position:absolute;top:14px;left:14px;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:6px;background:#fff;color:#374151;box-shadow:0 0 0 1px var(--line)}
+#rpk .ri[aria-checked=true]{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue);background:#F5F8FF}
+#rpk .ri[aria-checked=true] .th{background:#E8EFFF}
+#rpk .ri .ck{position:absolute;top:14px;right:14px;width:20px;height:20px;border-radius:50%;background:var(--blue);color:#fff;font-size:12px;font-weight:700;display:none;align-items:center;justify-content:center}
+#rpk .ri[aria-checked=true] .ck{display:flex}
+#rpk .ri:disabled{cursor:default}
+#rpk .ri.soon{opacity:.55}
+#rpk .ri.soon .tag{color:#6B7280}
+#rpk .pf{border-top:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;justify-content:flex-end;gap:8px;background:#FAFAFB;border-radius:0 0 16px 16px}
+#rpk .pf .n{font-size:12px;color:var(--muted);margin-right:auto;white-space:nowrap}
+#rpk .pf button{height:36px;padding:0 14px;border-radius:9px;font:600 13px Inter,sans-serif;cursor:pointer;white-space:nowrap;border:1px solid var(--line);background:#fff;color:var(--ink)}
+#rpk .pf .go{background:var(--blue);border-color:var(--blue);color:#fff}
+#rpk .pf .go:disabled{opacity:.45;cursor:not-allowed}
+.radd.on{border-style:solid;border-color:var(--blue);color:var(--blue);background:#EFF4FF}
+#rtitle{display:flex;align-items:flex-start;gap:8px}
+#rtitle .tt{flex:1;min-width:0}
+#rSwap{height:30px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;gap:6px;font:600 12.5px Inter,sans-serif;color:#1F2937;cursor:pointer;flex:none}
+#rSwap:hover:not(:disabled){border-color:#C3C8D0}
+#rSwap.on{border-color:var(--blue);color:#1D4ED8;box-shadow:0 0 0 3px #E0E9FF}
+#rSwap:disabled{opacity:.45;cursor:not-allowed}
+#utoast{position:absolute;bottom:196px;left:50%;transform:translateX(-50%);z-index:30;background:var(--ink);color:#fff;border-radius:10px;padding:6px 6px 6px 14px;font-size:13px;display:flex;align-items:center;gap:10px;white-space:nowrap;box-shadow:0 8px 20px rgba(17,24,39,.25)}
+#utoast[hidden]{display:none}
+#utoast button{border:0;background:none;color:#93B4FF;font:600 13px Inter,sans-serif;padding:4px 8px;border-radius:6px;cursor:pointer}
+#utoast button:hover{background:rgba(255,255,255,.1)}
 </style>
 </head>
 <body>
@@ -1109,7 +1151,8 @@ document.addEventListener('mousedown', (e) => { if (!e.target.closest('#rhead'))
   const inner = document.createElement('div'); inner.id = 'rinner';
   while (right.firstChild) inner.appendChild(right.firstChild);
   const title = document.createElement('div'); title.id = 'rtitle';
-  title.innerHTML = '<b id="rtName">Robot</b><span class="sub"><span class="sdot" id="rtDot"></span><span id="rtSub"></span></span>';
+  title.innerHTML = '<div class="tt"><b id="rtName">Robot</b><span class="sub"><span class="sdot" id="rtDot"></span><span id="rtSub"></span></span></div>'
+    + '<button id="rSwap" aria-haspopup="dialog" aria-expanded="false" title="Swap this robot for another arm"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-3.5-3.5"/><path d="M20 16H6l3.5 3.5"/></svg>Swap</button>';
   inner.insertBefore(title, inner.firstChild);
   main.appendChild(inner); right.appendChild(rail); right.appendChild(main);
   const tip = document.createElement('div'); tip.id = 'rtip'; tip.hidden = true; document.body.appendChild(tip);
@@ -1127,15 +1170,20 @@ function renderRail() {
   const key = JSON.stringify([list.map(r => [r.id, r.name, r.label, r.robot, chipDot(r)]), sc.active, open]);
   const on = list.find(r => r.id === sc.active) || list[0];
   if (on) { const [d, t] = chipDot(on); $('rtName').textContent = on.name; $('rtSub').textContent = `${on.label} · ${t}`; $('rtDot').className = 'sdot ' + d; }
-  else { $('rtName').textContent = 'No robot yet'; $('rtSub').textContent = 'Press + to add a station'; $('rtDot').className = 'sdot'; }
+  else { $('rtName').textContent = 'No robot yet'; $('rtSub').textContent = 'Press + to add a robot'; $('rtDot').className = 'sdot'; }
+  $('rSwap').hidden = !on || !!S.watch;
+  $('rSwap').disabled = !!runLock(sc);
+  $('rSwap').title = runLock(sc) ? 'A robot is working on a task. Stop it to swap.' : 'Swap this robot for another arm';
   if (key === S.railKey) return; S.railKey = key;
   const tog = `<button class="iconbtn" id="rToggle" aria-label="${open ? 'Hide' : 'Show'} robot panel" title="${open ? 'Hide' : 'Show'} robot panel" aria-expanded="${open}"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#374151" stroke-width="1.5"><rect x="1.75" y="2.75" width="14.5" height="12.5" rx="2.5"/><path d="M11.5 2.75 V15.25"/></svg></button>`;
   $('rrail').innerHTML = tog + '<span class="sep"></span>' + list.map(st => { const [d] = chipDot(st);
     return `<button class="rbot" data-st="${esc(st.id)}" aria-current="${!!on && st.id === on.id}" aria-label="${esc(st.name)}, ${esc(st.label)}"><img src="${ROBOT_IMG(st.robot)}" alt=""><span class="bdg ${d}"></span></button>`; }).join('')
-    + '<button class="radd" id="rAdd" aria-label="Add station" title="Add station">+</button>'
+    + `<button class="radd${S.pick && S.pick.mode === 'add' ? ' on' : ''}" id="rAdd" aria-label="Add a robot" aria-haspopup="dialog">+</button>`
     + `<a class="iconbtn rpast" id="rPast" href="${esc($('pastLink').href)}" target="_blank" rel="noopener" aria-label="Past runs" title="Past runs"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h11M6.5 21h11"/><path d="M7.5 3c0 4.5 4.5 6 4.5 9s-4.5 4.5-4.5 9"/><path d="M16.5 3c0 4.5-4.5 6-4.5 9s4.5 4.5 4.5 9"/><path d="M9.2 19.5c.8-1.6 1.8-2.3 2.8-2.3s2 .7 2.8 2.3z" fill="#374151" stroke-width="1"/></svg></a>`;
   $('rToggle').onclick = () => setRight(document.body.classList.contains('rclosed'));
-  $('rAdd').onclick = () => openAdd();
+  $('rAdd').onclick = () => { $('rtip').hidden = true; S.pick && S.pick.mode === 'add' ? closePicker() : openPicker('add'); };
+  $('rAdd').onmouseenter = () => { if (!S.pick) showRtip($('rAdd'), '<b>Add a robot</b>'); };
+  $('rAdd').onmouseleave = () => { $('rtip').hidden = true; };
   $('rPast').onmouseenter = () => showRtip($('rPast'), '<b>Past runs</b><br><span class="s">Replays of every finished run</span>');
   $('rPast').onmouseleave = () => { $('rtip').hidden = true; };
   $('rrail').querySelectorAll('.rbot').forEach(b => {
@@ -1264,15 +1312,123 @@ function openAdd() {
   $('rcards').querySelectorAll('button[data-r]').forEach(b => b.onclick = () => startPlacing(b.dataset.r));
   $('addModal').style.display = 'flex';
 }
+
+// ---------------------------------------------------------------- the robot picker (Add and Swap share it)
+// A lock only because physics is playing can be lifted for a moment; a robot at work can't.
+const runLock = (sc) => sc && sc.locked && !/while playing/.test(String(sc.locked)) ? (typeof sc.locked === 'string' ? sc.locked : 'A robot is running a task.') : '';
+async function holdPhysics() { if (S.scene && !S.scene.paused) { await api('/pg/pause', {}); S.resumeAfter = true; } }
+async function resumePhysics() { if (S.resumeAfter) { S.resumeAfter = false; await api('/pg/play', {}); } }
+const SOON_ROBOTS = [
+  {label: 'Kinova Gen3', joints: '7 joints', gripper: 'Robotiq 2F-85'},
+  {label: 'ALOHA (two arms)', joints: '2 × 6 joints', gripper: '2 grippers'},
+];
+(() => {
+  const d = document.createElement('div'); d.id = 'rpk'; d.hidden = true; d.setAttribute('role', 'dialog'); d.setAttribute('aria-labelledby', 'rpkTitle');
+  document.body.appendChild(d);
+  const u = document.createElement('div'); u.id = 'utoast'; u.hidden = true; u.setAttribute('role', 'status'); $('stage').appendChild(u);
+})();
+function openPicker(mode, uid) {
+  const sc = S.scene; if (!sc || sc.mode !== 'free' || S.watch || !S.cat) return;
+  if (runLock(sc)) { toast(runLock(sc)); return; }
+  if (S.placing) cancelPlacing();
+  const st = mode === 'swap' ? (sc.robots || []).find(r => r.id === uid) : null;
+  if (mode === 'swap' && !st) return;
+  const robots = S.cat.robots || [];
+  const cur = st ? st.robot : null;
+  const first = robots.find(r => r.id !== cur) || robots[0];
+  S.pick = {mode, uid: st && st.id, sel: first && first.id};
+  const n = (sc.robots || []).length + 1;
+  $('rpk').innerHTML = `${mode === 'add' ? '<span class="caret"></span>' : ''}<div class="ph"><div><h3 id="rpkTitle">${mode === 'add' ? 'Add a robot' : 'Swap ' + esc(st.name)}</h3>
+    <p>${mode === 'add' ? 'Pick an arm, then click the floor to place it.' : 'Replace the arm. It keeps its spot, its table and whatever is on it.'}</p></div>
+    <button class="x" aria-label="Close">✕</button></div>
+    <div class="grid" role="radiogroup" aria-label="Robots">${robots.map(r => `<button class="ri" role="radio" data-r="${esc(r.id)}" aria-checked="false" ${r.id === cur ? 'disabled' : ''}>
+      ${r.id === cur ? '<span class="tag">Current</span>' : ''}<span class="ck">✓</span><span class="th"><img src="${ROBOT_IMG(r.id)}" alt=""></span>
+      <span class="nm">${esc(r.label)}</span><span class="sp">${r.joints} joints · ${esc(r.gripper)}</span></button>`).join('')}
+      ${SOON_ROBOTS.map(r => `<button class="ri soon" disabled aria-disabled="true"><span class="tag">Coming soon</span><span class="th"><span style="color:#C3C8D0;font-size:34px">◌</span></span>
+      <span class="nm">${esc(r.label)}</span><span class="sp">${esc(r.joints)} · ${esc(r.gripper)}</span></button>`).join('')}</div>
+    <div class="pf">${mode === 'swap' ? '<span class="n">Name and chats stay.</span>' : ''}<button class="no">Cancel</button><button class="go"></button></div>`;
+  const pk = $('rpk');
+  const paint = () => {
+    pk.querySelectorAll('.ri[data-r]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.r === S.pick.sel)));
+    const r = robots.find(x => x.id === S.pick.sel);
+    pk.querySelector('.go').disabled = !r;
+    pk.querySelector('.go').textContent = !r ? (mode === 'add' ? 'Add' : 'Swap') : mode === 'add' ? `Add ${r.label}` : `Swap to ${r.label}`;
+  };
+  pk.querySelectorAll('.ri[data-r]').forEach(b => {
+    b.onclick = () => { S.pick.sel = b.dataset.r; paint(); };
+    b.ondblclick = () => { S.pick.sel = b.dataset.r; paint(); pickerGo(); };
+  });
+  pk.querySelector('.x').onclick = () => closePicker(true);
+  pk.querySelector('.no').onclick = () => closePicker(true);
+  pk.querySelector('.go').onclick = pickerGo;
+  paint(); pk.hidden = false;
+  // place it next to what opened it
+  if (mode === 'add') {
+    const a = $('rAdd').getBoundingClientRect(), h = pk.offsetHeight;
+    const top = Math.max(8, Math.min(a.top + a.height / 2 - 40, innerHeight - h - 8));
+    pk.style.left = (a.left - pk.offsetWidth - 12) + 'px'; pk.style.top = top + 'px';
+    pk.querySelector('.caret').style.top = (a.top + a.height / 2 - top - 7) + 'px';
+    pk.style.setProperty('--o', `right ${a.top + a.height / 2 - top}px`);
+    $('rAdd').classList.add('on'); $('rAdd').setAttribute('aria-expanded', 'true');
+  } else {
+    const a = $('rSwap').getBoundingClientRect();
+    pk.style.left = Math.max(8, a.right - pk.offsetWidth) + 'px'; pk.style.top = (a.bottom + 8) + 'px';
+    pk.style.setProperty('--o', 'right top');
+    $('rSwap').classList.add('on'); $('rSwap').setAttribute('aria-expanded', 'true');
+  }
+  const sel = pk.querySelector('.ri[aria-checked=true]'); (sel || pk.querySelector('.go')).focus({preventScroll: true});
+}
+function closePicker(refocus) {
+  if (!S.pick) return;
+  const mode = S.pick.mode; S.pick = null; $('rpk').hidden = true;
+  if ($('rAdd')) { $('rAdd').classList.remove('on'); $('rAdd').setAttribute('aria-expanded', 'false'); }
+  $('rSwap').classList.remove('on'); $('rSwap').setAttribute('aria-expanded', 'false');
+  if (refocus) (mode === 'add' ? $('rAdd') : $('rSwap')).focus({preventScroll: true});
+}
+async function pickerGo() {
+  const p = S.pick; if (!p || !p.sel) return;
+  closePicker();
+  if (runLock(S.scene)) { toast(runLock(S.scene)); return; }
+  await holdPhysics();
+  if (p.mode === 'add') { startPlacing(p.sel); return; }
+  const st = (S.scene.robots || []).find(r => r.id === p.uid); if (!st) { resumePhysics(); return; }
+  const from = st.robot, to = p.sel;
+  const r = await api('/pg/station/swap', {uid: p.uid, robot: to});
+  await resumePhysics();
+  if (!r.ok) { toast(r.error || "Couldn't swap it"); return; }
+  await refresh();
+  const lab = (S.cat.robots.find(x => x.id === to) || {}).label || to;
+  undoToast(`${st.name} is now a ${lab}`, async () => {
+    if (runLock(S.scene)) { toast(runLock(S.scene)); return; }
+    await holdPhysics();
+    const b = await api('/pg/station/swap', {uid: p.uid, robot: from});
+    await resumePhysics();
+    if (!b.ok) toast(b.error || "Couldn't undo it"); refresh();
+  });
+}
+function undoToast(msg, undo) {
+  const u = $('utoast'); u.innerHTML = `<span>${esc(msg)}</span><button>Undo</button>`; u.hidden = false;
+  u.querySelector('button').onclick = () => { u.hidden = true; undo(); };
+  clearTimeout(undoToast.h); undoToast.h = setTimeout(() => { u.hidden = true; }, 6000);
+}
+$('rSwap').onclick = () => { if (S.pick && S.pick.mode === 'swap') { closePicker(); return; } openPicker('swap', curStation().id); };
+document.addEventListener('keydown', (e) => {
+  if (!S.pick) return;
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closePicker(true); }
+  else if (e.key === 'Enter' && e.target.closest && e.target.closest('#rpk') && !e.target.classList.contains('no') && !e.target.classList.contains('x')) { e.preventDefault(); pickerGo(); }
+}, true);
+document.addEventListener('mousedown', (e) => { if (S.pick && !e.target.closest('#rpk, #rAdd, #rSwap')) closePicker(); }, true);
+window.addEventListener('resize', () => closePicker());
 function closeAdd() { $('addModal').style.display = 'none'; }
 $('addStationBtn').onclick = openAdd; $('amClose').onclick = closeAdd;
 $('addModal').onclick = (e) => { if (e.target === $('addModal')) closeAdd(); };
 function startPlacing(robot) {
   closeAdd(); S.placing = robot; S.placeYaw = 0; S.armed = null; renderItems();
   api('/pg/camera', {preset: 'lab'});
-  $('hintTag').textContent = 'Click the floor to place the station. R turns it, Esc cancels.';
+  const lab = ((S.cat.robots || []).find(x => x.id === robot) || {}).label || 'the robot';
+  $('hintTag').textContent = `Click the floor to place the ${lab}. R turns it, Esc cancels.`;
 }
-function cancelPlacing() { S.placing = null; hideTag(); api('/pg/ghost/clear', {}); render(); }
+function cancelPlacing() { S.placing = null; hideTag(); api('/pg/ghost/clear', {}); resumePhysics(); render(); }
 let stProbeBusy = false, stProbeNext = null;
 async function probeStation(p) {
   S.lastUV = p;
@@ -1289,6 +1445,7 @@ async function placeStation(p) {
   const r = await api('/pg/station/add', {robot: S.placing, u: p.u, v: p.v, yaw: S.placeYaw});
   if (!r.ok) { toast(r.error || "Can't go there"); return; }
   S.placing = null; hideTag(); S.sel = 'robot';
+  await resumePhysics();
   await refresh(); setSideTab('chat'); $('task').focus();
 }
 async function rotateSel() { const r = await api('/pg/rotate', {uid: S.sel, degrees: 90}); if (!r.ok) toast(r.error); refresh(); }
