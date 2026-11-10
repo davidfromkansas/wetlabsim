@@ -452,7 +452,6 @@ button:active:not(:disabled){transform:scale(.97)}
       </div>
     </div>
     <span class="watchtag" id="watchTag">Watching · read only</span>
-    <a class="small" id="liveLink" href="/live" target="_blank" rel="noopener" style="color:var(--blue2);font-weight:600;text-decoration:none;display:none">Live now ↗</a>
     <a class="small" id="pastLink" href="/pg/runs" target="_blank" rel="noopener" style="color:var(--blue2);font-weight:600;text-decoration:none">Past runs ↗</a>
     <span class="small">MuJoCo 4.0</span>
   </div>
@@ -1677,8 +1676,7 @@ $('wModel').onchange = renderWet;
     $('modeLibero').style.display = $('modeWet').style.display = 'none';
     document.body.classList.add('public');
     if (S.cat.front) {   // a hosted lab: the front lists live and past runs
-      $('pastLink').href = S.cat.front + '/pg/runs'; $('liveLink').href = S.cat.front + '/live';
-      $('liveLink').style.display = '';
+      $('pastLink').href = S.cat.front + '/pg/runs';
     }
     // Someone else's lab (no owner key): watch only. The server refuses changes anyway.
     if (!S.cat.owner) { document.body.classList.add('watch'); S.watch = true; S.sideTab = 'chat'; }
