@@ -489,7 +489,7 @@ body.rclosed #rrail{border-right:0}
 .rbot{position:relative;width:44px;height:44px;flex:none;border-radius:12px;border:0;padding:0;background:#fff;box-shadow:0 0 0 1px var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:box-shadow 120ms}
 .rbot:hover{box-shadow:0 0 0 2px #93B4FF}
 .rbot img{width:36px;height:36px;object-fit:contain;pointer-events:none}
-.rbot[aria-current=true]{box-shadow:0 0 0 2px var(--ink)}
+.rbot[aria-current=true]{box-shadow:0 0 0 2px var(--blue)}
 .rbot .bdg{position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:50%;border:2px solid var(--bg);background:#9CA3AF}
 .rbot .bdg.run{background:var(--green)}.rbot .bdg.wait{background:#D97706}
 .radd{width:44px;height:44px;flex:none;border-radius:12px;border:1.5px dashed #C3C8D0;background:transparent;color:var(--muted);font:400 20px Inter,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center}
@@ -522,7 +522,13 @@ body.rclosed #rmain{width:0}
 .tcrow{padding:6px 8px 8px 8px;align-items:center}
 .tcrow .mdl{border:0!important;background:transparent!important}
 .tcrow .mdl:hover{background:var(--soft)!important}
-#startBtn{margin-left:auto;border-radius:9px}
+#startBtn{margin-left:auto;border-radius:9px;background:var(--blue);border-color:var(--blue);white-space:nowrap;flex:none}
+#startBtn:hover:not(.blank){background:var(--blue2)}
+.tcrow .mdl{flex:none!important}
+.tcrow .mdl select{flex:none!important;width:auto;field-sizing:content;padding-right:2px}
+.taskcard .tchead{display:none}
+.tcrow .infobtn{flex:none}
+.taskcard textarea{padding-right:14px!important}
 #startBtn.blank{background:#E5E7EB;color:#9CA3AF;border-color:#E5E7EB}
 #startBtn.blank svg{fill:#9CA3AF}
 
@@ -1124,6 +1130,7 @@ function renderRail() {
   });
 }
 $('task').addEventListener('input', () => $('startBtn').classList.toggle('blank', !$('task').value.trim()));
+$('startBtn').before($('infoBtn'));
 // side panels open and close
 function setRight(open) {
   document.body.classList.toggle('rclosed', !open); S.railKey = null; if (S.scene) renderRail();
