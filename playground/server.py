@@ -298,6 +298,7 @@ class Session:
         self.created = self.used = time.time()
         self.db_id: str | None = None          # its row in the website's database (signed-in owner)
         self.unsent: dict = {}                  # station -> {"task", "model"}: typed but not run yet
+        self.share_token: str | None = None     # its share link is on (anyone with the link watches)
         self.sim = sim
         self.base_url, self.runs = base_url, runs
         self.runner = Runner(f"{base_url}/s/{sid}", runs)      # LIBERO, Wet Lab: the scene's one robot
@@ -360,7 +361,7 @@ class Session:
         task = next((r.info.get("task", "") for r in self.runners.values() if r.active()), "") or \
             (self.runner.info.get("task", "") if self.runner.active() else "")
         return {"id": self.id, "name": self.name, "stations": n, "used": self.used, "created": self.created,
-                "status": self.status(), "mode": self.sim.scene_mode, "task": task[:200]}
+                "status": self.status(), "mode": self.sim.scene_mode, "task": task[:200], "shared": bool(self.share_token)}
 
     def layout(self) -> dict:
         """The lab as built (stations and objects where they are now), for "Copy to my sessions"."""
@@ -409,6 +410,7 @@ def open_saved(db_id: str) -> Session | None:
 def _from_row(row: dict) -> Session:
     sess = new_session(ACCOUNT_OWNER, row["session_name"], layout=row["scene_layout"] or {}, db_id=row["session_id"])
     sess.unsent = row["unsent_tasks"] or {}
+    sess.share_token = row.get("share_token")
     if AUTOSAVE:
         AUTOSAVE.seed(*_snapshot(sess))
     return sess
@@ -573,6 +575,9 @@ class PGHandler(Handler):
             else:
                 self._err("no session yet", 503)
             return False
+        if self._private() and self._watching() is not sess:
+            self._err("this lab is private", 403)
+            return False
         self.sess = sess
         self.sim, self.runner, self.runners = sess.sim, sess.runner, sess.runners
         self.bench, self.wetbench, self.board = sess.bench, sess.wetbench, sess.board
@@ -645,11 +650,68 @@ class PGHandler(Handler):
         if not re.match(r"^[A-Za-z0-9_-]{1,64}$", user):
             return self._err("bad user", 400)
         try:
-            out = LABS.claim_lab("user:" + user, user)
+            out = LABS.lab_of_user(user) if (self._body() or {}).get("find_only") else LABS.claim_lab("user:" + user, user)
         except Exception as e:  # noqa: BLE001
             return self._err(f"could not start a lab: {e}", 503)
         out.pop("key", None)
         return self._json(out)
+
+    def _share_info(self) -> dict | None:
+        """The session's share link, for its owner (None where sharing isn't available)."""
+        if not (SAVE.enabled() and SAVE.WEBSITE_URL and self.sess.db_id) or not LABS.owner_ok(self.headers):
+            return None
+        tok = self.sess.share_token
+        return {"on": bool(tok), "link": f"{SAVE.WEBSITE_URL}/s/{tok}" if tok else ""}
+
+    def _watch_in(self):
+        """A share link's pass into this lab: the shared session, view only. Swapped for a cookie
+        naming that session and its share token, which stops working the moment the owner turns
+        sharing off (or on again, which makes a new token)."""
+        q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        d = LABS.watch_pass((q.get("pass") or [""])[0])
+        sess = None
+        if d and SAVE.enabled():
+            try:
+                sess = open_saved(d["w"])
+            except Exception as e:  # noqa: BLE001
+                print("could not open a shared session:", e)
+        if not (sess and sess.share_token and secrets.compare_digest(sess.share_token, str(d["t"]))):
+            return self._send(403, b"This share link has been turned off.", "text/plain; charset=utf-8")
+        self.send_response(303)
+        self.send_header("Set-Cookie", f"wl_watch={sess.id}.{sess.share_token}; Path=/; Max-Age=43200; HttpOnly; Secure; SameSite=Lax")
+        self.send_header("Location", f"/?s={sess.id}")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    def _watching(self) -> Session | None:
+        """The session a share-link viewer may watch (their cookie, while sharing is still on)."""
+        import http.cookies
+        c = http.cookies.SimpleCookie(self.headers.get("Cookie", ""))
+        sid, _, tok = (c["wl_watch"].value if "wl_watch" in c else "").partition(".")
+        sess = get_session(sid)
+        return sess if sess and sess.share_token and tok and secrets.compare_digest(sess.share_token, tok) else None
+
+    def _private(self) -> bool:
+        """A signed-in account's lab: only its owner, and share-link viewers of a shared session."""
+        return bool(LABS.OWNER_USER) and not getattr(self, "robot_api", False) and not LABS.owner_ok(self.headers)
+
+    def _view_cookie(self) -> str | None:
+        """The front's replay viewer: the run this browser's view pass opens (the owner's, or a
+        shared one while its link is still on)."""
+        import http.cookies
+        c = http.cookies.SimpleCookie(self.headers.get("Cookie", ""))
+        d = LABS.signed(c["wl_view"].value) if "wl_view" in c else None
+        if not (d and d.get("k") == "view" and d.get("r")):
+            return None
+        if d.get("t"):        # a share link: still on?
+            try:
+                rows = SAVE.sql("select share_token from runs where run_id = $1", [d["r"]])
+            except Exception as e:  # noqa: BLE001
+                print("could not check a run's share link:", e)
+                return None
+            if not rows or rows[0]["share_token"] != d["t"]:
+                return None
+        return d["r"]
 
     def _claim_lab(self):
         """The visitor's own lab, found by a cookie (no sign-in)."""
@@ -689,6 +751,10 @@ class PGHandler(Handler):
             elif len(SESSIONS) < MAX_SESSIONS:
                 new_session(me, default=True)
         live = [x for x in SESSIONS.values() if x is not None]
+        if LABS.OWNER_USER:     # a signed-in account's lab is private: its own sessions, or the one shared
+            w = None if owner else self._watching()
+            mine = sorted((x.summary() for x in live if owner and x.owner == me), key=lambda d: -d["used"])
+            return {"mine": mine, "live": [{**w.summary(), "url": ""}] if w else [], "max": MAX_SESSIONS, "owner": owner}
         mine = sorted((x.summary() for x in live if me and x.owner == me), key=lambda d: -d["used"])
         others = [{**x.summary(), "url": ""} for x in live if x.owner != me and x.status() == "working"]
         if LABS.shared():
@@ -725,16 +791,51 @@ class PGHandler(Handler):
         LABS.touch()
         if FRONT:
             path = urllib.parse.urlparse(self.path).path
+            if SAVE.WEBSITE_URL and path in ("/", "/live", "/pg/runs"):
+                # The website is the way in now (sign-in, your sessions and runs, shared links).
+                self.send_response(302)
+                self.send_header("Location", SAVE.WEBSITE_URL + ("/runs" if path == "/pg/runs" else "/"))
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return None
+            if path == "/view":         # the website's pass to replay one run: kept as a cookie
+                q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                tok = (q.get("pass") or [""])[0]
+                run = LABS.view_pass(tok)
+                if not run:
+                    return self._send(403, b"This replay link has expired. Open it from the website again.",
+                                      "text/plain; charset=utf-8")
+                self.send_response(303)
+                self.send_header("Set-Cookie", f"wl_view={tok}; Path=/; Max-Age=7200; HttpOnly; Secure; SameSite=Lax")
+                self.send_header("Location", f"/viewer?run={urllib.parse.quote(run)}")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return None
+            if SAVE.WEBSITE_URL and (path == "/viewer" or path.startswith("/runs/")):
+                want = (urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query).get("run") or [""])[0] \
+                    if path == "/viewer" else urllib.parse.unquote(path.split("/")[2])
+                if not want or self._view_cookie() != want:
+                    return self._err("this replay is private: open it from the website", 403)
             if path in ("/", "/live"):
                 # The visitor's cookie is set with the page, so every lab request after it carries
                 # it: a repeated or retried request finds the same lab instead of starting another.
                 hdr = {} if "wl_owner=" in self.headers.get("Cookie", "") else {
                     "Set-Cookie": f"wl_owner={secrets.token_urlsafe(18)}; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax"}
                 return self._send(200, (HERE / "static" / "front.html").read_bytes(), "text/html; charset=utf-8", hdr)
-            if path == "/api/live":
+            if path == "/api/live":     # public: only runs whose session is shared
+                if SAVE.WEBSITE_URL:
+                    return self._json({"labs": [{**x, "runs": [r for r in x["runs"] if r.get("share")]}
+                                                for x in LABS.live_list()["labs"]]})
                 return self._json(LABS.live_list())
         elif LABS.OWNER_USER and urllib.parse.urlparse(self.path).path == "/auth":
             return self._pass_in()
+        elif LABS.OWNER_USER and urllib.parse.urlparse(self.path).path == "/watch":
+            return self._watch_in()
+        elif LABS.shared() and urllib.parse.urlparse(self.path).path in ("/pg/runs", "/viewer") \
+                or LABS.shared() and self.path.startswith("/runs/"):
+            # Everyone's runs share a volume: a hosted lab doesn't list or replay them (the
+            # website does, for each run's owner and its share links).
+            return self._err("past runs are on the website", 404)
         p0 = urllib.parse.urlparse(self.path).path.rstrip("/") or "/"
         if p0 in ("/", "/playground") or p0.startswith("/pg/static/"):
             pass                          # the page itself needs no session
@@ -793,7 +894,7 @@ class PGHandler(Handler):
                                    "bench": self.bench.status(), "wetbench": self.wetbench.status(),
                                    "session": {"id": self.sess.id, "name": self.sess.name,
                                                "mine": self._owns()}, "stale": LABS.stale(),
-                                   "unsent": self.sess.unsent,
+                                   "unsent": self.sess.unsent, "share": self._share_info(),
                                    "idle_left": LABS.idle_left()})
             if p == "/pg/wetlab":
                 return self._json({"tasks": [{"id": t.id, "title": t.title, "prompt": t.prompt,
@@ -893,6 +994,8 @@ class PGHandler(Handler):
             if urllib.parse.urlparse(self.path).path == "/api/lab-for-user":
                 return self._lab_for_user()
             if urllib.parse.urlparse(self.path).path == "/api/lab":
+                if SAVE.WEBSITE_URL:
+                    return self._err("sign in on the website to get a lab", 403)
                 return self._claim_lab()
             return self._err("not found", 404)      # the front runs no labs of its own
         # Someone else's lab: watch only. Changes need the key the owner's link carries.
@@ -1032,6 +1135,14 @@ class PGHandler(Handler):
                 s.remove_station(b["uid"])
                 self.runners.pop(b["uid"], None)
                 return self._json({"ok": True})
+            if p == "/pg/session/share":   # the share link: on (a new random token) or off
+                if not (SAVE.enabled() and self.sess.db_id and SAVE.WEBSITE_URL):
+                    return self._err("sharing needs a signed-in account's lab", 400)
+                tok = secrets.token_urlsafe(16) if b.get("on") else None
+                SAVE.save_session(*_snapshot(self.sess))
+                SAVE.set_session_share(self.sess.db_id, tok)
+                self.sess.share_token = tok
+                return self._json({"ok": True, **self._share_info()})
             if p == "/pg/drafts":      # typed-but-unsent tasks and chosen models, kept with the session
                 tasks, models = b.get("tasks") or {}, b.get("models") or {}
                 self.sess.unsent = {str(k): {"task": str(tasks.get(k, ""))[:8000], "model": str(models.get(k, ""))[:80]}
@@ -1310,7 +1421,8 @@ def main(argv=None):
                         out.append({"station": uid, "task": st.get("task", "")[:200],
                                     "model": (st.get("model") or {}).get("label", ""), "started": st.get("started"),
                                     "session": sess.id, "session_name": sess.name,
-                                    "stations": len(sess.sim.stations)})
+                                    "stations": len(sess.sim.stations),
+                                    "share": f"{SAVE.WEBSITE_URL}/s/{sess.share_token}" if sess.share_token and SAVE.WEBSITE_URL else ""})
             return out
         LABS.start_reporting(live_runs, args.idle_minutes,
                              lambda: bool(QUEUE) or any(r.active() for r in _all_runners()))

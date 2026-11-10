@@ -88,27 +88,45 @@ def link_ok(given: str) -> bool:
 _used_passes: set = set()
 
 
-def pass_ok(token: str) -> bool:
-    """A one-time pass from the website into this lab: signed with LAB_LINK_SECRET, for this lab
-    and its owner, not expired, not used before. Format: base64url(json).base64url(hmac-sha256)."""
+def signed(token: str) -> dict | None:
+    """What a pass from the website says, if it is signed with LAB_LINK_SECRET and not expired.
+    Format: base64url(json).base64url(hmac-sha256)."""
     import base64
     import hashlib
     import hmac
     import json
-    if not (LINK_SECRET and OWNER_USER and "." in token):
-        return False
+    if not (LINK_SECRET and "." in token):
+        return None
     body, sig = token.rsplit(".", 1)
     want = base64.urlsafe_b64encode(hmac.new(LINK_SECRET.encode(), body.encode(), hashlib.sha256).digest()).decode().rstrip("=")
     if not secrets.compare_digest(sig, want):
-        return False
+        return None
     try:
         d = json.loads(base64.urlsafe_b64decode(body + "=" * (-len(body) % 4)))
     except Exception:  # noqa: BLE001
-        return False
-    if d.get("l") != LAB_ID or d.get("u") != OWNER_USER or float(d.get("exp", 0)) < time.time() or d.get("n") in _used_passes:
+        return None
+    return d if isinstance(d, dict) and float(d.get("exp", 0)) >= time.time() else None
+
+
+def pass_ok(token: str) -> bool:
+    """The owner's one-time pass into this lab: for this lab and its owner, used once."""
+    d = signed(token)
+    if not (d and OWNER_USER) or d.get("k") or d.get("l") != LAB_ID or d.get("u") != OWNER_USER or d.get("n") in _used_passes:
         return False
     _used_passes.add(d.get("n"))
     return True
+
+
+def watch_pass(token: str) -> dict | None:
+    """A share link's pass into this lab (view only): {"w": session, "t": its share token}."""
+    d = signed(token)
+    return d if d and d.get("k") == "watch" and d.get("l") == LAB_ID and d.get("w") and d.get("t") else None
+
+
+def view_pass(token: str) -> str | None:
+    """A pass to replay one finished run (the owner's, or a shared one): its run id."""
+    d = signed(token or "")
+    return d.get("r") if d and d.get("k") == "view" and d.get("r") else None
 
 
 def _dict(name: str):
@@ -173,7 +191,7 @@ def report(runs: list[dict]):
     """This lab is alive, at LAB_URL, with these runs going (for the front's Live now list)."""
     labs = _dict("wetlab-labs")
     cur = labs.get(LAB_ID) or {}
-    labs[LAB_ID] = {**cur, "url": LAB_URL, "seen": time.time(), "runs": runs, "build": BUILD,
+    labs[LAB_ID] = {**cur, "url": LAB_URL, "seen": time.time(), "runs": runs, "build": BUILD, "owner_user": OWNER_USER,
                     "started": cur.get("started", time.time())}
 
 
@@ -244,7 +262,17 @@ def claim_lab(owner: str, user: str = "") -> dict:
     return {"pending": True}
 
 
-def live_list() -> dict:
+def live_list(user: str | None = None) -> dict:
+    """What is running now: every lab's runs, or (user) only that signed-in account's (labs are
+    private; the website asks for the signed-in person's own)."""
     labs = live_labs()
-    out = [{"lab": k, "url": v.get("url"), "runs": v.get("runs", [])} for k, v in labs.items() if v.get("url")]
+    out = [{"lab": k, "url": v.get("url"), "runs": v.get("runs", [])} for k, v in labs.items()
+           if v.get("url") and (user is None or v.get("owner_user") == user)]
     return {"labs": out, "open": len(labs), "max": MAX_LABS}
+
+
+def lab_of_user(user: str) -> dict:
+    """A signed-in account's lab if it is up (nothing is started): {url, lab} or {closed: True}."""
+    lab = _dict("wetlab-owners").get("user:" + user)
+    info = live_labs().get(lab) if lab else None
+    return {"url": info["url"], "lab": lab} if info and info.get("url") and info.get("build", "") == BUILD else {"closed": True}

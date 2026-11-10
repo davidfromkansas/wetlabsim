@@ -73,3 +73,8 @@ create table if not exists run_files (
 )
 ;
 create index if not exists run_files_run on run_files (run_id)
+;
+-- Share links the owner turns on (view only): a random token, empty when sharing is off.
+alter table sessions add column if not exists share_token text unique
+;
+alter table runs add column if not exists share_token text unique

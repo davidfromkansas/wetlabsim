@@ -90,7 +90,7 @@ def _commit_loop(every=30):
 
 
 @app.function(cpu=1.0, memory=2048, volumes={"/data": runs}, max_containers=2, scaledown_window=600,
-              secrets=_optional_secret(LINK_SECRET))
+              secrets=[*_optional_secret(LINK_SECRET), *_optional_secret(DB_SECRET)])
 @modal.concurrent(max_inputs=500)
 @modal.web_server(8780, startup_timeout=300)
 def web():

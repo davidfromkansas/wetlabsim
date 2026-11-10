@@ -49,13 +49,13 @@ def sql(query: str, params: list | None = None) -> list[dict]:
 # ------------------------------------------------------------------ sessions
 def load_sessions(limit: int) -> list[dict]:
     """The owner's saved sessions, most recently saved first."""
-    return sql("""select session_id::text, session_name, scene_layout, unsent_tasks, save_version
+    return sql("""select session_id::text, session_name, scene_layout, unsent_tasks, save_version, share_token
                   from sessions where owner_user_id = $1 and deleted_at is null
                   order by last_saved_at desc limit $2""", [OWNER_USER, limit])
 
 
 def load_session(session_id: str) -> dict | None:
-    rows = sql("""select session_id::text, session_name, scene_layout, unsent_tasks, save_version
+    rows = sql("""select session_id::text, session_name, scene_layout, unsent_tasks, save_version, share_token
                   from sessions where session_id = $1::uuid and owner_user_id = $2 and deleted_at is null""",
                [session_id, OWNER_USER])
     return rows[0] if rows else None
@@ -72,6 +72,12 @@ def save_session(session_id: str, name: str, layout: dict, unsent: dict) -> int:
                   returning save_version""",
                [session_id, OWNER_USER, name, json.dumps(layout), json.dumps(unsent)])
     return int(rows[0]["save_version"]) if rows else 0
+
+
+def set_session_share(session_id: str, token: str | None):
+    """Turn a session's share link on (a new random token) or off (None)."""
+    sql("update sessions set share_token = $1 where session_id = $2::uuid and owner_user_id = $3",
+        [token, session_id, OWNER_USER])
 
 
 def opened(session_id: str):

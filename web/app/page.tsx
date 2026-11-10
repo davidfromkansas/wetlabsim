@@ -1,7 +1,6 @@
 import { SignInButton, UserButton } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
 import { mySessions, upsertUser } from "@/lib/db";
-import { MODAL_FRONT_URL } from "@/lib/modal";
 import { LiveNow } from "./live";
 import { OpenLab } from "./open-lab";
 import { MySessions } from "./my-sessions";
@@ -56,7 +55,6 @@ export default async function Home() {
 
       <div className="links small">
         {user && <a href="/runs">Your runs: tasks, outcomes and the code the AI wrote</a>}
-        <a href={`${MODAL_FRONT_URL}/pg/runs`}>Past runs: replays of every finished run</a>
       </div>
     </main>
   );

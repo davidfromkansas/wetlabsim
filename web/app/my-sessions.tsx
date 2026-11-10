@@ -24,7 +24,7 @@ export function MySessions({ initial }: { initial: SavedSession[] }) {
     <ul>
       {list.map((s) => (
         <li key={s.session_id}>
-          <span className="t"><b>{s.session_name}</b><span className="small">{s.stations} station{s.stations === 1 ? "" : "s"} · {s.runs} run{s.runs === 1 ? "" : "s"} · saved {ago(s.last_saved_at)}</span></span>
+          <span className="t"><b>{s.session_name}{s.shared && <span className="tag">Shared</span>}</b><span className="small">{s.stations} station{s.stations === 1 ? "" : "s"} · {s.runs} run{s.runs === 1 ? "" : "s"} · saved {ago(s.last_saved_at)}</span></span>
           <OpenLab session={s.session_id} label="Open" small />
           <button className="link" onClick={() => remove(s.session_id)} aria-label={`Delete ${s.session_name}`}>Delete</button>
         </li>

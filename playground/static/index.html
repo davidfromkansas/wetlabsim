@@ -184,6 +184,24 @@ body.v3 #view{position:relative;opacity:0}
 .idlecard button{margin-top:4px;height:36px;border:0;border-radius:9px;background:var(--blue);color:#fff;font:600 13.5px Inter,sans-serif;cursor:pointer}
 #droptag{position:absolute;transform:translate(-50%,-140%);white-space:nowrap;font-size:12px;font-weight:600;color:#fff;background:var(--blue);padding:3px 8px;border-radius:6px;box-shadow:0 2px 6px rgba(37,99,235,.3);pointer-events:none;display:none}
 #droptag.bad{background:var(--red)}
+.sharewrap{position:relative}
+.sharebtn{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:8px;border:1px solid #1D4ED8;background:#1D4ED8;color:#fff;font:600 14px Inter,sans-serif;cursor:pointer}
+.sharepop{position:absolute;right:0;top:46px;z-index:60;width:400px;box-sizing:border-box;padding:20px;background:#fff;border:1px solid #DCDCD6;border-radius:12px;box-shadow:0 12px 32px rgba(20,20,19,.14);display:flex;flex-direction:column;gap:16px}
+.sharepop[hidden]{display:none}
+.sharetitle{font-size:16px;font-weight:700;color:var(--ink)}
+.sharerow{display:flex;align-items:flex-start;gap:12px}
+.sharelabel{font-size:14px;font-weight:600;color:var(--ink)}
+.sharedesc{margin-top:4px;font-size:13px;line-height:1.45;color:#55554F}
+.switch{flex:none;position:relative;width:48px;height:28px;margin-top:2px;border-radius:999px;border:0;padding:0;cursor:pointer;background:#C9C8C0}
+.switch span{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:left .15s}
+.switch[aria-pressed=true]{background:#1D4ED8}.switch[aria-pressed=true] span{left:23px}
+.sharelink{display:flex;gap:8px}
+.sharelink input{flex:1;min-width:0;height:44px;padding:0 12px;border:1px solid #DCDCD6;border-radius:8px;background:#F6F6F3;font:13px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink)}
+.sharelink button{height:44px;padding:0 16px;border-radius:8px;border:1px solid #DCDCD6;background:#fff;font:600 14px Inter,sans-serif;cursor:pointer}
+.sharenote{font-size:12.5px;color:#55554F;margin-top:10px}
+#shareOffNote{margin-top:0}
+.sharedtag{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:#E0E7FF;color:#1E3A8A;margin-left:8px}
+.sharedmini{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:#1D4ED8;color:#fff;margin-left:6px}
 #toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:6px 12px;border-radius:8px;font-size:13px;display:none}
 .lib-top{padding:14px 16px 10px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line2)}
 input[type=search]{height:36px;padding:0 12px;border-radius:8px;border:1px solid #D1D5DB;font:14px Inter,sans-serif;color:var(--ink);background:#F9FAFB}
@@ -402,7 +420,7 @@ button:active:not(:disabled){transform:scale(.97)}
   <div class="hgroup">
     <button class="sbtn" id="navToggle" aria-controls="sessNav" aria-expanded="true" aria-label="Hide sessions" title="Hide sessions"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#374151" stroke-width="1.5"><rect x="1.75" y="2.75" width="14.5" height="12.5" rx="2.5"/><path d="M6.5 2.75 V15.25"/></svg></button>
     <svg aria-hidden="true" width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#2563EB" stroke-width="1.6"><path d="M13 3 L23 8.5 L13 14 L3 8.5 Z"/><path d="M3 8.5 V17.5 L13 23 V14"/><path d="M23 8.5 V17.5 L13 23"/></svg>
-    <span class="brand">MuJoCo Playground</span><span class="crumb" aria-hidden="true">/</span><button class="sessname" id="sessName" title="Rename this session"></button>
+    <span class="brand">MuJoCo Playground</span><span class="crumb" aria-hidden="true">/</span><button class="sessname" id="sessName" title="Rename this session"></button><span class="sharedtag" id="sharedTag" style="display:none">Shared</span>
     <div class="seg" role="group" aria-label="Mode">
       <button id="modeFree" aria-pressed="true">Free play</button>
       <button id="modeLibero" aria-pressed="false">LIBERO test</button>
@@ -417,6 +435,22 @@ button:active:not(:disabled){transform:scale(.97)}
   </div>
   <div class="hgroup" style="justify-content:flex-end">
     <span class="lockmsg" id="lockmsg" style="display:none"></span>
+    <div class="sharewrap" id="shareWrap" style="display:none">
+      <button class="sharebtn" id="shareBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="sharePop"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Share</button>
+      <div class="sharepop" id="sharePop" role="dialog" aria-label="Share this session" hidden>
+        <div class="sharetitle">Share this session</div>
+        <div class="sharerow">
+          <div style="flex:1"><label for="shareOn" class="sharelabel">Anyone with the link can watch</label>
+            <div class="sharedesc">They can watch live and see past runs, but can't change anything. No sign-in needed.</div></div>
+          <button id="shareOn" class="switch" type="button" aria-pressed="false"><span></span></button>
+        </div>
+        <div id="shareLinkRow" hidden>
+          <div class="sharelink"><input id="shareLink" readonly aria-label="Share link"><button id="shareCopy" type="button">Copy</button></div>
+          <div class="sharenote">Turning this off stops the link working right away.</div>
+        </div>
+        <div class="sharenote" id="shareOffNote">Only you can see this session.</div>
+      </div>
+    </div>
     <span class="watchtag" id="watchTag">Watching · read only</span>
     <a class="small" id="liveLink" href="/live" target="_blank" rel="noopener" style="color:var(--blue2);font-weight:600;text-decoration:none;display:none">Live now ↗</a>
     <a class="small" id="pastLink" href="/pg/runs" target="_blank" rel="noopener" style="color:var(--blue2);font-weight:600;text-decoration:none">Past runs ↗</a>
@@ -1231,6 +1265,7 @@ $('closedOpen').onclick = () => { location.href = (S.cat.front || '') + '/'; };
 async function refresh() {
   const sid = SID, sc = await api('/pg/scene');
   if (sid !== SID) return;                 // switched sessions meanwhile
+  if (JSON.stringify(sc.share) !== S.shareKey) { S.shareKey = JSON.stringify(sc.share); renderShare(sc.share); }
   if (sc.unsent && !(S.unsentFor || {})[sid]) {   // a saved session's unsent tasks, once per session
     S.unsentFor = {...(S.unsentFor || {}), [sid]: true};
     for (const [k, v] of Object.entries(sc.unsent)) { if (v.task && !S.drafts[k]) S.drafts[k] = v.task; if (v.model && !S.stModels[k]) S.stModels[k] = v.model; }
@@ -1287,6 +1322,28 @@ document.querySelectorAll('.pip .exp').forEach(b => b.onclick = () => expandCam(
 $('shrinkBtn').onclick = shrinkCam;
 $('bigCamWrap').onclick = (e) => { if (e.target === $('bigCamWrap')) shrinkCam(); };
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.bigCam) shrinkCam(); });
+// Share: the session's link, view only, off by default. Off revokes it at once; on again makes a
+// new link. Only on a signed-in account's lab (the scene says so with "share").
+function renderShare(info) {
+  $('shareWrap').style.display = info && !S.watch ? '' : 'none';
+  $('sharedTag').style.display = info && info.on ? '' : 'none';
+  if (!info) return;
+  $('shareOn').setAttribute('aria-pressed', String(info.on));
+  $('shareLinkRow').hidden = !info.on;
+  $('shareOffNote').hidden = info.on;
+  $('shareLink').value = (info.link || '').replace(/^https?:\/\//, '');
+  S.shareLink = info.link || '';
+  $('shareCopy').textContent = 'Copy';
+}
+$('shareBtn').onclick = () => { const p = $('sharePop'); p.hidden = !p.hidden; $('shareBtn').setAttribute('aria-expanded', String(!p.hidden)); };
+document.addEventListener('pointerdown', (e) => { if (!$('shareWrap').contains(e.target)) { $('sharePop').hidden = true; $('shareBtn').setAttribute('aria-expanded', 'false'); } });
+$('shareOn').onclick = async () => {
+  const on = $('shareOn').getAttribute('aria-pressed') !== 'true';
+  const r = await api('/pg/session/share', {on});
+  if (r.ok) { S.shareKey = JSON.stringify({on: r.on, link: r.link}); renderShare(r); } else toast(r.error);
+};
+$('shareCopy').onclick = async () => { try { await navigator.clipboard.writeText(S.shareLink); $('shareCopy').textContent = 'Copied'; } catch (e) { $('shareLink').select(); } };
+
 async function loop() {
   try {
     await refresh();
@@ -1329,7 +1386,7 @@ function renderSessions() {
   if (key === S.sessKey) return; S.sessKey = key;
   const dot = {working: ['run', 'Working'], finished: ['ok', 'Finished'], empty: ['', 'Nothing run yet']};
   $('mineList').innerHTML = mine.map(x => { const [d, t] = dot[x.status] || dot.empty;
-    return `<button class="srow" data-sid="${esc(x.id)}" aria-current="${x.id === SID}"><span class="sico">${CUBE}</span><span class="t"><b>${esc(x.name)}</b><span class="sub">${x.mode === 'free' ? nStations(x.stations) : x.mode === 'libero' ? 'LIBERO test' : 'Wet Lab'} · ${ago(x.used)}</span></span><span class="sdot ${d}" title="${t}"></span></button>`; }).join('')
+    return `<button class="srow" data-sid="${esc(x.id)}" aria-current="${x.id === SID}"><span class="sico">${CUBE}</span><span class="t"><b>${esc(x.name)}${x.shared ? '<span class="sharedmini">Shared</span>' : ''}</b><span class="sub">${x.mode === 'free' ? nStations(x.stations) : x.mode === 'libero' ? 'LIBERO test' : 'Wet Lab'} · ${ago(x.used)}</span></span><span class="sdot ${d}" title="${t}"></span></button>`; }).join('')
     || '<span class="snone">None yet. Press New session.</span>';
   $('liveList').innerHTML = live.map((x, i) => `<button class="srow" data-live="${i}" aria-current="${!x.url && x.id === SID}" title="${esc(x.task || '')}"><span class="sico">${EYE}</span><span class="t"><b>${esc(x.name)}</b><span class="sub">${esc(x.task || nStations(x.stations))}</span></span><span class="sdot run" title="Running now"></span></button>`).join('')
     || '<span class="snone">Nobody else is running anything right now.</span>';
