@@ -1676,8 +1676,7 @@ $('wModel').onchange = renderWet;
     $('modeLibero').style.display = $('modeWet').style.display = 'none';
     document.body.classList.add('public');
     if (S.cat.front) {   // a hosted lab: the front lists live and past runs
-      // Past runs: your runs on the website (a hosted lab doesn't list everyone's).
-      $('pastLink').href = S.cat.website ? S.cat.website + '/runs' : S.cat.front + '/pg/runs';
+      $('pastLink').href = S.cat.front + '/pg/runs';
     }
     // Someone else's lab (no owner key): watch only. The server refuses changes anyway.
     if (!S.cat.owner) { document.body.classList.add('watch'); S.watch = true; S.sideTab = 'chat'; }
