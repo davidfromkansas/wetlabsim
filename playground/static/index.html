@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/pg/static/generative-loaders.css">
 <style>
-:root{--bg:#F6F7F9;--panel:#FFFFFF;--line:#E5E7EB;--line2:#EEF0F3;--ink:#111827;--ink2:#1F2937;--muted:#4B5563;--soft:#F3F4F6;--blue:#2563EB;--blue2:#1D4ED8;--blueBg:#EFF4FF;--green:#16A34A;--red:#DC2626;--amber:#92400E;--amberBg:#FEF3C7}
+:root{--bg:#F3F4F6;--panel:#FFFFFF;--line:#E5E7EB;--line2:#E5E7EB;--ink:#111827;--ink2:#1F2937;--muted:#4B5563;--soft:#F3F4F6;--blue:#2563EB;--blue2:#1D4ED8;--blueBg:#EFF4FF;--green:#16A34A;--red:#DC2626;--amber:#92400E;--amberBg:#FEF3C7}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink2);font:14px/1.5 Inter,system-ui,sans-serif}
@@ -111,7 +111,7 @@ body.filing #chatpane,body.filing #right .freeonly{display:none!important}
 #filespane h3{margin:0;font-size:14px;color:var(--ink)}
 #files{font-size:13px;overflow:auto;flex:1;min-height:0}
 #files .frow{display:grid;grid-template-columns:minmax(0,1fr) 70px;gap:8px;align-items:center;min-height:26px;padding:0 6px;border-radius:6px;color:var(--ink2);text-decoration:none}
-#files .frow:nth-child(even){background:#F7F8FA}
+#files .frow:nth-child(even){background:var(--soft)}
 #files .frow .nm{display:flex;align-items:center;gap:6px;min-width:0}#files .frow .nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #files .frow .sz{text-align:right;color:var(--muted);font-size:12px}
 #files button.frow{width:100%;border:0;background:none;text-align:left;cursor:pointer;font:inherit}
@@ -148,7 +148,7 @@ body.filing #chatpane,body.filing #right .freeonly{display:none!important}
 #feed .runerr pre{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font:12px 'JetBrains Mono',monospace;color:#7F1D1D}
 #jumpBtn{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);display:none;height:30px;padding:0 12px;border-radius:999px;border:1px solid #D1D5DB;background:#fff;color:var(--ink);font-size:12.5px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(17,24,39,.15)}
 .runbar{padding:10px 16px;border-top:1px solid var(--line2);display:flex;gap:8px;align-items:center}
-#stage{flex:1;min-width:0;position:relative;background:#FBFBF9;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#stage{flex:1;min-width:0;position:relative;background:#FAFBFC;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #view{display:block;width:100%;height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;cursor:grab}
 /* the 3D view drawn in the page (view3d.js): the canvas sits under the (now see-through) video
    element, which still takes the mouse, so every drag, click and drop works as before */
@@ -397,8 +397,8 @@ button:active:not(:disabled){transform:scale(.97)}
 
 /* ---- Layout v3 (Nov 10): no top bar, full-height side panels, the scene as a rounded card ---- */
 header{display:none!important}
-body{background:#F4F5F7}
-#sessNav{background:#F4F5F7!important;border-right:0!important}
+body{background:var(--bg)}
+#sessNav{background:var(--bg)!important;border-right:0!important}
 #sessNav .in{gap:16px}
 .ptitle{display:flex;align-items:center;justify-content:space-between;padding:2px 0 0 6px}
 .ptitle b{font:700 18px Inter,sans-serif;color:var(--ink);letter-spacing:-.01em}
@@ -406,7 +406,7 @@ body{background:#F4F5F7}
 .iconbtn:hover{background:rgba(17,24,39,.06)}
 .snote,.livelbl{display:none!important}
 #stage{margin:8px;border-radius:14px;overflow:hidden;box-shadow:0 0 0 1px rgba(17,24,39,.07),0 1px 3px rgba(17,24,39,.06)}
-#right{background:#F4F5F7;border-left:0!important;width:340px;display:flex;flex-direction:column;transition:width 200ms cubic-bezier(.23,1,.32,1)}
+#right{background:var(--bg);border-left:0!important;width:340px;display:flex;flex-direction:column;transition:width 200ms cubic-bezier(.23,1,.32,1)}
 body.rclosed #right{display:none}
 #tabObjects,.dock{display:none!important}
 .tl{top:60px}
@@ -483,7 +483,7 @@ body.objopen.dragging #objTab{display:flex}
 #right{background:#fff!important;width:auto!important;flex-direction:row!important;transition:none!important;box-shadow:-1px 0 0 var(--line)}
 body.rclosed #right{display:flex!important}
 #openRight,#rhead{display:none!important}
-#rrail{width:64px;flex:none;background:#F7F8FA;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 0;overflow-y:auto;overflow-x:hidden}
+#rrail{width:64px;flex:none;background:var(--bg);display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 0;overflow-y:auto;overflow-x:hidden}
 body.rclosed #rrail{border-right:0}
 #rrail .sep{width:28px;height:1px;background:var(--line);flex:none;margin:2px 0}
 .rbot{position:relative;width:44px;height:44px;flex:none;border-radius:12px;border:0;padding:0;background:#fff;box-shadow:0 0 0 1px var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:box-shadow 120ms}
@@ -491,7 +491,7 @@ body.rclosed #rrail{border-right:0}
 .rbot img{width:36px;height:36px;object-fit:contain;pointer-events:none}
 .rbot[aria-current=true]{box-shadow:0 0 0 2px var(--ink)}
 .rbot[aria-current=true]:before{content:"";position:absolute;left:-12px;top:10px;width:4px;height:24px;border-radius:0 3px 3px 0;background:var(--ink)}
-.rbot .bdg{position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:50%;border:2px solid #F7F8FA;background:#9CA3AF}
+.rbot .bdg{position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:50%;border:2px solid var(--bg);background:#9CA3AF}
 .rbot .bdg.run{background:var(--green)}.rbot .bdg.wait{background:#D97706}
 .radd{width:44px;height:44px;flex:none;border-radius:12px;border:1.5px dashed #C3C8D0;background:transparent;color:var(--muted);font:400 20px Inter,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .radd:hover{border-color:#9CA3AF;color:var(--ink)}
@@ -526,6 +526,15 @@ body.rclosed #rmain{width:0}
 #startBtn{margin-left:auto;border-radius:9px}
 #startBtn.blank{background:#E5E7EB;color:#9CA3AF;border-color:#E5E7EB}
 #startBtn.blank svg{fill:#9CA3AF}
+
+/* ---------- colors: one gray frame, white cards ---------- */
+#right{background:var(--bg)!important;box-shadow:none!important}
+#rmain{margin:8px 8px 8px 0;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(17,24,39,.07),0 1px 3px rgba(17,24,39,.06);transition:width 200ms cubic-bezier(.23,1,.32,1),margin 200ms cubic-bezier(.23,1,.32,1)}
+body.rclosed #rmain{margin:8px 0;box-shadow:none}
+#rinner{background:#fff}
+#rrail{padding-top:16px}
+.rbot{box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(17,24,39,.06)}
+#rrail .iconbtn:hover,.ptitle .iconbtn:hover{background:rgba(17,24,39,.06)}
 </style>
 </head>
 <body>

@@ -89,7 +89,7 @@ export function start({stage, base = '', onReady}) {
   stage.prepend(canvas);
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color().setRGB(0.96, 0.965, 0.97, THREE.SRGBColorSpace);
+  scene.background = new THREE.Color().setRGB(0.98, 0.984, 0.988, THREE.SRGBColorSpace);
   const camera = new THREE.PerspectiveCamera(FOVY, 1, 0.03, 160);
   camera.up.set(0, 0, 1);
   scene.add(camera);
