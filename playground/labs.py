@@ -141,11 +141,20 @@ def shared() -> bool:
 
 
 # ------------------------------------------------------------------ builds
+def older(a: str, b: str) -> bool:
+    """Build a is from an earlier deploy than b (builds are YYYYmmdd-HHMMSS-<commit>, so they sort
+    by time). During a deploy the old front can still answer for a while: it must not treat the
+    new build's labs as stale, nor move "current" back."""
+    return bool(a and b) and a < b
+
+
 def announce_build():
-    """The front: this is the current build (once per front process)."""
+    """The front: this is the current build (once per front process; never an older one)."""
     global _announced
     if BUILD and not _announced:
-        _dict("wetlab-build")["current"] = BUILD
+        d = _dict("wetlab-build")
+        if not older(BUILD, d.get("current", "")):
+            d["current"] = BUILD
         _announced = True
 
 
@@ -224,7 +233,7 @@ def start_reporting(get_runs, idle_minutes: float, busy):
             except Exception as e:  # noqa: BLE001
                 print("lab report failed:", e)
             cur = current_build()
-            _stale = bool(BUILD and cur and cur != BUILD)
+            _stale = older(BUILD, cur)
             if _stale and not busy() and idle_for() > 15:
                 print(f"lab {LAB_ID} is build {BUILD}, the site is on {cur}: shutting down")
                 forget()
@@ -247,11 +256,11 @@ def claim_lab(owner: str, user: str = "") -> dict:
     owners, keys, labs = _dict("wetlab-owners"), _dict("wetlab-lab-keys"), _dict("wetlab-labs")
     live = live_labs()
     lab = owners.get(owner)
-    if lab and lab in live and live[lab].get("build", "") == BUILD:
+    if lab and lab in live and not older(live[lab].get("build", ""), BUILD):
         info = live[lab]
         return {"url": info["url"], "key": keys.get(lab), "lab": lab} if info.get("url") else {"pending": True}
     # An older build's lab with nothing running is on its way out: it doesn't take a place.
-    open_labs = [k for k, v in live.items() if v.get("build", "") == BUILD or v.get("runs")]
+    open_labs = [k for k, v in live.items() if not older(v.get("build", ""), BUILD) or v.get("runs")]
     if len(open_labs) >= MAX_LABS:
         return {"full": True, "open": len(open_labs), "max": MAX_LABS}
     lab, key = secrets.token_hex(4), secrets.token_urlsafe(24)
@@ -275,4 +284,4 @@ def lab_of_user(user: str) -> dict:
     """A signed-in account's lab if it is up (nothing is started): {url, lab} or {closed: True}."""
     lab = _dict("wetlab-owners").get("user:" + user)
     info = live_labs().get(lab) if lab else None
-    return {"url": info["url"], "lab": lab} if info and info.get("url") and info.get("build", "") == BUILD else {"closed": True}
+    return {"url": info["url"], "lab": lab} if info and info.get("url") and not older(info.get("build", ""), BUILD) else {"closed": True}
