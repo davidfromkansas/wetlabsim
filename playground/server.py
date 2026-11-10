@@ -490,6 +490,9 @@ class PGHandler(Handler):
         return True
 
     def _browser(self) -> str:
+        # A lab owned by a signed-in account: its owner is the same person on any browser.
+        if LABS.OWNER_USER and LABS.OWNER_KEY and LABS.owner_ok(self.headers):
+            return "account-owner"
         b = self.headers.get("X-Browser-Id", "")
         return b if re.match(r"^[A-Za-z0-9_-]{8,64}$", b) else ""
 
@@ -521,6 +524,33 @@ class PGHandler(Handler):
         self.board = self.station_runner(uid).board
         self.path = "/" + rest
         return True
+
+    def _pass_in(self):
+        """The website's one-time pass into this lab: swap it for the owner's cookie, then the lab."""
+        q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        if not LABS.pass_ok((q.get("pass") or [""])[0]):
+            return self._send(403, b"This link has expired or isn't yours. Open your lab from the website again.",
+                              "text/plain; charset=utf-8")
+        self.send_response(303)
+        self.send_header("Set-Cookie", f"wl_lab={LABS.OWNER_KEY}; Path=/; Max-Age=43200; HttpOnly; Secure; SameSite=Lax")
+        self.send_header("Location", "/")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    def _lab_for_user(self):
+        """The website (signed-in account): start or find that account's lab. Answers {url, lab}
+        when it is ready (no key: the website hands the owner a one-time pass instead)."""
+        if not LABS.link_ok(self.headers.get("X-Link-Secret", "")):
+            return self._err("not found", 404)
+        user = str((self._body() or {}).get("user", ""))
+        if not re.match(r"^[A-Za-z0-9_-]{1,64}$", user):
+            return self._err("bad user", 400)
+        try:
+            out = LABS.claim_lab("user:" + user, user)
+        except Exception as e:  # noqa: BLE001
+            return self._err(f"could not start a lab: {e}", 503)
+        out.pop("key", None)
+        return self._json(out)
 
     def _claim_lab(self):
         """The visitor's own lab, found by a cookie (no sign-in)."""
@@ -604,6 +634,8 @@ class PGHandler(Handler):
                 return self._send(200, (HERE / "static" / "front.html").read_bytes(), "text/html; charset=utf-8", hdr)
             if path == "/api/live":
                 return self._json(LABS.live_list())
+        elif LABS.OWNER_USER and urllib.parse.urlparse(self.path).path == "/auth":
+            return self._pass_in()
         p0 = urllib.parse.urlparse(self.path).path.rstrip("/") or "/"
         if p0 in ("/", "/playground") or p0.startswith("/pg/static/"):
             pass                          # the page itself needs no session
@@ -758,6 +790,8 @@ class PGHandler(Handler):
     def do_POST(self):
         LABS.touch()
         if FRONT:
+            if urllib.parse.urlparse(self.path).path == "/api/lab-for-user":
+                return self._lab_for_user()
             if urllib.parse.urlparse(self.path).path == "/api/lab":
                 return self._claim_lab()
             return self._err("not found", 404)      # the front runs no labs of its own

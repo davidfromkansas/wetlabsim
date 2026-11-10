@@ -1,6 +1,7 @@
 """The public MuJoCo Playground on Modal: one private lab per visitor.
 
     .venv/bin/modal deploy hosting/app.py
+    WETLAB_APP=wetlab-playground-staging .venv/bin/modal deploy hosting/app.py   (a test copy)
 
 web (the front, Modal's stable web address): gives each visitor (a browser cookie, no sign-in)
   their own lab, at most WETLAB_MAX_LABS open at once; lists live runs to watch (/live) and
@@ -28,12 +29,16 @@ import modal
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 IGNORE = [".git", ".venv", "runs", "build", "**/__pycache__", ".pytest_cache", "*.mp4", ".DS_Store",
           "playground/libero_assets/files", "hosting"]
-MAX_LABS = 10
+# The app: "wetlab-playground" is the public site. Another name (WETLAB_APP=wetlab-playground-staging
+# when deploying) is a separate copy with its own address, run records and lab registry, for testing.
+APP = os.environ.get("WETLAB_APP") or os.environ.get("WETLAB_MODAL_APP") or "wetlab-playground"
+STAGING = APP != "wetlab-playground"
+MAX_LABS = 2 if STAGING else 10
 # This deploy's build: a new one each deploy (inside a container, the one it was deployed with).
 # Labs from an older build aren't handed out again and shut down once nothing runs in them.
 BUILD = os.environ.get("WETLAB_BUILD") or time.strftime("%Y%m%d-%H%M%S") + "-" + subprocess.run(
     ["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
-FRONT_URL = "https://davidfromkansas--wetlab-playground-web.us-east.modal.run"
+FRONT_URL = f"https://davidfromkansas--{APP}-web.us-east.modal.run"
 
 image = (
     modal.Image.debian_slim(python_version="3.12")
@@ -41,11 +46,11 @@ image = (
     .apt_install("libegl1", "libgl1", "libgles2", "libegl-mesa0", "libgl1-mesa-dri", "libglvnd0")
     .pip_install("mujoco>=4.0,<5", "numpy", "pillow", "mcp", "modal")
     .env({"MUJOCO_GL": "egl", "EGL_PLATFORM": "surfaceless", "PYTHONPATH": "/app", "PYTHONUNBUFFERED": "1",
-          "WETLAB_MAX_LABS": str(MAX_LABS), "WETLAB_FRONT_URL": FRONT_URL, "WETLAB_MODAL_APP": "wetlab-playground",
-          "WETLAB_BUILD": BUILD})
+          "WETLAB_MAX_LABS": str(MAX_LABS), "WETLAB_FRONT_URL": FRONT_URL, "WETLAB_MODAL_APP": APP,
+          "WETLAB_BUILD": BUILD, "WETLAB_DICT_PREFIX": f"{APP}-" if STAGING else ""})
     .add_local_dir(str(ROOT), "/app", ignore=IGNORE)
 )
-runs = modal.Volume.from_name("wetlab-playground-runs", create_if_missing=True)
+runs = modal.Volume.from_name(f"{APP}-runs", create_if_missing=True)
 DEVIN_SECRET = "DEVIN_API_KEY"
 
 
@@ -59,8 +64,11 @@ def _optional_secret(name: str) -> list:
         return []
 
 
-lab_secrets = [modal.Secret.from_name("anthropic-secret"), *_optional_secret(DEVIN_SECRET)]
-app = modal.App("wetlab-playground", image=image)
+# LAB_LINK_SECRET, shared with the website (Vercel): its "lab for user" requests and the
+# one-time passes it hands signed-in owners. Without it the site works as before, no sign-in.
+LINK_SECRET = "wetlab-link"
+lab_secrets = [modal.Secret.from_name("anthropic-secret"), *_optional_secret(DEVIN_SECRET), *_optional_secret(LINK_SECRET)]
+app = modal.App(APP, image=image)
 
 
 def _commit_loop(every=30):
@@ -76,7 +84,8 @@ def _commit_loop(every=30):
     threading.Thread(target=loop, daemon=True).start()
 
 
-@app.function(cpu=1.0, memory=2048, volumes={"/data": runs}, max_containers=2, scaledown_window=600)
+@app.function(cpu=1.0, memory=2048, volumes={"/data": runs}, max_containers=2, scaledown_window=600,
+              secrets=_optional_secret(LINK_SECRET))
 @modal.concurrent(max_inputs=500)
 @modal.web_server(8780, startup_timeout=300)
 def web():
@@ -88,10 +97,11 @@ def web():
 
 @app.function(cpu=4.0, memory=6144, secrets=lab_secrets,
               volumes={"/data": runs}, max_containers=MAX_LABS, timeout=12 * 3600)
-def lab(lab_id: str, owner_key: str):
+def lab(lab_id: str, owner_key: str, owner_user: str = ""):
     """One visitor's lab, for as long as it is in use (its server exits after 5 minutes with no real activity)."""
     with modal.forward(8780) as page, modal.forward(8781) as robot, modal.forward(8782) as proxy:
         env = dict(os.environ, WETLAB_SESSION_DIR="/tmp/sessions", WETLAB_LAB_ID=lab_id, WETLAB_OWNER_KEY=owner_key, WETLAB_LAB_URL=page.url,
+                   WETLAB_OWNER_USER=owner_user,
                    WETLAB_RUN_TAG=lab_id, WETLAB_MODEL_PROXY_URL=proxy.url, WETLAB_RUN_BUDGET_USD="3")
         _commit_loop()
         proc = subprocess.Popen(

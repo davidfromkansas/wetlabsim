@@ -3,6 +3,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { upsertUser } from "@/lib/db";
 import { MODAL_FRONT_URL } from "@/lib/modal";
 import { LiveNow } from "./live";
+import { OpenLab } from "./open-lab";
 
 export const dynamic = "force-dynamic";
 
@@ -28,8 +29,7 @@ export default async function Home() {
           <>
             <p className="status">Signed in as {user.primaryEmailAddress?.emailAddress}</p>
             <p className="small" style={{ margin: "8px 0 14px" }}>Your own lab, just for you. It takes about half a minute to start.</p>
-            {/* Step 2 hands the sign-in to the lab; until then the lab is found by the Modal front. */}
-            <a className="primary" href={`${MODAL_FRONT_URL}/`}>Open your lab</a>
+            <OpenLab />
           </>
         ) : (
           <>

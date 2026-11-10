@@ -25,6 +25,12 @@ OWNER_KEY = os.environ.get("WETLAB_OWNER_KEY", "")
 LAB_URL = os.environ.get("WETLAB_LAB_URL", "")
 FRONT_URL = os.environ.get("WETLAB_FRONT_URL", "")
 BUILD = os.environ.get("WETLAB_BUILD", "")
+# Signed in on the website (Vercel): the lab's owner is that account, and the website and the
+# labs share LAB_LINK_SECRET (the "lab for user" request, and the one-time pass into the lab).
+OWNER_USER = os.environ.get("WETLAB_OWNER_USER", "")
+LINK_SECRET = os.environ.get("LAB_LINK_SECRET", "")
+# A second copy of the site (staging) keeps its own registry: its Modal Dicts carry this prefix.
+DICT_PREFIX = os.environ.get("WETLAB_DICT_PREFIX", "")
 SLOT_TTL = 420          # s: a run is at most 5 minutes; a slot this old belongs to a dead run
 MAX_LABS = int(os.environ.get("WETLAB_MAX_LABS", "10"))
 LAB_STALE = 90          # s: a lab that hasn't reported this long is gone
@@ -63,16 +69,52 @@ def idle_left() -> float | None:
 
 
 def owner_ok(headers) -> bool:
-    """Whether a request may change this lab (only its owner, by the key their link carries)."""
+    """Whether a request may change this lab: only its owner, by the key their link carries or
+    the cookie the one-time pass set (signed in on the website)."""
     if not OWNER_KEY:
         return True
-    return secrets.compare_digest(headers.get("X-Lab-Key", ""), OWNER_KEY)
+    import http.cookies
+    c = http.cookies.SimpleCookie(headers.get("Cookie", ""))
+    key = headers.get("X-Lab-Key", "") or (c["wl_lab"].value if "wl_lab" in c else "")
+    return secrets.compare_digest(key, OWNER_KEY)
+
+
+# ------------------------------------------------------------------ signed-in owners
+def link_ok(given: str) -> bool:
+    """The website's request (it knows LAB_LINK_SECRET); without the secret nobody is."""
+    return bool(LINK_SECRET) and secrets.compare_digest(given, LINK_SECRET)
+
+
+_used_passes: set = set()
+
+
+def pass_ok(token: str) -> bool:
+    """A one-time pass from the website into this lab: signed with LAB_LINK_SECRET, for this lab
+    and its owner, not expired, not used before. Format: base64url(json).base64url(hmac-sha256)."""
+    import base64
+    import hashlib
+    import hmac
+    import json
+    if not (LINK_SECRET and OWNER_USER and "." in token):
+        return False
+    body, sig = token.rsplit(".", 1)
+    want = base64.urlsafe_b64encode(hmac.new(LINK_SECRET.encode(), body.encode(), hashlib.sha256).digest()).decode().rstrip("=")
+    if not secrets.compare_digest(sig, want):
+        return False
+    try:
+        d = json.loads(base64.urlsafe_b64decode(body + "=" * (-len(body) % 4)))
+    except Exception:  # noqa: BLE001
+        return False
+    if d.get("l") != LAB_ID or d.get("u") != OWNER_USER or float(d.get("exp", 0)) < time.time() or d.get("n") in _used_passes:
+        return False
+    _used_passes.add(d.get("n"))
+    return True
 
 
 def _dict(name: str):
     if name not in _dicts:
         import modal
-        _dicts[name] = modal.Dict.from_name(name, create_if_missing=True)
+        _dicts[name] = modal.Dict.from_name(DICT_PREFIX + name, create_if_missing=True)
     return _dicts[name]
 
 
@@ -179,7 +221,7 @@ def start_reporting(get_runs, idle_minutes: float, busy):
 
 
 # ------------------------------------------------------------------ the front
-def claim_lab(owner: str) -> dict:
+def claim_lab(owner: str, user: str = "") -> dict:
     """The lab for this visitor: theirs if it is still up and on this build, else a new one (if
     there is room). Returns {url, key} when ready, {pending: True} while it starts, or {full: True}."""
     import modal
@@ -189,7 +231,7 @@ def claim_lab(owner: str) -> dict:
     lab = owners.get(owner)
     if lab and lab in live and live[lab].get("build", "") == BUILD:
         info = live[lab]
-        return {"url": info["url"], "key": keys.get(lab)} if info.get("url") else {"pending": True}
+        return {"url": info["url"], "key": keys.get(lab), "lab": lab} if info.get("url") else {"pending": True}
     # An older build's lab with nothing running is on its way out: it doesn't take a place.
     open_labs = [k for k, v in live.items() if v.get("build", "") == BUILD or v.get("runs")]
     if len(open_labs) >= MAX_LABS:
@@ -198,7 +240,7 @@ def claim_lab(owner: str) -> dict:
     owners[owner], keys[lab] = lab, key
     # Counted as open while it starts (it reports itself once its server is up).
     labs[lab] = {"url": "", "seen": time.time() + 120, "started": time.time(), "runs": [], "build": BUILD}
-    modal.Function.from_name(os.environ.get("WETLAB_MODAL_APP", "wetlab-playground"), "lab").spawn(lab, key)
+    modal.Function.from_name(os.environ.get("WETLAB_MODAL_APP", "wetlab-playground"), "lab").spawn(lab, key, user)
     return {"pending": True}
 
 
