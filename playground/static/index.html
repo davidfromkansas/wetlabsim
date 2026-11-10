@@ -495,7 +495,8 @@ body.rclosed #rrail{border-right:0}
 .radd{width:44px;height:44px;flex:none;border-radius:12px;border:1.5px dashed #C3C8D0;background:transparent;color:var(--muted);font:400 20px Inter,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .radd:hover{border-color:#9CA3AF;color:var(--ink)}
 body.watch .radd{display:none}
-#rrail .rpast{margin-top:auto;flex:none}
+#rrail .rpast{margin-top:auto;flex:none;width:44px;height:44px;border-radius:12px;background:#fff;box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(17,24,39,.06);transition:box-shadow 120ms}
+#rrail .rpast:hover{background:#fff;box-shadow:0 0 0 2px #93B4FF}
 #pastLink{display:none!important}
 #rtip{position:fixed;z-index:80;background:var(--ink);color:#fff;border-radius:8px;padding:7px 11px;font:12px/1.4 Inter,sans-serif;white-space:nowrap;pointer-events:none}
 #rtip[hidden]{display:none}
@@ -536,8 +537,8 @@ body.rclosed #rmain{width:0}
 
 /* ---------- colors: one gray frame, white cards ---------- */
 #right{background:var(--bg)!important;box-shadow:none!important}
-#rmain{margin:8px 8px 8px 0;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(17,24,39,.07),0 1px 3px rgba(17,24,39,.06);transition:width 200ms cubic-bezier(.23,1,.32,1),margin 200ms cubic-bezier(.23,1,.32,1)}
-body.rclosed #rmain{margin:8px 0;box-shadow:none}
+#rmain{margin:8px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(17,24,39,.07),0 1px 3px rgba(17,24,39,.06);transition:width 200ms cubic-bezier(.23,1,.32,1),margin 200ms cubic-bezier(.23,1,.32,1)}
+body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
 #rinner{background:#fff}
 #rrail{padding-top:16px}
 .rbot{box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(17,24,39,.06)}
