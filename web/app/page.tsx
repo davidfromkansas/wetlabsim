@@ -54,7 +54,10 @@ export default async function Home() {
         <LiveNow />
       </div>
 
-      <div className="links small"><a href={`${MODAL_FRONT_URL}/pg/runs`}>Past runs: replays, chat and files of every finished run</a></div>
+      <div className="links small">
+        {user && <a href="/runs">Your runs: tasks, outcomes and the code the AI wrote</a>}
+        <a href={`${MODAL_FRONT_URL}/pg/runs`}>Past runs: replays of every finished run</a>
+      </div>
     </main>
   );
 }

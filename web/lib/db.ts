@@ -32,3 +32,36 @@ export async function deleteSession(userId: string, sessionId: string): Promise<
   if (!sql) return;
   await sql`update sessions set deleted_at = now() where session_id = ${sessionId}::uuid and owner_user_id = ${userId}`;
 }
+
+export type RunRow = {
+  run_id: string; session_id: string | null; session_name: string | null; robot_station_id: string | null;
+  robot_type: string | null; robot_kit_version: string | null; ai_provider: string | null; ai_model: string | null;
+  task_prompt: string | null; run_outcome: string | null; started_at: string | null; ended_at: string | null;
+  cost_usd: string | null; blob_folder_path: string | null; files: number;
+};
+
+/** Your runs, newest first. */
+export async function myRuns(userId: string): Promise<RunRow[]> {
+  if (!sql) return [];
+  return (await sql`
+    select r.*, s.session_name, (select count(*)::int from run_files f where f.run_id = r.run_id) as files
+    from runs r left join sessions s on s.session_id = r.session_id
+    where r.started_by_user_id = ${userId} order by r.started_at desc nulls last limit 200`) as RunRow[];
+}
+
+/** One of your runs (null if it isn't yours). */
+export async function myRun(userId: string, runId: string): Promise<RunRow | null> {
+  if (!sql) return null;
+  const rows = (await sql`
+    select r.*, s.session_name, (select count(*)::int from run_files f where f.run_id = r.run_id) as files
+    from runs r left join sessions s on s.session_id = r.session_id
+    where r.run_id = ${runId} and r.started_by_user_id = ${userId}`) as RunRow[];
+  return rows[0] ?? null;
+}
+
+export type RunFile = { file_path: string; language: string | null; size_bytes: number | null; line_count: number | null; code_text: string | null };
+
+export async function runFiles(runId: string): Promise<RunFile[]> {
+  if (!sql) return [];
+  return (await sql`select file_path, language, size_bytes, line_count, code_text from run_files where run_id = ${runId} order by file_path`) as RunFile[];
+}

@@ -331,14 +331,16 @@ class Session:
                 return {}
         start, result, st, mdl = read("workspace_start.json"), read("result.json"), runner.status(), runner.info.get("model") or {}
         station = self.sim.station(uid)
+        files = SAVE.ai_files(run_dir)
+        folder = SAVE.upload_run(run_dir, run_id, files)      # into private Blob, through the website
         SAVE.record_run({"run_id": run_id, "session_id": self.db_id, "robot_station_id": uid,
                          "robot_type": start.get("robot_type") or (station.robot if station else None),
                          "robot_kit_version": start.get("robot_kit_version"), "started_by_user_id": SAVE.OWNER_USER,
                          "ai_provider": mdl.get("agent"), "ai_model": mdl.get("model") or mdl.get("id"),
                          "task_prompt": runner.info.get("task"), "run_outcome": st.get("status"),
                          "started_at": runner.info.get("started"), "ended_at": time.time(),
-                         "cost_usd": result.get("cost_usd"), "blob_folder_path": None})
-        SAVE.record_files(run_id, SAVE.ai_files(run_dir))
+                         "cost_usd": result.get("cost_usd"), "blob_folder_path": folder})
+        SAVE.record_files(run_id, files)
 
     def active(self) -> bool:
         return (self.runner.active() or self.bench.active() or self.wetbench.active()

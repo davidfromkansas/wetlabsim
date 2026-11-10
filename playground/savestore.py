@@ -167,6 +167,66 @@ def ai_files(run_dir) -> list[dict]:
     return out
 
 
+# The run's own record, uploaded with the agent's files (the replay viewer and the website read
+# them). Text records are gzipped: the robot's states compress about tenfold.
+RUN_RECORD_FILES = ["task.txt", "run.json", "result.json", "events.json", "command.json", "model.ref",
+                    "workspace_start.json", "transcript.jsonl", "states.jsonl", "replay.npz"]
+UPLOAD_MAX = 4_000_000          # the website takes at most 4.5 MB a request
+WEBSITE_URL = os.environ.get("WETLAB_WEBSITE_URL", "")
+
+
+def blob_enabled() -> bool:
+    return bool(WEBSITE_URL and os.environ.get("LAB_LINK_SECRET"))
+
+
+def _upload(run_id: str, path: str, data: bytes, content_type: str) -> bool:
+    q = urllib.parse.urlencode({"run": run_id, "path": path})
+    req = urllib.request.Request(f"{WEBSITE_URL}/api/internal/run-file?{q}", data=data, method="POST",
+                                 headers={"Content-Type": content_type, "X-Link-Secret": os.environ["LAB_LINK_SECRET"]})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return r.status == 200
+
+
+def upload_run(run_dir, run_id: str, files: list[dict]) -> str | None:
+    """A finished run's files into private Blob (through the website) at runs/<run id>/: its
+    record (text gzipped) and workspace/<path> for each file the agent wrote or changed. Sets
+    each file's blob_file_path; returns the run's folder, or None when nothing could be sent."""
+    import gzip
+    import mimetypes
+    import pathlib
+    if not blob_enabled():
+        return None
+    run_dir, sent = pathlib.Path(run_dir), 0
+    for name in RUN_RECORD_FILES:
+        p = run_dir / name
+        if not p.is_file():
+            continue
+        data, path, ctype = p.read_bytes(), name, "application/octet-stream"
+        if not name.endswith(".npz"):
+            data, path, ctype = gzip.compress(data), name + ".gz", "application/gzip"
+        if len(data) > UPLOAD_MAX:
+            print(f"run {run_id}: {name} is too big to upload ({len(data)} bytes)")
+            continue
+        try:
+            sent += _upload(run_id, path, data, ctype)
+        except Exception as e:  # noqa: BLE001
+            print(f"run {run_id}: could not upload {name}:", e)
+    for f in files:
+        p = run_dir / "workspace" / f["file_path"]
+        data = p.read_bytes()
+        if len(data) > UPLOAD_MAX:
+            print(f"run {run_id}: {f['file_path']} is too big to upload ({len(data)} bytes)")
+            continue
+        try:
+            if _upload(run_id, f"workspace/{f['file_path']}", data,
+                       mimetypes.guess_type(p.name)[0] or "application/octet-stream"):
+                f["blob_file_path"] = f"runs/{run_id}/workspace/{f['file_path']}"
+                sent += 1
+        except Exception as e:  # noqa: BLE001
+            print(f"run {run_id}: could not upload {f['file_path']}:", e)
+    return f"runs/{run_id}/" if sent else None
+
+
 def record_files(run_id: str, files: list[dict]):
     """run_files rows for what the AI wrote: file_path, language, size_bytes, line_count, code_text, blob_file_path."""
     sql("delete from run_files where run_id = $1", [run_id])

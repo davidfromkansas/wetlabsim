@@ -47,7 +47,9 @@ image = (
     .pip_install("mujoco>=4.0,<5", "numpy", "pillow", "mcp", "modal")
     .env({"MUJOCO_GL": "egl", "EGL_PLATFORM": "surfaceless", "PYTHONPATH": "/app", "PYTHONUNBUFFERED": "1",
           "WETLAB_MAX_LABS": str(MAX_LABS), "WETLAB_FRONT_URL": FRONT_URL, "WETLAB_MODAL_APP": APP,
-          "WETLAB_BUILD": BUILD, "WETLAB_DICT_PREFIX": f"{APP}-" if STAGING else ""})
+          "WETLAB_BUILD": BUILD, "WETLAB_DICT_PREFIX": f"{APP}-" if STAGING else "",
+          # The website: finished runs' files go to its private Blob store through it.
+          "WETLAB_WEBSITE_URL": "https://wetlab-playground.vercel.app"})
     .add_local_dir(str(ROOT), "/app", ignore=IGNORE)
 )
 runs = modal.Volume.from_name(f"{APP}-runs", create_if_missing=True)
