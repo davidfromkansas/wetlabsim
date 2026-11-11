@@ -1,5 +1,6 @@
 // Your runs: every AI task you've run, newest first (only yours).
 import Link from "next/link";
+import { UserButton } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
 import { myRuns } from "@/lib/db";
 
@@ -11,7 +12,7 @@ export default async function Runs() {
   const runs = await myRuns(user.id).catch(() => []);
   return (
     <main>
-      <p className="small"><Link href="/">← MuJoCo Playground</Link></p>
+      <div className="top"><p className="small"><Link href="/">← Back to the Playground</Link></p><UserButton /></div>
       <h1>Your runs</h1>
       <p className="sub">Every task you've given an AI, with the code it wrote. Only you can see these.</p>
       <div className="card">
