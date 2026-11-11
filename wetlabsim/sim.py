@@ -664,6 +664,8 @@ class Sim:
     # The first robot is the robot of a one-robot scene: the robot cell's API addresses it.
     @property
     def arm(self) -> Arm:
+        if not self.arms:      # a playground lab with no robot yet
+            raise RobotError("there's no robot in this lab")
         return next(iter(self.arms.values()))
 
     def __getattr__(self, k):
