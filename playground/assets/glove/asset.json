@@ -1,0 +1,52 @@
+{
+ "source": "ppe_gloves_cloth_a01",
+ "usd": "sm_ppe_gloves_cloth_a01_01.usd",
+ "mass": 0.12389,
+ "friction": 0.5,
+ "com": [
+  0.00427,
+  0.07677,
+  0.01904
+ ],
+ "size": [
+  0.233,
+  0.2517,
+  0.0533
+ ],
+ "collision": "limp shell (MuJoCo flex, 2D)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png",
+   "bind": "bind_0.npz"
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_1.png",
+   "bind": "bind_1.npz"
+  }
+ ],
+ "collision_parts": [],
+ "soft": {
+  "kind": "shell",
+  "radius": 0.002,
+  "sim": "sim.obj",
+  "nodes": 37
+ }
+}

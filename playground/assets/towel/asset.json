@@ -1,0 +1,39 @@
+{
+ "source": "consumable_microfiber_towel_wrinkled_b01",
+ "usd": "sm_consumable_microfiber_towel_wrinkled_b01_01.usd",
+ "mass": 0.20627,
+ "friction": 0.5,
+ "com": [
+  0.00761,
+  0.0148,
+  0.00949
+ ],
+ "size": [
+  0.4064,
+  0.3391,
+  0.0337
+ ],
+ "collision": "cloth (MuJoCo flex, 2D)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png",
+   "bind": "bind_0.npz"
+  }
+ ],
+ "collision_parts": [],
+ "soft": {
+  "kind": "sheet",
+  "radius": 0.002,
+  "sim": "sim.obj",
+  "nodes": 42
+ }
+}

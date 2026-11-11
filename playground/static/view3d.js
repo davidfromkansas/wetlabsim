@@ -166,6 +166,46 @@ export function start({stage, base = '', onReady}) {
     return obj;
   }
 
+  // A soft object's mesh (a MuJoCo skin, scene3d.skin_bin): each vertex follows the bodies of
+  // the simulated shape it is bound to, re-placed every pose frame (drawSkins).
+  async function skinObject(sk, version) {
+    const buf = await (await fetch(`${base}/pg/skin/${sk.id}.bin?v=${encodeURIComponent(version)}`)).arrayBuffer();
+    const [nv, nf, hasUv, k] = new Uint32Array(buf, 0, 4);
+    let o = 16;
+    const rest = new Float32Array(buf, o, nv * 3); o += nv * 12;
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(rest), 3));
+    if (hasUv) { geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(buf, o, nv * 2), 2)); o += nv * 8; }
+    geo.setIndex(new THREE.BufferAttribute(new Uint32Array(buf, o, nf * 3), 1)); o += nf * 12;
+    const body = new Int32Array(buf, o, nv * k); o += nv * k * 4;
+    const w = new Float32Array(buf, o, nv * k); o += nv * k * 4;
+    const bind = new Float32Array(buf, o, nv * k * 3);
+    geo.computeVertexNormals();
+    const mat = new THREE.MeshPhongMaterial({
+      color: srgb(sk.rgba), specular: new THREE.Color(sk.specular * 0.3, sk.specular * 0.3, sk.specular * 0.3),
+      shininess: 4 + 96 * sk.shininess, side: THREE.DoubleSide});
+    if (sk.tex >= 0) mat.map = texture(sk.tex, version, 1, 1);
+    const obj = new THREE.Mesh(geo, mat);
+    obj.castShadow = obj.receiveShadow = true; obj.frustumCulled = false;
+    return {obj, geo, rest, body, w, bind, k, nv};
+  }
+  function drawSkins(p) {
+    for (const s of V.skins || []) {
+      const out = s.geo.attributes.position.array, {rest, body, w, bind, k, nv} = s;
+      for (let v = 0; v < nv; v++) {
+        let x = rest[3 * v], y = rest[3 * v + 1], z = rest[3 * v + 2];
+        for (let j = 0; j < k; j++) {
+          const b = body[v * k + j]; if (b < 0) continue;
+          const wt = w[v * k + j], bi = 3 * (v * k + j);
+          x += wt * (p[3 * b] - bind[bi]); y += wt * (p[3 * b + 1] - bind[bi + 1]); z += wt * (p[3 * b + 2] - bind[bi + 2]);
+        }
+        out[3 * v] = x; out[3 * v + 1] = y; out[3 * v + 2] = z;
+      }
+      s.geo.attributes.position.needsUpdate = true;
+      s.geo.computeVertexNormals();
+    }
+  }
+
   let gen = 0;     // bumped when the page switches to another session's world
   async function loadScene() {
     if (V.loading) return;
@@ -178,6 +218,8 @@ export function start({stage, base = '', onReady}) {
       const bodies = Array.from({length: sc.nbody}, () => { const b = new THREE.Group(); next.add(b); return b; });
       const objs = await Promise.all(sc.geoms.map(g => geomObject(g, sc.version, sc.meshhash).then(o => [g, o])));
       for (const [g, o] of objs) if (o) bodies[g.body].add(o);
+      const skins = await Promise.all((sc.skins || []).map(sk => skinObject(sk, sc.version)));
+      for (const s of skins) next.add(s.obj);
       // Lights: MuJoCo's headlight (ambient + a light at the eye) and the scene's own lights.
       const amb = sc.headlight.ambient, dif = sc.headlight.diffuse;
       next.add(new THREE.AmbientLight(new THREE.Color(amb[0], amb[1], amb[2]), Math.PI));
@@ -194,7 +236,7 @@ export function start({stage, base = '', onReady}) {
         next.add(L); next.add(L.target);
       }
       if (g0 !== gen) { V.loading = false; return loadScene(); }
-      scene.remove(root); root = next; scene.add(root); V.bodies = bodies; V.version = sc.version;
+      scene.remove(root); root = next; scene.add(root); V.bodies = bodies; V.skins = skins; V.version = sc.version;
       if (floorFx) { scene.remove(floorFx); floorFx = null; }
       if (sc.floorfx) floorFx = makeFloorFx();
       if (floorFx) scene.add(floorFx);
@@ -263,6 +305,7 @@ export function start({stage, base = '', onReady}) {
         V.bodies[i].position.set(p[3 * i], p[3 * i + 1], p[3 * i + 2]);
         V.bodies[i].quaternion.set(q[4 * i + 1], q[4 * i + 2], q[4 * i + 3], q[4 * i]);
       }
+      drawSkins(p);
       drawShapes(f.shapes);
       // Follow the server's camera (glides, presets, other tabs) unless moved here just now.
       if (V.follow && performance.now() - V.lastLocal > 800) V.cam = f.cam;
@@ -289,7 +332,7 @@ export function start({stage, base = '', onReady}) {
     base = b; gen++; V.version = null; V.follow = true; V.lastLocal = 0;
     texCache.clear(); meshCache.clear();
     if (es) es.close();
-    scene.remove(root); root = new THREE.Group(); scene.add(root); V.bodies = [];
+    scene.remove(root); root = new THREE.Group(); scene.add(root); V.bodies = []; V.skins = [];
     loadScene().then(connect);
   };
   loadScene().then(connect);

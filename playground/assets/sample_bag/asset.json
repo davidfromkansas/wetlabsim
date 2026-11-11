@@ -1,0 +1,64 @@
+{
+ "source": "medical_sample_bag_a01",
+ "usd": "sm_medical_sample_bag_a01_01.usda",
+ "mass": 0.18035,
+ "friction": 0.4,
+ "com": [
+  0.00158,
+  -1e-05,
+  0.14511
+ ],
+ "size": [
+  0.0344,
+  0.1503,
+  0.219
+ ],
+ "collision": "cloth (MuJoCo flex, 2D)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.8,
+    0.8,
+    0.8,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "bind": "bind_0.npz"
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_1.png",
+   "bind": "bind_1.npz"
+  },
+  {
+   "mesh": "vis_2.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_2.png",
+   "bind": "bind_2.npz"
+  }
+ ],
+ "collision_parts": [],
+ "soft": {
+  "kind": "sheet",
+  "radius": 0.002,
+  "sim": "sim.obj",
+  "nodes": 28
+ }
+}

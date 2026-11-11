@@ -26,7 +26,38 @@ from . import world as W
 
 VIEW_W, VIEW_H = 1280, 800      # default size of the main view
 MAX_W, MAX_H = 1920, 1200        # the scene's offscreen buffer (offwidth/offheight)
+SOFT_MAX = 3       # soft objects a lab may hold: each is many bodies and contacts (see world._add_soft)
 FOVY = 45.0        # the free camera's vertical field of view (MuJoCo's default)
+
+
+def _ray_flex(m, d, f: int, p0, dn):
+    """Where a ray (unit direction) first meets a flex: its triangles (2D), or within a few mm
+    of its segments (1D). None if it misses."""
+    a, n = int(m.flex_vertadr[f]), int(m.flex_vertnum[f])
+    dim, ea, en = int(m.flex_dim[f]), int(m.flex_elemdataadr[f]), int(m.flex_elemnum[f])
+    V = d.flexvert_xpos[a:a + n]
+    E = m.flex_elem[ea:ea + en * (dim + 1)].reshape(en, dim + 1)
+    if dim == 2:   # Moller-Trumbore, all triangles at once
+        A, B, C = V[E[:, 0]], V[E[:, 1]], V[E[:, 2]]
+        e1, e2 = B - A, C - A
+        h = np.cross(dn, e2)
+        det = np.einsum("ij,ij->i", e1, h)
+        ok = np.abs(det) > 1e-12
+        inv = np.where(ok, 1.0 / np.where(ok, det, 1), 0)
+        sv = p0 - A
+        u = np.einsum("ij,ij->i", sv, h) * inv
+        q = np.cross(sv, e1)
+        v = (q @ dn) * inv
+        t = np.einsum("ij,ij->i", e2, q) * inv
+        hit = ok & (u >= 0) & (v >= 0) & (u + v <= 1) & (t > 0)
+        return float(t[hit].min()) if hit.any() else None
+    A, B = V[E[:, 0]], V[E[:, -1]]
+    ts = np.linspace(0, 1, 9)[:, None, None]
+    P = A[None] + ts * (B - A)[None] - p0          # points along each segment
+    t = P @ dn
+    r = np.linalg.norm(P - t[..., None] * dn, axis=2)
+    near = (t > 0) & (r < m.flex_radius[f] + 0.005)
+    return float(t[near].min()) if near.any() else None
 
 
 class PlaygroundSim(Sim):
@@ -111,8 +142,12 @@ class PlaygroundSim(Sim):
             return
         for st in self.stations:
             self.body_station[m.body(f"obj_{W.table_uid(st)}").id] = st.uid
+        self.flex_uid = {}
         for p in self.placed:
             self.body_uid[m.body(f"obj_{p.uid}").id] = p.uid
+            f = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_FLEX, f"obj_{p.uid}")
+            if f >= 0:
+                self.flex_uid[f] = p.uid
 
     def _swap_model(self):
         """Build the scene for the current mode from scratch and start it over."""
@@ -187,13 +222,29 @@ class PlaygroundSim(Sim):
         return next((p for p in self.placed if p.uid == uid), None)
 
     def _sync_placed(self):
-        """Remember where every free object is now, so a rebuild keeps them there."""
+        """Remember where every free object is now, so a rebuild keeps them there. A soft
+        object is remembered by where its shape lies now (a rebuild lays it out flat again)."""
         m, d = self.m, self.d
         for p in self.placed:
+            f = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_FLEX, f"obj_{p.uid}")
+            if f >= 0:
+                a, n = int(m.flex_vertadr[f]), int(m.flex_vertnum[f])
+                V = d.flexvert_xpos[a:a + n]
+                p.pos = (float(V[:, 0].mean()), float(V[:, 1].mean()),
+                         float(V[:, 2].min() - m.flex_radius[f]) - self._soft_lift(p))
+                p.quat = None
+                continue
             b = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, f"obj_{p.uid}")
             if b >= 0 and m.body_jntnum[b]:
                 p.pos = tuple(float(v) for v in d.xpos[b])
                 p.quat = tuple(float(v) for v in d.xquat[b])
+
+    def _soft_lift(self, p: W.Placed) -> float:
+        """How far above a soft object's place its simulated shape starts (a sheet lies through
+        the middle of the item), so remembering it by its lowest point doesn't lift it."""
+        meta = catalog.meta(p.item)
+        V, _, _ = W.read_obj(catalog.ASSETS / p.item / meta["soft"]["sim"])
+        return float(V[:, 2].min())
 
     def rebuild(self, sync: bool = True):
         """Recompile the lab after an edit. Every robot keeps its pose and controller state;
@@ -222,7 +273,9 @@ class PlaygroundSim(Sim):
             self._model_ver += 1
 
     def add(self, item: str, pos, yaw: float = 0.0) -> str:
-        catalog.item(item)
+        if catalog.item(item)["soft"] and W.soft_count(self.placed) >= SOFT_MAX:
+            raise RobotError(f"a lab holds at most {SOFT_MAX} soft objects (each takes a lot of the "
+                             "physics' time); remove one first")
         with self.lock:
             uid = self.new_uid(item)
             self.placed.append(W.Placed(uid, item, tuple(pos), yaw))
@@ -239,7 +292,7 @@ class PlaygroundSim(Sim):
             if yaw is not None:
                 p.yaw = yaw
             p.quat = None if yaw is not None or p.quat is None else W.yaw_quat(p.yaw)
-            self.rebuild()
+            self.rebuild(sync=False)     # synced above; its new place stands
 
     def remove(self, uid: str):
         with self.lock:
@@ -357,6 +410,9 @@ class PlaygroundSim(Sim):
                 raise RobotError("no free space next to this station")
             dx, dy = spot
             riders = self._on_table(st)
+            soft = sum(1 for p in riders if catalog.item(p.item)["soft"])
+            if soft and W.soft_count(self.placed) + soft > SOFT_MAX:
+                raise RobotError(f"the copy would bring the lab over {SOFT_MAX} soft objects; remove one first")
             new = self._new_station_uid()
             base = (st.name or f"Robot {uid[2:]}").strip()
             self.stations.append(W.Station(new, st.robot, (st.pos[0] + dx, st.pos[1] + dy), st.yaw,
@@ -601,6 +657,17 @@ class PlaygroundSim(Sim):
             dist = mujoco.mj_ray(self.m, self.d, np.asarray(p0, float), np.asarray(d, float),
                                  np.array([1, 1, 1, 0, 0, 0], np.uint8), 1, exclude_body, gid)
             body = int(self.m.geom_bodyid[gid[0]]) if dist >= 0 else -1
+            # mj_ray sees geoms only; a soft object is hit where the ray passes close to its shape.
+            dn = np.asarray(d, float) / np.linalg.norm(d)
+            for f, uid in getattr(self, "flex_uid", {}).items():
+                fb = self.m.body(f"obj_{uid}").id
+                if fb == exclude_body:
+                    continue
+                tf = _ray_flex(self.m, self.d, f, np.asarray(p0, float), dn)
+                if tf is not None:
+                    tf /= float(np.linalg.norm(d))
+                    if dist < 0 or tf < dist:
+                        dist, body = tf, fb
         return (dist if dist >= 0 else None), body
 
     def _owner(self, body: int):

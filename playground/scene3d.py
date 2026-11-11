@@ -3,6 +3,8 @@
 scene(m)        every visible geom (MuJoCo's groups 0-2): its body, shape, size, local pose,
                 colour and material, and which mesh and texture it uses. Sent once per model.
 mesh_bin(m, i)  one mesh as indexed triangles (positions, texture coordinates, faces).
+skin_bin(m, i)  one skin (a soft object's mesh): its rest vertices, texture coordinates and
+                faces, and the bodies that move each vertex with their weights.
 tex_png(m, i)   one 2D texture as a PNG.
 poses(d, ...)   one frame of the stream: every body's position and orientation, plus the
                 view's overlay shapes (ghost, selection) and the server's camera, so glides
@@ -63,11 +65,21 @@ def scene(m: mujoco.MjModel, version) -> dict:
             "reflectance": round(float(m.mat_reflectance[mat]), 3) if mat >= 0 else 0.0,
             "shadow": True,
         })
+    skins = []
+    for i in range(m.nskin):
+        if int(m.skin_group[i]) not in VISIBLE_GROUPS:
+            continue
+        mat = int(m.skin_matid[i])
+        rgba = np.array(m.mat_rgba[mat] if mat >= 0 else m.skin_rgba[i], np.float32)
+        tex = int(m.mat_texid[mat, int(mujoco.mjtTextureRole.mjTEXROLE_RGB)]) if mat >= 0 else -1
+        skins.append({"id": i, "rgba": _r(rgba, 3), "tex": tex,
+                      "specular": round(float(m.mat_specular[mat]), 3) if mat >= 0 else 0.5,
+                      "shininess": round(float(m.mat_shininess[mat]), 3) if mat >= 0 else 0.5})
     lights = [{"pos": _r(m.light_pos[i]), "dir": _r(m.light_dir[i]), "diffuse": _r(m.light_diffuse[i], 3),
                "ambient": _r(m.light_ambient[i], 3), "directional": int(m.light_type[i]) == 1,
                "castshadow": bool(m.light_castshadow[i])} for i in range(m.nlight)]
     hl = m.vis.headlight
-    return {"version": str(version), "nbody": int(m.nbody), "geoms": geoms, "lights": lights,
+    return {"version": str(version), "nbody": int(m.nbody), "geoms": geoms, "skins": skins, "lights": lights,
             "headlight": {"ambient": _r(hl.ambient, 3), "diffuse": _r(hl.diffuse, 3)},
             "meshhash": {str(i): mesh_hash(m, i) for i in {gg["mesh"] for gg in geoms if gg["mesh"] >= 0}}}
 
@@ -105,6 +117,39 @@ def mesh_bin(m, i: int) -> bytes:
     if has_uv:
         out.write(np.asarray(tc[uniq[:, 2]], "<f4").tobytes())
     out.write(np.asarray(inv.reshape(-1, 3), "<u4").tobytes())
+    return out.getvalue()
+
+
+def skin_bin(m, i: int) -> bytes:
+    """[nv, nf, has_uv, k] (uint32 x4), rest positions (nv x 3 float32), uvs (nv x 2, if any),
+    faces (nf x 3 uint32), then for each vertex k influences: body ids (nv x k int32, -1 for
+    none), weights (nv x k float32) and the bodies' bind positions (nv x k x 3 float32).
+    A vertex is drawn at rest + sum(w * (body position now - bind position)): the soft objects'
+    bones only slide (world._add_soft), so that is MuJoCo's own skinning."""
+    va, nv = int(m.skin_vertadr[i]), int(m.skin_vertnum[i])
+    fa, nf = int(m.skin_faceadr[i]), int(m.skin_facenum[i])
+    ta = int(m.skin_texcoordadr[i])
+    infl = [[] for _ in range(nv)]
+    for b in range(int(m.skin_boneadr[i]), int(m.skin_boneadr[i]) + int(m.skin_bonenum[i])):
+        a, n = int(m.skin_bonevertadr[b]), int(m.skin_bonevertnum[b])
+        for v, w in zip(m.skin_bonevertid[a:a + n], m.skin_bonevertweight[a:a + n]):
+            infl[int(v)].append((int(m.skin_bonebodyid[b]), float(w), m.skin_bonebindpos[b]))
+    k = max(1, max(len(x) for x in infl))
+    body = np.full((nv, k), -1, np.int32)
+    wt = np.zeros((nv, k), np.float32)
+    bind = np.zeros((nv, k, 3), np.float32)
+    for v, x in enumerate(infl):
+        for j, (bb, w, bp) in enumerate(x):
+            body[v, j], wt[v, j], bind[v, j] = bb, w, bp
+    out = io.BytesIO()
+    out.write(struct.pack("<IIII", nv, nf, 1 if ta >= 0 else 0, k))
+    out.write(np.asarray(m.skin_vert[va:va + nv], "<f4").tobytes())
+    if ta >= 0:
+        out.write(np.asarray(m.skin_texcoord[ta:ta + nv], "<f4").tobytes())
+    out.write(np.asarray(m.skin_face[fa:fa + nf], "<u4").tobytes())
+    out.write(body.astype("<i4").tobytes())
+    out.write(wt.astype("<f4").tobytes())
+    out.write(bind.astype("<f4").tobytes())
     return out.getvalue()
 
 
