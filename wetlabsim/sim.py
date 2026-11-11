@@ -531,6 +531,14 @@ class Arm:
                 if j >= 0 and m.jnt_type[j] == mujoco.mjtJoint.mjJNT_FREE:
                     p = self.to_base(d.xpos[i])
                     out[name] = {"pos": p.round(5).tolist(), "quat": d.xquat[i].round(5).tolist()}
+            # Soft objects (the playground's flexes) have no single pose: their shape's centre,
+            # lowest and highest point, and extent along the base frame's axes.
+            for f in range(m.nflex):
+                a, n = int(m.flex_vertadr[f]), int(m.flex_vertnum[f])
+                V = np.array([self.to_base(v) for v in d.flexvert_xpos[a:a + n]])
+                out[mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_FLEX, f)] = {
+                    "pos": V.mean(0).round(5).tolist(), "low": round(float(V[:, 2].min()), 5),
+                    "high": round(float(V[:, 2].max()), 5), "extent": np.ptp(V, 0).round(5).tolist(), "soft": True}
             return {"time": round(d.time, 4), "task": self.task, "objects": out}
 
     def calibration(self) -> dict:

@@ -18,6 +18,7 @@ import json
 import re
 import os
 import pathlib
+import secrets
 import shutil
 import signal
 import subprocess
@@ -282,7 +283,9 @@ def main(argv=None):
             else args.task or pathlib.Path(args.task_file).read_text().strip())
     runs = pathlib.Path(args.runs).resolve()
     token = os.environ.get("WETLAB_EVAL_TOKEN") or (runs / ".eval_token").read_text().strip()
-    run_id = time.strftime("%Y%m%d-%H%M%S") + f"-{args.agent}" + (f"-{args.task_id}" if args.task_id else "")
+    # A short random tail: runs started in the same second (several robots in a lab) get their own.
+    run_id = (time.strftime("%Y%m%d-%H%M%S") + f"-{args.agent}" + (f"-{args.task_id}" if args.task_id else "")
+              + f"-{secrets.token_hex(2)}")
     if os.environ.get("WETLAB_RUN_TAG"):       # several labs share one runs folder: keep ids apart
         run_id += "-" + os.environ["WETLAB_RUN_TAG"]
     store = storage.get(args.store, runs)
