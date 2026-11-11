@@ -254,18 +254,18 @@ SEPARATE = re.compile(r"cap|lid|cork|stopper|plug", re.I)
 def part_kind(b: dict, fixed: bool, item: str = "") -> str:
     """How a part of a jointed item is built: "top" (the main body, a loose part, a welded cap),
     "joint" (on its hinge or slide) or "rigid" (fixed in place: its shapes join its parent part's
-    body). Fixed too, as they'd only cost speed: free-spinning wheels and casters (unlimited
-    hinges) of furniture, which doesn't roll here, and buttons and switches of furniture (and of
-    everything, with BUTTONS_MOVE off). A button or dial with no limits (an infusion pump's, a
-    toaster's) is fixed too: nothing stops it, and so light a part spins by itself."""
+    body). Fixed too: buttons and switches of furniture (and of everything, with BUTTONS_MOVE
+    off), and every free-spinning part (a hinge with no limits: furniture's wheels and casters, a
+    drill's chuck, a ratchet's drive, a dial). Nothing stops them and the assets give them no
+    friction, so a light one spins by itself and a push sends it spinning out of control."""
     if b.get("root") or b.get("free"):
         return "top"
     if b.get("weld"):
         caps = catalog.CAPS.get(item, ())
         return "top" if SEPARATE.search(b["name"]) or any(c in b["name"] for c in caps) else "rigid"
-    if fixed and "range" not in b["joint"]:
+    if "range" not in b["joint"]:
         return "rigid"
-    if BUTTON.search(b["name"]) and (fixed or not BUTTONS_MOVE or "range" not in b["joint"]):
+    if BUTTON.search(b["name"]) and (fixed or not BUTTONS_MOVE):
         return "rigid"
     return "joint"
 

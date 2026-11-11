@@ -103,6 +103,27 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Thermometer | Lab & Medical | NVIDIA SimReady | [`thermometer_fever_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/thermometer_fever_a01) |
 | Disinfectant bottle | Lab & Medical | NVIDIA SimReady | [`disinfectant_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/disinfectant_a01) |
 | Box of gloves | Lab & Medical | NVIDIA SimReady | [`box_glove_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/box_glove_a01) |
+| Scissors | Tools | NVIDIA SimReady | [`tools_scissors_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/tools_scissors_a01) |
+| Combination pliers | Tools | NVIDIA SimReady | [`handTool_pliers_combination_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/handTool_pliers_combination_a01) |
+| Long-nose pliers | Tools | NVIDIA SimReady | [`handTool_pliers_long_nose_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/handTool_pliers_long_nose_a01) |
+| Long-nose pliers, curved | Tools | NVIDIA SimReady | [`handTool_pliers_long_nose_curved_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/handTool_pliers_long_nose_curved_a01) |
+| Diagonal cutting pliers | Tools | NVIDIA SimReady | [`handTool_pliers_diagonal_cutting_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/handTool_pliers_diagonal_cutting_a01) |
+| Groove-joint pliers | Tools | NVIDIA SimReady | [`handTool_pliers_groove_joint_8in_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/handTool_pliers_groove_joint_8in_b01) |
+| Locking pliers | Tools | NVIDIA SimReady | [`handTool_pliers_locking_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/handTool_pliers_locking_a01) |
+| Folding utility knife | Tools | NVIDIA SimReady | [`handTool_knife_foldingUtility_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/handTool_knife_foldingUtility_a01) |
+| Retractable knife | Tools | NVIDIA SimReady | [`handTool_knife_retractableBlade_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/handTool_knife_retractableBlade_a01) |
+| Adjustable wrench | Tools | NVIDIA SimReady | [`handTool_wrench_adjustable_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/handTool_wrench_adjustable_a01) |
+| Monkey wrench | Tools | NVIDIA SimReady | [`handTool_wrench_monkey_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/handTool_wrench_monkey_a01) |
+| Tap wrench | Tools | NVIDIA SimReady | [`handTool_wrench_tap_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/handTool_wrench_tap_a01) |
+| Ratchet | Tools | NVIDIA SimReady | [`handTool_ratchet_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/handTool_ratchet_b01) |
+| Torque wrench | Tools | NVIDIA SimReady | [`handTool_torque_wrench_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/handTool_torque_wrench_b01) |
+| Clamp | Tools | NVIDIA SimReady | [`tool_clamp_c01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/tool_clamp_c01) |
+| Large clamp | Tools | NVIDIA SimReady | [`tools_clamp_large_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/tools_clamp_large_a01) |
+| Hand drill | Tools | NVIDIA SimReady | [`instrument_hand_drill_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/instrument_hand_drill_b01) |
+| Power drill | Tools | NVIDIA SimReady | [`powerTool_drill_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/powerTool_drill_a01) |
+| Power drill, 2 | Tools | NVIDIA SimReady | [`powerTool_drill_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/powerTool_drill_b01) |
+| Cordless heat gun | Tools | NVIDIA SimReady | [`powerTool_heatGun_cordless_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/powerTool_heatGun_cordless_a01) |
+| Cutting tool | Tools | NVIDIA SimReady | [`powerTool_cutting_tool_c01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/powerTool_cutting_tool_c01) |
 | Mug | Kitchen | NVIDIA SimReady | [`kitchenware_mug_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/kitchenware_mug_a01) |
 | Bowl | Kitchen | NVIDIA SimReady | [`kitchenware_bowl_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/kitchenware_bowl_b01) |
 | Cutting board | Kitchen | NVIDIA SimReady | [`kitchenware_cuttingBoard_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/kitchenware_cuttingBoard_a01) |

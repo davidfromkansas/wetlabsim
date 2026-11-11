@@ -1,0 +1,196 @@
+{
+ "source": "handTool_wrench_adjustable_a01",
+ "usd": "sm_handTool_wrench_adjustable_a01_01.usd",
+ "mass": 0.71129,
+ "friction": 0.4,
+ "com": null,
+ "size": [
+  0.2096,
+  0.0564,
+  0.0139
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "body_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.0857,
+      0.0857,
+      0.0857,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      0.8773,
+      0.8854,
+      0.8937,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 8.873878184789729e-05
+    }
+   ],
+   "mass": 0.589413,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -0.012595,
+    0.002008,
+    -0.0003
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.012595,
+    0.002008,
+    -0.0003,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "jaw_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.8773,
+      0.8854,
+      0.8937,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 7.067389176157495e-06
+    }
+   ],
+   "mass": 0.079778,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_jaw_01_joint_00",
+    "type": "slide",
+    "range": [
+     -0.011507,
+     0.0
+    ],
+    "pos": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     1.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.086082,
+    0.012015,
+    0.00721
+   ],
+   "quat": [
+    0.988007,
+    0.0,
+    0.0,
+    0.15441
+   ],
+   "frame": [
+    0.073487,
+    0.014023,
+    0.006911,
+    0.988007,
+    0.0,
+    0.0,
+    0.15441
+   ]
+  },
+  {
+   "name": "knurl_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.7284,
+      0.7289,
+      0.7264,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 1.8362516005236435e-06
+    }
+   ],
+   "mass": 0.0421,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_knurl_01_joint_00",
+    "type": "hinge",
+    "pos": [
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     1.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.067919,
+    0.002184,
+    0.007195
+   ],
+   "quat": [
+    0.989006,
+    0.0,
+    0.0,
+    0.147879
+   ],
+   "frame": [
+    0.055323,
+    0.004192,
+    0.006895,
+    0.989006,
+    0.0,
+    0.0,
+    0.147879
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

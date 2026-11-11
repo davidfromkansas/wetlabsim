@@ -1,0 +1,264 @@
+{
+ "source": "handTool_knife_retractableBlade_a01",
+ "usd": "sm_handTool_knife_retractableBlade_a01_01.usd",
+ "mass": 0.8582,
+ "friction": 0.5,
+ "com": null,
+ "size": [
+  0.1604,
+  0.061,
+  0.0259
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "blade_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_1.png"
+    },
+    {
+     "mesh": "b0_vis_2.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_2.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 2.0575629754833224e-05
+    }
+   ],
+   "mass": 0.325919,
+   "parent": 1,
+   "collide": false,
+   "joint": {
+    "name": "joint_blade_01_joint_00",
+    "type": "hinge",
+    "range": [
+     -2.722714,
+     0.0
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.021438,
+    -0.007854,
+    0.010314
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.021255,
+    0.005457,
+    0.010314,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "body_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    },
+    {
+     "mesh": "b1_vis_1.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_1.png"
+    },
+    {
+     "mesh": "b1_vis_2.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_2.png"
+    },
+    {
+     "mesh": "b1_vis_3.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_3.png"
+    },
+    {
+     "mesh": "b1_vis_4.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_4.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 6.360919694274569e-05
+    }
+   ],
+   "mass": 0.528933,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -0.000184,
+    0.013311,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.000184,
+    0.013311,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "button_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b2_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 3.71112846858955e-08
+    }
+   ],
+   "mass": 0.003348,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_button_01_joint_00",
+    "type": "slide",
+    "range": [
+     0.0,
+     0.00064
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.038099,
+    -0.004676,
+    -0.003457
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.059354,
+    0.000781,
+    0.006857,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}
