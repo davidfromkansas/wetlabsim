@@ -225,7 +225,7 @@
 const qs = new URLSearchParams(location.search);
 const ARCHIVE = qs.get('run');
 const BASE = ARCHIVE ? '/runs/' + encodeURIComponent(ARCHIVE) : '';
-const LOGOS = { Anthropic: '/static/anthropic.svg', OpenAI: '/static/openai.svg', Cognition: '/static/cognition.svg', Google: '/static/google.svg', TypeSafe: '/static/typesafe.svg' };
+const LOGOS = { Anthropic: '/static/anthropic.svg', OpenAI: '/static/openai.svg', Cognition: '/static/cognition.svg', Google: '/static/google.svg', TypeSafe: '/static/typesafe.png' };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const mmss = (s) => { s = Math.max(0, Math.floor(s || 0)); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
