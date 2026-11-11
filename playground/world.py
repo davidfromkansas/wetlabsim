@@ -412,6 +412,18 @@ def _add_jointed(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_
                 jt.springref = dr.get("target", 0.0)
             if "damping" in dr and "damping" not in j:
                 jt.damping[0] = dr["damping"]
+            for k in ("solref_friction", "solimp_friction", "solref_limit", "solimp_limit"):
+                if k.replace("_", "") in j:          # the asset's own MuJoCo joint softness (Tripo)
+                    setattr(jt, k, j[k.replace("_", "")])
+            if dr.get("target_velocity") and dr.get("damping") and "damping" not in j:
+                # a drive toward a speed (a toaster's timer): its force is damping x (target speed -
+                # speed); the joint's damping gives the second part, this the constant first
+                act = world.add_actuator(name=f"{names[i]}_drive", target=jt.name, trntype=mujoco.mjtTrn.mjTRN_JOINT,
+                                         gaintype=mujoco.mjtGain.mjGAIN_FIXED, biastype=mujoco.mjtBias.mjBIAS_AFFINE)
+                act.gainprm[0] = 0.0
+                act.biasprm[0] = dr["damping"] * dr["target_velocity"]
+                if dr.get("max_force") is not None:
+                    act.forcelimited, act.forcerange = mujoco.mjtLimited.mjLIMITED_TRUE, [-dr["max_force"], dr["max_force"]]
         _part_geoms(world, body, names[i], b, pre[i], cls, meta.get("friction"), at)
         inertia.setdefault(id(body), (body, []))[1].append((b.get("inertial"), np.eye(4) if at is None else at))
         for c, cb in enumerate(bodies):
@@ -423,6 +435,18 @@ def _add_jointed(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_
             add(i)
     for body, parts in inertia.values():          # as the asset states, where it states all of it
         set_inertia(body, parts)
+    joint_of = {b["joint"]["name"]: f"{names[i]}_{b['joint']['name']}" for i, b in enumerate(bodies)
+                if kind[i] == "joint"}
+    for t in meta.get("tendons", []):               # the asset's tendons over its joints (Tripo's door closers)
+        if t["type"] != "fixed" or not all(n in joint_of for n in t["joints"]):
+            continue
+        tn = world.add_tendon(name=f"obj_{p.uid}__{t['name']}")
+        for n, c in zip(t["joints"], t["coef"]):
+            tn.wrap_joint(joint_of[n], c)
+        tn.stiffness[0] = t.get("stiffness", 0.0)
+        tn.damping[0] = t.get("damping", 0.0)
+        if "springlength" in t:
+            tn.springlength = t["springlength"]
     for i, b in enumerate(bodies):
         if kind[i] == "rigid":
             continue
