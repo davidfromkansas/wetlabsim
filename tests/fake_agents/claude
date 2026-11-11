@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+"""Stand-in for `claude -p ... --output-format stream-json`: Claude Code's stream format, and
+real work on the robot."""
+import pathlib, sys
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from _common import out, write_pick, run_pick, think  # noqa: E402
+model = sys.argv[sys.argv.index("--model") + 1] if "--model" in sys.argv else "claude-opus-5-5"
+model = {"opus": "claude-opus-5-5"}.get(model, model)
+n = [0]
+def msg(blocks, out_tok=300):
+    n[0] += 1
+    out({"type": "assistant", "message": {"id": f"msg_{n[0]}", "model": model, "content": blocks,
+         "usage": {"input_tokens": 1200, "output_tokens": out_tok, "cache_read_input_tokens": 9000 + 3000 * n[0],
+                   "cache_creation_input_tokens": 800}}})
+def result(tid, text):
+    out({"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": tid, "content": text}]}})
+out({"type": "system", "subtype": "init", "model": model})
+think(); msg([{"type": "thinking", "thinking": "Find the apple with the overhead camera, then plan a grasp."}])
+msg([{"type": "tool_use", "id": "t1", "name": "Read", "input": {"file_path": "SITE.md"}}]); think(0.5); result("t1", "site")
+think(); msg([{"type": "tool_use", "id": "t2", "name": "mcp__wetlab__look", "input": {"camera": "overhead"}}]); think(1); result("t2", [{"type": "image"}])
+think(); write_pick(); msg([{"type": "tool_use", "id": "t3", "name": "Write", "input": {"file_path": "pick.py", "content": "..."}}], 2500); result("t3", "ok")
+msg([{"type": "tool_use", "id": "t4", "name": "Bash", "input": {"command": "python3 pick.py --first"}}]); o, _ = run_pick(True); result("t4", o)
+think(); msg([{"type": "text", "text": "That target was out of reach. Trying a smaller move."}])
+msg([{"type": "tool_use", "id": "t5", "name": "Bash", "input": {"command": "python3 pick.py"}}]); o, _ = run_pick(); result("t5", o)
+think(); msg([{"type": "tool_use", "id": "t6", "name": "mcp__wetlab__look", "input": {"camera": "wrist"}}]); think(1); result("t6", [{"type": "image"}])
+think(); msg([{"type": "text", "text": "DONE. Moved the object over and let go."}])
+out({"type": "result", "subtype": "success", "total_cost_usd": 0.42,
+     "usage": {"input_tokens": 9000, "output_tokens": 4300, "cache_read_input_tokens": 80000}})

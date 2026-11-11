@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+"""Stand-in for `devin acp`: answers the ACP bridge (wetlabsim/devin_acp.py) the way Devin does,
+streaming thoughts, tool calls and its per-turn token totals, and does real work on the robot."""
+import json, pathlib, sys
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from _common import write_pick, run_pick, think  # noqa: E402
+def send(m): sys.stdout.write(json.dumps(m) + "\n"); sys.stdout.flush()
+def upd(u): send({"jsonrpc": "2.0", "method": "session/update", "params": {"sessionId": "s1", "update": u}})
+cwd = "."
+for line in sys.stdin:
+    m = json.loads(line)
+    if m.get("method") == "initialize":
+        send({"jsonrpc": "2.0", "id": m["id"], "result": {}})
+    elif m.get("method") == "session/new":
+        cwd = m["params"].get("cwd", ".")
+        send({"jsonrpc": "2.0", "id": m["id"], "result": {"sessionId": "s1"}})
+    elif m.get("method") == "session/prompt":
+        think(); upd({"sessionUpdate": "agent_thought_chunk", "content": {"type": "text", "text": "Read the site sheet, then write pick.py."}})
+        upd({"sessionUpdate": "tool_call", "toolCallId": "c1", "kind": "read", "title": "Read SITE.md", "status": "pending",
+             "rawInput": {"file_path": "SITE.md"}})
+        upd({"sessionUpdate": "tool_call_update", "toolCallId": "c1", "status": "completed"})
+        think(); write_pick(cwd)
+        upd({"sessionUpdate": "tool_call", "toolCallId": "c2", "kind": "edit", "title": "Write pick.py", "status": "completed",
+             "rawInput": {"file_path": "pick.py", "content": "..."}})
+        for i, first in ((3, True), (4, False)):
+            think(1)
+            upd({"sessionUpdate": "tool_call", "toolCallId": f"c{i}", "kind": "execute", "title": "python pick.py",
+                 "status": "pending", "rawInput": {"command": "python pick.py" + (" --first" if first else "")}})
+            o, _ = run_pick(first, cwd)
+            upd({"sessionUpdate": "tool_call_update", "toolCallId": f"c{i}", "status": "completed",
+                 "content": [{"type": "content", "content": {"type": "text", "text": o}}]})
+            send({"jsonrpc": "2.0", "method": "_cognition.ai/agent_stopped",
+                  "params": {"stats": {"modelLabel": "SWE-2 Max", "inputTokens": 30000 * (i - 2), "outputTokens": 900 * (i - 2)}}})
+        think(); upd({"sessionUpdate": "agent_message_chunk", "content": {"type": "text", "text": "DONE, moved it and let go."}})
+        send({"jsonrpc": "2.0", "id": m["id"], "result": {"stopReason": "end_turn"}})
+    elif m.get("method") == "session/cancel":
+        break
