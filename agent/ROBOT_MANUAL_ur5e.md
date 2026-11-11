@@ -9,7 +9,7 @@ exactly like real hardware:
 - **You only know what the robot can sense.** Nobody will tell you where objects
   are. Use the cameras (and depth) to find them, and the gripper and wrist force
   readings to check what happened.
-- **Collisions are real.** Hitting the bench, a rack or a tube hard triggers a
+- **Collisions are real.** Hitting the bench or an object hard triggers a
   *protective stop*. Call `unlock_protective_stop()` before moving again.
 - Objects can slip, tip over or be knocked out of place.
 - **Only the robot API.** On a real robot there is no simulator code to read. Don't look
@@ -87,21 +87,12 @@ Images are 640 × 480. Depth is distance along the camera's viewing axis.
 Cameras are calibrated: `f.camera_position` and `f.camera_rotation` give the
 camera pose in the base frame (OpenCV axes: x right, y down, z forward).
 
-## Equipment specs (from the catalogue)
+## Robot specs (from the catalogue)
 
-- **Tubes:** 15 ml conical tubes with a pointed bottom, about 17 mm wide and 12.3 cm
-  tall with the coloured screw cap on (cap about 23 mm wide, 10 mm tall). Empty, about
-  6.5 g. They don't stand up on their own.
-- **Racks:** white two-tier centrifuge-tube racks, 205 x 96 mm, 60 mm tall. The top
-  plate has 15 ml holes in 3 rows x 6 columns on a 36 mm grid, with bigger 50 ml holes
-  between them (2 x 5). A tube stands in a hole on the bottom plate.
-- **Other items on the bench:** a blue 60-well rack with two 1.5 ml tubes, a 50 ml
-  tube with an orange cap, and a 100 mm petri dish.
 - **Gripper:** Robotiq 2F-85, 85 mm maximum opening.
 
 ## Good practice
 
 - Look before you move, and look again after each step to check it worked.
 - Approach from above, then move down slowly (0.05 to 0.1 m/s) near objects.
-- Grip tubes on the body, below the cap and above the rack's top plate.
 - After grasping, check `object_detected` and the wrist force before lifting far.
