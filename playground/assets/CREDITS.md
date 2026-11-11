@@ -53,6 +53,13 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Lab bottle, extra large | Lab & Medical | NVIDIA SimReady | [`bottle_laboratory_a04`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/bottle_laboratory_a04) |
 | Glass vial | Lab & Medical | NVIDIA SimReady | [`container_vial_glass_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/container_vial_glass_a01) |
 | Glass jar with lid | Lab & Medical | NVIDIA SimReady | [`container_jar_glass_silver_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/container_jar_glass_silver_a01) |
+| Glass jar, gold lid | Lab & Medical | NVIDIA SimReady | [`container_jar_glass_gold_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/container_jar_glass_gold_a01) |
+| Glass jar, black lid | Lab & Medical | NVIDIA SimReady | [`container_jar_glass_black_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/container_jar_glass_black_a01) |
+| Corked bottle | Lab & Medical | NVIDIA SimReady | [`misc_bottle_corked_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_bottle_corked_a01) |
+| Disinfectant bottle, 2 | Lab & Medical | NVIDIA SimReady | [`disinfectant_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/disinfectant_b01) |
+| Medicine bottle | Lab & Medical | NVIDIA SimReady | [`medicine_c01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/medicine_c01) |
+| Medicine bottle, 2 | Lab & Medical | NVIDIA SimReady | [`medicine_c02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/medicine_c02) |
+| Medicine bottle, 3 | Lab & Medical | NVIDIA SimReady | [`medicine_c03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/medicine_c03) |
 | Small syringe | Lab & Medical | NVIDIA SimReady | [`syringe_a03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/syringe_a03) |
 | Insulin syringe | Lab & Medical | NVIDIA SimReady | [`syringe_insulin_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/syringe_insulin_a01) |
 | Syringe, 2 | Lab & Medical | NVIDIA SimReady | [`syringe_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/syringe_a02) |

@@ -60,6 +60,13 @@ ITEMS = [
     ("lab_bottle_xl", "Lab & Medical", "Lab bottle, extra large", "bottle_laboratory_a04", False, False),
     ("glass_vial", "Lab & Medical", "Glass vial", "container_vial_glass_a01", False, False),
     ("glass_jar", "Lab & Medical", "Glass jar with lid", "container_jar_glass_silver_a01", False, False),
+    ("glass_jar_gold", "Lab & Medical", "Glass jar, gold lid", "container_jar_glass_gold_a01", False, False),
+    ("glass_jar_black", "Lab & Medical", "Glass jar, black lid", "container_jar_glass_black_a01", False, False),
+    ("corked_bottle", "Lab & Medical", "Corked bottle", "misc_bottle_corked_a01", False, False),
+    ("disinfectant_2", "Lab & Medical", "Disinfectant bottle, 2", "disinfectant_b01", False, False),
+    ("medicine_bottle", "Lab & Medical", "Medicine bottle", "medicine_c01", False, False),
+    ("medicine_bottle_2", "Lab & Medical", "Medicine bottle, 2", "medicine_c02", False, False),
+    ("medicine_bottle_3", "Lab & Medical", "Medicine bottle, 3", "medicine_c03", False, False),
     ("syringe_small", "Lab & Medical", "Small syringe", "syringe_a03", False, False),
     ("syringe_insulin", "Lab & Medical", "Insulin syringe", "syringe_insulin_a01", False, False),
     ("syringe_a02", "Lab & Medical", "Syringe, 2", "syringe_a02", False, False),
@@ -130,6 +137,11 @@ ITEMS = [
 # cubies are each hinged to its centre on a single axis (they can't turn as faces, and each
 # costs speed).
 SOLID = {"rubiks_cube"}
+
+# Glued-on parts kept as separate caps (on a weld) whose asset doesn't name them as a cap, lid,
+# cork or stopper (world.SEPARATE finds those): item -> part names.
+CAPS = {"medicine_bottle": ["body_02"], "medicine_bottle_2": ["body_02"], "medicine_bottle_3": ["body_02"],
+        "disinfectant_2": ["cup_01"]}
 
 # Friction in moving parts, added to what the asset states (most NVIDIA assets state none, so
 # hinges flop and plungers slide freely): item -> {joint name or part of it: MuJoCo frictionloss

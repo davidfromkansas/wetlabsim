@@ -1,0 +1,109 @@
+{
+ "source": "misc_bottle_corked_a01",
+ "usd": "sm_misc_bottle_corked_a01_01.usd",
+ "mass": 0.30174,
+ "friction": 0.7,
+ "com": null,
+ "size": [
+  0.0402,
+  0.0402,
+  0.101
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "body_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.8,
+      0.8,
+      0.8,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 9.937829441876081e-05
+    }
+   ],
+   "mass": 0.301149,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -6.8e-05,
+    -6.8e-05,
+    -0.000258
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -6.8e-05,
+    -6.8e-05,
+    -0.000258,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "lid_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.773,
+      0.6534,
+      0.5125,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 2.5321755599176908e-06
+    }
+   ],
+   "mass": 0.000595,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    -0.000109,
+    -6e-05,
+    0.092352
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.000109,
+    -6e-05,
+    0.092352,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

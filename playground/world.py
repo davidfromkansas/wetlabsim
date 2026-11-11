@@ -251,7 +251,7 @@ def _part_geoms(world, body, name: str, rec: dict, prefix: str, cls, friction, a
 SEPARATE = re.compile(r"cap|lid|cork|stopper|plug", re.I)
 
 
-def part_kind(b: dict, fixed: bool) -> str:
+def part_kind(b: dict, fixed: bool, item: str = "") -> str:
     """How a part of a jointed item is built: "top" (the main body, a loose part, a welded cap),
     "joint" (on its hinge or slide) or "rigid" (fixed in place: its shapes join its parent part's
     body). Fixed too, as they'd only cost speed: free-spinning wheels and casters (unlimited
@@ -261,7 +261,8 @@ def part_kind(b: dict, fixed: bool) -> str:
     if b.get("root") or b.get("free"):
         return "top"
     if b.get("weld"):
-        return "top" if SEPARATE.search(b["name"]) else "rigid"
+        caps = catalog.CAPS.get(item, ())
+        return "top" if SEPARATE.search(b["name"]) or any(c in b["name"] for c in caps) else "rigid"
     if fixed and "range" not in b["joint"]:
         return "rigid"
     if BUTTON.search(b["name"]) and (fixed or not BUTTONS_MOVE or "range" not in b["joint"]):
@@ -301,7 +302,7 @@ def _add_jointed(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_
     names = [f"obj_{p.uid}" if b.get("root") else f"obj_{p.uid}__{i}" for i, b in enumerate(bodies)]
     frame = [_pose(b["frame"][:3], b["frame"][3:]) for b in bodies]
     root = next(i for i, b in enumerate(bodies) if b.get("root"))
-    kind = [part_kind(b, fixed) for b in bodies]
+    kind = [part_kind(b, fixed, p.item) for b in bodies]
 
     host = list(names)        # the MuJoCo body each part's shapes are in
 
