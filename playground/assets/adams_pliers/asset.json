@@ -1,0 +1,222 @@
+{
+ "source": "instrument_adams_pliers_b01",
+ "usd": "sm_instrument_adams_pliers_b01_01.usd",
+ "mass": 0.61115,
+ "friction": 0.3,
+ "com": null,
+ "size": [
+  0.1904,
+  0.0984,
+  0.0156
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "handleLeftPart_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 6.9667949513853635e-06
+    }
+   ],
+   "mass": 0.068683,
+   "parent": 2,
+   "collide": false,
+   "joint": {
+    "name": "joint_handleLeftPart_01_joint_00",
+    "type": "hinge",
+    "range": [
+     -0.087266,
+     0.174533
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.006129,
+    -0.000556,
+    0.007725,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "handleLeft_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 4.0238211117136986e-05
+    }
+   ],
+   "mass": 0.251351,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    0.058558,
+    0.000105,
+    0.010138
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.058558,
+    0.000105,
+    0.010138,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "handleRightPart_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b2_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 6.6762936714184296e-06
+    }
+   ],
+   "mass": 0.067963,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.006129,
+    -0.000556,
+    0.007725
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.006129,
+    -0.000556,
+    0.007725,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "handleRight_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b3_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b3_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b3_col_0.obj",
+     "volume": 3.732030049505328e-05
+    }
+   ],
+   "mass": 0.223148,
+   "parent": 2,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    0.058558,
+    0.000105,
+    0.010138
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.058558,
+    0.000105,
+    0.010138,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

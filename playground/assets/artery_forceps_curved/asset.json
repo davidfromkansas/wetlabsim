@@ -1,0 +1,128 @@
+{
+ "source": "instrument_artery_forceps_curved_b01",
+ "usd": "sm_instrument_artery_forceps_curved_b01_01.usd",
+ "mass": 0.26259,
+ "friction": 0.3,
+ "com": null,
+ "size": [
+  0.1807,
+  0.0986,
+  0.0193
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "handleLeft_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 3.5202317614965144e-05
+    }
+   ],
+   "mass": 0.137162,
+   "parent": 1,
+   "collide": false,
+   "joint": {
+    "name": "joint_handleLeft_01_joint_00",
+    "type": "hinge",
+    "range": [
+     -2.268928,
+     0.174533
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.036815,
+    0.000352,
+    0.002428,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "handleRight_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 3.615714854658938e-05
+    }
+   ],
+   "mass": 0.125428,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -0.036815,
+    0.000352,
+    0.002428
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.036815,
+    0.000352,
+    0.002428,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

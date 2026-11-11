@@ -1,0 +1,128 @@
+{
+ "source": "instrument_bipolar_dissecting_scissors_a01",
+ "usd": "sm_instrument_bipolar_dissecting_scissors_a01_01.usd",
+ "mass": 0.32739,
+ "friction": 0.3,
+ "com": null,
+ "size": [
+  0.2765,
+  0.049,
+  0.0048
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "body_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 1.506295904813717e-05
+    }
+   ],
+   "mass": 0.163233,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.069165,
+    0.000239,
+    -2e-06
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.069165,
+    0.000239,
+    -2e-06,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "body_02_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 1.667793232122831e-05
+    }
+   ],
+   "mass": 0.164162,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_body_02_joint_00",
+    "type": "hinge",
+    "range": [
+     0.0,
+     2.268928
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    1e-06,
+    9e-06,
+    8e-06
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.069167,
+    0.000247,
+    6e-06,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

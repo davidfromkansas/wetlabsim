@@ -1,0 +1,182 @@
+{
+ "source": "stapler_surgical_a01",
+ "usd": "sm_stapler_surgical_a01_01.usd",
+ "mass": 0.92671,
+ "friction": 0.8,
+ "com": null,
+ "size": [
+  0.4602,
+  0.1656,
+  0.0306
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "base_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.8354,
+      0.8248,
+      0.7633,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_2.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_2.png"
+    },
+    {
+     "mesh": "b0_vis_3.obj",
+     "rgba": [
+      0.0,
+      0.4522,
+      0.889,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_4.obj",
+     "rgba": [
+      0.7569,
+      0.7647,
+      0.7608,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.0006003122282585287
+    }
+   ],
+   "mass": 0.521615,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.03057,
+    0.01267,
+    -0.001686
+   ],
+   "quat": [
+    0.999995,
+    0.002308,
+    -0.001769,
+    0.001369
+   ],
+   "frame": [
+    0.03057,
+    0.01267,
+    -0.001686,
+    0.999995,
+    0.002308,
+    -0.001769,
+    0.001369
+   ]
+  },
+  {
+   "name": "hand_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.8354,
+      0.8248,
+      0.7633,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b1_vis_1.obj",
+     "rgba": [
+      0.7569,
+      0.7647,
+      0.7608,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 4.8382617116897275e-05
+    }
+   ],
+   "mass": 0.405091,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_hand_01_joint_00",
+    "type": "hinge",
+    "range": [
+     0.0,
+     0.174533
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.032698,
+    -0.037174,
+    0.01691
+   ],
+   "quat": [
+    0.999995,
+    -0.002308,
+    0.001769,
+    -0.001369
+   ],
+   "frame": [
+    0.06331,
+    -0.024492,
+    0.015169,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

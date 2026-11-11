@@ -1,0 +1,252 @@
+{
+ "source": "instrument_nasal_forceps_b01",
+ "usd": "sm_instrument_nasal_forceps_b01_01.usd",
+ "mass": 0.31251,
+ "friction": 0.3,
+ "com": null,
+ "size": [
+  0.2191,
+  0.1059,
+  0.0038
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "actuator_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 2.037008006662785e-06
+    }
+   ],
+   "mass": 0.05289,
+   "parent": 1,
+   "collide": false,
+   "joint": {
+    "name": "joint_jactuator_01_joint_00",
+    "type": "hinge",
+    "pos": [
+     -0.002331,
+     0.009222,
+     -0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.020176,
+    0.039599,
+    0.001817,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "handleLeft_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 8.391802308462005e-06
+    }
+   ],
+   "mass": 0.09077,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.020176,
+    0.039599,
+    0.001817
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.020176,
+    0.039599,
+    0.001817,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "handleRight_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b2_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 2.5017173893213937e-05
+    }
+   ],
+   "mass": 0.157813,
+   "parent": 1,
+   "collide": false,
+   "joint": {
+    "name": "joint_handleRight_01_joint_00",
+    "type": "hinge",
+    "range": [
+     -0.017453,
+     2.094395
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.020176,
+    0.039599,
+    0.001817,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "jaw_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b3_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b3_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b3_col_0.obj",
+     "volume": 2.934028016760935e-07
+    }
+   ],
+   "mass": 0.011032,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_jaw_01_joint_01",
+    "type": "hinge",
+    "range": [
+     -0.785398,
+     0.017453
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    -0.107052,
+    0.011644,
+    0.00093
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.086876,
+    0.051243,
+    0.002747,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

@@ -1,0 +1,128 @@
+{
+ "source": "instrument_selfretaining_retractor_a01",
+ "usd": "sm_instrument_selfretaining_retractor_a01_01.usd",
+ "mass": 0.35082,
+ "friction": 0.3,
+ "com": null,
+ "size": [
+  0.191,
+  0.0898,
+  0.024
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "retractor_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 5.6564902735499094e-05
+    }
+   ],
+   "mass": 0.175729,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -0.026457,
+    1e-06,
+    0.002246
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.026457,
+    1e-06,
+    0.002246,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "retractor_02_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 6.914092071936749e-05
+    }
+   ],
+   "mass": 0.175093,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_retractor_02_joint_00",
+    "type": "hinge",
+    "range": [
+     0.0,
+     0.628319
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.026457,
+    1e-06,
+    0.002246,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}
