@@ -58,13 +58,19 @@ ITEMS = [
     ("glove", "Soft", "Cloth glove", "ppe_gloves_cloth_a01", False, False),
     ("fuel_hose", "Soft", "Fuel hose", "consumable_hose_fuel_a01", False, False),
     ("hydraulic_hose", "Soft", "Hydraulic hose", "consumable_hose_hydraulic_a01", False, False),
+    ("sponge", "Soft", "Kitchen sponge", "cleaning_sponge_b01", False, False),
+    ("foam_brick", "Soft", "Foam brick", "primitives_brick_foam_a01", False, False),
 ]
 
 # Soft items, by how MuJoCo simulates them (all with the robot cell's implicitfast integrator):
 #   sheet  a single-layer cloth through the item (2D flex): it folds and drapes, and its edges
 #          don't stretch (edge equality constraints); a flat bag is one too;
 #   shell  the item's own surface, simplified (2D flex), the same way: a glove or a bag goes limp;
-#   rope   a chain along the item's centre line (1D flex) whose links don't stretch.
+#   rope   a chain along the item's centre line (1D flex) whose links don't stretch;
+#   solid  a springy block (3D flex, its shape interpolated from its box's 8 corners) with
+#          MuJoCo's own elasticity: Young's modulus (Pa), Poisson's ratio and damping (s). The
+#          moduli are those of soft foams (about 10 kPa): a full-strength grip squeezes them by
+#          a third to a half, and they spring back when let go.
 # The item's own SimReady mesh is drawn over the flex as a MuJoCo skin. `nodes` sets how fine
 # the simulated shape is (each node costs speed); see tools/build_soft.py.
 SOFT = {
@@ -75,6 +81,8 @@ SOFT = {
     "glove": {"kind": "shell", "nodes": 40},
     "fuel_hose": {"kind": "rope", "nodes": 20},
     "hydraulic_hose": {"kind": "rope", "nodes": 20},
+    "sponge": {"kind": "solid", "young": 1e4, "poisson": 0.2, "damping": 0.002},
+    "foam_brick": {"kind": "solid", "young": 8e3, "poisson": 0.2, "damping": 0.002},
 }
 
 # Robot stations: a Menagerie arm (wetlabsim/assets) on its own packing table. Specs are the

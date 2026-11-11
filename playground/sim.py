@@ -37,6 +37,9 @@ def _ray_flex(m, d, f: int, p0, dn):
     dim, ea, en = int(m.flex_dim[f]), int(m.flex_elemdataadr[f]), int(m.flex_elemnum[f])
     V = d.flexvert_xpos[a:a + n]
     E = m.flex_elem[ea:ea + en * (dim + 1)].reshape(en, dim + 1)
+    if dim == 3:   # a solid: the faces of its tetrahedra
+        E = np.vstack([E[:, [0, 1, 2]], E[:, [0, 1, 3]], E[:, [0, 2, 3]], E[:, [1, 2, 3]]])
+        dim = 2
     if dim == 2:   # Moller-Trumbore, all triangles at once
         A, B, C = V[E[:, 0]], V[E[:, 1]], V[E[:, 2]]
         e1, e2 = B - A, C - A

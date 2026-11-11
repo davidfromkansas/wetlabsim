@@ -1,0 +1,42 @@
+{
+ "source": "primitives_brick_foam_a01",
+ "usd": "sm_primitives_brick_foam_a01_01.usda",
+ "mass": 0.04846,
+ "friction": 0.4,
+ "com": [
+  -0.00038,
+  -0.0001,
+  0.02574
+ ],
+ "size": [
+  0.0779,
+  0.0512,
+  0.0526
+ ],
+ "collision": "springy solid (MuJoCo flex, 3D)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png",
+   "bind": "bind_0.npz"
+  }
+ ],
+ "collision_parts": [],
+ "soft": {
+  "kind": "solid",
+  "sim": "sim.obj",
+  "nodes": 8,
+  "radius": 0.001,
+  "young": 8000.0,
+  "poisson": 0.2,
+  "damping": 0.002
+ }
+}

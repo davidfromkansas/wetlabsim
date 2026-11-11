@@ -60,6 +60,19 @@ KINDS = {
 PROP = dict(condim=6, friction=(1, 0.005, 0.0001), solref=(0.005, 1))
 FURNITURE = dict(condim=3, friction=(1, 0.005, 0.0001), solref=(0.005, 1))
 
+# The lab's solver options: the robot cell's own (wetlabsim/scene.py), except three, so that
+# soft objects can be springy. MuJoCo 4.0 integrates flex elasticity only under its
+# "discrete" integrator ("Numerical integration" in MuJoCo's Computation chapter). Under
+# "discrete", MuJoCo's noslip post-processing leaves out tendon and actuator couplings (same
+# chapter), and the Franka Hand closes through a tendon: with noslip its grasps slipped and
+# dropped things. So noslip is off, and grasps are kept from slipping the way MuJoCo's
+# documentation gives for elliptic friction cones instead: a high impratio (frictional-to-
+# normal constraint impedance; "XML Reference", option/impratio), 100. Measured in the
+# playground (tools: a 20 s full-strength hold of six items, both arms, both benches): every
+# grasp holds, creeping 0.06-1.5 mm (a mug held by its rim, 3-19 mm), as with the cell's
+# own settings. The robot cell, and with it Wet Lab and LIBERO mode, keeps its own options.
+OPTION = {**S.OPTION, "integrator": "discrete", "noslip_iterations": 0, "impratio": 100}
+
 
 @dataclass
 class Placed:
@@ -160,7 +173,7 @@ def _world_xml() -> str:
 <mujoco model="playground">
   <compiler angle="radian" autolimits="true"/>
   <size memory="512M"/>
-  <option {_xml_attrs(S.OPTION)}><flag {_xml_attrs(S.FLAGS)}/></option>
+  <option {_xml_attrs(OPTION)}><flag {_xml_attrs(S.FLAGS)}/></option>
   {defaults}
   <visual>
     <global offwidth="1920" offheight="1200" azimuth="150" elevation="-25"/>
@@ -283,10 +296,11 @@ def _rot(quat):
 def _add_soft(world: mujoco.MjSpec, p: Placed, meta: dict, mat_cache: set):
     """A soft item (catalog.SOFT): a MuJoCo flex, its own mesh drawn over it as a skin.
 
-    The flex sits in a body "obj_<uid>" at the item's place; its vertices are bodies
-    "obj_<uid>_<i>" that slide freely. Sheets and shells are 2D flexes (tools/build_soft.py's
-    sim.obj), ropes 1D chains; in both the edges keep their length (edge equality
-    constraints), so cloth folds but doesn't stretch. Contact with everything else uses the
+    The flex sits in a body "obj_<uid>" at the item's place; its vertices (a solid's 8 corner
+    nodes, "obj_<uid>_<ix>_<iy>_<iz>") are bodies "obj_<uid>_<i>" that slide freely. Sheets and
+    shells are 2D flexes (tools/build_soft.py's sim.obj), ropes 1D chains; in both the edges
+    keep their length (edge equality constraints), so cloth folds but doesn't stretch. Solids
+    are 3D flexes with MuJoCo's own elasticity, so they squash and spring back. Contact with everything else uses the
     item's own friction, as rigid items do; the flex doesn't collide with itself."""
     d = catalog.ASSETS / p.item
     soft = meta["soft"]
@@ -294,17 +308,24 @@ def _add_soft(world: mujoco.MjSpec, p: Placed, meta: dict, mat_cache: set):
     R, pos = _rot(quat), np.asarray(p.pos, float)
     simV, _, simF = read_obj(d / soft["sim"])
     pts = " ".join(f"{v:.6f}" for v in simV.ravel())
-    if soft["kind"] == "rope":
+    if soft["kind"] == "solid":
+        lo, hi = simV.min(0), simV.max(0)
+        c, size = (lo + hi) / 2, hi - lo
+        shape = (f'type="grid" dim="3" count="2 2 2" spacing="{size[0]:.6f} {size[1]:.6f} {size[2]:.6f}" '
+                 f'pos="{c[0]:.6f} {c[1]:.6f} {c[2]:.6f}" dof="trilinear"')
+    elif soft["kind"] == "rope":
         elems = " ".join(f"{i} {i + 1}" for i in range(len(simV) - 1))
         shape = f'type="direct" dim="1" point="{pts}" element="{elems}"'
     else:
         shape = f'type="direct" dim="2" point="{pts}" element="{" ".join(str(i) for i in simF.ravel())}"'
     mu = meta.get("friction") or PROP["friction"][0]
+    material = (f'<elasticity young="{soft["young"]}" poisson="{soft["poisson"]}" damping="{soft["damping"]}"/>'
+                if soft["kind"] == "solid" else '<edge equality="true"/>')
     child = mujoco.MjSpec.from_string(f"""<mujoco><worldbody>
       <body name="{p.uid}" pos="{pos[0]:.6f} {pos[1]:.6f} {pos[2]:.6f}" quat="{' '.join(f'{q:.8f}' for q in quat)}">
         <flexcomp name="{p.uid}" {shape} radius="{soft['radius']}" mass="{meta.get('mass') or 0.1}" group="3"
                   rgba="0.6 0.6 0.6 1">
-          <edge equality="true"/>
+          {material}
           <contact condim="3" friction="{mu} {PROP['friction'][1]} {PROP['friction'][2]}"
                    solref="{PROP['solref'][0]} {PROP['solref'][1]}" selfcollide="none"/>
         </flexcomp>
@@ -325,11 +346,13 @@ def _add_soft(world: mujoco.MjSpec, p: Placed, meta: dict, mat_cache: set):
             rows, cols = np.nonzero((idx == i) & (w > 1e-6))
             vertid.append(rows.tolist())
             vertweight.append(w[rows, cols].tolist())
+        names = ([f"obj_{p.uid}_{i >> 2}_{(i >> 1) & 1}_{i & 1}" for i in bones] if soft["kind"] == "solid"
+                 else [f"obj_{p.uid}_{i}" for i in bones])
         world.add_skin(
             name=f"obj_{p.uid}_skin{k}", material=f"{prefix}mat{k}", group=1,
             vert=(V @ R.T + pos).ravel().tolist(), face=F.ravel().tolist(),
             texcoord=(np.c_[UV[:, 0], 1 - UV[:, 1]].ravel().tolist() if UV is not None else []),
-            bodyname=[f"obj_{p.uid}_{i}" for i in bones], bindpos=simW[bones].ravel().tolist(),
+            bodyname=names, bindpos=simW[bones].ravel().tolist(),
             bindquat=np.tile(quat, len(bones)).tolist(), vertid=vertid, vertweight=vertweight)
 
 
