@@ -78,7 +78,7 @@ SOFT = {
     "towel": {"kind": "sheet", "nodes": 42},
     "drape": {"kind": "sheet", "nodes": 36},
     "sample_bag": {"kind": "sheet", "nodes": 30},
-    "glove": {"kind": "shell", "nodes": 40},
+    "glove": {"kind": "sheet", "nodes": 40},
     "fuel_hose": {"kind": "rope", "nodes": 20},
     "hydraulic_hose": {"kind": "rope", "nodes": 20},
     "sponge": {"kind": "solid", "young": 1e4, "poisson": 0.2, "damping": 0.002},

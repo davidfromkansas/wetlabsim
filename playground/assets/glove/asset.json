@@ -13,7 +13,7 @@
   0.2517,
   0.0533
  ],
- "collision": "limp shell (MuJoCo flex, 2D)",
+ "collision": "cloth (MuJoCo flex, 2D)",
  "visuals": [
   {
    "mesh": "vis_0.obj",
@@ -44,9 +44,9 @@
  ],
  "collision_parts": [],
  "soft": {
-  "kind": "shell",
+  "kind": "sheet",
   "radius": 0.002,
   "sim": "sim.obj",
-  "nodes": 37
+  "nodes": 42
  }
 }

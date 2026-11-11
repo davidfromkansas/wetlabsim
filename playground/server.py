@@ -41,6 +41,14 @@ from . import scene3d as S3
 
 HERE = pathlib.Path(__file__).parent
 PAGE = HERE / "static" / "index.html"
+
+
+def _page() -> bytes:
+    """The page, with the 3D view's script named by its content: a browser that cached an older
+    view3d.js (an hour, like every static file) loads the new one as soon as it changes."""
+    import hashlib
+    v = hashlib.sha1((HERE / "static" / "view3d.js").read_bytes()).hexdigest()[:12]
+    return PAGE.read_bytes().replace(b"/pg/static/view3d.js?v=VIEW3D", f"/pg/static/view3d.js?v={v}".encode())
 ROBOT_API_URL = ""      # set when the robot API listener is running (main)
 TIME_LIMIT = 180.0     # seconds: a LIBERO test run that hasn't finished by then is stopped
 # The public site (main --public): Claude (and Devin, with an org key) only, free play only,
@@ -469,7 +477,7 @@ def new_session(owner: str, name: str | None = None, layout: dict | None = None,
     with SESSIONS_LOCK:
         if len(SESSIONS) >= MAX_SESSIONS:
             raise RobotError(f"this server holds {MAX_SESSIONS} sessions at most; none can be added now")
-        mine = {x.name for x in SESSIONS.values() if x.owner == owner}
+        mine = {x.name for x in SESSIONS.values() if x is not None and x.owner == owner}   # (None: one still loading)
         if not name:
             name, n = "Untitled lab", 1
             while name in mine:
@@ -864,7 +872,7 @@ class PGHandler(Handler):
         p = url.path.rstrip("/") or "/"
         try:
             if p in ("/", "/playground"):
-                return self._send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
+                return self._send(200, _page(), "text/html; charset=utf-8")
             if p == "/pg/layout":
                 # Public (anyone may copy a lab they can watch), readable from another lab's page.
                 return self._send(200, json.dumps(self.sess.layout()).encode(), "application/json",

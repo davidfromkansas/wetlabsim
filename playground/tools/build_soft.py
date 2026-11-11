@@ -134,7 +134,7 @@ def _shell(V, F, nodes):
 def _centre_line(P, nodes):
     """A hose's centre line: the centroid of each thin slice across its main axis (a hose that
     runs one way along that axis), resampled to `nodes` points evenly spaced along it; and the
-    tube's radius around it (the median distance of its surface from the line)."""
+    tube's radius around it."""
     c = P.mean(0)
     axis = np.linalg.svd(P - c, full_matrices=False)[2][0]
     s = (P - c) @ axis
@@ -144,7 +144,9 @@ def _centre_line(P, nodes):
     arc = np.r_[0, np.cumsum(np.linalg.norm(np.diff(L, axis=0), axis=1))]
     t = np.linspace(0, arc[-1], nodes)
     line = np.c_[[np.interp(t, arc, L[:, j]) for j in range(3)]].T
-    return line, float(np.median(_seg_dist(P, line)[0])), float(arc[-1])
+    # the tube's radius as most of its surface has it (the 90th percentile, so its thicker parts,
+    # fittings and bends rest on the table instead of sinking into it)
+    return line, float(np.percentile(_seg_dist(P, line)[0], 90)), float(arc[-1])
 
 
 def _seg_dist(P, line):
