@@ -1,0 +1,255 @@
+{
+ "source": "pail_plastic_red_a02",
+ "usd": "sm_pail_plastic_red_a02_01.usd",
+ "mass": 0.576,
+ "friction": 0.4,
+ "com": null,
+ "size": [
+  0.196,
+  0.1844,
+  0.2
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "sm_body_a02_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.2122,
+      0.016,
+      0.0116,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 8.518763197542166e-05
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 1.9830504628715247e-05
+    },
+    {
+     "mesh": "b0_col_2.obj",
+     "volume": 1.5523578591277447e-07
+    },
+    {
+     "mesh": "b0_col_3.obj",
+     "volume": 7.604214711550766e-05
+    },
+    {
+     "mesh": "b0_col_4.obj",
+     "volume": 9.682690660460279e-05
+    },
+    {
+     "mesh": "b0_col_5.obj",
+     "volume": 7.676591594208983e-05
+    },
+    {
+     "mesh": "b0_col_6.obj",
+     "volume": 2.8753712763209867e-05
+    },
+    {
+     "mesh": "b0_col_7.obj",
+     "volume": 5.407082111285605e-05
+    },
+    {
+     "mesh": "b0_col_8.obj",
+     "volume": 9.065588915073678e-05
+    },
+    {
+     "mesh": "b0_col_9.obj",
+     "volume": 0.00011933880284300444
+    },
+    {
+     "mesh": "b0_col_10.obj",
+     "volume": 0.00016081782618273123
+    },
+    {
+     "mesh": "b0_col_11.obj",
+     "volume": 6.250775694102707e-05
+    },
+    {
+     "mesh": "b0_col_12.obj",
+     "volume": 1.706620869180586e-05
+    },
+    {
+     "mesh": "b0_col_13.obj",
+     "volume": 2.01630604081525e-05
+    },
+    {
+     "mesh": "b0_col_14.obj",
+     "volume": 5.596966946382618e-05
+    },
+    {
+     "mesh": "b0_col_15.obj",
+     "volume": 9.395873207091414e-06
+    },
+    {
+     "mesh": "b0_col_16.obj",
+     "volume": 6.04687120257725e-05
+    },
+    {
+     "mesh": "b0_col_17.obj",
+     "volume": 9.174892376897272e-06
+    },
+    {
+     "mesh": "b0_col_18.obj",
+     "volume": 1.1635006784297877e-05
+    },
+    {
+     "mesh": "b0_col_19.obj",
+     "volume": 2.145405908857029e-05
+    },
+    {
+     "mesh": "b0_col_20.obj",
+     "volume": 1.6239426073749533e-05
+    },
+    {
+     "mesh": "b0_col_21.obj",
+     "volume": 2.0404664929695726e-05
+    },
+    {
+     "mesh": "b0_col_22.obj",
+     "volume": 4.692896506437945e-06
+    },
+    {
+     "mesh": "b0_col_23.obj",
+     "volume": 1.2069402633462835e-05
+    }
+   ],
+   "mass": 0.560292,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -0.0,
+    -0.0,
+    -0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.0,
+    -0.0,
+    -0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "sm_handle_a02_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 1.5975249971452038e-06
+    },
+    {
+     "mesh": "b1_col_1.obj",
+     "volume": 1.5815805780259299e-06
+    },
+    {
+     "mesh": "b1_col_2.obj",
+     "volume": 9.162926546114633e-07
+    },
+    {
+     "mesh": "b1_col_3.obj",
+     "volume": 1.1313351032156002e-06
+    },
+    {
+     "mesh": "b1_col_4.obj",
+     "volume": 8.697817807626774e-07
+    },
+    {
+     "mesh": "b1_col_5.obj",
+     "volume": 6.793161538169337e-07
+    },
+    {
+     "mesh": "b1_col_6.obj",
+     "volume": 6.767464797378601e-07
+    },
+    {
+     "mesh": "b1_col_7.obj",
+     "volume": 1.0599070376774597e-06
+    },
+    {
+     "mesh": "b1_col_8.obj",
+     "volume": 1.3894821457719724e-06
+    },
+    {
+     "mesh": "b1_col_9.obj",
+     "volume": 7.000076888137869e-07
+    }
+   ],
+   "mass": 0.015709,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_sm_handle_a02_joint_00",
+    "type": "hinge",
+    "range": [
+     -4.625123,
+     0.0
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.002318,
+    0.174315
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.0,
+    0.002318,
+    0.174315,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

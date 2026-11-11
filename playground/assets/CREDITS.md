@@ -146,6 +146,26 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Blue crate | Bins & Trays | NVIDIA SimReady | [`crate_blue_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/crate_blue_a01) |
 | Cardboard box | Bins & Trays | NVIDIA SimReady | [`box_cube_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/box_cube_a01) |
 | Waste bin | Bins & Trays | NVIDIA SimReady | [`bin_waste_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/bin_waste_a01) |
+| Mini plastic basket | Bins & Trays | NVIDIA SimReady | [`storage_basket_plastic_mini_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/storage_basket_plastic_mini_a01) |
+| Plastic basket | Bins & Trays | NVIDIA SimReady | [`storage_basket_plastic_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/storage_basket_plastic_a01) |
+| Red pail | Bins & Trays | NVIDIA SimReady | [`pail_plastic_red_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pail_plastic_red_a02) |
+| Screw-top pail | Bins & Trays | NVIDIA SimReady | [`pail_screwTop_red_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pail_screwTop_red_a02) |
+| First-aid kit | Bins & Trays | NVIDIA SimReady | [`safety_firstAidKit_box_plastic_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/safety_firstAidKit_box_plastic_a01) |
+| Hard-case toolbox | Bins & Trays | NVIDIA SimReady | [`storage_toolbox_carry_hardCase_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/storage_toolbox_carry_hardCase_b01) |
+| Case | Bins & Trays | NVIDIA SimReady | [`case_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/case_a01) |
+| Case, 2 | Bins & Trays | NVIDIA SimReady | [`case_e01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/case_e01) |
+| Window spray | Cleaning | NVIDIA SimReady | [`cleaning_windowSpray_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_windowSpray_a01) |
+| Soap dispenser | Cleaning | NVIDIA SimReady | [`cleaning_soapDispenser_d01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_soapDispenser_d01) |
+| Soap dispenser, 2 | Cleaning | NVIDIA SimReady | [`cleaning_soapDispenser_e01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_soapDispenser_e01) |
+| Solvent spray | Cleaning | NVIDIA SimReady | [`consumable_spray_solvent_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/consumable_spray_solvent_a01) |
+| Eyeglasses | PPE | NVIDIA SimReady | [`misc_eyeGlasses_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_eyeGlasses_a01) |
+| Eyeglasses, 2 | PPE | NVIDIA SimReady | [`accessory_eyeglasses_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/accessory_eyeglasses_a01) |
+| Safety glasses | PPE | NVIDIA SimReady | [`ppe_eyeProtection_safetyGlasses_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/ppe_eyeProtection_safetyGlasses_a01) |
+| Ear muffs | PPE | NVIDIA SimReady | [`ppe_hearingProtection_earMuffs_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/ppe_hearingProtection_earMuffs_a01) |
+| Computer mouse | Electronics | NVIDIA SimReady | [`computer_mouse_office_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/computer_mouse_office_b01) |
+| Barcode scanner | Electronics | NVIDIA SimReady | [`computer_scanner_barcode_c01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/computer_scanner_barcode_c01) |
+| Digital multimeter | Electronics | NVIDIA SimReady | [`testingTool_multimeter_digital_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/testingTool_multimeter_digital_b01) |
+| Digital pressure gauge | Electronics | NVIDIA SimReady | [`serviceTool_gauge_pressureDigitalRemote_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/serviceTool_gauge_pressureDigitalRemote_a01) |
 | Golf ball | Toys & Basics | NVIDIA SimReady | [`misc_golfBall_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_golfBall_a01) |
 | Puzzle cube | Toys & Basics | NVIDIA SimReady | [`toys_rubiksCube_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/toys_rubiksCube_a01) |
 | Ping-pong ball | Toys & Basics | NVIDIA SimReady | [`misc_toy_pongPaddle_ball_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_toy_pongPaddle_ball_a01) |

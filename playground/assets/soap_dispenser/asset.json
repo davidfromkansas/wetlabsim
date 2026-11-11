@@ -1,0 +1,175 @@
+{
+ "source": "cleaning_soapDispenser_d01",
+ "usd": "sm_cleaning_soapDispenser_d01_01.usd",
+ "mass": 0.24927,
+ "friction": 0.4,
+ "com": null,
+ "size": [
+  0.0778,
+  0.0778,
+  0.1823
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "sm_cleaning_soapDispenser_a01_body_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.0008031823141397685
+    }
+   ],
+   "mass": 0.22391,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.000495,
+    0.000382,
+    -1.8e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.000495,
+    0.000382,
+    -1.8e-05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "sm_cleaning_soapDispenser_a01_cap_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 6.46633152456053e-05
+    }
+   ],
+   "mass": 0.019476,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    0.000495,
+    0.000382,
+    0.146096
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.000495,
+    0.000382,
+    0.146096,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "sm_cleaning_soapDispenser_a01_push_obj_00",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b2_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 1.1122688579432628e-05
+    }
+   ],
+   "mass": 0.005883,
+   "parent": 1,
+   "collide": false,
+   "joint": {
+    "name": "joint_sm_cleaning_soapDispenser_a01_push_joint_00",
+    "type": "slide",
+    "range": [
+     -0.011436,
+     -0.000436
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    -9.2e-05,
+    0.007234,
+    0.022886
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.000403,
+    0.007616,
+    0.168982,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}
