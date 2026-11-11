@@ -136,3 +136,16 @@ def test_a_drawer_slides_out_of_its_cabinet():
     j = _joint(sim, uid, "drawer_02_joint_00")
     _push(sim, j, 30.0, 0.5)
     assert d.qpos[m.jnt_qposadr[j]] > 0.4
+
+
+def test_a_fridge_door_closes_itself_near_shut_and_stays_open_wide():
+    """Tripo's door-closer tendons (MuJoCo tendons with a spring deadband): a door let go a little
+    open swings shut; opened wide it stays."""
+    for start, shut in ((0.3, True), (1.2, False)):
+        sim, uid = _lab("lab_fridge", fixed=True)
+        m, d = sim.m, sim.d
+        j = _joint(sim, uid, "door_fresh_hinge")
+        d.qpos[m.jnt_qposadr[j]] = start
+        mujoco.mj_step(m, d, int(3.0 / m.opt.timestep))
+        q = d.qpos[m.jnt_qposadr[j]]
+        assert (q < 0.02) if shut else (q > 1.1), (start, q)
