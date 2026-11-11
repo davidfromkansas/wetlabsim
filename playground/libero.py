@@ -386,8 +386,6 @@ def _table(m: mujoco.MjModel, d: mujoco.MjData):
 
 def site_sheet(t: Task, m: mujoco.MjModel | None = None, d: mujoco.MjData | None = None) -> str:
     bx, by, bz = t.meta["robot_base"]["pos"]
-    names = list(t.meta["objects"])
-    items = "\n".join(f"- {label(t, n)}" for n in names)
     table = ""
     if m is not None and d is not None and (tb := _table(m, d)) is not None:
         c, s, top = tb
@@ -427,10 +425,6 @@ calibration is in `cameras.json`:
 
 Poses use OpenCV camera axes (x right, y down, z forward); `rotation` maps camera
 coordinates into the named frame. The lenses have no distortion.
-
-## What's in the workspace
-
-{items}
 
 ## Start state
 
