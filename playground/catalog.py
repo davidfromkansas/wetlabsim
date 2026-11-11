@@ -1,6 +1,7 @@
 """The object library: which NVIDIA SimReady assets the playground offers, in which tab.
 
-Every item comes from NVIDIA's SimReady set (nvidia/simready-assets) or Tripo's SimReady
+Every item comes from AutoBio (in wetlabsim/assets/autobio; "autobio:..." items, built by
+tools/build_autobio.py) or from NVIDIA's SimReady set (nvidia/simready-assets) or Tripo's SimReady
 assets (VAST-AI/Tripo-Simready-Assets, folder names "tripo:...") on Hugging Face, and ships with
 its own physics (mass, collision shapes, and moving parts on their joints). `hollow` items are containers:
 they collide as convex pieces so things fit inside (see tools/convert_simready.py).
@@ -36,6 +37,14 @@ ITEMS = [
     ("balance", "Lab equipment", "Analytical balance", "tripo:analytical_balance_N09", False, False),
     ("uvc_lamp", "Lab equipment", "UV-C lamp", "lamp_uvc_a01", False, False),
     ("task_light", "Lab equipment", "Bench task light", "lighting_taskLight_adjustableArmBench_a01", False, False),
+    ("tube_15ml", "Lab & Medical", "15 ml tube", "autobio:centrifuge_tube_15ml", False, False),
+    ("tube_50ml", "Lab & Medical", "50 ml tube", "autobio:centrifuge_tube_50ml", False, False),
+    ("microtube", "Lab & Medical", "1.5 ml screw tube", "autobio:centrifuge_1-5ml_screw", False, False),
+    ("petri_dish", "Lab & Medical", "100 mm cell dish", "autobio:cell_dish_100", True, False),
+    ("pipette", "Lab & Medical", "Pipette", "autobio:pipette", False, False),
+    ("pipette_stand", "Lab & Medical", "Pipette stand", "autobio:pipette_stand", False, False),
+    ("tube_rack", "Lab & Medical", "Tube rack", "autobio:centrifuge_10slot", True, False),
+    ("rack_60well", "Lab & Medical", "60-well rack", "autobio:centrifuge_plate_60well", True, False),
     ("lab_bottle", "Lab & Medical", "Lab bottle", "bottle_laboratory_a01", False, False),
     ("lab_bottle_tall", "Lab & Medical", "Small vial", "bottle_laboratory_b01", False, False),
     ("syringe", "Lab & Medical", "Syringe", "syringe_a01", False, False),

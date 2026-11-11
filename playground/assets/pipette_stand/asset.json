@@ -1,0 +1,84 @@
+{
+ "source": "AutoBio",
+ "usd": null,
+ "mass": null,
+ "friction": 1.0,
+ "com": null,
+ "size": [
+  0.285,
+  0.1762,
+  0.2664
+ ],
+ "collision": "AutoBio's collision proxies (as the robot cell uses them)",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "stand",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.95,
+      0.95,
+      0.97,
+      1.0
+     ],
+     "roughness": 0.4,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      0.95,
+      0.95,
+      0.97,
+      1.0
+     ],
+     "roughness": 0.4,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.0003574596423139138
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 0.00037799999017199573
+    },
+    {
+     "mesh": "b0_col_2.obj",
+     "volume": 0.00037799999017199573
+    }
+   ],
+   "mass": null,
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    1,
+    0,
+    0,
+    0
+   ],
+   "frame": [
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0
+   ],
+   "parent": null,
+   "root": true
+  }
+ ],
+ "unstated_mass": [
+  "stand"
+ ]
+}

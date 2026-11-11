@@ -1,0 +1,109 @@
+{
+ "source": "AutoBio",
+ "usd": null,
+ "mass": 0.00125,
+ "friction": 1.0,
+ "com": null,
+ "size": [
+  0.0124,
+  0.0124,
+  0.0446
+ ],
+ "collision": "AutoBio's collision proxies (as the robot cell uses them)",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "body",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.88,
+      0.92,
+      0.95,
+      0.55
+     ],
+     "roughness": 0.4,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 3.3209775354905684e-06
+    }
+   ],
+   "mass": 0.00097,
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    1,
+    0,
+    0,
+    0
+   ],
+   "frame": [
+    0.0,
+    0.0,
+    0.0,
+    1,
+    0,
+    0,
+    0
+   ],
+   "parent": null,
+   "root": true
+  },
+  {
+   "name": "cap",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.95,
+      0.75,
+      0.1,
+      1
+     ],
+     "roughness": 0.4,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 1.032838089878679e-06
+    }
+   ],
+   "mass": 0.00028,
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    1,
+    0,
+    0,
+    0
+   ],
+   "frame": [
+    -3.6e-05,
+    -2.5e-05,
+    0.042445,
+    1,
+    0,
+    0,
+    0
+   ],
+   "parent": 0,
+   "weld": true,
+   "collide": false
+  }
+ ],
+ "unstated_mass": []
+}

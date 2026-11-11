@@ -18,6 +18,7 @@ SOURCES = {
     "nvidia": ("NVIDIA SimReady", "https://huggingface.co/datasets/nvidia/simready-assets"),
     "tripo": ("Tripo SimReady", "https://huggingface.co/datasets/VAST-AI/Tripo-Simready-Assets"),
 }
+AUTOBIO = ("AutoBio", "../../wetlabsim/assets/autobio/NOTICE.md")
 
 
 def write_credits():
@@ -29,10 +30,14 @@ def write_credits():
              "and changed nothing else. All rights stay with their authors.", ""]
     for key, (name, url) in SOURCES.items():
         lines.append(f"- **{name}** ({key}): {url}")
-    lines += ["", "AutoBio's lab models are credited in `wetlabsim/assets/autobio/NOTICE.md`.", "",
+    lines += ["", "AutoBio's lab models (the tubes, racks, dish, pipette and its stand) are used with credit to",
+              "its authors; see `wetlabsim/assets/autobio/NOTICE.md`.", "",
               "| Item | Library tab | Source | Asset |", "| --- | --- | --- | --- |"]
     for i, tab, label, hf, _, _ in catalog.ITEMS:
         repo, _, folder = hf.rpartition(":")
+        if repo == "autobio":             # in the repo already (tools/build_autobio.py)
+            lines.append(f"| {label} | {tab} | AutoBio (credit in NOTICE.md) | [`{folder}`]({AUTOBIO[1]}) |")
+            continue
         name, url = SOURCES[repo or "nvidia"]
         lines.append(f"| {label} | {tab} | {name} | [`{folder}`]({url}/tree/main/{folder}) |")
     (catalog.ASSETS / "CREDITS.md").write_text("\n".join(lines) + "\n")
@@ -43,7 +48,7 @@ def main(argv=None):
     ap.add_argument("ids", nargs="*")
     ap.add_argument("--cache", default="build/simready")
     a = ap.parse_args(argv)
-    ids = a.ids or [i[0] for i in catalog.ITEMS]
+    ids = a.ids or [i[0] for i in catalog.ITEMS if not i[3].startswith("autobio:")]
     for id_ in ids:
         it = catalog.item(id_)
         try:
