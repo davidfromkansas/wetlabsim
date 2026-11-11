@@ -181,8 +181,11 @@ class Runner:
             if mdl["model"]:
                 cmd += ["--model", mdl["model"]]
             self.runs.mkdir(parents=True, exist_ok=True)
-            log = open(self.runs / "playground-runner.log", "a")
-            self.log_from = log.tell()          # this run's part of the shared log starts here
+            # Each run its own log (runs going at once on several robots mustn't read each
+            # other's errors).
+            (self.runs / "runner-logs").mkdir(exist_ok=True)
+            self.log_path = self.runs / "runner-logs" / f"{time.strftime('%Y%m%d-%H%M%S')}-{secrets.token_hex(3)}.log"
+            log = open(self.log_path, "a")
             env = dict(os.environ)
             if ROBOT_API_URL:
                 # The agent gets the robot API and a token for this robot, for this run only.
@@ -251,8 +254,7 @@ class Runner:
                 if msg:
                     return str(msg)[:600]
         try:
-            with open(self.runs / "playground-runner.log", errors="ignore") as f:
-                f.seek(getattr(self, "log_from", 0))
+            with open(getattr(self, "log_path", None) or os.devnull, errors="ignore") as f:
                 lines = [l.strip() for l in f.read().splitlines() if l.strip()]
         except OSError:
             return ""
