@@ -82,3 +82,19 @@ def test_moving_an_item_takes_its_cap_along():
     mujoco.mj_step(sim.m, sim.d, int(0.5 / sim.m.opt.timestep))
     m, d = sim.m, sim.d
     assert np.linalg.norm(d.xpos[lid] - d.xpos[m.body(f"obj_{uid}").id] - rel) < 0.003
+
+
+def test_autobio_tubes_keep_their_caps_on():
+    """AutoBio's tubes (tools/build_autobio.py): the screw cap is a separate part, welded on."""
+    sim, uid = _lab("tube_15ml")
+    m, d = sim.m, sim.d
+    cap = W.part_bodies(m, uid)[0]
+    assert any(m.eq(i).name.startswith(f"obj_{uid}__") for i in range(m.neq))
+    g = next(i for i in range(m.ngeom) if m.geom_bodyid[i] == cap)
+    b = m.body(f"obj_{uid}").id
+    rel = d.xmat[b].reshape(3, 3).T @ (d.geom_xpos[g] - d.xpos[b])     # the cap, in the tube's frame
+    d.qvel[m.jnt_dofadr[m.body_jntadr[b]] + 3] = 8.0         # knock it over
+    mujoco.mj_step(m, d, int(3.0 / m.opt.timestep))
+    assert d.xmat[b].reshape(3, 3)[2, 2] < 0.5
+    now = d.xmat[b].reshape(3, 3).T @ (d.geom_xpos[g] - d.xpos[b])
+    assert np.linalg.norm(now - rel) < 0.002

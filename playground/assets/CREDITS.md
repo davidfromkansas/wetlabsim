@@ -8,7 +8,8 @@ and changed nothing else. All rights stay with their authors.
 - **NVIDIA SimReady** (nvidia): https://huggingface.co/datasets/nvidia/simready-assets
 - **Tripo SimReady** (tripo): https://huggingface.co/datasets/VAST-AI/Tripo-Simready-Assets
 
-AutoBio's lab models are credited in `wetlabsim/assets/autobio/NOTICE.md`.
+AutoBio's lab models (the tubes, racks, dish, pipette and its stand) are used with credit to
+its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 
 | Item | Library tab | Source | Asset |
 | --- | --- | --- | --- |
@@ -29,6 +30,14 @@ AutoBio's lab models are credited in `wetlabsim/assets/autobio/NOTICE.md`.
 | Analytical balance | Lab equipment | Tripo SimReady | [`analytical_balance_N09`](https://huggingface.co/datasets/VAST-AI/Tripo-Simready-Assets/tree/main/analytical_balance_N09) |
 | UV-C lamp | Lab equipment | NVIDIA SimReady | [`lamp_uvc_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/lamp_uvc_a01) |
 | Bench task light | Lab equipment | NVIDIA SimReady | [`lighting_taskLight_adjustableArmBench_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/lighting_taskLight_adjustableArmBench_a01) |
+| 15 ml tube | Lab & Medical | AutoBio (credit in NOTICE.md) | [`centrifuge_tube_15ml`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| 50 ml tube | Lab & Medical | AutoBio (credit in NOTICE.md) | [`centrifuge_tube_50ml`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| 1.5 ml screw tube | Lab & Medical | AutoBio (credit in NOTICE.md) | [`centrifuge_1-5ml_screw`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| 100 mm cell dish | Lab & Medical | AutoBio (credit in NOTICE.md) | [`cell_dish_100`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| Pipette | Lab & Medical | AutoBio (credit in NOTICE.md) | [`pipette`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| Pipette stand | Lab & Medical | AutoBio (credit in NOTICE.md) | [`pipette_stand`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| Tube rack | Lab & Medical | AutoBio (credit in NOTICE.md) | [`centrifuge_10slot`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| 60-well rack | Lab & Medical | AutoBio (credit in NOTICE.md) | [`centrifuge_plate_60well`](../../wetlabsim/assets/autobio/NOTICE.md) |
 | Lab bottle | Lab & Medical | NVIDIA SimReady | [`bottle_laboratory_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/bottle_laboratory_a01) |
 | Small vial | Lab & Medical | NVIDIA SimReady | [`bottle_laboratory_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/bottle_laboratory_b01) |
 | Syringe | Lab & Medical | NVIDIA SimReady | [`syringe_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/syringe_a01) |

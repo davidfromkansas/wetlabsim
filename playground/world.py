@@ -255,19 +255,28 @@ def part_kind(b: dict, fixed: bool) -> str:
     """How a part of a jointed item is built: "top" (the main body, a loose part, a welded cap),
     "joint" (on its hinge or slide) or "rigid" (fixed in place: its shapes join its parent part's
     body). Fixed too, as they'd only cost speed: free-spinning wheels and casters (unlimited
-    hinges) of furniture, which doesn't roll here, and buttons and switches."""
+    hinges) of furniture, which doesn't roll here, and buttons and switches of furniture (and of
+    everything, with BUTTONS_MOVE off)."""
     if b.get("root") or b.get("free"):
         return "top"
     if b.get("weld"):
         return "top" if SEPARATE.search(b["name"]) else "rigid"
     if fixed and "range" not in b["joint"]:
         return "rigid"
-    if BUTTON.search(b["name"]):
+    if BUTTON.search(b["name"]) and (fixed or not BUTTONS_MOVE):
         return "rigid"
     return "joint"
 
 
 BUTTON = re.compile(r"switch|button", re.I)
+# A cap's weld: as quick as the lab's plastic contacts (wetlabsim.scene.MATERIALS) and nearly
+# hard. With MuJoCo's defaults a light cap is pushed 3 mm (1.5 degrees) off its tube when the
+# tube lies on it, and flies 10 cm off on impact.
+CAP_SOLREF = [0.005, 1.0]
+CAP_SOLIMP = [0.99, 0.999, 0.001, 0.5, 2.0]
+# Buttons, triggers and switches of hand-sized items move (a robot can press them); furniture's
+# are fixed. False: fixed everywhere (each moving part costs a little speed).
+BUTTONS_MOVE = True
 
 
 def _add_jointed(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_cache: set):
@@ -342,7 +351,8 @@ def _add_jointed(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_
             rel = np.linalg.inv(frame[i]) @ frame[hp]
             world.add_equality(type=mujoco.mjtEq.mjEQ_WELD, objtype=mujoco.mjtObj.mjOBJ_BODY,
                                name=f"{names[i]}_weld", name1=names[i], name2=host[b["parent"]],
-                               data=[0, 0, 0, *rel[:3, 3], *_quat_of(rel), 1, 0])
+                               data=[0, 0, 0, *rel[:3, 3], *_quat_of(rel), 1, 0],
+                               solref=CAP_SOLREF, solimp=CAP_SOLIMP)
 
 
 def part_bodies(m: mujoco.MjModel, uid: str) -> list[int]:
