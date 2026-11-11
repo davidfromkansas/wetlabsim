@@ -481,7 +481,10 @@ def main(argv=None):
         if src.is_dir() and any(src.iterdir()):
             shutil.copytree(src, workspace / "scratchpad (outside the workspace)", dirs_exist_ok=True)
     if hasattr(proc, "sync_workspace"):     # a remote agent: bring its folder back for the record
-        proc.sync_workspace(workspace)
+        try:
+            proc.sync_workspace(workspace)
+        except Exception as e:  # noqa: BLE001  (the run happened: keep its result without the folder)
+            print(f"note: couldn't bring the agent's folder back from its sandbox: {e}", flush=True)
     if own_token:
         _eval_call(args.url, token, "/eval/robot_token/revoke", {"token": robot_token})
     store.copy_tree(run_id, "workspace", workspace)

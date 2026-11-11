@@ -31,8 +31,8 @@ def get(name: str):
 class _SandboxRun:
     """A process-like handle on an agent CLI running in a Modal Sandbox."""
 
-    def __init__(self, sb, proc):
-        self.sb, self.proc = sb, proc
+    def __init__(self, sb, proc, mark: str):
+        self.sb, self.proc, self.mark = sb, proc, mark   # mark: in the agent's command line
         self.stdout = self._lines(proc.stdout)
 
     @staticmethod
@@ -66,15 +66,34 @@ class _SandboxRun:
         return self.proc.poll()
 
     def send_signal(self, sig):
-        self.terminate()
+        """Signal the agent's process in the sandbox (the sandbox itself stays up, so its folder can
+        still be brought back afterwards)."""
+        import signal
+        name = signal.Signals(sig).name[3:]
+        # The mark is split in two in the script, so this shell's own command line doesn't match it.
+        k = len(self.mark) // 2
+        script = (f'm="{self.mark[:k]}""{self.mark[k:]}"; for d in /proc/[0-9]*; do p=${{d#/proc/}}; '
+                  '[ "$p" = "$$" ] && continue; c=$(tr "\\0" " " < $d/cmdline 2>/dev/null); '
+                  f'case "$c" in *"$m"*) kill -{name} $p 2>/dev/null;; esac; done; true')
+        try:
+            self.sb.exec("sh", "-c", script).wait()
+        except Exception:  # noqa: BLE001
+            pass
 
     def terminate(self):
+        import signal
+        self.send_signal(signal.SIGTERM)
+
+    def kill(self):
+        import signal
+        self.send_signal(signal.SIGKILL)
+
+    def close(self):
+        """End the sandbox."""
         try:
             self.sb.terminate()
         except Exception:  # noqa: BLE001
             pass
-
-    kill = terminate
 
     def sync_workspace(self, local):
         """Copy the sandbox's /workspace back into the local workspace folder, then end it."""
@@ -87,7 +106,7 @@ class _SandboxRun:
             with tarfile.open(fileobj=io.BytesIO(data)) as t:
                 t.extractall(local, filter="data")
         finally:
-            self.terminate()
+            self.close()
 
 
 # The Devin CLI release the sandbox image installs: its Linux build and published SHA-256
@@ -182,7 +201,7 @@ class ModalSandboxLauncher:
                     "--deny", "/tools", "--deny", "/root", "--raw-log", "/tmp/devin_acp_raw.jsonl"]
             if model:
                 rcmd += ["--model", model]
-            return _SandboxRun(sb, sb.exec(*rcmd, workdir="/workspace", env=base_env))
+            return _SandboxRun(sb, sb.exec(*rcmd, workdir="/workspace", env=base_env), "/tools/devin_acp.py")
         from .run_agent import MCP_TOOLS
         rcmd = ["claude", "-p", prompt, "--mcp-config", "/tools/mcp.json", "--strict-mcp-config",
                 "--allowedTools", "Bash", "Read", "Write", "Edit", *MCP_TOOLS,
@@ -193,7 +212,7 @@ class ModalSandboxLauncher:
             "PYTHONPATH": "/client", "WETLAB_ROBOT_URL": robot_url, "WETLAB_ROBOT_TOKEN": token,
             "ANTHROPIC_BASE_URL": proxy, "ANTHROPIC_API_KEY": token,
             "DISABLE_TELEMETRY": "1", "DISABLE_AUTOUPDATER": "1", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"})
-        return _SandboxRun(sb, proc)
+        return _SandboxRun(sb, proc, "/tools/mcp.json")
 
 
 LAUNCHERS["modal"] = ModalSandboxLauncher
