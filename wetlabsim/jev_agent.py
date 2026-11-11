@@ -5,8 +5,11 @@ about the content it is sent, with a probability for every option and a confiden
 a coding agent's sandbox, this loop asks Jev, over and over, "here is what you have, what next?",
 and carries out the move it picks through the robot client, like any agent's code would.
 
-Each step Jev gets only what the other AIs get: the task, the robot's datasheets, the two
-cameras (overhead and wrist) and the robot's own readings. No object positions.
+Each step Jev gets: the task, the site sheet (how this robot is set up; or with --docs datasheets,
+the robot's datasheets), the two cameras (overhead and wrist), the robot's own readings and its
+memory: the running list of every earlier step this run (its answers, and what the robot then
+did). Jev keeps nothing between requests, so that list is how it knows what it already tried.
+No object positions.
 
 Every answer Jev sends back is printed as a JSON line ({"type": "_jev", ...}) for the run's
 transcript and the live chat: the answers with all their probabilities and confidences, the
@@ -23,6 +26,7 @@ from __future__ import annotations
 import argparse
 import base64
 import html
+import http.client
 import json
 import math
 import os
@@ -43,6 +47,7 @@ from wetlabsim.robot import Robot, RobotError
 API_URL = os.environ.get("JEV_API_URL", "https://api.typesafe.ai/v1/systemone")
 DEFAULT_MODEL = "jev-1.14.0"
 PRICE_PER_MTOK = 0.042          # dollars per million input tokens (output is free), Jev 1.14
+HISTORY_STEPS = 150             # memory: at most this many most recent steps (about 40 tokens each)
 DOC_CHARS = 80_000               # the datasheets' text, at most: Jev reads at most 32k tokens of state
                                  # plus one question, pictures included
 STEP = {"large": 0.05, "small": 0.01}            # metres per move
@@ -91,6 +96,26 @@ def datasheets(workspace: pathlib.Path) -> dict:
         else:
             left.append(name)
     return {"documents": out, "left_out": left}
+
+
+def site_sheet(workspace: pathlib.Path) -> dict:
+    """The site sheet in the agent's folder (SITE.md: how this robot is installed, its frame,
+    cameras and start state), the same one the coding agents get."""
+    f = workspace / "SITE.md"
+    return {"documents": {"SITE.md": f.read_text()} if f.exists() else {}, "left_out": []}
+
+
+def memory_entry(n: int, ans: dict, did: str, st_after: dict | None) -> dict:
+    """One step of Jev's memory: what it answered and what the robot then did."""
+    pick = lambda k: (ans.get(k) or {}).get("choice")  # noqa: E731
+    pct = lambda k: round(((ans.get(k) or {}).get("probabilities") or {}).get(pick(k), 0) * 100)  # noqa: E731
+    e = {"step": n, "goal": f"{pick('goal')} ({pct('goal')}% sure)", "move": f"{pick('move')} ({pct('move')}% sure)",
+         "step_size": pick("step"), "result": did}
+    if st_after:
+        g = st_after.get("gripper") or {}
+        e["fingers_after"] = ("closed" if (g.get("position") or 0) > 200 else "open" if (g.get("position") or 0) < 20
+                              else "partly closed") + (", holding something" if g.get("object_detected") else "")
+    return e
 
 
 def robot_readings(st: dict) -> dict:
@@ -146,7 +171,7 @@ def questions(cal: dict | None) -> dict:
     return {
         "goal": {"type": "choice",
                  "instructions": "Which part of the task in `task` should the robot be working on right now, "
-                                 "judging by `cameras` and `robot`?",
+                                 "judging by `cameras`, `robot` and the earlier steps in `memory`?",
                  "criteria": {
                      "find_object": "Move the hand over the object the task is about.",
                      "line_up": "Line the open fingers up with the object, above it.",
@@ -160,8 +185,8 @@ def questions(cal: dict | None) -> dict:
                      "finished": "The task in `task` is complete.",
                  }},
         "move": {"type": "choice",
-                 "instructions": "What should the robot do next to carry out `task`, judging by `cameras` "
-                                 "and `robot`? `cameras.overhead` looks down on the table from above; "
+                 "instructions": "What should the robot do next to carry out `task`, judging by `cameras`, "
+                                 "`robot` and what the earlier steps in `memory` did? `cameras.overhead` looks down on the table from above; "
                                  "`cameras.wrist` looks out from between the fingers.",
                  "criteria": moves},
         "step": {"type": "choice",
@@ -194,7 +219,7 @@ def ask_jev(key: str, model: str, state: dict, assets: dict, qs: dict, timeout: 
                 time.sleep(min(wait, 10))
                 continue
             raise RuntimeError(f"Jev API error {e.code}: {msg}") from None
-        except (urllib.error.URLError, TimeoutError) as e:
+        except (urllib.error.URLError, TimeoutError, http.client.HTTPException, ConnectionError) as e:
             if attempt < 4:
                 time.sleep(0.5 * 2 ** attempt)
                 continue
@@ -271,6 +296,9 @@ def main(argv=None):
     ap.add_argument("task")
     ap.add_argument("--model", default=DEFAULT_MODEL)
     ap.add_argument("--max-steps", type=int, default=2000)
+    ap.add_argument("--docs", choices=["site", "datasheets"], default="site",
+                    help="what Jev reads about the robot: the site sheet (default) or the datasheets")
+    ap.add_argument("--no-memory", action="store_true", help="don't send Jev its earlier steps")
     args = ap.parse_args(argv)
 
     key = os.environ.get("JEV_API_KEY") or os.environ.get("TYPESAFE_API_KEY") or ""
@@ -279,13 +307,14 @@ def main(argv=None):
         return 2
     r = Robot()
     workspace = pathlib.Path(args.workspace)
-    docs = datasheets(workspace)
+    docs = site_sheet(workspace) if args.docs == "site" else datasheets(workspace)
     try:
         cal = r._req("GET", "/info").get("camera_calibration", {}).get("overhead")
     except RobotError:
         cal = None
     qs = questions(cal)
-    emit("start", model=args.model, questions=qs, datasheets=list(docs["documents"]),
+    memory: list[dict] = []
+    emit("start", model=args.model, questions=qs, datasheets=list(docs["documents"]), memory=not args.no_memory,
          datasheets_left_out=docs["left_out"], datasheet_chars=sum(len(t) for t in docs["documents"].values()))
 
     tokens = 0
@@ -305,7 +334,11 @@ def main(argv=None):
         state = {"task": args.task,
                  "cameras": {"overhead": refs["overhead"], "wrist": refs["wrist"]},
                  "robot": robot_readings(st),
-                 "datasheets": docs["documents"]}
+                 ("site_sheet" if args.docs == "site" else "datasheets"): docs["documents"]}
+        if not args.no_memory:
+            older = len(memory) - HISTORY_STEPS
+            state["memory"] = ({"earlier_steps_not_shown": older} if older > 0 else {}) | {
+                "steps_so_far": memory[-HISTORY_STEPS:] or "none yet: this is the first step"}
         try:
             resp, secs = ask_jev(key, args.model, state, assets, qs)
         except RuntimeError as e:
@@ -324,6 +357,11 @@ def main(argv=None):
                 result, ok = carry_out(r, move, step, st), True
             except RobotError as e:
                 result, ok = f"the robot refused: {e}", False
+        try:
+            after = r.get_state()
+        except RobotError:
+            after = None
+        memory.append(memory_entry(n, ans, result, after))
         emit("step", step=n, model=resp.get("model"), seconds=round(secs, 3), answers=ans, usage=usage,
              input_tokens_total=tokens, cost_usd=round(tokens * PRICE_PER_MTOK / 1e6, 6),
              camera_time=st["time"], did=result, ok=ok)

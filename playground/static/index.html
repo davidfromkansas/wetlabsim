@@ -1753,7 +1753,7 @@ function render() {
   $('task').placeholder = `Tell ${free ? st.name : 'the robot'} what to do. For example: put the apple in the bowl.`;
   $('startBtn').classList.toggle('blank', !$('task').value.trim());
   const jev = modelInfo($('model').value).provider === 'typesafe';
-  $('infoText').textContent = (jev ? `Jev doesn't write code. Each step it gets your task, the ${st.label || 'robot'}'s datasheets, its two cameras and its sensors, and picks one move (a 1 or 5 cm step, a turn, or open/close the fingers), which is carried out for it. ` +
+  $('infoText').textContent = (jev ? `Jev doesn't write code. Each step it gets your task, the site sheet, its two cameras, its sensors and the list of its earlier steps and what they did, and picks one move (a 1 or 5 cm step, a turn, or open/close the fingers), which is carried out for it. ` +
     `Its answers come with how sure it was, shown in the chat. ` : `Your task, the ${st.label || 'robot'}'s manuals, a site sheet naming what's on its table (not where), its two cameras and its sensors. It writes code to move the robot. `) +
     (S.cat.public ? `It runs in its own locked-down cloud box. Each run stops at ${Math.round(S.cat.free_time_limit / 60)} minutes or about $3 of AI use, ${S.cat.max_active} runs go at a time (others wait in line), and every run is public: anyone can watch it live and look at it afterwards.`
       : `There's no time limit: it runs until it says it's done, or you press Stop. Runs use your own Claude Code or Codex login.`);

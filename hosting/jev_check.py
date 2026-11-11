@@ -24,7 +24,7 @@ app = modal.App("wetlab-jev-check", image=image)
 
 
 @app.function(cpu=4.0, memory=6144, timeout=900, secrets=[modal.Secret.from_name("JEV_API_KEY")])
-def check(task: str, seconds: int) -> dict:
+def check(task: str, seconds: int, site: str = "") -> dict:
     import subprocess
     import time
     import urllib.request
@@ -36,8 +36,12 @@ def check(task: str, seconds: int) -> dict:
             break
         except OSError:
             time.sleep(1)
+    extra = []
+    if site:
+        pathlib.Path("/tmp/SITE.md").write_text(site)
+        extra = ["--site-file", "/tmp/SITE.md"]
     out = subprocess.run(["python", "-m", "wetlabsim.run_agent", "--agent", "jev", "--model", "jev-1.14.0",
-                          "--task", task, "--runs", "/tmp/runs", "--time-limit", str(seconds)],
+                          "--task", task, "--runs", "/tmp/runs", "--time-limit", str(seconds), *extra],
                          cwd="/app", capture_output=True, text=True)
     cell.terminate()
     runs = sorted(pathlib.Path("/tmp/runs").glob("2*"))
@@ -47,8 +51,8 @@ def check(task: str, seconds: int) -> dict:
 
 
 @app.local_entrypoint()
-def main(task: str = "Pick up the red-capped tube and lift it a little.", seconds: int = 60):
-    res = check.remote(task, seconds)
+def main(task: str = "Pick up the red-capped tube and lift it a little.", seconds: int = 60, site_file: str = ""):
+    res = check.remote(task, seconds, pathlib.Path(site_file).read_text() if site_file else "")
     print(res["runner"])
     for e in res["events"]:
         if e.get("kind") == "step":

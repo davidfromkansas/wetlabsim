@@ -76,3 +76,13 @@ def test_steps_reach_the_chat_with_everything_jev_sent():
     assert meta.feed(ev)
     info = meta.info()
     assert info["provider"] == "TypeSafe" and info["input_tokens"] == 3000 and info["cost_usd"] == 0.000126
+
+
+def test_memory_entry_says_what_jev_chose_and_what_happened():
+    ans = {"goal": {"type": "choice", "choice": "grasp", "probabilities": {"grasp": 0.82, "lift": 0.18}},
+           "move": {"type": "choice", "choice": "close_gripper", "probabilities": {"close_gripper": 0.6, "up": 0.4}},
+           "step": {"type": "choice", "choice": "small", "probabilities": {"small": 1.0}}}
+    e = J.memory_entry(4, ans, "closed the fingers (nothing between them)",
+                       {"gripper": {"position": 255, "object_detected": False}})
+    assert e == {"step": 4, "goal": "grasp (82% sure)", "move": "close_gripper (60% sure)", "step_size": "small",
+                 "result": "closed the fingers (nothing between them)", "fingers_after": "closed"}

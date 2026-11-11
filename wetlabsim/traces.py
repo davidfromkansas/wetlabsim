@@ -80,8 +80,9 @@ class Parser:
                 docs = ", ".join(e.get("datasheets") or []) or "none"
                 left = ", ".join(e.get("datasheets_left_out") or [])
                 steps.append(Step(t, "says", f"Jev ({e.get('model')}) is starting. Each step it gets the task, "
-                                             f"both cameras, the robot's readings and the datasheets ({docs})"
-                                             + (f"; left out to fit Jev's limit: {left}" if left else "")
+                                             f"both cameras, the robot's readings, {docs}"
+                                             + (f" (left out to fit Jev's limit: {left})" if left else "")
+                                             + (" and the list of its earlier steps and what they did" if e.get("memory") else "")
                                              + ", and picks one move."))
             elif kind == "retry":
                 steps.append(Step(t, "tool", f"Jev API busy ({e.get('status')}), trying again in {e.get('wait_s')} s"))
