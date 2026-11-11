@@ -1,0 +1,311 @@
+{
+ "source": "appliance_toaster_a01",
+ "usd": "sm_appliance_toaster_a01_01.usd",
+ "mass": 1.49178,
+ "friction": 0.61,
+ "com": null,
+ "size": [
+  0.3066,
+  0.1549,
+  0.179
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "body_obj_01",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_1.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.006930885541588219
+    }
+   ],
+   "mass": 1.456584,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -0.013309,
+    1e-05,
+    -1.1e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.013309,
+    1e-05,
+    -1.1e-05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "cancel_button_obj_01",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 1.2252812266339072e-06
+    }
+   ],
+   "mass": 0.001623,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_cancel_button_joint_00",
+    "type": "slide",
+    "range": [
+     -0.003214,
+     -0.000214
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.136,
+    0.031023,
+    0.041917
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.122691,
+    0.031033,
+    0.041906,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "dial_obj_01",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b2_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 1.4435431961140204e-05
+    }
+   ],
+   "mass": 0.007502,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_dial_joint_00",
+    "type": "hinge",
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.138011,
+    3.1e-05,
+    0.04817
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.124702,
+    4.1e-05,
+    0.048159,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "lever_obj_01",
+   "visuals": [
+    {
+     "mesh": "b3_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b3_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b3_col_0.obj",
+     "volume": 2.301286856864954e-05
+    }
+   ],
+   "mass": 0.010932,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_lever_joint_00",
+    "type": "slide",
+    "range": [
+     -0.059494,
+     -0.000494
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.148901,
+    2.3e-05,
+    0.146
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.135591,
+    3.3e-05,
+    0.145989,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "tray_obj_01",
+   "visuals": [
+    {
+     "mesh": "b4_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b4_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b4_col_0.obj",
+     "volume": 0.00011085343013550594
+    }
+   ],
+   "mass": 0.015135,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    0.091696,
+    -6.3e-05,
+    0.147083
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.091696,
+    -6.3e-05,
+    0.147083,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

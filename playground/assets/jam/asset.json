@@ -1,0 +1,111 @@
+{
+ "source": "food_processed_jam_a01",
+ "usd": "sm_food_processed_jam_a01_01.usd",
+ "mass": 0.18352,
+ "friction": 0.4,
+ "com": null,
+ "size": [
+  0.1153,
+  0.1152,
+  0.1144
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "sm_food_processed_jam_a01_body_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.0007782071574105611
+    }
+   ],
+   "mass": 0.105049,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -0.0,
+    0.0,
+    -6.9e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.0,
+    0.0,
+    -6.9e-05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "sm_food_processed_jam_a01_lid_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 0.00020123488364681228
+    }
+   ],
+   "mass": 0.078471,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    -0.0,
+    0.0,
+    0.10598
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.0,
+    0.0,
+    0.10598,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

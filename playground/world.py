@@ -256,8 +256,8 @@ def part_kind(b: dict, fixed: bool, item: str = "") -> str:
     "joint" (on its hinge or slide) or "rigid" (fixed in place: its shapes join its parent part's
     body). Fixed too, as they'd only cost speed: free-spinning wheels and casters (unlimited
     hinges) of furniture, which doesn't roll here, and buttons and switches of furniture (and of
-    everything, with BUTTONS_MOVE off). A button with no limits (an infusion pump's) is fixed too:
-    nothing stops it, and so light a part spins by itself."""
+    everything, with BUTTONS_MOVE off). A button or dial with no limits (an infusion pump's, a
+    toaster's) is fixed too: nothing stops it, and so light a part spins by itself."""
     if b.get("root") or b.get("free"):
         return "top"
     if b.get("weld"):
@@ -270,13 +270,13 @@ def part_kind(b: dict, fixed: bool, item: str = "") -> str:
     return "joint"
 
 
-BUTTON = re.compile(r"switch|button", re.I)
+BUTTON = re.compile(r"switch|button|dial|knob", re.I)
 # A cap's weld: as quick as the lab's plastic contacts (wetlabsim.scene.MATERIALS) and nearly
 # hard. With MuJoCo's defaults a light cap is pushed 3 mm (1.5 degrees) off its tube when the
 # tube lies on it, and flies 10 cm off on impact.
 CAP_SOLREF = [0.005, 1.0]
 CAP_SOLIMP = [0.99, 0.999, 0.001, 0.5, 2.0]
-# Buttons, triggers and switches of hand-sized items move (a robot can press them); furniture's
+# Buttons, dials and switches of hand-sized items move (a robot can press them); furniture's
 # are fixed. False: fixed everywhere (each moving part costs a little speed).
 BUTTONS_MOVE = True
 

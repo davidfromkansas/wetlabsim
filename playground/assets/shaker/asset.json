@@ -1,0 +1,111 @@
+{
+ "source": "kitchenware_shaker_a01",
+ "usd": "sm_kitchenware_shaker_a01_01.usd",
+ "mass": 0.10439,
+ "friction": 0.4,
+ "com": null,
+ "size": [
+  0.0619,
+  0.0618,
+  0.1097
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "sm_kitchenware_shaker_a01_body_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.00022072452566866135
+    }
+   ],
+   "mass": 0.089498,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -9e-06,
+    0.000144,
+    -7.8e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -9e-06,
+    0.000144,
+    -7.8e-05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "sm_kitchenware_shaker_a01_cap_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 1.8812923920107852e-05
+    }
+   ],
+   "mass": 0.014893,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    -9e-06,
+    0.000144,
+    0.101747
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -9e-06,
+    0.000144,
+    0.101747,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

@@ -109,6 +109,19 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Apple | Kitchen | NVIDIA SimReady | [`food_produce_apple_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/food_produce_apple_b01) |
 | Canned food | Kitchen | NVIDIA SimReady | [`food_processed_cannedFood_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/food_processed_cannedFood_b01) |
 | Cereal box | Kitchen | NVIDIA SimReady | [`food_processed_boxedCereal_d01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/food_processed_boxedCereal_d01) |
+| Bottled water | Kitchen | NVIDIA SimReady | [`food_beverage_bottledWater_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/food_beverage_bottledWater_b01) |
+| Ketchup | Kitchen | NVIDIA SimReady | [`food_processed_ketchup_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/food_processed_ketchup_a01) |
+| Jam jar | Kitchen | NVIDIA SimReady | [`food_processed_jam_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/food_processed_jam_a01) |
+| Milk carton | Kitchen | NVIDIA SimReady | [`food_processed_milk_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/food_processed_milk_a01) |
+| Shaker | Kitchen | NVIDIA SimReady | [`kitchenware_shaker_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/kitchenware_shaker_a01) |
+| Kettle | Kitchen | NVIDIA SimReady | [`kitchenware_kettle_n01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/kitchenware_kettle_n01) |
+| Kettle, 2 | Kitchen | NVIDIA SimReady | [`kitchenware_kettle_d01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/kitchenware_kettle_d01) |
+| Kettle, 3 | Kitchen | NVIDIA SimReady | [`kitchenware_kettle_c01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/kitchenware_kettle_c01) |
+| Kettle, 4 | Kitchen | NVIDIA SimReady | [`kitchenware_kettle_y01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/kitchenware_kettle_y01) |
+| Toaster | Kitchen | NVIDIA SimReady | [`appliance_toaster_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/appliance_toaster_a01) |
+| Kitchen scissors | Kitchen | NVIDIA SimReady | [`utensils_scissors_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensils_scissors_a01) |
+| Kitchen scissors, 2 | Kitchen | NVIDIA SimReady | [`utensils_scissors_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensils_scissors_b01) |
+| Kitchen scissors, 3 | Kitchen | NVIDIA SimReady | [`utensils_scissors_e01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensils_scissors_e01) |
 | Blue crate | Bins & Trays | NVIDIA SimReady | [`crate_blue_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/crate_blue_a01) |
 | Cardboard box | Bins & Trays | NVIDIA SimReady | [`box_cube_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/box_cube_a01) |
 | Waste bin | Bins & Trays | NVIDIA SimReady | [`bin_waste_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/bin_waste_a01) |

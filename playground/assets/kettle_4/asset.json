@@ -1,0 +1,212 @@
+{
+ "source": "kitchenware_kettle_y01",
+ "usd": "sm_kitchenware_kettle_y01_01.usd",
+ "mass": 2.70546,
+ "friction": 0.4,
+ "com": null,
+ "size": [
+  0.1542,
+  0.2331,
+  0.2448
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "sm_kitchenware_kettle_y01_body_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.7843,
+      0.8045,
+      0.8339,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      0.7843,
+      0.8045,
+      0.8339,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_2.obj",
+     "rgba": [
+      0.7843,
+      0.8045,
+      0.8339,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.004506893597948466
+    }
+   ],
+   "mass": 2.651786,
+   "parent": null,
+   "root": true,
+   "pos": [
+    2e-05,
+    -0.024514,
+    -0.000235
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    2e-05,
+    -0.024514,
+    -0.000235,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "sm_kitchenware_kettle_y01_button_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 1.7708370078240287e-06
+    }
+   ],
+   "mass": 0.001551,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_sm_kitchenware_kettle_y01_button_joint_00",
+    "type": "hinge",
+    "range": [
+     -0.174533,
+     0.0
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.071349,
+    0.051661
+   ],
+   "quat": [
+    0.999742,
+    0.022724,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    2e-05,
+    0.046834,
+    0.051425,
+    0.999742,
+    0.022724,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "sm_kitchenware_kettle_y01_lid_obj_00",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.7843,
+      0.8045,
+      0.8339,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 0.0001252369929747925
+    }
+   ],
+   "mass": 0.052125,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_sm_kitchenware_kettle_y01_lid_joint_00",
+    "type": "hinge",
+    "range": [
+     -1.570796,
+     0.0
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.054571,
+    0.220406
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    2e-05,
+    0.030057,
+    0.220171,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}
