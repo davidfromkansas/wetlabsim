@@ -45,6 +45,17 @@ const css = `
 #results .gh .m b{color:var(--ink)}
 #results .rrow{display:grid;grid-template-columns:16px minmax(0,1fr) auto auto 12px;gap:10px;align-items:center;padding:9px 6px;border-radius:8px;font:13.5px Inter,sans-serif;color:#111827;border:0;background:transparent;text-align:left;width:100%;cursor:pointer}
 #results .rrow:hover{background:#F3F4F6}
+#results .rrow .acts{grid-column:2 / -1;display:flex;gap:8px;align-items:center;margin-top:2px}
+#results .vbtn{height:34px;padding:0 12px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;color:#111827;font:600 13px Inter,sans-serif;display:inline-flex;align-items:center;gap:6px;cursor:pointer;text-decoration:none}
+#results .vbtn:hover{background:#F3F4F6}
+#results .vnote{font-size:12.5px;color:#4B5563}
+#vidWrap{position:fixed;inset:0;z-index:90;background:rgba(17,24,39,.6);display:none;align-items:center;justify-content:center;padding:20px}
+#vidWrap.open{display:flex}
+#vidWrap .bx{width:min(1180px,100%);background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 24px 60px -12px rgba(17,24,39,.5)}
+#vidWrap .hd{display:flex;align-items:center;gap:10px;padding:12px 14px;font:600 15px Inter,sans-serif;color:#111827}
+#vidWrap .hd span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#vidWrap .hd button{width:38px;height:38px;border-radius:9px;border:1px solid #D1D5DB;background:#fff;cursor:pointer;font-size:18px}
+#vidWrap video{display:block;width:100%;aspect-ratio:16/9;background:#111827}
 #results .rrow:focus-visible{outline:2px solid #2563EB;outline-offset:1px}
 #results .rrow .st{color:#4B5563;font-size:12.5px;white-space:nowrap}
 #results .rrow .n{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -56,6 +67,19 @@ const css = `
 document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
 const CHECK = '<svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>';
 const CROSS = '<svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg>';
+const PLAY = '<svg width="11" height="11" viewBox="0 0 14 14" fill="#111827" aria-hidden="true"><path d="M3 1.5 L12.5 7 L3 12.5 Z"/></svg>';
+// A run's video, in a player over the page.
+document.body.insertAdjacentHTML('beforeend', '<div id="vidWrap" role="dialog" aria-modal="true" aria-label="Run video"><div class="bx"><div class="hd"><span id="vidTitle"></span><button id="vidX" aria-label="Close video">×</button></div><video id="vid" controls playsinline></video></div></div>');
+function openVideo(src, title) {
+  const w = document.getElementById('vidWrap'), v = document.getElementById('vid');
+  document.getElementById('vidTitle').textContent = title || 'Run video';
+  v.src = src; w.classList.add('open'); v.play().catch(() => {});
+  document.getElementById('vidX').focus();
+}
+function closeVideo() { const v = document.getElementById('vid'); v.pause(); v.removeAttribute('src'); v.load(); document.getElementById('vidWrap').classList.remove('open'); }
+document.getElementById('vidX').onclick = closeVideo;
+document.getElementById('vidWrap').addEventListener('click', (e) => { if (e.target.id === 'vidWrap') closeVideo(); });
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.getElementById('vidWrap').classList.contains('open')) closeVideo(); });
 const CHEV = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#6B7280" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4.5 2.5L8 6l-3.5 3.5"/></svg>';
 const LABEL = {finished: 'Succeeded', error: 'Error', stopped: 'Stopped', time_limit: 'Time limit', agent_error: 'Error'};
 const fmt = (x) => { x = Math.max(0, x || 0); return `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`; };
@@ -163,11 +187,18 @@ function drawResults() {
       const lab = LABEL[x.status] || x.status, why = x.reason || lab;
       const err = x.status === 'error' && x.error_text ? `<span class="err">${esc(String(x.error_text).split('\n').slice(-2).join('\n').slice(0, 240))}</span>` : '';
       const said = x.status !== 'finished' && x.ai_done != null ? (x.ai_done ? ' · The AI had said DONE' : '') : '';
-      return `<button class="rrow" data-run="${esc(x.run_id)}" aria-label="Open run ${of > 1 ? `${x.index} of ${of}` : ''}: ${esc(why)}">${sq(x.ok ? 'ok' : 'no', false, why)}<span class="n">${of > 1 ? `Run ${x.index} of ${of}` : 'Run'} <span class="st">· ${esc(lab)}</span></span><span class="mono">${fmt(x.seconds)}</span><span class="mono">${x.cost_usd != null ? usd(x.cost_usd) : ''}</span>${CHEV}<span class="why${x.ok ? '' : ' bad'}">${esc(why)}${said}${err}</span></button>`;
+      const vid = x.video_url ? (x.video_url.startsWith('/') ? `<button class="vbtn" data-video="${esc(x.video_url)}" data-title="${esc((of > 1 ? `Run ${x.index} of ${of}` : 'Run') + ' · ' + (x.task || ''))}">${PLAY}Watch video</button>`
+          : `<a class="vbtn" href="${esc(x.video_url)}" target="_blank" rel="noopener">${PLAY}Watch video ↗</a>`)
+        : x.video === 'making' ? '<span class="vnote">Video is being made…</span>' : x.video === 'failed' ? '<span class="vnote">No video for this run</span>' : '';
+      return `<div class="rrow" role="button" tabindex="0" data-run="${esc(x.run_id)}" aria-label="Open run ${of > 1 ? `${x.index} of ${of}` : ''}: ${esc(why)}">${sq(x.ok ? 'ok' : 'no', false, why)}<span class="n">${of > 1 ? `Run ${x.index} of ${of}` : 'Run'} <span class="st">· ${esc(lab)}</span></span><span class="mono">${fmt(x.seconds)}</span><span class="mono">${x.cost_usd != null ? usd(x.cost_usd) : ''}</span>${CHEV}<span class="why${x.ok ? '' : ' bad'}">${esc(why)}${said}${err}</span>${vid ? `<span class="acts">${vid}</span>` : ''}</div>`;
     }).join('');
     return `<div class="grp">${head}${rows}</div>`;
   }).join('');
-  el.querySelectorAll('[data-run]').forEach(b => b.onclick = () => window.openRunTimeline(R.uid, b.dataset.run));
+  el.querySelectorAll('[data-run]').forEach(b => {
+    b.onclick = (e) => { if (!e.target.closest('.vbtn')) window.openRunTimeline(R.uid, b.dataset.run); };
+    b.onkeydown = (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === b) { e.preventDefault(); window.openRunTimeline(R.uid, b.dataset.run); } };
+  });
+  el.querySelectorAll('button[data-video]').forEach(b => b.onclick = (e) => { e.stopPropagation(); openVideo(U(b.dataset.video), b.dataset.title); });
 }
 
 setInterval(() => {

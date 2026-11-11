@@ -76,3 +76,18 @@ def test_apply_settings_and_station_reset():
     sim.apply_settings({"option": {"timestep": 0.002}})
     assert sim.m.opt.timestep == pytest.approx(0.002)
     assert not sim.restore_station(snap)
+
+
+def test_run_video_layout_and_parts(tmp_path):
+    from playground import runvideo as RV
+    for n in (2, 3):
+        big, smalls = RV.layout(n)
+        assert len(smalls) == n
+        for x, y, w, h in [big, *smalls]:
+            assert x >= 0 and y >= RV.HEAD and x + w <= RV.W and y + h <= RV.H and w % 2 == 0 and h % 2 == 0
+    f = tmp_path / "v.mp4"
+    data = bytes(range(256)) * 30000          # ~7.7 MB: three parts
+    f.write_bytes(data)
+    chunks, man = RV.parts(f)
+    assert b"".join(chunks) == data and man["size"] == len(data) and man["parts"] == [len(c) for c in chunks]
+    assert all(len(c) <= RV.PART for c in chunks) and len(chunks) == 3

@@ -329,6 +329,70 @@ def _run_timeline(sess: "Session", uid: str, run_id: str = "") -> dict:
             "provider_id": mdl.get("provider"), "error_text": st.get("error_text")}
 
 
+class _Videos:
+    """Each finished run's video (playground/runvideo.py), one at a time, in its own low-priority
+    process, then into the website's private storage with the run's other files."""
+
+    def __init__(self):
+        self.jobs: list = []
+        self.cv = threading.Condition()
+        self.working = False
+        threading.Thread(target=self._loop, daemon=True, name="run-videos").start()
+
+    def busy(self) -> bool:
+        return self.working or bool(self.jobs)
+
+    def add(self, sess, uid, entry, run_dir, cams, title):
+        with self.cv:
+            self.jobs.append((sess, uid, entry, pathlib.Path(run_dir), cams, title))
+            self.cv.notify()
+
+    def _loop(self):
+        while True:
+            with self.cv:
+                while not self.jobs:
+                    self.cv.wait()
+                job = self.jobs.pop(0)
+                self.working = True
+            try:
+                self._make(*job)
+            except Exception as e:  # noqa: BLE001
+                print("could not make a run's video:", e)
+                job[2]["video"] = "failed"
+            finally:
+                self.working = False
+
+    def _make(self, sess, uid, entry, run_dir, cams, title):
+        if not (run_dir / "replay.npz").exists() or not (run_dir / "model.ref").exists():
+            entry["video"] = "failed"
+            return
+        cmd = ["nice", "-n", "19", sys.executable, "-m", "playground.runvideo", str(run_dir), "--title", title[:300]]
+        for cam, label in cams:
+            cmd += ["--cam", f"{cam}={label}"]
+        # Software OpenGL on a lab without a GPU: two of its threads, so the live sim keeps its share.
+        env = dict(os.environ, LP_NUM_THREADS=os.environ.get("LP_NUM_THREADS", "2"))
+        r = subprocess.run(cmd, cwd=str(HERE.parent), env=env, capture_output=True, text=True, timeout=3 * 3600)
+        if r.returncode != 0 or not (run_dir / "video.mp4").exists():
+            print("run video failed:", (r.stderr or r.stdout)[-600:])
+            entry["video"] = "failed"
+            return
+        entry["video"] = "ready"
+        if SAVE.blob_enabled() and sess.db_id:
+            from . import runvideo as RV
+            chunks, man = RV.parts(run_dir / "video.mp4")
+            try:
+                for i, c in enumerate(chunks):
+                    SAVE._upload(entry["run_id"], f"video/part-{i:03d}", c, "application/octet-stream")
+                SAVE._upload(entry["run_id"], "video/manifest.json", json.dumps(man).encode(), "application/json")
+                entry["video_saved"] = True
+            except Exception as e:  # noqa: BLE001
+                print(f"run {entry['run_id']}: could not upload its video:", e)
+
+
+VIDEOS_ON = os.environ.get("WETLAB_RUN_VIDEOS", "1") != "0"
+VIDEOS = _Videos()
+
+
 def _end_reason(status: str, limit, ai_done: bool, batch: dict | None) -> str:
     """Why a run ended, in plain words (the Results list and its squares)."""
     if status == "finished":
@@ -460,6 +524,16 @@ class Session:
             self.record_run(uid, runner)
         except Exception as e:  # noqa: BLE001
             print("could not record the run:", e)
+        if entry["run_id"] and VIDEOS_ON:
+            arm, st_ = self.sim.arms.get(uid), self.sim.station(uid)
+            if arm is not None:
+                entry["video"] = "making"
+                cams = [("side", "Scene"), ("overhead", "Overhead camera")] + \
+                    [(k, k.replace("_", " ").capitalize() + " camera") for k in arm.P["cameras"] if "wrist" in k]
+                VIDEOS.add(self, uid, entry, runner.runs / entry["run_id"],
+                           [(arm.P["cameras"][k], lab) for k, lab in cams if k in arm.P["cameras"]],
+                           " · ".join(x for x in ((st_.name if st_ else uid), entry["model_label"] or "",
+                                                  " ".join(entry["task"].split())) if x))
         if b and not b.get("finished"):
             self._next_in_batch(uid, b)
 
@@ -589,6 +663,10 @@ def _from_row(row: dict) -> Session:
     if isinstance(hist, dict):
         sess.history = {str(k): [e for e in v if isinstance(e, dict)] for k, v in hist.items()
                         if re.match(r"^st\d{1,3}$", str(k)) and isinstance(v, list)}
+        for h in sess.history.values():
+            for e in h:
+                if e.get("video") == "making":      # the lab closed before it was made
+                    e["video"] = "failed"
     if AUTOSAVE:
         AUTOSAVE.seed(*_snapshot(sess))
     return sess
@@ -981,6 +1059,39 @@ class PGHandler(Handler):
                 uniq.append(o)
         return {"mine": mine, "live": uniq, "max": MAX_SESSIONS, "owner": owner}
 
+    def _send_file(self, path: pathlib.Path, ctype: str):
+        """A file, with byte ranges (a video player seeks with them)."""
+        if not path.is_file():
+            return self._err("not ready", 404)
+        size = path.stat().st_size
+        m = re.match(r"^bytes=(\d*)-(\d*)$", self.headers.get("Range", ""))
+        start, end = 0, size - 1
+        if m and (m.group(1) or m.group(2)):
+            if m.group(1):
+                start = int(m.group(1))
+                end = min(size - 1, int(m.group(2))) if m.group(2) else size - 1
+            else:
+                start = max(0, size - int(m.group(2)))
+            if start > end:
+                self.send_response(416)
+                self.send_header("Content-Range", f"bytes */{size}")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return None
+        with open(path, "rb") as f:
+            f.seek(start)
+            body = f.read(end - start + 1)
+        self.send_response(206 if m and (m.group(1) or m.group(2)) else 200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Accept-Ranges", "bytes")
+        if m and (m.group(1) or m.group(2)):
+            self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+        self.send_header("Cache-Control", "private, max-age=3600")
+        self.end_headers()
+        self.wfile.write(body)
+        return None
+
     def _settings_info(self) -> dict:
         """The Scene settings panel: what each setting is now, the Playground's own value, MuJoCo's
         default, and this session's changes."""
@@ -1130,9 +1241,22 @@ class PGHandler(Handler):
                 return self._json(_run_timeline(self.sess, qs.get("uid", [""])[0], qs.get("run", [""])[0]))
             if p == "/pg/results":          # a robot's finished runs, newest first, for its Results tab
                 uid = qs.get("uid", [""])[0]
-                return self._json({"ok": True, "runs": [{k: v for k, v in e.items() if k != "run"}
-                                                        for e in reversed(self.sess.history.get(uid, []))],
-                                   "batch": self.sess.batch_status(uid)})
+                runs = []
+                for e in reversed(self.sess.history.get(uid, [])):
+                    x = {k: v for k, v in e.items() if k != "run"}
+                    # The video: here while this lab has it, else on the website (saved runs).
+                    if e.get("video") == "ready" and (self.runs_dir / e["run_id"] / "video.mp4").exists():
+                        x["video_url"] = f"/pg/run_video?uid={urllib.parse.quote(uid)}&run={urllib.parse.quote(e['run_id'])}"
+                    elif e.get("video_saved") and SAVE.WEBSITE_URL:
+                        x["video_url"] = f"{SAVE.WEBSITE_URL}/runs/{urllib.parse.quote(e['run_id'])}"
+                    runs.append(x)
+                return self._json({"ok": True, "runs": runs, "batch": self.sess.batch_status(uid)})
+            if p == "/pg/run_video":        # one of a robot's run videos (only runs in its Results list)
+                uid, run_id = qs.get("uid", [""])[0], qs.get("run", [""])[0]
+                if not any(e.get("run_id") == run_id for e in self.sess.history.get(uid, [])) \
+                        or not re.match(r"^[\w.-]{1,120}$", run_id):
+                    return self._err("no such run", 404)
+                return self._send_file(self.runs_dir / run_id / "video.mp4", "video/mp4")
             if p == "/pg/settings":
                 return self._json(self._settings_info())
             if p == "/pg/wetlab":
@@ -1720,7 +1844,7 @@ def main(argv=None):
                                     "share": f"{SAVE.WEBSITE_URL}/s/{sess.share_token}" if sess.share_token and SAVE.WEBSITE_URL else ""})
             return out
         LABS.start_reporting(live_runs, args.idle_minutes,
-                             lambda: bool(QUEUE) or any(r.active() for r in _all_runners()))
+                             lambda: bool(QUEUE) or VIDEOS.busy() or any(r.active() for r in _all_runners()))
     if args.robot_port:
         global ROBOT_API_URL
         rsrv = ThreadingHTTPServer((args.host, args.robot_port), RobotAPIHandler)
