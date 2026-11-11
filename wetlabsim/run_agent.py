@@ -105,6 +105,14 @@ def workspace_leaks(*dirs: pathlib.Path) -> list[pathlib.Path]:
 DOCS_LEVELS = ("standard", "assisted")
 
 
+# The robots with a "standard" kit (the maker's own documents): the model folder each gets.
+STANDARD_KITS = {"franka": "franka_emika_panda", "aloha": "aloha"}
+# Left out of the robot model folder: notes, and for the ALOHA Menagerie's table scene and
+# its MJX patches (the robot only, as for the Franka).
+KIT_LEAVE_OUT = ("*.md", "scene.xml", "*.patch", "*.png", "tablelegs.obj", "tabletop.obj",
+                 "small_meta_table_diffuse.png", "extrusion_*.stl", "*_mount.stl",
+                 "corner_bracket.stl", "angled_extrusion.stl")
+
 # Written per run from the task and the station's site, not part of the robot's starter kit.
 PER_RUN_FILES = {"GOAL.md", "SITE.md", "cameras.json"}
 
@@ -144,23 +152,26 @@ def prepare_workspace(workspace: pathlib.Path, client: pathlib.Path, robot: str,
             note += (" SITE.md describes this installation (its table, cameras and what is on it);"
                      " where it differs from the manual's lab bench, SITE.md is right.")
     else:
-        if robot != "franka":
-            raise SystemExit("the standard docs level exists only for the Franka; use --docs assisted")
-        from .datasheets import fetch
-        fetch()
-        for f in ("AGENTS.md", "CLAUDE.md", "COMMANDS.md", "SITE.md"):
-            shutil.copy(AGENT_DIR / "franka" / f, workspace / f)
-        if site_file:   # another installation of the same robot (e.g. the playground's table)
+        if robot not in STANDARD_KITS:
+            raise SystemExit("the standard docs level exists only for the Franka and the ALOHA; use --docs assisted")
+        kit = STANDARD_KITS[robot]
+        from .datasheets import DIRS, fetch
+        fetch(robot=robot)
+        for f in ("AGENTS.md", "CLAUDE.md", "COMMANDS.md"):
+            shutil.copy(AGENT_DIR / robot / f, workspace / f)
+        if site_file:   # this installation (e.g. the playground's table)
             shutil.copy(site_file, workspace / "SITE.md")
+        else:
+            shutil.copy(AGENT_DIR / robot / "SITE.md", workspace / "SITE.md")
         (workspace / "GOAL.md").write_text(task + "\n")
         (workspace / "cameras.json").write_text(json.dumps(info["camera_calibration"], indent=1))
         sheets = workspace / "datasheets"
         sheets.mkdir()
-        for s in json.loads((AGENT_DIR / "datasheets" / "sources.json").read_text()):
-            shutil.copy(AGENT_DIR / "datasheets" / s["file"], sheets / s["file"])
-        shutil.copy(AGENT_DIR / "datasheets" / "sources.json", sheets / "sources.json")
-        model = ROOT / "wetlabsim" / "assets" / "franka_emika_panda"
-        shutil.copytree(model, workspace / "robot_model", ignore=shutil.ignore_patterns("*.md"))
+        for s in json.loads((DIRS[robot] / "sources.json").read_text()):
+            shutil.copy(DIRS[robot] / s["file"], sheets / s["file"])
+        shutil.copy(DIRS[robot] / "sources.json", sheets / "sources.json")
+        shutil.copytree(ROOT / "wetlabsim" / "assets" / kit, workspace / "robot_model",
+                        ignore=shutil.ignore_patterns(*KIT_LEAVE_OUT))
         # Leave out the pixel/point helpers: at this level agents use the calibration themselves.
         a = robot_py.index("    # --- assisted helpers")
         b = robot_py.index("    # --- end assisted helpers\n") + len("    # --- end assisted helpers\n")
@@ -317,6 +328,8 @@ def main(argv=None):
     # the full package, whose scene and simulator code would reveal where everything is.
     info = _eval_call(args.url, token, "/info")
     robot = info.get("robot_id", "ur5e")
+    if args.agent == "jev" and robot == "aloha":
+        raise SystemExit("Jev drives one arm at a time; it can't run the two-arm ALOHA yet")
     workspace = pathlib.Path(tempfile.mkdtemp(prefix=f"wetlab-{run_id}-"))
     client = pathlib.Path(tempfile.mkdtemp(prefix=f"wetlab-{run_id}-client-"))
     note = prepare_workspace(workspace, client, robot, args.docs, task, info,

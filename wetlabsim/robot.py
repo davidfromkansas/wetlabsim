@@ -74,8 +74,12 @@ class Frame:
 
 
 class Robot:
-    def __init__(self, url: str = DEFAULT_URL, timeout: float = 120.0, token: str = DEFAULT_TOKEN):
-        self.url = url.rstrip("/")
+    def __init__(self, url: str = DEFAULT_URL, timeout: float = 120.0, token: str = DEFAULT_TOKEN,
+                 arm: str | None = None):
+        """arm: on a two-arm robot (ALOHA), "left" or "right": this client commands that arm.
+        Without it, a two-arm robot's client reads both arms, uses all cameras and stops both."""
+        self.url = url.rstrip("/") + (f"/{arm}" if arm else "")
+        self.arm = arm
         self.timeout = timeout
         self.token = token
 
@@ -124,7 +128,10 @@ class Robot:
     def get_tcp_force(self) -> list[float]:
         """Wrist force/torque [Fx, Fy, Fz, Tx, Ty, Tz] in N and Nm, tool frame,
         gripper weight already removed. Holding a 20 g tube adds about 0.2 N."""
-        return self.get_state()["tcp_force"]
+        st = self.get_state()
+        if "tcp_force" not in st:
+            raise RobotError("this robot has no wrist force/torque sensor")
+        return st["tcp_force"]
 
     def zero_ft_sensor(self):
         """Tare the wrist force sensor at the current reading."""

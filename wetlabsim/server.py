@@ -68,7 +68,7 @@ class Archive:
                     o = json.loads(line)
                 except json.JSONDecodeError:
                     continue
-                if "joint_positions" in o:
+                if "joint_positions" in o or "left" in o:     # one arm, or a two-arm robot's
                     o.pop("ground_truth", None)   # the evaluator's knowledge stays out of the viewer
                     self.states.append(o)
         rec = np.load(run_dir / "replay.npz") if (run_dir / "replay.npz").exists() else None

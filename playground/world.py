@@ -21,6 +21,8 @@ from wetlabsim import scene as S
 from . import catalog
 
 TABLE_UID = "table"     # (older saved scenes) the one table a robot stood on
+# Kept clear around a robot's base when a station starts with items, or when an arm is swapped in.
+BASE_CLEARANCE = 0.25
 # A station's robot stands on its table, near one long edge, facing across it (+x).
 ROBOT_XY = (-0.42, 0.0)
 STATION_TABLE = "table_packing"
@@ -122,7 +124,20 @@ class Station:
 
     @property
     def robot_xy(self) -> tuple:
+        if self.robot == "aloha":     # two arms facing each other across the middle of the table
+            return (0.0, 0.0)
         return self.spec["robot_xy"]
+
+    def bases(self) -> list:
+        """Where the robot stands on the table, in the station's frame: one base, or an ALOHA's two."""
+        if self.robot == "aloha":
+            return [(-0.019, 0.469), (-0.019, -0.469)]
+        return [self.robot_xy]
+
+    def near_base(self, x: float, y: float, r: float = BASE_CLEARANCE) -> bool:
+        """Whether a world point is within r of the robot's base (or bases)."""
+        lx, ly = self.to_local(x, y)
+        return any(math.hypot(lx - bx, ly - by) < r for bx, by in self.bases())
 
     @property
     def top(self) -> float:
@@ -571,8 +586,9 @@ def add_station(world: mujoco.MjSpec, st: Station, cache: set):
     world.worldbody.add_site(name=st.prefix + "robot_mount", pos=list(st.to_world(rx, ry, top)),
                              quat=list(mount))
     c, s_ = math.cos(st.yaw), math.sin(st.yaw)
-    _camera(world, st.prefix + "overhead", st.to_world(rx + 0.75, ry, top + 1.0),
-            st.to_world(rx + 0.42, ry, top), 55, up=(-c, -s_, 0))
+    if st.robot != "aloha":           # an ALOHA brings its own (the real rig's four cameras)
+        _camera(world, st.prefix + "overhead", st.to_world(rx + 0.75, ry, top + 1.0),
+                st.to_world(rx + 0.42, ry, top), 55, up=(-c, -s_, 0))
     _camera(world, st.prefix + "side", st.to_world(rx + 1.75, ry - 1.3, top + 0.8),
             st.to_world(rx + 0.4, ry, top + 0.1), 45)
     S.add_robot(world, st.robot, st.prefix + "robot_mount", st.prefix)

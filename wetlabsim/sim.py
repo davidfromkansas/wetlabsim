@@ -105,7 +105,10 @@ class Arm:
         self.sim = sim
         self.uid = uid
         self.prefix = prefix
-        self.robot = S.robot_name(robot)
+        # One arm of a two-arm robot ("aloha:left") reports to the pair (TwoArm), which logs for it.
+        self.side = robot.split(":")[1] if ":" in robot else ""
+        self.parent: "TwoArm | None" = None
+        self.robot = robot if self.side else S.robot_name(robot)
         self.P = S.profile_for(self.robot, prefix, world_cameras)
         self.rng = np.random.default_rng()
         self.events: list[dict] = []
@@ -142,13 +145,18 @@ class Arm:
         self.grip_qadr = m.joint(P["grip_joint"]).qposadr[0]
         self.grip_dadr = m.joint(P["grip_joint"]).dofadr[0]
         self.tcp_site = m.site(P["tcp_site"]).id
-        self.ft_site = m.site(P["ft_site"]).id
-        self.ft_body = m.body(P["ft_body"]).id
+        # A wrist force/torque sensor, where the robot has one (the ViperX has none).
+        self.has_ft = bool(P.get("ft_site"))
+        self.ft_site = m.site(P["ft_site"]).id if self.has_ft else -1
+        self.ft_body = m.body(P["ft_body"]).id if self.has_ft else -1
         self.base_body = m.body(P["base_body"]).id
         self.ready_q = P["ready_q"]
         self.joint_lo = m.jnt_range[[m.joint(j).id for j in P["arm_joints"]], 0]
         self.joint_hi = m.jnt_range[[m.joint(j).id for j in P["arm_joints"]], 1]
         self.grip_force_base = m.actuator_forcerange[self.grip_act].copy()
+        # A servo-driven gripper (ALOHA) is limited at its joint (the servo's effort limit).
+        self.grip_jnt = m.joint(P["grip_joint"]).id
+        self.grip_jnt_force_base = m.jnt_actfrcrange[self.grip_jnt].copy()
         self.sensors = P.get("sensors", ("ft_force", "ft_torque"))
         self._ik_data = mujoco.MjData(m)
         # this robot's own joints (arm, gripper, fingers): kept when the scene is rebuilt
@@ -181,7 +189,7 @@ class Arm:
         self.grip_rate = 255.0
         self.ft_offset = np.zeros(6)
         # A real wrist force estimate is off by up to its rated accuracy until it is tared.
-        fb, tb = self.P["ft_bias"]
+        fb, tb = self.P.get("ft_bias", (0.0, 0.0))
         self.ft_bias = np.concatenate([self.rng.uniform(-fb, fb, 3), self.rng.uniform(-tb, tb, 3)])
         self.events = []
         self.state_log = []
@@ -203,6 +211,8 @@ class Arm:
         d.ctrl[self.grip_act] = snap["grip_ctrl"]
 
     def log_event(self, event: str, **kw):
+        if self.parent is not None:          # one arm of a pair: the pair's log, marked with the arm
+            return self.parent.log_event(event, arm=self.side, **kw)
         ev = {"t": round(self.sim.d.time, 4), "event": event, **kw}
         if self.uid != "robot":
             ev["robot"] = self.uid
@@ -249,7 +259,7 @@ class Arm:
         # Safety checks (every 10 steps).
         if self.mode == "running" and int(d.time / self.sim.m.opt.timestep) % 10 == 0:
             err = np.max(np.abs(d.ctrl[self.arm_act] - d.qpos[self.arm_qadr]))
-            reflex = self._reflex(self._ft_external())
+            reflex = self._reflex(self._ft_external()) if self.has_ft else ""
             if reflex:
                 self._protective_stop(reflex)
             elif err > TRACKING_LIMIT:
@@ -432,12 +442,17 @@ class Arm:
                 # The tendon force splits over both fingers, so it is twice the squeeze.
                 f = 2 * (lo + (hi - lo) * fo)
                 m.actuator_forcerange[self.grip_act] = [-f, f]
+            elif "grip_ctrl_range" in P:
+                self.grip_rate = 40.0 + 360.0 * sp
+                m.jnt_actfrcrange[self.grip_jnt] = self.grip_jnt_force_base * (0.2 + 0.8 * fo)
             else:
                 self.grip_rate = 40.0 + 360.0 * sp
                 m.actuator_forcerange[self.grip_act] = self.grip_force_base * (0.2 + 0.8 * fo)
             self.log_event("command", kind="gripper", position=position, speed=speed, force=force)
 
     def zero_ft(self):
+        if not self.has_ft:
+            raise RobotError("this robot has no wrist force/torque sensor")
         with self.lock:
             self.ft_offset = self._ft_compensated(offset=False)
 
@@ -477,6 +492,9 @@ class Arm:
 
     def _grip_ctrl(self, position):
         """Actuator command for a gripper position on the 0 (open) .. 255 (closed) scale."""
+        if "grip_ctrl_range" in self.P:          # the actuator's own units (ALOHA: finger travel, m)
+            a, b = self.P["grip_ctrl_range"]
+            return a + (b - a) * position / 255.0
         o = self.P["grip_ctrl_open"]
         return o + (255.0 - 2 * o) * position / 255.0   # o=0: same scale; o=255: reversed
 
@@ -486,9 +504,11 @@ class Arm:
         pos = float(np.clip((d.qpos[self.grip_qadr] - q_open) / (q_closed - q_open) * 255.0, 0, 255))
         vel = abs(float(d.qvel[self.grip_dadr]))
         moving = bool(abs(self.grip_cmd - self.grip_target) > 0.5 or vel > 0.05)   # plain bool for JSON
+        meet = P.get("grip_meet")      # where the fingers touch each other, when short of fully closed
+        meet = 255.0 * (meet - q_open) / (q_closed - q_open) if meet is not None else 255.0
         if moving:
             obj = 0
-        elif self.grip_target - pos > 6:
+        elif self.grip_target - pos > 6 and pos < meet - 6:
             obj = 2   # stopped early while closing: something is between the fingers
         elif pos - self.grip_target > 6:
             obj = 1   # stopped early while opening
@@ -504,9 +524,7 @@ class Arm:
             qd = d.qvel[self.arm_dadr].copy()
             pw, Rw = d.site_xpos[self.tcp_site].copy(), d.site_xmat[self.tcp_site].reshape(3, 3).copy()
             pb, Rb = self.to_base(pw, Rw)
-            fn, tn = self.P["ft_noise"]
-            ft = self._ft_compensated() + np.concatenate([self.rng.normal(0, fn, 3), self.rng.normal(0, tn, 3)])
-            return {
+            out = {
                 "time": round(d.time, 4),
                 "mode": self.mode,
                 "protective_stop_reason": self.stop_reason,
@@ -514,10 +532,14 @@ class Arm:
                 "joint_positions": q.round(5).tolist(),
                 "joint_velocities": qd.round(4).tolist(),
                 "tcp_pose": np.concatenate([pb, rotvec_from_quat(quat_from_mat(Rb))]).round(5).tolist(),
-                "tcp_force": ft.round(3).tolist(),
-                "gripper": self.gripper_status(),
-                "realtime_factor": round(self.sim.rt_factor, 3),
             }
+            if self.has_ft:
+                fn, tn = self.P["ft_noise"]
+                ft = self._ft_compensated() + np.concatenate([self.rng.normal(0, fn, 3), self.rng.normal(0, tn, 3)])
+                out["tcp_force"] = ft.round(3).tolist()
+            out["gripper"] = self.gripper_status()
+            out["realtime_factor"] = round(self.sim.rt_factor, 3)
+            return out
 
     def ground_truth(self) -> dict:
         """Object poses (in this robot's base frame) for scoring only. Never exposed through
@@ -582,6 +604,141 @@ class Arm:
 
     def render(self, camera: str, **kw) -> dict:
         return self.sim.render(camera, arm=self, **kw)
+
+
+class TwoArm(Arm):
+    """A two-arm robot (ALOHA): one robot in the lab, one AI run, two arms. Each arm is an Arm
+    of its own ("left", "right") with its own base frame, controller, gripper and wrist camera;
+    its commands go to that arm (the robot API's /left/..., /right/...). The pair keeps the
+    log, the run and the shared cameras, reads both arms, and stops both."""
+
+    def __init__(self, sim: "Sim", robot: str, prefix: str = "", uid: str = "robot",
+                 world_cameras: str | None = None):
+        self.sim = sim
+        self.uid = uid
+        self.prefix = prefix
+        self.side = ""
+        self.parent = None
+        self.robot = S.robot_name(robot)
+        self.P = S.profile_for(self.robot, prefix, world_cameras)
+        self.sides: dict[str, Arm] = {}
+        for side in self.P["sides"]:
+            a = Arm(sim, f"{self.robot}:{side}", prefix, uid)
+            a.parent = self
+            self.sides[side] = a
+        self.rng = np.random.default_rng()
+        self.events: list[dict] = []
+        self._log_f = None
+        self.run_dir = None
+        self.recording_from = 0.0
+        self.state_log: list[dict] = []
+        self.task = None
+        self.has_ft = False
+
+    # The pair's status is its arms'.
+    @property
+    def mode(self):
+        return "protective_stop" if any(a.mode != "running" for a in self.sides.values()) else "running"
+
+    @property
+    def stop_reason(self):
+        return "; ".join(f"{s} arm: {a.stop_reason}" for s, a in self.sides.items() if a.stop_reason)
+
+    @property
+    def motion(self):
+        return next((a.motion for a in self.sides.values() if a.motion is not None), None)
+
+    @motion.setter
+    def motion(self, v):
+        if v is None:              # a rebuild drops both arms' motions
+            for a in self.sides.values():
+                a.motion = None
+
+    def _index(self):
+        m = self.sim.m
+        for a in self.sides.values():
+            a._index()
+        arms = list(self.sides.values())
+        self.base_body = m.body(self.prefix + "base").id
+        self.bodies = set().union(*(a.bodies for a in arms))
+        self.own_joints = [j for a in arms for j in a.own_joints]
+        self.n_arm = sum(a.n_arm for a in arms)
+        self.arm_qadr = np.concatenate([a.arm_qadr for a in arms])
+        self.arm_dadr = np.concatenate([a.arm_dadr for a in arms])
+        self.arm_act = np.concatenate([a.arm_act for a in arms])
+        self.joint_lo = np.concatenate([a.joint_lo for a in arms])
+        self.joint_hi = np.concatenate([a.joint_hi for a in arms])
+        self.ready_q = np.concatenate([a.ready_q for a in arms])
+        self.P["arm_joints"] = [j for a in arms for j in a.P["arm_joints"]]
+
+    def reset_pose(self):
+        for a in self.sides.values():
+            a.reset_pose()
+
+    def reset_state(self):
+        for a in self.sides.values():
+            a.reset_state()
+        self.events = []
+        self.state_log = []
+        self.recording_from = self.sim.d.time
+
+    def snapshot(self) -> dict:
+        return {s: a.snapshot() for s, a in self.sides.items()}
+
+    def restore(self, snap: dict):
+        for s, a in self.sides.items():
+            if s in snap:
+                a.restore(snap[s])
+
+    def _control(self):
+        for a in self.sides.values():
+            a._control()
+
+    # ------------------------------------------------------------ commands
+    def _which(self):
+        raise RobotError(f"this robot has {len(self.sides)} arms: send each command to one of them "
+                         f"({', '.join(self.sides)})")
+
+    def move_l(self, *a, **k):
+        self._which()
+
+    move_j = move_j_ik = gripper_move = move_l
+
+    def zero_ft(self):
+        raise RobotError("this robot has no wrist force/torque sensors")
+
+    def stop(self):
+        for a in self.sides.values():
+            a.stop()
+
+    def unlock(self):
+        for a in self.sides.values():
+            a.unlock()
+
+    # ------------------------------------------------------------- sensors
+    def gripper_status(self):
+        return {s: a.gripper_status() for s, a in self.sides.items()}
+
+    def state(self) -> dict:
+        with self.lock:
+            out = {"time": round(self.sim.d.time, 4), "mode": self.mode,
+                   "protective_stop_reason": self.stop_reason, "moving": self.motion is not None}
+            for s, a in self.sides.items():
+                st = a.state()
+                for k in ("time", "realtime_factor"):
+                    st.pop(k, None)
+                out[s] = st
+            out["realtime_factor"] = round(self.sim.rt_factor, 3)
+            return out
+
+    def base_tf(self):
+        """The pair's readings and its cameras' poses are in the left arm's base frame."""
+        return self.sides[next(iter(self.sides))].base_tf()
+
+    def calibration(self) -> dict:
+        """Each arm's calibration, in that arm's own frames: the fixed cameras in its base frame,
+        its wrist camera in its TCP frame."""
+        return {s: a.calibration() for s, a in self.sides.items()}
 
 
 class RobotView:

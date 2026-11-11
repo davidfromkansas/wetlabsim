@@ -1,7 +1,8 @@
-"""Franka's official documents for the robot, as the agent gets them.
+"""The makers' own documents for each robot, as the agent gets them.
 
-The PDFs are Franka's, unchanged. Their sources and checksums are in
-agent/datasheets/sources.json; this fetches any that are missing and checks them:
+The files are the makers', unchanged. Their sources and checksums are in
+agent/datasheets/sources.json (Franka) and agent/aloha/datasheets/sources.json (ALOHA);
+this fetches any that are missing and checks them:
 
     python -m wetlabsim.datasheets
 """
@@ -12,19 +13,21 @@ import json
 import pathlib
 import urllib.request
 
-DIR = pathlib.Path(__file__).resolve().parent.parent / "agent" / "datasheets"
+AGENT = pathlib.Path(__file__).resolve().parent.parent / "agent"
+DIRS = {"franka": AGENT / "datasheets", "aloha": AGENT / "aloha" / "datasheets"}
+DIR = DIRS["franka"]
 
 
-def sources() -> list[dict]:
-    return json.loads((DIR / "sources.json").read_text())
+def sources(robot: str = "franka") -> list[dict]:
+    return json.loads((DIRS[robot] / "sources.json").read_text())
 
 
-def fetch(strict: bool = True) -> list[pathlib.Path]:
+def fetch(strict: bool = True, robot: str = "franka") -> list[pathlib.Path]:
     """Make sure every document is present. A PDF whose checksum doesn't match is an error;
-    the FCI page is a live web page, so a changed checksum there is only reported."""
+    web pages are live, so a changed checksum there is only reported."""
     out = []
-    for s in sources():
-        path = DIR / s["file"]
+    for s in sources(robot):
+        path = DIRS[robot] / s["file"]
         if not path.exists():
             req = urllib.request.Request(s["url"], headers={"User-Agent": "wetlabsim"})
             with urllib.request.urlopen(req, timeout=60) as r:
@@ -40,5 +43,6 @@ def fetch(strict: bool = True) -> list[pathlib.Path]:
 
 
 if __name__ == "__main__":
-    for p in fetch():
-        print("ok", p.name)
+    for robot in DIRS:
+        for p in fetch(robot=robot):
+            print("ok", robot, p.name)

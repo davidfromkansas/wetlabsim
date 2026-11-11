@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Specifications &mdash; ALOHA Documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/sphinx_collapse.css" type="text/css" />
+      <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="_static/tr_style.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="canonical" href="/2.0/specifications.html" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting Started" href="getting_started.html" />
+    <link rel="prev" title="ALOHA" href="index.html" />
+   
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "nglikgkapv");
+  </script>
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+  <div class="sidebartitle-docs-home">
+    <a href="https://docs.trossenrobotics.com/" target="_blank" class="icon icon-home">
+      &nbsp;Trossen Robotics Docs Home
+    </a>
+    <div class="sidebartitle-docs-home-hr">
+      <hr>
+    </div>
+  </div>
+  
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Specifications</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#aloha-stationary">Aloha Stationary</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#stationary-packing-list">Stationary Packing List</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stationary-specifications">Stationary Specifications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stationary-technical-drawing">Stationary Technical Drawing</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#aloha-mobile">Aloha Mobile</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#mobile-packing-list">Mobile Packing List</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mobile-specifications">Mobile Specifications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mobile-technical-drawing">Mobile Technical Drawing</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#mobile-minimum-dimensions">Mobile Minimum Dimensions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mobile-maximum-dimensions">Mobile Maximum Dimensions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#aloha-solo">Aloha Solo</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#solo-packing-list">Solo Packing List</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#solo-specifications">Solo Specifications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#solo-technical-drawing">Solo Technical Drawing</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#aloha-pre-configured-laptop">ALOHA Pre-configured Laptop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aloha-pre-configured-mini-pc">ALOHA Pre-configured Mini PC</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="operation.html">Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="training.html">Training and Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gui.html">Trossen Aloha UI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ALOHA Documentation</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Specifications</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/TrossenRobotics/aloha_docs/blob/2.0/docs/specifications.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+
+  <div class="section" id="specifications">
+<h1>Specifications<a class="headerlink" href="#specifications" title="Permalink to this headline"></a></h1>
+<div class="section" id="aloha-stationary">
+<h2>Aloha Stationary<a class="headerlink" href="#aloha-stationary" title="Permalink to this headline"></a></h2>
+<div class="section" id="stationary-packing-list">
+<h3>Stationary Packing List<a class="headerlink" href="#stationary-packing-list" title="Permalink to this headline"></a></h3>
+<table border="1" class="docutils align-center">
+<colgroup>
+<col width="91%" />
+<col width="9%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Sub-Assembly or Part</strong></td>
+<td><strong>Qty</strong></td>
+</tr>
+<tr class="row-even"><td colspan="2"><p class="first last centered">
+<strong><strong>Frame and Gravity Compensation</strong></strong></p></td>
+</tr>
+<tr class="row-odd"><td>Upright “H” Sub-Assembly</td>
+<td>2</td>
+</tr>
+<tr class="row-even"><td>Arm Mount “A” Sub-Assembly</td>
+<td>2</td>
+</tr>
+<tr class="row-odd"><td>2020-305mm Bar “45” Sub-Assembly</td>
+<td>4</td>
+</tr>
+<tr class="row-even"><td>2020-200mm Bar “G” Sub-Assembly</td>
+<td>2</td>
+</tr>
+<tr class="row-odd"><td>2020-200mm Bar “P” Sub-Assembly</td>
+<td>2</td>
+</tr>
+<tr class="row-even"><td>2020-1220mm Bar “F” Sub-Assembly</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>2020-1220mm Bar “B” Sub-Assembly</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>2040-890mm Bar “T” Sub-Assembly</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>Automatic-Return Hanging Retractor without Cable Lock, 1 to 2 lb. Capacity</td>
+<td>2</td>
+</tr>
+<tr class="row-even"><td>Pulley for Wire Rope</td>
+<td>6</td>
+</tr>
+<tr class="row-odd"><td>5” Long Extension Spring</td>
+<td>2</td>
+</tr>
+<tr class="row-even"><td>110mm Length 1/16 Steel Wire with Loop Crimped Ends</td>
+<td>2</td>
+</tr>
+<tr class="row-odd"><td>Spring Snap Hook Carabiners</td>
+<td>8</td>
+</tr>
+<tr class="row-even"><td>C-Clamps</td>
+<td>4</td>
+</tr>
+<tr class="row-odd"><td>M2.5x6s</td>
+<td>20</td>
+</tr>
+<tr class="row-even"><td>M3x8s</td>
+<td>10</td>
+</tr>
+<tr class="row-odd"><td>M3x12s</td>
+<td>5</td>
+</tr>
+<tr class="row-even"><td>M5x8b</td>
+<td>25</td>
+</tr>
+<tr class="row-odd"><td>M5x10b</td>
+<td>50</td>
+</tr>
+<tr class="row-even"><td>M5x12b</td>
+<td>20</td>
+</tr>
+<tr class="row-odd"><td>M5x14b</td>
+<td>25</td>
+</tr>
+<tr class="row-even"><td>M3 T-Driver</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>WX Leader Pair Bag</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td colspan="2"><p class="first last centered">
+<strong><strong>Large Electronics (Cameras + Computer)</strong></strong></p></td>
+</tr>
+<tr class="row-odd"><td>Control Laptop (Delayed)</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>Intel RealSense D405</td>
+<td>4</td>
+</tr>
+<tr class="row-odd"><td colspan="2">Small Electronics</td>
+</tr>
+<tr class="row-even"><td>USB 3.0 A Male to Micro B Male, Right Angled with Locking Screws</td>
+<td>4</td>
+</tr>
+<tr class="row-odd"><td>USB 3.0 A Male to USB 3.0 Female Extension 10ft</td>
+<td>2</td>
+</tr>
+<tr class="row-even"><td>USB 3.0 A to B Cable in Black, 6 ft</td>
+<td>2</td>
+</tr>
+<tr class="row-odd"><td>Foot pedal switch (Delayed)</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>Sabrent 7-Port USB Hub</td>
+<td>2</td>
+</tr>
+<tr class="row-odd"><td>Belkin Power Strip Surge Protector - 10 AC Outlets, 15ft Heavy Duty Metal Extension Cord</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td colspan="2"><p class="first last centered">
+<strong><strong>3D Printed Components</strong></strong></p></td>
+</tr>
+<tr class="row-odd"><td>Overhead Cam Mount</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>Worms-Eye Cam Mount</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>ViperX Wrist Cam Mount</td>
+<td>2</td>
+</tr>
+<tr class="row-even"><td>WX Wrist Clip</td>
+<td>3</td>
+</tr>
+<tr class="row-odd"><td>2040 USB Cable Clip</td>
+<td>20</td>
+</tr>
+<tr class="row-even"><td>2020 USB Cable Clip</td>
+<td>20</td>
+</tr>
+<tr class="row-odd"><td colspan="2"><p class="first last centered">
+<strong><strong>Robots</strong></strong></p></td>
+</tr>
+<tr class="row-even"><td>Aloha ViperX 300 6DOF</td>
+<td>2</td>
+</tr>
+<tr class="row-odd"><td>Aloha WidowX 250 6DOF</td>
+<td>2</td>
+</tr>
+<tr class="row-even"><td>Aloha Finger Bag</td>
+<td>2</td>
+</tr>
+<tr class="row-odd"><td>12v20a Power Supply</td>
+<td>2</td>
+</tr>
+<tr class="row-even"><td>12v10a Power Supply</td>
+<td>2</td>
+</tr>
+<tr class="row-odd"><td>USB-A to Micro USB, 10 Foot, Black</td>
+<td>4</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="stationary-specifications">
+<h3>Stationary Specifications<a class="headerlink" href="#stationary-specifications" title="Permalink to this headline"></a></h3>
+<table border="1" class="docutils align-center" style="width: 50%">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>Dimensions</td>
+<td>1019D x 1066H x 1225W mm</td>
+</tr>
+<tr class="row-even"><td>Leader Arms</td>
+<td>WidowX 250 S - Aloha Version</td>
+</tr>
+<tr class="row-odd"><td>Follower Arms</td>
+<td>ViperX 300 S - Aloha Version</td>
+</tr>
+<tr class="row-even"><td>Camera</td>
+<td>4x Intel RealSense D405</td>
+</tr>
+<tr class="row-odd"><td>Chassis</td>
+<td>Modular</td>
+</tr>
+<tr class="row-even"><td>Computer</td>
+<td>Coming Soon</td>
+</tr>
+<tr class="row-odd"><td>USB Hubs</td>
+<td>Yes 2X</td>
+</tr>
+<tr class="row-even"><td>Gravity Compensators</td>
+<td>Yes</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="stationary-technical-drawing">
+<h3>Stationary Technical Drawing<a class="headerlink" href="#stationary-technical-drawing" title="Permalink to this headline"></a></h3>
+<p>Coming Soon!</p>
+</div>
+</div>
+<div class="section" id="aloha-mobile">
+<h2>Aloha Mobile<a class="headerlink" href="#aloha-mobile" title="Permalink to this headline"></a></h2>
+<div class="section" id="mobile-packing-list">
+<h3>Mobile Packing List<a class="headerlink" href="#mobile-packing-list" title="Permalink to this headline"></a></h3>
+<table border="1" class="docutils align-center">
+<colgroup>
+<col width="88%" />
+<col width="12%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Sub-Assembly or Part</strong></td>
+<td><strong>QTY</strong></td>
+</tr>
+<tr class="row-even"><td colspan="2"><p class="first last centered">
+<strong><strong>Frame + Hardware</strong></strong></p></td>
+</tr>
+<tr class="row-odd"><td>Podium with Adjustable Rails + Electronics Shelf</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>ViperX Vertical Mount with Left + Right VX Arm Mounts</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>WidowX Vertical Mount with Left + Right WX Arm Mounts + Cables</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>Caster Horizontal Mount with Foot Pedal</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>Camera Stand</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>M2.5x6s</td>
+<td>10</td>
+</tr>
+<tr class="row-odd"><td>M3x6s</td>
+<td>5</td>
+</tr>
+<tr class="row-even"><td>M3x10s</td>
+<td>5</td>
+</tr>
+<tr class="row-odd"><td>M4x12b</td>
+<td>5</td>
+</tr>
+<tr class="row-even"><td>M5x8b</td>
+<td>30</td>
+</tr>
+<tr class="row-odd"><td>M5x10b</td>
+<td>15</td>
+</tr>
+<tr class="row-even"><td>M5x12b</td>
+<td>30</td>
+</tr>
+<tr class="row-odd"><td>M5x18s</td>
+<td>5</td>
+</tr>
+<tr class="row-even"><td>M2.5 T-Driver</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>M3 Ball-End Driver</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>M4 T-Driver</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>Loctite</td>
+<td>3</td>
+</tr>
+<tr class="row-even"><td>Zip Ties - 6 in</td>
+<td>10</td>
+</tr>
+<tr class="row-odd"><td>Zip Ties - 10 in</td>
+<td>10</td>
+</tr>
+<tr class="row-even"><td colspan="2"><p class="first last centered">
+<strong><strong>3D Printed Parts</strong></strong></p></td>
+</tr>
+<tr class="row-odd"><td>2020 USB Cable Clip</td>
+<td>20</td>
+</tr>
+<tr class="row-even"><td>2040 USB Cable Clip</td>
+<td>20</td>
+</tr>
+<tr class="row-odd"><td>ViperX wrist cam mount</td>
+<td>4</td>
+</tr>
+<tr class="row-even"><td>Overhead cam mount</td>
+<td>2</td>
+</tr>
+<tr class="row-odd"><td colspan="2"><p class="first last centered">
+<strong><strong>Electronics Shelf Inside Podium</strong></strong></p></td>
+</tr>
+<tr class="row-even"><td>4 Outlet Power Strip</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>12v20a Power Supply</td>
+<td>2</td>
+</tr>
+<tr class="row-even"><td>12v10a Power Supply</td>
+<td>2</td>
+</tr>
+<tr class="row-odd"><td>Sabrent 7-Port USB Hub</td>
+<td>2</td>
+</tr>
+<tr class="row-even"><td>1ft Outlet Extension</td>
+<td>2</td>
+</tr>
+<tr class="row-odd"><td colspan="2"><p class="first last centered">
+<strong><strong>Small Electronics</strong></strong></p></td>
+</tr>
+<tr class="row-even"><td>USB A 3.0 Male to Male Cable 6 Foot</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>USB 3.0 to Micro B Cable 3m Locking Right Angled</td>
+<td>3</td>
+</tr>
+<tr class="row-even"><td>USB A to Micro USB 10 Foot</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>PS4 Controller</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>Foot Pedal Switch (NOT YET IMPLEMENTED)</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td colspan="2"><p class="first last centered">
+<strong><strong>Cameras</strong></strong></p></td>
+</tr>
+<tr class="row-even"><td>Intel RealSense D405</td>
+<td>3</td>
+</tr>
+<tr class="row-odd"><td colspan="2"><p class="first last centered">
+<strong><strong>Computer</strong></strong></p></td>
+</tr>
+<tr class="row-even"><td>System76 Serval WS</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>Power Supply Charger</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td colspan="2"><p class="first last centered">
+<strong><strong>Power Supply</strong></strong></p></td>
+</tr>
+<tr class="row-odd"><td>OUPES 1800W Portable Power Station, 1.4kWh</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>Power Station Charger</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td colspan="2"><p class="first last centered">
+<strong><strong>Robot Base</strong></strong></p></td>
+</tr>
+<tr class="row-even"><td>SLATE</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>FS-i6S Controller</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>Contact Charger</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>Power Supply</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>Pigtail Cable</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>USB 3.0 A Male to A Male Cable 3 Foot</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td colspan="2"><p class="first last centered">
+<strong><strong>Robot Arms</strong></strong></p></td>
+</tr>
+<tr class="row-odd"><td>Aloha ViperX 6dof Mobile</td>
+<td>2</td>
+</tr>
+<tr class="row-even"><td>Aloha WidowX 6dof</td>
+<td>2</td>
+</tr>
+<tr class="row-odd"><td>VX Finger Bag</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="mobile-specifications">
+<h3>Mobile Specifications<a class="headerlink" href="#mobile-specifications" title="Permalink to this headline"></a></h3>
+<table border="1" class="docutils align-center" style="width: 50%">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>Dimensions</td>
+<td>See drawing for minimum and maximum dimensions</td>
+</tr>
+<tr class="row-even"><td>Weight</td>
+<td>122 kg</td>
+</tr>
+<tr class="row-odd"><td>Maximum Speed</td>
+<td>1m/s</td>
+</tr>
+<tr class="row-even"><td>Leader Arms</td>
+<td>WidowX 250 S - Aloha Version</td>
+</tr>
+<tr class="row-odd"><td>Follower Arms</td>
+<td>ViperX 300 S - Aloha Version</td>
+</tr>
+<tr class="row-even"><td>Camera</td>
+<td>3x USB Camera</td>
+</tr>
+<tr class="row-odd"><td>Stability</td>
+<td>Adjustable Training Wheels</td>
+</tr>
+<tr class="row-even"><td>USB Hubs</td>
+<td>Yes 2X</td>
+</tr>
+<tr class="row-odd"><td>Gravity Compensators</td>
+<td>Software-enabled gravity compensation</td>
+</tr>
+<tr class="row-even"><td>Mobile Power Station Battery</td>
+<td>Yes - 1.4kWh</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="mobile-technical-drawing">
+<h3>Mobile Technical Drawing<a class="headerlink" href="#mobile-technical-drawing" title="Permalink to this headline"></a></h3>
+<div class="section" id="mobile-minimum-dimensions">
+<h4>Mobile Minimum Dimensions<a class="headerlink" href="#mobile-minimum-dimensions" title="Permalink to this headline"></a></h4>
+<img alt="Aloha Mobile Minimum Dimensions Drawing" class="align-center" src="_images/aloha_mobile_min_drawing.png" />
+</div>
+<div class="section" id="mobile-maximum-dimensions">
+<h4>Mobile Maximum Dimensions<a class="headerlink" href="#mobile-maximum-dimensions" title="Permalink to this headline"></a></h4>
+<img alt="Aloha Mobile Maximum Dimensions Drawing" class="align-center" src="_images/aloha_mobile_max_drawing.png" />
+</div>
+</div>
+</div>
+<div class="section" id="aloha-solo">
+<h2>Aloha Solo<a class="headerlink" href="#aloha-solo" title="Permalink to this headline"></a></h2>
+<div class="section" id="solo-packing-list">
+<h3>Solo Packing List<a class="headerlink" href="#solo-packing-list" title="Permalink to this headline"></a></h3>
+<table border="1" class="docutils align-center">
+<colgroup>
+<col width="91%" />
+<col width="9%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Sub-Assembly or Part</strong></td>
+<td><strong>Qty</strong></td>
+</tr>
+<tr class="row-even"><td>M2.5x6s</td>
+<td>20</td>
+</tr>
+<tr class="row-odd"><td>M3x8s</td>
+<td>10</td>
+</tr>
+<tr class="row-even"><td>M3x12s</td>
+<td>5</td>
+</tr>
+<tr class="row-odd"><td>M5x8b</td>
+<td>25</td>
+</tr>
+<tr class="row-even"><td>M5x10b</td>
+<td>50</td>
+</tr>
+<tr class="row-odd"><td>M5x12b</td>
+<td>20</td>
+</tr>
+<tr class="row-even"><td>M5x14b</td>
+<td>25</td>
+</tr>
+<tr class="row-odd"><td>M3 T-Driver</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>WX Leader Bag</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td colspan="2"><p class="first last centered">
+<strong><strong>Large Electronics (Cameras + Computer)</strong></strong></p></td>
+</tr>
+<tr class="row-even"><td>Control Laptop (Delayed)</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>Intel RealSense D405</td>
+<td>2</td>
+</tr>
+<tr class="row-even"><td colspan="2"><p class="first last centered">
+<strong><strong>Small Electronics</strong></strong></p></td>
+</tr>
+<tr class="row-odd"><td>USB 3.0 A Male to Micro B Male, Right Angled with Locking Screws</td>
+<td>2</td>
+</tr>
+<tr class="row-even"><td>USB 3.0 A Male to USB 3.0 Female Extension 10ft</td>
+<td>2</td>
+</tr>
+<tr class="row-odd"><td>USB 3.0 A to B Cable in Black, 6 ft</td>
+<td>2</td>
+</tr>
+<tr class="row-even"><td>Foot pedal switch (Delayed)</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>Camera Tripod Stand</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>Sabrent 7-Port USB Hub</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td colspan="2"><p class="first last centered">
+<strong><strong>3D Printed Components</strong></strong></p></td>
+</tr>
+<tr class="row-even"><td>Overhead Cam Mount</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>Worms-Eye Cam Mount</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>ViperX Wrist Cam Mount</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>WX Wrist Clip</td>
+<td>3</td>
+</tr>
+<tr class="row-even"><td>2040 USB Cable Clip</td>
+<td>10</td>
+</tr>
+<tr class="row-odd"><td>2020 USB Cable Clip</td>
+<td>10</td>
+</tr>
+<tr class="row-even"><td colspan="2"><p class="first last centered">
+<strong><strong>Robots</strong></strong></p></td>
+</tr>
+<tr class="row-odd"><td>Aloha ViperX 300 6DOF</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>Aloha WidowX 250 6DOF</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>Aloha Finger Bag</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>12v20A Power Supply</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>12V10A Power Supply</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>USB-A to Micro USB, 10 Foot, Black</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="solo-specifications">
+<h3>Solo Specifications<a class="headerlink" href="#solo-specifications" title="Permalink to this headline"></a></h3>
+<table border="1" class="docutils align-center" style="width: 50%">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>Dimensions</td>
+<td>1019D x 1066H x 1225W mm</td>
+</tr>
+<tr class="row-even"><td>Leader Arms</td>
+<td>WidowX 250 S - Aloha Version</td>
+</tr>
+<tr class="row-odd"><td>Follower Arms</td>
+<td>ViperX 300 S - Aloha Version</td>
+</tr>
+<tr class="row-even"><td>Camera</td>
+<td>2x Intel RealSense D405</td>
+</tr>
+<tr class="row-odd"><td>Chassis</td>
+<td>Modular</td>
+</tr>
+<tr class="row-even"><td>Computer</td>
+<td>Coming Soon</td>
+</tr>
+<tr class="row-odd"><td>USB Hubs</td>
+<td>Yes 1X</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="solo-technical-drawing">
+<h3>Solo Technical Drawing<a class="headerlink" href="#solo-technical-drawing" title="Permalink to this headline"></a></h3>
+<p>Coming Soon!</p>
+</div>
+</div>
+<div class="section" id="aloha-pre-configured-laptop">
+<h2>ALOHA Pre-configured Laptop<a class="headerlink" href="#aloha-pre-configured-laptop" title="Permalink to this headline"></a></h2>
+<p>Trossen Robotics offers the option of providing a laptop pre-configured to work with either variant of the ALOHA kit.
+The laptop is the Serval WS (serw13) from System76 with the following specifications:</p>
+<ul class="simple">
+<li>Ubuntu 22.04 LTS</li>
+<li>5.8 GHz i9-14900HX</li>
+<li>32 GB DDR5 4800 MHz (2x 16GB)</li>
+<li>1 TB PCIe4 M.2 SSD</li>
+<li>WiFi 6E + Bluetooth 5</li>
+<li>8 GB GeForce RTX 4060 with 3072 CUDA Cores</li>
+<li>17.3” Matte 2K QHD (240Hz) Display</li>
+</ul>
+</div>
+<div class="section" id="aloha-pre-configured-mini-pc">
+<h2>ALOHA Pre-configured Mini PC<a class="headerlink" href="#aloha-pre-configured-mini-pc" title="Permalink to this headline"></a></h2>
+<p>Trossen Robotics offers the option of providing a mini computer pre-configured to work with any variant of the ALOHA kit.
+The computer is the Meerkat (meer8) from System76 with the following specifications:</p>
+<ul class="simple">
+<li>Ubuntu 22.04 LTS</li>
+<li>4.5 GHz i5-1340P</li>
+<li>32 GB DDR5 3200 MHz (2x 16GB)</li>
+<li>500 GB PCIe4 M.2 SSD</li>
+<li>WiFi 6E + Bluetooth 5</li>
+<li>i5-1340P: Intel® Iris® Xe Graphics</li>
+</ul>
+</div>
+</div>
+
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="ALOHA" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="getting_started.html" class="btn btn-neutral float-right" title="Getting Started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Trossen Robotics.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+  
+     
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v2.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dd><a href="../1.0/specifications.html">v1.0</a></dd>
+      <dd><a href="specifications.html">v2.0</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

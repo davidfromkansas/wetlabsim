@@ -328,7 +328,7 @@ class Session:
     def station_runner(self, uid: str) -> Runner:
         r = self.runners.get(uid)
         st = self.sim.station(uid)
-        docs = "standard" if st is None or st.robot == "franka" else "assisted"
+        docs = "standard" if st is None or st.robot in ("franka", "aloha") else "assisted"
         if r is None or r.docs != docs and not r.active():
             r = self.runners[uid] = Runner(f"{self.base_url}/s/{self.id}/st/{uid}", self.runs, docs)
             r.on_done = lambda runner, uid=uid: self.record_run(uid, runner)
@@ -637,7 +637,11 @@ class PGHandler(Handler):
         if sim.scene_mode != "free" or uid not in sim.arms:
             self._err("no such station", 404)
             return True
-        self.sim = RobotView(sim, sim.arms[uid])
+        arm = sim.arms[uid]
+        side, _, more = rest.partition("/")
+        if side in getattr(arm, "sides", {}):     # one arm of a two-arm robot: /st/<station>/left/...
+            arm, rest = arm.sides[side], more
+        self.sim = RobotView(sim, arm)
         self.board = self.station_runner(uid).board
         self.path = "/" + rest
         return True
@@ -1055,7 +1059,7 @@ class PGHandler(Handler):
         if not getattr(self, "robot_api", False):
             self.sess.used = time.time()
         # With a robot API running, robot commands are only taken there, with a run token.
-        tail = re.sub(r"^(/s/[^/]+)?(/st/[^/]+)?", "", urllib.parse.urlparse(self.path).path).rstrip("/")
+        tail = re.sub(r"^(/s/[^/]+)?(/st/[^/]+)?(/left|/right)?", "", urllib.parse.urlparse(self.path).path).rstrip("/")
         if ROBOT_API_URL and not getattr(self, "robot_api", False) and tail in RA.ROBOT_COMMANDS:
             return self._err("robot commands go through the robot API, with a run token", 403)
         if urllib.parse.urlparse(self.path).path.endswith("/eval/robot_token/revoke"):
