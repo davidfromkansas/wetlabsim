@@ -58,14 +58,25 @@ li .secondary{flex:none}
 .land-arm{flex:1;min-width:0;height:min(740px,calc(100vh - 120px));display:flex;align-items:center;justify-content:center}
 .land-arm video{height:100%;max-width:100%;object-fit:contain}
 @media (max-width:860px){
-  .land-nav{height:56px;padding:0 16px}
-  .land-hero{flex-direction:column;align-items:stretch;gap:8px;padding:24px 16px 16px}
-  .land-copy{width:auto;gap:16px}
-  .land-copy h1{font-size:38px;line-height:1.08}
-  .land-copy .land-start{align-self:stretch;justify-content:center}
-  .land-ghost{height:44px}
-  .land-arm{height:auto;flex:1;min-height:0}
-  .land-arm video{width:100%;height:auto;max-height:100%}
+  /* Phone: robot fills the top of the screen, headline + Start sit low in thumb reach */
+  .land{height:100vh;height:100dvh;min-height:0;overflow:hidden}
+  .land-hero{flex-direction:column;align-items:stretch;gap:0;padding:0;min-height:0}
+  .land-arm{order:-1;flex:1;min-height:0;height:auto;position:relative;overflow:hidden;
+    -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 10%,#000 78%,transparent 100%);
+            mask-image:linear-gradient(180deg,transparent 0,#000 10%,#000 78%,transparent 100%)}
+  .land-arm video{position:absolute;left:50%;top:52%;width:auto;height:min(118%,112vw);max-width:none;max-height:none;transform:translate(-46%,-50%)}
+  .land-copy{width:auto;gap:20px;padding:0 24px calc(28px + env(safe-area-inset-bottom))}
+  .land-copy h1{font-size:clamp(36px,11vw,48px);line-height:1.04;letter-spacing:-.03em;text-wrap:balance}
+  .land-copy .land-start{align-self:stretch;justify-content:center;height:58px;font-size:17px;padding:0 24px 0 8px;position:relative}
+  .land-copy .land-start .land-play{position:absolute;left:8px;width:42px;height:42px}
+}
+@media (max-width:860px) and (min-aspect-ratio:3/4){
+  /* phone held sideways / small tablets: side by side again */
+  .land{height:auto;min-height:100dvh;overflow:visible}
+  .land-hero{flex-direction:row;align-items:center;gap:24px;padding:16px 24px}
+  .land-arm{order:0;align-self:stretch;-webkit-mask-image:none;mask-image:none}
+  .land-arm video{position:static;transform:none;width:100%;height:100%;object-fit:contain}
+  .land-copy{width:min(360px,45%);padding:0}
 }
 /* Signed in: a faint outline of the Playground while your lab starts */
 .boot{position:fixed;inset:0;display:flex;background:#F4F5F7}
