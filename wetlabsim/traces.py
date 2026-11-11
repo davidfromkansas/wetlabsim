@@ -6,6 +6,8 @@ import json
 import pathlib
 from dataclasses import dataclass
 
+from . import prices
+
 
 @dataclass
 class Step:
@@ -322,7 +324,8 @@ class RunMeta:
         self.output_tokens = 0
         self.cached_tokens = 0      # part of the input read from the provider's cache
         self.cost_usd: float | None = None
-        self._claude_msgs: dict[str, tuple[int, int]] = {}
+        self._claude_msgs: dict[str, tuple] = {}
+        self._final_cost = False
 
     def feed(self, e: dict) -> bool:
         """Update from one transcript event. Returns True if anything changed."""
@@ -336,10 +339,15 @@ class RunMeta:
             if msg.get("id") and u:
                 inp = (u.get("input_tokens") or 0) + (u.get("cache_creation_input_tokens") or 0) \
                     + (u.get("cache_read_input_tokens") or 0)
-                self._claude_msgs[msg["id"]] = (inp, u.get("output_tokens") or 0, u.get("cache_read_input_tokens") or 0)
+                self._claude_msgs[msg["id"]] = (inp, u.get("output_tokens") or 0, u.get("cache_read_input_tokens") or 0,
+                                                prices.anthropic_cost(msg.get("model") or self.model, u))
                 self.input_tokens = sum(m[0] for m in self._claude_msgs.values())
                 self.output_tokens = sum(m[1] for m in self._claude_msgs.values())
                 self.cached_tokens = sum(m[2] for m in self._claude_msgs.values())
+                # A running estimate from list prices, so the cost shows while the run is going;
+                # Claude Code's own total replaces it at the end.
+                if not self._final_cost:
+                    self.cost_usd = round(sum(m[3] for m in self._claude_msgs.values()), 6)
                 return True
         if typ == "result":         # Claude Code's final totals (the per-message counts above are partial)
             u = e.get("usage") or {}
@@ -350,6 +358,7 @@ class RunMeta:
                 self.output_tokens = u.get("output_tokens") or 0
             if e.get("total_cost_usd") is not None:
                 self.cost_usd = float(e["total_cost_usd"])
+                self._final_cost = True
             return True
         if typ == "turn.completed":  # Codex
             u = e.get("usage") or {}

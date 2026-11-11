@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+"""Stand-in for `codex exec --json`: Codex's event format, and real work on the robot."""
+import pathlib, sys
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from _common import out, write_pick, run_pick, think  # noqa: E402
+out({"type": "thread.started", "thread_id": "th1"}); out({"type": "turn.started"})
+think(); out({"type": "item.completed", "item": {"id": "i1", "type": "reasoning", "text": "Plan: look, then write pick.py"}})
+out({"type": "item.completed", "item": {"id": "i2", "type": "mcp_tool_call", "tool": "look", "arguments": {"camera": "overhead"}}})
+think(); write_pick(); out({"type": "item.completed", "item": {"id": "i3", "type": "file_change", "changes": [{"path": "pick.py", "kind": "add"}]}})
+out({"type": "item.started", "item": {"id": "i4", "type": "command_execution", "command": "python pick.py --first"}})
+o, _ = run_pick(True); out({"type": "item.completed", "item": {"id": "i4", "type": "command_execution", "aggregated_output": o}})
+think(); out({"type": "item.started", "item": {"id": "i5", "type": "command_execution", "command": "python pick.py"}})
+o, _ = run_pick(); out({"type": "item.completed", "item": {"id": "i5", "type": "command_execution", "aggregated_output": o}})
+think(); out({"type": "item.completed", "item": {"id": "i6", "type": "agent_message", "text": "DONE: moved it and let go."}})
+out({"type": "turn.completed", "usage": {"input_tokens": 52000, "cached_input_tokens": 40000, "output_tokens": 3100}})

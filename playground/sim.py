@@ -588,7 +588,9 @@ class PlaygroundSim(Sim):
             return {"mode": "free", "objects": items, "paused": self.paused, "selected": self.selected,
                     "time": round(self.d.time, 3), "realtime_factor": round(self.rt_factor, 3),
                     "active": self.active_station,
-                    "robots": [st.as_dict() for st in self.stations]}
+                    "robots": [{**st.as_dict(),
+                                **({"base": [round(float(v), 3) for v in self.arms[st.uid].base_tf()[0]]}
+                                   if st.uid in self.arms else {})} for st in self.stations]}
 
     # ---------------------------------------------------- pause / play
     def play(self):

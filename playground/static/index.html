@@ -2346,7 +2346,7 @@ $('wModel').onchange = renderWet;
   $('modelLogo').src = LOGOS[modelInfo($('model').value).provider] || LOGOS.anthropic;
   // Draw the main view in the page (instant camera); fall back to the server's video.
   try {
-    const m = await import('/pg/static/view3d.js?v=VIEW3D');   // the server puts in the file's hash
+    const m = await import('/pg/static/view3d.js?v=HASH');   // the server puts in the file's hash
     const v = m.start({stage, base: `/s/${SID}`, onReady: () => { $('loading').style.display = 'none'; }});
     if (v) { window.V3 = v; document.body.classList.add('v3'); }
   } catch (e) { console.warn('3D view unavailable, using video', e); }
@@ -2355,5 +2355,6 @@ $('wModel').onchange = renderWet;
   loop();
 })();
 </script>
+<script src="/pg/static/runpanel.js?v=HASH"></script>
 </body>
 </html>

@@ -44,11 +44,14 @@ PAGE = HERE / "static" / "index.html"
 
 
 def _page() -> bytes:
-    """The page, with the 3D view's script named by its content: a browser that cached an older
+    """The page, with the 3D view's scripts named by their content: a browser that cached an older
     view3d.js (an hour, like every static file) loads the new one as soon as it changes."""
     import hashlib
-    v = hashlib.sha1((HERE / "static" / "view3d.js").read_bytes()).hexdigest()[:12]
-    return PAGE.read_bytes().replace(b"/pg/static/view3d.js?v=VIEW3D", f"/pg/static/view3d.js?v={v}".encode())
+    page = PAGE.read_bytes()
+    for name in ("view3d.js", "runpanel.js"):
+        v = hashlib.sha1((HERE / "static" / name).read_bytes()).hexdigest()[:12]
+        page = page.replace(f"/pg/static/{name}?v=HASH".encode(), f"/pg/static/{name}?v={v}".encode())
+    return page
 ROBOT_API_URL = ""      # set when the robot API listener is running (main)
 TIME_LIMIT = 180.0     # seconds: a LIBERO test run that hasn't finished by then is stopped
 # The public site (main --public): Claude (and Devin, with an org key) only, free play only,
@@ -206,6 +209,7 @@ class Runner:
             slot = getattr(self, "slot", None)
             def _ended():
                 proc.wait()
+                self.info["ended"] = time.time()
                 RA.TOKENS.revoke(tok)
                 LABS.free_slot(slot)
                 if self.on_done:
@@ -268,6 +272,57 @@ class Runner:
             return ""
         lines = [l for l in lines if not l.startswith(("Make a video", "Run ", "Done in "))]
         return "\n".join(lines[-6:])[:600]
+
+
+# What a robot is doing now, for the tag over it: the run's newest step, or the arm moving.
+DOING = {"thinks": "thinking", "says": "thinking", "decides": "thinking", "output": "thinking", "tool": "thinking",
+         "runs": "running", "writes": "writing", "reads": "reading", "looks": "looking"}
+
+
+def _run_live(sess: "Session", uid: str) -> dict:
+    """A robot's run as its tag shows it: time, tokens, dollars (when known) and what it is doing."""
+    r = sess.runners.get(uid)
+    if r is None or not r.info:
+        return {}
+    run = r.board.run or {}
+    out = {"tokens": run.get("tokens") or 0, "cost_usd": run.get("cost_usd"), "run_id": run.get("run_id")}
+    if r.active():
+        tr = r.board.trace
+        doing = DOING.get(tr[-1]["kind"], "thinking") if tr else "thinking"
+        arm = sess.sim.arms.get(uid)
+        if arm is not None and arm.motion is not None and not arm.motion.done.is_set():
+            doing = "moving"
+        out["doing"] = doing
+    return out
+
+
+def _run_timeline(sess: "Session", uid: str) -> dict:
+    """A robot's latest run (live or finished) as rows, flags, spend and its result: see
+    wetlabsim/timeline.py. Pictures at any moment come from the robot's camera/<name>.jpg?t=."""
+    from wetlabsim import timeline as TL
+    r = sess.runners.get(uid)
+    run = dict(r.board.run) if r else {}
+    if not run.get("run_id"):
+        return {"ok": False, "error": "this robot has no run yet"}
+    st = r.status()
+    live = bool(st.get("active"))
+    run_dir = r.runs / run["run_id"]
+    arm = sess.sim.arms.get(uid)
+    now = float(sess.sim.d.time)
+    start = float(run.get("sim_start") or now)
+    if live:
+        end = now
+    elif run.get("wall_seconds"):
+        end = start + float(run["wall_seconds"])
+    else:           # stopped before it could write its own record
+        end = min(now, start + max(0.0, r.info.get("ended", time.time()) - r.info.get("started", time.time())))
+    events = None if (not live and (run_dir / "events.json").exists()) else list(arm.events if arm else [])
+    mdl = r.info.get("model") or {}
+    run.update(status="running" if live else st.get("status") or run.get("status"),
+               model_label=mdl.get("label") or run.get("model_label"))
+    tl = TL.for_run_dir(run_dir, events=events, run=run, end=end, live=live)
+    return {"ok": True, **tl, "uid": uid, "run_id": run["run_id"], "sim_start": start,
+            "provider_id": mdl.get("provider"), "error_text": st.get("error_text")}
 
 
 def _runs_page(runs: list[dict], runs_dir: pathlib.Path) -> str:
@@ -763,7 +818,7 @@ class PGHandler(Handler):
         self.wfile.write(body)
 
     def _runs_status(self) -> dict:
-        out = {uid: self.runners[uid].status() for uid in list(self.runners)}
+        out = {uid: {**self.runners[uid].status(), **_run_live(self.sess, uid)} for uid in list(self.runners)}
         for i, q in enumerate(list(QUEUE)):
             if q["session"] == self.sess.id:
                 out[q["station"]] = {"active": False, "queued": i + 1, "task": q["task"], "model": q["model"]}
@@ -928,6 +983,8 @@ class PGHandler(Handler):
                                                "mine": self._owns()}, "stale": LABS.stale(),
                                    "unsent": self.sess.unsent, "share": self._share_info(),
                                    "idle_left": LABS.idle_left()})
+            if p == "/pg/run_timeline":     # a robot's latest run, for the run popup
+                return self._json(_run_timeline(self.sess, qs.get("uid", [""])[0]))
             if p == "/pg/wetlab":
                 return self._json({"tasks": [{"id": t.id, "title": t.title, "prompt": t.prompt,
                                               "needs_answer": t.needs_answer} for t in WT.TASKS.values()],
