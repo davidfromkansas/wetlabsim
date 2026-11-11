@@ -8,6 +8,7 @@ Physics settings (solver, materials) are the robot cell's own (wetlabsim/scene.p
 """
 from __future__ import annotations
 
+import contextvars
 import math
 import re
 import warnings
@@ -19,6 +20,7 @@ import numpy as np
 from wetlabsim import scene as S
 
 from . import catalog
+from . import settings as ST
 
 TABLE_UID = "table"     # (older saved scenes) the one table a robot stood on
 # Kept clear around a robot's base when a station starts with items, or when an arm is swapped in.
@@ -181,17 +183,28 @@ def _xml_attrs(d):
     return S._xml_attrs(d)
 
 
+# The session's scene settings (playground/settings.py) while its lab is built.
+_SETTINGS: contextvars.ContextVar[dict] = contextvars.ContextVar("pg_settings", default={})
+
+
+def prop_class() -> dict:
+    """The objects' material class, with the session's changes."""
+    return ST.material(PROP, "prop", _SETTINGS.get())
+
+
 def _world_xml() -> str:
+    cfg = _SETTINGS.get()
     defaults = ("<default>"
-                + "".join(f'<default class="{n}"><geom {_xml_attrs(p)}/></default>' for n, p in S.MATERIALS.items())
-                + f'<default class="prop"><geom {_xml_attrs(PROP)}/></default>'
-                + f'<default class="furniture"><geom {_xml_attrs(FURNITURE)}/></default>'
+                + "".join(f'<default class="{n}"><geom {_xml_attrs(ST.material(p, n, cfg))}/></default>'
+                          for n, p in S.MATERIALS.items())
+                + f'<default class="prop"><geom {_xml_attrs(prop_class())}/></default>'
+                + f'<default class="furniture"><geom {_xml_attrs(ST.material(FURNITURE, "furniture", cfg))}/></default>'
                 + "</default>")
     return f"""
 <mujoco model="playground">
   <compiler angle="radian" autolimits="true"/>
   <size memory="512M"/>
-  <option {_xml_attrs(OPTION)}><flag {_xml_attrs(S.FLAGS)}/></option>
+  <option {_xml_attrs(ST.option_attrs(OPTION, cfg))}><flag {_xml_attrs(ST.flag_attrs(S.FLAGS, cfg))}/></option>
   {defaults}
   <visual>
     <global offwidth="1920" offheight="1200" azimuth="150" elevation="-25"/>
@@ -640,7 +653,8 @@ def _add_soft(world: mujoco.MjSpec, p: Placed, meta: dict, mat_cache: set):
         shape = f'type="direct" dim="1" point="{pts}" element="{elems}"'
     else:
         shape = f'type="direct" dim="2" point="{pts}" element="{" ".join(str(i) for i in simF.ravel())}"'
-    mu = meta.get("friction") or PROP["friction"][0]
+    prop = prop_class()
+    mu = meta.get("friction") or prop["friction"][0]
     material = (f'<elasticity young="{soft["young"]}" poisson="{soft["poisson"]}" damping="{soft["damping"]}"/>'
                 if soft["kind"] == "solid" else '<edge equality="true"/>')
     child = mujoco.MjSpec.from_string(f"""<mujoco><worldbody>
@@ -648,8 +662,8 @@ def _add_soft(world: mujoco.MjSpec, p: Placed, meta: dict, mat_cache: set):
         <flexcomp name="{p.uid}" {shape} radius="{soft['radius']}" mass="{meta.get('mass') or 0.1}" group="3"
                   rgba="0.6 0.6 0.6 1">
           {material}
-          <contact condim="3" friction="{mu} {PROP['friction'][1]} {PROP['friction'][2]}"
-                   solref="{PROP['solref'][0]} {PROP['solref'][1]}" selfcollide="none"/>
+          <contact condim="3" friction="{mu} {prop['friction'][1]} {prop['friction'][2]}"
+                   solref="{prop['solref'][0]} {prop['solref'][1]}" selfcollide="none"/>
         </flexcomp>
       </body></worldbody></mujoco>""")
     world.attach(child, frame=world.worldbody.add_frame(), prefix="obj_")
@@ -682,8 +696,20 @@ def soft_count(placed: list[Placed]) -> int:
     return sum(1 for p in placed if catalog.item(p.item)["soft"])
 
 
-def build(placed: list[Placed], stations: list[Station]) -> mujoco.MjModel:
-    """Compile the lab: every station (table, robot, cameras) and every placed item."""
+def build(placed: list[Placed], stations: list[Station], settings: dict | None = None) -> mujoco.MjModel:
+    """Compile the lab: every station (table, robot, cameras) and every placed item, with the
+    session's scene settings (playground/settings.py; none: the lab's defaults)."""
+    cfg = settings or {}
+    tok = _SETTINGS.set(cfg)
+    tok2 = S.MATERIAL_CHANGES.set(cfg.get("materials") or {})
+    try:
+        return _build(placed, stations)
+    finally:
+        _SETTINGS.reset(tok)
+        S.MATERIAL_CHANGES.reset(tok2)
+
+
+def _build(placed: list[Placed], stations: list[Station]) -> mujoco.MjModel:
     world = mujoco.MjSpec.from_string(_world_xml())
     cache: set = set()
     for st in stations:

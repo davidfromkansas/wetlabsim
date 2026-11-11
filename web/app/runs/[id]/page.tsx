@@ -30,6 +30,17 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
         {run.cost_usd ? ` · $${Number(run.cost_usd).toFixed(2)}` : ""} · starter kit {run.robot_kit_version}
       </p>
       {run.blob_folder_path && (
+        <div className="card" style={{ marginBottom: 16 }}>
+          <h2>Video</h2>
+          {/* Made by the lab a few minutes after the run; missing for runs from before videos. */}
+          <video controls preload="metadata" src={`/api/runs/${encodeURIComponent(run.run_id)}/video`}
+                 style={{ width: "100%", borderRadius: 8, background: "#F3F4F6", aspectRatio: "16 / 9" }}>
+            This run has no video.
+          </video>
+          <p className="small">This robot&apos;s own cameras: its view of its table, its overhead camera and its wrist camera. If it doesn&apos;t play, the video may still be in the making, or the run is from before videos.</p>
+        </div>
+      )}
+      {run.blob_folder_path && (
         <div className="links small" style={{ marginBottom: 16 }}>
           <a href={file("transcript.jsonl.gz", true)}>Download transcript</a>
           <a href={file("replay.npz", true)}>Download replay</a>

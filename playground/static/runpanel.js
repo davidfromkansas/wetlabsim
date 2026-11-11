@@ -118,15 +118,17 @@ const popCams = (uid) => {
 const TL = {};                 // the latest timeline per robot
 const fetching = {};
 
-async function loadTimeline(uid) {
-  if (fetching[uid]) return TL[uid];
-  fetching[uid] = true;
+// key: the robot (its latest run), or "<robot>#<run id>" for one of its past runs.
+async function loadTimeline(key) {
+  if (fetching[key]) return TL[key];
+  fetching[key] = true;
+  const [uid, run] = key.split('#');
   try {
-    const r = await fetch(U('/pg/run_timeline') + '?uid=' + encodeURIComponent(uid), {headers: {'X-Browser-Id': BID}});
+    const r = await fetch(U('/pg/run_timeline') + '?uid=' + encodeURIComponent(uid) + (run ? '&run=' + encodeURIComponent(run) : ''), {headers: {'X-Browser-Id': BID}});
     const j = await r.json();
-    if (j.ok) TL[uid] = j;
-  } catch (e) { /* the next poll tries again */ } finally { fetching[uid] = false; }
-  return TL[uid];
+    if (j.ok) TL[key] = j;
+  } catch (e) { /* the next poll tries again */ } finally { fetching[key] = false; }
+  return TL[key];
 }
 
 // Where the time went, as one bar: time slices coloured by the busiest thing in each.
@@ -155,8 +157,12 @@ function tagHtml(uid, run, tl) {
   const first = live ? `<span class="dot" style="background:${COLORS[doing] || '#9CA3AF'}"></span><span class="now">${DOING[doing] || 'Starting'}</span>`
     : `<span class="badge${bad ? ' bad' : mid ? ' mid' : ''}">${STATUS[st] || 'Done'}</span>`;
   const bar = tl ? stripSegments(tl, live ? Math.max(limit, secs) : Math.max(secs, 1)) : '';
+  // Repeat runs (more than one): which run this is, and a square per run.
+  const b = run.batch, many = b && b.total > 1 && window.runSquares;
+  const k = many ? Math.min(b.total, b.results.length + (b.finished ? 0 : 1)) : 0;
+  const batch = many ? `<div class="r" style="font-size:12.5px"><b>${b.finished ? `${b.results.filter(x => x === 'succeeded').length} of ${b.results.length} succeeded` : `Run ${k} of ${b.total}`}</b></div>${window.runSquares(b, live, false)}` : '';
   return `<div class="ftab"><img src="${LOGOS[m.provider] || LOGOS.anthropic}" alt="">${esc(m.label || '')}</div>
-    <div class="tbody"><div class="r">${first}<span><b>${fmt(secs)}</b>${live && limit ? ` <span class="mut">/ ${fmt(limit)}</span>` : ''}</span><span style="margin-left:auto"><b>${money}</b></span></div>
+    <div class="tbody">${batch}<div class="r">${first}<span><b>${fmt(secs)}</b>${live && limit ? ` <span class="mut">/ ${fmt(limit)}</span>` : ''}</span><span style="margin-left:auto"><b>${money}</b></span></div>
     <div class="thick" role="img" aria-label="What the robot has been doing over time">${bar}</div></div><div class="pointer"></div>`;
 }
 
@@ -179,7 +185,7 @@ function drawTags() {
         el.onclick = () => openRun(rb.id);
         tagsEl.appendChild(el);
       }
-      const key = JSON.stringify([run.active, run.status, Math.floor(run.elapsed || 0), run.cost_usd, run.tokens, run.doing, TL[rb.id] && TL[rb.id].duration]);
+      const key = JSON.stringify([run.active, run.status, Math.floor(run.elapsed || 0), run.cost_usd, run.tokens, run.doing, TL[rb.id] && TL[rb.id].duration, run.batch]);
       if (el.dataset.key !== key) { el.dataset.key = key; el.innerHTML = tagHtml(rb.id, run, TL[rb.id]); }
       // Keep the whole tag on screen, below the toolbar: when it has to move, it drops its pointer.
       const sw = stage.clientWidth, h = el.offsetHeight, w = el.offsetWidth;
@@ -202,25 +208,25 @@ function drawTags() {
 requestAnimationFrame(drawTags);
 
 // ------------------------------------------------------------------ the popup
-const P = {uid: null, t: null, follow: true, timer: null, pics: null};
-function openRun(uid) {
-  P.uid = uid; P.t = null; P.follow = true;
+const P = {uid: null, key: null, t: null, follow: true, timer: null, pics: null};
+function openRun(uid, runId) {
+  P.uid = uid; P.key = runId ? `${uid}#${runId}` : uid; P.t = null; P.follow = true;
   pop.classList.add('open'); P.opener = document.activeElement;
   card.innerHTML = `<div class="hd"><span class="nm">Loading the run…</span><button class="x" id="rpX" aria-label="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#111827" stroke-width="2" stroke-linecap="round"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>`;
   document.getElementById('rpX').onclick = closeRun;
   refreshRun(true);
   clearInterval(P.timer);
-  P.timer = setInterval(() => { if (TL[P.uid] && TL[P.uid].live) refreshRun(); }, 2000);
+  P.timer = setInterval(() => { if (TL[P.key] && TL[P.key].live) refreshRun(); }, 2000);
 }
 function closeRun() {
-  pop.classList.remove('open'); clearInterval(P.timer); P.uid = null;
+  pop.classList.remove('open'); clearInterval(P.timer); P.uid = null; P.key = null;
   if (P.opener && P.opener.focus) P.opener.focus();
 }
 pop.addEventListener('click', (e) => { if (e.target === pop) closeRun(); });
 window.addEventListener('keydown', (e) => {
   if (!P.uid) return;
   if (e.key === 'Escape') closeRun();
-  const tl = TL[P.uid];
+  const tl = TL[P.key];
   if (tl && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
     P.follow = false; setPlayhead(Math.min(tl.duration, Math.max(0, (P.t || 0) + (e.key === 'ArrowLeft' ? -1 : 1))));
   }
@@ -228,7 +234,7 @@ window.addEventListener('keydown', (e) => {
 window.openRunTimeline = openRun;
 
 async function refreshRun(first) {
-  const tl = await loadTimeline(P.uid);
+  const tl = await loadTimeline(P.key);
   if (!P.uid) return;
   if (!tl) { if (first) card.querySelector('.nm').textContent = 'This robot has no run yet'; return; }
   const sc = card.scrollTop;
@@ -331,7 +337,7 @@ function render(tl) {
 }
 
 function setPlayhead(t, quick) {
-  const tl = TL[P.uid]; if (!tl || !P.geo) return;
+  const tl = TL[P.key]; if (!tl || !P.geo) return;
   const D = Math.max(tl.duration, 0.001);
   P.t = Math.min(Math.max(t, 0), D);
   const ph = document.getElementById('rpPh');
@@ -355,5 +361,5 @@ function setPlayhead(t, quick) {
     }
   }, quick ? 0 : 120);
 }
-window.addEventListener('resize', () => { if (P.uid && TL[P.uid]) render(TL[P.uid]); });
+window.addEventListener('resize', () => { if (P.key && TL[P.key]) render(TL[P.key]); });
 })();

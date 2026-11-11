@@ -46,7 +46,8 @@ image = (
     modal.Image.debian_slim(python_version="3.12")
     # Mesa's software OpenGL behind EGL: MuJoCo renders with no GPU and no display.
     .apt_install("libegl1", "libgl1", "libgles2", "libegl-mesa0", "libgl1-mesa-dri", "libglvnd0",
-                 "poppler-utils")   # pdftotext: Jev reads the robot's datasheets as text
+                 "poppler-utils",   # pdftotext: Jev reads the robot's datasheets as text
+                 "ffmpeg", "fonts-dejavu-core")    # each finished run's video (playground/runvideo.py)
     .pip_install("mujoco>=4.0,<5", "numpy", "pillow", "mcp", "modal")
     .env({"MUJOCO_GL": "egl", "EGL_PLATFORM": "surfaceless", "PYTHONPATH": "/app", "PYTHONUNBUFFERED": "1",
           "WETLAB_MAX_LABS": str(MAX_LABS), "WETLAB_FRONT_URL": FRONT_URL, "WETLAB_MODAL_APP": APP,

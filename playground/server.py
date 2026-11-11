@@ -38,6 +38,7 @@ from wetlabsim import robot_api as RA
 from . import labs as LABS
 from . import savestore as SAVE
 from . import scene3d as S3
+from . import settings as ST
 
 HERE = pathlib.Path(__file__).parent
 PAGE = HERE / "static" / "index.html"
@@ -48,7 +49,7 @@ def _page() -> bytes:
     view3d.js (an hour, like every static file) loads the new one as soon as it changes."""
     import hashlib
     page = PAGE.read_bytes()
-    for name in ("view3d.js", "runpanel.js"):
+    for name in ("view3d.js", "runpanel.js", "scenesettings.js", "results.js"):
         v = hashlib.sha1((HERE / "static" / name).read_bytes()).hexdigest()[:12]
         page = page.replace(f"/pg/static/{name}?v=HASH".encode(), f"/pg/static/{name}?v={v}".encode())
     return page
@@ -296,12 +297,15 @@ def _run_live(sess: "Session", uid: str) -> dict:
     return out
 
 
-def _run_timeline(sess: "Session", uid: str) -> dict:
-    """A robot's latest run (live or finished) as rows, flags, spend and its result: see
-    wetlabsim/timeline.py. Pictures at any moment come from the robot's camera/<name>.jpg?t=."""
+def _run_timeline(sess: "Session", uid: str, run_id: str = "") -> dict:
+    """A robot's latest run (live or finished), or one of its past runs (run_id), as rows,
+    flags, spend and its result: see wetlabsim/timeline.py. Pictures at any moment come from
+    the robot's camera/<name>.jpg?t=."""
     from wetlabsim import timeline as TL
     r = sess.runners.get(uid)
     run = dict(r.board.run) if r else {}
+    if run_id and run_id != run.get("run_id"):
+        return _past_timeline(sess, uid, run_id)
     if not run.get("run_id"):
         return {"ok": False, "error": "this robot has no run yet"}
     st = r.status()
@@ -323,6 +327,99 @@ def _run_timeline(sess: "Session", uid: str) -> dict:
     tl = TL.for_run_dir(run_dir, events=events, run=run, end=end, live=live)
     return {"ok": True, **tl, "uid": uid, "run_id": run["run_id"], "sim_start": start,
             "provider_id": mdl.get("provider"), "error_text": st.get("error_text")}
+
+
+class _Videos:
+    """Each finished run's video (playground/runvideo.py), one at a time, in its own low-priority
+    process, then into the website's private storage with the run's other files."""
+
+    def __init__(self):
+        self.jobs: list = []
+        self.cv = threading.Condition()
+        self.working = False
+        threading.Thread(target=self._loop, daemon=True, name="run-videos").start()
+
+    def busy(self) -> bool:
+        return self.working or bool(self.jobs)
+
+    def add(self, sess, uid, entry, run_dir, cams, title):
+        with self.cv:
+            self.jobs.append((sess, uid, entry, pathlib.Path(run_dir), cams, title))
+            self.cv.notify()
+
+    def _loop(self):
+        while True:
+            with self.cv:
+                while not self.jobs:
+                    self.cv.wait()
+                job = self.jobs.pop(0)
+                self.working = True
+            try:
+                self._make(*job)
+            except Exception as e:  # noqa: BLE001
+                print("could not make a run's video:", e)
+                job[2]["video"] = "failed"
+            finally:
+                self.working = False
+
+    def _make(self, sess, uid, entry, run_dir, cams, title):
+        if not (run_dir / "replay.npz").exists() or not (run_dir / "model.ref").exists():
+            entry["video"] = "failed"
+            return
+        cmd = ["nice", "-n", "19", sys.executable, "-m", "playground.runvideo", str(run_dir), "--title", title[:300]]
+        for cam, label in cams:
+            cmd += ["--cam", f"{cam}={label}"]
+        # Software OpenGL on a lab without a GPU: two of its threads, so the live sim keeps its share.
+        env = dict(os.environ, LP_NUM_THREADS=os.environ.get("LP_NUM_THREADS", "2"))
+        r = subprocess.run(cmd, cwd=str(HERE.parent), env=env, capture_output=True, text=True, timeout=3 * 3600)
+        if r.returncode != 0 or not (run_dir / "video.mp4").exists():
+            print("run video failed:", (r.stderr or r.stdout)[-600:])
+            entry["video"] = "failed"
+            return
+        entry["video"] = "ready"
+        if SAVE.blob_enabled() and sess.db_id:
+            from . import runvideo as RV
+            chunks, man = RV.parts(run_dir / "video.mp4")
+            try:
+                for i, c in enumerate(chunks):
+                    SAVE._upload(entry["run_id"], f"video/part-{i:03d}", c, "application/octet-stream")
+                SAVE._upload(entry["run_id"], "video/manifest.json", json.dumps(man).encode(), "application/json")
+                entry["video_saved"] = True
+            except Exception as e:  # noqa: BLE001
+                print(f"run {entry['run_id']}: could not upload its video:", e)
+
+
+VIDEOS_ON = os.environ.get("WETLAB_RUN_VIDEOS", "1") != "0"
+VIDEOS = _Videos()
+
+
+def _end_reason(status: str, limit, ai_done: bool, batch: dict | None) -> str:
+    """Why a run ended, in plain words (the Results list and its squares)."""
+    if status == "finished":
+        return "The AI finished on its own" + (" and said DONE" if ai_done else ", without saying DONE")
+    if status == "stopped":
+        return "Stopped: you pressed Stop all" if batch and batch.get("cancelled") else "Stopped: you pressed Stop"
+    if status == "time_limit":
+        mins = f" ({float(limit) / 60:g} min)" if limit else ""
+        return f"Cut off: it hit the time limit{mins}"
+    return "Error: the AI could not keep going"
+
+
+def _past_timeline(sess: "Session", uid: str, run_id: str) -> dict:
+    """One of a robot's earlier runs (from its Results list), as _run_timeline shows a run."""
+    from wetlabsim import timeline as TL
+    h = next((x for x in sess.history.get(uid, []) if x.get("run_id") == run_id), None)
+    if h is None or not re.match(r"^[\w.-]{1,120}$", run_id):
+        return {"ok": False, "error": "no such run"}
+    run_dir = sess.runs / run_id
+    run = dict(h.get("run") or {})
+    run.update(run_id=run_id, status=h.get("status"), model_label=h.get("model_label"))
+    start = float(run.get("sim_start") or h.get("sim_start") or 0.0)
+    end = start + float(h.get("seconds") or 0.0)
+    events = None if (run_dir / "events.json").exists() else []
+    tl = TL.for_run_dir(run_dir, events=events, run=run, end=end, live=False)
+    return {"ok": True, **tl, "uid": uid, "run_id": run_id, "sim_start": start,
+            "provider_id": h.get("provider"), "error_text": h.get("error_text")}
 
 
 def _runs_page(runs: list[dict], runs_dir: pathlib.Path) -> str:
@@ -377,6 +474,8 @@ class Session:
         self.runner = Runner(f"{base_url}/s/{sid}", runs)      # LIBERO, Wet Lab: the scene's one robot
         self.board = self.runner.board
         self.runners: dict[str, Runner] = {}                     # free play: one per station
+        self.history: dict[str, list] = {}       # free play: each station's finished runs, oldest first
+        self.batches: dict[str, dict] = {}       # free play: each station's repeat runs (Run task N times)
         self.bench = Bench(sim, self.runner, self, runs / "libero_results.jsonl")
         self.wetbench = WL.WetBench(sim, self.runner, self, runs / "wetlab_results.jsonl")
 
@@ -386,8 +485,77 @@ class Session:
         docs = "standard" if st is None or st.robot in ("franka", "aloha") else "assisted"
         if r is None or r.docs != docs and not r.active():
             r = self.runners[uid] = Runner(f"{self.base_url}/s/{self.id}/st/{uid}", self.runs, docs)
-            r.on_done = lambda runner, uid=uid: self.record_run(uid, runner)
+            r.on_done = lambda runner, uid=uid: self.run_ended(uid, runner)
         return r
+
+    def run_ended(self, uid: str, runner: "Runner"):
+        """A station's run has ended: into its Results list and the website's database, and
+        the next run of its batch (the station put back as it was when the batch started)."""
+        st = runner.status()
+        run = dict(runner.board.run or {})
+        mdl = runner.info.get("model") or {}
+        b = self.batches.get(uid)
+        status = st.get("status") or "error"
+        entry = {"run_id": run.get("run_id") or "", "task": runner.info.get("task", "")[:4000],
+                 "model": mdl.get("id"), "model_label": mdl.get("label"), "provider": mdl.get("provider"),
+                 "status": status, "ok": status == "finished", "started": runner.info.get("started"),
+                 "seconds": round(float(run.get("wall_seconds") or (runner.info.get("ended", time.time())
+                                                                    - runner.info.get("started", time.time()))), 1),
+                 "cost_usd": run.get("cost_usd"), "tokens": run.get("tokens"), "sim_start": run.get("sim_start"),
+                 "error_text": st.get("error_text"),
+                 "run": {k: run.get(k) for k in ("sim_start", "agent", "model", "model_label", "robot", "robot_label",
+                                                 "gripper_label", "task", "time_limit", "cost_usd", "tokens",
+                                                 "wall_seconds", "status") if k in run}}
+        # Did the AI say it was done (its own word, DONE: see wetlabsim/run_agent.py)? And why the
+        # run ended, in plain words, for the Results list.
+        from wetlabsim.timeline import DONE_RE
+        entry["ai_done"] = any(isinstance(x, dict) and x.get("kind") == "says"
+                               and (DONE_RE.search(str(x.get("text", "")))
+                                    or str(x.get("text", "")).startswith("Jev says the task is done"))
+                               for x in list(runner.board.trace))
+        entry["reason"] = _end_reason(status, runner.info.get("time_limit"), entry["ai_done"], b)
+        if b and not b.get("finished"):
+            b["results"].append("succeeded" if entry["ok"] else "failed")
+            entry.update(batch=b["id"], index=len(b["results"]), of=b["total"])
+        if entry["run_id"]:
+            self.history.setdefault(uid, []).append(entry)
+            del self.history[uid][:-200]
+        try:
+            self.record_run(uid, runner)
+        except Exception as e:  # noqa: BLE001
+            print("could not record the run:", e)
+        if entry["run_id"] and VIDEOS_ON:
+            arm, st_ = self.sim.arms.get(uid), self.sim.station(uid)
+            if arm is not None:
+                entry["video"] = "making"
+                cams = [("side", "Scene"), ("overhead", "Overhead camera")] + \
+                    [(k, k.replace("_", " ").capitalize() + " camera") for k in arm.P["cameras"] if "wrist" in k]
+                VIDEOS.add(self, uid, entry, runner.runs / entry["run_id"],
+                           [(arm.P["cameras"][k], lab) for k, lab in cams if k in arm.P["cameras"]],
+                           " · ".join(x for x in ((st_.name if st_ else uid), entry["model_label"] or "",
+                                                  " ".join(entry["task"].split())) if x))
+        if b and not b.get("finished"):
+            self._next_in_batch(uid, b)
+
+    def _next_in_batch(self, uid: str, b: dict):
+        if len(b["results"]) >= b["total"] or b.get("stop_after") or b.get("cancelled"):
+            b["finished"] = True
+            return
+        if self.sim.station(uid) is None or not self.sim.restore_station(b["snap"]):
+            b.update(finished=True, note="the lab changed, so the remaining runs were not started")
+            return
+        with QUEUE_LOCK:
+            QUEUE.append({"session": self.id, "station": uid, "task": b["task"], "model": b["model"],
+                          "limit": b["limit"], "queued": time.time()})
+        _start_queued()
+
+    def batch_status(self, uid: str) -> dict | None:
+        b = self.batches.get(uid)
+        if not b:
+            return None
+        return {"id": b["id"], "total": b["total"], "results": list(b["results"]),
+                "finished": bool(b.get("finished")), "stop_after": bool(b.get("stop_after")),
+                "note": b.get("note", "")}
 
     def record_run(self, uid: str, runner: "Runner"):
         """A finished run, into the website's database: its runs row (which robot, starter kit,
@@ -448,9 +616,11 @@ class Session:
                                  for st in s.stations],
                     "objects": [{"uid": o.uid, "item": o.item, "pos": list(o.pos), "yaw": o.yaw,
                                  "quat": list(o.quat) if o.quat is not None else None} for o in s.placed],
-                    "paused": bool(s.paused)}
+                    "paused": bool(s.paused), "settings": ST.jsonable(s.settings)}
 
     def stop(self):
+        for b in self.batches.values():
+            b["cancelled"] = True
         with QUEUE_LOCK:
             QUEUE[:] = [q for q in QUEUE if q["session"] != self.id]
         self.bench.stop()
@@ -470,6 +640,9 @@ def _snapshot(sess: Session):
     """What autosave keeps of a session: (db id, name, layout, unsent tasks)."""
     layout = sess.layout()
     layout.pop("name", None)
+    # The Results lists (the session's own, so not in layout(): anyone watching may copy that).
+    layout["history"] = {uid: [{k: v for k, v in e.items() if k != "run"} for e in h[-100:]]
+                         for uid, h in sess.history.items()}
     return sess.db_id, sess.name, layout, sess.unsent
 
 
@@ -486,6 +659,14 @@ def _from_row(row: dict) -> Session:
     sess = new_session(ACCOUNT_OWNER, row["session_name"], layout=row["scene_layout"] or {}, db_id=row["session_id"])
     sess.unsent = row["unsent_tasks"] or {}
     sess.share_token = row.get("share_token")
+    hist = (row["scene_layout"] or {}).get("history")
+    if isinstance(hist, dict):
+        sess.history = {str(k): [e for e in v if isinstance(e, dict)] for k, v in hist.items()
+                        if re.match(r"^st\d{1,3}$", str(k)) and isinstance(v, list)}
+        for h in sess.history.values():
+            for e in h:
+                if e.get("video") == "making":      # the lab closed before it was made
+                    e["video"] = "failed"
     if AUTOSAVE:
         AUTOSAVE.seed(*_snapshot(sess))
     return sess
@@ -555,7 +736,12 @@ def new_session(owner: str, name: str | None = None, layout: dict | None = None,
             sim = PlaygroundSim()
         else:
             stations, placed = _world_from_layout(layout)
-            sim = PlaygroundSim(placed=placed, stations=stations)
+            try:
+                cfg = ST.clean((layout or {}).get("settings"))
+            except ValueError as e:
+                print("ignoring a saved session's settings:", e)
+                cfg = {}
+            sim = PlaygroundSim(placed=placed, stations=stations, settings=cfg)
             nums = [int(m.group(1)) for o in placed for m in [re.search(r"_(\d+)$", o.uid)] if m]
             sim._uid = max(nums, default=0)
         log_root = pathlib.Path(os.environ.get("WETLAB_SESSION_DIR") or PGHandler.runs_dir)
@@ -587,6 +773,14 @@ def first_session() -> Session | None:
     return min(live, key=lambda x: x.created) if live else None
 
 
+def _mat_base(cls: str) -> dict:
+    """A material class's own contact numbers in the Playground (before a session's changes)."""
+    from . import world as W
+    from wetlabsim import scene as WS
+    return {"prop": W.PROP, "furniture": W.FURNITURE}.get(cls) or WS.MATERIALS[cls]
+
+
+_LAB_DEFAULTS = None            # the Playground's own settings (an empty lab), for the settings panel
 QUEUE: list[dict] = []          # free-play runs waiting for a free slot, oldest first
 QUEUE_LOCK = threading.Lock()
 
@@ -822,6 +1016,9 @@ class PGHandler(Handler):
         for i, q in enumerate(list(QUEUE)):
             if q["session"] == self.sess.id:
                 out[q["station"]] = {"active": False, "queued": i + 1, "task": q["task"], "model": q["model"]}
+        for uid in list(self.sess.batches):
+            if uid in out:
+                out[uid]["batch"] = self.sess.batch_status(uid)
         return out
 
     def _sessions(self, starter: bool = False) -> dict:
@@ -861,6 +1058,63 @@ class PGHandler(Handler):
                 seen.add((o["url"], o["id"]))
                 uniq.append(o)
         return {"mine": mine, "live": uniq, "max": MAX_SESSIONS, "owner": owner}
+
+    def _send_file(self, path: pathlib.Path, ctype: str):
+        """A file, with byte ranges (a video player seeks with them)."""
+        if not path.is_file():
+            return self._err("not ready", 404)
+        size = path.stat().st_size
+        m = re.match(r"^bytes=(\d*)-(\d*)$", self.headers.get("Range", ""))
+        start, end = 0, size - 1
+        if m and (m.group(1) or m.group(2)):
+            if m.group(1):
+                start = int(m.group(1))
+                end = min(size - 1, int(m.group(2))) if m.group(2) else size - 1
+            else:
+                start = max(0, size - int(m.group(2)))
+            if start > end:
+                self.send_response(416)
+                self.send_header("Content-Range", f"bytes */{size}")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return None
+        with open(path, "rb") as f:
+            f.seek(start)
+            body = f.read(end - start + 1)
+        self.send_response(206 if m and (m.group(1) or m.group(2)) else 200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Accept-Ranges", "bytes")
+        if m and (m.group(1) or m.group(2)):
+            self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+        self.send_header("Cache-Control", "private, max-age=3600")
+        self.end_headers()
+        self.wfile.write(body)
+        return None
+
+    def _settings_info(self) -> dict:
+        """The Scene settings panel: what each setting is now, the Playground's own value, MuJoCo's
+        default, and this session's changes."""
+        global _LAB_DEFAULTS
+        if _LAB_DEFAULTS is None:
+            from . import world as W
+            _LAB_DEFAULTS = ST.read_model(W.build([], []))
+        with self.sim.lock:
+            now = ST.read_model(self.sim.m)
+        cfg = self.sim.settings
+        mats = {c: {**ST.material(_mat_base(c), c, cfg)} for c in ST.MATERIALS}
+        mats = {c: {k: list(v) if isinstance(v, tuple) else v for k, v in d.items() if k in ST.MAT_FIELDS}
+                for c, d in mats.items()}
+        lab_mats = {c: {k: list(v) if isinstance(v, tuple) else v for k, v in _mat_base(c).items() if k in ST.MAT_FIELDS}
+                    for c in ST.MATERIALS}
+        return {"ok": True, "mode": self.sim.scene_mode, "current": {**now, "materials": mats},
+                "playground": {**_LAB_DEFAULTS, "materials": lab_mats}, "mujoco": ST.mujoco_defaults(),
+                "changes": ST.jsonable(cfg),
+                "schema": {"options": [{"name": n, "label": l, "kind": k, "extra": e, "group": g}
+                                       for n, l, k, e, g in ST.OPTIONS],
+                           "enums": ST.ENUMS, "disable": ST.DISABLE, "enable": ST.ENABLE,
+                           "act_groups": ST.ACT_GROUPS, "materials": ST.MATERIALS, "condims": list(ST.CONDIMS)},
+                "doc": ST.DOC}
 
     def _locked(self) -> str:
         if self.sim.scene_mode == "libero":
@@ -983,8 +1237,28 @@ class PGHandler(Handler):
                                                "mine": self._owns()}, "stale": LABS.stale(),
                                    "unsent": self.sess.unsent, "share": self._share_info(),
                                    "idle_left": LABS.idle_left()})
-            if p == "/pg/run_timeline":     # a robot's latest run, for the run popup
-                return self._json(_run_timeline(self.sess, qs.get("uid", [""])[0]))
+            if p == "/pg/run_timeline":     # a robot's latest run (or one of its past runs), for the run popup
+                return self._json(_run_timeline(self.sess, qs.get("uid", [""])[0], qs.get("run", [""])[0]))
+            if p == "/pg/results":          # a robot's finished runs, newest first, for its Results tab
+                uid = qs.get("uid", [""])[0]
+                runs = []
+                for e in reversed(self.sess.history.get(uid, [])):
+                    x = {k: v for k, v in e.items() if k != "run"}
+                    # The video: here while this lab has it, else on the website (saved runs).
+                    if e.get("video") == "ready" and (self.runs_dir / e["run_id"] / "video.mp4").exists():
+                        x["video_url"] = f"/pg/run_video?uid={urllib.parse.quote(uid)}&run={urllib.parse.quote(e['run_id'])}"
+                    elif e.get("video_saved") and SAVE.WEBSITE_URL:
+                        x["video_url"] = f"{SAVE.WEBSITE_URL}/runs/{urllib.parse.quote(e['run_id'])}"
+                    runs.append(x)
+                return self._json({"ok": True, "runs": runs, "batch": self.sess.batch_status(uid)})
+            if p == "/pg/run_video":        # one of a robot's run videos (only runs in its Results list)
+                uid, run_id = qs.get("uid", [""])[0], qs.get("run", [""])[0]
+                if not any(e.get("run_id") == run_id for e in self.sess.history.get(uid, [])) \
+                        or not re.match(r"^[\w.-]{1,120}$", run_id):
+                    return self._err("no such run", 404)
+                return self._send_file(self.runs_dir / run_id / "video.mp4", "video/mp4")
+            if p == "/pg/settings":
+                return self._json(self._settings_info())
             if p == "/pg/wetlab":
                 return self._json({"tasks": [{"id": t.id, "title": t.title, "prompt": t.prompt,
                                               "needs_answer": t.needs_answer} for t in WT.TASKS.values()],
@@ -1251,6 +1525,24 @@ class PGHandler(Handler):
                 self.sess.unsent = {str(k): {"task": str(tasks.get(k, ""))[:8000], "model": str(models.get(k, ""))[:80]}
                                     for k in set(tasks) | set(models) if re.match(r"^st\d{1,3}$", str(k))}
                 return self._json({"ok": True})
+            if p == "/pg/settings":
+                if s.scene_mode != "free":
+                    return self._json({"ok": False, "error": "scene settings are for free play"})
+                with QUEUE_LOCK:
+                    waiting = any(q["session"] == self.sess.id for q in QUEUE)
+                if self._busy() or waiting:
+                    return self._json({"ok": False, "error": "A robot is working on a task. Stop it first to change the scene settings."})
+                try:
+                    cfg = ST.clean(b.get("settings"))
+                except ValueError as e:
+                    return self._json({"ok": False, "error": str(e)})
+                try:
+                    s.apply_settings(cfg)
+                except Exception as e:  # noqa: BLE001    MuJoCo's own words on a combination it refuses
+                    return self._json({"ok": False, "error": f"MuJoCo could not use these settings: {e}"})
+                for b2 in self.sess.batches.values():       # an old batch's start no longer exists
+                    b2["finished"] = True
+                return self._json({"ok": True, **self._settings_info()})
             if p == "/pg/session/rename":
                 name = str(b.get("name", "")).strip()[:60]
                 if name:
@@ -1364,8 +1656,16 @@ class PGHandler(Handler):
                         limit = FREE_TIME_LIMIT          # the site's cap, not the page's say
                     else:
                         limit = float(b.get("time_limit", FREE_TIME_LIMIT))
+                    try:
+                        repeat = max(1, min(30, int(b.get("repeat", 1))))
+                    except (TypeError, ValueError):
+                        repeat = 1
                     s.selected = None
                     s.play()
+                    # Every run of the batch starts from the station as it is now (Run task N times).
+                    self.sess.batches[uid] = {"id": secrets.token_hex(4), "total": repeat, "results": [],
+                                              "task": task[:4000], "model": model, "limit": limit,
+                                              "snap": s.station_snapshot(uid)}
                     job = {"session": self.sess.id, "station": uid, "task": task[:4000], "model": model,
                            "limit": limit, "queued": time.time()}
                     with QUEUE_LOCK:
@@ -1384,7 +1684,15 @@ class PGHandler(Handler):
                 s.pause()
                 return self._json({"ok": True})
             if p == "/pg/stop":
-                if b.get("station"):          # one station's run
+                if b.get("station") and b.get("after_this"):     # let this run finish, start no more
+                    bt = self.sess.batches.get(b["station"])
+                    if bt and not bt.get("finished"):
+                        bt["stop_after"] = True
+                    return self._json({"ok": True})
+                if b.get("station"):          # one station's run (and the rest of its batch)
+                    bt = self.sess.batches.get(b["station"])
+                    if bt:
+                        bt["cancelled"] = True
                     with QUEUE_LOCK:
                         QUEUE[:] = [q for q in QUEUE if not (q["session"] == self.sess.id and q["station"] == b["station"])]
                     r = self.runners.get(b["station"])
@@ -1536,7 +1844,7 @@ def main(argv=None):
                                     "share": f"{SAVE.WEBSITE_URL}/s/{sess.share_token}" if sess.share_token and SAVE.WEBSITE_URL else ""})
             return out
         LABS.start_reporting(live_runs, args.idle_minutes,
-                             lambda: bool(QUEUE) or any(r.active() for r in _all_runners()))
+                             lambda: bool(QUEUE) or VIDEOS.busy() or any(r.active() for r in _all_runners()))
     if args.robot_port:
         global ROBOT_API_URL
         rsrv = ThreadingHTTPServer((args.host, args.robot_port), RobotAPIHandler)
