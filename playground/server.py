@@ -927,6 +927,14 @@ class PGHandler(Handler):
                 out = S3.scene(m, ver)
                 out["floorfx"] = self.sim.scene_mode == "free"      # the Tron floor, drawn by the page
                 return self._json(out)
+            if p.startswith("/pg/skin/"):
+                with self.sim.lock:
+                    data = S3.skin_bin(self.sim.m, int(pathlib.Path(p).stem))
+                hdr = {"Cache-Control": "no-cache"}
+                if "gzip" in self.headers.get("Accept-Encoding", ""):
+                    import gzip
+                    data, hdr["Content-Encoding"] = gzip.compress(data, 5), "gzip"
+                return self._send(200, data, "application/octet-stream", hdr)
             if p.startswith("/pg/mesh/") or p.startswith("/pg/tex/"):
                 m = self.sim.m
                 i = int(pathlib.Path(p).stem)

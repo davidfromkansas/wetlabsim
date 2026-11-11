@@ -184,6 +184,19 @@ def _world_xml() -> str:
 """
 
 
+def _add_materials(world: mujoco.MjSpec, d, prefix: str, meta: dict):
+    for k, v in enumerate(meta["visuals"]):
+        if v.get("texture"):
+            world.add_texture(name=f"{prefix}tex{k}", file=str(d / v["texture"]),
+                              type=mujoco.mjtTexture.mjTEXTURE_2D)
+            mat = world.add_material(name=f"{prefix}mat{k}", rgba=v["rgba"])
+            mat.textures[mujoco.mjtTextureRole.mjTEXROLE_RGB] = f"{prefix}tex{k}"
+        else:
+            world.add_material(name=f"{prefix}mat{k}", rgba=v["rgba"])
+        world.material(f"{prefix}mat{k}").specular = 0.3 if v.get("metallic", 0) > 0.5 else 0.15
+        world.material(f"{prefix}mat{k}").shininess = max(0.05, 1 - v.get("roughness", 0.6))
+
+
 def _add_item(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_cache: set):
     d = catalog.ASSETS / p.item
     prefix = f"{p.item}__"
@@ -191,15 +204,7 @@ def _add_item(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_cac
         mesh_cache.add(p.item)
         for k, v in enumerate(meta["visuals"]):
             world.add_mesh(name=f"{prefix}vis{k}", file=str(d / v["mesh"]))
-            if v.get("texture"):
-                world.add_texture(name=f"{prefix}tex{k}", file=str(d / v["texture"]),
-                                  type=mujoco.mjtTexture.mjTEXTURE_2D)
-                mat = world.add_material(name=f"{prefix}mat{k}", rgba=v["rgba"])
-                mat.textures[mujoco.mjtTextureRole.mjTEXROLE_RGB] = f"{prefix}tex{k}"
-            else:
-                world.add_material(name=f"{prefix}mat{k}", rgba=v["rgba"])
-            world.material(f"{prefix}mat{k}").specular = 0.3 if v.get("metallic", 0) > 0.5 else 0.15
-            world.material(f"{prefix}mat{k}").shininess = max(0.05, 1 - v.get("roughness", 0.6))
+        _add_materials(world, d, prefix, meta)
         for k, c in enumerate(meta["collision_parts"]):
             world.add_mesh(name=f"{prefix}col{k}", file=str(d / c["mesh"]))
     quat = p.quat or yaw_quat(p.yaw)
@@ -254,6 +259,84 @@ def add_station(world: mujoco.MjSpec, st: Station, cache: set):
     S.add_robot(world, st.robot, st.prefix + "robot_mount", st.prefix)
 
 
+def read_obj(path):
+    """Our OBJs (tools/convert_simready.write_obj): v, vt with the same indices, triangles."""
+    V, UV, F = [], [], []
+    with open(path) as f:
+        for line in f:
+            if line.startswith("v "):
+                V.append(line.split()[1:4])
+            elif line.startswith("vt "):
+                UV.append(line.split()[1:3])
+            elif line.startswith("f "):
+                F.append([c.split("/")[0] for c in line.split()[1:4]])
+    return (np.array(V, float).reshape(-1, 3), np.array(UV, float) if UV else None,
+            np.array(F, int).reshape(-1, 3) - 1)
+
+
+def _rot(quat):
+    R = np.zeros(9)
+    mujoco.mju_quat2Mat(R, np.asarray(quat, float))
+    return R.reshape(3, 3)
+
+
+def _add_soft(world: mujoco.MjSpec, p: Placed, meta: dict, mat_cache: set):
+    """A soft item (catalog.SOFT): a MuJoCo flex, its own mesh drawn over it as a skin.
+
+    The flex sits in a body "obj_<uid>" at the item's place; its vertices are bodies
+    "obj_<uid>_<i>" that slide freely. Sheets and shells are 2D flexes (tools/build_soft.py's
+    sim.obj), ropes 1D chains; in both the edges keep their length (edge equality
+    constraints), so cloth folds but doesn't stretch. Contact with everything else uses the
+    item's own friction, as rigid items do; the flex doesn't collide with itself."""
+    d = catalog.ASSETS / p.item
+    soft = meta["soft"]
+    quat = yaw_quat(p.yaw)
+    R, pos = _rot(quat), np.asarray(p.pos, float)
+    simV, _, simF = read_obj(d / soft["sim"])
+    pts = " ".join(f"{v:.6f}" for v in simV.ravel())
+    if soft["kind"] == "rope":
+        elems = " ".join(f"{i} {i + 1}" for i in range(len(simV) - 1))
+        shape = f'type="direct" dim="1" point="{pts}" element="{elems}"'
+    else:
+        shape = f'type="direct" dim="2" point="{pts}" element="{" ".join(str(i) for i in simF.ravel())}"'
+    mu = meta.get("friction") or PROP["friction"][0]
+    child = mujoco.MjSpec.from_string(f"""<mujoco><worldbody>
+      <body name="{p.uid}" pos="{pos[0]:.6f} {pos[1]:.6f} {pos[2]:.6f}" quat="{' '.join(f'{q:.8f}' for q in quat)}">
+        <flexcomp name="{p.uid}" {shape} radius="{soft['radius']}" mass="{meta.get('mass') or 0.1}" group="3"
+                  rgba="0.6 0.6 0.6 1">
+          <edge equality="true"/>
+          <contact condim="3" friction="{mu} {PROP['friction'][1]} {PROP['friction'][2]}"
+                   solref="{PROP['solref'][0]} {PROP['solref'][1]}" selfcollide="none"/>
+        </flexcomp>
+      </body></worldbody></mujoco>""")
+    world.attach(child, frame=world.worldbody.add_frame(), prefix="obj_")
+    prefix = f"{p.item}__"
+    if p.item not in mat_cache:
+        mat_cache.add(p.item)
+        _add_materials(world, d, prefix, meta)
+    simW = simV @ R.T + pos
+    for k, v in enumerate(meta["visuals"]):
+        V, UV, F = read_obj(d / v["mesh"])
+        b = np.load(d / v["bind"])
+        idx, w = b["idx"], b["w"]
+        bones = np.unique(idx[w > 1e-6])
+        vertid, vertweight = [], []
+        for i in bones:
+            rows, cols = np.nonzero((idx == i) & (w > 1e-6))
+            vertid.append(rows.tolist())
+            vertweight.append(w[rows, cols].tolist())
+        world.add_skin(
+            name=f"obj_{p.uid}_skin{k}", material=f"{prefix}mat{k}", group=1,
+            vert=(V @ R.T + pos).ravel().tolist(), face=F.ravel().tolist(),
+            texcoord=(np.c_[UV[:, 0], 1 - UV[:, 1]].ravel().tolist() if UV is not None else []),
+            bodyname=[f"obj_{p.uid}_{i}" for i in bones], bindpos=simW[bones].ravel().tolist(),
+            bindquat=np.tile(quat, len(bones)).tolist(), vertid=vertid, vertweight=vertweight)
+
+
+def soft_count(placed: list[Placed]) -> int:
+    return sum(1 for p in placed if catalog.item(p.item)["soft"])
+
+
 def build(placed: list[Placed], stations: list[Station]) -> mujoco.MjModel:
     """Compile the lab: every station (table, robot, cameras) and every placed item."""
     world = mujoco.MjSpec.from_string(_world_xml())
@@ -262,7 +345,10 @@ def build(placed: list[Placed], stations: list[Station]) -> mujoco.MjModel:
         add_station(world, st, cache)
     for p in placed:
         it = catalog.item(p.item)
-        _add_item(world, p, catalog.meta(p.item), it["fixed"], cache)
+        if it["soft"]:
+            _add_soft(world, p, catalog.meta(p.item), cache)
+        else:
+            _add_item(world, p, catalog.meta(p.item), it["fixed"], cache)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         return world.compile()

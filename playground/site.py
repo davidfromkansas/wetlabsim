@@ -93,7 +93,9 @@ def site_sheet(placed: list[W.Placed], station: W.Station | None = None,
         w, d, h = (round(v * 100, 1) for v in m["size"])
         mass = f", about {m['mass'] * 1000:.0f} g" if m.get("mass") and m["mass"] < 5 else (
             f", about {m['mass']:.1f} kg" if m.get("mass") else "")
-        lines.append(f"- {n} x {it['label'].lower()} ({w} x {d} x {h} cm{mass})")
+        soft = {"sheet": ", soft: a cloth that folds and drapes", "shell": ", soft: limp",
+                "rope": ", soft: bends like a rope"}.get((it["soft"] or {}).get("kind"), "")
+        lines.append(f"- {n} x {it['label'].lower()} ({w} x {d} x {h} cm{mass}{soft})")
     items = ("Things on this table (on the table top or on each other):\n\n"
              + "\n".join(lines)) if lines else "Nothing else is on the table."
     others = [s for s in stations if s.uid != station.uid]

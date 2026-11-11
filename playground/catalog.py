@@ -4,6 +4,8 @@ Every item comes from NVIDIA's SimReady set on Hugging Face (nvidia/simready-ass
 ships with its own MuJoCo physics (mass and collision shape). `hollow` items are containers:
 they collide as convex pieces so things fit inside (see tools/convert_simready.py).
 `fixed` items are furniture: they stand where they are dropped and don't move.
+Items in SOFT are deformable: MuJoCo flexes instead of rigid bodies (see world.py and
+tools/build_soft.py).
 """
 from __future__ import annotations
 
@@ -12,7 +14,7 @@ import pathlib
 
 ASSETS = pathlib.Path(__file__).parent / "assets"
 
-TABS = ["Furniture", "Lab & Medical", "Kitchen", "Bins & Trays", "Toys & Basics"]
+TABS = ["Furniture", "Lab & Medical", "Kitchen", "Bins & Trays", "Toys & Basics", "Soft"]
 
 # id, tab, label, Hugging Face folder, hollow, fixed
 ITEMS = [
@@ -49,7 +51,31 @@ ITEMS = [
     ("golf_ball", "Toys & Basics", "Golf ball", "misc_golfBall_a01", False, False),
     ("rubiks_cube", "Toys & Basics", "Puzzle cube", "toys_rubiksCube_a01", False, False),
     ("pong_ball", "Toys & Basics", "Ping-pong ball", "misc_toy_pongPaddle_ball_a01", False, False),
+    ("cloth", "Soft", "Cleaning cloth", "cleaning_cloth_a01", False, False),
+    ("towel", "Soft", "Microfibre towel", "consumable_microfiber_towel_wrinkled_b01", False, False),
+    ("drape", "Soft", "Surgical drape", "drape_surgical_a01", False, False),
+    ("sample_bag", "Soft", "Sample bag", "medical_sample_bag_a01", False, False),
+    ("glove", "Soft", "Cloth glove", "ppe_gloves_cloth_a01", False, False),
+    ("fuel_hose", "Soft", "Fuel hose", "consumable_hose_fuel_a01", False, False),
+    ("hydraulic_hose", "Soft", "Hydraulic hose", "consumable_hose_hydraulic_a01", False, False),
 ]
+
+# Soft items, by how MuJoCo simulates them (all with the robot cell's implicitfast integrator):
+#   sheet  a single-layer cloth through the item (2D flex): it folds and drapes, and its edges
+#          don't stretch (edge equality constraints); a flat bag is one too;
+#   shell  the item's own surface, simplified (2D flex), the same way: a glove or a bag goes limp;
+#   rope   a chain along the item's centre line (1D flex) whose links don't stretch.
+# The item's own SimReady mesh is drawn over the flex as a MuJoCo skin. `nodes` sets how fine
+# the simulated shape is (each node costs speed); see tools/build_soft.py.
+SOFT = {
+    "cloth": {"kind": "sheet", "nodes": 36},
+    "towel": {"kind": "sheet", "nodes": 42},
+    "drape": {"kind": "sheet", "nodes": 36},
+    "sample_bag": {"kind": "sheet", "nodes": 30},
+    "glove": {"kind": "shell", "nodes": 40},
+    "fuel_hose": {"kind": "rope", "nodes": 20},
+    "hydraulic_hose": {"kind": "rope", "nodes": 20},
+}
 
 # Robot stations: a Menagerie arm (wetlabsim/assets) on its own packing table. Specs are the
 # makers' datasheet figures.
@@ -71,7 +97,8 @@ DEFAULT_TABLE = "table_packing"
 def item(id_: str) -> dict:
     for i, tab, label, hf, hollow, fixed in ITEMS:
         if i == id_:
-            return {"id": i, "tab": tab, "label": label, "hf": hf, "hollow": hollow, "fixed": fixed}
+            return {"id": i, "tab": tab, "label": label, "hf": hf, "hollow": hollow, "fixed": fixed,
+                    "soft": SOFT.get(i)}
     raise KeyError(id_)
 
 
@@ -88,5 +115,6 @@ def available() -> list[dict]:
             m = json.loads(f.read_text())
             out.append({"id": i, "tab": tab, "label": label, "fixed": fixed, "size": m["size"],
                         "mass": m["mass"], "friction": m.get("friction"),
-                        "collision": m.get("collision", ""), "thumb": f"/pg/thumb/{i}.png"})
+                        "collision": m.get("collision", ""), "thumb": f"/pg/thumb/{i}.png",
+                        "soft": i in SOFT})
     return out

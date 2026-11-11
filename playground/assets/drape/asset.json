@@ -1,0 +1,39 @@
+{
+ "source": "drape_surgical_a01",
+ "usd": "sm_drape_surgical_a01_01.usd",
+ "mass": 0.30054,
+ "friction": 0.5,
+ "com": [
+  0.00142,
+  -0.00165,
+  0.02326
+ ],
+ "size": [
+  0.2732,
+  0.212,
+  0.073
+ ],
+ "collision": "cloth (MuJoCo flex, 2D)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png",
+   "bind": "bind_0.npz"
+  }
+ ],
+ "collision_parts": [],
+ "soft": {
+  "kind": "sheet",
+  "radius": 0.002,
+  "sim": "sim.obj",
+  "nodes": 35
+ }
+}
