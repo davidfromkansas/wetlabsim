@@ -8,6 +8,7 @@ out here.
 """
 from __future__ import annotations
 
+import contextvars
 import os
 import pathlib
 import warnings
@@ -153,9 +154,14 @@ def _defaults_xml():
                                   for n, p in MATERIALS.items()) + "</default>")
 
 
+# A playground session's changes to the materials (playground/settings.py), while its lab is
+# built: {material: {condim, friction, solref}}. Empty for the robot cell.
+MATERIAL_CHANGES: contextvars.ContextVar[dict] = contextvars.ContextVar("material_changes", default={})
+
+
 def _set_material(geom, name):
     """Give a geom of an attached robot model the contact properties of a material."""
-    p = MATERIALS[name]
+    p = {**MATERIALS[name], **MATERIAL_CHANGES.get().get(name, {})}
     geom.condim = p["condim"]
     geom.friction = list(p["friction"])
     geom.solref = list(p["solref"])

@@ -65,7 +65,8 @@ def _ray_flex(m, d, f: int, p0, dn):
 
 class PlaygroundSim(Sim):
     def __init__(self, placed: list[W.Placed] | None = None, robot: str = "franka",
-                 stations: list[W.Station] | None = None, **kw):
+                 stations: list[W.Station] | None = None, settings: dict | None = None, **kw):
+        self.settings = settings or {}           # the session's scene settings (playground/settings.py)
         self.placed = placed if placed is not None else W.default_scene()
         self.stations = stations if stations is not None else W.default_stations()
         self._uid = 0
@@ -101,7 +102,7 @@ class PlaygroundSim(Sim):
             m.vis.global_.offwidth = max(m.vis.global_.offwidth, MAX_W)
             m.vis.global_.offheight = max(m.vis.global_.offheight, MAX_H)
             return m
-        return W.build(self.placed, self.stations)
+        return W.build(self.placed, self.stations, self.settings)
 
     def _make_arms(self) -> dict[str, Arm]:
         if self.scene_mode == "free":
@@ -166,6 +167,67 @@ class PlaygroundSim(Sim):
             self._model_ver += 1
             self.reset()
             self.paused = True
+
+    def apply_settings(self, settings: dict):
+        """New scene settings: the lab is compiled with them (first, so a combination MuJoCo
+        refuses changes nothing) and starts over from where everything started."""
+        if self.scene_mode != "free":
+            raise RobotError("scene settings are for free play")
+        m = W.build(self.placed, self.stations, settings)      # raises if MuJoCo refuses them
+        with self.lock:
+            was = self.paused
+            self.settings = settings
+            self.m = m
+            self.d = mujoco.MjData(m)
+            self._cap_rgba0 = {}
+            self._index()
+            self.selected = None
+            self._model_ver += 1
+            self.reset()
+            self.paused = was
+
+    # ------------------------------------------- one station, back to a moment
+    def station_snapshot(self, uid: str) -> dict:
+        """This station's robot and every loose object on its table, as they are now (for
+        repeat runs: each run starts from here; the rest of the lab carries on)."""
+        with self.lock:
+            m, d = self.m, self.d
+            st, arm = self.station(uid), self.arm_of(uid)
+            roots = {int(m.body_rootid[b]) for b in arm.bodies}
+            for p in self.placed:
+                b = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, f"obj_{p.uid}")
+                if b >= 0 and st.holds(float(d.xpos[b][0]), float(d.xpos[b][1]), 0.05):
+                    pre = f"obj_{p.uid}"
+                    roots |= {int(m.body_rootid[k]) for k in range(m.nbody)
+                              if (m.body(k).name == pre or m.body(k).name.startswith(pre + "__"))}
+            qpos, qvel = [], []
+            for j in range(m.njnt):
+                if int(m.body_rootid[m.jnt_bodyid[j]]) not in roots:
+                    continue
+                t = m.jnt_type[j]
+                nq = 7 if t == mujoco.mjtJoint.mjJNT_FREE else 4 if t == mujoco.mjtJoint.mjJNT_BALL else 1
+                nv = 6 if t == mujoco.mjtJoint.mjJNT_FREE else 3 if t == mujoco.mjtJoint.mjJNT_BALL else 1
+                qpos += list(range(m.jnt_qposadr[j], m.jnt_qposadr[j] + nq))
+                qvel += list(range(m.jnt_dofadr[j], m.jnt_dofadr[j] + nv))
+            # Soft objects: their flex vertices' bodies (in the same trees) are covered above.
+            return {"ver": self._model_ver, "uid": uid, "qpos_i": qpos, "qpos": d.qpos[qpos].copy(),
+                    "qvel_i": qvel, "qvel": d.qvel[qvel].copy(), "arm": arm.snapshot()}
+
+    def restore_station(self, snap: dict) -> bool:
+        """Put a station back as station_snapshot saw it. False if the lab has been rebuilt
+        since (its numbering may have changed)."""
+        with self.lock:
+            if snap["ver"] != self._model_ver or self.arms.get(snap["uid"]) is None:
+                return False
+            m, d = self.m, self.d
+            d.qpos[snap["qpos_i"]] = snap["qpos"]
+            d.qvel[snap["qvel_i"]] = 0.0
+            arm = self.arms[snap["uid"]]
+            arm.restore(snap["arm"])
+            arm.reset_state()
+            arm.motion = None
+            mujoco.mj_forward(m, d)
+            return True
 
     def set_libero(self, task_id: str, setup: int = 0):
         t = LB.task(task_id)
@@ -265,7 +327,7 @@ class PlaygroundSim(Sim):
                 self._sync_placed()
             old_d = self.d
             snaps = {uid: a.snapshot() for uid, a in self.arms.items()}
-            m = W.build(self.placed, self.stations)
+            m = W.build(self.placed, self.stations, self.settings)
             d = mujoco.MjData(m)
             self.m, self.d = m, d
             self._index()

@@ -368,6 +368,9 @@ body.fixed .tl{top:12px}
 #datapane{flex:1;display:none;flex-direction:column;gap:12px;min-height:0;overflow:auto;padding:14px 16px}
 body.dataing #datapane{display:flex}
 body.dataing #chatpane,body.dataing #right .freeonly,body.dataing #filespane{display:none!important}
+#resultspane{display:none;flex:1;min-height:0;flex-direction:column;overflow:auto}
+body.resulting #resultspane{display:flex}
+body.resulting #chatpane,body.resulting #right .freeonly,body.resulting #filespane,body.resulting #datapane{display:none!important}
 .dhead{display:flex;align-items:center;gap:8px}.dhead b{flex:1;min-width:0;font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .badge{font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:6px;background:#DCFCE7;color:#166534;white-space:nowrap}
 .badge.stop{background:#FEE2E2;color:#991B1B}
@@ -836,7 +839,9 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
       <button role="tab" id="tabObjects" aria-selected="true" aria-controls="items">Objects</button>
       <button role="tab" id="tabFiles" aria-selected="false" aria-controls="filespane">Files</button>
       <button role="tab" id="tabData" aria-selected="false" aria-controls="datapane">Data</button>
+      <button role="tab" id="tabResults" aria-selected="false" aria-controls="resultspane">Results</button>
     </div>
+    <section id="resultspane" aria-label="This robot's past runs"><div id="results"></div></section>
     <section id="datapane" aria-label="Robot readings">
       <div class="dempty" id="dEmpty" style="display:none">Add a station to see its robot's readings here.</div>
       <div id="dBody" style="display:flex;flex-direction:column;gap:12px">
@@ -869,6 +874,7 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
           <div class="infopop" id="infoPop" role="note" hidden><b>What the AI gets</b><br><span id="infoText"></span></div>
           <label for="task" class="small" style="position:absolute;left:-9999px">Task</label>
           <textarea id="task" rows="3" placeholder="Tell this robot what to do, in plain words. Example: put the apple in the bowl."></textarea>
+          <div class="runs" id="runsRow"><span class="lb">Runs<span>Each run starts from this robot's table as it is now</span></span><div class="step" role="group" aria-label="How many runs"><button type="button" id="runsMinus" aria-label="One fewer run">&#8722;</button><output id="runsN" aria-live="polite">1</output><button type="button" id="runsPlus" aria-label="One more run">+</button></div></div>
           <div class="tcrow"><div class="mdl"><img id="modelLogo" src="/static/anthropic.svg" alt=""><select id="model" aria-label="AI model"></select></div><button class="primary" id="startBtn"><svg width="11" height="11" viewBox="0 0 14 14" fill="#fff" aria-hidden="true"><path d="M3 1.5 L12.5 7 L3 12.5 Z"/></svg>Run task</button></div>
         </div>
       </section>
@@ -1547,7 +1553,7 @@ $('startBtn').onclick = async () => {
     const ok = await askConfirm('Resume the physics world?', `The world is paused. Starting this task will resume physics for the whole lab${n > 1 ? `, so all ${n} robots and every object start moving again` : ''}.`, 'Resume and run task');
     if (!ok) return;
   }
-  const r = await api('/pg/play', {task, model: $('model').value, station});
+  const r = await api('/pg/play', {task, model: $('model').value, station, repeat: window.runsFor ? window.runsFor(station) : 1});
   if (!r.ok) { toast(r.error); return; }
   S.runTask = task; S.follow = true; S.feedKey = ''; setSideTab('chat');
   refresh();
@@ -1565,6 +1571,7 @@ $('tabChat').onclick = () => setSideTab('chat');
 $('tabObjects').onclick = () => setObjects(true);
 $('tabFiles').onclick = () => { setSideTab('files'); pollFiles(); };
 $('tabData').onclick = () => { setSideTab('data'); pollData(); };
+$('tabResults').onclick = () => { setSideTab('results'); if (window.pollResults) window.pollResults(true); };
 function esc(s) { return String(s).replace(/[&<>]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;'}[c])); }
 // The chat: the same rendering as the robot cell's viewer (wetlabsim/viewer.html), rebuilt
 // from the whole trace whenever it grows. It follows new items while you're at the bottom;
@@ -1802,8 +1809,9 @@ function render() {
   document.body.classList.toggle('chatting', !S.fixed && S.sideTab === 'chat');
   document.body.classList.toggle('filing', S.sideTab === 'files');
   document.body.classList.toggle('dataing', S.sideTab === 'data');
+  document.body.classList.toggle('resulting', S.sideTab === 'results');
   document.body.classList.toggle('running', active);
-  for (const [id, t] of [['tabChat', 'chat'], ['tabObjects', 'objects'], ['tabFiles', 'files'], ['tabData', 'data']]) $(id).setAttribute('aria-selected', S.sideTab === t);
+  for (const [id, t] of [['tabChat', 'chat'], ['tabObjects', 'objects'], ['tabFiles', 'files'], ['tabData', 'data'], ['tabResults', 'results']]) $(id).setAttribute('aria-selected', S.sideTab === t);
   if (S.sideTab === 'data') renderData();
   $('libhint').textContent = sc.locked ? 'Pause physics to add or move objects.' : (S.armed ? $('libhint').textContent : LIBHINT);
   $('task').readOnly = active;
@@ -2358,5 +2366,7 @@ $('wModel').onchange = renderWet;
 })();
 </script>
 <script src="/pg/static/runpanel.js?v=HASH"></script>
+<script src="/pg/static/scenesettings.js?v=HASH"></script>
+<script src="/pg/static/results.js?v=HASH"></script>
 </body>
 </html>
