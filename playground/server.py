@@ -698,8 +698,11 @@ class PGHandler(Handler):
         return sess if sess and sess.share_token and tok and secrets.compare_digest(sess.share_token, tok) else None
 
     def _private(self) -> bool:
-        """A signed-in account's lab: only its owner, and share-link viewers of a shared session."""
-        return bool(LABS.OWNER_USER) and not getattr(self, "robot_api", False) and not LABS.owner_ok(self.headers)
+        """A signed-in account's lab: only its owner, and share-link viewers of a shared session.
+        The lab's own run harness (wetlabsim.run_agent) comes in with the lab's eval token, which
+        agents never get."""
+        return (bool(LABS.OWNER_USER) and not getattr(self, "robot_api", False)
+                and not LABS.owner_ok(self.headers) and not self._authed())
 
     def _view_cookie(self) -> str | None:
         """The front's replay viewer: the run this browser's view pass opens (the owner's, or a
