@@ -1,7 +1,7 @@
 """The site sheet an agent gets in the playground: how its robot is installed here.
 
-Like a real lab's site sheet it says how the robot is mounted and which cameras it has,
-and names the things on the table, but never where they are: the agent finds them with
+Like a real lab's site sheet it says how the robot is mounted and which cameras it has.
+It says nothing about what is on the table or in the room: the agent finds that out with
 its cameras.
 """
 from __future__ import annotations
@@ -39,10 +39,6 @@ calibration is in `cameras.json`:
 Poses use OpenCV camera axes (x right, y down, z forward); `rotation` maps camera
 coordinates into the named frame. The lenses have no distortion.
 
-## What's here
-
-{items}
-{others}
 ## Start state
 
 At the start of a run the arm is at joint angles
@@ -73,41 +69,17 @@ TABLES = {"table": "a heavy-duty packing table", "wetlab": "a stainless steel la
 
 def site_sheet(placed: list[W.Placed], station: W.Station | None = None,
                stations: list[W.Station] | None = None) -> str:
-    """The sheet for one station's robot. Things on its table are listed as on the table;
-    the rest of the lab is described only in outline."""
+    """The sheet for one station's robot. Nothing about the objects or the rest of the lab:
+    the agent sees those with its cameras. `placed` and `stations` are kept for callers."""
     from wetlabsim import scene as WS
     station = station or W.default_stations()[0]
-    stations = stations or [station]
     sx, sy = station.footprint()
     top = station.top
     rx, ry = station.robot_xy
     P = WS.ROBOTS[station.robot]
-    lines = []
-    counts: dict[str, int] = {}
-    for p in placed:
-        if not station.holds(p.pos[0], p.pos[1]):
-            continue
-        counts[p.item] = counts.get(p.item, 0) + 1
-    for item, n in counts.items():
-        it, m = catalog.item(item), catalog.meta(item)
-        w, d, h = (round(v * 100, 1) for v in m["size"])
-        mass = f", about {m['mass'] * 1000:.0f} g" if m.get("mass") and m["mass"] < 5 else (
-            f", about {m['mass']:.1f} kg" if m.get("mass") else "")
-        soft = {"sheet": ", soft: a cloth that folds and drapes", "shell": ", soft: limp",
-                "rope": ", soft: bends like a rope"}.get((it["soft"] or {}).get("kind"), "")
-        lines.append(f"- {n} x {it['label'].lower()} ({w} x {d} x {h} cm{mass}{soft})")
-    items = ("Things on this table (on the table top or on each other):\n\n"
-             + "\n".join(lines)) if lines else "Nothing else is on the table."
-    others = [s for s in stations if s.uid != station.uid]
-    other = ""
-    if others:
-        names = ", ".join(f"a {WS.ROBOTS[s.robot]['name']}" for s in others)
-        other = (f"\nThis room has {len(others)} other robot station(s) ({names}), each on its own table. "
-                 "Other agents may be working at them at the same time. Your robot can only be "
-                 "commanded through your own interface.\n")
     tw, td, _ = catalog.meta(station.table_item)["size"]
     return TEMPLATE.format(top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100,
                            d_cm=min(tw, td) * 100, x0=-sx / 2 - rx, x1=sx / 2 - rx, y0=-sy / 2 - ry,
-                           y1=sy / 2 - ry, items=items, others=other, robot_name=P["name"],
+                           y1=sy / 2 - ry, robot_name=P["name"],
                            tool=TOOL[station.robot], hand=HAND[station.robot],
                            ready="[" + ", ".join(f"{v:g}" for v in P["ready_q"]) + "]")
