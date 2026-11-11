@@ -12,12 +12,15 @@ import json
 import pathlib
 import urllib.request
 
-REPO = "https://huggingface.co/datasets/nvidia/simready-assets"
-API = "https://huggingface.co/api/datasets/nvidia/simready-assets/tree/main/"
+# Where assets come from: NVIDIA's SimReady set, and Tripo's SimReady assets (the same packaging
+# under usd/ instead of simready_usd/, with jointed parts).
+REPOS = {"nvidia": "nvidia/simready-assets", "tripo": "VAST-AI/Tripo-Simready-Assets"}
+REPO = "https://huggingface.co/datasets/" + REPOS["nvidia"]
 
 
-def _list(folder: str) -> list[dict]:
-    with urllib.request.urlopen(API + folder + "?recursive=true", timeout=60) as r:
+def _list(folder: str, repo: str = "nvidia") -> list[dict]:
+    api = f"https://huggingface.co/api/datasets/{REPOS[repo]}/tree/main/"
+    with urllib.request.urlopen(api + folder + "?recursive=true", timeout=60) as r:
         return json.load(r)
 
 
@@ -26,20 +29,20 @@ def wanted(path: str) -> bool:
         return False
     if "/.thumbs/" in path:
         return path.endswith(("_transparent.png", ".usd.png", ".usda.png")) and "/256x256/" in path \
-            and "simready_usd/.thumbs" in path
-    return "/simready_usd/" in path or path.endswith("LICENSE.txt")
+            and ("simready_usd/.thumbs" in path or "/usd/.thumbs" in path)
+    return "/simready_usd/" in path or "/usd/" in path or path.endswith("LICENSE.txt")
 
 
-def fetch(folder: str, out: pathlib.Path) -> pathlib.Path:
+def fetch(folder: str, out: pathlib.Path, repo: str = "nvidia") -> pathlib.Path:
     dest = out / folder
-    for f in _list(folder):
+    for f in _list(folder, repo):
         if f.get("type") != "file" or not wanted(f["path"]):
             continue
         target = out / f["path"]
         if target.exists() and target.stat().st_size == f.get("size"):
             continue
         target.parent.mkdir(parents=True, exist_ok=True)
-        with urllib.request.urlopen(f"{REPO}/resolve/main/{f['path']}", timeout=120) as r:
+        with urllib.request.urlopen(f"https://huggingface.co/datasets/{REPOS[repo]}/resolve/main/{f['path']}", timeout=120) as r:
             target.write_bytes(r.read())
     return dest
 

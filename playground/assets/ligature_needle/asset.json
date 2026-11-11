@@ -1,0 +1,37 @@
+{
+ "source": "instrument_ligature_needle_a01",
+ "usd": "sm_instrument_ligature_needle_a01_01.usd",
+ "mass": 0.1653,
+ "friction": 0.3,
+ "com": [
+  0.0815,
+  0.00406,
+  0.00955
+ ],
+ "size": [
+  0.2186,
+  0.0236,
+  0.0221
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 3.504089852404565e-05
+  }
+ ]
+}

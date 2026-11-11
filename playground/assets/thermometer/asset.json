@@ -3,80 +3,140 @@
  "usd": "sm_thermometer_fever_a01_01.usd",
  "mass": 0.05713,
  "friction": 0.4,
- "com": [
-  -0.03745,
-  -3e-05,
-  0.0427
- ],
+ "com": null,
  "size": [
   0.1496,
   0.0375,
   0.0487
  ],
- "collision": "convex hull (as the asset specifies)",
- "visuals": [
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
   {
-   "mesh": "vis_0.obj",
-   "rgba": [
-    1.0,
-    1.0,
-    1.0,
-    1.0
+   "name": "thermometer_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.0529,
+      0.0529,
+      0.0529,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      0.5271,
+      0.5271,
+      0.5271,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_2.obj",
+     "rgba": [
+      0.2056,
+      0.2111,
+      0.2051,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_3.obj",
+     "rgba": [
+      0.8635,
+      0.8625,
+      0.8589,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
    ],
-   "roughness": 0.6,
-   "metallic": 0.0
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.00014818516605817533
+    }
+   ],
+   "mass": 0.049868,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -0.022857,
+    0.001569,
+    0.027121
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.022857,
+    0.001569,
+    0.027121,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
   },
   {
-   "mesh": "vis_1.obj",
-   "rgba": [
-    0.0529,
-    0.0529,
-    0.0529,
-    1.0
+   "name": "thermometer_glass_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
    ],
-   "roughness": 0.6,
-   "metallic": 0.0
-  },
-  {
-   "mesh": "vis_2.obj",
-   "rgba": [
-    0.5271,
-    0.5271,
-    0.5271,
-    1.0
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 2.1594523702358765e-07
+    }
    ],
-   "roughness": 0.6,
-   "metallic": 0.0
-  },
-  {
-   "mesh": "vis_3.obj",
-   "rgba": [
-    1.0,
-    1.0,
-    1.0,
-    1.0
+   "mass": 0.007263,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    -0.022857,
+    0.001569,
+    0.027121
    ],
-   "roughness": 0.6,
-   "metallic": 0.0,
-   "texture": "tex_3.png"
-  },
-  {
-   "mesh": "vis_4.obj",
-   "rgba": [
+   "quat": [
     1.0,
-    1.0,
-    1.0,
-    1.0
+    0.0,
+    0.0,
+    0.0
    ],
-   "roughness": 0.6,
-   "metallic": 0.0,
-   "texture": "tex_4.png"
+   "frame": [
+    -0.022857,
+    0.001569,
+    0.027121,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
   }
  ],
- "collision_parts": [
-  {
-   "mesh": "col_0.obj",
-   "volume": 0.00014818516605817533
-  }
- ]
+ "unstated_mass": []
 }

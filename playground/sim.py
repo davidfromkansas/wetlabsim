@@ -148,6 +148,8 @@ class PlaygroundSim(Sim):
         self.flex_uid = {}
         for p in self.placed:
             self.body_uid[m.body(f"obj_{p.uid}").id] = p.uid
+            for b in W.part_bodies(m, p.uid):         # a jointed item's other parts
+                self.body_uid[b] = p.uid
             f = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_FLEX, f"obj_{p.uid}")
             if f >= 0:
                 self.flex_uid[f] = p.uid
@@ -242,6 +244,8 @@ class PlaygroundSim(Sim):
             if b >= 0 and m.body_jntnum[b]:
                 p.pos = tuple(float(v) for v in d.xpos[b])
                 p.quat = tuple(float(v) for v in d.xquat[b])
+            if b >= 0:
+                W.save_parts(m, d, p, b)
 
     def _soft_lift(self, p: W.Placed) -> float:
         """How far above a soft object's place its simulated shape starts (a sheet lies through
@@ -264,6 +268,8 @@ class PlaygroundSim(Sim):
             d = mujoco.MjData(m)
             self.m, self.d = m, d
             self._index()
+            for p in self.placed:
+                W.restore_joints(m, d, p)
             for uid, a in self.arms.items():
                 if uid in snaps:
                     a.restore(snaps[uid])
@@ -661,6 +667,16 @@ class PlaygroundSim(Sim):
             dist = mujoco.mj_ray(self.m, self.d, np.asarray(p0, float), np.asarray(d, float),
                                  np.array([1, 1, 1, 0, 0, 0], np.uint8), 1, exclude_body, gid)
             body = int(self.m.geom_bodyid[gid[0]]) if dist >= 0 else -1
+            # the excluded object's other parts (a lid, a door) don't count either
+            own = getattr(self, "body_uid", {}).get(exclude_body)
+            skipped = 0.0
+            while own is not None and dist >= 0 and self.body_uid.get(body) == own:
+                skipped += dist + 1e-4
+                dist = mujoco.mj_ray(self.m, self.d, np.asarray(p0, float) + skipped * np.asarray(d, float),
+                                     np.asarray(d, float), np.array([1, 1, 1, 0, 0, 0], np.uint8), 1, body, gid)
+                body = int(self.m.geom_bodyid[gid[0]]) if dist >= 0 else -1
+            if dist >= 0:
+                dist += skipped
             # mj_ray sees geoms only; a soft object is hit where the ray passes close to its shape.
             dn = np.asarray(d, float) / np.linalg.norm(d)
             for f, uid in getattr(self, "flex_uid", {}).items():

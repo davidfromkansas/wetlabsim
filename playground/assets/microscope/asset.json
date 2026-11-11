@@ -1,0 +1,1037 @@
+{
+ "source": "compound_microscope_N06",
+ "usd": "compound_microscope_N06.usda",
+ "mass": 6.87198,
+ "friction": 1.0,
+ "com": null,
+ "size": [
+  0.2234,
+  0.2326,
+  0.383
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "body",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_2.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_3.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_4.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_5.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_6.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_7.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_8.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_9.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_10.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_11.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 4.625621807834738e-06
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 5.338165753660528e-06
+    },
+    {
+     "mesh": "b0_col_2.obj",
+     "volume": 5.338165753660528e-06
+    },
+    {
+     "mesh": "b0_col_3.obj",
+     "volume": 5.338165753660528e-06
+    },
+    {
+     "mesh": "b0_col_4.obj",
+     "volume": 5.338165753660527e-06
+    }
+   ],
+   "mass": 5.52977,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.01579,
+    0.079695,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.01579,
+    0.079695,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "condenser",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b1_vis_1.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 1.9465475021093035e-05
+    },
+    {
+     "mesh": "b1_col_1.obj",
+     "volume": 2.1069663823886722e-07
+    }
+   ],
+   "mass": 0.068395,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "condenser",
+    "type": "slide",
+    "range": [
+     0.0,
+     0.024
+    ],
+    "damping": 2.0,
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.0,
+    -0.04,
+    0.102904
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.01579,
+    0.039695,
+    0.102904,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "focus",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b2_vis_1.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b2_vis_2.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b2_vis_3.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b2_vis_4.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b2_vis_5.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b2_vis_6.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b2_vis_7.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 6.317501905783462e-06
+    },
+    {
+     "mesh": "b2_col_1.obj",
+     "volume": 7.074214831825931e-06
+    },
+    {
+     "mesh": "b2_col_2.obj",
+     "volume": 3.757380287679941e-06
+    },
+    {
+     "mesh": "b2_col_3.obj",
+     "volume": 3.75738028767994e-06
+    },
+    {
+     "mesh": "b2_col_4.obj",
+     "volume": 1.1199367648811106e-05
+    },
+    {
+     "mesh": "b2_col_5.obj",
+     "volume": 1.1199367648811111e-05
+    },
+    {
+     "mesh": "b2_col_6.obj",
+     "volume": 5.828168089730382e-06
+    },
+    {
+     "mesh": "b2_col_7.obj",
+     "volume": 5.82816808973038e-06
+    }
+   ],
+   "mass": 0.338941,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "focus",
+    "type": "slide",
+    "range": [
+     0.0,
+     0.012
+    ],
+    "damping": 4.0,
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.0,
+    -0.144,
+    0.161904
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.01579,
+    -0.064305,
+    0.161904,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "stage_x",
+   "visuals": [
+    {
+     "mesh": "b3_vis_0.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b3_vis_1.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b3_vis_2.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b3_vis_3.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b3_vis_4.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b3_vis_5.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b3_col_0.obj",
+     "volume": 0.00014966175186567407
+    },
+    {
+     "mesh": "b3_col_1.obj",
+     "volume": 1.3048779242377279e-05
+    },
+    {
+     "mesh": "b3_col_2.obj",
+     "volume": 7.0457647155781605e-06
+    },
+    {
+     "mesh": "b3_col_3.obj",
+     "volume": 3.5947844105384862e-06
+    }
+   ],
+   "mass": 0.538508,
+   "parent": 2,
+   "collide": false,
+   "joint": {
+    "name": "stage_x",
+    "type": "slide",
+    "range": [
+     0.0,
+     0.075
+    ],
+    "damping": 2.4,
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.104,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.01579,
+    0.039695,
+    0.161904,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "stage_y",
+   "visuals": [
+    {
+     "mesh": "b4_vis_0.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b4_vis_1.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b4_vis_2.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b4_vis_3.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b4_col_0.obj",
+     "volume": 8.10222916474692e-07
+    },
+    {
+     "mesh": "b4_col_1.obj",
+     "volume": 8.10222916474692e-07
+    },
+    {
+     "mesh": "b4_col_2.obj",
+     "volume": 1.3901619628770972e-06
+    },
+    {
+     "mesh": "b4_col_3.obj",
+     "volume": 1.3901619628770972e-06
+    }
+   ],
+   "mass": 0.03606,
+   "parent": 3,
+   "collide": false,
+   "joint": {
+    "name": "stage_y",
+    "type": "slide",
+    "range": [
+     0.0,
+     0.0495
+    ],
+    "damping": 2.4,
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     1.0,
+     0.0
+    ]
+   },
+   "pos": [
+    -0.0375,
+    -0.02475,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.02171,
+    0.014945,
+    0.161904,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "clip",
+   "visuals": [
+    {
+     "mesh": "b5_vis_0.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b5_vis_1.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b5_col_0.obj",
+     "volume": 7.225899538862369e-07
+    },
+    {
+     "mesh": "b5_col_1.obj",
+     "volume": 6.291591136248094e-07
+    }
+   ],
+   "mass": 0.007945,
+   "parent": 4,
+   "collide": false,
+   "joint": {
+    "name": "clip",
+    "type": "hinge",
+    "range": [
+     0.0,
+     0.453786
+    ],
+    "damping": 0.4,
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.0392,
+    -0.014,
+    0.007
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.01749,
+    0.000945,
+    0.168904,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "head",
+   "visuals": [
+    {
+     "mesh": "b6_vis_0.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b6_vis_1.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b6_vis_2.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b6_vis_3.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b6_vis_4.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b6_vis_5.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b6_vis_6.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b6_col_0.obj",
+     "volume": 0.00010477270378322864
+    },
+    {
+     "mesh": "b6_col_1.obj",
+     "volume": 3.192653553771381e-05
+    },
+    {
+     "mesh": "b6_col_2.obj",
+     "volume": 1.3388383830000183e-05
+    },
+    {
+     "mesh": "b6_col_3.obj",
+     "volume": 3.19265355377138e-05
+    },
+    {
+     "mesh": "b6_col_4.obj",
+     "volume": 1.3388383830000186e-05
+    }
+   ],
+   "mass": 0.21609,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "head",
+    "type": "hinge",
+    "range": [
+     0.0,
+     6.283185
+    ],
+    "damping": 0.8,
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.0,
+    -0.04,
+    0.293232
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.01579,
+    0.039695,
+    0.293232,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "nosepiece",
+   "visuals": [
+    {
+     "mesh": "b7_vis_0.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b7_vis_1.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b7_vis_2.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b7_vis_3.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b7_vis_4.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b7_col_0.obj",
+     "volume": 2.857280086304203e-05
+    },
+    {
+     "mesh": "b7_col_1.obj",
+     "volume": 2.8438980262199218e-06
+    },
+    {
+     "mesh": "b7_col_2.obj",
+     "volume": 2.8438980262199226e-06
+    },
+    {
+     "mesh": "b7_col_3.obj",
+     "volume": 2.8438980262199218e-06
+    },
+    {
+     "mesh": "b7_col_4.obj",
+     "volume": 2.8438980262199213e-06
+    }
+   ],
+   "mass": 0.136267,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "nosepiece",
+    "type": "hinge",
+    "range": [
+     0.0,
+     6.283185
+    ],
+    "damping": 0.5,
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.0,
+    -0.04,
+    0.231904
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.01579,
+    0.039695,
+    0.231904,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

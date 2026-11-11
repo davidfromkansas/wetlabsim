@@ -1,0 +1,155 @@
+{
+ "source": "ppe_eyeProtection_goggles_a01",
+ "usd": "sm_ppe_eyeProtection_goggles_a01_01.usd",
+ "mass": 0.44826,
+ "friction": 0.8,
+ "com": null,
+ "size": [
+  0.1082,
+  0.1657,
+  0.0733
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "frame_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.4917,
+      0.2619,
+      0.2624,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.0005918378854168125
+    }
+   ],
+   "mass": 0.102124,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.011061,
+    0.000499,
+    0.035878
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.011061,
+    0.000499,
+    0.035878,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "strap_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.4917,
+      0.2619,
+      0.2624,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 0.0001234509148554194
+    }
+   ],
+   "mass": 0.102939,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    -0.01411,
+    0.000499,
+    0.035166
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.01411,
+    0.000499,
+    0.035166,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "visor_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.8,
+      0.8,
+      0.8,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 0.0001963512704515813
+    }
+   ],
+   "mass": 0.2432,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    0.033249,
+    0.000499,
+    0.039533
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.033249,
+    0.000499,
+    0.039533,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

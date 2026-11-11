@@ -1,0 +1,121 @@
+{
+ "source": "blood_bag_a01",
+ "usd": "sm_blood_bag_a01_01.usd",
+ "mass": 0.4,
+ "friction": 0.5,
+ "com": null,
+ "size": [
+  0.2643,
+  0.1752,
+  0.046
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "bag_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.001173174947262808
+    }
+   ],
+   "mass": 0.1,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.007614,
+    0.0,
+    -0.000918
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.007614,
+    0.0,
+    -0.000918,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "blood_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.0212,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b1_vis_1.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_1.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 0.001008590827911554
+    }
+   ],
+   "mass": 0.3,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    0.007614,
+    0.0,
+    -0.000918
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.007614,
+    0.0,
+    -0.000918,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

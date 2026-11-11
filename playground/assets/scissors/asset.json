@@ -1,0 +1,128 @@
+{
+ "source": "instrument_scissors_a01",
+ "usd": "sm_instrument_scissors_a01_01.usd",
+ "mass": 0.191,
+ "friction": 0.3,
+ "com": null,
+ "size": [
+  0.1719,
+  0.049,
+  0.0048
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "scissors_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 8.231734806387186e-06
+    }
+   ],
+   "mass": 0.095011,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.022911,
+    0.000232,
+    0.002512
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.022911,
+    0.000232,
+    0.002512,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "scissors_02_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 9.860325957684173e-06
+    }
+   ],
+   "mass": 0.095991,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_scissors_02_joint_00",
+    "type": "hinge",
+    "range": [
+     0.0,
+     2.268928
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.022911,
+    0.000232,
+    0.002512,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}
