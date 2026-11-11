@@ -421,6 +421,21 @@
      0.20571
     ],
     "damping": 6.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -480,6 +495,21 @@
      0.20571
     ],
     "damping": 6.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -539,6 +569,21 @@
      0.20571
     ],
     "damping": 6.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -598,6 +643,21 @@
      0.14145
     ],
     "damping": 6.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -703,7 +763,13 @@
    "collision_parts": [
     {
      "mesh": "b5_col_0.obj",
-     "volume": 5.368988428509335e-05
+     "volume": 5.368988428509335e-05,
+     "friction": 0.55,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     }
    ],
    "mass": 1.738686,
@@ -717,6 +783,21 @@
      0.20387
     ],
     "damping": 8.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -822,7 +903,13 @@
    "collision_parts": [
     {
      "mesh": "b6_col_0.obj",
-     "volume": 5.368988428509334e-05
+     "volume": 5.368988428509334e-05,
+     "friction": 0.55,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     }
    ],
    "mass": 1.738686,
@@ -836,6 +923,21 @@
      0.19621
     ],
     "damping": 8.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -1029,7 +1131,13 @@
    "collision_parts": [
     {
      "mesh": "b7_col_0.obj",
-     "volume": 2.3470170088782567e-05
+     "volume": 2.3470170088782567e-05,
+     "friction": 0.6,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     }
    ],
    "mass": 9.363601,
@@ -1043,6 +1151,21 @@
      2.268928
     ],
     "damping": 0.289681,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -1168,6 +1291,21 @@
      0.055
     ],
     "damping": 3.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -1293,6 +1431,21 @@
      0.055
     ],
     "damping": 3.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -1418,6 +1571,21 @@
      0.055
     ],
     "damping": 3.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -1478,6 +1646,21 @@
     ],
     "damping": 0.25,
     "stiffness": 2.5,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -1581,6 +1764,21 @@
      2.268928
     ],
     "damping": 0.673624,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -1706,6 +1904,21 @@
      0.055
     ],
     "damping": 3.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -1831,6 +2044,21 @@
      0.055
     ],
     "damping": 3.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -1956,6 +2184,21 @@
      0.055
     ],
     "damping": 3.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -2081,6 +2324,21 @@
      0.055
     ],
     "damping": 3.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -2184,6 +2442,21 @@
      0.1725
     ],
     "damping": 5.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -2243,6 +2516,21 @@
      0.165025
     ],
     "damping": 6.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -2302,6 +2590,21 @@
      0.165025
     ],
     "damping": 6.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -2361,6 +2664,21 @@
      0.165025
     ],
     "damping": 6.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -2420,6 +2738,21 @@
      0.165025
     ],
     "damping": 6.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -2453,5 +2786,67 @@
    ]
   }
  ],
- "unstated_mass": []
+ "unstated_mass": [],
+ "tendons": [
+  {
+   "name": "tn__mechdoor_freezer_closewell_Xe0N",
+   "type": "fixed",
+   "joints": [
+    "door_freezer_hinge"
+   ],
+   "coef": [
+    1.0
+   ],
+   "stiffness": -2.42906,
+   "springlength": [
+    0.50346,
+    1000.0
+   ]
+  },
+  {
+   "name": "tn__mechdoor_fresh_closewell_Wb0L",
+   "type": "fixed",
+   "joints": [
+    "door_fresh_hinge"
+   ],
+   "coef": [
+    1.0
+   ],
+   "stiffness": -7.15293,
+   "springlength": [
+    0.376698,
+    1000.0
+   ]
+  },
+  {
+   "name": "tn__mechdoor_freezer_sealwell_mc0M",
+   "type": "fixed",
+   "joints": [
+    "door_freezer_hinge"
+   ],
+   "coef": [
+    1.0
+   ],
+   "stiffness": -169.917,
+   "springlength": [
+    0.0349066,
+    1000.0
+   ]
+  },
+  {
+   "name": "tn__mechdoor_fresh_sealwell_lZ0K",
+   "type": "fixed",
+   "joints": [
+    "door_fresh_hinge"
+   ],
+   "coef": [
+    1.0
+   ],
+   "stiffness": -209.758,
+   "springlength": [
+    0.0349066,
+    1000.0
+   ]
+  }
+ ]
 }

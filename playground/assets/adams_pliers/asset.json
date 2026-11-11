@@ -32,10 +32,31 @@
    "collision_parts": [
     {
      "mesh": "b0_col_0.obj",
-     "volume": 6.9667949513853635e-06
+     "volume": 6.9667949513853635e-06,
+     "friction": 0.3,
+     "restitution": 0.1
     }
    ],
    "mass": 0.068683,
+   "inertial": {
+    "mass": 0.068683,
+    "pos": [
+     -0.039961,
+     0.024384,
+     3.8e-05
+    ],
+    "diaginertia": [
+     1.33275e-05,
+     4.14217e-05,
+     5.41655e-05
+    ],
+    "quat": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
    "parent": 2,
    "collide": false,
    "joint": {
@@ -96,10 +117,31 @@
    "collision_parts": [
     {
      "mesh": "b1_col_0.obj",
-     "volume": 4.0238211117136986e-05
+     "volume": 4.0238211117136986e-05,
+     "friction": 0.3,
+     "restitution": 0.1
     }
    ],
    "mass": 0.251351,
+   "inertial": {
+    "mass": 0.251351,
+    "pos": [
+     -0.083775,
+     0.028832,
+     -0.002553
+    ],
+    "diaginertia": [
+     0.00011209,
+     0.00090354,
+     0.00100937
+    ],
+    "quat": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
    "parent": 0,
    "weld": true,
    "collide": false,
@@ -143,10 +185,31 @@
    "collision_parts": [
     {
      "mesh": "b2_col_0.obj",
-     "volume": 6.6762936714184296e-06
+     "volume": 6.6762936714184296e-06,
+     "friction": 0.3,
+     "restitution": 0.1
     }
    ],
    "mass": 0.067963,
+   "inertial": {
+    "mass": 0.067963,
+    "pos": [
+     -0.041022,
+     -0.024331,
+     4.6e-05
+    ],
+    "diaginertia": [
+     1.2353e-05,
+     4.07159e-05,
+     5.25143e-05
+    ],
+    "quat": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
    "parent": null,
    "root": true,
    "pos": [
@@ -189,10 +252,31 @@
    "collision_parts": [
     {
      "mesh": "b3_col_0.obj",
-     "volume": 3.732030049505328e-05
+     "volume": 3.732030049505328e-05,
+     "friction": 0.3,
+     "restitution": 0.1
     }
    ],
    "mass": 0.223148,
+   "inertial": {
+    "mass": 0.223148,
+    "pos": [
+     -0.083966,
+     -0.029157,
+     -0.002558
+    ],
+    "diaginertia": [
+     8.80884e-05,
+     0.000711536,
+     0.000794811
+    ],
+    "quat": [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
    "parent": 2,
    "weld": true,
    "collide": false,

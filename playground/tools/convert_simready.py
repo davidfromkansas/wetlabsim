@@ -116,6 +116,75 @@ def friction(stage) -> float | None:
     return round(max(vals), 3) if vals else None
 
 
+def phys_material(prim) -> dict:
+    """The physics material bound to a collider (USD Physics, purpose "physics"): its static and
+    dynamic friction and restitution, as the asset states them."""
+    out = {}
+    names = (("static", "staticFriction"), ("dynamic", "dynamicFriction"), ("restitution", "restitution"))
+    mat = UsdShade.MaterialBindingAPI(prim).ComputeBoundMaterial("physics")[0]
+    if mat:
+        for k, a in names:
+            v = mat.GetPrim().GetAttribute("physics:" + a)
+            if v and v.Get() is not None:
+                out[k] = round(float(v.Get()), 4)
+    if not out:     # no physics binding: the same values, as NVIDIA also writes them on the look material
+        mat = UsdShade.MaterialBindingAPI(prim).ComputeBoundMaterial()[0]
+        if mat:
+            for k, a in names:
+                v = mat.GetPrim().GetAttribute("pxr:usd:physics_" + a)
+                if v and v.Get() is not None:
+                    out[k] = round(float(v.Get()), 4)
+    return out
+
+
+def mass_props(prim, M: np.ndarray, mpu: float):
+    """A collider's stated mass, centre of mass and inertia (USD Physics MassAPI: inertia about its
+    centre of mass, along principalAxes, in the collider's own frame), in the world frame:
+    (mass, centre, 3x3 inertia), or None when the asset doesn't state all three."""
+    import mujoco
+    get = lambda a: prim.GetAttribute(a).Get() if prim.GetAttribute(a) else None
+    m, c, I, q = get("physics:mass"), get("physics:centerOfMass"), get("physics:diagonalInertia"), get("physics:principalAxes")
+    # USD Physics' "not stated" values: a centre of mass at -inf, an inertia of zeros
+    if not m or c is None or I is None or not np.all(np.isfinite(c)) or not np.any(np.array(I, float) > 0):
+        return None
+    R = _rigid(M, 1.0)[:3, :3]
+    Rp = np.eye(3)
+    if q is not None:
+        qq = np.array([q.GetReal(), *q.GetImaginary()], float)
+        if np.linalg.norm(qq) > 0:
+            Rp = np.zeros(9)
+            mujoco.mju_quat2Mat(Rp, qq / np.linalg.norm(qq))
+            Rp = Rp.reshape(3, 3)
+    Iv = np.array(I, float)
+    # physically possible only: no principal moment exceeds the sum of the other two
+    if np.any(Iv <= 0) or np.any(Iv > Iv.sum() - Iv + 1e-12):
+        return None
+    Rw = R @ Rp
+    return float(m), (M @ np.r_[np.array(c, float), 1.0])[:3] * mpu, Rw @ np.diag(Iv * mpu ** 2) @ Rw.T
+
+
+def combine_inertia(props: list, T_inv: np.ndarray):
+    """Parts' stated (mass, centre, inertia) combined into one body's, in the frame T_inv maps the
+    world into: {"mass", "pos", "diaginertia", "quat"} (MuJoCo's inertial: principal axes)."""
+    import mujoco
+    m = sum(p[0] for p in props)
+    c = sum(p[0] * p[1] for p in props) / m
+    I = np.zeros((3, 3))
+    for mi, ci, Ii in props:       # parallel axis theorem, about the combined centre
+        d = ci - c
+        I += Ii + mi * (d @ d * np.eye(3) - np.outer(d, d))
+    R = T_inv[:3, :3]
+    I = R @ I @ R.T
+    w, V = np.linalg.eigh((I + I.T) / 2)
+    if np.linalg.det(V) < 0:
+        V[:, 0] = -V[:, 0]
+    q = np.zeros(4)
+    mujoco.mju_mat2Quat(q, np.ascontiguousarray(V).ravel())
+    pos = R @ c + T_inv[:3, 3]
+    return {"mass": round(m, 6), "pos": [round(float(v), 6) for v in pos],
+            "diaginertia": [float(f"{max(v, 1e-12):.6g}") for v in w], "quat": [round(float(v), 6) for v in q]}
+
+
 def _owner(prim) -> str:
     """The rigid body a prim belongs to (its nearest ancestor with the rigid body API), or ""."""
     while prim and prim.IsValid():
@@ -126,9 +195,10 @@ def _owner(prim) -> str:
 
 
 def read(stage, by_body: bool = False):
-    """Visual groups by material, collision meshes, and the stated mass properties. by_body: the
-    groups are keyed (rigid body, material) and each collider comes with its body, its stated
-    mass and its approximation (for assets with moving parts)."""
+    """Visual groups by material, colliders, and the stated total mass and centre of mass. Each
+    collider: its mesh (world frame, metres), rigid body, stated mass, approximation, physics
+    material, stated mass properties and (from a MuJoCo layer) contact solref. by_body: the
+    visual groups are keyed (rigid body, material), for assets with moving parts."""
     xc = UsdGeom.XformCache()
     mpu = UsdGeom.GetStageMetersPerUnit(stage)
     groups: dict = {}
@@ -155,12 +225,17 @@ def read(stage, by_body: bool = False):
         approx = prim.GetAttribute("physics:approximation")
         if prim.HasAPI("PhysicsCollisionAPI") or (approx and approx.Get()):
             tm = trimesh.Trimesh(P, idx[tri_corner], process=True)
-            if by_body:
-                a = prim.GetAttribute("physics:mass")
-                colliders.append({"body": _owner(prim), "mesh": tm, "mass": float(a.Get()) if a and a.Get() else None,
-                                  "approx": str(approx.Get()) if approx and approx.Get() else "convexHull"})
-            else:
-                colliders.append(tm)
+            a = prim.GetAttribute("physics:mass")
+            sr = prim.GetAttribute("mjc:solref")
+            props = mass_props(prim, M, mpu)
+            if props is not None:      # a centre of mass must lie inside the part (some assets state the origin)
+                hull = tm.convex_hull
+                if not hull.is_watertight or hull.nearest.signed_distance([props[1]])[0] < 0.02 * float(np.min(hull.extents)):
+                    props = None
+            colliders.append({"body": _owner(prim), "mesh": tm, "mass": float(a.Get()) if a and a.Get() else None,
+                              "approx": str(approx.Get()) if approx and approx.Get() else "convexHull",
+                              "material": phys_material(prim), "props": props,
+                              "solref": [float(v) for v in sr.Get()] if sr and sr.Get() is not None else None})
             a = prim.GetAttribute("physics:mass")
             if a and a.Get():
                 mass = (mass or 0.0) + float(a.Get())
@@ -254,7 +329,7 @@ def _joints(stage, mpu: float) -> list[dict]:
                 "PhysicsFixedJoint": "weld"}.get(prim.GetTypeName())
         if kind is None or not b1:
             continue
-        rec = {"name": prim.GetName(), "type": kind, "body0": b0[0] if b0 else "", "body1": b1[0],
+        rec = {"name": prim.GetName(), "path": str(prim.GetPath()), "type": kind, "body0": b0[0] if b0 else "", "body1": b1[0],
                # USD Physics: the two parts of a joint don't collide unless the joint says so
                "collide": bool(prim.GetAttribute("physics:collisionEnabled").Get())}
         if kind != "weld":
@@ -276,10 +351,92 @@ def _joints(stage, mpu: float) -> list[dict]:
             if lo is not None and hi is not None and np.isfinite(lo) and np.isfinite(hi) and hi > lo:
                 scale = np.pi / 180 if kind == "hinge" else mpu
                 rec["range"] = [round(float(lo) * scale, 6), round(float(hi) * scale, 6)]
-            for k in ("damping", "frictionloss", "armature", "stiffness"):
+            for k in ("damping", "frictionloss", "armature", "stiffness", "springref"):
                 a = prim.GetAttribute(f"mjc:{k}")
                 if a and a.Get() is not None:
                     rec[k] = float(a.Get())
+            for k in ("solreffriction", "solimpfriction", "solreflimit", "solimplimit"):
+                a = prim.GetAttribute(f"mjc:{k}")
+                if a and a.Get() is not None:
+                    rec[k] = [float(v) for v in a.Get()]
+        out.append(rec)
+    return out
+
+
+def joint_extras(usd: pathlib.Path) -> dict:
+    """What the asset's neutral physics says about each joint (NVIDIA's MuJoCo layer deletes it):
+    its drive, as USD Physics states it (a spring or damper toward a target; a motor if it has a
+    target velocity), its starting position (joint state), and from the PhysX layer its joint
+    friction coefficient. Angles in radians, lengths in metres; drive gains per radian or metre."""
+    stage = Usd.Stage.Open(str(usd))
+    root = stage.GetDefaultPrim()
+    vs = root.GetVariantSets()
+    stage.SetEditTarget(stage.GetSessionLayer())
+    for name in vs.GetNames():
+        if "Disabled" in vs.GetVariantSet(name).GetVariantNames():
+            vs.GetVariantSet(name).SetVariantSelection("Disabled")
+    physx = None
+    if "PhysX" in vs.GetNames() and "Enabled" in vs.GetVariantSet("PhysX").GetVariantNames():
+        physx = Usd.Stage.Open(str(usd))
+        pv = physx.GetDefaultPrim().GetVariantSets()
+        physx.SetEditTarget(physx.GetSessionLayer())
+        for name in pv.GetNames():
+            pv.GetVariantSet(name).SetVariantSelection("Enabled" if name == "PhysX" else "Disabled")
+    mpu = UsdGeom.GetStageMetersPerUnit(stage)
+    out = {}
+    for prim in Usd.PrimRange(stage.GetPseudoRoot(), Usd.TraverseInstanceProxies()):
+        t = prim.GetTypeName()
+        if t not in ("PhysicsRevoluteJoint", "PhysicsPrismaticJoint"):
+            continue
+        ang = t == "PhysicsRevoluteJoint"
+        kind = "angular" if ang else "linear"
+        unit = np.pi / 180 if ang else mpu            # USD Physics: degrees, or the stage's length unit
+        get = lambda a, p=prim: p.GetAttribute(a).Get() if p.GetAttribute(a) else None
+        rec = {}
+        if prim.HasAPI(UsdPhysics.DriveAPI, kind):
+            d = {k: get(f"drive:{kind}:physics:{k}") for k in ("stiffness", "damping", "targetPosition", "targetVelocity", "maxForce")}
+            drive = {}
+            if d["stiffness"]:
+                drive["stiffness"] = float(d["stiffness"]) / unit    # force per degree -> per radian
+            if d["damping"]:
+                drive["damping"] = float(d["damping"]) / unit
+            if d["targetPosition"]:
+                drive["target"] = float(d["targetPosition"]) * unit
+            if d["targetVelocity"]:
+                drive["target_velocity"] = float(d["targetVelocity"]) * unit
+            if d["maxForce"] is not None and np.isfinite(d["maxForce"]):
+                drive["max_force"] = float(d["maxForce"])
+            if drive:
+                rec["drive"] = {k: round(v, 8) for k, v in drive.items()}
+        pos = get(f"state:{kind}:physics:position")
+        if pos:
+            rec["initial"] = round(float(pos) * unit, 6)
+        if physx is not None:
+            pp = physx.GetPrimAtPath(prim.GetPath())
+            jf = pp.GetAttribute("physxJoint:jointFriction") if pp else None
+            if jf and jf.Get():
+                rec["physx_joint_friction"] = float(jf.Get())
+        if rec:
+            out[str(prim.GetPath())] = rec
+    return out
+
+
+def _tendons(stage, joint_names: dict) -> list[dict]:
+    """The asset's MuJoCo tendons (Tripo's door closers and seals): fixed tendons over its joints,
+    with their stiffness and spring length (MuJoCo's own tendon attributes)."""
+    out = []
+    for prim in Usd.PrimRange(stage.GetPseudoRoot(), Usd.TraverseInstanceProxies()):
+        if prim.GetTypeName() != "MjcTendon":
+            continue
+        get = lambda a: prim.GetAttribute(a).Get() if prim.GetAttribute(a) else None
+        targets = [str(t) for t in prim.GetRelationship("mjc:path").GetTargets()]
+        rec = {"name": prim.GetName(), "type": str(get("mjc:type")),
+               "joints": [joint_names.get(t) for t in targets], "coef": [float(v) for v in (get("mjc:path:coef") or [])]}
+        for k in ("stiffness", "damping"):
+            if get(f"mjc:{k}") is not None:
+                rec[k] = float(get(f"mjc:{k}"))
+        if get("mjc:springlength") is not None:
+            rec["springlength"] = [float(v) for v in get("mjc:springlength")]
         out.append(rec)
     return out
 
@@ -321,11 +478,24 @@ def _visuals(groups: dict, origin, T_inv, out: pathlib.Path, prefix: str, budget
     return visuals
 
 
-def _hulls(meshes: list, approx: list, out: pathlib.Path, prefix: str) -> list[dict]:
+def _surface(c: dict) -> dict:
+    """What a collision part keeps of its collider's surface: friction, restitution, solref."""
+    out = {}
+    if "static" in c["material"]:
+        out["friction"] = c["material"]["static"]
+    if "restitution" in c["material"]:
+        out["restitution"] = c["material"]["restitution"]
+    if c.get("solref"):
+        out["solref"] = c["solref"]
+    return out
+
+
+def _hulls(meshes: list, approx: list, out: pathlib.Path, prefix: str, surfaces=None) -> list[dict]:
     """A body's collision shapes: each collider as the asset asks (its convex hull, or convex
-    pieces by CoACD for a convex decomposition)."""
+    pieces by CoACD for a convex decomposition), each with its collider's surface."""
     parts = []
-    for m, a in zip(meshes, approx):
+    surfaces = surfaces or [{}] * len(meshes)
+    for m, a, sf in zip(meshes, approx, surfaces):
         pieces = [m.convex_hull]
         if a == "convexDecomposition" and len(m.faces) > 20:
             import coacd
@@ -339,7 +509,7 @@ def _hulls(meshes: list, approx: list, out: pathlib.Path, prefix: str) -> list[d
                 continue
             name = f"{prefix}col_{len(parts)}.obj"
             write_obj(out / name, piece.vertices, piece.faces)
-            parts.append({"mesh": name, "volume": float(piece.volume)})
+            parts.append({"mesh": name, "volume": float(piece.volume), **sf})
     return parts
 
 
@@ -358,6 +528,7 @@ def convert_articulated(stage, src: pathlib.Path, usd: pathlib.Path, out: pathli
     mpu = UsdGeom.GetStageMetersPerUnit(stage)
     groups, colliders, _, _ = read(stage, by_body=True)
     joints = _joints(stage, mpu)
+    extras = joint_extras(usd)
     paths = sorted({k[0] for k in groups} | {c["body"] for c in colliders})
     paths = [p for p in paths if p]
     allV = np.vstack([np.vstack(g["V"]) for g in groups.values()])
@@ -395,8 +566,12 @@ def convert_articulated(stage, src: pathlib.Path, usd: pathlib.Path, out: pathli
         bmass = float(a.Get()) if a and a.Get() else (sum(c["mass"] for c in mine_c if c["mass"]) or None)
         rec = {"name": name, "visuals": _visuals(mine_g, origin, Tinv, out, f"b{i}_", max_tris, total),
                "collision_parts": _hulls(meshes, ["convexDecomposition" if hollow else c["approx"]
-                                                  for c in mine_c], out, f"b{i}_"),
+                                                  for c in mine_c], out, f"b{i}_", [_surface(c) for c in mine_c]),
                "mass": round(bmass, 6) if bmass else None}
+        props = [c["props"] for c in mine_c]
+        if props and all(props):          # the mass, centre and inertia the asset states, in this part's frame
+            Tw = np.linalg.inv(T[p]) @ np.r_[np.c_[np.eye(3), -origin], [[0, 0, 0, 1]]]
+            rec["inertial"] = combine_inertia(props, Tw)
         j = joint_of.get(p)
         if p == main_root:
             rec.update(parent=None, root=True)
@@ -407,7 +582,8 @@ def convert_articulated(stage, src: pathlib.Path, usd: pathlib.Path, out: pathli
         else:
             rec.update(parent=paths.index(j["body0"]),
                        collide=j["collide"],
-                       joint={k: v for k, v in j.items() if k not in ("body0", "body1", "anchor", "world_axis", "collide")})
+                       joint={k: v for k, v in j.items() if k not in ("body0", "body1", "anchor", "world_axis", "collide", "path")})
+            rec["joint"].update(extras.get(j["path"], {}))
             # anchor and axis in the part's own frame
             rec["joint"]["pos"] = [round(float(v), 6) for v in (Tinv @ np.r_[j["anchor"] - origin, 1.0])[:3]]
             rec["joint"]["axis"] = [round(float(v), 6) for v in Tinv[:3, :3] @ j["world_axis"]]
@@ -427,6 +603,9 @@ def convert_articulated(stage, src: pathlib.Path, usd: pathlib.Path, out: pathli
         "visuals": [], "collision_parts": [], "bodies": bodies,
         "unstated_mass": [b["name"] for b in bodies if not b["mass"]],
     }
+    tendons = _tendons(stage, {j["path"]: j["name"] for j in joints})
+    if tendons:
+        meta["tendons"] = tendons
     (out / "asset.json").write_text(json.dumps(meta, indent=1))
     return meta
 
@@ -480,7 +659,7 @@ def convert(src: pathlib.Path, out: pathlib.Path, hollow=False, max_tris=60000, 
             vis["rgba"][:3] = [round(float(c) / 255, 4) for c in np.array(img).reshape(-1, 3).mean(0)]
         write_obj(out / vis["mesh"], Vw, F, UVw if has_tex else None)
         visuals.append(vis)
-    col = trimesh.util.concatenate(colliders) if colliders else trimesh.util.concatenate(
+    col = trimesh.util.concatenate([c["mesh"] for c in colliders]) if colliders else trimesh.util.concatenate(
         [trimesh.Trimesh(np.vstack(g["V"]), np.arange(len(np.vstack(g["V"]))).reshape(-1, 3)) for g in groups.values()])
     col.apply_translation(-origin)
     parts = []
@@ -498,11 +677,14 @@ def convert(src: pathlib.Path, out: pathlib.Path, hollow=False, max_tris=60000, 
             if len(f) < 4:
                 continue
             write_obj(out / f"col_{k}.obj", v, f)
-            parts.append({"mesh": f"col_{k}.obj", "volume": float(trimesh.Trimesh(v, f).convex_hull.volume)})
+            parts.append({"mesh": f"col_{k}.obj", "volume": float(trimesh.Trimesh(v, f).convex_hull.volume),
+                          **_nearest_surface(colliders, piece.centroid + origin)})
     else:
         hull = col.convex_hull
         write_obj(out / "col_0.obj", hull.vertices, hull.faces)
-        parts.append({"mesh": "col_0.obj", "volume": float(hull.volume)})
+        # one hull for the whole item: the surface of its biggest collider
+        big = max(colliders, key=lambda c: c["mesh"].convex_hull.volume) if colliders else None
+        parts.append({"mesh": "col_0.obj", "volume": float(hull.volume), **(_surface(big) if big else {})})
     meta = {
         "source": src.name, "usd": usd.name,
         "mass": round(float(mass), 5) if mass else None,
@@ -512,8 +694,19 @@ def convert(src: pathlib.Path, out: pathlib.Path, hollow=False, max_tris=60000, 
         "collision": "convex pieces (CoACD)" if hollow else "convex hull (as the asset specifies)",
         "visuals": visuals, "collision_parts": parts,
     }
+    props = [c["props"] for c in colliders]
+    if props and all(props):        # the stated mass, centre and inertia, in the item's frame
+        meta["inertial"] = combine_inertia(props, np.r_[np.c_[np.eye(3), -origin], [[0, 0, 0, 1]]])
     (out / "asset.json").write_text(json.dumps(meta, indent=1))
     return meta
+
+
+def _nearest_surface(colliders: list, point) -> dict:
+    """The surface of the collider nearest a point (a convex piece takes the material it came from)."""
+    if not colliders:
+        return {}
+    d = [float(np.min(np.linalg.norm(c["mesh"].vertices - point, axis=1))) for c in colliders]
+    return _surface(colliders[int(np.argmin(d))])
 
 
 def main(argv=None):

@@ -32,10 +32,31 @@
    "collision_parts": [
     {
      "mesh": "b0_col_0.obj",
-     "volume": 0.00047622646474865666
+     "volume": 0.00047622646474865666,
+     "friction": 0.61,
+     "restitution": 0.1
     }
    ],
    "mass": 0.3,
+   "inertial": {
+    "mass": 0.3,
+    "pos": [
+     0.0,
+     -0.0,
+     0.104537
+    ],
+    "diaginertia": [
+     4.4749e-05,
+     0.000195848,
+     0.000195848
+    ],
+    "quat": [
+     0.707107,
+     0.0,
+     0.707107,
+     -0.0
+    ]
+   },
    "parent": null,
    "root": true,
    "pos": [
@@ -78,10 +99,31 @@
    "collision_parts": [
     {
      "mesh": "b1_col_0.obj",
-     "volume": 0.00011581735901290071
+     "volume": 0.00011581735901290071,
+     "friction": 0.4,
+     "restitution": 0.4
     }
    ],
    "mass": 0.046685,
+   "inertial": {
+    "mass": 0.046685,
+    "pos": [
+     0.000416,
+     -0.0,
+     0.170646
+    ],
+    "diaginertia": [
+     2.32305e-05,
+     2.32384e-05,
+     3.54119e-05
+    ],
+    "quat": [
+     0.707107,
+     0.0,
+     0.0,
+     -0.707107
+    ]
+   },
    "parent": 0,
    "weld": true,
    "collide": false,
@@ -125,10 +167,31 @@
    "collision_parts": [
     {
      "mesh": "b2_col_0.obj",
-     "volume": 2.104175531336252e-06
+     "volume": 2.104175531336252e-06,
+     "friction": 0.4,
+     "restitution": 0.4
     }
    ],
    "mass": 0.001876,
+   "inertial": {
+    "mass": 0.001876,
+    "pos": [
+     0.000219,
+     -0.0,
+     0.002946
+    ],
+    "diaginertia": [
+     7.49716e-08,
+     7.60115e-08,
+     9.13692e-08
+    ],
+    "quat": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
    "parent": 0,
    "collide": false,
    "joint": {

@@ -43,10 +43,31 @@
    "collision_parts": [
     {
      "mesh": "b0_col_0.obj",
-     "volume": 2.727082726681582e-06
+     "volume": 2.727082726681582e-06,
+     "friction": 0.4,
+     "restitution": 0.4
     }
    ],
    "mass": 0.002771,
+   "inertial": {
+    "mass": 0.002771,
+    "pos": [
+     0.0,
+     -0.0,
+     -0.0
+    ],
+    "diaginertia": [
+     9.89287e-09,
+     1.80891e-06,
+     1.80891e-06
+    ],
+    "quat": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
    "parent": 1,
    "collide": false,
    "joint": {
@@ -130,10 +151,31 @@
    "collision_parts": [
     {
      "mesh": "b1_col_0.obj",
-     "volume": 8.926759005100661e-06
+     "volume": 8.926759005100661e-06,
+     "friction": 0.3,
+     "restitution": 0.1
     }
    ],
    "mass": 0.009458,
+   "inertial": {
+    "mass": 0.009458,
+    "pos": [
+     0.006592,
+     0.000519,
+     0.007341
+    ],
+    "diaginertia": [
+     1.87319e-07,
+     7.89128e-06,
+     7.92896e-06
+    ],
+    "quat": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
    "parent": null,
    "root": true,
    "pos": [
@@ -176,10 +218,31 @@
    "collision_parts": [
     {
      "mesh": "b2_col_0.obj",
-     "volume": 1.5539470037237496e-06
+     "volume": 1.5539470037237496e-06,
+     "friction": 0.4,
+     "restitution": 0.4
     }
    ],
    "mass": 0.002757,
+   "inertial": {
+    "mass": 0.002757,
+    "pos": [
+     0.000129,
+     -0.0,
+     -0.0
+    ],
+    "diaginertia": [
+     6.22936e-08,
+     6.28006e-08,
+     6.28006e-08
+    ],
+    "quat": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
    "parent": 0,
    "weld": true,
    "collide": false,
@@ -223,10 +286,31 @@
    "collision_parts": [
     {
      "mesh": "b3_col_0.obj",
-     "volume": 1.1958960025633042e-06
+     "volume": 1.1958960025633042e-06,
+     "friction": 0.4,
+     "restitution": 0.4
     }
    ],
    "mass": 0.002211,
+   "inertial": {
+    "mass": 0.002211,
+    "pos": [
+     -0.0,
+     -0.0,
+     0.0
+    ],
+    "diaginertia": [
+     2.01848e-08,
+     9.05505e-08,
+     9.05505e-08
+    ],
+    "quat": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
    "parent": 1,
    "weld": true,
    "collide": false,

@@ -2,6 +2,7 @@
  "source": "kitchenware_cuttingBoard_a01",
  "usd": "sm_kitchenware_cuttingBoard_a01_01.usd",
  "mass": 1.65333,
+ "friction": 0.5,
  "com": [
   -0.0,
   -0.0,
@@ -30,8 +31,28 @@
  "collision_parts": [
   {
    "mesh": "col_0.obj",
-   "volume": 0.0011110422795431703
+   "volume": 0.0011110422795431703,
+   "friction": 0.5,
+   "restitution": 0.4
   }
  ],
- "friction": 0.5
+ "inertial": {
+  "mass": 1.653332,
+  "pos": [
+   -0.0,
+   -0.0,
+   0.223466
+  ],
+  "diaginertia": [
+   0.0062871,
+   0.01743,
+   0.0235611
+  ],
+  "quat": [
+   0.707107,
+   0.0,
+   0.707107,
+   -0.0
+  ]
+ }
 }
