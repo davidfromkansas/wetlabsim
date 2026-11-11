@@ -16,6 +16,8 @@ lab (one container per visitor): a playground server in public mode (free play o
 Devin: with the Modal secret "DEVIN_API_KEY" (holding DEVIN_API_KEY, a Devin organization's
 service-user key), labs also offer Devin's models, each run's Devin CLI in a Sandbox that can reach
 the robot and Devin's own servers only. Without that secret the site is Claude only.
+Jev: with the Modal secret "JEV_API_KEY" (holding JEV_API_KEY, a TypeSafe API key), labs also offer
+Jev 1.14. Its step loop runs in the lab itself (it runs no code from the model), so the key stays there.
 Run records go to the "wetlab-playground-runs" volume, shared by every lab and the front.
 """
 import os
@@ -43,7 +45,8 @@ FRONT_URL = f"https://davidfromkansas--{APP}-web.us-east.modal.run"
 image = (
     modal.Image.debian_slim(python_version="3.12")
     # Mesa's software OpenGL behind EGL: MuJoCo renders with no GPU and no display.
-    .apt_install("libegl1", "libgl1", "libgles2", "libegl-mesa0", "libgl1-mesa-dri", "libglvnd0")
+    .apt_install("libegl1", "libgl1", "libgles2", "libegl-mesa0", "libgl1-mesa-dri", "libglvnd0",
+                 "poppler-utils")   # pdftotext: Jev reads the robot's datasheets as text
     .pip_install("mujoco>=4.0,<5", "numpy", "pillow", "mcp", "modal")
     .env({"MUJOCO_GL": "egl", "EGL_PLATFORM": "surfaceless", "PYTHONPATH": "/app", "PYTHONUNBUFFERED": "1",
           "WETLAB_MAX_LABS": str(MAX_LABS), "WETLAB_FRONT_URL": FRONT_URL, "WETLAB_MODAL_APP": APP,
@@ -54,6 +57,7 @@ image = (
 )
 runs = modal.Volume.from_name(f"{APP}-runs", create_if_missing=True)
 DEVIN_SECRET = "DEVIN_API_KEY"
+JEV_SECRET = "JEV_API_KEY"
 
 
 def _optional_secret(name: str) -> list:
@@ -71,7 +75,8 @@ def _optional_secret(name: str) -> list:
 LINK_SECRET = "wetlab-link"
 # DATABASE_URL (the website's Neon database): a signed-in owner's lab saves its sessions and runs there.
 DB_SECRET = "wetlab-db"
-lab_secrets = [modal.Secret.from_name("anthropic-secret"), *_optional_secret(DEVIN_SECRET), *_optional_secret(LINK_SECRET),
+lab_secrets = [modal.Secret.from_name("anthropic-secret"), *_optional_secret(DEVIN_SECRET), *_optional_secret(JEV_SECRET),
+               *_optional_secret(LINK_SECRET),
                *_optional_secret(DB_SECRET)]
 app = modal.App(APP, image=image)
 

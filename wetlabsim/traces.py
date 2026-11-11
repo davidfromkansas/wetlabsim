@@ -11,6 +11,7 @@ from dataclasses import dataclass
 class Step:
     t: float          # robot clock (s)
     kind: str         # "says" | "thinks" | "runs" | "output" | "looks" | "reads" | "writes" | "tool"
+                      # | "decides" (one of Jev's moves: text is the step's JSON, see jev_agent.py)
     text: str
 
 
@@ -68,6 +69,26 @@ class Parser:
         if typ == "_raw":
             if e.get("text", "").strip():
                 steps.append(Step(t, "says", e["text"].strip()))
+        # ---- Jev's loop (jev_agent.py): one step per move, with everything its API answered
+        elif typ == "_jev":
+            kind = e.get("kind")
+            if kind == "step":
+                keep = ("step", "model", "seconds", "answers", "usage", "input_tokens_total", "cost_usd",
+                        "camera_time", "did", "ok")
+                steps.append(Step(t, "decides", json.dumps({k: e.get(k) for k in keep})))
+            elif kind == "start":
+                docs = ", ".join(e.get("datasheets") or []) or "none"
+                left = ", ".join(e.get("datasheets_left_out") or [])
+                steps.append(Step(t, "says", f"Jev ({e.get('model')}) is starting. Each step it gets the task, "
+                                             f"both cameras, the robot's readings and the datasheets ({docs})"
+                                             + (f"; left out to fit Jev's limit: {left}" if left else "")
+                                             + ", and picks one move."))
+            elif kind == "retry":
+                steps.append(Step(t, "tool", f"Jev API busy ({e.get('status')}), trying again in {e.get('wait_s')} s"))
+            elif kind == "error":
+                steps.append(Step(t, "says", f"Stopped: {e.get('text', '')}"))
+            elif kind == "done":
+                steps.append(Step(t, "says", e.get("text") or f"Jev says the task is done (after {e.get('steps')} steps)."))
         # ---- Devin through ACP (devin_acp.py)
         elif typ == "_devin_acp":
             kind = e.get("kind")
@@ -252,7 +273,8 @@ def load_run(run_dir) -> list[Step]:
 
 
 # ------------------------------------------------------------------ run info
-AGENTS = {"claude": ("Claude Code", "Anthropic"), "codex": ("Codex", "OpenAI"), "devin": ("Devin", "Cognition")}
+AGENTS = {"claude": ("Claude Code", "Anthropic"), "codex": ("Codex", "OpenAI"), "devin": ("Devin", "Cognition"),
+          "jev": ("TypeSafe API", "TypeSafe")}
 
 
 def provider_of(model: str, agent: str) -> str:
@@ -266,6 +288,8 @@ def provider_of(model: str, agent: str) -> str:
         return "Cognition"
     if m.startswith("gemini"):
         return "Google"
+    if m.startswith("jev"):
+        return "TypeSafe"
     return AGENTS.get(agent, (agent, ""))[1]
 
 
@@ -331,6 +355,12 @@ class RunMeta:
             self.input_tokens += u.get("input_tokens") or 0
             self.cached_tokens += u.get("cached_input_tokens") or 0
             self.output_tokens += (u.get("output_tokens") or 0)
+            return True
+        if typ == "_jev" and e.get("kind") == "step":
+            self.model = e.get("model") or self.model
+            self.input_tokens = e.get("input_tokens_total") or self.input_tokens
+            self.output_tokens += (e.get("usage") or {}).get("output_tokens") or 0
+            self.cost_usd = e.get("cost_usd")
             return True
         if typ == "_devin_acp" and e.get("kind") == "usage":
             self.model = e.get("model") or self.model
