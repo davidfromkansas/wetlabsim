@@ -114,10 +114,6 @@ camera's z axis). The calibration is in `cameras.json`, once for each arm (`left
 Poses use OpenCV camera axes (x right, y down, z forward); `rotation` maps camera
 coordinates into the named frame. The lenses have no distortion.
 
-## What's here
-
-{items}
-{others}
 ## Start state
 
 At the start of a run both arms are at joint angles `{ready}` (rad), gripper open, not in
@@ -142,11 +138,10 @@ def site_sheet(placed: list[W.Placed], station: W.Station | None = None,
         # The left arm's frame: x toward the right arm (station -y), y = station +x.
         x0, x1 = by - sy / 2, by + sy / 2
         y0, y1 = -sx / 2 - bx, sx / 2 - bx
-        from wetlabsim import scene as WS2
-        ready = WS2.aloha_side("left")["ready_q"]
+        ready = WS.aloha_side("left")["ready_q"]
         return ALOHA_TEMPLATE.format(top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100,
                                      d_cm=min(tw, td) * 100, gap=2 * by, gap_cm=200 * by, x0=x0, x1=x1,
-                                     y0=y0, y1=y1, ry0=-y1, ry1=-y0, items=items, others=other,
+                                     y0=y0, y1=y1, ry0=-y1, ry1=-y0,
                                      ready="[" + ", ".join(f"{v:g}" for v in ready) + "]")
     return TEMPLATE.format(top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100,
                            d_cm=min(tw, td) * 100, x0=-sx / 2 - rx, x1=sx / 2 - rx, y0=-sy / 2 - ry,

@@ -43,10 +43,6 @@ camera's z axis). The calibration is in `cameras.json`, once for each arm (`left
 Poses use OpenCV camera axes (x right, y down, z forward); `rotation` maps camera
 coordinates into the named frame. The lenses have no distortion.
 
-## What's here
-
-Nothing else is on the table.
-
 ## Start state
 
 At the start of a run both arms are at joint angles `[0, -0.96, 1.16, 0, -0.3, 0]` (rad), gripper open, not in

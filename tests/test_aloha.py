@@ -103,6 +103,7 @@ def test_site_sheet():
     text = site.site_sheet([], W.Station("st1", "aloha", (0, 0), 0.0, "Robot 1"))
     assert "two Trossen ViperX 300 S arms" in text and "93.8 cm apart" in text
     assert "No force/torque sensing" in text
+    assert "What's here" not in text
 
 
 def test_wet_lab_bench_keeps_clear_of_both_bases():
