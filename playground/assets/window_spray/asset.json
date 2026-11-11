@@ -31,7 +31,9 @@
    "collision_parts": [
     {
      "mesh": "b0_col_0.obj",
-     "volume": 0.0007601758293311256
+     "volume": 0.0007601758293311256,
+     "friction": 0.4,
+     "restitution": 0.05
     }
    ],
    "mass": 0.80603,
@@ -129,7 +131,9 @@
    "collision_parts": [
     {
      "mesh": "b1_col_0.obj",
-     "volume": 0.0007352520885548589
+     "volume": 0.0007352520885548589,
+     "friction": 0.5,
+     "restitution": 0.12
     }
    ],
    "mass": 0.01584,
@@ -292,7 +296,9 @@
    "collision_parts": [
     {
      "mesh": "b3_col_0.obj",
-     "volume": 5.166123851912892e-06
+     "volume": 5.166123851912892e-06,
+     "friction": 0.5,
+     "restitution": 0.12
     }
    ],
    "mass": 0.00058,

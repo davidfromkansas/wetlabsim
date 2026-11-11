@@ -255,6 +255,33 @@ def set_surface(g, c: dict, cls, friction=None):
         g.solref = [BOUNCE_TIMECONST, restitution_dampratio(c["restitution"])]
 
 
+def set_inertia(body, parts: list) -> bool:
+    """Give a body the mass, centre of mass and inertia its asset states for each of its parts
+    (tools/convert_simready.combine_inertia), combined about their common centre: parts are
+    (inertial, where the part sits in the body). False, and nothing set, if any part lacks them."""
+    if not parts or any(not inr for inr, _ in parts):
+        return False
+    m = sum(inr["mass"] for inr, _ in parts)
+    cs, Is = [], []
+    for inr, at in parts:
+        R = at[:3, :3] @ _rot(inr["quat"])
+        cs.append(at[:3, :3] @ np.array(inr["pos"]) + at[:3, 3])
+        Is.append(R @ np.diag(inr["diaginertia"]) @ R.T)
+    c = sum(inr["mass"] * ci for (inr, _), ci in zip(parts, cs)) / m
+    I = np.zeros((3, 3))
+    for (inr, _), ci, Ii in zip(parts, cs, Is):
+        d = ci - c
+        I += Ii + inr["mass"] * (d @ d * np.eye(3) - np.outer(d, d))
+    w, V = np.linalg.eigh((I + I.T) / 2)
+    if np.linalg.det(V) < 0:
+        V[:, 0] = -V[:, 0]
+    T = np.eye(4)
+    T[:3, :3] = V
+    body.mass, body.ipos, body.iquat, body.inertia = m, list(c), _quat_of(T), list(np.maximum(w, 1e-12))
+    body.explicitinertial = True
+    return True
+
+
 def _part_geoms(world, body, name: str, rec: dict, prefix: str, cls, friction, at=None):
     """A part's collision shapes (its stated mass spread over them by volume) and its visuals;
     at: where the part sits in the body, for a part fixed onto another."""
@@ -333,6 +360,7 @@ def _add_jointed(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_
     kind = [part_kind(b, fixed, p.item) for b in bodies]
 
     host = list(names)        # the MuJoCo body each part's shapes are in
+    inertia: dict = {}        # MuJoCo body -> [(its parts' stated inertial, where each sits in it)]
 
     def add(i, parent=None):
         """parent: (the body to build in, where the parent part's frame sits in it)."""
@@ -367,6 +395,7 @@ def _add_jointed(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_
                 if k in j:
                     getattr(jt, k)[0] = j[k]
         _part_geoms(world, body, names[i], b, pre[i], cls, meta.get("friction"), at)
+        inertia.setdefault(id(body), (body, []))[1].append((b.get("inertial"), np.eye(4) if at is None else at))
         for c, cb in enumerate(bodies):
             if cb.get("parent") == i and kind[c] != "top":
                 add(c, (body, np.eye(4) if at is None else at))
@@ -374,6 +403,8 @@ def _add_jointed(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_
     for i in range(len(bodies)):
         if kind[i] == "top":
             add(i)
+    for body, parts in inertia.values():          # as the asset states, where it states all of it
+        set_inertia(body, parts)
     for i, b in enumerate(bodies):
         if kind[i] == "rigid":
             continue
@@ -451,6 +482,7 @@ def _add_item(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_cac
     for k, _ in enumerate(meta["visuals"]):
         body.add_geom(name=f"obj_{p.uid}_vis{k}", type=mujoco.mjtGeom.mjGEOM_MESH, meshname=f"{prefix}vis{k}",
                       material=f"{prefix}mat{k}", contype=0, conaffinity=0, group=1, mass=0)
+    set_inertia(body, [(meta.get("inertial"), np.eye(4))])
 
 
 def table_top(meta: dict) -> float:
