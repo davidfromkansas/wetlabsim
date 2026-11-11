@@ -98,3 +98,41 @@ def test_autobio_tubes_keep_their_caps_on():
     assert d.xmat[b].reshape(3, 3)[2, 2] < 0.5
     now = d.xmat[b].reshape(3, 3).T @ (d.geom_xpos[g] - d.xpos[b])
     assert np.linalg.norm(now - rel) < 0.002
+
+
+def test_springs_dampers_and_spinning_parts_follow_their_assets():
+    """Drives become MuJoCo springs and dampers: a gauge's button springs back; a drill's chuck
+    (a hinge with no limits, damped) turns when pushed and comes to rest, not spinning by itself."""
+    sim, uid = _lab("pressure_gauge")
+    m, d = sim.m, sim.d
+    j = _joint(sim, uid, "button_03_joint_00")
+    assert m.jnt_stiffness[j] > 0
+    mujoco.mj_step(m, d, int(1.0 / m.opt.timestep))
+    q0 = d.qpos[m.jnt_qposadr[j]]
+    _push(sim, j, -0.5)
+    assert d.qpos[m.jnt_qposadr[j]] < q0 - 0.005
+    mujoco.mj_step(m, d, int(1.0 / m.opt.timestep))
+    assert abs(d.qpos[m.jnt_qposadr[j]] - q0) < 0.001
+
+    sim, uid = _lab("drill")
+    m, d = sim.m, sim.d
+    j = _joint(sim, uid, "chuck_01_joint_00")
+    assert not m.jnt_limited[j] and m.dof_damping[m.jnt_dofadr[j]] > 0
+    mujoco.mj_step(m, d, int(2.0 / m.opt.timestep))
+    q0 = d.qpos[m.jnt_qposadr[j]]
+    mujoco.mj_step(m, d, int(2.0 / m.opt.timestep))
+    assert abs(d.qpos[m.jnt_qposadr[j]] - q0) < 0.01            # still on its own
+    _push(sim, j, 0.01)
+    q1 = d.qpos[m.jnt_qposadr[j]]
+    assert q1 - q0 > 0.3
+    mujoco.mj_step(m, d, int(2.0 / m.opt.timestep))
+    assert abs(d.qvel[m.jnt_dofadr[j]]) < 0.05
+
+
+def test_a_drawer_slides_out_of_its_cabinet():
+    """A drawer on a runner slides inside the cabinet's body without catching on it."""
+    sim, uid = _lab("drug_cabinet", fixed=True)
+    m, d = sim.m, sim.d
+    j = _joint(sim, uid, "drawer_02_joint_00")
+    _push(sim, j, 30.0, 0.5)
+    assert d.qpos[m.jnt_qposadr[j]] > 0.4

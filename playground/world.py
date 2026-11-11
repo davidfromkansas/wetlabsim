@@ -310,15 +310,15 @@ def part_kind(b: dict, fixed: bool, item: str = "") -> str:
     """How a part of a jointed item is built: "top" (the main body, a loose part, a welded cap),
     "joint" (on its hinge or slide) or "rigid" (fixed in place: its shapes join its parent part's
     body). Fixed too: buttons and switches of furniture (and of everything, with BUTTONS_MOVE
-    off), and every free-spinning part (a hinge with no limits: furniture's wheels and casters, a
-    drill's chuck, a ratchet's drive, a dial). Nothing stops them and the assets give them no
-    friction, so a light one spins by itself and a push sends it spinning out of control."""
+    off), and a free-spinning part (a hinge with no limits) whose asset gives it no damping
+    (furniture's wheels and casters, a wrench's knurl): nothing would stop it, and so light a
+    part spins by itself. One with damping (a drill's chuck, a ratchet's drive) turns."""
     if b.get("root") or b.get("free"):
         return "top"
     if b.get("weld"):
         caps = catalog.CAPS.get(item, ())
         return "top" if SEPARATE.search(b["name"]) or any(c in b["name"] for c in caps) else "rigid"
-    if "range" not in b["joint"]:
+    if "range" not in b["joint"] and not joint_damping(b["joint"]):
         return "rigid"
     if BUTTON.search(b["name"]) and (fixed or not BUTTONS_MOVE):
         return "rigid"
@@ -326,6 +326,18 @@ def part_kind(b: dict, fixed: bool, item: str = "") -> str:
 
 
 BUTTON = re.compile(r"switch|button|dial|knob", re.I)
+
+
+def drive(j: dict) -> dict:
+    """A joint's drive as the asset states it (USD Physics DriveAPI); a drive whose force is
+    capped at zero does nothing."""
+    d = j.get("drive") or {}
+    return {} if d.get("max_force") == 0 else d
+
+
+def joint_damping(j: dict) -> float:
+    """The joint's damping: its asset's MuJoCo value, else its drive's."""
+    return j.get("damping") or drive(j).get("damping") or 0.0
 # A cap's weld: as quick as the lab's plastic contacts (wetlabsim.scene.MATERIALS) and nearly
 # hard. With MuJoCo's defaults a light cap is pushed 3 mm (1.5 degrees) off its tube when the
 # tube lies on it, and flies 10 cm off on impact.
@@ -394,6 +406,12 @@ def _add_jointed(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_
             for k in ("damping", "stiffness"):     # MuJoCo's linear coefficient
                 if k in j:
                     getattr(jt, k)[0] = j[k]
+            dr = drive(j)            # the asset's drive: a spring toward its target, and a damper
+            if "stiffness" in dr and "stiffness" not in j:
+                jt.stiffness[0] = dr["stiffness"]
+                jt.springref = dr.get("target", 0.0)
+            if "damping" in dr and "damping" not in j:
+                jt.damping[0] = dr["damping"]
         _part_geoms(world, body, names[i], b, pre[i], cls, meta.get("friction"), at)
         inertia.setdefault(id(body), (body, []))[1].append((b.get("inertial"), np.eye(4) if at is None else at))
         for c, cb in enumerate(bodies):
@@ -410,6 +428,14 @@ def _add_jointed(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_
             continue
         if b.get("parent") is not None and not b.get("collide") and host[b["parent"]] != host[i]:
             world.add_exclude(bodyname1=host[b["parent"]], bodyname2=names[i])   # jointed parts pass through each other
+        if kind[i] == "joint":
+            # nor with the parts further up its chain (a drawer on a runner in a cabinet): our convex
+            # shapes are coarser than the asset's exact ones, and overlap where it slides inside
+            a = bodies[b["parent"]].get("parent") if bodies[b["parent"]].get("joint") else None
+            while a is not None:
+                if host[a] != host[i]:
+                    world.add_exclude(bodyname1=host[a], bodyname2=names[i])
+                a = bodies[a].get("parent") if bodies[a].get("joint") else None
         if b.get("weld"):                            # held to its parent as the asset lays them out
             hp = next(k for k in range(len(bodies)) if names[k] == host[b["parent"]])
             rel = np.linalg.inv(frame[i]) @ frame[hp]
@@ -449,6 +475,15 @@ def save_parts(m: mujoco.MjModel, d: mujoco.MjData, p: Placed, root: int):
 
 
 def restore_joints(m: mujoco.MjModel, d: mujoco.MjData, p: Placed):
+    """Joint positions as they were, or for a new item where its asset says they start."""
+    if p.joints is None:
+        meta = catalog.meta(p.item)
+        for i, b in enumerate(meta.get("bodies") or []):
+            if b.get("joint", {}).get("initial"):
+                jid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, f"obj_{p.uid}__{i}_{b['joint']['name']}")
+                if jid >= 0:
+                    d.qpos[m.jnt_qposadr[jid]] = b["joint"]["initial"]
+        return
     for name, q in (p.joints or {}).items():
         j = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, name)
         if j >= 0:
