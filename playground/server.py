@@ -907,6 +907,7 @@ class PGHandler(Handler):
                                    "time_limit": TIME_LIMIT, "public": PUBLIC,
                                    "free_time_limit": FREE_TIME_LIMIT, "max_active": MAX_ACTIVE if PUBLIC else 0,
                                    "owner": LABS.owner_ok(self.headers), "front": LABS.FRONT_URL,
+                                   "website": SAVE.WEBSITE_URL if LABS.OWNER_USER else "",
                                    "lab_url": LABS.LAB_URL})
             if p.startswith("/pg/thumb/"):
                 f = catalog.ASSETS / pathlib.Path(p).stem / "thumb.png"

@@ -280,6 +280,19 @@ header>.hgroup:first-child{flex:1 1 auto}header>.hgroup:last-child{flex:0 1 auto
 .sessname{flex:0 1 auto;min-width:48px}
 .sessname{font-size:15px;font-weight:600;color:var(--ink);max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:0;background:none;padding:2px 4px;border-radius:6px;cursor:default;font-family:inherit}
 body:not(.watch) .sessname.can{cursor:text}
+/* account: bottom of the sessions sidebar (signed-in hosted labs only) */
+.acct{margin-top:auto;position:relative;flex:none}
+.acct[hidden]{display:none}
+.acctbtn{width:100%;height:48px;border-radius:10px;padding:0 8px;display:flex;align-items:center;gap:10px;background:#fff;box-shadow:0 0 0 1px var(--line);border:0;text-align:left;font:inherit;color:var(--ink);cursor:pointer}
+.acctbtn:hover{background:var(--soft)}
+.acctbtn .av{width:30px;height:30px;border-radius:50%;background:#4B5563;display:flex;align-items:center;justify-content:center;flex:none}
+.acctbtn .n{flex:1;min-width:0}.acctbtn .n b{display:block;font-size:13px}.acctbtn .n span{display:block;font-size:11.5px;color:var(--muted)}
+.acctmenu{position:absolute;left:0;right:0;bottom:56px;background:#fff;border-radius:12px;box-shadow:0 0 0 1px rgba(17,24,39,.08),0 16px 36px -12px rgba(17,24,39,.3);padding:6px;display:flex;flex-direction:column;z-index:20}
+.acctmenu[hidden]{display:none}
+.acctmenu a{height:36px;border-radius:8px;padding:0 10px;display:flex;align-items:center;gap:10px;color:var(--ink);font-weight:500;font-size:13px;text-decoration:none}
+.acctmenu a:hover,.acctmenu a:focus-visible{background:var(--soft);outline:none}
+.acctmenu a span{margin-left:auto;font-size:11.5px;color:var(--muted);font-weight:400}
+.acctmenu i{height:1px;background:#EEF0F3;margin:4px 6px}
 #sessNav{width:248px;flex:none;overflow:hidden;border-right:1px solid var(--line);transition:width 200ms cubic-bezier(.23,1,.32,1);min-height:0;background:#FAFAFB}
 #sessNav.closed{width:0;border-right:0}
 #sessNav .in{width:248px;height:100%;display:flex;flex-direction:column;gap:18px;padding:14px 12px;min-height:0;overflow-y:auto}
@@ -691,6 +704,14 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
     <div><span class="slbl" id="mineLbl">Your sessions</span><div class="slist" id="mineList"></div></div>
     <div><span class="slbl livelbl">Live now · watch others</span><div class="slist" id="liveList"></div></div>
     <span class="snote">Every session is public. Anyone can watch it, but only you can change it.</span>
+    <div class="acct" id="acct" hidden>
+      <div class="acctmenu" id="acctMenu" role="menu" aria-label="Account" hidden>
+        <a role="menuitem" id="acctRuns" href="#" target="_blank" rel="noopener"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#374151" stroke-width="1.5" stroke-linecap="round"><path d="M4 2h8M4 14h8M5 2c0 3 6 3 6 6s-6 3-6 6M11 2c0 3-6 3-6 6s6 3 6 6"/></svg>Your runs<span>all sessions</span></a>
+        <i></i>
+        <a role="menuitem" id="acctOut" href="#"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#374151" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3H4.5A1.5 1.5 0 003 4.5v7A1.5 1.5 0 004.5 13H10"/><path d="M7 8h7M11.5 5.5L14 8l-2.5 2.5"/></svg>Sign out</a>
+      </div>
+      <button class="acctbtn" id="acctBtn" aria-haspopup="menu" aria-expanded="false"><span class="av" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.5"><circle cx="8" cy="5.5" r="2.6"/><path d="M2.8 14c.7-2.6 2.8-4 5.2-4s4.5 1.4 5.2 4"/></svg></span><span class="n"><b>Your account</b><span>Signed in with Google</span></span><svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#4B5563" stroke-width="1.5"><path d="M4 8.5L7 5.5l3 3"/></svg></button>
+    </div>
   </div></nav>
   <aside id="left" aria-label="Robot and task">
     <div class="sec stsec">
@@ -2241,6 +2262,15 @@ $('wModel').onchange = renderWet;
     if (S.cat.front) {   // a hosted lab: the front lists live and past runs
       $('pastLink').href = S.cat.front + '/pg/runs'; S.railKey = null; $('liveLink').href = S.cat.front + '/live';
       $('liveLink').style.display = '';
+    }
+    if (S.cat.website && S.cat.owner) {   // signed in through the website: account menu (Your runs, Sign out)
+      const btn = $('acctBtn'), menu = $('acctMenu');
+      $('acctRuns').href = S.cat.website + '/runs'; $('acctOut').href = S.cat.website + '/sign-out';
+      $('acct').hidden = false;
+      const show = (on) => { menu.hidden = !on; btn.setAttribute('aria-expanded', String(on)); };
+      btn.onclick = (e) => { e.stopPropagation(); show(menu.hidden); if (!menu.hidden) menu.querySelector('a').focus(); };
+      document.addEventListener('click', (e) => { if (!menu.hidden && !$('acct').contains(e.target)) show(false); });
+      menu.addEventListener('keydown', (e) => { if (e.key === 'Escape') { show(false); btn.focus(); } });
     }
     // Someone else's lab (no owner key): watch only. The server refuses changes anyway.
     if (!S.cat.owner) { document.body.classList.add('watch'); S.watch = true; S.sideTab = 'chat'; }
