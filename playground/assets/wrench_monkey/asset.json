@@ -1,0 +1,196 @@
+{
+ "source": "handTool_wrench_monkey_a01",
+ "usd": "sm_handTool_wrench_monkey_a01_01.usd",
+ "mass": 1.11821,
+ "friction": 0.61,
+ "com": null,
+ "size": [
+  0.2707,
+  0.0689,
+  0.0292
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "body_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.1746,
+      0.0558,
+      0.0558,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.00018083148306255673
+    }
+   ],
+   "mass": 0.6206,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.016459,
+    -0.011691,
+    0.014623
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.016459,
+    -0.011691,
+    0.014623,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "head_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.6173,
+      0.6173,
+      0.6173,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b1_vis_1.obj",
+     "rgba": [
+      0.7496,
+      0.7496,
+      0.7496,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 6.392239873426367e-05
+    }
+   ],
+   "mass": 0.346104,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_head_01_joint_00",
+    "type": "slide",
+    "range": [
+     0.0,
+     0.019494
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.064235,
+    0.020869,
+    5.7e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.080693,
+    0.009178,
+    0.01468,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "lock_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.5098,
+      0.5137,
+      0.5216,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 1.1743468708279572e-05
+    }
+   ],
+   "mass": 0.151505,
+   "parent": 1,
+   "collide": false,
+   "joint": {
+    "name": "joint_lock_01_joint_00",
+    "type": "hinge",
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    -0.027283,
+    -1e-06,
+    -5.9e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.05341,
+    0.009177,
+    0.014622,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

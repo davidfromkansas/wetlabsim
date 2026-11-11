@@ -1,0 +1,189 @@
+{
+ "source": "tool_clamp_c01",
+ "usd": "sm_tool_clamp_c01_01.usd",
+ "mass": 0.7471,
+ "friction": 0.3,
+ "com": null,
+ "size": [
+  0.1876,
+  0.1356,
+  0.0234
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "body_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.2809,
+      0.2675,
+      0.2593,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.00010656701233236026
+    }
+   ],
+   "mass": 0.515,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.027797,
+    5e-06,
+    -0.000255
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.027797,
+    5e-06,
+    -0.000255,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "hande_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.2721,
+      0.2624,
+      0.2564,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 2.643138622589082e-06
+    }
+   ],
+   "mass": 0.044159,
+   "parent": 2,
+   "collide": false,
+   "joint": {
+    "name": "joint_hande_01_joint_00",
+    "type": "slide",
+    "range": [
+     -0.0001,
+     0.048753
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     1.0,
+     0.0
+    ]
+   },
+   "pos": [
+    -0.058294,
+    -0.023639,
+    1e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.08852,
+    -0.034338,
+    0.011723,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "pres_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.2721,
+      0.2624,
+      0.2564,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 2.8485309607954345e-05
+    }
+   ],
+   "mass": 0.187941,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_pres_01_joint_00",
+    "type": "slide",
+    "range": [
+     -0.008772,
+     0.047079
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    -0.058022,
+    -0.010704,
+    0.011968
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.030226,
+    -0.010699,
+    0.011712,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

@@ -1,0 +1,268 @@
+{
+ "source": "tools_clamp_large_a01",
+ "usd": "sm_tools_clamp_large_a01_01.usda",
+ "mass": 0.11248,
+ "friction": 0.61,
+ "com": null,
+ "size": [
+  0.1649,
+  0.1277,
+  0.0361
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "part_clampJaw_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.9344,
+      0.1392,
+      0.0168,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 6.73691842391429e-06
+    }
+   ],
+   "mass": 0.006101,
+   "parent": 2,
+   "collide": false,
+   "joint": {
+    "name": "joint_part_clampJaw_01_joint_00",
+    "type": "hinge",
+    "range": [
+     -0.15708,
+     1.919862
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    -0.070661,
+    -0.009657,
+    5.7e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.070754,
+    -0.009657,
+    0.021638,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "part_clampJaw_02_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.9344,
+      0.1392,
+      0.0168,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 6.736918079827248e-06
+    }
+   ],
+   "mass": 0.006101,
+   "parent": 3,
+   "collide": false,
+   "joint": {
+    "name": "joint_part_clampJaw_02_joint_00",
+    "type": "hinge",
+    "range": [
+     -1.919862,
+     0.15708
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    -0.070661,
+    0.009657,
+    5.7e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.070754,
+    0.009657,
+    0.021638,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "part_clampLeg_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.0073,
+      0.0073,
+      0.0073,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b2_tex_0.png"
+    },
+    {
+     "mesh": "b2_vis_1.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b2_tex_1.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 0.0001588006193749053
+    }
+   ],
+   "mass": 0.05326,
+   "parent": 3,
+   "collide": false,
+   "joint": {
+    "name": "joint_part_clampLeg_01_joint_00",
+    "type": "hinge",
+    "range": [
+     0.0,
+     1.22173
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -9.3e-05,
+    0.0,
+    0.021581,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "part_clampLeg_02_obj_00",
+   "visuals": [
+    {
+     "mesh": "b3_vis_0.obj",
+     "rgba": [
+      0.0073,
+      0.0073,
+      0.0073,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b3_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b3_col_0.obj",
+     "volume": 0.00011726684762840555
+    }
+   ],
+   "mass": 0.047021,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -9.3e-05,
+    0.0,
+    0.021581
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -9.3e-05,
+    0.0,
+    0.021581,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

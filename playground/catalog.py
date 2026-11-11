@@ -16,7 +16,7 @@ import pathlib
 
 ASSETS = pathlib.Path(__file__).parent / "assets"
 
-TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Instruments", "PPE", "Kitchen", "Bins & Trays", "Toys & Basics", "Soft"]
+TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Instruments", "PPE", "Tools", "Kitchen", "Bins & Trays", "Toys & Basics", "Soft"]
 
 # id, tab, label, Hugging Face folder, hollow, fixed
 ITEMS = [
@@ -110,6 +110,27 @@ ITEMS = [
     ("thermometer", "Lab & Medical", "Thermometer", "thermometer_fever_a01", False, False),
     ("disinfectant", "Lab & Medical", "Disinfectant bottle", "disinfectant_a01", False, False),
     ("glove_box", "Lab & Medical", "Box of gloves", "box_glove_a01", False, False),
+    ("tool_scissors", "Tools", "Scissors", "tools_scissors_a01", False, False),
+    ("pliers_combination", "Tools", "Combination pliers", "handTool_pliers_combination_a01", False, False),
+    ("pliers_long_nose", "Tools", "Long-nose pliers", "handTool_pliers_long_nose_a01", False, False),
+    ("pliers_long_nose_curved", "Tools", "Long-nose pliers, curved", "handTool_pliers_long_nose_curved_a01", False, False),
+    ("pliers_diagonal", "Tools", "Diagonal cutting pliers", "handTool_pliers_diagonal_cutting_a01", False, False),
+    ("pliers_groove_joint", "Tools", "Groove-joint pliers", "handTool_pliers_groove_joint_8in_b01", False, False),
+    ("pliers_locking", "Tools", "Locking pliers", "handTool_pliers_locking_a01", True, False),
+    ("knife_folding", "Tools", "Folding utility knife", "handTool_knife_foldingUtility_a01", False, False),
+    ("knife_retractable", "Tools", "Retractable knife", "handTool_knife_retractableBlade_a01", False, False),
+    ("wrench_adjustable", "Tools", "Adjustable wrench", "handTool_wrench_adjustable_a01", False, False),
+    ("wrench_monkey", "Tools", "Monkey wrench", "handTool_wrench_monkey_a01", False, False),
+    ("wrench_tap", "Tools", "Tap wrench", "handTool_wrench_tap_a01", False, False),
+    ("ratchet", "Tools", "Ratchet", "handTool_ratchet_b01", False, False),
+    ("torque_wrench", "Tools", "Torque wrench", "handTool_torque_wrench_b01", False, False),
+    ("clamp_c", "Tools", "Clamp", "tool_clamp_c01", False, False),
+    ("clamp_large", "Tools", "Large clamp", "tools_clamp_large_a01", False, False),
+    ("hand_drill", "Tools", "Hand drill", "instrument_hand_drill_b01", False, False),
+    ("drill", "Tools", "Power drill", "powerTool_drill_a01", False, False),
+    ("drill_2", "Tools", "Power drill, 2", "powerTool_drill_b01", False, False),
+    ("heat_gun", "Tools", "Cordless heat gun", "powerTool_heatGun_cordless_a01", False, False),
+    ("cutting_tool", "Tools", "Cutting tool", "powerTool_cutting_tool_c01", False, False),
     ("mug", "Kitchen", "Mug", "kitchenware_mug_a01", True, False),
     ("bowl", "Kitchen", "Bowl", "kitchenware_bowl_b01", True, False),
     ("cutting_board", "Kitchen", "Cutting board", "kitchenware_cuttingBoard_a01", False, False),

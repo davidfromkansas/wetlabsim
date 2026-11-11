@@ -1,0 +1,200 @@
+{
+ "source": "powerTool_heatGun_cordless_a01",
+ "usd": "sm_powerTool_heatGun_cordless_a01_01.usd",
+ "mass": 0.92571,
+ "friction": 0.55,
+ "com": null,
+ "size": [
+  0.2202,
+  0.0905,
+  0.2879
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "body_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.0037939438996561596
+    }
+   ],
+   "mass": 0.919664,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.003493,
+    0.0,
+    -0.000113
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.003493,
+    0.0,
+    -0.000113,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "button_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 7.252055152754974e-07
+    }
+   ],
+   "mass": 0.001045,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_button_01_joint_00",
+    "type": "slide",
+    "range": [
+     0.0,
+     0.001481
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.018658,
+    4.2e-05,
+    0.172519
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.022151,
+    4.2e-05,
+    0.172406,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "button_02_obj_00",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.7,
+      0.7,
+      0.72,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 8.188656421524221e-06
+    }
+   ],
+   "mass": 0.004996,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_button_02_joint_00",
+    "type": "slide",
+    "range": [
+     -0.006141,
+     0.0
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.021141,
+    -2e-06,
+    0.19326
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.024634,
+    -2e-06,
+    0.193147,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}
