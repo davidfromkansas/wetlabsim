@@ -35,6 +35,8 @@ MCP_TOOLS = ["mcp__wetlab__look", "mcp__wetlab__robot_state", "mcp__wetlab__emer
 
 
 def _eval_call(url, token, path, body=None):
+    """A call to the cell (or the playground's lab) as the run harness: with the eval token, which
+    a signed-in account's private lab also needs from it."""
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(url + path, data=data, method="POST" if data else "GET",
                                  headers={"X-Eval-Token": token, "Content-Type": "application/json"})
@@ -299,7 +301,7 @@ def main(argv=None):
     # The agent's own Python can import only the robot client (wetlabsim.robot), like a real
     # robot's SDK. That copy comes first on PYTHONPATH, so it also hides an installed copy of
     # the full package, whose scene and simulator code would reveal where everything is.
-    info = json.loads(urllib.request.urlopen(args.url + "/info").read())
+    info = _eval_call(args.url, token, "/info")
     robot = info.get("robot_id", "ur5e")
     workspace = pathlib.Path(tempfile.mkdtemp(prefix=f"wetlab-{run_id}-"))
     client = pathlib.Path(tempfile.mkdtemp(prefix=f"wetlab-{run_id}-client-"))
@@ -310,7 +312,7 @@ def main(argv=None):
     _eval_call(args.url, token, "/eval/reset", {"run_dir": str(run_dir), "task": args.task_id})
     gt0 = _eval_call(args.url, token, "/eval/ground_truth")
     wall_reset = time.time()
-    sim_reset = json.loads(urllib.request.urlopen(args.url + "/state").read())["time"]
+    sim_reset = _eval_call(args.url, token, "/state")["time"]
     cmd = build_command(args.agent, task, args.model, workspace, run_dir, note, robot_url, robot_token)
     leaks = workspace_leaks(workspace, client)
     if leaks:
@@ -433,8 +435,8 @@ def main(argv=None):
     gt = _eval_call(args.url, token, "/eval/ground_truth")
     _eval_call(args.url, token, "/eval/save_recording", {"path": str(run_dir / "replay.npz")})
     _eval_call(args.url, token, "/eval/close_log", {})
-    state = json.loads(urllib.request.urlopen(args.url + "/state").read())
-    events = json.loads(urllib.request.urlopen(args.url + "/events?all=1").read())
+    state = _eval_call(args.url, token, "/state")
+    events = _eval_call(args.url, token, "/events?all=1")
     store.write_json(run_id, "events.json", events, indent=0)
     run_info.update(meta.info(), status=status, wall_seconds=round(elapsed, 1))
     _eval_call(args.url, token, "/eval/run", run_info)
