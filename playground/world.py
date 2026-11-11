@@ -248,7 +248,7 @@ def _part_geoms(world, body, name: str, rec: dict, prefix: str, cls, friction, a
 # Parts an asset glues on with a fixed joint that stay separate bodies (held by a weld), so they
 # could come off later: caps, lids and stoppers. Other glued parts (labels, needles, shelves,
 # straps) are fixed in place on their part, and cost nothing.
-SEPARATE = re.compile(r"cap|lid|cork|stopper|plug", re.I)
+SEPARATE = re.compile(r"cap|lid|cover|cork|stopper|plug", re.I)
 
 
 def part_kind(b: dict, fixed: bool, item: str = "") -> str:

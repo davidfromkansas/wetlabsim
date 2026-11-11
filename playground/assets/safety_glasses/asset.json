@@ -1,0 +1,238 @@
+{
+ "source": "ppe_eyeProtection_safetyGlasses_a01",
+ "usd": "sm_ppe_eyeProtection_safetyGlasses_a01_01.usd",
+ "mass": 0.17209,
+ "friction": 0.4,
+ "com": null,
+ "size": [
+  0.1669,
+  0.169,
+  0.0596
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "frame_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.00012753551009827448
+    }
+   ],
+   "mass": 0.023258,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -0.000995,
+    -0.0,
+    -6.7e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.000995,
+    -0.0,
+    -6.7e-05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "lens_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      0.9383,
+      0.9653,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 7.260739235737309e-05
+    }
+   ],
+   "mass": 0.1349,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    0.08181,
+    -0.0,
+    0.039271
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.08181,
+    -0.0,
+    0.039271,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "templeLeft_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b2_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 1.4197712055269089e-05
+    }
+   ],
+   "mass": 0.006965,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_templeLeft_01_joint_00",
+    "type": "hinge",
+    "range": [
+     0.0,
+     1.570796
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.019739,
+    0.081444,
+    0.054177
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.018744,
+    0.081444,
+    0.05411,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "templeRight_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b3_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b3_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b3_col_0.obj",
+     "volume": 1.4192232576940768e-05
+    }
+   ],
+   "mass": 0.006964,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_templeRight_01_joint_00",
+    "type": "hinge",
+    "range": [
+     -1.570796,
+     0.0
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.019744,
+    -0.081441,
+    0.054178
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.018749,
+    -0.081441,
+    0.054111,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

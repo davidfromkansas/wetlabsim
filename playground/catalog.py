@@ -16,7 +16,7 @@ import pathlib
 
 ASSETS = pathlib.Path(__file__).parent / "assets"
 
-TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Instruments", "PPE", "Tools", "Kitchen", "Bins & Trays", "Toys & Basics", "Soft"]
+TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Instruments", "PPE", "Tools", "Kitchen", "Bins & Trays", "Cleaning", "Electronics", "Toys & Basics", "Soft"]
 
 # id, tab, label, Hugging Face folder, hollow, fixed
 ITEMS = [
@@ -153,6 +153,26 @@ ITEMS = [
     ("crate", "Bins & Trays", "Blue crate", "crate_blue_a01", True, False),
     ("cube_box", "Bins & Trays", "Cardboard box", "box_cube_a01", False, False),
     ("waste_bin", "Bins & Trays", "Waste bin", "bin_waste_a01", True, False),
+    ("basket_mini", "Bins & Trays", "Mini plastic basket", "storage_basket_plastic_mini_a01", True, False),
+    ("basket", "Bins & Trays", "Plastic basket", "storage_basket_plastic_a01", True, False),
+    ("pail", "Bins & Trays", "Red pail", "pail_plastic_red_a02", True, False),
+    ("pail_screw_top", "Bins & Trays", "Screw-top pail", "pail_screwTop_red_a02", True, False),
+    ("first_aid_kit", "Bins & Trays", "First-aid kit", "safety_firstAidKit_box_plastic_a01", True, False),
+    ("toolbox", "Bins & Trays", "Hard-case toolbox", "storage_toolbox_carry_hardCase_b01", True, False),
+    ("case_a", "Bins & Trays", "Case", "case_a01", True, False),
+    ("case_e", "Bins & Trays", "Case, 2", "case_e01", True, False),
+    ("window_spray", "Cleaning", "Window spray", "cleaning_windowSpray_a01", False, False),
+    ("soap_dispenser", "Cleaning", "Soap dispenser", "cleaning_soapDispenser_d01", False, False),
+    ("soap_dispenser_2", "Cleaning", "Soap dispenser, 2", "cleaning_soapDispenser_e01", False, False),
+    ("solvent_spray", "Cleaning", "Solvent spray", "consumable_spray_solvent_a01", False, False),
+    ("eyeglasses", "PPE", "Eyeglasses", "misc_eyeGlasses_a01", False, False),
+    ("eyeglasses_2", "PPE", "Eyeglasses, 2", "accessory_eyeglasses_a01", False, False),
+    ("safety_glasses", "PPE", "Safety glasses", "ppe_eyeProtection_safetyGlasses_a01", False, False),
+    ("ear_muffs", "PPE", "Ear muffs", "ppe_hearingProtection_earMuffs_a01", False, False),
+    ("mouse", "Electronics", "Computer mouse", "computer_mouse_office_b01", False, False),
+    ("barcode_scanner", "Electronics", "Barcode scanner", "computer_scanner_barcode_c01", False, False),
+    ("multimeter", "Electronics", "Digital multimeter", "testingTool_multimeter_digital_b01", False, False),
+    ("pressure_gauge", "Electronics", "Digital pressure gauge", "serviceTool_gauge_pressureDigitalRemote_a01", False, False),
     ("golf_ball", "Toys & Basics", "Golf ball", "misc_golfBall_a01", False, False),
     ("rubiks_cube", "Toys & Basics", "Puzzle cube", "toys_rubiksCube_a01", False, False),
     ("pong_ball", "Toys & Basics", "Ping-pong ball", "misc_toy_pongPaddle_ball_a01", False, False),
