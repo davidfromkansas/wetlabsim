@@ -1,0 +1,111 @@
+{
+ "source": "food_processed_ketchup_a01",
+ "usd": "sm_food_processed_ketchup_a01_01.usd",
+ "mass": 0.23687,
+ "friction": 0.4,
+ "com": null,
+ "size": [
+  0.0578,
+  0.093,
+  0.1806
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "sm_food_processed_ketchup_a01_body_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.0006037951603244424
+    }
+   ],
+   "mass": 0.169326,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -3e-06,
+    -7.7e-05,
+    -0.000154
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -3e-06,
+    -7.7e-05,
+    -0.000154,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "sm_food_processed_ketchup_a01_cap_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 6.205190738088541e-05
+    }
+   ],
+   "mass": 0.067542,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    -3e-06,
+    -7.7e-05,
+    0.165376
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -3e-06,
+    -7.7e-05,
+    0.165376,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

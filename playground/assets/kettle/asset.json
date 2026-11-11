@@ -1,0 +1,276 @@
+{
+ "source": "kitchenware_kettle_n01",
+ "usd": "sm_kitchenware_kettle_n01_01.usd",
+ "mass": 0.59919,
+ "friction": 0.61,
+ "com": null,
+ "size": [
+  0.1609,
+  0.2319,
+  0.2509
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "sm_kitchenware_kettle_n01_body_obj_01",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.6448,
+      0.6548,
+      0.6612,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      0.6448,
+      0.6548,
+      0.6612,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.005133117099342968
+    }
+   ],
+   "mass": 0.56571,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -1e-06,
+    -0.025511,
+    -0.000173
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -1e-06,
+    -0.025511,
+    -0.000173,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "sm_kitchenware_kettle_n01_button_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 1.5060119095675614e-06
+    }
+   ],
+   "mass": 0.001474,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_sm_kitchenware_kettle_n01_button_joint_00",
+    "type": "slide",
+    "range": [
+     -0.002314,
+     -0.000314
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    -0.0,
+    0.097644,
+    0.236
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -1e-06,
+    0.072133,
+    0.235827,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "sm_kitchenware_kettle_n01_lid_obj_00",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.6448,
+      0.6548,
+      0.6612,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b2_vis_1.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b2_tex_1.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 7.858062861227359e-05
+    }
+   ],
+   "mass": 0.028147,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_sm_kitchenware_kettle_n01_lid_joint_00",
+    "type": "hinge",
+    "range": [
+     -1.22173,
+     0.0
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    -1.2e-05,
+    0.043335,
+    0.239335
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -1.3e-05,
+    0.017824,
+    0.239162,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "sm_kitchenware_kettle_n01_switch_obj_00",
+   "visuals": [
+    {
+     "mesh": "b3_vis_0.obj",
+     "rgba": [
+      0.6448,
+      0.6548,
+      0.6612,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b3_col_0.obj",
+     "volume": 3.0795105704797878e-06
+    }
+   ],
+   "mass": 0.003861,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_sm_kitchenware_kettle_n01_switch_joint_00",
+    "type": "hinge",
+    "range": [
+     -0.174533,
+     0.0
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    -1.2e-05,
+    0.062719,
+    0.030206
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -1.3e-05,
+    0.037208,
+    0.030033,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

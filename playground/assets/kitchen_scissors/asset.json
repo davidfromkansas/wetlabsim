@@ -1,0 +1,192 @@
+{
+ "source": "utensils_scissors_a01",
+ "usd": "sm_utensils_scissors_a01_01.usd",
+ "mass": 0.55175,
+ "friction": 0.3,
+ "com": null,
+ "size": [
+  0.0675,
+  0.2,
+  0.0097
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "sm_utensils_scissors_a01_left_handel_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 1.3918175788165347e-05
+    }
+   ],
+   "mass": 0.187301,
+   "parent": 1,
+   "collide": false,
+   "joint": {
+    "name": "joint_sm_utensils_scissors_a01_left_handel_joint_00",
+    "type": "hinge",
+    "range": [
+     -0.558505,
+     0.0
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.000515,
+    0.000143,
+    -2.2e-05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "sm_utensils_scissors_a01_reveat_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 4.7014968854360625e-07
+    }
+   ],
+   "mass": 0.187301,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.000515,
+    0.000143,
+    -2.2e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.000515,
+    0.000143,
+    -2.2e-05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "sm_utensils_scissors_a01_right_handel_obj_00",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b2_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 1.3738320993562546e-05
+    }
+   ],
+   "mass": 0.17715,
+   "parent": 1,
+   "collide": false,
+   "joint": {
+    "name": "joint_sm_utensils_scissors_a01_right_handel_joint_00",
+    "type": "hinge",
+    "range": [
+     0.0,
+     0.558505
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.000515,
+    0.000143,
+    -2.2e-05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}
