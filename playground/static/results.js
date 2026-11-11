@@ -48,6 +48,9 @@ const css = `
 #results .rrow:focus-visible{outline:2px solid #2563EB;outline-offset:1px}
 #results .rrow .st{color:#4B5563;font-size:12.5px;white-space:nowrap}
 #results .rrow .n{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#results .rrow .why{grid-column:2 / -1;font-size:12.5px;color:#4B5563;line-height:1.4;margin-top:-4px}
+#results .rrow .why.bad{color:#991B1B}
+#results .rrow .why .err{display:block;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11.5px;color:#991B1B;background:#FEF2F2;border-radius:6px;padding:4px 6px;margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:4.4em;overflow:hidden}
 #results .rrow .mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;color:#374151;white-space:nowrap}
 `;
 document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
@@ -156,7 +159,12 @@ function drawResults() {
     const sqs = of > 1 ? (going ? squares(live, ((S.scene.runs || {})[R.uid] || {}).active, false)
       : `<div class="sqs">${[...g.runs].reverse().map(x => sq(x.ok ? 'ok' : 'no', false, `Run ${x.index}: ${LABEL[x.status] || x.status}`)).join('')}</div>`) : '';
     const head = `<div class="gh"><span class="t">${esc(x0.task || '')}</span><span class="m"><img src="${logo}" alt="">${esc(x0.model_label || '')}${when ? ` · ${when}` : ''}${of > 1 ? ` · <b>${ok} of ${g.runs.length} succeeded</b>${going ? ' so far' : ''}` : ''}${anyCost ? ` · ${usd(cost)}` : ''}</span>${sqs}</div>`;
-    const rows = g.runs.map(x => `<button class="rrow" data-run="${esc(x.run_id)}" aria-label="Open run ${of > 1 ? `${x.index} of ${of}` : ''}: ${LABEL[x.status] || x.status}">${sq(x.ok ? 'ok' : 'no', false, LABEL[x.status] || x.status)}<span class="n">${of > 1 ? `Run ${x.index} of ${of}` : 'Run'} <span class="st">· ${LABEL[x.status] || esc(x.status)}</span></span><span class="mono">${fmt(x.seconds)}</span><span class="mono">${x.cost_usd != null ? usd(x.cost_usd) : ''}</span>${CHEV}</button>`).join('');
+    const rows = g.runs.map(x => {
+      const lab = LABEL[x.status] || x.status, why = x.reason || lab;
+      const err = x.status === 'error' && x.error_text ? `<span class="err">${esc(String(x.error_text).split('\n').slice(-2).join('\n').slice(0, 240))}</span>` : '';
+      const said = x.status !== 'finished' && x.ai_done != null ? (x.ai_done ? ' · The AI had said DONE' : '') : '';
+      return `<button class="rrow" data-run="${esc(x.run_id)}" aria-label="Open run ${of > 1 ? `${x.index} of ${of}` : ''}: ${esc(why)}">${sq(x.ok ? 'ok' : 'no', false, why)}<span class="n">${of > 1 ? `Run ${x.index} of ${of}` : 'Run'} <span class="st">· ${esc(lab)}</span></span><span class="mono">${fmt(x.seconds)}</span><span class="mono">${x.cost_usd != null ? usd(x.cost_usd) : ''}</span>${CHEV}<span class="why${x.ok ? '' : ' bad'}">${esc(why)}${said}${err}</span></button>`;
+    }).join('');
     return `<div class="grp">${head}${rows}</div>`;
   }).join('');
   el.querySelectorAll('[data-run]').forEach(b => b.onclick = () => window.openRunTimeline(R.uid, b.dataset.run));

@@ -329,6 +329,18 @@ def _run_timeline(sess: "Session", uid: str, run_id: str = "") -> dict:
             "provider_id": mdl.get("provider"), "error_text": st.get("error_text")}
 
 
+def _end_reason(status: str, limit, ai_done: bool, batch: dict | None) -> str:
+    """Why a run ended, in plain words (the Results list and its squares)."""
+    if status == "finished":
+        return "The AI finished on its own" + (" and said DONE" if ai_done else ", without saying DONE")
+    if status == "stopped":
+        return "Stopped: you pressed Stop all" if batch and batch.get("cancelled") else "Stopped: you pressed Stop"
+    if status == "time_limit":
+        mins = f" ({float(limit) / 60:g} min)" if limit else ""
+        return f"Cut off: it hit the time limit{mins}"
+    return "Error: the AI could not keep going"
+
+
 def _past_timeline(sess: "Session", uid: str, run_id: str) -> dict:
     """One of a robot's earlier runs (from its Results list), as _run_timeline shows a run."""
     from wetlabsim import timeline as TL
@@ -430,6 +442,14 @@ class Session:
                  "run": {k: run.get(k) for k in ("sim_start", "agent", "model", "model_label", "robot", "robot_label",
                                                  "gripper_label", "task", "time_limit", "cost_usd", "tokens",
                                                  "wall_seconds", "status") if k in run}}
+        # Did the AI say it was done (its own word, DONE: see wetlabsim/run_agent.py)? And why the
+        # run ended, in plain words, for the Results list.
+        from wetlabsim.timeline import DONE_RE
+        entry["ai_done"] = any(isinstance(x, dict) and x.get("kind") == "says"
+                               and (DONE_RE.search(str(x.get("text", "")))
+                                    or str(x.get("text", "")).startswith("Jev says the task is done"))
+                               for x in list(runner.board.trace))
+        entry["reason"] = _end_reason(status, runner.info.get("time_limit"), entry["ai_done"], b)
         if b and not b.get("finished"):
             b["results"].append("succeeded" if entry["ok"] else "failed")
             entry.update(batch=b["id"], index=len(b["results"]), of=b["total"])
