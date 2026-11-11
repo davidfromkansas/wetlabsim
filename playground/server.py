@@ -131,19 +131,27 @@ MODELS = [
     {"id": "adaptive", "label": "Adaptive", "via": "Devin", "agent": "devin", "model": "adaptive",
      "provider": "cognition",
      "needs": "Devin Pro"},
+    # TypeSafe's decision model: no code, one move per answer (wetlabsim/jev_agent.py). Pinned to a
+    # version so runs stay comparable when "jev-latest" moves on.
+    {"id": "jev-1.14", "label": "Jev 1.14", "via": "TypeSafe", "agent": "jev", "model": "jev-1.14.0",
+     "provider": "typesafe", "needs": "a Jev API key (JEV_API_KEY)"},
 ]
 # A Devin organization's API key (a service user's, in DEVIN_API_KEY) runs every Devin model.
 # Without one, Devin runs as this machine's own login, with that plan's limits ("needs").
 DEVIN_ORG = bool(os.environ.get("DEVIN_API_KEY"))
+# A TypeSafe API key (JEV_API_KEY, or TYPESAFE_API_KEY as TypeSafe's docs name it) runs Jev.
+JEV_KEY = bool(os.environ.get("JEV_API_KEY") or os.environ.get("TYPESAFE_API_KEY"))
 
 
 def _needs(m: dict) -> str:
-    return "" if m["agent"] == "devin" and DEVIN_ORG else m.get("needs", "")
+    if (m["agent"] == "devin" and DEVIN_ORG) or (m["agent"] == "jev" and JEV_KEY):
+        return ""
+    return m.get("needs", "")
 
 
 def _site_agents() -> set:
-    """The agents the public site runs: Claude, and Devin once its organization key is set."""
-    return {"claude"} | ({"devin"} if DEVIN_ORG else set())
+    """The agents the public site runs: Claude, plus Devin and Jev once their keys are set."""
+    return {"claude"} | ({"devin"} if DEVIN_ORG else set()) | ({"jev"} if JEV_KEY else set())
 
 
 class Runner:
@@ -899,6 +907,7 @@ class PGHandler(Handler):
                                    "time_limit": TIME_LIMIT, "public": PUBLIC,
                                    "free_time_limit": FREE_TIME_LIMIT, "max_active": MAX_ACTIVE if PUBLIC else 0,
                                    "owner": LABS.owner_ok(self.headers), "front": LABS.FRONT_URL,
+                                   "website": SAVE.WEBSITE_URL if LABS.OWNER_USER else "",
                                    "lab_url": LABS.LAB_URL})
             if p.startswith("/pg/thumb/"):
                 f = catalog.ASSETS / pathlib.Path(p).stem / "thumb.png"

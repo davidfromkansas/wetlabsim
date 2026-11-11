@@ -129,6 +129,24 @@
   .dialog .x { width:28px; height:28px; border:0; border-radius:6px; background:var(--line); color:var(--ink); cursor:pointer; }
   .dialog pre { margin:0; padding:16px; white-space:pre-wrap; font:13px/1.6 var(--mono); color:var(--text); max-height:60vh; overflow:auto; }
   .dialog p { margin:0; padding:10px 16px 14px; font-size:12px; color:var(--muted); }
+#feed .jev{border:1px solid #D1D5DB;border-radius:8px;overflow:hidden;font-size:13px}
+#feed .jev .bar{display:flex;justify-content:space-between;gap:8px;padding:5px 8px;background:#F3F4F6;color:var(--ink2);font:12.5px Inter,sans-serif}
+#feed .jev .jp{color:var(--muted)}
+#feed .jev .jrow{display:flex;flex-wrap:wrap;gap:4px 14px;padding:6px 8px 0;color:#374151}
+#feed .jev .jdid{padding:4px 8px 6px;color:var(--muted);font:12px 'JetBrains Mono',monospace}
+#feed .jev.err .jdid{color:var(--red)}
+#feed .jev details{border-top:1px solid var(--line);padding:4px 8px 8px}
+#feed .jev summary{cursor:pointer;color:var(--muted);font-size:12px}
+#feed .jev .jq{margin-top:8px}
+#feed .jev .jqh{font-weight:600;margin-bottom:2px}#feed .jev .jqh span{font-weight:400;color:var(--muted);font-size:11px}
+#feed .jev .jbar{display:grid;grid-template-columns:120px 1fr 38px;align-items:center;gap:6px;font-size:12px}
+#feed .jev .jbar i{display:block;height:6px;border-radius:3px;background:#93C5FD}
+#feed .jev .jbar b{font-weight:500;text-align:right;color:var(--muted)}
+#feed .jev .jc{font-size:12px;color:var(--muted)}
+#feed .jev .jimg{position:relative;width:220px;margin-top:4px}
+#feed .jev .jimg img{display:block;width:100%;border-radius:6px;border:1px solid var(--line)}
+#feed .jev .jimg i{position:absolute;border:2px solid #EC4899;border-radius:2px}
+#feed .jev pre{margin:8px 0 0;max-height:200px;overflow:auto;font:11.5px 'JetBrains Mono',monospace;white-space:pre-wrap;color:var(--ink2)}
 </style>
 </head>
 <body>
@@ -207,7 +225,7 @@
 const qs = new URLSearchParams(location.search);
 const ARCHIVE = qs.get('run');
 const BASE = ARCHIVE ? '/runs/' + encodeURIComponent(ARCHIVE) : '';
-const LOGOS = { Anthropic: '/static/anthropic.svg', OpenAI: '/static/openai.svg', Cognition: '/static/cognition.svg', Google: '/static/google.svg' };
+const LOGOS = { Anthropic: '/static/anthropic.svg', OpenAI: '/static/openai.svg', Cognition: '/static/cognition.svg', Google: '/static/google.svg', TypeSafe: '/static/typesafe.png' };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const mmss = (s) => { s = Math.max(0, Math.floor(s || 0)); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
@@ -377,6 +395,33 @@ function renderSeen() {
 
 // ------------------------------------------------------------------- chat
 let feedKey = '', viewChanged = false;
+// One of Jev's moves (wetlabsim/jev_agent.py): everything its API answered for that step.
+function jevCard(text, start, camBase) {
+  let d; try { d = JSON.parse(text); } catch (e) { return `<p>${esc(text)}</p>`; }
+  const a = d.answers || {}, pct = (x) => x == null ? '' : Math.round(x * 100) + '%';
+  const nice = (s) => String(s || '').replace(/_/g, ' ');
+  const top = (q) => q && q.choice ? `${nice(q.choice)} <span class="jp">${pct((q.probabilities || {})[q.choice])}</span>` : '—';
+  const bars = (q) => Object.entries((q && q.probabilities) || {}).sort((x, y) => y[1] - x[1])
+    .map(([k, v]) => `<div class="jbar"><span>${esc(nice(k))}</span><i style="width:${Math.max(1, v * 100)}%"></i><b>${pct(v)}</b></div>`).join('');
+  const mv = a.move || {}, moving = mv.choice && !/gripper|stop|done/.test(mv.choice);
+  const u = d.usage || {}, bx = a.target && a.target.box;
+  const img = camBase ? `<div class="jimg"><img src="${camBase}/camera/overhead.jpg?t=${(+d.camera_time || 0).toFixed(3)}" alt="What the overhead camera showed Jev" loading="lazy">` +
+    (bx ? `<i style="left:${bx.left * 100}%;top:${bx.top * 100}%;width:${(bx.right - bx.left) * 100}%;height:${(bx.bottom - bx.top) * 100}%"></i>` : '') + '</div>' : '';
+  const qs = Object.entries(a).map(([k, q]) => {
+    let body = '';
+    if (q.type === 'choice' || q.type === 'score') body = bars(q) + (q.confidence != null ? `<div class="jc">confidence ${pct(q.confidence)}</div>` : '');
+    else if (q.type === 'noul') body = `<div class="jbar"><span>yes</span><i style="width:${Math.max(1, q.noul * 100)}%"></i><b>${pct(q.noul)}</b></div>`;
+    else if (q.type === 'box') body = (q.box ? `<div class="jc">left ${pct(q.box.left)} · right ${pct(q.box.right)} · top ${pct(q.box.top)} · bottom ${pct(q.box.bottom)} of the picture</div>` : '<div class="jc">no box</div>')
+      + (q.confidence != null ? `<div class="jc">confidence ${pct(q.confidence)}</div>` : '') + img;
+    return `<div class="jq"><div class="jqh">${esc(nice(k))} <span>${esc(q.type || '')}</span></div>${body}</div>`;
+  }).join('');
+  return `<div class="jev${d.ok === false ? ' err' : ''}">
+    <div class="bar"><span><span class="sdot" style="color:${d.ok === false ? 'var(--red)' : 'var(--green)'}">●</span> Step ${d.step} · ${top(mv)}${moving && a.step ? ' · ' + esc(nice(a.step.choice)) : ''}</span><span>${(+d.seconds || 0).toFixed(2)} s</span></div>
+    <div class="jrow"><span>Goal: ${top(a.goal)}</span>${a.task_done ? `<span>Task done? ${pct(a.task_done.noul)}</span>` : ''}${mv.confidence != null ? `<span>Sure of move: ${pct(mv.confidence)}</span>` : ''}</div>
+    <div class="jdid">⎿ ${esc(d.did || '')}</div>
+    <details><summary>Everything Jev sent back · ${esc(d.model || '')} · ${(u.input_tokens || 0).toLocaleString()} tokens in, ${(u.output_tokens || 0).toLocaleString()} out${d.cost_usd != null ? ' · $' + (+d.cost_usd).toFixed(4) + ' so far' : ''}</summary>${qs}
+      <pre>${esc(JSON.stringify({model: d.model, answers: a, usage: u}, null, 1))}</pre></details></div>`;
+}
 function renderFeed() {
   const v = start + viewTime();
   const shown = trace.filter((s) => s.t <= v + 0.01);
@@ -397,6 +442,7 @@ function renderFeed() {
     let body = '';
     if (s.kind === 'says') body = `<p>${esc(s.text)}</p>`;
     else if (s.kind === 'thinks') body = `<p class="think">${esc(s.text)}</p>`;
+    else if (s.kind === 'decides') body = jevCard(s.text, start, BASE);
     else if (s.kind === 'runs') {
       const err = outText && /Error|Traceback|refused|protective stop/i.test(outText);
       body = `<div class="codecard"><div class="bar"><span><span class="dot" style="color:${err ? 'var(--red)' : 'var(--green)'}">●</span> Run code</span><span>${mmss(s.t - start)}</span></div><pre>${esc(s.text)}</pre>` +
