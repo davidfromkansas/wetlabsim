@@ -233,8 +233,9 @@ class PlaygroundSim(Sim):
             if f >= 0:
                 a, n = int(m.flex_vertadr[f]), int(m.flex_vertnum[f])
                 V = d.flexvert_xpos[a:a + n]
-                p.pos = (float(V[:, 0].mean()), float(V[:, 1].mean()),
-                         float(V[:, 2].min() - m.flex_radius[f]) - self._soft_lift(p))
+                # its body sits _soft_lift below its shape's lowest vertex (the vertex's own radius
+                # is already in where it rests)
+                p.pos = (float(V[:, 0].mean()), float(V[:, 1].mean()), float(V[:, 2].min()) - self._soft_lift(p))
                 p.quat = None
                 continue
             b = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, f"obj_{p.uid}")

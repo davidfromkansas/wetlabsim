@@ -91,3 +91,20 @@ def test_sponge_squeezes_and_springs_back():
     _step(sim, 1.0)
     size = lambda P: np.sort(np.ptp(P, 0))
     assert np.abs(size(V()) - size(v0)).max() < 0.005, "it springs back when let go"
+
+
+@pytest.mark.parametrize("item", ["fuel_hose", "cloth", "sponge"])
+def test_soft_items_keep_their_height_across_edits(item):
+    """Every edit rebuilds the lab and lays soft objects out again where they lie: they mustn't
+    sink (each rebuild once put them a flex radius lower: a hose 2 cm into the table)."""
+    sim = PlaygroundSim(stations=[])
+    st = sim.station(sim.add_station("franka", (0, 0), 0.0, "table"))
+    uid = sim.add(item, (0.05, 0.0, st.top + 0.03))
+    _step(sim, 1.5)
+    f = mujoco.mj_name2id(sim.m, mujoco.mjtObj.mjOBJ_FLEX, f"obj_{uid}")
+    low = lambda: float(sim.d.flexvert_xpos[sim.m.flex_vertadr[f]:sim.m.flex_vertadr[f] + sim.m.flex_vertnum[f], 2].min())
+    z0 = low()
+    for _ in range(3):
+        sim.rebuild()
+        mujoco.mj_forward(sim.m, sim.d)
+    assert abs(low() - z0) < 0.001
