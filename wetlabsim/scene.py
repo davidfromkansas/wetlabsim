@@ -437,8 +437,15 @@ def _add_wrist_camera(body, cam_pos, target):
     cam.alt.xyaxes = [*x, *y]
 
 
-def _match_options(*specs):
-    for spec in specs:  # match the world's solver options so attaching is silent
+def _match_options(*specs, world=None):
+    """Match the world's solver options so attaching is silent: the world's own, when it
+    has others than the robot cell's (the playground's lab)."""
+    if world is not None:
+        for spec in specs:
+            for k in ("timestep", "impratio", "tolerance", "noslip_iterations", "cone", "integrator", "enableflags"):
+                setattr(spec.option, k, getattr(world.option, k))
+        return
+    for spec in specs:
         spec.option.timestep = OPTION["timestep"]
         spec.option.impratio = OPTION["impratio"]
         spec.option.tolerance = OPTION["tolerance"]
@@ -474,7 +481,7 @@ def _franka(world, mount="robot_mount", prefix=""):
     _add_wrist_camera(hand, [-0.075, 0.0, 0.04], [0.0, 0.0, 0.22])
     for body in arm.bodies:   # Franka's controller compensates for gravity
         body.gravcomp = 1.0
-    _match_options(arm)
+    _match_options(arm, world=world)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         world.site(mount).attach_body(arm.body("link0"), prefix, "")
@@ -502,7 +509,7 @@ def _ur5e(world, mount_site="robot_mount", prefix=""):
     for spec in (arm, grip):
         for body in spec.bodies:
             body.gravcomp = 1.0
-    _match_options(arm, grip)
+    _match_options(arm, grip, world=world)
 
     arm.site("attachment_site").attach_body(mount, "gripper/", "")
     with warnings.catch_warnings():

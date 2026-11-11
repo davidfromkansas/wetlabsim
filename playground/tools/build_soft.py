@@ -8,8 +8,10 @@ SimReady meshes, textures and mass), then gets what MuJoCo needs to simulate it 
 - sheet: sim.obj, a single-layer grid across the item's two largest extents: its underside if
          it lies flat, else through its middle;
 - shell: sim.obj, the item's own surface simplified to about `nodes` vertices;
-- rope:  sim.obj, a chain of `nodes` vertices along the item's centre line (found from its
-         mesh: the longest path through its points), and the tube's radius.
+- rope:  sim.obj, a chain of `nodes` vertices along the item's centre line, and the tube's
+         radius;
+- solid: sim.obj, the 8 corners of the item's box (a 3D flex whose shape is interpolated
+         from them: MuJoCo's trilinear flex), in the order MuJoCo numbers them.
 
 Every vertex of the item's visual meshes is bound to the closest point on the simulated shape
 (bind_<k>.npz: up to three sim vertices and their weights), so the visual mesh follows the
@@ -163,6 +165,24 @@ def _bind_line(line, V):
     return idx, w
 
 
+def _box(lo, hi):
+    """The 8 corners, ordered as MuJoCo numbers a 2x2x2 flex grid's nodes (4*ix + 2*iy + iz)."""
+    return np.array([[(lo, hi)[ix][0], (lo, hi)[iy][1], (lo, hi)[iz][2]]
+                     for ix in (0, 1) for iy in (0, 1) for iz in (0, 1)])
+
+
+def _bind_box(lo, hi, V):
+    """Trilinear weights of each point over the box's 8 corners."""
+    t = np.clip((V - lo) / (hi - lo), 0, 1)
+    idx, w = [], []
+    for ix in (0, 1):
+        for iy in (0, 1):
+            for iz in (0, 1):
+                idx.append(4 * ix + 2 * iy + iz)
+                w.append((t[:, 0] if ix else 1 - t[:, 0]) * (t[:, 1] if iy else 1 - t[:, 1]) * (t[:, 2] if iz else 1 - t[:, 2]))
+    return np.tile(np.array(idx, np.int32), (len(V), 1)), np.array(w, np.float32).T
+
+
 def _bind(sim_V, sim_F, V):
     """Each point: the three sim vertices of its closest sim triangle and its barycentric weights."""
     sim = trimesh.Trimesh(sim_V, sim_F, process=False)
@@ -200,6 +220,18 @@ def build(id_: str, cache: pathlib.Path):
             idx, w = _bind_line(line, V)
             np.savez_compressed(out / f"bind_{k}.npz", idx=idx, w=w)
             meta["visuals"][k]["bind"] = f"bind_{k}.npz"
+    elif spec["kind"] == "solid":
+        write_obj(out / "sim.obj", _box(lo, hi), np.zeros((0, 3), int))
+        soft.update(sim="sim.obj", nodes=8, radius=0.001, young=spec["young"], poisson=spec["poisson"],
+                    damping=spec["damping"])
+        for k, (V, UV, F) in enumerate(parts):
+            V, UV, F = _decimate(V, UV, F, max(200, VIS_FACES * len(F) // total))
+            write_obj(out / meta["visuals"][k]["mesh"], V, F, UV)
+            if UV is None and meta["visuals"][k].get("texture"):
+                del meta["visuals"][k]["texture"]
+            idx, w = _bind_box(lo, hi, V)
+            np.savez_compressed(out / f"bind_{k}.npz", idx=idx, w=w)
+            meta["visuals"][k]["bind"] = f"bind_{k}.npz"
     else:
         if spec["kind"] == "sheet":
             sim_V, sim_F = _sheet(lo, hi, spec["nodes"])
@@ -219,7 +251,7 @@ def build(id_: str, cache: pathlib.Path):
             meta["visuals"][k]["bind"] = f"bind_{k}.npz"
     meta["soft"] = soft
     meta["collision"] = {"sheet": "cloth (MuJoCo flex, 2D)", "shell": "limp shell (MuJoCo flex, 2D)",
-                         "rope": "rope (MuJoCo flex, 1D)"}[spec["kind"]]
+                         "rope": "rope (MuJoCo flex, 1D)", "solid": "springy solid (MuJoCo flex, 3D)"}[spec["kind"]]
     meta["collision_parts"] = []
     for f in out.glob("col_*.obj"):
         f.unlink()

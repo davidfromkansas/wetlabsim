@@ -1,0 +1,55 @@
+{
+ "source": "cleaning_sponge_b01",
+ "usd": "sm_cleaning_sponge_b01_01.usd",
+ "mass": 0.02103,
+ "friction": 0.7,
+ "com": [
+  -8e-05,
+  -7e-05,
+  0.01655
+ ],
+ "size": [
+  0.0707,
+  0.1006,
+  0.0329
+ ],
+ "collision": "springy solid (MuJoCo flex, 3D)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png",
+   "bind": "bind_0.npz"
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_1.png",
+   "bind": "bind_1.npz"
+  }
+ ],
+ "collision_parts": [],
+ "soft": {
+  "kind": "solid",
+  "sim": "sim.obj",
+  "nodes": 8,
+  "radius": 0.001,
+  "young": 10000.0,
+  "poisson": 0.2,
+  "damping": 0.002
+ }
+}
