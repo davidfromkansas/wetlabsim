@@ -36,3 +36,54 @@ li .secondary{flex:none}
 .sharelink button{height:44px;padding:0 16px;border-radius:8px;border:1px solid #DCDCD6;background:#fff;font:600 14px var(--font-inter),sans-serif;cursor:pointer}
 .sharenote{display:block;font-size:12.5px;color:#55554F;margin-top:10px}
 .tag{display:inline-block;margin-left:8px;padding:2px 6px;border-radius:4px;background:#1D4ED8;color:#fff;font-size:10px;font-weight:700;vertical-align:middle}
+/* Signed-out front page: one screen, headline + Google sign-in + the robot loop. The video is drawn
+   on #FAFAFA, so the page uses the same color and the video has no visible edge. */
+.land{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;background:#FAFAFA}
+.land-nav{height:64px;display:flex;align-items:center;gap:12px;padding:0 48px}
+.land-mark{width:28px;height:28px;border-radius:8px;background:var(--ink);display:flex;align-items:center;justify-content:center}
+.land-brand{font-size:16px;font-weight:700;color:var(--ink)}
+.land-ghost{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 14px;border-radius:9px;border:1px solid #D1D5DB;background:#fff;color:var(--ink);font:600 13.5px var(--font-inter),sans-serif;cursor:pointer;text-decoration:none}
+.land-hero{flex:1;display:flex;gap:64px;align-items:center;max-width:1440px;width:100%;margin:0 auto;padding:0 48px 24px}
+.land-copy{width:460px;flex:none;display:flex;flex-direction:column;gap:24px}
+.land-copy h1{margin:0;font-size:56px;line-height:1.05;letter-spacing:-.025em;color:var(--ink);font-weight:700}
+.land-cta{align-self:flex-start;display:inline-flex;align-items:center;gap:10px;height:48px;padding:0 20px 0 8px;border-radius:12px;border:0;background:var(--ink);color:#fff;font:600 15px var(--font-inter),sans-serif;cursor:pointer;box-shadow:0 1px 2px rgba(17,24,39,.2),0 8px 20px -8px rgba(17,24,39,.5)}
+.land-cta.solid{padding:0 18px;align-self:auto}
+.land-g{width:32px;height:32px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center}
+.land-arm{flex:1;min-width:0;height:min(740px,calc(100vh - 120px));display:flex;align-items:center;justify-content:center}
+.land-arm video{height:100%;max-width:100%;object-fit:contain}
+@media (max-width:860px){
+  .land-nav{height:56px;padding:0 16px}
+  .land-hero{flex-direction:column;align-items:stretch;gap:8px;padding:24px 16px 16px}
+  .land-copy{width:auto;gap:16px}
+  .land-copy h1{font-size:38px;line-height:1.08}
+  .land-copy .land-cta{align-self:stretch;justify-content:center;height:52px}
+  .land-ghost{height:44px}
+  .land-arm{height:auto;flex:1;min-height:0}
+  .land-arm video{width:100%;height:auto;max-height:100%}
+}
+/* Signed in: a faint outline of the Playground while your lab starts */
+.boot{position:fixed;inset:0;display:flex;background:#F4F5F7}
+.boot i{display:block;height:30px;border-radius:8px;background:#E9EBEF}
+.boot-side{width:260px;flex:none;padding:16px 12px;display:flex;flex-direction:column;gap:8px}
+.boot-side b{font-size:15px;color:var(--ink);margin:0 4px 10px}
+.boot-scene{flex:1;margin:8px 0;border-radius:14px;background:linear-gradient(180deg,#fff 0%,#EEF2F6 100%);box-shadow:0 0 0 1px rgba(17,24,39,.07)}
+.boot-rail{width:64px;flex:none;background:#F7F8FA;border-left:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 0}
+.boot-rail i{width:44px;height:44px;border-radius:12px}
+.boot-panel{width:356px;flex:none;background:#fff;padding:16px;display:flex;flex-direction:column;gap:12px}
+.boot-panel i{background:#F3F4F6}
+.boot-card{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(360px,calc(100% - 32px));background:#fff;border-radius:16px;box-shadow:0 0 0 1px rgba(17,24,39,.08),0 24px 50px -20px rgba(17,24,39,.3);padding:24px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.boot-card b{font-size:17px;color:var(--ink)}
+.boot-card p{margin:0;color:var(--muted);font-size:13.5px}
+.boot-card .boot-small{font-size:12.5px}
+.boot-dots{display:flex;gap:5px;height:24px;align-items:center}
+.boot-dots i{width:7px;height:7px;border-radius:50%;background:#2563EB;animation:bootdot 1.2s ease-in-out infinite}
+.boot-dots i:nth-child(2){animation-delay:.12s}.boot-dots i:nth-child(3){animation-delay:.24s}.boot-dots i:nth-child(4){animation-delay:.36s}.boot-dots i:nth-child(5){animation-delay:.48s}
+@keyframes bootdot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+.boot-bar{width:100%;height:4px;border-radius:2px;background:#EEF0F3;overflow:hidden;margin-top:6px}
+.boot-bar span{display:block;width:40%;height:100%;border-radius:2px;background:#2563EB;animation:bootbar 1.6s ease-in-out infinite}
+.boot-bar.amber span{background:#F59E0B}
+@keyframes bootbar{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}
+.boot-acts{display:flex;gap:8px;width:100%;margin-top:8px}
+.boot-acts > *{flex:1;margin:0;height:44px}
+@media (max-width:860px){.boot-side,.boot-rail,.boot-panel{display:none}.boot-scene{margin:8px}}
+@media (prefers-reduced-motion:reduce){.boot-dots i,.boot-bar span{animation:none}}
