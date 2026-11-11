@@ -256,14 +256,15 @@ def part_kind(b: dict, fixed: bool) -> str:
     "joint" (on its hinge or slide) or "rigid" (fixed in place: its shapes join its parent part's
     body). Fixed too, as they'd only cost speed: free-spinning wheels and casters (unlimited
     hinges) of furniture, which doesn't roll here, and buttons and switches of furniture (and of
-    everything, with BUTTONS_MOVE off)."""
+    everything, with BUTTONS_MOVE off). A button with no limits (an infusion pump's) is fixed too:
+    nothing stops it, and so light a part spins by itself."""
     if b.get("root") or b.get("free"):
         return "top"
     if b.get("weld"):
         return "top" if SEPARATE.search(b["name"]) else "rigid"
     if fixed and "range" not in b["joint"]:
         return "rigid"
-    if BUTTON.search(b["name"]) and (fixed or not BUTTONS_MOVE):
+    if BUTTON.search(b["name"]) and (fixed or not BUTTONS_MOVE or "range" not in b["joint"]):
         return "rigid"
     return "joint"
 
@@ -330,6 +331,9 @@ def _add_jointed(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_
             for k in ("frictionloss", "armature"):
                 if k in j:
                     setattr(jt, k, j[k])
+            for key, f in catalog.JOINT_FRICTION.get(p.item, {}).items():
+                if key in j["name"]:
+                    jt.frictionloss = f
             for k in ("damping", "stiffness"):     # MuJoCo's linear coefficient
                 if k in j:
                     getattr(jt, k)[0] = j[k]

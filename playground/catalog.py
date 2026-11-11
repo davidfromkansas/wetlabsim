@@ -32,9 +32,12 @@ ITEMS = [
     ("optical_table", "Furniture", "Optical table", "labware_table_thorlabs_a01", False, True),
     ("eyewash_station", "Furniture", "Eyewash station", "safety_eyewashStation_stand_selfContained_a01", False, True),
     ("wash_basin", "Furniture", "Wash basin", "washBasin_a01", True, True),
+    ("drug_cabinet", "Furniture", "Drug cabinet", "cabinet_for_drugs_a01", False, True),
+    ("fixture_cabinet", "Furniture", "Wall cabinet", "fixture_cabinet_b01", False, True),
     ("microcentrifuge", "Lab equipment", "Microcentrifuge", "tripo:microcentrifuge_N07", False, False),
     ("microscope", "Lab equipment", "Compound microscope", "tripo:compound_microscope_N06", False, False),
     ("balance", "Lab equipment", "Analytical balance", "tripo:analytical_balance_N09", False, False),
+    ("infusion_pump", "Lab equipment", "Infusion pump", "pump_infusion_a01", False, False),
     ("uvc_lamp", "Lab equipment", "UV-C lamp", "lamp_uvc_a01", False, False),
     ("task_light", "Lab equipment", "Bench task light", "lighting_taskLight_adjustableArmBench_a01", False, False),
     ("tube_15ml", "Lab & Medical", "15 ml tube", "autobio:centrifuge_tube_15ml", False, False),
@@ -59,6 +62,14 @@ ITEMS = [
     ("glass_jar", "Lab & Medical", "Glass jar with lid", "container_jar_glass_silver_a01", False, False),
     ("syringe_small", "Lab & Medical", "Small syringe", "syringe_a03", False, False),
     ("syringe_insulin", "Lab & Medical", "Insulin syringe", "syringe_insulin_a01", False, False),
+    ("syringe_a02", "Lab & Medical", "Syringe, 2", "syringe_a02", False, False),
+    ("syringe_a04", "Lab & Medical", "Syringe, 4", "syringe_a04", False, False),
+    ("syringe_a05", "Lab & Medical", "Syringe, 5", "syringe_a05", False, False),
+    ("syringe_insulin_2", "Lab & Medical", "Insulin syringe, 2", "syringe_insulin_a02", False, False),
+    ("syringe_insulin_3", "Lab & Medical", "Insulin syringe, 3", "syringe_insulin_b01", False, False),
+    ("inhaler", "Lab & Medical", "Inhaler", "device_inhaler_a01", False, False),
+    ("lancing_device", "Lab & Medical", "Lancing device", "device_lancing_a01", False, False),
+    ("instrument_storage", "Lab & Medical", "Instrument case", "instrument_storage_a01", True, False),
     ("blood_bag", "Lab & Medical", "Blood bag", "blood_bag_a01", False, False),
     ("funnel", "Lab & Medical", "Funnel with flexible spout", "serviceTool_funnel_flexibleSpout_a01", True, False),
     ("sterilising_box", "Lab & Medical", "Sterilising box", "container_system_sterilising_a02", True, False),
@@ -70,6 +81,17 @@ ITEMS = [
     ("scissors", "Instruments", "Surgical scissors", "instrument_scissors_a01", False, False),
     ("clamp", "Instruments", "Surgical clamp", "instrument_clamp_a01", False, False),
     ("caliper", "Instruments", "Caliper", "instrument_caliper_a01", False, False),
+    ("bipolar_scissors", "Instruments", "Bipolar dissecting scissors", "instrument_bipolar_dissecting_scissors_a01", False, False),
+    ("artery_forceps", "Instruments", "Artery forceps", "instrument_artery_forceps_b01", False, False),
+    ("artery_forceps_curved", "Instruments", "Artery forceps, curved", "instrument_artery_forceps_curved_b01", False, False),
+    ("bone_forceps", "Instruments", "Bone forceps", "instrument_bone_forceps_b01", False, False),
+    ("nasal_forceps", "Instruments", "Nasal forceps", "instrument_nasal_forceps_b01", False, False),
+    ("retractor", "Instruments", "Self-retaining retractor", "instrument_selfretaining_retractor_a01", False, False),
+    ("surgical_stapler", "Instruments", "Surgical stapler", "stapler_surgical_a01", False, False),
+    ("wire_cutters", "Instruments", "Wire cutters", "instrument_wire_cutters_b01", False, False),
+    ("bone_clamp", "Instruments", "Bone clamp", "instrument_bone_clamp_b01", False, False),
+    ("adams_pliers", "Instruments", "Adams pliers", "instrument_adams_pliers_b01", False, False),
+    ("bone_rongeurs", "Instruments", "Bone rongeurs", "instrument_bone_rongeurs_b01", False, False),
     ("scalpel", "Instruments", "Scalpel handle", "instrument_scalpel_handle_a01", False, False),
     ("ligature_needle", "Instruments", "Ligature needle", "instrument_ligature_needle_a01", False, False),
     ("surgical_needle", "Instruments", "Surgical needle", "needle_surgical_a01", False, False),
@@ -108,6 +130,11 @@ ITEMS = [
 # cubies are each hinged to its centre on a single axis (they can't turn as faces, and each
 # costs speed).
 SOLID = {"rubiks_cube"}
+
+# Friction in moving parts, added to what the asset states (most NVIDIA assets state none, so
+# hinges flop and plungers slide freely): item -> {joint name or part of it: MuJoCo frictionloss
+# (N for a slide, N m for a hinge)}. Empty until the values are agreed; see world._add_jointed.
+JOINT_FRICTION: dict[str, dict[str, float]] = {}
 
 # Soft items, by how MuJoCo simulates them (all with the robot cell's implicitfast integrator):
 #   sheet  a single-layer cloth through the item (2D flex): it folds and drapes, and its edges

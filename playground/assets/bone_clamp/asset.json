@@ -1,0 +1,128 @@
+{
+ "source": "instrument_bone_clamp_b01",
+ "usd": "sm_instrument_bone_clamp_b01_01.usd",
+ "mass": 0.79953,
+ "friction": 0.3,
+ "com": null,
+ "size": [
+  0.2465,
+  0.0366,
+  0.043
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "body_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.00015938088045231526
+    }
+   ],
+   "mass": 0.425024,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.002304,
+    -1e-06,
+    -4.1e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.002304,
+    -1e-06,
+    -4.1e-05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "slide_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 0.00012629639525191423
+    }
+   ],
+   "mass": 0.374506,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_slide_01_joint_00",
+    "type": "slide",
+    "range": [
+     -0.005863,
+     0.052961
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.0,
+    0.023309
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.002304,
+    -1e-06,
+    0.023268,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}
