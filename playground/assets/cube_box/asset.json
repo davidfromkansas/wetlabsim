@@ -2,6 +2,7 @@
  "source": "box_cube_a01",
  "usd": "sm_box_cube_a01_01.usd",
  "mass": 0.10362,
+ "friction": 0.7,
  "com": [
   0.00332,
   -0.00387,
@@ -54,8 +55,28 @@
  "collision_parts": [
   {
    "mesh": "col_0.obj",
-   "volume": 0.001135756577958598
+   "volume": 0.001135756577958598,
+   "friction": 0.7,
+   "restitution": 0.4
   }
  ],
- "friction": 0.7
+ "inertial": {
+  "mass": 0.103619,
+  "pos": [
+   0.003323,
+   -0.003869,
+   0.052401
+  ],
+  "diaginertia": [
+   0.000567802,
+   0.00067552,
+   0.000695402
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ }
 }

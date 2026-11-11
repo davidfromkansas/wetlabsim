@@ -2,6 +2,7 @@
  "source": "misc_golfBall_a01",
  "usd": "sm_misc_golfBall_a01_01.usd",
  "mass": 0.1416,
+ "friction": 0.35,
  "com": [
   NaN,
   NaN,
@@ -30,8 +31,9 @@
  "collision_parts": [
   {
    "mesh": "col_0.obj",
-   "volume": 4.0740364473697343e-05
+   "volume": 4.0740364473697343e-05,
+   "friction": 0.35,
+   "restitution": 0.05
   }
- ],
- "friction": 0.35
+ ]
 }

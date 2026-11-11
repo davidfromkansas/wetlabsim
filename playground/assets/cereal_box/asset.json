@@ -2,6 +2,7 @@
  "source": "food_processed_boxedCereal_d01",
  "usd": "sm_food_processed_boxedCereal_d01_01.usda",
  "mass": 0.1214,
+ "friction": 0.4,
  "com": [
   0.00017,
   -0.0,
@@ -30,8 +31,28 @@
  "collision_parts": [
   {
    "mesh": "col_0.obj",
-   "volume": 0.004093124368137171
+   "volume": 0.004093124368137171,
+   "friction": 0.4,
+   "restitution": 0.1
   }
  ],
- "friction": 0.4
+ "inertial": {
+  "mass": 0.121398,
+  "pos": [
+   0.000173,
+   -0.0,
+   0.159078
+  ],
+  "diaginertia": [
+   0.000391955,
+   0.00108323,
+   0.00137082
+  ],
+  "quat": [
+   0.707107,
+   0.0,
+   0.707107,
+   -0.0
+  ]
+ }
 }

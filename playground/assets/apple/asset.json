@@ -2,6 +2,7 @@
  "source": "food_produce_apple_b01",
  "usd": "sm_food_produce_apple_b01_01.usd",
  "mass": 0.15984,
+ "friction": 0.45,
  "com": [
   -0.00037,
   0.00125,
@@ -30,8 +31,28 @@
  "collision_parts": [
   {
    "mesh": "col_0.obj",
-   "volume": 0.00018016548336816042
+   "volume": 0.00018016548336816042,
+   "friction": 0.45,
+   "restitution": 0.4
   }
  ],
- "friction": 0.45
+ "inertial": {
+  "mass": 0.159845,
+  "pos": [
+   -0.000374,
+   0.00125,
+   0.035258
+  ],
+  "diaginertia": [
+   0.000124554,
+   0.000128207,
+   0.000132393
+  ],
+  "quat": [
+   -0.5,
+   0.5,
+   0.5,
+   0.5
+  ]
+ }
 }

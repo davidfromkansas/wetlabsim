@@ -40,7 +40,7 @@ Each asset ships as one root file plus layers ("payloads"). The root offers thre
 | Density per material (`physics_density`) | What the material weighs per volume: steel 7,850 kg/m³, plastic about 1,000 | 2,646 | **No** | `geom density` |
 | Fill ratio and wall thickness (`physics_fillRatio`, `physics_thickness`) | How hollow a part is. A bottle is a thin shell (4 mm walls, 60% full), not a solid block | 2,646 | **No**. This is why some of NVIDIA's masses look odd when computed from solid volume | Mass from shell volume × density, written as `geom mass`. MuJoCo can also compute shell inertia (`mesh inertia="shell"`) |
 | Collision shape (`physics:approximation`) | The simplified shape used for contact | 2,669 | **Yes**: convex hull, or convex pieces (CoACD) where asked | `geom type="mesh"` (convex) |
-| Engine-specific collision (MuJoCo layer) | NVIDIA's MuJoCo layer sets every collider to a single convex hull (`mjc:maxhullvert -1`, `mjc:inertia convex`, `mjc:group 2`) | 2,669 | We read the neutral layer instead. In the sample, 4% ask for convex decomposition there, and we honour that | `mesh maxhullvert`, `mesh inertia`, `geom group` |
+| Engine-specific collision (MuJoCo layer) | NVIDIA's MuJoCo layer sets every collider to a single convex hull (`mjc:maxhullvert -1`, `mjc:inertia convex`, `mjc:group 2`). Its PhysX layer uses the exact shape (SDF) instead | 2,669 | **Yes**: we read NVIDIA's MuJoCo layer, so one convex hull per collider. Containers we mark hollow are split into convex pieces (CoACD) | `mesh maxhullvert`, `mesh inertia`, `geom group` |
 
 ### Physics: surfaces
 

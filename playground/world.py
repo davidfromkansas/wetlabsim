@@ -226,6 +226,35 @@ def _quat_of(T: np.ndarray) -> list:
     return [float(v) for v in q]
 
 
+def restitution_dampratio(e: float) -> float:
+    """The damping ratio of a spring-damper contact that bounces back with coefficient of
+    restitution e: zeta = -ln(e) / sqrt(pi^2 + ln(e)^2) (a damped oscillator's half period). It
+    goes in the contact's solref (time constant, damping ratio), MuJoCo's way to set how bouncy a
+    contact is ("Modeling", Restitution)."""
+    if e <= 0:
+        return 1.0
+    le = math.log(min(e, 0.99))
+    return -le / math.sqrt(math.pi ** 2 + le ** 2)
+
+
+# The time constant of a contact that bounces: MuJoCo's default (0.02 s). With the lab's stiffer
+# 0.005 s, an under-damped resting contact chatters and light items creep 1-2 mm/s (measured on
+# a task light, funnel, tap wrench, toaster and gauge); at 0.02 s they settle.
+BOUNCE_TIMECONST = 0.02
+
+
+def set_surface(g, c: dict, cls, friction=None):
+    """A collision shape's surface, as its asset states: sliding friction (static, MuJoCo takes
+    one coefficient), and how bouncy it is (restitution, or the asset's own MuJoCo solref)."""
+    mu = c.get("friction", friction)
+    if mu:
+        g.friction = [mu, g.friction[1], g.friction[2]]
+    if c.get("solref"):
+        g.solref = list(c["solref"])
+    elif c.get("restitution") is not None:
+        g.solref = [BOUNCE_TIMECONST, restitution_dampratio(c["restitution"])]
+
+
 def _part_geoms(world, body, name: str, rec: dict, prefix: str, cls, friction, at=None):
     """A part's collision shapes (its stated mass spread over them by volume) and its visuals;
     at: where the part sits in the body, for a part fixed onto another."""
@@ -236,8 +265,7 @@ def _part_geoms(world, body, name: str, rec: dict, prefix: str, cls, friction, a
                           default=cls, group=3, rgba=[0, 0, 0, 0], **off)
         if rec.get("mass"):
             g.mass = rec["mass"] * c["volume"] / total
-        if friction:
-            g.friction = [friction, g.friction[1], g.friction[2]]
+        set_surface(g, c, cls, friction)
     for k, _ in enumerate(rec["visuals"]):
         body.add_geom(name=f"{name}_vis{k}", type=mujoco.mjtGeom.mjGEOM_MESH, meshname=f"{prefix}vis{k}",
                       material=f"{prefix}mat{k}", contype=0, conaffinity=0, group=1, mass=0, **off)
@@ -419,8 +447,7 @@ def _add_item(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_cac
         g = body.add_geom(name=f"obj_{p.uid}_col{k}", type=mujoco.mjtGeom.mjGEOM_MESH,
                           meshname=f"{prefix}col{k}", default=cls, group=3, rgba=[0, 0, 0, 0])
         g.mass = mass * c["volume"] / total_vol
-        if meta.get("friction"):
-            g.friction = [meta["friction"], g.friction[1], g.friction[2]]
+        set_surface(g, c, cls, meta.get("friction"))
     for k, _ in enumerate(meta["visuals"]):
         body.add_geom(name=f"obj_{p.uid}_vis{k}", type=mujoco.mjtGeom.mjGEOM_MESH, meshname=f"{prefix}vis{k}",
                       material=f"{prefix}mat{k}", contype=0, conaffinity=0, group=1, mass=0)

@@ -32,7 +32,7 @@ ITEMS = [
     ("optical_table", "Furniture", "Optical table", "labware_table_thorlabs_a01", False, True),
     ("eyewash_station", "Furniture", "Eyewash station", "safety_eyewashStation_stand_selfContained_a01", False, True),
     ("wash_basin", "Furniture", "Wash basin", "washBasin_a01", True, True),
-    ("drug_cabinet", "Furniture", "Drug cabinet", "cabinet_for_drugs_a01", False, True),
+    ("drug_cabinet", "Furniture", "Drug cabinet", "cabinet_for_drugs_a01", True, True),
     ("fixture_cabinet", "Furniture", "Wall cabinet", "fixture_cabinet_b01", False, True),
     ("microcentrifuge", "Lab equipment", "Microcentrifuge", "tripo:microcentrifuge_N07", False, False),
     ("microscope", "Lab equipment", "Compound microscope", "tripo:compound_microscope_N06", False, False),

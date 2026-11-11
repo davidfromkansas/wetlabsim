@@ -32,74 +32,127 @@
    "collision_parts": [
     {
      "mesh": "b0_col_0.obj",
-     "volume": 3.430034054346872e-07
+     "volume": 3.430034054346872e-07,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b0_col_1.obj",
-     "volume": 3.6954109710578623e-07
+     "volume": 3.6954109710578623e-07,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b0_col_2.obj",
-     "volume": 3.1816726487233824e-07
+     "volume": 3.1816726487233824e-07,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b0_col_3.obj",
-     "volume": 5.885330992431668e-07
+     "volume": 5.885330992431668e-07,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b0_col_4.obj",
-     "volume": 4.0957947018083447e-07
+     "volume": 4.0957947018083447e-07,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b0_col_5.obj",
-     "volume": 3.3513201006730284e-08
+     "volume": 3.3513201006730284e-08,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b0_col_6.obj",
-     "volume": 5.78569430337319e-07
+     "volume": 5.78569430337319e-07,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b0_col_7.obj",
-     "volume": 9.672107814713636e-09
+     "volume": 9.672107814713636e-09,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b0_col_8.obj",
-     "volume": 2.2196871606755453e-07
+     "volume": 2.2196871606755453e-07,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b0_col_9.obj",
-     "volume": 2.7000953993005043e-08
+     "volume": 2.7000953993005043e-08,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b0_col_10.obj",
-     "volume": 2.0082957519887437e-08
+     "volume": 2.0082957519887437e-08,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b0_col_11.obj",
-     "volume": 2.603844702742019e-07
+     "volume": 2.603844702742019e-07,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b0_col_12.obj",
-     "volume": 7.211517535934449e-09
+     "volume": 7.211517535934449e-09,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b0_col_13.obj",
-     "volume": 1.3796434210864956e-08
+     "volume": 1.3796434210864956e-08,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b0_col_14.obj",
-     "volume": 1.9579557031507827e-08
+     "volume": 1.9579557031507827e-08,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b0_col_15.obj",
-     "volume": 5.2205899921214505e-09
+     "volume": 5.2205899921214505e-09,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b0_col_16.obj",
-     "volume": 3.005735699156229e-08
+     "volume": 3.005735699156229e-08,
+     "friction": 0.3,
+     "restitution": 0.1
     }
    ],
    "mass": 0.192752,
+   "inertial": {
+    "mass": 0.192752,
+    "pos": [
+     -0.0,
+     0.0,
+     0.00169
+    ],
+    "diaginertia": [
+     2.22259e-05,
+     5.16607e-05,
+     6.84682e-05
+    ],
+    "quat": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
    "parent": null,
    "root": true,
    "pos": [
@@ -142,26 +195,55 @@
    "collision_parts": [
     {
      "mesh": "b1_col_0.obj",
-     "volume": 9.13712895739279e-09
+     "volume": 9.13712895739279e-09,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b1_col_1.obj",
-     "volume": 5.795763954374572e-08
+     "volume": 5.795763954374572e-08,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b1_col_2.obj",
-     "volume": 5.7832210761829253e-08
+     "volume": 5.7832210761829253e-08,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b1_col_3.obj",
-     "volume": 8.441705651587701e-07
+     "volume": 8.441705651587701e-07,
+     "friction": 0.3,
+     "restitution": 0.1
     },
     {
      "mesh": "b1_col_4.obj",
-     "volume": 1.4659569204762906e-08
+     "volume": 1.4659569204762906e-08,
+     "friction": 0.3,
+     "restitution": 0.1
     }
    ],
    "mass": 0.118128,
+   "inertial": {
+    "mass": 0.118128,
+    "pos": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "diaginertia": [
+     1.06482e-05,
+     2.65594e-05,
+     3.7179e-05
+    ],
+    "quat": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
    "parent": 0,
    "collide": false,
    "joint": {
@@ -171,6 +253,10 @@
      -0.03,
      0.03
     ],
+    "drive": {
+     "damping": 4.0
+    },
+    "physx_joint_friction": 0.800000011920929,
     "pos": [
      0.0,
      0.0,

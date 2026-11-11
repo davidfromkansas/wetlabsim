@@ -2,6 +2,7 @@
  "source": "food_processed_cannedFood_b01",
  "usd": "sm_food_processed_cannedFood_b01_01.usd",
  "mass": 0.0532,
+ "friction": 0.61,
  "com": [
   -5e-05,
   -3e-05,
@@ -30,8 +31,28 @@
  "collision_parts": [
   {
    "mesh": "col_0.obj",
-   "volume": 0.0005666483791700894
+   "volume": 0.0005666483791700894,
+   "friction": 0.61,
+   "restitution": 0.1
   }
  ],
- "friction": 0.61
+ "inertial": {
+  "mass": 0.053198,
+  "pos": [
+   -4.9e-05,
+   -2.7e-05,
+   0.059943
+  ],
+  "diaginertia": [
+   7.24856e-05,
+   8.80982e-05,
+   8.80984e-05
+  ],
+  "quat": [
+   -0.5,
+   0.5,
+   0.5,
+   0.5
+  ]
+ }
 }

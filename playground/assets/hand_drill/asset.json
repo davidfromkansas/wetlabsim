@@ -31,15 +31,40 @@
    "collision_parts": [
     {
      "mesh": "b0_col_0.obj",
-     "volume": 5.5065154907410327e-05
+     "volume": 5.5065154907410327e-05,
+     "friction": 0.3,
+     "restitution": 0.1
     }
    ],
    "mass": 0.301612,
+   "inertial": {
+    "mass": 0.301612,
+    "pos": [
+     0.108283,
+     0.0,
+     -0.0
+    ],
+    "diaginertia": [
+     1.51637e-05,
+     0.000836893,
+     0.000836893
+    ],
+    "quat": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
    "parent": 2,
    "collide": false,
    "joint": {
     "name": "joint_body_01_joint_00",
     "type": "hinge",
+    "drive": {
+     "damping": 0.05729578
+    },
+    "physx_joint_friction": 1.0,
     "pos": [
      0.0,
      0.0,
@@ -90,15 +115,40 @@
    "collision_parts": [
     {
      "mesh": "b1_col_0.obj",
-     "volume": 6.489204586246934e-05
+     "volume": 6.489204586246934e-05,
+     "friction": 0.3,
+     "restitution": 0.1
     }
    ],
    "mass": 0.394671,
+   "inertial": {
+    "mass": 0.394671,
+    "pos": [
+     0.006364,
+     0.006368,
+     0.006462
+    ],
+    "diaginertia": [
+     0.000168881,
+     0.000168919,
+     0.00030814
+    ],
+    "quat": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
    "parent": 2,
    "collide": false,
    "joint": {
     "name": "joint_handDrill_01_joint_00",
     "type": "hinge",
+    "drive": {
+     "damping": 0.05729578
+    },
+    "physx_joint_friction": 1.0,
     "pos": [
      0.0,
      0.0,
@@ -149,10 +199,31 @@
    "collision_parts": [
     {
      "mesh": "b2_col_0.obj",
-     "volume": 0.000199338130486094
+     "volume": 0.000199338130486094,
+     "friction": 0.3,
+     "restitution": 0.1
     }
    ],
    "mass": 0.464931,
+   "inertial": {
+    "mass": 0.464931,
+    "pos": [
+     -0.047848,
+     0.008059,
+     0.008685
+    ],
+    "diaginertia": [
+     0.000383828,
+     0.00138434,
+     0.00170975
+    ],
+    "quat": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
    "parent": null,
    "root": true,
    "pos": [

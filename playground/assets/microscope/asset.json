@@ -152,23 +152,53 @@
    "collision_parts": [
     {
      "mesh": "b0_col_0.obj",
-     "volume": 4.625621807834738e-06
+     "volume": 4.625621807834738e-06,
+     "friction": 0.35,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b0_col_1.obj",
-     "volume": 5.338165753660528e-06
+     "volume": 5.338165753660528e-06,
+     "friction": 1.0,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b0_col_2.obj",
-     "volume": 5.338165753660528e-06
+     "volume": 5.338165753660528e-06,
+     "friction": 1.0,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b0_col_3.obj",
-     "volume": 5.338165753660528e-06
+     "volume": 5.338165753660528e-06,
+     "friction": 1.0,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b0_col_4.obj",
-     "volume": 5.338165753660527e-06
+     "volume": 5.338165753660527e-06,
+     "friction": 1.0,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     }
    ],
    "mass": 5.52977,
@@ -224,11 +254,23 @@
    "collision_parts": [
     {
      "mesh": "b1_col_0.obj",
-     "volume": 1.9465475021093035e-05
+     "volume": 1.9465475021093035e-05,
+     "friction": 0.5,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b1_col_1.obj",
-     "volume": 2.1069663823886722e-07
+     "volume": 2.1069663823886722e-07,
+     "friction": 0.45,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     }
    ],
    "mass": 0.068395,
@@ -242,6 +284,21 @@
      0.024
     ],
     "damping": 2.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -369,35 +426,83 @@
    "collision_parts": [
     {
      "mesh": "b2_col_0.obj",
-     "volume": 6.317501905783462e-06
+     "volume": 6.317501905783462e-06,
+     "friction": 0.64,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b2_col_1.obj",
-     "volume": 7.074214831825931e-06
+     "volume": 7.074214831825931e-06,
+     "friction": 0.64,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b2_col_2.obj",
-     "volume": 3.757380287679941e-06
+     "volume": 3.757380287679941e-06,
+     "friction": 0.64,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b2_col_3.obj",
-     "volume": 3.75738028767994e-06
+     "volume": 3.75738028767994e-06,
+     "friction": 0.64,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b2_col_4.obj",
-     "volume": 1.1199367648811106e-05
+     "volume": 1.1199367648811106e-05,
+     "friction": 0.45,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b2_col_5.obj",
-     "volume": 1.1199367648811111e-05
+     "volume": 1.1199367648811111e-05,
+     "friction": 0.45,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b2_col_6.obj",
-     "volume": 5.828168089730382e-06
+     "volume": 5.828168089730382e-06,
+     "friction": 0.45,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b2_col_7.obj",
-     "volume": 5.82816808973038e-06
+     "volume": 5.82816808973038e-06,
+     "friction": 0.45,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     }
    ],
    "mass": 0.338941,
@@ -411,6 +516,21 @@
      0.012
     ],
     "damping": 4.0,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -516,19 +636,43 @@
    "collision_parts": [
     {
      "mesh": "b3_col_0.obj",
-     "volume": 0.00014966175186567407
+     "volume": 0.00014966175186567407,
+     "friction": 0.48,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b3_col_1.obj",
-     "volume": 1.3048779242377279e-05
+     "volume": 1.3048779242377279e-05,
+     "friction": 0.48,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b3_col_2.obj",
-     "volume": 7.0457647155781605e-06
+     "volume": 7.0457647155781605e-06,
+     "friction": 0.45,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b3_col_3.obj",
-     "volume": 3.5947844105384862e-06
+     "volume": 3.5947844105384862e-06,
+     "friction": 0.45,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     }
    ],
    "mass": 0.538508,
@@ -542,6 +686,21 @@
      0.075
     ],
     "damping": 2.4,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -625,19 +784,43 @@
    "collision_parts": [
     {
      "mesh": "b4_col_0.obj",
-     "volume": 8.10222916474692e-07
+     "volume": 8.10222916474692e-07,
+     "friction": 0.5,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b4_col_1.obj",
-     "volume": 8.10222916474692e-07
+     "volume": 8.10222916474692e-07,
+     "friction": 0.5,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b4_col_2.obj",
-     "volume": 1.3901619628770972e-06
+     "volume": 1.3901619628770972e-06,
+     "friction": 0.5,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b4_col_3.obj",
-     "volume": 1.3901619628770972e-06
+     "volume": 1.3901619628770972e-06,
+     "friction": 0.5,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     }
    ],
    "mass": 0.03606,
@@ -651,6 +834,21 @@
      0.0495
     ],
     "damping": 2.4,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -712,11 +910,23 @@
    "collision_parts": [
     {
      "mesh": "b5_col_0.obj",
-     "volume": 7.225899538862369e-07
+     "volume": 7.225899538862369e-07,
+     "friction": 0.45,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b5_col_1.obj",
-     "volume": 6.291591136248094e-07
+     "volume": 6.291591136248094e-07,
+     "friction": 0.45,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     }
    ],
    "mass": 0.007945,
@@ -730,6 +940,21 @@
      0.453786
     ],
     "damping": 0.4,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -846,23 +1071,53 @@
    "collision_parts": [
     {
      "mesh": "b6_col_0.obj",
-     "volume": 0.00010477270378322864
+     "volume": 0.00010477270378322864,
+     "friction": 0.55,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b6_col_1.obj",
-     "volume": 3.192653553771381e-05
+     "volume": 3.192653553771381e-05,
+     "friction": 0.55,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b6_col_2.obj",
-     "volume": 1.3388383830000183e-05
+     "volume": 1.3388383830000183e-05,
+     "friction": 0.55,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b6_col_3.obj",
-     "volume": 3.19265355377138e-05
+     "volume": 3.19265355377138e-05,
+     "friction": 0.55,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b6_col_4.obj",
-     "volume": 1.3388383830000186e-05
+     "volume": 1.3388383830000186e-05,
+     "friction": 0.55,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     }
    ],
    "mass": 0.21609,
@@ -876,6 +1131,21 @@
      6.283185
     ],
     "damping": 0.8,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,
@@ -970,23 +1240,53 @@
    "collision_parts": [
     {
      "mesh": "b7_col_0.obj",
-     "volume": 2.857280086304203e-05
+     "volume": 2.857280086304203e-05,
+     "friction": 0.5,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b7_col_1.obj",
-     "volume": 2.8438980262199218e-06
+     "volume": 2.8438980262199218e-06,
+     "friction": 0.5,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b7_col_2.obj",
-     "volume": 2.8438980262199226e-06
+     "volume": 2.8438980262199226e-06,
+     "friction": 0.5,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b7_col_3.obj",
-     "volume": 2.8438980262199218e-06
+     "volume": 2.8438980262199218e-06,
+     "friction": 0.5,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     },
     {
      "mesh": "b7_col_4.obj",
-     "volume": 2.8438980262199213e-06
+     "volume": 2.8438980262199213e-06,
+     "friction": 0.5,
+     "restitution": 0.0,
+     "solref": [
+      0.02,
+      1.0
+     ]
     }
    ],
    "mass": 0.136267,
@@ -1000,6 +1300,21 @@
      6.283185
     ],
     "damping": 0.5,
+    "solreffriction": [
+     0.002,
+     1.0
+    ],
+    "solimpfriction": [
+     0.99,
+     0.999,
+     0.001,
+     0.5,
+     2.0
+    ],
+    "solreflimit": [
+     0.01,
+     1.0
+    ],
     "pos": [
      0.0,
      0.0,

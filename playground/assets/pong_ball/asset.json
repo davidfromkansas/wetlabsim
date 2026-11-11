@@ -2,6 +2,7 @@
  "source": "misc_toy_pongPaddle_ball_a01",
  "usd": "sm_misc_toy_pongPaddle_ball_a01_01.usd",
  "mass": 0.01037,
+ "friction": 0.4,
  "com": [
   0.0,
   0.0,
@@ -30,8 +31,28 @@
  "collision_parts": [
   {
    "mesh": "col_0.obj",
-   "volume": 2.8827638571983523e-05
+   "volume": 2.8827638571983523e-05,
+   "friction": 0.4,
+   "restitution": 0.4
   }
  ],
- "friction": 0.4
+ "inertial": {
+  "mass": 0.01037,
+  "pos": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "diaginertia": [
+   2.49853e-06,
+   2.49854e-06,
+   2.49854e-06
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ }
 }
