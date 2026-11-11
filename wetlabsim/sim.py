@@ -648,7 +648,9 @@ class TwoArm(Arm):
 
     @property
     def motion(self):
-        return next((a.motion for a in self.sides.values() if a.motion is not None), None)
+        """An arm's move still under way if there is one, else an arm's last move."""
+        ms = [a.motion for a in self.sides.values() if a.motion is not None]
+        return next((m for m in ms if not m.done.is_set()), ms[0] if ms else None)
 
     @motion.setter
     def motion(self, v):

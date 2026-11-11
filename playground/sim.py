@@ -589,8 +589,16 @@ class PlaygroundSim(Sim):
                     "time": round(self.d.time, 3), "realtime_factor": round(self.rt_factor, 3),
                     "active": self.active_station,
                     "robots": [{**st.as_dict(),
-                                **({"base": [round(float(v), 3) for v in self.arms[st.uid].base_tf()[0]]}
+                                **({"base": [round(float(v), 3) for v in self._base_mid(self.arms[st.uid])]}
                                    if st.uid in self.arms else {})} for st in self.stations]}
+
+    @staticmethod
+    def _base_mid(arm):
+        """Where a robot's tag hangs: its base, or the middle of a two-arm robot's two bases."""
+        sides = getattr(arm, "sides", None)
+        if sides:
+            return sum(a.base_tf()[0] for a in sides.values()) / len(sides)
+        return arm.base_tf()[0]
 
     # ---------------------------------------------------- pause / play
     def play(self):

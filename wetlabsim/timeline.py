@@ -151,23 +151,37 @@ def _robot(events: list, lanes: _Lanes, start: float, end: float) -> tuple[list,
     """Moving and Gripper rows, protective stops and the gripper flags, from the robot's events."""
     flags, stops = [], []
     cmds = sorted((e for e in events if e.get("event") == "command"), key=lambda e: e["t"])
-    tries = 0
+    tries: dict = {}            # per arm: a two-arm robot (ALOHA) logs which arm with "arm"
     for i, e in enumerate(cmds):
         t = e["t"]
         kind = e.get("kind", "")
-        nxt = next((c["t"] for c in cmds[i + 1:] if c.get("kind") != "gripper"), end) if kind != "gripper" else end
+        arm = e.get("arm") or ""
+        who = arm.capitalize() + " arm: " if arm else ""
+        nxt = next((c["t"] for c in cmds[i + 1:] if c.get("kind") != "gripper" and (c.get("arm") or "") == arm),
+                   end) if kind != "gripper" else end
         if kind.startswith("move"):
             dur = e.get("seconds")
             b = min(t + float(dur), nxt) if dur is not None else nxt
-            lanes.add("moving", t, min(b, end), "", kind.replace("_", " "))
+            lanes.add("moving", t, min(b, end), "", (arm + " " if arm else "") + kind.replace("_", " "))
         elif kind == "gripper":
             closing = float(e.get("position", 0)) >= CLOSED_AT
-            lanes.add("gripper", t, min(t + GRIP_SECONDS, end), "", "close" if closing else "open")
+            lanes.add("gripper", t, min(t + GRIP_SECONDS, end), "", (arm + " " if arm else "") + ("close" if closing else "open"))
             if closing:
-                tries += 1
-                flags.append({"t": round(t, 3), "kind": "grip", "label": "Gripped" if tries == 1 else f"Gripped (try {tries})"})
+                tries[arm] = n = tries.get(arm, 0) + 1
+                flags.append({"t": round(t, 3), "kind": "grip", "label": who + ("Gripped" if n == 1 else f"Gripped (try {n})")})
             else:
-                flags.append({"t": round(t, 3), "kind": "release", "label": "Let go"})
+                flags.append({"t": round(t, 3), "kind": "release", "label": who + "Let go"})
+    # Both arms of a two-arm robot gripping (or letting go) within a moment: one flag, not two
+    # labels on top of each other.
+    merged: list = []
+    for f in flags:
+        p = merged[-1] if merged else None
+        if p and p["kind"] == f["kind"] and f["t"] - p["t"] < 2.0 and p["label"].startswith(("Left arm: ", "Right arm: ")) \
+                and f["label"].startswith(("Left arm: ", "Right arm: ")) and p["label"][:4] != f["label"][:4]:
+            p["label"] = "Both arms: " + ("Gripped" if f["kind"] == "grip" else "Let go")
+            continue
+        merged.append(f)
+    flags[:] = merged
     for e in events:
         if e.get("event") == "protective_stop":
             stops.append(e)

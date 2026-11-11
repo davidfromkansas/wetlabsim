@@ -90,7 +90,7 @@ const css = `
 #runpop .spark .tag{position:absolute;top:4px;font:700 12px 'JetBrains Mono',monospace;background:#fff;padding:0 4px;border-radius:4px;box-shadow:0 0 0 1px #E5E7EB;white-space:nowrap}
 #runpop .note{font-size:12.5px;color:#4B5563;margin-top:4px}
 #runpop .hr{grid-column:1/-1;height:1px;background:#E5E7EB;margin:6px 0 2px}
-#runpop .pv{margin-top:14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(220px,.9fr);gap:12px;background:#F4F5F7;border-radius:12px;padding:12px}
+#runpop .pv{margin-top:14px;display:grid;grid-template-columns:repeat(var(--pics,3),minmax(0,1fr)) minmax(220px,.9fr);gap:12px;background:#F4F5F7;border-radius:12px;padding:12px}
 #runpop .pv figure{margin:0}
 #runpop .pv img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;background:#E5E7EB;display:block}
 #runpop .pv figcaption{font-size:13px;font-weight:600;margin-top:6px}
@@ -107,6 +107,14 @@ const fmt = (x) => { x = Math.max(0, x || 0); return `${Math.floor(x / 60)}:${St
 const usd = (x) => x == null ? '' : '$' + (x < 0.1 && x > 0 ? x.toFixed(3) : x.toFixed(2));
 const ktok = (n) => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1000 ? Math.round(n / 1000) + 'k' : String(n || 0);
 const robotBase = (uid) => `/s/${SID}/st/${uid}`;
+// The popup's pictures: the scene, the overhead camera and the wrist camera, or both wrists
+// on a two-arm robot (ALOHA). [img id, camera, caption]
+const popCams = (uid) => {
+  const two = ((S.scene && S.scene.robots || []).find(r => r.id === uid) || {}).robot === 'aloha';
+  return [['rpSide', 'side', 'Scene'], ['rpOver', 'overhead', 'Overhead camera'],
+          ...(two ? [['rpWristL', 'left_wrist', 'Left wrist camera'], ['rpWristR', 'right_wrist', 'Right wrist camera']]
+                  : [['rpWrist', 'wrist', 'Wrist camera']])];
+};
 const TL = {};                 // the latest timeline per robot
 const fetching = {};
 
@@ -299,9 +307,9 @@ function render(tl) {
       <span></span><div class="ruler">${ticks}</div><span></span>
       <div class="track" id="rpTrack"></div><div class="ph${live && P.follow ? ' live' : ''}" id="rpPh"></div>
     </div>
-    <div class="pv"><figure><img id="rpSide" alt="The scene at the playhead"><figcaption>Scene</figcaption></figure>
+    <div class="pv" style="--pics:${popCams(tl.uid).length}"><figure><img id="rpSide" alt="The scene at the playhead"><figcaption>Scene</figcaption></figure>
       <figure><img id="rpOver" alt="The overhead camera at the playhead"><figcaption>Overhead camera (AI sees)</figcaption></figure>
-      <figure><img id="rpWrist" alt="The wrist camera at the playhead"><figcaption>Wrist camera (AI sees)</figcaption></figure>
+      ${popCams(tl.uid).slice(2).map(([id, , cap]) => `<figure><img id="${id}" alt="The ${cap.toLowerCase()} at the playhead"><figcaption>${cap} (AI sees)</figcaption></figure>`).join('')}
       <div class="what"><b id="rpT"></b><span id="rpWhat"></span><span id="rpSpent" class="mono"></span></div></div>`;
   document.getElementById('rpX').onclick = closeRun;
   card.querySelectorAll('.strip img').forEach(im => im.onclick = () => { P.follow = false; setPlayhead(+im.dataset.t); });
@@ -342,7 +350,7 @@ function setPlayhead(t, quick) {
   clearTimeout(P.pics);
   P.pics = setTimeout(() => {
     const base = robotBase(tl.uid), at = (tl.sim_start + P.t).toFixed(2);
-    for (const [id, cam] of [['rpSide', 'side'], ['rpOver', 'overhead'], ['rpWrist', 'wrist']]) {
+    for (const [id, cam] of popCams(tl.uid)) {
       const im = document.getElementById(id); if (im) im.src = `${base}/camera/${cam}.jpg?t=${at}`;
     }
   }, quick ? 0 : 120);

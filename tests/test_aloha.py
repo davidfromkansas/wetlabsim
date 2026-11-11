@@ -131,3 +131,31 @@ def test_swap_refuses_when_things_stand_where_a_base_goes():
     sim.remove("v1")
     sim.swap_robot(uid, "aloha")
     assert isinstance(sim.arms[uid], TwoArm)
+
+
+def test_run_timeline_keeps_each_arm_apart():
+    from wetlabsim import timeline as TL
+    sim, pair = _lab()
+    L, R = pair.sides["left"], pair.sides["right"]
+    t0 = sim.d.time
+    L.move_j([0.3, -0.9, 1.1, 0, -0.3, 0], 1.0)
+    _step(sim, 0.3)
+    R.move_j([-0.3, -0.9, 1.1, 0, -0.3, 0], 1.0)
+    assert pair.motion is R.motion or not pair.motion.done.is_set()
+    _step(sim, 0.5)
+    L.gripper_move(255)
+    _step(sim, 0.5)
+    R.gripper_move(255)
+    _step(sim, 4.0)
+    L.gripper_move(0)
+    _step(sim, 1.0)
+    tl = TL.build([], list(pair.events), {"agent": "claude", "model": "opus", "sim_start": t0,
+                                          "status": "finished"}, end=sim.d.time)
+    moving = next(l for l in tl["lanes"] if l["id"] == "moving")["blocks"]
+    # The right arm's move doesn't cut the left arm's short.
+    assert [b["detail"] for b in moving] == ["left move j", "right move j"]
+    assert moving[0]["end"] > moving[1]["start"]
+    assert [f["label"] for f in tl["flags"]] == ["Both arms: Gripped", "Left arm: Let go"]
+    # The run tag hangs over the middle of the pair, not over one arm.
+    mid = (L.base_tf()[0] + R.base_tf()[0]) / 2
+    assert np.allclose(sim.scene_info()["robots"][0]["base"], mid, atol=1e-3)
