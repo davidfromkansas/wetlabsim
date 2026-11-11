@@ -1578,7 +1578,8 @@ function renderFeed() {
     prevT = st.t; prevKind = st.kind;
   }
   // A run that failed before saying anything: show why, instead of an empty chat.
-  if (!active && run.status === 'error' && !trace.some(st => st.kind === 'says')) out.push(`<li class="it turn"><div class="who">${logo ? `<img src="${logo}" alt="">` : ''}<strong>${who}</strong></div><div class="runerr"><b>The run stopped before the AI could start.</b>${run.error_text ? `<pre>${esc(run.error_text)}</pre>` : ''}</div></li>`);
+  // An error with nothing from the AI: it never got going. Else it stopped partway.
+  if (!active && run.status === 'error' && !trace.some(st => st.kind === 'says')) out.push(`<li class="it turn"><div class="who">${logo ? `<img src="${logo}" alt="">` : ''}<strong>${who}</strong></div><div class="runerr"><b>${trace.length ? 'The run stopped with an error.' : 'The run stopped before the AI could start.'}</b>${run.error_text ? `<pre>${esc(run.error_text)}</pre>` : ''}</div></li>`);
   if (active) out.push(`<li class="thinking">${snake(16)} Thinking…</li>`);
   const f = $('feed');
   f.innerHTML = out.join('');
