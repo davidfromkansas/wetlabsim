@@ -232,6 +232,8 @@ ROBOTS = [
      "reach_mm": 855, "payload_kg": 3, "joints": 7, "thumb": "/pg/static/station_franka.png"},
     {"id": "ur5e", "label": "UR5e", "maker": "Universal Robots", "gripper": "Robotiq 2F-85",
      "reach_mm": 850, "payload_kg": 5, "joints": 6, "thumb": "/pg/static/station_ur5e.png"},
+    {"id": "aloha", "label": "ALOHA (two arms)", "maker": "Trossen Robotics", "gripper": "2 grippers",
+     "reach_mm": 750, "payload_kg": 0.75, "joints": "2 × 6", "arms": 2, "thumb": "/pg/static/station_aloha.png"},
 ]
 
 

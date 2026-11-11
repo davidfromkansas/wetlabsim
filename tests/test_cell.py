@@ -15,7 +15,7 @@ def test_rotvec_roundtrip():
     assert np.allclose(rotvec_from_quat(quat_from_rotvec(rv)), rv, atol=1e-9)
 
 
-ROBOTS = list(S.ROBOTS)
+ROBOTS = list(S.CELL_ROBOTS)
 
 
 @pytest.mark.parametrize("robot", ROBOTS)

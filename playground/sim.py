@@ -17,7 +17,7 @@ from PIL import Image
 
 from wetlabsim import scene as WS
 from wetlabsim import tasks as WT
-from wetlabsim.sim import Arm, RobotError, Sim
+from wetlabsim.sim import Arm, RobotError, Sim, TwoArm
 
 from . import catalog
 from . import libero as LB
@@ -105,7 +105,8 @@ class PlaygroundSim(Sim):
 
     def _make_arms(self) -> dict[str, Arm]:
         if self.scene_mode == "free":
-            return {st.uid: Arm(self, st.robot, st.prefix, st.uid) for st in self.stations}
+            return {st.uid: (TwoArm if WS.ROBOTS[st.robot].get("sides") else Arm)(self, st.robot, st.prefix, st.uid)
+                    for st in self.stations}
         return {"robot": Arm(self, self.robot)}
 
     def station(self, uid: str | None = None) -> W.Station | None:
@@ -348,6 +349,8 @@ class PlaygroundSim(Sim):
             top = st.top
             for item, lx, ly, iyaw in st.spec["layout"]:     # what the station starts with
                 x, y, _ = st.to_world(lx, ly)
+                if st.near_base(x, y):        # where another robot's base stands (an ALOHA's two)
+                    continue
                 self.placed.append(W.Placed(self.new_uid(item), item, (x, y, top), st.yaw + iyaw))
             self.rebuild()
             self.active_station = uid
@@ -444,6 +447,11 @@ class PlaygroundSim(Sim):
                 raise RobotError("no such station")
             if st.robot == robot:
                 return
+            self._sync_placed()
+            new = W.Station(st.uid, robot, st.pos, st.yaw, st.name, st.kind)
+            if any(new.holds(p.pos[0], p.pos[1]) and new.near_base(p.pos[0], p.pos[1]) for p in self.placed):
+                raise RobotError(f"there are things where the {WS.ROBOTS[robot]['name']} would stand: "
+                                 "move them away from where its base goes first")
             st.robot = robot
             self.arms.pop(uid, None)
             self.rebuild()
@@ -581,8 +589,16 @@ class PlaygroundSim(Sim):
                     "time": round(self.d.time, 3), "realtime_factor": round(self.rt_factor, 3),
                     "active": self.active_station,
                     "robots": [{**st.as_dict(),
-                                **({"base": [round(float(v), 3) for v in self.arms[st.uid].base_tf()[0]]}
+                                **({"base": [round(float(v), 3) for v in self._base_mid(self.arms[st.uid])]}
                                    if st.uid in self.arms else {})} for st in self.stations]}
+
+    @staticmethod
+    def _base_mid(arm):
+        """Where a robot's tag hangs: its base, or the middle of a two-arm robot's two bases."""
+        sides = getattr(arm, "sides", None)
+        if sides:
+            return sum(a.base_tf()[0] for a in sides.values()) / len(sides)
+        return arm.base_tf()[0]
 
     # ---------------------------------------------------- pause / play
     def play(self):

@@ -255,6 +255,10 @@ function renderHeader() {
     $('costSub').textContent = run.agent === 'claude' && run.status === 'running' ? '$ shown when the run ends' : (run.agent_label || 'This agent') + " doesn't report $"; }
   else { $('cost').textContent = '—'; $('costSub').textContent = run.run_id ? 'reported as the agent works' : ''; }
   if (run.cached_tokens) $('costSub').title = kfmt(run.cached_tokens) + ' of the input tokens were read from cache';
+  if (run.robot === 'aloha' && $('cam-wrist').dataset.cam === 'wrist') {   // two arms: show the left wrist's
+    $('cam-wrist').dataset.cam = 'left_wrist';
+    $('cam-wrist').parentElement.querySelector('figcaption b').textContent = 'Left wrist camera';
+  }
   const rl = run.robot_label || robotInfo.robot || '—';
   $('robot').textContent = rl.replace('Franka Emika ', 'Franka ');
   $('robotSub').textContent = (run.gripper_label || robotInfo.gripper) ? 'with ' + (run.gripper_label || robotInfo.gripper) : '';
@@ -326,10 +330,11 @@ $('live').onclick = () => { if (ARCHIVE) seekTo(now); else { following = true; p
 const f3 = (x) => (x > -0.0005 ? '' : '−') + Math.abs(x).toFixed(3);
 const f2 = (x) => (x > -0.005 ? '' : '−') + Math.abs(x).toFixed(2);
 function renderState(s) {
-  if (!s || !s.joint_positions) return;
+  if (!s || !(s.joint_positions || s.left)) return;
   const stop = s.mode === 'protective_stop';
   $('safety').className = 'badge' + (stop ? ' stop' : ''); $('safety').textContent = stop ? 'Safety stop' : 'No safety stop';
   $('safety').title = stop ? (s.protective_stop_reason || '') : '';
+  if (s.left) return renderTwoArms(s);
   $('joints').innerHTML = s.joint_positions.map((q, i) => `<tr><td>Joint ${i + 1}</td><td>${f3(q)}</td><td>${f2(s.joint_velocities[i] || 0)}</td></tr>`).join('');
   const p = s.tcp_pose || [0, 0, 0, 0, 0, 0], f = s.tcp_force || [0, 0, 0, 0, 0, 0], g = s.gripper || {};
   const gapMM = (3 + 80 * (1 - (g.position || 0) / 255)).toFixed(0);
@@ -347,6 +352,24 @@ function renderState(s) {
   $('tel').innerHTML = rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
 }
 
+// A two-arm robot (ALOHA): each arm's readings, under "left" and "right".
+function renderTwoArms(s) {
+  const arms = [['Left', s.left], ['Right', s.right]];
+  $('joints').innerHTML = arms.map(([n, a]) => a.joint_positions.map((q, i) => `<tr><td>${n} joint ${i + 1}</td><td>${f3(q)}</td><td>${f2((a.joint_velocities || [])[i] || 0)}</td></tr>`).join('')).join('');
+  const rows = [];
+  for (const [n, a] of arms) {
+    const p = a.tcp_pose || [0, 0, 0, 0, 0, 0], g = a.gripper || {};
+    rows.push([n + ' hand position (x, y, z)', p.slice(0, 3).map(f3).join(', ') + ' m'],
+              [n + ' hand orientation (rot. vector)', p.slice(3).map(f3).join(', ') + ' rad'],
+              [n + ' arm moving', a.moving ? 'Yes' : 'No'],
+              [n + ' gripper opening', (2 * (37 - 35 * (g.position || 0) / 255)).toFixed(0) + ' mm (' + Math.round(g.position || 0) + '/255)'],
+              [n + ' gripper holding something', g.object_detected ? 'Yes' : 'No']);
+    if (a.mode === 'protective_stop') rows.unshift([n + ' arm stop reason', a.protective_stop_reason || '']);
+  }
+  rows.push(['Robot clock', (s.time || 0).toFixed(3) + ' s']);
+  $('tel').innerHTML = rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+}
+
 // ---------------------------------------------------------------- cameras
 const camImgs = ['side', 'overhead', 'wrist'].map((c) => $('cam-' + c));
 let lastCamT = -1;
@@ -359,7 +382,7 @@ function camLoop(img) {
     const fr = new Image();
     fr.onload = () => { img.src = fr.src; setTimeout(() => URL.revokeObjectURL(fr.src), 2000); setTimeout(next, Math.max(0, gap - (performance.now() - t0))); };
     fr.onerror = () => setTimeout(next, 1000);
-    fetch(`/camera/${cam}.jpg?viewer=1`).then((r) => r.ok ? r.blob() : Promise.reject()).then((b) => { fr.src = URL.createObjectURL(b); }).catch(() => setTimeout(next, 1000));
+    fetch(`/camera/${img.dataset.cam}.jpg?viewer=1`).then((r) => r.ok ? r.blob() : Promise.reject()).then((b) => { fr.src = URL.createObjectURL(b); }).catch(() => setTimeout(next, 1000));
   };
   next();
 }

@@ -16,9 +16,14 @@ import threading
 import time
 
 # What an agent may do: the robot client's calls (wetlabsim.robot) and nothing else.
-GET_PATHS = re.compile(r"^/(state|info|camera/(overhead|wrist)\.(png|jpg|rgbd\.npz|depth\.npy))$")
+# A two-arm robot (ALOHA) has the same API for each arm, under /left and /right, and its
+# four cameras (overhead, low, and a wrist camera per arm).
+SIDE = r"(/(left|right))?"
+GET_PATHS = re.compile(r"^" + SIDE + r"/(state|info|camera/(overhead|wrist|low|left_wrist|right_wrist)"
+                       r"\.(png|jpg|rgbd\.npz|depth\.npy))$")
 POST_PATHS = {"/move_l", "/move_j", "/move_j_pose", "/stop", "/unlock_protective_stop",
               "/zero_ft_sensor", "/gripper"}
+POST_RE = re.compile(r"^" + SIDE + r"(" + "|".join(re.escape(x) for x in POST_PATHS) + r")$")
 # The robot's commands: on the app's listener these are refused once a robot API is running.
 ROBOT_COMMANDS = POST_PATHS
 
@@ -64,7 +69,7 @@ def allowed(method: str, path: str) -> bool:
     path = path.split("?", 1)[0].rstrip("/") or "/"
     if method == "GET":
         return bool(GET_PATHS.match(path))
-    return method == "POST" and path in POST_PATHS
+    return method == "POST" and bool(POST_RE.match(path))
 
 
 class RobotAPIMixin:

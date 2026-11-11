@@ -26,7 +26,8 @@ def look(camera: str = "overhead") -> list:
     """Take a photo with one of the robot's cameras and look at it.
 
     camera: "overhead" (fixed above the bench, sees the whole work area) or
-    "wrist" (mounted on the gripper, looks where the fingers point).
+    "wrist" (mounted on the gripper, looks where the fingers point). A two-arm
+    robot (ALOHA) has "overhead", "low", "left_wrist" and "right_wrist".
     Returns the image plus the camera's calibration so you can relate pixels
     to robot coordinates (see Frame.pixel_to_point in the robot manual).
     """
@@ -55,7 +56,7 @@ def robot_state() -> str:
 
 @server.tool()
 def emergency_stop() -> str:
-    """Stop the arm immediately."""
+    """Stop the arm (both arms on a two-arm robot) immediately."""
     try:
         robot.stop()
         return "stopped"

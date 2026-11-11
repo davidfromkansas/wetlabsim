@@ -350,6 +350,7 @@ body.empty .pips{display:none}
 body.fixed .tl{top:12px}
 .pip{width:220px;border-radius:10px;overflow:hidden;background:#111827;box-shadow:0 6px 18px rgba(17,24,39,.28);border:1px solid rgba(255,255,255,.6)}
 .pip img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#1F2937}
+.pips.four .pip{width:132px}
 .pcap{display:flex;align-items:center;gap:6px;padding:5px 6px 5px 9px;background:#fff;font:600 12px Inter,sans-serif;color:var(--ink)}
 .pcap span{font-size:10px;font-weight:700;color:var(--blue2);flex:1;white-space:nowrap}
 .exp{width:26px;height:26px;border-radius:6px;border:1px solid #D1D5DB;background:#fff;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;flex:none}
@@ -608,6 +609,8 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
 .radd.on{border-style:solid;border-color:var(--blue);color:var(--blue);background:#EFF4FF}
 #rtitle{display:flex;align-items:flex-start;gap:8px}
 #rtitle .tt{flex:1;min-width:0}
+#rtitle .tt .sub{display:flex;align-items:center;min-width:0}
+#rtSub{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #rSwap{height:30px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;gap:6px;font:600 12.5px Inter,sans-serif;color:#1F2937;cursor:pointer;flex:none}
 #rSwap:hover:not(:disabled){border-color:#C3C8D0}
 #rSwap.on{border-color:var(--blue);color:#1D4ED8;box-shadow:0 0 0 3px #E0E9FF}
@@ -1142,7 +1145,7 @@ function renderDock() {
 
 // ---------------------------------------------------------------- layout v3: robots are the unit
 // The lab's robots, listed under the open session in the sidebar, and the robot panel's header.
-const ROBOT_PIC = {franka: '/pg/static/robot_franka.png', ur5e: '/pg/static/robot_ur5e.png'};
+const ROBOT_PIC = {franka: '/pg/static/robot_franka.png', ur5e: '/pg/static/robot_ur5e.png', aloha: '/pg/static/robot_aloha.png'};
 const ROBOT_IMG = (r) => ROBOT_PIC[r] || ROBOT_PIC.franka;
 async function pickRobot(id) {
   $('rmenu').hidden = true; $('rpick').setAttribute('aria-expanded', 'false');
@@ -1366,7 +1369,6 @@ async function holdPhysics() { if (S.scene && !S.scene.paused) { await api('/pg/
 async function resumePhysics() { if (S.resumeAfter) { S.resumeAfter = false; await api('/pg/play', {}); } }
 const SOON_ROBOTS = [
   {label: 'Kinova Gen3', joints: '7 joints', gripper: 'Robotiq 2F-85'},
-  {label: 'ALOHA (two arms)', joints: '2 × 6 joints', gripper: '2 grippers'},
 ];
 (() => {
   const d = document.createElement('div'); d.id = 'rpk'; d.hidden = true; d.setAttribute('role', 'dialog'); d.setAttribute('aria-labelledby', 'rpkTitle');
@@ -1634,7 +1636,7 @@ function renderFeed() {
       const label = st.kind === 'reads' ? 'Read file' : st.kind === 'writes' ? 'Wrote file' : st.kind === 'looks' ? 'Look' : 'Tool';
       let text = st.kind === 'writes' ? st.text.split('\n')[0] : st.text, img = '';
       if (st.kind === 'looks') {
-        const c = /^(overhead|wrist|side) camera/.exec(st.text), f = /saved image (.+)$/.exec(st.text);
+        const c = /^(overhead|wrist|side|low|left_wrist|right_wrist) camera/.exec(st.text), f = /saved image (.+)$/.exec(st.text);
         if (c) img = `<img src="${stBase()}/camera/${c[1]}.jpg?t=${st.t.toFixed(3)}" alt="What the ${c[1]} camera showed at ${mmss(st.t - start)}" loading="lazy">`;
         else if (f) img = `<img src="${stBase()}/run/file?path=${encodeURIComponent(f[1])}" alt="${esc(f[1])}" loading="lazy" onerror="this.remove()">`;
         text = c ? c[1] + ' camera' : f ? f[1] : text;
@@ -1782,7 +1784,7 @@ function render() {
   const empty = free && !(sc.robots || []).length;
   document.body.classList.toggle('empty', empty);
   $('emptyMsg').textContent = S.watch ? 'Nobody has added a robot to this lab yet.' : 'Press “Add station”, then click the floor to place it.';
-  const camKey = stBase() || '/';
+  const camKey = (stBase() || '/') + '|' + (free ? curStation().robot || '' : '');
   if (S.camFor !== camKey) { S.camFor = camKey; openCams(); }
   const obj = sc.objects.find(o => o.uid === S.sel);
   $('objPanel').style.display = obj ? 'flex' : 'none';
@@ -1881,18 +1883,48 @@ function openStreams() {
   else window.V3.setBase(`/s/${SID}`);
   openCams();
 }
-// The selected station's two cameras (what its AI sees), small in the lower left.
+// The selected station's cameras (what its AI sees), small in the lower left: two for a one-arm
+// robot, the four of a two-arm ALOHA.
+const CAM_NAMES = {overhead: 'Overhead', wrist: 'Wrist', low: 'Low', left_wrist: 'Left wrist', right_wrist: 'Right wrist'};
+const EXP_ICON = '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M7 1 H11 V5 M5 11 H1 V7 M11 1 L7 5 M1 11 L5 7"/></svg>';
+function stationCams() {
+  return S.scene && S.scene.mode === 'free' && curStation().robot === 'aloha'
+    ? ['overhead', 'low', 'left_wrist', 'right_wrist'] : ['overhead', 'wrist'];
+}
 function openCams() {
   const t = Date.now(), base = stBase(), none = S.scene && S.scene.mode === 'free' && !S.scene.active;
-  $('camOver').src = none ? '' : base + '/stream/overhead.mjpg?fps=4&r=' + t;
-  $('camWrist').src = none ? '' : base + '/stream/wrist.mjpg?fps=4&r=' + t;
+  const cams = stationCams(), key = cams.join();
+  if ($('pips').dataset.cams !== key) {
+    $('pips').dataset.cams = key; $('pips').classList.toggle('four', cams.length > 2);
+    $('pips').innerHTML = cams.map(c => `<div class="pip"><img data-cam="${c}" alt="${CAM_NAMES[c]} camera, what the AI sees"><div class="pcap">${CAM_NAMES[c]}<span>AI SEES</span><button class="exp" data-cam="${c}" aria-label="Expand ${CAM_NAMES[c].toLowerCase()} camera" title="Expand">${EXP_ICON}</button></div></div>`).join('');
+    $('pips').querySelectorAll('.pip .exp').forEach(b => b.onclick = () => expandCam(b.dataset.cam));
+  }
+  // Each video stream holds one of the browser's six connections to the lab; four would starve
+  // the page's other requests, so four cameras take turns as still frames instead.
+  clearTimeout(openCams.poll);
+  if (cams.length > 2 && !none) {
+    const imgs = [...$('pips').querySelectorAll('img[data-cam]')];
+    let i = 0;
+    const next = () => {
+      if ($('pips').dataset.cams !== key || stBase() !== base) return;
+      const im = imgs[i++ % imgs.length], url = base + `/camera/${im.dataset.cam}.jpg?viewer=1&r=` + Date.now();
+      const pre = new Image();
+      pre.onload = () => { im.src = pre.src; openCams.poll = setTimeout(next, 120); };
+      pre.onerror = () => { openCams.poll = setTimeout(next, 1000); };
+      pre.src = url;
+    };
+    next();
+  } else {
+    $('pips').querySelectorAll('img[data-cam]').forEach(im => { im.src = none ? '' : base + `/stream/${im.dataset.cam}.mjpg?fps=4&r=` + t; });
+  }
+  if (S.bigCam && !cams.includes(S.bigCam)) S.bigCam = cams[0];
   if (S.bigCam) $('bigCam').src = none ? '' : base + `/stream/${S.bigCam}.mjpg?fps=8&r=` + t;
 }
 // Expand a camera: it grows out of the lower-left corner into a large view; Shrink puts it back.
 S.bigCam = null;
 function expandCam(cam) {
   S.bigCam = cam; const w = $('bigCamWrap');
-  $('bigName').textContent = (cam === 'wrist' ? 'Wrist' : 'Overhead') + ' camera · ' + (curStation().name || curStation().label || 'Robot');
+  $('bigName').textContent = (CAM_NAMES[cam] || cam) + ' camera · ' + (curStation().name || curStation().label || 'Robot');
   $('bigCam').alt = $('bigName').textContent; openCams();
   w.classList.add('on'); w.getBoundingClientRect(); w.classList.add('open'); $('shrinkBtn').focus();
 }
@@ -2041,7 +2073,7 @@ async function pollData() {
   const key = stBase();
   try {
     const st = await (await fetch(key + '/state', {headers: {'X-Browser-Id': BID}})).json();
-    if (key !== stBase() || !st.joint_positions) return;
+    if (key !== stBase() || !(st.joint_positions || st.left)) return;
     S.data = {key, st}; S.dataAt = Date.now();
     if (S.scene && !S.scene.paused) S.liveAt = Date.now();
   } catch (e) {}
@@ -2066,20 +2098,28 @@ function renderData() {
   const stop = d.mode === 'protective_stop';
   $('dSafety').className = 'badge' + (stop ? ' stop' : ''); $('dSafety').textContent = stop ? 'Safety stop' : 'No safety stop';
   $('dSafety').title = stop ? (d.protective_stop_reason || '') : '';
-  $('dJoints').innerHTML = d.joint_positions.map((q, i) => `<tr><td>Joint ${i + 1}</td><td>${f3(q)}</td><td>${f2((d.joint_velocities || [])[i] || 0)}</td></tr>`).join('');
-  const p = d.tcp_pose || [0, 0, 0, 0, 0, 0], f = d.tcp_force || [0, 0, 0, 0, 0, 0], g = d.gripper || {};
+  // A two-arm robot (ALOHA) reports each arm under "left" and "right".
+  const arms = d.left ? [['Left ', d.left], ['Right ', d.right]] : [['', d]];
+  $('dJoints').innerHTML = arms.map(([n, a]) => a.joint_positions.map((q, i) => `<tr><td>${n}${n ? 'j' : 'J'}oint ${i + 1}</td><td>${f3(q)}</td><td>${f2((a.joint_velocities || [])[i] || 0)}</td></tr>`).join('')).join('');
   // Gripper opening from its 0-255 command, as the robot cell's viewer shows it.
-  const mm = stn.robot === 'ur5e' ? 85 * (1 - (g.position || 0) / 255) : 3 + 80 * (1 - (g.position || 0) / 255);
-  const rows = [
-    ['Hand position (x, y, z)', p.slice(0, 3).map(f3).join(', ') + ' m'],
-    ['Hand orientation (rotation vector)', p.slice(3).map(f3).join(', ') + ' rad'],
-    ['Wrist force (x, y, z)', f.slice(0, 3).map(f2).join(', ') + ' N'],
-    ['Wrist torque (x, y, z)', f.slice(3).map(f2).join(', ') + ' Nm'],
-    ['Arm moving', d.moving ? 'Yes' : 'No'],
-    ['Gripper opening', mm.toFixed(0) + ' mm (' + Math.round(g.position || 0) + '/255)'],
-    ['Holding something', g.object_detected ? 'Yes' : 'No'],
-    ['Robot clock', (d.time || 0).toFixed(3) + ' s'],
-  ];
+  const openMm = (g) => stn.robot === 'ur5e' ? 85 * (1 - (g.position || 0) / 255)
+    : stn.robot === 'aloha' ? 2 * (37 - 35 * (g.position || 0) / 255) : 3 + 80 * (1 - (g.position || 0) / 255);
+  const rows = [];
+  for (const [n, a] of arms) {
+    const p = a.tcp_pose || [0, 0, 0, 0, 0, 0], g = a.gripper || {}, lc = n ? n.trim().toLowerCase() + ' ' : '';
+    rows.push([(n ? n + 'hand' : 'Hand') + ' position (x, y, z)', p.slice(0, 3).map(f3).join(', ') + ' m'],
+              [(n ? n + 'hand' : 'Hand') + ' orientation (rotation vector)', p.slice(3).map(f3).join(', ') + ' rad']);
+    if (a.tcp_force) {
+      const f = a.tcp_force;
+      rows.push(['Wrist force (x, y, z)', f.slice(0, 3).map(f2).join(', ') + ' N'],
+                ['Wrist torque (x, y, z)', f.slice(3).map(f2).join(', ') + ' Nm']);
+    }
+    rows.push([(n ? n + 'arm' : 'Arm') + ' moving', a.moving ? 'Yes' : 'No'],
+              [(n ? n + 'gripper' : 'Gripper') + ' opening', openMm(g).toFixed(0) + ' mm (' + Math.round(g.position || 0) + '/255)'],
+              [(n ? n + 'gripper' : 'Holding') + (n ? ' holding something' : ' something'), g.object_detected ? 'Yes' : 'No']);
+    if (n && a.mode === 'protective_stop') rows.push([n + 'arm stop reason', a.protective_stop_reason || '']);
+  }
+  rows.push(['Robot clock', (d.time || 0).toFixed(3) + ' s']);
   if (stop) rows.unshift(['Stop reason', d.protective_stop_reason || '']);
   $('dTel').innerHTML = rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
 }

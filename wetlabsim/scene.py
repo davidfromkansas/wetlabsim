@@ -410,8 +410,54 @@ ROBOTS = {
         "reflex_force": (np.full(3, -1e9), np.full(3, 1e9)), "reflex_force_norm": 140.0,
         "reflex_torque": (np.full(3, -1e9), np.full(3, 1e9)),
     },
+    # ALOHA 2: two Trossen ViperX 300 S arms facing each other across a table, one AI driving
+    # both. DeepMind's Menagerie model (assets/aloha), unchanged. Each arm is a robot of its own
+    # ("left", "right": ALOHA_SIDE below) with its own base frame; this entry is the pair.
+    "aloha": {
+        "name": "ALOHA 2 (two ViperX 300 S arms)", "gripper": "ALOHA 2 parallel gripper (x2)",
+        "sides": ("left", "right"),
+        # Menagerie's frame has the arms along x, the operator at -y; the station's robot faces +x.
+        "mount_quat": "0.70710678 0 0 -0.70710678",
+        # The four RealSense D405s of the real rig (ALOHA 2 packing list).
+        "cameras": {"overhead": "overhead", "low": "low",
+                    "left_wrist": "wrist_cam_left", "right_wrist": "wrist_cam_right",
+                    "side": "side"},      # the station's audience camera (people only)
+    },
 }
 DEFAULT_ROBOT = "franka"
+# The robots the robot cell (and LIBERO, Wet Lab) can stand at its bench; the ALOHA is for the
+# playground's stations.
+CELL_ROBOTS = ("franka", "ur5e")
+
+# The DYNAMIXEL servos' no-load speeds at 12 V (ROBOTIS e-manual): XM540-W270 30 rpm for the
+# waist, shoulder, elbow, forearm roll and wrist angle; XM430-W350 46 rpm for the wrist rotate
+# (Trossen's ViperX 300 6DOF page lists which servo drives which joint).
+_VX300S_VMAX = np.array([30, 30, 30, 30, 30, 46]) * 2 * np.pi / 60
+
+
+def aloha_side(side: str) -> dict:
+    """One arm of an ALOHA: a ViperX 300 S with the ALOHA 2 gripper, as a robot of its own."""
+    n = ["waist", "shoulder", "elbow", "forearm_roll", "wrist_angle", "wrist_rotate"]
+    return {
+        "name": f"ALOHA 2 {side} arm (ViperX 300 S)", "gripper": "ALOHA 2 parallel gripper", "side": side,
+        "arm_joints": [f"{side}/{j}" for j in n], "arm_actuators": [f"{side}/{j}" for j in n],
+        "home_q": np.zeros(6),
+        "ready_q": np.array([0.0, -0.96, 1.16, 0.0, -0.3, 0.0]),     # Menagerie's neutral pose
+        "tcp_site": f"{side}/gripper", "base_body": f"{side}/base_link",
+        "ft_site": None,      # the ViperX has no wrist force/torque sensor
+        "grip_actuator": f"{side}/gripper", "grip_joint": f"{side}/left_finger",
+        # Finger travel on the rail (m from centre): Menagerie's control range, measured on the
+        # real gripper fully open and fully closed.
+        "grip_open": 0.037, "grip_closed": 0.002, "grip_ctrl_range": (0.037, 0.002),
+        # The fingers meet at 7.8 mm from centre (the model's finger shapes), short of the control
+        # range's end: a close with nothing between them stops there.
+        "grip_meet": 0.0078,
+        "grip_ctrl_open": 0.0,
+        "max_opening_mm": 74,
+        "cameras": {"overhead": "overhead", "low": "low", "wrist": f"wrist_cam_{side}"},
+        "joint_vmax": _VX300S_VMAX, "joint_amax": np.full(6, 10.0),
+        "cart_vmax": 0.5, "rot_vmax": 3.0,
+    }
 
 
 def robot_name(robot: str | None = None) -> str:
@@ -518,9 +564,50 @@ def _ur5e(world, mount_site="robot_mount", prefix=""):
     return prefix + "gripper/ft_site"
 
 
+# The ALOHA 2 rig's fixed cameras, from Menagerie's aloha/scene.xml (in its frame, table top at
+# z = 0): the overhead camera on the top bar, and the low "worm's-eye" camera at the front edge.
+ALOHA_CAMERAS = {"overhead": ([0, -0.303794, 1.02524], [0.976332, 0.216277, 0, 0]),
+                 "low": ([0, -0.377167, 0.0316055], [0.672659, 0.739953, 0, 0])}
+# RealSense D405 vertical field of view (Intel's datasheet: 87 x 58 degrees). Menagerie gives
+# the D405's focal length and sensor size for 1280 x 720; our cameras are 640 x 480, set by fovy.
+D405_FOVY = 58.0
+
+
+def _aloha(world, mount_site="robot_mount", prefix=""):
+    """DeepMind Menagerie's ALOHA 2 (two ViperX 300 S arms, each with its gripper and wrist
+    camera), as published, plus the rig's overhead and low cameras."""
+    arm = mujoco.MjSpec.from_file(str(ASSETS / "aloha" / "aloha.xml"))
+    for k in list(arm.keys):          # Menagerie's keyframe: our controller sets the start pose
+        arm.delete(k)
+    for c in list(arm.cameras):
+        if c.name in ("teleoperator_pov", "collaborator_pov"):
+            arm.delete(c)
+        else:   # the wrist D405s at 640 x 480
+            c.sensor_size = [0, 0]
+            c.focal_length = [0, 0]
+            c.focal_pixel = [0, 0]
+            c.resolution = [0, 0]
+            c.fovy = D405_FOVY
+    for g in arm.geoms:
+        if g.contype or g.conaffinity:
+            fingers = "finger_link" in (g.parent.name or "")
+            _set_material(g, "rubber_pad" if fingers else "robot")
+    base = arm.worldbody.add_body(name="base")       # the pair's frame: centre of the table top
+    for name, (pos, quat) in ALOHA_CAMERAS.items():
+        base.add_camera(name=name, pos=pos, quat=quat, fovy=D405_FOVY)
+    _match_options(arm, world=world)
+    site = world.site(mount_site)
+    frame = world.worldbody.add_frame(pos=list(site.pos), quat=list(site.quat))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        world.attach(arm, frame=frame, prefix=prefix)
+
+
 def add_robot(world, robot: str, mount: str = "robot_mount", prefix: str = ""):
     """Attach a robot (with its wrist camera and wrist force/torque sensor) at a mount site.
     prefix: put in front of every name the robot brings, so several robots fit in one scene."""
+    if robot == "aloha":
+        return _aloha(world, mount, prefix)      # no wrist force/torque sensors on a ViperX
     ft_site = _franka(world, mount, prefix) if robot == "franka" else _ur5e(world, mount, prefix)
     # Wrist force/torque sensor (UR5e: built in at the flange; Panda: estimated from joint torques).
     world.add_sensor(name=prefix + "ft_force", type=mujoco.mjtSensor.mjSENS_FORCE,
@@ -533,21 +620,31 @@ def profile_for(robot: str, prefix: str = "", world_cameras: str | None = None) 
     """A robot's profile with its model names as they are when it was attached with prefix.
     world_cameras: prefix of the fixed (overhead, side) cameras that belong to this robot
     (default: the same prefix)."""
-    P = dict(ROBOTS[robot_name(robot)])
+    side = None
+    if robot.startswith("aloha:"):      # one arm of an ALOHA
+        robot, side = robot.split(":")
+    P = dict(aloha_side(side) if side else ROBOTS[robot_name(robot)])
     if not prefix and world_cameras is None:
         return P
     wc = prefix if world_cameras is None else world_cameras
+    if robot == "aloha":                # its cameras come with it (under its prefix)
+        wc = prefix
     for k in ("arm_joints", "arm_actuators"):
-        P[k] = [prefix + n for n in P[k]]
+        if k in P:
+            P[k] = [prefix + n for n in P[k]]
     for k in ("tcp_site", "ft_site", "ft_body", "base_body", "grip_actuator", "grip_joint"):
-        P[k] = prefix + P[k]
-    P["cameras"] = {k: (prefix + v if k == "wrist" else wc + v) for k, v in P["cameras"].items()}
-    P["sensors"] = (prefix + "ft_force", prefix + "ft_torque")
+        if P.get(k):
+            P[k] = prefix + P[k]
+    P["cameras"] = {k: (prefix + v if "wrist" in k else wc + v) for k, v in P["cameras"].items()}
+    if P.get("ft_site", "x"):
+        P["sensors"] = (prefix + "ft_force", prefix + "ft_torque")
     return P
 
 
 def build_model(robot: str | None = None) -> mujoco.MjModel:
     robot = robot_name(robot)
+    if robot not in CELL_ROBOTS:
+        raise ValueError(f"the robot cell has a bench for {', '.join(CELL_ROBOTS)} only, not {robot!r}")
     world = mujoco.MjSpec.from_string(_world_xml(ROBOTS[robot]["mount_quat"]))
     add_robot(world, robot)
     with warnings.catch_warnings():
