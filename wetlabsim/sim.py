@@ -385,7 +385,9 @@ class Arm:
                 self.motion.done.set()
             mo = Motion(self.sim.d.time, times, qs)
             self.motion = mo
-            self.log_event("command", **info)
+            # How long the move will take (unless replaced or stopped first): the run's timeline
+            # draws it as a bar.
+            self.log_event("command", seconds=round(float(times[-1]), 3), **info)
             return mo
 
     def stop(self):

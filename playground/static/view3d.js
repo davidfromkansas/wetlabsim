@@ -325,6 +325,12 @@ export function start({stage, base = '', onReady}) {
   V._scene = scene;   // for debugging from the console
   V.applyDelta = (d) => { V.cam = applyDelta(V.cam, d); V.lastLocal = performance.now(); };
   V.camForServer = () => ({...V.cam, aspect: camera.aspect});
+  // A point in the world on screen (CSS pixels within the stage), e.g. to hang a tag over a robot.
+  V.project = (p) => {
+    const v = new THREE.Vector3(p[0], p[1], p[2]).project(camera);
+    const w = parseFloat(canvas.style.width) || 0, h = parseFloat(canvas.style.height) || 0;
+    return {x: (v.x + 1) / 2 * w, y: (1 - v.y) / 2 * h, visible: v.z < 1 && Math.abs(v.x) <= 1.2 && Math.abs(v.y) <= 1.2};
+  };
   V.setFollow = (on) => { V.follow = on; if (on) V.lastLocal = 0; };
   // Another session: its own world (scene, meshes, textures and pose stream), drawn at once.
   V.setBase = (b) => {
