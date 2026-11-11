@@ -10,8 +10,32 @@ import shutil
 import sys
 
 from .. import catalog
-from .convert_simready import convert
+from .convert_simready import convert, usd_dir
 from .fetch_simready import fetch
+
+
+SOURCES = {
+    "nvidia": ("NVIDIA SimReady", "https://huggingface.co/datasets/nvidia/simready-assets"),
+    "tripo": ("Tripo SimReady", "https://huggingface.co/datasets/VAST-AI/Tripo-Simready-Assets"),
+}
+
+
+def write_credits():
+    """playground/assets/CREDITS.md: every library item, its source and licence (CC BY 4.0)."""
+    lines = ["# Object library credits", "",
+             "Every object in the playground's library is a ready-made asset, used under the",
+             "[Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/) licence",
+             "it is published with. We converted each to MuJoCo (`playground/tools/convert_simready.py`)",
+             "and changed nothing else. All rights stay with their authors.", ""]
+    for key, (name, url) in SOURCES.items():
+        lines.append(f"- **{name}** ({key}): {url}")
+    lines += ["", "AutoBio's lab models are credited in `wetlabsim/assets/autobio/NOTICE.md`.", "",
+              "| Item | Library tab | Source | Asset |", "| --- | --- | --- | --- |"]
+    for i, tab, label, hf, _, _ in catalog.ITEMS:
+        repo, _, folder = hf.rpartition(":")
+        name, url = SOURCES[repo or "nvidia"]
+        lines.append(f"| {label} | {tab} | {name} | [`{folder}`]({url}/tree/main/{folder}) |")
+    (catalog.ASSETS / "CREDITS.md").write_text("\n".join(lines) + "\n")
 
 
 def main(argv=None):
@@ -23,15 +47,17 @@ def main(argv=None):
     for id_ in ids:
         it = catalog.item(id_)
         try:
-            src = fetch(it["hf"], pathlib.Path(a.cache))
-            m = convert(src, catalog.ASSETS / id_, hollow=it["hollow"])
-            tdir = src / "simready_usd" / ".thumbs" / "256x256"
+            repo, _, folder = it["hf"].rpartition(":")
+            src = fetch(folder, pathlib.Path(a.cache), repo or "nvidia")
+            m = convert(src, catalog.ASSETS / id_, hollow=it["hollow"], solid=id_ in catalog.SOLID)
+            tdir = usd_dir(src) / ".thumbs" / "256x256"
             thumbs = sorted(tdir.glob("*_transparent.png")) or sorted(tdir.glob("*.usd*.png"))
             if thumbs:
                 shutil.copy(thumbs[0], catalog.ASSETS / id_ / "thumb.png")
-            print(f"{id_:20s} mass={m['mass']} size={m['size']} parts={len(m['collision_parts'])}")
+            print(f"{id_:20s} mass={m['mass']} size={m['size']} parts={len(m['collision_parts'])} bodies={len(m.get('bodies', []))}")
         except Exception as e:  # noqa: BLE001
             print(f"{id_:20s} FAILED: {e}", file=sys.stderr)
+    write_credits()
 
 
 if __name__ == "__main__":

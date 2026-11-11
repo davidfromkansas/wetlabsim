@@ -539,7 +539,11 @@ class Arm:
                 out[mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_FLEX, f)] = {
                     "pos": V.mean(0).round(5).tolist(), "low": round(float(V[:, 2].min()), 5),
                     "high": round(float(V[:, 2].max()), 5), "extent": np.ptp(V, 0).round(5).tolist(), "soft": True}
-            return {"time": round(d.time, 4), "task": self.task, "objects": out}
+            # Objects' moving parts (a lid's hinge, a drawer's slide): radians or metres.
+            joints = {m.joint(j).name: round(float(d.qpos[m.jnt_qposadr[j]]), 5) for j in range(m.njnt)
+                      if m.body(m.jnt_bodyid[j]).name.startswith("obj_")
+                      and int(m.jnt_type[j]) in (int(mujoco.mjtJoint.mjJNT_HINGE), int(mujoco.mjtJoint.mjJNT_SLIDE))}
+            return {"time": round(d.time, 4), "task": self.task, "objects": out, "joints": joints}
 
     def calibration(self) -> dict:
         """Camera calibration as a lab would have it after a hand-eye calibration: intrinsics,

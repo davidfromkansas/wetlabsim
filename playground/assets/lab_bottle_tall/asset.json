@@ -2,58 +2,155 @@
  "source": "bottle_laboratory_b01",
  "usd": "sm_bottle_laboratory_b01_01.usd",
  "mass": 0.0443,
- "com": [
-  -1e-05,
-  -0.0,
-  0.00983
- ],
+ "friction": 0.4,
+ "com": null,
  "size": [
   0.0101,
   0.01,
   0.05
  ],
- "collision": "convex hull (as the asset specifies)",
- "visuals": [
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
   {
-   "mesh": "vis_0.obj",
-   "rgba": [
-    0.0082,
-    0.4347,
-    0.3553,
-    1.0
+   "name": "ampule_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.855,
+      0.855,
+      0.855,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
    ],
-   "roughness": 0.09999999403953552,
-   "metallic": 0.0
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 3.080807440042731e-06
+    }
+   ],
+   "mass": 0.03413,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -1.5e-05,
+    -0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -1.5e-05,
+    -0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
   },
   {
-   "mesh": "vis_1.obj",
-   "rgba": [
-    1.0,
-    1.0,
-    1.0,
-    1.0
+   "name": "decal_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
    ],
-   "roughness": 0.6,
-   "metallic": 0.0,
-   "texture": "tex_1.png"
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 1.3147868588909335e-07
+    }
+   ],
+   "mass": 3.8e-05,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    0.005005,
+    -0.0,
+    0.016368
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.005005,
+    -0.0,
+    0.016368,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
   },
   {
-   "mesh": "vis_2.obj",
-   "rgba": [
-    0.855,
-    0.855,
-    0.855,
-    1.0
+   "name": "liquid_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.0082,
+      0.4347,
+      0.3553,
+      1.0
+     ],
+     "roughness": 0.09999999403953552,
+     "metallic": 0.0
+    }
    ],
-   "roughness": 0.6,
-   "metallic": 0.0
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 1.377917034990605e-06
+    }
+   ],
+   "mass": 0.01013,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    -1.5e-05,
+    -0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -1.5e-05,
+    -0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
   }
  ],
- "collision_parts": [
-  {
-   "mesh": "col_0.obj",
-   "volume": 3.0867905333543635e-06
-  }
- ],
- "friction": 0.4
+ "unstated_mass": []
 }

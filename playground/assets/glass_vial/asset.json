@@ -3,47 +3,109 @@
  "usd": "sm_container_vial_glass_a01_01.usd",
  "mass": 0.22495,
  "friction": 0.5,
- "com": [
-  7e-05,
-  -0.0,
-  0.07329
- ],
+ "com": null,
  "size": [
   0.0326,
   0.0326,
   0.0829
  ],
- "collision": "convex hull (as the asset specifies)",
- "visuals": [
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
   {
-   "mesh": "vis_0.obj",
-   "rgba": [
-    1.0,
-    1.0,
-    1.0,
-    1.0
+   "name": "body_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
    ],
-   "roughness": 0.6,
-   "metallic": 0.0,
-   "texture": "tex_0.png"
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 5.799105392780311e-05
+    }
+   ],
+   "mass": 0.205085,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
   },
   {
-   "mesh": "vis_1.obj",
-   "rgba": [
-    1.0,
-    1.0,
-    1.0,
-    1.0
+   "name": "cork_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
    ],
-   "roughness": 0.6,
-   "metallic": 0.0,
-   "texture": "tex_1.png"
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 7.028971887057189e-06
+    }
+   ],
+   "mass": 0.019861,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    -0.000193,
+    0.00028,
+    0.062361
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.000193,
+    0.00028,
+    0.062361,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
   }
  ],
- "collision_parts": [
-  {
-   "mesh": "col_0.obj",
-   "volume": 6.419863022181637e-05
-  }
- ]
+ "unstated_mass": []
 }

@@ -1,7 +1,8 @@
 """The object library: which NVIDIA SimReady assets the playground offers, in which tab.
 
-Every item comes from NVIDIA's SimReady set on Hugging Face (nvidia/simready-assets) and
-ships with its own MuJoCo physics (mass and collision shape). `hollow` items are containers:
+Every item comes from NVIDIA's SimReady set (nvidia/simready-assets) or Tripo's SimReady
+assets (VAST-AI/Tripo-Simready-Assets, folder names "tripo:...") on Hugging Face, and ships with
+its own physics (mass, collision shapes, and moving parts on their joints). `hollow` items are containers:
 they collide as convex pieces so things fit inside (see tools/convert_simready.py).
 `fixed` items are furniture: they stand where they are dropped and don't move.
 Items in SOFT are deformable: MuJoCo flexes instead of rigid bodies (see world.py and
@@ -14,7 +15,7 @@ import pathlib
 
 ASSETS = pathlib.Path(__file__).parent / "assets"
 
-TABS = ["Furniture", "Lab & Medical", "Kitchen", "Bins & Trays", "Toys & Basics", "Soft"]
+TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Instruments", "PPE", "Kitchen", "Bins & Trays", "Toys & Basics", "Soft"]
 
 # id, tab, label, Hugging Face folder, hollow, fixed
 ITEMS = [
@@ -22,6 +23,19 @@ ITEMS = [
     ("workbench", "Furniture", "Workbench", "furniture_workbench_standard_d01", True, True),
     ("instrument_trolley", "Furniture", "Instrument trolley", "trolley_instrument_b01", True, True),
     ("lab_bench", "Furniture", "Stainless lab bench", "table_metal_stainless_a03", True, True),
+    ("co2_incubator", "Furniture", "CO2 incubator", "tripo:co2_incubator_N08", False, True),
+    ("autoclave", "Furniture", "Benchtop autoclave", "tripo:benchtop_autoclave_N10", False, True),
+    ("lab_fridge", "Furniture", "Double-door fridge", "tripo:double_door_fridge_N14", False, True),
+    ("refrigerator", "Furniture", "Refrigerator", "refrigerator_b01", False, True),
+    ("labware_cabinet", "Furniture", "Labware cabinet", "labware_cabinet_a01", False, True),
+    ("optical_table", "Furniture", "Optical table", "labware_table_thorlabs_a01", False, True),
+    ("eyewash_station", "Furniture", "Eyewash station", "safety_eyewashStation_stand_selfContained_a01", False, True),
+    ("wash_basin", "Furniture", "Wash basin", "washBasin_a01", True, True),
+    ("microcentrifuge", "Lab equipment", "Microcentrifuge", "tripo:microcentrifuge_N07", False, False),
+    ("microscope", "Lab equipment", "Compound microscope", "tripo:compound_microscope_N06", False, False),
+    ("balance", "Lab equipment", "Analytical balance", "tripo:analytical_balance_N09", False, False),
+    ("uvc_lamp", "Lab equipment", "UV-C lamp", "lamp_uvc_a01", False, False),
+    ("task_light", "Lab equipment", "Bench task light", "lighting_taskLight_adjustableArmBench_a01", False, False),
     ("lab_bottle", "Lab & Medical", "Lab bottle", "bottle_laboratory_a01", False, False),
     ("lab_bottle_tall", "Lab & Medical", "Small vial", "bottle_laboratory_b01", False, False),
     ("syringe", "Lab & Medical", "Syringe", "syringe_a01", False, False),
@@ -35,7 +49,26 @@ ITEMS = [
     ("glass_vial", "Lab & Medical", "Glass vial", "container_vial_glass_a01", False, False),
     ("glass_jar", "Lab & Medical", "Glass jar with lid", "container_jar_glass_silver_a01", False, False),
     ("syringe_small", "Lab & Medical", "Small syringe", "syringe_a03", False, False),
-    ("forceps", "Lab & Medical", "Forceps", "instrument_forceps_a01", False, False),
+    ("syringe_insulin", "Lab & Medical", "Insulin syringe", "syringe_insulin_a01", False, False),
+    ("blood_bag", "Lab & Medical", "Blood bag", "blood_bag_a01", False, False),
+    ("funnel", "Lab & Medical", "Funnel with flexible spout", "serviceTool_funnel_flexibleSpout_a01", True, False),
+    ("sterilising_box", "Lab & Medical", "Sterilising box", "container_system_sterilising_a02", True, False),
+    ("sterilising_tray_deep", "Lab & Medical", "Deep sterilising tray", "container_system_sterilising_b02", True, False),
+    ("sterilising_basket", "Lab & Medical", "Sterilising basket", "container_system_sterilising_d01", True, False),
+    ("sterilising_container", "Lab & Medical", "Sterilising container", "container_system_sterilising_e01", True, False),
+    ("instrument_tray", "Lab & Medical", "Instrument tray", "tray_sterilization_instrument_c02", True, False),
+    ("forceps", "Instruments", "Forceps", "instrument_forceps_a01", False, False),
+    ("scissors", "Instruments", "Surgical scissors", "instrument_scissors_a01", False, False),
+    ("clamp", "Instruments", "Surgical clamp", "instrument_clamp_a01", False, False),
+    ("caliper", "Instruments", "Caliper", "instrument_caliper_a01", False, False),
+    ("scalpel", "Instruments", "Scalpel handle", "instrument_scalpel_handle_a01", False, False),
+    ("ligature_needle", "Instruments", "Ligature needle", "instrument_ligature_needle_a01", False, False),
+    ("surgical_needle", "Instruments", "Surgical needle", "needle_surgical_a01", False, False),
+    ("chemical_gloves", "PPE", "Chemical gloves", "ppe_gloves_chemical_a01", False, False),
+    ("light_gloves", "PPE", "Light-duty gloves", "ppe_gloves_lightDuty_a01", False, False),
+    ("goggles", "PPE", "Safety goggles", "ppe_eyeProtection_goggles_a01", False, False),
+    ("respirator", "PPE", "Half-mask respirator", "ppe_respirator_halfMask_a01", False, False),
+    ("face_mask", "PPE", "Medical face mask", "facemask_medical_a01", False, False),
     ("thermometer", "Lab & Medical", "Thermometer", "thermometer_fever_a01", False, False),
     ("disinfectant", "Lab & Medical", "Disinfectant bottle", "disinfectant_a01", False, False),
     ("glove_box", "Lab & Medical", "Box of gloves", "box_glove_a01", False, False),
@@ -61,6 +94,11 @@ ITEMS = [
     ("sponge", "Soft", "Kitchen sponge", "cleaning_sponge_b01", False, False),
     ("foam_brick", "Soft", "Foam brick", "primitives_brick_foam_a01", False, False),
 ]
+
+# Items kept as one rigid body although their asset has moving parts: the puzzle cube's 26
+# cubies are each hinged to its centre on a single axis (they can't turn as faces, and each
+# costs speed).
+SOLID = {"rubiks_cube"}
 
 # Soft items, by how MuJoCo simulates them (all with the robot cell's implicitfast integrator):
 #   sheet  a single-layer cloth through the item (2D flex): it folds and drapes, and its edges

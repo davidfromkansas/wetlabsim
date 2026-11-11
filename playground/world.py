@@ -9,6 +9,7 @@ Physics settings (solver, materials) are the robot cell's own (wetlabsim/scene.p
 from __future__ import annotations
 
 import math
+import re
 import warnings
 from dataclasses import dataclass, field
 
@@ -81,6 +82,8 @@ class Placed:
     pos: tuple            # world position of the item's bottom centre (m)
     yaw: float = 0.0      # rotation about the vertical (rad)
     quat: tuple | None = None   # full orientation when set (after physics has moved it)
+    joints: dict | None = None  # a jointed item's joint positions, by joint name (kept across rebuilds)
+    parts: dict | None = None   # a jointed item's loose or welded parts: body name -> (pos, quat)
 
     def as_dict(self):
         return {"uid": self.uid, "item": self.item, "pos": [round(float(v), 4) for v in self.pos],
@@ -210,7 +213,177 @@ def _add_materials(world: mujoco.MjSpec, d, prefix: str, meta: dict):
         world.material(f"{prefix}mat{k}").shininess = max(0.05, 1 - v.get("roughness", 0.6))
 
 
+def _pose(pos, quat) -> np.ndarray:
+    T = np.eye(4)
+    T[:3, :3] = _rot(quat)
+    T[:3, 3] = pos
+    return T
+
+
+def _quat_of(T: np.ndarray) -> list:
+    q = np.zeros(4)
+    mujoco.mju_mat2Quat(q, np.ascontiguousarray(T[:3, :3]).ravel())
+    return [float(v) for v in q]
+
+
+def _part_geoms(world, body, name: str, rec: dict, prefix: str, cls, friction, at=None):
+    """A part's collision shapes (its stated mass spread over them by volume) and its visuals;
+    at: where the part sits in the body, for a part fixed onto another."""
+    off = {} if at is None else {"pos": list(at[:3, 3]), "quat": _quat_of(at)}
+    total = sum(c["volume"] for c in rec["collision_parts"]) or 1.0
+    for k, c in enumerate(rec["collision_parts"]):
+        g = body.add_geom(name=f"{name}_col{k}", type=mujoco.mjtGeom.mjGEOM_MESH, meshname=f"{prefix}col{k}",
+                          default=cls, group=3, rgba=[0, 0, 0, 0], **off)
+        if rec.get("mass"):
+            g.mass = rec["mass"] * c["volume"] / total
+        if friction:
+            g.friction = [friction, g.friction[1], g.friction[2]]
+    for k, _ in enumerate(rec["visuals"]):
+        body.add_geom(name=f"{name}_vis{k}", type=mujoco.mjtGeom.mjGEOM_MESH, meshname=f"{prefix}vis{k}",
+                      material=f"{prefix}mat{k}", contype=0, conaffinity=0, group=1, mass=0, **off)
+    if at is None and not rec["collision_parts"]:          # a part with nothing to touch still needs a mass to move
+        body.mass, body.inertia, body.explicitinertial = rec.get("mass") or 0.005, [1e-7] * 3, True
+
+
+# Parts an asset glues on with a fixed joint that stay separate bodies (held by a weld), so they
+# could come off later: caps, lids and stoppers. Other glued parts (labels, needles, shelves,
+# straps) are fixed in place on their part, and cost nothing.
+SEPARATE = re.compile(r"cap|lid|cork|stopper|plug", re.I)
+
+
+def part_kind(b: dict, fixed: bool) -> str:
+    """How a part of a jointed item is built: "top" (the main body, a loose part, a welded cap),
+    "joint" (on its hinge or slide) or "rigid" (fixed in place: its shapes join its parent part's
+    body). Fixed too, as they'd only cost speed: free-spinning wheels and casters (unlimited
+    hinges) of furniture, which doesn't roll here, and buttons and switches."""
+    if b.get("root") or b.get("free"):
+        return "top"
+    if b.get("weld"):
+        return "top" if SEPARATE.search(b["name"]) else "rigid"
+    if fixed and "range" not in b["joint"]:
+        return "rigid"
+    if BUTTON.search(b["name"]):
+        return "rigid"
+    return "joint"
+
+
+BUTTON = re.compile(r"switch|button", re.I)
+
+
+def _add_jointed(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_cache: set):
+    """An item with moving parts (tools/convert_simready.convert_articulated): its main body, the
+    parts on hinge and slide joints nested under it, and its separate parts (a cap held by a weld,
+    or loose)."""
+    d = catalog.ASSETS / p.item
+    bodies = meta["bodies"]
+    pre = [f"{p.item}__b{i}_" for i in range(len(bodies))]
+    if p.item not in mesh_cache:
+        mesh_cache.add(p.item)
+        for i, b in enumerate(bodies):
+            for k, v in enumerate(b["visuals"]):         # weightless: a flat part (a label) is fine
+                world.add_mesh(name=f"{pre[i]}vis{k}", file=str(d / v["mesh"]),
+                               inertia=mujoco.mjtMeshInertia.mjMESH_INERTIA_SHELL)
+            _add_materials(world, d, pre[i], b)
+            for k, c in enumerate(b["collision_parts"]):
+                world.add_mesh(name=f"{pre[i]}col{k}", file=str(d / c["mesh"]))
+    cls = world.find_default("furniture" if fixed else "prop")
+    T0 = _pose(p.pos, p.quat or yaw_quat(p.yaw))
+    names = [f"obj_{p.uid}" if b.get("root") else f"obj_{p.uid}__{i}" for i, b in enumerate(bodies)]
+    frame = [_pose(b["frame"][:3], b["frame"][3:]) for b in bodies]
+    root = next(i for i, b in enumerate(bodies) if b.get("root"))
+    kind = [part_kind(b, fixed) for b in bodies]
+
+    host = list(names)        # the MuJoCo body each part's shapes are in
+
+    def add(i, parent=None):
+        """parent: (the body to build in, where the parent part's frame sits in it)."""
+        b = bodies[i]
+        at = None
+        if kind[i] == "top":                         # placed in the world
+            saved = (p.parts or {}).get(names[i])     # where it lay, relative to the main body
+            T = T0 @ frame[i] if b.get("root") or not saved else T0 @ frame[root] @ _pose(*saved)
+            body = world.worldbody.add_body(name=names[i], pos=list(T[:3, 3]), quat=_quat_of(T))
+            if not (fixed and b.get("root")):
+                body.add_freejoint(name=f"{names[i]}_joint")
+        elif kind[i] == "rigid":                     # its shapes join its parent's body
+            body, pat = parent
+            at = pat @ np.linalg.inv(frame[b["parent"]]) @ frame[i]
+            host[i] = host[b["parent"]]
+        else:
+            pbody, pat = parent
+            T = pat @ _pose(b["pos"], b["quat"])
+            body = pbody.add_body(name=names[i], pos=list(T[:3, 3]), quat=_quat_of(T))
+            j = b["joint"]
+            jt = body.add_joint(name=f"{names[i]}_{j['name']}", pos=j["pos"], axis=j["axis"],
+                                type=mujoco.mjtJoint.mjJNT_HINGE if j["type"] == "hinge" else mujoco.mjtJoint.mjJNT_SLIDE)
+            if "range" in j:
+                jt.range, jt.limited = j["range"], mujoco.mjtLimited.mjLIMITED_TRUE
+            for k in ("frictionloss", "armature"):
+                if k in j:
+                    setattr(jt, k, j[k])
+            for k in ("damping", "stiffness"):     # MuJoCo's linear coefficient
+                if k in j:
+                    getattr(jt, k)[0] = j[k]
+        _part_geoms(world, body, names[i], b, pre[i], cls, meta.get("friction"), at)
+        for c, cb in enumerate(bodies):
+            if cb.get("parent") == i and kind[c] != "top":
+                add(c, (body, np.eye(4) if at is None else at))
+
+    for i in range(len(bodies)):
+        if kind[i] == "top":
+            add(i)
+    for i, b in enumerate(bodies):
+        if kind[i] == "rigid":
+            continue
+        if b.get("parent") is not None and not b.get("collide") and host[b["parent"]] != host[i]:
+            world.add_exclude(bodyname1=host[b["parent"]], bodyname2=names[i])   # jointed parts pass through each other
+        if b.get("weld"):                            # held to its parent as the asset lays them out
+            hp = next(k for k in range(len(bodies)) if names[k] == host[b["parent"]])
+            rel = np.linalg.inv(frame[i]) @ frame[hp]
+            world.add_equality(type=mujoco.mjtEq.mjEQ_WELD, objtype=mujoco.mjtObj.mjOBJ_BODY,
+                               name=f"{names[i]}_weld", name1=names[i], name2=host[b["parent"]],
+                               data=[0, 0, 0, *rel[:3, 3], *_quat_of(rel), 1, 0])
+
+
+def part_bodies(m: mujoco.MjModel, uid: str) -> list[int]:
+    """A jointed item's bodies besides its main one (obj_<uid>__<i>)."""
+    pre = f"obj_{uid}__"
+    return [b for b in range(m.nbody) if m.body(b).name.startswith(pre)]
+
+
+def save_parts(m: mujoco.MjModel, d: mujoco.MjData, p: Placed, root: int):
+    """Remember a jointed item's joint positions, and where its separate parts lie relative to
+    its main body, so a rebuild (or a move of the item) keeps them as they are."""
+    parts = part_bodies(m, p.uid)
+    if not parts:
+        return
+    joints, loose = {}, {}
+    Tr = _pose(d.xpos[root], d.xquat[root])
+    meta = catalog.meta(p.item)
+    if m.body_jntnum[root]:          # the item's place is its own frame's, not its main body's
+        fr = next(b["frame"] for b in meta["bodies"] if b.get("root"))
+        Ta = Tr @ np.linalg.inv(_pose(fr[:3], fr[3:]))
+        p.pos, p.quat = tuple(float(v) for v in Ta[:3, 3]), tuple(_quat_of(Ta))
+    for b in parts:
+        for j in range(m.body_jntadr[b], m.body_jntadr[b] + m.body_jntnum[b]):
+            if m.jnt_type[j] in (int(mujoco.mjtJoint.mjJNT_HINGE), int(mujoco.mjtJoint.mjJNT_SLIDE)):
+                joints[m.joint(j).name] = float(d.qpos[m.jnt_qposadr[j]])
+        if m.body_parentid[b] == 0:
+            rel = np.linalg.inv(Tr) @ _pose(d.xpos[b], d.xquat[b])
+            loose[m.body(b).name] = (tuple(float(v) for v in rel[:3, 3]), tuple(_quat_of(rel)))
+    p.joints, p.parts = joints, loose
+
+
+def restore_joints(m: mujoco.MjModel, d: mujoco.MjData, p: Placed):
+    for name, q in (p.joints or {}).items():
+        j = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, name)
+        if j >= 0:
+            d.qpos[m.jnt_qposadr[j]] = q
+
+
 def _add_item(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_cache: set):
+    if meta.get("bodies"):
+        return _add_jointed(world, p, meta, fixed, mesh_cache)
     d = catalog.ASSETS / p.item
     prefix = f"{p.item}__"
     if p.item not in mesh_cache:

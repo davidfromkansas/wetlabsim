@@ -1,0 +1,108 @@
+{
+ "source": "ppe_gloves_lightDuty_a01",
+ "usd": "sm_ppe_gloves_lightDuty_a01_01.usd",
+ "mass": 0.92762,
+ "friction": 0.8,
+ "com": null,
+ "size": [
+  0.2468,
+  0.231,
+  0.0163
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "leftGlove_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.3448,
+      0.5107,
+      0.6953,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.00022673134193162083
+    }
+   ],
+   "mass": 0.458758,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -0.003941,
+    -0.061374,
+    -2.1e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.003941,
+    -0.061374,
+    -2.1e-05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "rightGlove_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.3448,
+      0.5107,
+      0.6953,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 0.0002265363708174473
+    }
+   ],
+   "mass": 0.468857,
+   "parent": null,
+   "free": true,
+   "pos": [
+    -0.003941,
+    0.060453,
+    -2.1e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.003941,
+    0.060453,
+    -2.1e-05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

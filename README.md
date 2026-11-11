@@ -144,7 +144,9 @@ checks were compared with LIBERO's own on test scenes recorded in its stack
 
 ## Credits
 
-The playground's objects are NVIDIA SimReady assets (Hugging Face `nvidia/simready-assets`).
+The playground's objects are NVIDIA SimReady and Tripo SimReady assets (Hugging Face
+`nvidia/simready-assets`, `VAST-AI/Tripo-Simready-Assets`), CC BY 4.0: every item and its
+source is listed in [`playground/assets/CREDITS.md`](playground/assets/CREDITS.md).
 LIBERO's scenes, objects, tasks and starting setups come from
 [LIBERO](https://github.com/Lifelong-Robot-Learning/LIBERO) (licence in `playground/libero_assets/LICENSE`).
 
