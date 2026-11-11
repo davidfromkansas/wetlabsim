@@ -1,8 +1,9 @@
-"""Run one agent (Claude Code, Codex or Devin) on a task in the robot cell and record everything.
+"""Run one agent (Claude Code, Codex, Devin or Jev) on a task in the robot cell and record everything.
 
     python -m wetlabsim.run_agent --agent claude --task "Move the red-capped tube to the empty rack."
     python -m wetlabsim.run_agent --agent codex  --task-file tasks/move_tube.txt
     python -m wetlabsim.run_agent --agent devin  --task-file tasks/move_tube.txt
+    python -m wetlabsim.run_agent --agent jev    --task "Put the red cube in the bowl."
 
 The robot cell (python -m wetlabsim.server) must already be running. Each run:
 1. resets the cell to its starting state and starts a new log,
@@ -248,12 +249,20 @@ def build_command(agent: str, task: str, model: str | None, workspace: pathlib.P
         if model:
             cmd += ["--model", model]
         return cmd
-    raise SystemExit(f"unknown agent {agent!r}; use claude, codex or devin")
+    if agent == "jev":
+        # Jev writes no code: our own loop (jev_agent.py) asks it for one move at a time and
+        # carries it out through the robot client. Run by file path, like Devin's bridge: its
+        # PYTHONPATH only has the robot client.
+        cmd = [py, str(ROOT / "wetlabsim" / "jev_agent.py"), str(workspace), task]
+        if model:
+            cmd += ["--model", model]
+        return cmd
+    raise SystemExit(f"unknown agent {agent!r}; use claude, codex, devin or jev")
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--agent", required=True, choices=["claude", "codex", "devin"])
+    ap.add_argument("--agent", required=True, choices=["claude", "codex", "devin", "jev"])
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument("--task")
     g.add_argument("--task-file")
@@ -290,7 +299,9 @@ def main(argv=None):
         run_id += "-" + os.environ["WETLAB_RUN_TAG"]
     store = storage.get(args.store, runs)
     run_dir = store.create(run_id)
-    launcher = launchers.get(args.launcher)
+    # Jev's loop is our own code (it holds the Jev key and runs no code from the model), so it
+    # runs right here, never in a sandbox.
+    launcher = launchers.get("local" if args.agent == "jev" else args.launcher)
     # The robot as the agent reaches it: the robot API with this run's token (kept out of the
     # saved command and of the agent's workspace files), or the cell's own URL.
     robot_url = args.robot_url or args.url
@@ -337,6 +348,9 @@ def main(argv=None):
     last_meta_post = [0.0]
     env = dict(os.environ, PYTHONPATH=str(client), WETLAB_ROBOT_URL=robot_url, WETLAB_ROBOT_TOKEN=robot_token)
     env.pop("DEVIN_API_KEY", None)
+    if args.agent != "jev":
+        env.pop("JEV_API_KEY", None)
+        env.pop("TYPESAFE_API_KEY", None)
     devin_home = None
     if args.agent == "devin" and devin_auth.key() and launcher.name == "local":
         # Devin logs in with the organization's key (a login of its own for this run, outside
