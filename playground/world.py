@@ -529,10 +529,51 @@ def save_parts(m: mujoco.MjModel, d: mujoco.MjData, p: Placed, root: int):
     p.joints, p.parts = joints, loose
 
 
+def scramble_cube(m: mujoco.MjModel, d: mujoco.MjData, uid: str, turns: int = 25, rng=None):
+    """Mix up a puzzle cube (MuJoCo's 3x3x3 model) as a person would: random quarter turns of
+    its faces, done exactly (no physics), so it starts as a fair, solvable puzzle. Each piece's
+    joint is set to the rotation the turns gave it."""
+    rng = rng or np.random.default_rng()
+    core = m.body(f"obj_{uid}__core").id
+    pieces = [b for b in range(m.nbody) if m.body_parentid[b] == core]
+    home = {b: np.round(m.geom_pos[m.body_geomadr[b]] / np.abs(m.geom_pos[m.body_geomadr[b]]).max())
+            for b in pieces}
+    R = {b: np.eye(3) for b in pieces}
+    last = None
+    for _ in range(turns):
+        while True:
+            k, side = int(rng.integers(3)), int(rng.choice([-1, 1]))
+            if (k, side) != last:
+                break
+        last = (k, side)
+        q, Rm = np.zeros(4), np.zeros(9)
+        mujoco.mju_axisAngle2Quat(q, np.eye(3)[k], float(rng.choice([-1, 1, 2])) * np.pi / 2)
+        mujoco.mju_quat2Mat(Rm, q)
+        Rm = Rm.reshape(3, 3)
+        for b in pieces:
+            if round(float((R[b] @ home[b])[k])) == side:
+                R[b] = Rm @ R[b]
+    for b in pieces:
+        j = m.body_jntadr[b]
+        a = m.jnt_qposadr[j]
+        q = np.zeros(4)
+        mujoco.mju_mat2Quat(q, R[b].ravel())
+        if m.jnt_type[j] == mujoco.mjtJoint.mjJNT_BALL:
+            d.qpos[a:a + 4] = q
+        else:                                         # a face centre: it only spins on its own axis
+            v = np.zeros(3)
+            mujoco.mju_quat2Vel(v, q, 1.0)
+            d.qpos[a] = float(v @ m.jnt_axis[j])
+
+
 def restore_joints(m: mujoco.MjModel, d: mujoco.MjData, p: Placed):
-    """Joint positions as they were, or for a new item where its asset says they start."""
+    """Joint positions as they were, or for a new item where its asset says they start (a puzzle
+    cube starts mixed up, ready to be solved)."""
     if p.joints is None:
         meta = catalog.meta(p.item)
+        if meta.get("scramble"):
+            scramble_cube(m, d, p.uid)
+            return
         for i, b in enumerate(meta.get("bodies") or []):
             if b.get("joint", {}).get("initial"):
                 jid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, f"obj_{p.uid}__{i}_{b['joint']['name']}")
