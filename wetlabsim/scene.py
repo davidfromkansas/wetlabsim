@@ -429,6 +429,18 @@ ROBOTS = {
                     "left_wrist": "wrist_cam_left", "right_wrist": "wrist_cam_right",
                     "side": "side"},      # the station's audience camera (people only)
     },
+    # Franka Robotics' FR3 Duo with its vision & manipulation kit: two FR3 arms on the Duo mount,
+    # a Robotiq 2F-85 and a RealSense D405 on each wrist, a ZED Mini on the head. Converted from
+    # Franka's SimReady USD (playground/tools/convert_fr3_duo.py; assets/franka_fr3_duo). Each arm
+    # is a robot of its own (fr3_duo_side below); this entry is the pair.
+    "fr3_duo": {
+        "name": "Franka FR3 Duo (two FR3 arms)", "gripper": "Robotiq 2F-85 (x2)",
+        "sides": ("left", "right"),
+        "mount_quat": "1 0 0 0",       # the kit's +x is forward, as the station's robot faces
+        # The kit's three cameras: the ZED Mini on the head (its left eye) and the two wrist D405s.
+        "cameras": {"head": "head", "left_wrist": "wrist_cam_left", "right_wrist": "wrist_cam_right",
+                    "side": "side"},      # the station's audience camera (people only)
+    },
 }
 DEFAULT_ROBOT = "franka"
 # The robots the robot cell (and LIBERO, Wet Lab) can stand at its bench; the ALOHA is for the
@@ -464,6 +476,62 @@ def aloha_side(side: str) -> dict:
         "joint_vmax": _VX300S_VMAX, "joint_amax": np.full(6, 10.0),
         "cart_vmax": 0.5, "rot_vmax": 3.0,
     }
+
+
+# FR3 limits from Franka's FCI documentation, "Limits for Franka Research 3 (FR3)" (agent/fr3_duo/
+# datasheets): joint velocity and acceleration, Cartesian translation and rotation speed.
+_FR3_VMAX = np.array([2.62, 2.62, 2.62, 2.62, 5.26, 4.18, 5.26])
+_FR3_AMAX = np.full(7, 10.0)
+# The kit's own starting pose (its USD joint states: Franka's usual "ready" pose) and ours: both
+# grippers pointing down, 45 cm in front of the mount and 20 cm either side of the middle, 25 cm
+# above the table (solved once on the model; the arms are mounted tilted, so the two aren't mirror
+# images joint by joint).
+FR3_DUO_HOME = np.array([0.0, -0.7854, 0.0, -2.3562, 0.0, 1.5708, 0.7854])
+FR3_DUO_READY = {"left": np.array([1.289, -0.025, -1.136, -0.519, 0.317, 0.934, -1.3]),
+                 "right": np.array([-1.289, -0.026, 1.136, -0.52, -0.315, 0.935, -0.272])}
+# Franka's FR3 Duo installation guide: the kit's origin 200 mm above the work surface (its reference
+# kinematics are laid out for that). The mount's underside is 31 mm below the origin.
+FR3_DUO_ORIGIN_HEIGHT = 0.20
+FR3_DUO_MOUNT_BOTTOM = 0.031
+
+
+def fr3_duo_side(side: str) -> dict:
+    """One arm of an FR3 Duo: an FR3 with a Robotiq 2F-85, as a robot of its own."""
+    return {
+        "name": f"FR3 Duo {side} arm (Franka FR3)", "gripper": "Robotiq 2F-85", "side": side,
+        "arm_joints": [f"{side}/joint{i}" for i in range(1, 8)],
+        "arm_actuators": [f"{side}/joint{i}" for i in range(1, 8)],
+        "home_q": FR3_DUO_HOME.copy(), "ready_q": FR3_DUO_READY[side].copy(),
+        "tcp_site": f"{side}/gripper/pinch",
+        # The FR3 estimates the external wrench at its flange from its seven link-side torque
+        # sensors; the load bolted on (adapter, wrist camera, gripper) is the hand's subtree.
+        "ft_site": f"{side}/flange", "ft_body": f"{side}/hand", "base_body": f"{side}/link0",
+        # Poses in the Duo's origin frame (Franka's reference for the kit), not the tilted arm's.
+        "frame_body": "base",
+        "sensors": (f"{side}/ft_force", f"{side}/ft_torque"),
+        "grip_actuator": f"{side}/gripper/fingers_actuator", "grip_joint": f"{side}/gripper/right_driver_joint",
+        "grip_open": 0.0, "grip_closed": 0.8,   # driver joint (rad), as on the UR5e's 2F-85
+        "grip_ctrl_open": 0.0,
+        "max_opening_mm": 85,
+        "cameras": {"head": "head", "wrist": f"wrist_cam_{side}"},
+        "joint_vmax": _FR3_VMAX, "joint_amax": _FR3_AMAX,
+        "cart_vmax": 3.0, "rot_vmax": 2.5,
+        # Franka publishes no noise or accuracy figure for the FR3's wrench estimate, and its
+        # collision thresholds are the user's to set: none are invented here (zero noise and bias,
+        # no Cartesian reflex). A blocked arm still stops on its joint tracking error.
+        "ft_noise": (0.0, 0.0), "ft_bias": (0.0, 0.0),
+        "reflex_force": (np.full(3, -1e9), np.full(3, 1e9)),
+        "reflex_torque": (np.full(3, -1e9), np.full(3, 1e9)),
+    }
+
+
+SIDE_PROFILES = {"aloha": lambda side: aloha_side(side), "fr3_duo": lambda side: fr3_duo_side(side)}
+
+
+def side_profile(robot: str) -> dict:
+    """One arm of a two-arm robot, by its "robot:side" name ("aloha:left", "fr3_duo:right")."""
+    pair, side = robot.split(":")
+    return SIDE_PROFILES[pair](side)
 
 
 def robot_name(robot: str | None = None) -> str:
@@ -609,11 +677,47 @@ def _aloha(world, mount_site="robot_mount", prefix=""):
         world.attach(arm, frame=frame, prefix=prefix)
 
 
+def _fr3_duo(world, mount_site="robot_mount", prefix=""):
+    """Franka's FR3 Duo with its vision & manipulation kit (assets/franka_fr3_duo: the kit's own
+    model, with Menagerie's 2F-85 on each wrist), standing with its origin 200 mm above the table
+    on a riser block, as Franka's installation guide lays it out."""
+    duo = mujoco.MjSpec.from_file(str(ASSETS / "franka_fr3_duo" / "fr3_duo.xml"))
+    for g in duo.geoms:
+        if g.classname.name in ("pad_box1", "pad_box2"):      # the 2F-85's silicone pads
+            _set_material(g, "rubber_pad")
+        elif g.contype or g.conaffinity:
+            _set_material(g, "robot")
+    for body in duo.bodies:     # Franka's controller compensates for gravity
+        body.gravcomp = 1.0
+    # The riser under the mount: from the table up to the mount's underside.
+    h = FR3_DUO_ORIGIN_HEIGHT - FR3_DUO_MOUNT_BOTTOM
+    base = duo.body("base")
+    base.add_geom(name="riser", type=mujoco.mjtGeom.mjGEOM_BOX, size=[0.12, 0.145, h / 2],
+                  pos=[0, 0, -FR3_DUO_MOUNT_BOTTOM - h / 2], rgba=[0.32, 0.33, 0.35, 1], group=2)
+    _set_material(base.geoms[-1], "robot")
+    _match_options(duo, world=world)
+    site = world.site(mount_site)
+    R = np.zeros(9)
+    mujoco.mju_quat2Mat(R, np.asarray(site.quat, float))
+    pos = np.asarray(site.pos, float) + R.reshape(3, 3)[:, 2] * FR3_DUO_ORIGIN_HEIGHT
+    frame = world.worldbody.add_frame(pos=pos.tolist(), quat=list(site.quat))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        world.attach(duo, frame=frame, prefix=prefix)
+    for side in ("left", "right"):
+        world.add_sensor(name=f"{prefix}{side}/ft_force", type=mujoco.mjtSensor.mjSENS_FORCE,
+                         objtype=mujoco.mjtObj.mjOBJ_SITE, objname=f"{prefix}{side}/flange")
+        world.add_sensor(name=f"{prefix}{side}/ft_torque", type=mujoco.mjtSensor.mjSENS_TORQUE,
+                         objtype=mujoco.mjtObj.mjOBJ_SITE, objname=f"{prefix}{side}/flange")
+
+
 def add_robot(world, robot: str, mount: str = "robot_mount", prefix: str = ""):
     """Attach a robot (with its wrist camera and wrist force/torque sensor) at a mount site.
     prefix: put in front of every name the robot brings, so several robots fit in one scene."""
     if robot == "aloha":
         return _aloha(world, mount, prefix)      # no wrist force/torque sensors on a ViperX
+    if robot == "fr3_duo":
+        return _fr3_duo(world, mount, prefix)
     ft_site = _franka(world, mount, prefix) if robot == "franka" else _ur5e(world, mount, prefix)
     # Wrist force/torque sensor (UR5e: built in at the flange; Panda: estimated from joint torques).
     world.add_sensor(name=prefix + "ft_force", type=mujoco.mjtSensor.mjSENS_FORCE,
@@ -627,22 +731,26 @@ def profile_for(robot: str, prefix: str = "", world_cameras: str | None = None) 
     world_cameras: prefix of the fixed (overhead, side) cameras that belong to this robot
     (default: the same prefix)."""
     side = None
-    if robot.startswith("aloha:"):      # one arm of an ALOHA
+    if ":" in robot:                    # one arm of a two-arm robot ("aloha:left")
+        P = dict(side_profile(robot))
         robot, side = robot.split(":")
-    P = dict(aloha_side(side) if side else ROBOTS[robot_name(robot)])
+    else:
+        P = dict(ROBOTS[robot_name(robot)])
     if not prefix and world_cameras is None:
         return P
     wc = prefix if world_cameras is None else world_cameras
-    if robot == "aloha":                # its cameras come with it (under its prefix)
+    if "sides" in ROBOTS[robot]:        # a two-arm robot's cameras come with it (under its prefix)
         wc = prefix
     for k in ("arm_joints", "arm_actuators"):
         if k in P:
             P[k] = [prefix + n for n in P[k]]
-    for k in ("tcp_site", "ft_site", "ft_body", "base_body", "grip_actuator", "grip_joint"):
+    for k in ("tcp_site", "ft_site", "ft_body", "base_body", "frame_body", "grip_actuator", "grip_joint"):
         if P.get(k):
             P[k] = prefix + P[k]
     P["cameras"] = {k: (prefix + v if "wrist" in k else wc + v) for k, v in P["cameras"].items()}
-    if P.get("ft_site", "x"):
+    if "sensors" in P:
+        P["sensors"] = tuple(prefix + n for n in P["sensors"])
+    elif P.get("ft_site", "x"):
         P["sensors"] = (prefix + "ft_force", prefix + "ft_torque")
     return P
 

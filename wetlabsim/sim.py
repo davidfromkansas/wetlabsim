@@ -150,6 +150,9 @@ class Arm:
         self.ft_site = m.site(P["ft_site"]).id if self.has_ft else -1
         self.ft_body = m.body(P["ft_body"]).id if self.has_ft else -1
         self.base_body = m.body(P["base_body"]).id
+        # The frame poses are given in: the arm's base, or the robot's own reference frame where it
+        # has one (an FR3 Duo's arms are mounted tilted; both report in the Duo's origin frame).
+        self.frame_body = m.body(P.get("frame_body") or P["base_body"]).id
         self.ready_q = P["ready_q"]
         self.joint_lo = m.jnt_range[[m.joint(j).id for j in P["arm_joints"]], 0]
         self.joint_hi = m.jnt_range[[m.joint(j).id for j in P["arm_joints"]], 1]
@@ -313,7 +316,7 @@ class Arm:
     def base_tf(self):
         """Robot base frame (world) position and rotation."""
         d = self.sim.d
-        return d.xpos[self.base_body].copy(), d.xmat[self.base_body].reshape(3, 3).copy()
+        return d.xpos[self.frame_body].copy(), d.xmat[self.frame_body].reshape(3, 3).copy()
 
     def to_world(self, p_b, R_b=None):
         bp, bR = self.base_tf()
@@ -578,7 +581,7 @@ class Arm:
             d = mujoco.MjData(m)
             d.qpos[:] = self.sim.d.qpos
         mujoco.mj_forward(m, d)
-        bp, bR = d.xpos[self.base_body], d.xmat[self.base_body].reshape(3, 3)
+        bp, bR = d.xpos[self.frame_body], d.xmat[self.frame_body].reshape(3, 3)
         tp, tR = d.site_xpos[self.tcp_site], d.site_xmat[self.tcp_site].reshape(3, 3)
         out = {}
         for name, cam in self.P["cameras"].items():
@@ -663,7 +666,7 @@ class TwoArm(Arm):
         for a in self.sides.values():
             a._index()
         arms = list(self.sides.values())
-        self.base_body = m.body(self.prefix + "base").id
+        self.base_body = self.frame_body = m.body(self.prefix + "base").id
         self.bodies = set().union(*(a.bodies for a in arms))
         self.own_joints = [j for a in arms for j in a.own_joints]
         self.n_arm = sum(a.n_arm for a in arms)
@@ -709,6 +712,8 @@ class TwoArm(Arm):
     move_j = move_j_ik = gripper_move = move_l
 
     def zero_ft(self):
+        if any(a.has_ft for a in self.sides.values()):
+            self._which()
         raise RobotError("this robot has no wrist force/torque sensors")
 
     def stop(self):

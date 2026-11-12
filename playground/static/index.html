@@ -1196,7 +1196,7 @@ function stationStatus(st) {
   if (draft.trim()) return {color: '#16A34A', text: 'Task ready'};
   return {color: '#9CA3AF', text: 'No task yet'};
 }
-const STATION_IMG = {franka: '/pg/static/station_franka.png', ur5e: '/pg/static/station_ur5e.png', aloha: '/pg/static/station_aloha.png'};
+const STATION_IMG = {franka: '/pg/static/station_franka.png', ur5e: '/pg/static/station_ur5e.png', aloha: '/pg/static/station_aloha.png', fr3_duo: '/pg/static/station_fr3_duo.png'};
 function chipDot(st) {
   const sc = S.scene, run = (sc.runs || {})[st.id];
   if (run && run.active) return ['run', 'Working on its task'];
@@ -1236,7 +1236,7 @@ function renderDock() {
 
 // ---------------------------------------------------------------- layout v3: robots are the unit
 // The lab's robots, listed under the open session in the sidebar, and the robot panel's header.
-const ROBOT_PIC = {franka: '/pg/static/robot_franka.png', ur5e: '/pg/static/robot_ur5e.png', aloha: '/pg/static/robot_aloha.png'};
+const ROBOT_PIC = {franka: '/pg/static/robot_franka.png', ur5e: '/pg/static/robot_ur5e.png', aloha: '/pg/static/robot_aloha.png', fr3_duo: '/pg/static/robot_fr3_duo.png'};
 const ROBOT_IMG = (r) => ROBOT_PIC[r] || ROBOT_PIC.franka;
 async function pickRobot(id) {
   $('rmenu').hidden = true; $('rpick').setAttribute('aria-expanded', 'false');
@@ -1782,7 +1782,7 @@ function renderFeed() {
       const label = st.kind === 'reads' ? 'Read file' : st.kind === 'writes' ? 'Wrote file' : st.kind === 'looks' ? 'Look' : 'Tool';
       let text = st.kind === 'writes' ? st.text.split('\n')[0] : st.text, img = '';
       if (st.kind === 'looks') {
-        const c = /^(overhead|wrist|side|low|left_wrist|right_wrist) camera/.exec(st.text), f = /saved image (.+)$/.exec(st.text);
+        const c = /^(head|overhead|wrist|side|low|left_wrist|right_wrist) camera/.exec(st.text), f = /saved image (.+)$/.exec(st.text);
         if (c) img = `<img src="${stBase()}/camera/${c[1]}.jpg?t=${st.t.toFixed(3)}" alt="What the ${c[1]} camera showed at ${mmss(st.t - start)}" loading="lazy">`;
         else if (f) img = `<img src="${stBase()}/run/file?path=${encodeURIComponent(f[1])}" alt="${esc(f[1])}" loading="lazy" onerror="this.remove()">`;
         text = c ? c[1] + ' camera' : f ? f[1] : text;
@@ -2032,12 +2032,13 @@ function openStreams() {
   openCams();
 }
 // The selected station's cameras (what its AI sees), small in the lower left: two for a one-arm
-// robot, the four of a two-arm ALOHA.
-const CAM_NAMES = {overhead: 'Overhead', wrist: 'Wrist', low: 'Low', left_wrist: 'Left wrist', right_wrist: 'Right wrist'};
+// robot, the four of a two-arm ALOHA, the head and two wrists of an FR3 Duo.
+const CAM_NAMES = {head: 'Head', overhead: 'Overhead', wrist: 'Wrist', low: 'Low', left_wrist: 'Left wrist', right_wrist: 'Right wrist'};
 const EXP_ICON = '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M7 1 H11 V5 M5 11 H1 V7 M11 1 L7 5 M1 11 L5 7"/></svg>';
 function stationCams() {
-  return S.scene && S.scene.mode === 'free' && curStation().robot === 'aloha'
-    ? ['overhead', 'low', 'left_wrist', 'right_wrist'] : ['overhead', 'wrist'];
+  const r = S.scene && S.scene.mode === 'free' ? curStation().robot : '';
+  return r === 'aloha' ? ['overhead', 'low', 'left_wrist', 'right_wrist']
+    : r === 'fr3_duo' ? ['head', 'left_wrist', 'right_wrist'] : ['overhead', 'wrist'];
 }
 function openCams() {
   const t = Date.now(), base = stBase(), none = S.scene && S.scene.mode === 'free' && !S.scene.active;
@@ -2250,7 +2251,7 @@ function renderData() {
   const arms = d.left ? [['Left ', d.left], ['Right ', d.right]] : [['', d]];
   $('dJoints').innerHTML = arms.map(([n, a]) => a.joint_positions.map((q, i) => `<tr><td>${n}${n ? 'j' : 'J'}oint ${i + 1}</td><td>${f3(q)}</td><td>${f2((a.joint_velocities || [])[i] || 0)}</td></tr>`).join('')).join('');
   // Gripper opening from its 0-255 command, as the robot cell's viewer shows it.
-  const openMm = (g) => stn.robot === 'ur5e' ? 85 * (1 - (g.position || 0) / 255)
+  const openMm = (g) => stn.robot === 'ur5e' || stn.robot === 'fr3_duo' ? 85 * (1 - (g.position || 0) / 255)
     : stn.robot === 'aloha' ? 2 * (37 - 35 * (g.position || 0) / 255) : 3 + 80 * (1 - (g.position || 0) / 255);
   const rows = [];
   for (const [n, a] of arms) {

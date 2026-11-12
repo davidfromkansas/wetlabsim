@@ -27,7 +27,8 @@ def look(camera: str = "overhead") -> list:
 
     camera: "overhead" (fixed above the bench, sees the whole work area) or
     "wrist" (mounted on the gripper, looks where the fingers point). A two-arm
-    robot (ALOHA) has "overhead", "low", "left_wrist" and "right_wrist".
+    robot has its own: the ALOHA "overhead", "low", "left_wrist" and "right_wrist"; the
+    FR3 Duo "head", "left_wrist" and "right_wrist".
     Returns the image plus the camera's calibration so you can relate pixels
     to robot coordinates (see Frame.pixel_to_point in the robot manual).
     """

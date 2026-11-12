@@ -255,7 +255,11 @@ function renderHeader() {
     $('costSub').textContent = run.agent === 'claude' && run.status === 'running' ? '$ shown when the run ends' : (run.agent_label || 'This agent') + " doesn't report $"; }
   else { $('cost').textContent = '—'; $('costSub').textContent = run.run_id ? 'reported as the agent works' : ''; }
   if (run.cached_tokens) $('costSub').title = kfmt(run.cached_tokens) + ' of the input tokens were read from cache';
-  if (run.robot === 'aloha' && $('cam-wrist').dataset.cam === 'wrist') {   // two arms: show the left wrist's
+  if (run.robot === 'fr3_duo' && $('cam-overhead').dataset.cam === 'overhead') {   // its head camera in place of an overhead one
+    $('cam-overhead').dataset.cam = 'head';
+    $('cam-overhead').parentElement.querySelector('figcaption b').textContent = 'Head camera';
+  }
+  if ((run.robot === 'aloha' || run.robot === 'fr3_duo') && $('cam-wrist').dataset.cam === 'wrist') {   // two arms: show the left wrist's
     $('cam-wrist').dataset.cam = 'left_wrist';
     $('cam-wrist').parentElement.querySelector('figcaption b').textContent = 'Left wrist camera';
   }
@@ -352,7 +356,7 @@ function renderState(s) {
   $('tel').innerHTML = rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
 }
 
-// A two-arm robot (ALOHA): each arm's readings, under "left" and "right".
+// A two-arm robot (ALOHA, FR3 Duo): each arm's readings, under "left" and "right".
 function renderTwoArms(s) {
   const arms = [['Left', s.left], ['Right', s.right]];
   $('joints').innerHTML = arms.map(([n, a]) => a.joint_positions.map((q, i) => `<tr><td>${n} joint ${i + 1}</td><td>${f3(q)}</td><td>${f2((a.joint_velocities || [])[i] || 0)}</td></tr>`).join('')).join('');
@@ -362,7 +366,8 @@ function renderTwoArms(s) {
     rows.push([n + ' hand position (x, y, z)', p.slice(0, 3).map(f3).join(', ') + ' m'],
               [n + ' hand orientation (rot. vector)', p.slice(3).map(f3).join(', ') + ' rad'],
               [n + ' arm moving', a.moving ? 'Yes' : 'No'],
-              [n + ' gripper opening', (2 * (37 - 35 * (g.position || 0) / 255)).toFixed(0) + ' mm (' + Math.round(g.position || 0) + '/255)'],
+              [n + ' gripper opening', (run.robot === 'fr3_duo' ? 85 * (1 - (g.position || 0) / 255)    // Robotiq 2F-85
+                                        : 2 * (37 - 35 * (g.position || 0) / 255)).toFixed(0) + ' mm (' + Math.round(g.position || 0) + '/255)'],
               [n + ' gripper holding something', g.object_detected ? 'Yes' : 'No']);
     if (a.mode === 'protective_stop') rows.unshift([n + ' arm stop reason', a.protective_stop_reason || '']);
   }
@@ -407,10 +412,11 @@ function refreshCams(force) {
 }
 function renderSeen() {
   const v = start + viewTime();
-  for (const cam of ['overhead', 'wrist']) {
+  for (const id of ['overhead', 'wrist']) {
+    const cam = $('cam-' + id).dataset.cam;      // a two-arm robot shows others (head, left wrist)
     let last = null;
     for (const e of events) if (e.event === 'camera' && e.camera === cam && e.t >= start && e.t <= v) last = e.t;
-    const el = $('seen-' + cam);
+    const el = $('seen-' + id);
     el.textContent = last == null ? 'Not looked at yet' : 'AI last looked ' + mmss(last - start);
     el.className = 'seen' + (last == null ? '' : ' yes');
   }

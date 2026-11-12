@@ -520,7 +520,7 @@ class Session:
     def station_runner(self, uid: str) -> Runner:
         r = self.runners.get(uid)
         st = self.sim.station(uid)
-        docs = "standard" if st is None or st.robot in ("franka", "aloha") else "assisted"
+        docs = "standard" if st is None or st.robot in ("franka", "aloha", "fr3_duo") else "assisted"
         if r is None or r.docs != docs and not r.active():
             r = self.runners[uid] = Runner(f"{self.base_url}/s/{self.id}/st/{uid}", self.runs, docs)
             r.on_done = lambda runner, uid=uid: self.run_ended(uid, runner)
