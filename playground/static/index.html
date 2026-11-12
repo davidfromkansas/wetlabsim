@@ -102,7 +102,7 @@ body.watch header .seg{opacity:.6;pointer-events:none}
 /* watching someone else's hosted lab: nothing to edit or start */
 .watchtag{display:none;font-size:12px;font-weight:600;color:var(--amber);background:var(--amberBg);padding:4px 10px;border-radius:6px}
 body.watch .watchtag{display:inline}
-body.watch #tabObjects,body.watch #addStationBtn,body.watch .stacts,body.watch #playBtn,body.watch #resetBtn,
+body.watch #tabObjects,body.watch #addStationBtn,body.watch .stacts,body.watch #playBtn,
 body.watch .taskcard,body.watch #stopBtn,body.watch .bl,body.watch #lockmsg,body.watch .campad,body.watch .camreset{display:none!important}
 /* the Files tab: the AI's work folder, in the robot cell viewer's "Sandbox Workspace" style */
 #filespane{flex:1;display:none;flex-direction:column;min-height:0;padding:12px 16px 14px;gap:8px}
@@ -152,7 +152,7 @@ body.filing #chatpane,body.filing #right .freeonly{display:none!important}
 #view{display:block;width:100%;height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;cursor:grab}
 /* the 3D view drawn in the page (view3d.js): the canvas sits under the (now see-through) video
    element, which still takes the mouse, so every drag, click and drop works as before */
-.view3d{position:absolute;inset:0;display:block}
+.view3d{position:absolute;inset:0;display:block;transition:opacity 150ms ease}
 body.v3 #view{position:relative;opacity:0}
 #view.dragging{cursor:grabbing}
 .tl{position:absolute;left:14px;top:84px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}
@@ -350,6 +350,7 @@ body.empty .pips{display:none}
 body.fixed .tl{top:12px}
 .pip{width:220px;border-radius:10px;overflow:hidden;background:#111827;box-shadow:0 6px 18px rgba(17,24,39,.28);border:1px solid rgba(255,255,255,.6)}
 .pip img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#1F2937}
+.pip img:not([src]),.pip img[src=""]{visibility:hidden}
 .pips.four .pip{width:132px}
 .pcap{display:flex;align-items:center;gap:6px;padding:5px 6px 5px 9px;background:#fff;font:600 12px Inter,sans-serif;color:var(--ink)}
 .pcap span{font-size:10px;font-weight:700;color:var(--blue2);flex:1;white-space:nowrap}
@@ -699,8 +700,6 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
   </div>
   <div style="display:flex;align-items:center;gap:10px">
     <button class="play" id="playBtn" aria-label="Play"><svg id="playIcon" width="14" height="14" viewBox="0 0 14 14" fill="#fff"><path d="M3 1.5 L12.5 7 L3 12.5 Z"/></svg><span id="playLabel">Play</span></button>
-    <button class="round" id="resetBtn" title="Put everything back where it started" aria-label="Reset"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#374151" stroke-width="1.6" stroke-linecap="round"><path d="M3 8 a5 5 0 1 0 1.6 -3.7"/><path d="M3 2 V5 H6"/></svg></button>
-    <div style="display:flex;flex-direction:column;line-height:1.25;margin-left:4px"><span class="clock" id="clock">00:00.0</span><span class="small" id="rt">paused</span></div>
   </div>
   <div class="hgroup" style="justify-content:flex-end">
     <span class="lockmsg" id="lockmsg" style="display:none"></span>
@@ -721,7 +720,6 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
       </div>
     </div>
     <span class="watchtag" id="watchTag">Watching · read only</span>
-    <a class="small" id="liveLink" href="/live" target="_blank" rel="noopener" style="color:var(--blue2);font-weight:600;text-decoration:none;display:none">Live now ↗</a>
     <a class="small" id="pastLink" href="/pg/runs" target="_blank" rel="noopener" style="color:var(--blue2);font-weight:600;text-decoration:none">Past runs ↗</a>
     <span class="small">MuJoCo 4.0</span>
   </div>
@@ -1185,7 +1183,7 @@ function stationStatus(st) {
   if (draft.trim()) return {color: '#16A34A', text: 'Task ready'};
   return {color: '#9CA3AF', text: 'No task yet'};
 }
-const STATION_IMG = {franka: '/pg/static/station_franka.png', ur5e: '/pg/static/station_ur5e.png'};
+const STATION_IMG = {franka: '/pg/static/station_franka.png', ur5e: '/pg/static/station_ur5e.png', aloha: '/pg/static/station_aloha.png'};
 function chipDot(st) {
   const sc = S.scene, run = (sc.runs || {})[st.id];
   if (run && run.active) return ['run', 'Working on its task'];
@@ -1335,11 +1333,11 @@ $('openRight').onclick = () => setRight(true);
 $('navClose').onclick = () => setNav(false);
 $('openLeft').onclick = () => setNav(true);
 try { if (localStorage.getItem('pgRight') === '0') setRight(false); } catch (e) {}
-// play, reset, clock and past runs float over the top of the scene
+// play and past runs float over the top of the scene
 (() => {
   const pill = $('playpill');
   pill.appendChild($('playBtn').parentElement);
-  ['pastLink', 'liveLink', 'shareWrap', 'watchTag', 'lockmsg'].forEach(id => { if ($(id)) pill.appendChild($(id)); });
+  ['pastLink', 'shareWrap', 'watchTag', 'lockmsg'].forEach(id => { if ($(id)) pill.appendChild($(id)); });
 })();
 // the object library lives in a drawer over the scene
 (() => {
@@ -1648,7 +1646,6 @@ $('playBtn').onclick = async () => {
   if (S.scene && !S.scene.paused) await api('/pg/pause', {}); else await api('/pg/play', {});
   refresh();
 };
-$('resetBtn').onclick = async () => { const r = await api('/pg/reset', {}); if (!r.ok) toast(r.error); refresh(); };
 
 // A small "are you sure" card. Resolves true when confirmed.
 function askConfirm(title, text, okLabel) {
@@ -1870,7 +1867,6 @@ async function pollTrace() {
 }
 
 // ---------------------------------------------------------------- state
-function fmtClock(t) { const m = Math.floor(t / 60), s = t - m * 60; return String(m).padStart(2, '0') + ':' + s.toFixed(1).padStart(4, '0'); }
 function render() {
   const sc = S.scene; if (!sc) return;
   applyMode();
@@ -1882,8 +1878,6 @@ function render() {
     $('playBtn').title = $('playBtn').disabled ? `${working === 1 ? 'A robot is' : working + ' robots are'} working. Stop ${working === 1 ? 'it' : 'them'} from the chat to pause the world.`
       : playing ? 'Freeze the physics world: every robot and object stops' : 'Run the physics world'; }
   $('playIcon').innerHTML = playing ? '<rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/>' : '<path d="M3 1.5 L12.5 7 L3 12.5 Z"/>';
-  $('clock').textContent = fmtClock(sc.time);
-  $('rt').textContent = playing ? 'World running' + (sc.realtime_factor >= 0.97 ? '' : ' · ' + (sc.realtime_factor * 100).toFixed(0) + '% speed') : 'World paused';
   $('lockmsg').style.display = sc.locked && (active || S.fixed) ? '' : 'none'; $('lockmsg').textContent = S.fixed ? 'Scene locked for a fair test' : active ? 'Scene locked while a robot works' : 'Pause physics to edit the scene';
   $('right').classList.toggle('locked', !!sc.locked);
   $('liveTag').style.display = playing ? '' : 'none';
@@ -2433,8 +2427,7 @@ $('wModel').onchange = renderWet;
     $('modeLibero').style.display = $('modeWet').style.display = 'none';
     document.body.classList.add('public');
     if (S.cat.front) {   // a hosted lab: the front lists live and past runs
-      $('pastLink').href = S.cat.front + '/pg/runs'; S.railKey = null; $('liveLink').href = S.cat.front + '/live';
-      $('liveLink').style.display = '';
+      $('pastLink').href = S.cat.front + '/pg/runs'; S.railKey = null;
     }
     if (S.cat.website && S.cat.owner) {   // signed in through the website: account menu (Your runs, Sign out)
       const btn = $('acctBtn'), menu = $('acctMenu');

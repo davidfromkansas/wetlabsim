@@ -16,10 +16,12 @@ server keeps rendering the AI's own cameras as before.
 from __future__ import annotations
 
 import base64
+import collections
 import hashlib
 import io
 import json
 import struct
+import threading
 
 import mujoco
 import numpy as np
@@ -82,7 +84,9 @@ def scene(m: mujoco.MjModel, version) -> dict:
     hl = m.vis.headlight
     return {"version": str(version), "nbody": int(m.nbody), "geoms": geoms, "skins": skins, "lights": lights,
             "headlight": {"ambient": _r(hl.ambient, 3), "diffuse": _r(hl.diffuse, 3)},
-            "meshhash": {str(i): mesh_hash(m, i) for i in {gg["mesh"] for gg in geoms if gg["mesh"] >= 0}}}
+            "meshhash": {str(i): mesh_hash(m, i) for i in {gg["mesh"] for gg in geoms if gg["mesh"] >= 0}},
+            "texhash": {str(i): tex_hash(m, i) for i in {gg["tex"] for gg in geoms if gg["tex"] >= 0}
+                        | {sk["tex"] for sk in skins if sk["tex"] >= 0}}}
 
 
 def _cube_mapped(m, i: int) -> bool:
@@ -199,6 +203,51 @@ def tex_png(m, i: int) -> bytes:
     buf = io.BytesIO()
     Image.fromarray(img[:, :, :3] if c >= 3 else img[:, :, 0]).save(buf, format="PNG")
     return buf.getvalue()
+
+
+def tex_hash(m, i: int) -> str:
+    w, h, c = int(m.tex_width[i]), int(m.tex_height[i]), int(m.tex_nchannel[i])
+    a = int(m.tex_adr[i])
+    hh = hashlib.sha1(struct.pack("<III", w, h, c))
+    hh.update(m.tex_data[a:a + w * h * c].tobytes())
+    return hh.hexdigest()[:16]
+
+
+# Meshes and textures by content: every session's world shares the robots', tables' and
+# objects' meshes, so each is built once for the whole lab and the page keeps it across sessions.
+class _Cache:
+    def __init__(self, limit: int):
+        self.d: collections.OrderedDict[str, bytes] = collections.OrderedDict()
+        self.size, self.limit, self.lock = 0, limit, threading.Lock()
+
+    def get(self, key: str, make) -> bytes:
+        with self.lock:
+            if key in self.d:
+                self.d.move_to_end(key)
+                return self.d[key]
+        data = make()
+        with self.lock:
+            if key not in self.d:
+                self.d[key] = data
+                self.size += len(data)
+                while self.size > self.limit and len(self.d) > 1:
+                    self.size -= len(self.d.popitem(last=False)[1])
+        return data
+
+
+_MESHES, _TEXTURES = _Cache(400 << 20), _Cache(200 << 20)
+
+
+def mesh_by_hash(m, hashes: list[str]) -> list[bytes | None]:
+    """Each named mesh of this model (None for a hash it doesn't have), from the lab's cache."""
+    index = {}
+    for i in range(int(m.nmesh)):
+        index.setdefault(mesh_hash(m, i), i)
+    return [_MESHES.get(h, lambda i=index[h]: mesh_bin(m, i)) if h in index else None for h in hashes]
+
+
+def tex_cached(m, i: int) -> bytes:
+    return _TEXTURES.get(tex_hash(m, i), lambda: tex_png(m, i))
 
 
 def poses(xpos: np.ndarray, xquat: np.ndarray, extra: dict) -> str:

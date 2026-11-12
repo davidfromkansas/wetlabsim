@@ -16,6 +16,7 @@ import re
 import pathlib
 import secrets
 import signal
+import struct
 import subprocess
 import sys
 import tempfile
@@ -1292,11 +1293,24 @@ class PGHandler(Handler):
                     import gzip
                     data, hdr["Content-Encoding"] = gzip.compress(data, 5), "gzip"
                 return self._send(200, data, "application/octet-stream", hdr)
+            if p == "/pg/meshes":
+                # Several meshes in one answer, named by their content hashes (scene3d's meshhash):
+                # for each, its length (uint32, 0xFFFFFFFF if this world has no such mesh) and mesh_bin.
+                want = [h for h in (qs.get("h") or [""])[0].split(",") if re.match(r"^[0-9a-f]{16}$", h)][:400]
+                parts = []
+                for b in S3.mesh_by_hash(self.sim.m, want):
+                    parts += [struct.pack("<I", 0xFFFFFFFF)] if b is None else [struct.pack("<I", len(b)), b]
+                data = b"".join(parts)
+                hdr = {"Cache-Control": "private, max-age=86400"}   # the URL names the contents
+                if "gzip" in self.headers.get("Accept-Encoding", ""):
+                    import gzip
+                    data, hdr["Content-Encoding"] = gzip.compress(data, 4), "gzip"
+                return self._send(200, data, "application/octet-stream", hdr)
             if p.startswith("/pg/mesh/") or p.startswith("/pg/tex/"):
                 m = self.sim.m
                 i = int(pathlib.Path(p).stem)
                 data, ctype = ((S3.mesh_bin(m, i), "application/octet-stream") if p.startswith("/pg/mesh/")
-                               else (S3.tex_png(m, i), "image/png"))
+                               else (S3.tex_cached(m, i), "image/png"))
                 hdr = {"Cache-Control": "max-age=86400"}       # the URL carries the content's hash
                 if "gzip" in self.headers.get("Accept-Encoding", "") and ctype != "image/png":
                     import gzip
