@@ -432,7 +432,27 @@ export function start({stage, base = '', onReady}) {
     const g = new THREE.Group(); g.add(halo, ring, fat, hit); gizmo.add(g);
     rings[k] = {g, ring, fat, halo}; hitRings[k] = hit;
   }
-  let G = null;        // {center, axes: 'xyz' | 'z', active, hover}
+  // Move arrows: one per world axis, the same colours, shown instead of the rings in Move mode.
+  // Dragging one slides the object along that axis only.
+  const arrows = {}, hitArrows = {};
+  const along = (geo, k) => { if (k === 'x') geo.rotateZ(-Math.PI / 2); if (k === 'z') geo.rotateX(Math.PI / 2); return geo; };
+  const arrowGeo = (k, r, head) => {
+    const shaft = new THREE.CylinderGeometry(r, r, 0.8, 16).translate(0, 0.55, 0);
+    const cone = new THREE.ConeGeometry(head, 0.32, 24).translate(0, 1.1, 0);
+    return [along(shaft, k), along(cone, k)];
+  };
+  for (const k of ['x', 'y', 'z']) {
+    const mat = new THREE.MeshBasicMaterial({color: RING_COL[k], depthTest: false, transparent: true});
+    const white = new THREE.MeshBasicMaterial({color: 0xffffff, depthTest: false, transparent: true, opacity: 0.9});
+    const g = new THREE.Group(), thin = new THREE.Group(), fat = new THREE.Group(), halo = new THREE.Group();
+    for (const geo of arrowGeo(k, 0.05, 0.13)) { const m = new THREE.Mesh(geo, white); m.renderOrder = 998; halo.add(m); }
+    for (const geo of arrowGeo(k, 0.03, 0.1)) { const m = new THREE.Mesh(geo, mat); m.renderOrder = 999; thin.add(m); }
+    for (const geo of arrowGeo(k, 0.05, 0.13)) { const m = new THREE.Mesh(geo, mat); m.renderOrder = 999; fat.add(m); }
+    const hit = new THREE.Mesh(along(new THREE.CylinderGeometry(0.16, 0.16, 1.2, 12).translate(0, 0.65, 0), k), new THREE.MeshBasicMaterial({visible: false}));
+    g.add(halo, thin, fat, hit); gizmo.add(g);
+    arrows[k] = {g, thin, fat, halo, mat}; hitArrows[k] = hit;
+  }
+  let G = null;        // {center, mode: 'rotate' | 'move', axes: 'xyz' | 'xy' | 'z', active, hover}
   function ringScale() {
     if (!G) return 1;
     const c = new THREE.Vector3(...G.center);
@@ -443,9 +463,15 @@ export function start({stage, base = '', onReady}) {
     if (!G) return;
     gizmo.position.set(...G.center);
     gizmo.scale.setScalar(ringScale());
+    const mv = G.mode === 'move';
+    for (const k of ['x', 'y', 'z']) {
+      const a = arrows[k], dim = !!G.active && G.active !== k, big = G.active === k || (!G.active && G.hover === k);
+      a.g.visible = mv && G.axes.includes(k);
+      a.mat.opacity = dim ? 0.18 : 1; a.halo.visible = !dim; a.thin.visible = !big; a.fat.visible = big;
+    }
     for (const k of ['x', 'y', 'z']) {
       const r = rings[k], dim = !!G.active && G.active !== k, big = G.active === k || (!G.active && G.hover === k);
-      r.g.visible = G.axes.includes(k);
+      r.g.visible = !mv && G.axes.includes(k);
       r.ring.material.opacity = dim ? 0.18 : 1;
       r.halo.visible = !dim; r.halo.scale.setScalar(1); r.halo.material.opacity = 0.9;
       r.ring.visible = !big; r.fat.visible = big;
@@ -464,7 +490,7 @@ export function start({stage, base = '', onReady}) {
     const r = rayAt(clientX, clientY);
     let best = null;
     for (const k of G.axes.split('')) {
-      const h = r.intersectObject(hitRings[k], false)[0];
+      const h = r.intersectObject((G.mode === 'move' ? hitArrows : hitRings)[k], false)[0];
       if (h && (!best || h.distance < best.d)) best = {k, d: h.distance};
     }
     return best && best.k;
@@ -485,11 +511,29 @@ export function start({stage, base = '', onReady}) {
     const w = new THREE.Vector3().crossVectors(n, u);
     return Math.atan2(v.dot(w), v.dot(u));
   };
-  // Show bodies turned by angle (radians) about axis k through center, until cleared.
+  // How far (m) along axis k through center (else the gizmo's centre) the pointer is: the point on that line
+  // closest to the pointer's ray (null when the line points straight at the camera).
+  V.arrowT = (k, clientX, clientY, center) => {
+    if (!G && !center) return null;
+    const a = new THREE.Vector3(...AXES[k]), c = new THREE.Vector3(...(center || G.center)), r = rayAt(clientX, clientY).ray;
+    const w0 = c.clone().sub(r.origin), b = a.dot(r.direction), den = 1 - b * b;
+    if (den < 1e-3) return null;
+    return (b * r.direction.dot(w0) - a.dot(w0)) / den;
+  };
+  // Show bodies turned by angle (radians) about axis k through center, or slid by offset
+  // ([dx, dy, dz] m), until cleared.
   let PV = null;
   V.setPreview = (pv) => { PV = pv; };
   function drawPreview() {
     if (!PV || !V.rawP) return;
+    if (PV.offset) {
+      const p = V.rawP;
+      for (const i of PV.bodies) {
+        const b = V.bodies[i]; if (!b) continue;
+        b.position.set(p[3 * i] + PV.offset[0], p[3 * i + 1] + PV.offset[1], p[3 * i + 2] + PV.offset[2]);
+      }
+      return;
+    }
     const qd = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(...AXES[PV.axis]), PV.angle);
     const c = new THREE.Vector3(...PV.center), p = V.rawP, q = V.rawQ;
     for (const i of PV.bodies) {

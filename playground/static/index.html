@@ -388,8 +388,15 @@ body.fixed .tl{top:12px}
 .poses button{height:78px;border:1px solid #D1D5DB;border-radius:10px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 12px Inter,sans-serif;color:var(--ink);cursor:pointer;padding:4px}
 .poses img{width:40px;height:40px;border-radius:7px;object-fit:cover;background:#2B2B2E}
 .ofoot{display:flex;gap:8px;align-items:center}.ofoot .ghostbtn{flex:none;padding:0 12px}
-.snap{display:flex;align-items:center;gap:6px;font-size:12.5px;color:#374151;flex:1;cursor:pointer}
+.snap{display:flex;align-items:center;gap:6px;font-size:12.5px;color:#374151;flex:1;cursor:pointer;white-space:nowrap}
 .snap input{width:16px;height:16px;accent-color:var(--blue)}
+/* the object card's Rotate | Move switch, and its close (deselect) button */
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--soft);border-radius:10px;padding:3px;gap:3px}
+.seg button{height:34px;border:0;border-radius:8px;background:transparent;font:600 13px Inter,sans-serif;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer}
+.seg button[aria-selected=true]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(17,24,39,.12),0 0 0 1px rgba(17,24,39,.06)}
+#objX{margin-left:auto;align-self:flex-start}
+.mbox{display:flex;flex-direction:column;gap:10px}
+.rrow input.cm{font-size:14px}
 #rotTag{position:absolute;transform:translate(14px,-130%);white-space:nowrap;font:700 16px 'JetBrains Mono',monospace;color:#fff;background:var(--ink);padding:5px 10px;border-radius:8px;box-shadow:0 6px 16px rgba(17,24,39,.35);pointer-events:none;display:none;z-index:6}
 #rotTag b{font-weight:700}
 #axisGuide{position:absolute;left:14px;top:84px;width:84px;height:84px;border-radius:12px;display:none;z-index:2;pointer-events:none}
@@ -833,9 +840,18 @@ body.watch #physBtn{display:none}
     <div class="watchbanner glass" id="watchBanner"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#111827" stroke-width="1.5"><path d="M1 8 C3 4 5.5 3 8 3 C10.5 3 13 4 15 8 C13 12 10.5 13 8 13 C5.5 13 3 12 1 8 Z"/><circle cx="8" cy="8" r="2.2"/></svg><span>Watching someone else's lab · view only</span><button class="vb copyLab">Copy to my sessions</button></div>
     <div class="emptyfloor"><b>No robots yet</b><span id="emptyMsg">Press “+ Station”, then click the floor to place it.</span></div>
     <div id="objPanel" class="glass" style="display:none;flex-direction:column;gap:10px">
-      <div class="ohd"><img id="objImg" alt=""><div><span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Selected object</span><h3 id="objName" style="margin:2px 0 0;font-size:15px;color:var(--ink)"></h3></div></div>
+      <div class="ohd"><img id="objImg" alt=""><div><span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Selected object</span><h3 id="objName" style="margin:2px 0 0;font-size:15px;color:var(--ink)"></h3></div><button class="iconbtn" id="objX" aria-label="Deselect and close" title="Deselect (Esc)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" stroke="#374151" stroke-width="1.7" stroke-linecap="round"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
       <dl><dt>Size</dt><dd id="objSize"></dd><dt>Mass</dt><dd id="objMass"></dd><dt>Friction</dt><dd id="objFric"></dd><dt>Collision</dt><dd id="objCol" style="font-family:Inter;font-size:12px"></dd></dl>
       <div class="acts" style="display:flex;flex-direction:column;gap:10px">
+        <div class="seg" role="tablist" aria-label="Edit the object"><button role="tab" id="modeRot" aria-selected="true"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path d="M12.5 1.5v3h-3"/></svg>Rotate</button><button role="tab" id="modeMove" aria-selected="false"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1v14M1 8h14M8 1l-2 2M8 1l2 2M8 15l-2-2M8 15l2-2M1 8l2-2M1 8l2 2M15 8l-2-2M15 8l-2 2"/></svg>Move</button></div>
+        <div class="mbox" id="moveBox" style="display:none">
+        <div class="osec">Move<span>drag an arrow, or type (cm)</span></div>
+        <div class="rrow" data-ax="x" style="--ax:#DC2626"><span class="lt" style="background:#DC2626">X</span><button data-d="-1" aria-label="Move along X by minus 1 cm">−1</button><input id="movx" class="cm" type="number" step="0.1" aria-label="Position along X, cm"><button data-d="1" aria-label="Move along X by 1 cm">+1</button></div>
+        <div class="rrow" data-ax="y" style="--ax:#16A34A"><span class="lt" style="background:#16A34A">Y</span><button data-d="-1" aria-label="Move along Y by minus 1 cm">−1</button><input id="movy" class="cm" type="number" step="0.1" aria-label="Position along Y, cm"><button data-d="1" aria-label="Move along Y by 1 cm">+1</button></div>
+        <div class="rrow" data-ax="z" style="--ax:#2563EB"><span class="lt" style="background:#2563EB">Z</span><button data-d="-1" aria-label="Move along Z by minus 1 cm">−1</button><input id="movz" class="cm" type="number" step="0.1" min="0" aria-label="Height above the surface under it, cm"><button data-d="1" aria-label="Move along Z by 1 cm">+1</button></div>
+        <div class="small" id="mvWhy">Z is the height above the surface under it (0: resting on it). It stays up until physics plays.</div>
+        </div>
+        <div class="mbox" id="rotBox">
         <div class="osec">Rotate<span>drag a ring, or type</span></div>
         <div class="rrow" data-ax="x" style="--ax:#DC2626"><span class="lt" style="background:#DC2626">X</span><button data-d="-15" aria-label="Rotate X by minus 15 degrees">−15</button><input id="rotx" type="number" step="1" aria-label="Rotation about X, degrees"><button data-d="15" aria-label="Rotate X by 15 degrees">+15</button></div>
         <div class="rrow" data-ax="y" style="--ax:#16A34A"><span class="lt" style="background:#16A34A">Y</span><button data-d="-15" aria-label="Rotate Y by minus 15 degrees">−15</button><input id="roty" type="number" step="1" aria-label="Rotation about Y, degrees"><button data-d="15" aria-label="Rotate Y by 15 degrees">+15</button></div>
@@ -843,7 +859,8 @@ body.watch #physBtn{display:none}
         <div class="small" id="rotWhy" style="display:none"></div>
         <div id="setDown" style="display:flex;flex-direction:column;gap:8px"><div class="osec">Set down</div>
           <div class="poses"><button data-pose="0"><img alt="">As placed</button><button data-pose="90"><img alt="" style="transform:rotate(90deg)">On its side</button><button data-pose="180"><img alt="" style="transform:rotate(180deg)">Upside down</button></div></div>
-        <div class="ofoot"><label class="snap"><input type="checkbox" id="snapChk" checked>Snap to 15°</label><button class="ghostbtn" id="resetRot">Reset</button><button class="ghostbtn" id="delBtn">Remove</button></div>
+        </div>
+        <div class="ofoot"><label class="snap" id="snapRotL"><input type="checkbox" id="snapChk" checked>Snap to 15°</label><label class="snap" id="snapMvL" style="display:none"><input type="checkbox" id="snapMv" checked>Snap to 1 cm</label><button class="ghostbtn" id="resetRot">Reset</button><button class="ghostbtn" id="putDown" style="display:none" title="Back down onto the surface under it">Put down</button><button class="ghostbtn" id="delBtn">Remove</button></div>
       </div>
     </div>
     <div id="rotTag"></div>
@@ -1065,7 +1082,15 @@ view.addEventListener('mousedown', async (e) => {
   const p = uv(e);
   // on a rotate ring of the selected object: turn it about that axis
   const o = selObj(), ring = e.button === 0 && o && window.V3 && document.body.classList.contains('rotating') && window.V3.gizmoHit(e.clientX, e.clientY);
-  if (ring) {
+  if (ring && S.editMode === 'move') {
+    const t0 = window.V3.arrowT(ring, e.clientX, e.clientY, o.mid);
+    if (t0 != null && o.at) {
+      drag = {x: e.clientX, y: e.clientY, btn: 0, moved: false, p0: p, obj: null, mv: {k: ring, t0, cm: 0, obj: o}};
+      window.V3.setGizmo({active: ring});
+      return;
+    }
+  }
+  if (ring && S.editMode !== 'move') {
     const a = window.V3.gizmoAngle(ring, e.clientX, e.clientY);
     drag = {x: e.clientX, y: e.clientY, btn: 0, moved: false, p0: p, obj: null, rot: {k: ring, prev: a, sum: 0, deg: 0, obj: o}};
     window.V3.setGizmo({active: ring});
@@ -1083,6 +1108,21 @@ window.addEventListener('mousemove', (e) => {
   if (!drag && window.V3 && document.body.classList.contains('rotating') && e.target === view) {
     const k = window.V3.gizmoHit(e.clientX, e.clientY) || null;
     window.V3.setGizmo({hover: k}); view.classList.toggle('ringhover', !!k);
+  }
+  if (drag && drag.mv) {
+    const m = drag.mv, t = window.V3.arrowT(m.k, e.clientX, e.clientY, m.obj.mid);
+    if (t == null) return;
+    let cm = (t - m.t0) * 100;
+    cm = $('snapMv').checked && !e.shiftKey ? Math.round(cm) : Math.round(cm * 10) / 10;
+    if (m.k === 'z') cm = Math.max(cm, -m.obj.at[2] * 100);          // not below the surface under it
+    m.cm = cm; drag.moved = true;
+    const off = [0, 0, 0]; off[AXI[m.k]] = cm / 100;
+    window.V3.setPreview({bodies: m.obj.bodies, offset: off});
+    window.V3.setGizmo({center: m.obj.mid.map((v, i) => v + off[i])});
+    const t2 = $('rotTag'), sp = stage.getBoundingClientRect();
+    t2.style.display = 'block'; t2.style.left = (e.clientX - sp.left) + 'px'; t2.style.top = (e.clientY - sp.top) + 'px';
+    t2.innerHTML = `<b style="color:${{x: '#F87171', y: '#4ADE80', z: '#60A5FA'}[m.k]}">${m.k.toUpperCase()}</b> ${cm > 0 ? '+' : ''}${cm.toFixed(1)} cm`;
+    return;
   }
   if (drag && drag.rot) {
     const r = drag.rot, a = window.V3.gizmoAngle(r.k, e.clientX, e.clientY);
@@ -1109,6 +1149,18 @@ window.addEventListener('mousemove', (e) => {
 window.addEventListener('mouseup', async (e) => {
   if (!drag) return;
   const d = drag; drag = null; view.classList.remove('dragging');
+  if (d.mv) {
+    $('rotTag').style.display = 'none';
+    window.V3.setGizmo({active: null});
+    const m = d.mv;
+    if (m.cm) {
+      const r = await api('/pg/translate', {uid: m.obj.uid, ...moveBody(m.k, m.obj.at[AXI[m.k]] + m.cm / 100)});
+      if (!r.ok) toast(r.error);
+      await refresh();
+      setTimeout(() => window.V3.setPreview(null), 150);    // once the new place has streamed in
+    } else window.V3.setPreview(null);
+    return;
+  }
   if (d.rot) {
     $('rotTag').style.display = 'none';
     window.V3.setGizmo({active: null});
@@ -1132,7 +1184,7 @@ window.addEventListener('mouseup', async (e) => {
   if (S.placing) { await placeStation(p); return; }
   if (S.armed) { const id = S.armed; S.armed = null; probeNext = null; renderItems(); hideTag(); $('libhint').textContent = LIBHINT; await place(id, p); return; }
   const hit = await api('/pg/pick', {u: p.u, v: p.v});
-  S.sel = hit.kind === 'robot' || hit.station ? 'robot' : hit.kind === 'object' ? hit.uid : S.sel;
+  S.sel = hit.kind === 'robot' || hit.station ? 'robot' : hit.kind === 'object' ? hit.uid : S.sel === 'robot' ? S.sel : null;
   if (hit.kind === 'robot' && S.scene && S.scene.mode === 'free') S.sideTab = 'chat';
   refresh();
 });
@@ -1192,7 +1244,7 @@ const CAM_KEYS = {ArrowUp: [0, 1, 0], ArrowDown: [0, -1, 0], ArrowLeft: [-1, 0, 
                   PageUp: [0, 0, 1], PageDown: [0, 0, -1], '+': [0, 0, 1], '=': [0, 0, 1], '-': [0, 0, -1]};
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
-  if (e.key === 'Escape') { if (S.placing) cancelPlacing(); S.armed = null; renderItems(); hideTag(); api('/pg/ghost/clear', {}); }
+  if (e.key === 'Escape') { const busy = S.placing || S.armed; if (S.placing) cancelPlacing(); S.armed = null; renderItems(); hideTag(); api('/pg/ghost/clear', {}); if (!busy && !S.bigCam) deselect(); }
   if (S.placing && (e.key === 'r' || e.key === 'R')) { S.placeYaw += Math.PI / 2; if (S.lastUV) probeStation(S.lastUV); return; }
   if ((e.key === 'Delete' || e.key === 'Backspace') && S.sel && S.sel !== 'robot') removeSel();
   if (e.key === 'r' && S.sel && S.sel !== 'robot') rotateSel();
@@ -1643,7 +1695,7 @@ async function orient(body) {
   const r = await api('/pg/orient', {uid: o.uid, ...body}); if (!r.ok) toast(r.error);
   await refresh();
 }
-document.querySelectorAll('.rrow').forEach(row => {
+document.querySelectorAll('#rotBox .rrow').forEach(row => {
   const ax = row.dataset.ax;
   row.querySelectorAll('button').forEach(b => b.onclick = () => orient({axis: ax, degrees: +b.dataset.d}));
   row.querySelector('input').addEventListener('change', () => {
@@ -1668,12 +1720,55 @@ function drawRotPanel(obj, it) {
   document.querySelectorAll('.poses img').forEach(i => { if (it.thumb && i.getAttribute('src') !== it.thumb) i.src = it.thumb; });
   $('resetRot').disabled = !!(S.scene || {}).locked;
 }
+// ---------------------------------------------------------------- moving the selected object
+// The card's Rotate | Move switch (remembered in this browser); Move drags arrows or types cm.
+S.editMode = (() => { try { return localStorage.getItem('editMode') === 'move' ? 'move' : 'rotate'; } catch { return 'rotate'; } })();
+function setEditMode(m) { S.editMode = m; try { localStorage.setItem('editMode', m); } catch {} refresh(); }
+$('modeRot').onclick = () => setEditMode('rotate'); $('modeMove').onclick = () => setEditMode('move');
+async function translate(body) {
+  const o = selObj(); if (!o) return;
+  const r = await api('/pg/translate', {uid: o.uid, ...body}); if (!r.ok) toast(r.error);
+  await refresh();
+}
+const AXI = {x: 0, y: 1, z: 2};
+const moveBody = (k, v) => k === 'z' ? {lift: Math.max(0, v)} : {[k]: v};     // v in metres
+document.querySelectorAll('#moveBox .rrow').forEach(row => {
+  const k = row.dataset.ax;
+  row.querySelectorAll('button').forEach(b => b.onclick = () => { const o = selObj(); if (o && o.at) translate(moveBody(k, o.at[AXI[k]] + b.dataset.d / 100)); });
+  row.querySelector('input').addEventListener('change', (e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) translate(moveBody(k, v / 100)); });
+});
+$('putDown').onclick = () => translate({lift: 0});
+function deselect() {
+  if (!S.sel || S.sel === 'robot') return;
+  S.sel = null; if (window.V3) window.V3.setPreview(null);
+  refresh();
+}
+$('objX').onclick = deselect;
+function drawEditPanel(obj) {
+  const mv = S.editMode === 'move', locked = !!(S.scene || {}).locked;
+  $('modeRot').setAttribute('aria-selected', String(!mv)); $('modeMove').setAttribute('aria-selected', String(mv));
+  $('rotBox').style.display = mv ? 'none' : 'flex'; $('moveBox').style.display = mv ? 'flex' : 'none';
+  $('snapRotL').style.display = mv ? 'none' : 'flex'; $('snapMvL').style.display = mv ? 'flex' : 'none';
+  $('resetRot').style.display = mv ? 'none' : ''; $('putDown').style.display = mv ? '' : 'none';
+  if (!mv || !obj.at) return;
+  for (const k of ['x', 'y', 'z']) {
+    const inp = $('mov' + k), row = inp.closest('.rrow'), off = k === 'z' && !obj.lift;
+    if (document.activeElement !== inp) inp.value = (obj.at[AXI[k]] * 100).toFixed(1);
+    row.classList.toggle('off', off);
+    row.querySelectorAll('button,input').forEach(c => { c.disabled = off || locked; });
+    row.title = off ? `Only X and Y: ${obj.lift_why}` : '';
+  }
+  $('mvWhy').textContent = obj.lift ? 'Z is the height above the surface under it (0: resting on it). It stays up until physics plays.'
+    : `Only X and Y here: ${obj.lift_why}.`;
+  $('putDown').disabled = locked || !obj.lift || !obj.at[2];
+}
 function showRings(obj) {
   const on = !!(obj && window.V3 && !S.watch && !(S.scene && S.scene.locked));
   document.body.classList.toggle('rotating', on);
   if (!window.V3) return;
   if (!on) { window.V3.setGizmo(null); return; }
-  if (!(drag && drag.rot)) window.V3.setGizmo({center: obj.mid, axes: obj.tilt ? 'xyz' : 'z', active: null});
+  if (!(drag && (drag.rot || drag.mv))) window.V3.setGizmo({center: obj.mid, mode: S.editMode,
+    axes: S.editMode === 'move' ? (obj.lift ? 'xyz' : 'xy') : obj.tilt ? 'xyz' : 'z', active: null});
 }
 function drawAxisGuide() {
   if (!window.V3 || !document.body.classList.contains('rotating')) return;
@@ -1969,6 +2064,7 @@ function render() {
     $('objCol').textContent = it.collision || ''; $('delBtn').disabled = !obj.removable || sc.locked;
     if (it.thumb && $('objImg').getAttribute('src') !== it.thumb) $('objImg').src = it.thumb;
     if (obj.euler) drawRotPanel(obj, it);
+    drawEditPanel(obj);
     $('delBtn').textContent = obj.removable ? 'Remove' : 'Always here';
   }
   // In free play the chat takes the object library's place while a run is on, and stays
@@ -2025,7 +2121,7 @@ setInterval(() => {
 $('idleStay').onclick = () => { lastActive = 0; markActive(); $('idleCard').hidden = true; };
 $('closedOpen').onclick = () => { location.href = (S.cat.front || '') + '/'; };
 async function refresh() {
-  const sid = SID, sc = await api('/pg/scene');
+  const sid = SID, sc = await api('/pg/scene' + (S.sel && S.sel !== 'robot' ? '?sel=' + encodeURIComponent(S.sel) : ''));
   if (sid !== SID) return;                 // switched sessions meanwhile
   if (JSON.stringify(sc.share) !== S.shareKey) { S.shareKey = JSON.stringify(sc.share); renderShare(sc.share); }
   if (sc.unsent && !(S.unsentFor || {})[sid]) {   // a saved session's unsent tasks, once per session
