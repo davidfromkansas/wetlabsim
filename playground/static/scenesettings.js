@@ -93,9 +93,6 @@ const ic = (p) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" s
 const INFO = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v4" stroke-linecap="round"/><circle cx="8" cy="4.9" r=".9" fill="currentColor" stroke="none"/></svg>';
 const XI = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#374151" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
 const css = `
-#ssBtn{position:absolute;right:14px;top:12px;z-index:6}
-@container (max-width:1060px){#ssBtn{top:66px}}
-body:not(.freeplay) #ssBtn{display:none}
 #ssWrap{position:fixed;inset:0;z-index:80;background:rgba(17,24,39,.38);display:none;align-items:center;justify-content:center;padding:20px}
 #ssWrap.open{display:flex}
 #ss{width:min(1080px,100%);height:min(780px,100%);background:#fff;border-radius:16px;box-shadow:0 24px 60px -12px rgba(17,24,39,.45),0 0 0 1px rgba(17,24,39,.08);display:flex;flex-direction:column;overflow:hidden;position:relative;font:14px/1.5 Inter,system-ui,sans-serif;color:#111827}
@@ -230,8 +227,6 @@ body:not(.freeplay) #ssBtn{display:none}
 @media (max-width:760px){#ss .gexp{padding-left:16px}#ss .gs{padding:16px}#ss .mh.tabbed{padding-left:16px}#ss .snav{width:64px}#ss .snav .lb,#ss .snav .n,#ss .snav .chg{display:none}#ss .row{grid-template-columns:1fr}#ss .srch{display:none}}
 `;
 document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
-const stage = document.getElementById('stage');
-stage.insertAdjacentHTML('beforeend', `<button class="fbtn" id="ssBtn" aria-haspopup="dialog">${ic('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>')}Settings</button>`);
 document.body.insertAdjacentHTML('beforeend', `<div id="ssWrap"><div id="ss" role="dialog" aria-modal="true" aria-label="Settings"></div></div><div id="ssTip" role="tooltip"></div>`);
 const wrap = document.getElementById('ssWrap'), box = document.getElementById('ss'), tip = document.getElementById('ssTip');
 
@@ -617,7 +612,6 @@ G.draw = () => {
   }
 };
 
-document.getElementById('ssBtn').onclick = () => open();
 window.openSettings = open;
 wrap.addEventListener('mousedown', (e) => { if (e.target === wrap) close(); });
 document.addEventListener('keydown', (e) => {
@@ -629,6 +623,6 @@ document.addEventListener('keydown', (e) => {
   else if (dlg && dlg.classList.contains('open')) dlg.classList.remove('open');
   else close();
 });
-// Free play only: the button shows when the page is in free play.
+// Free play only: the Settings button (in the robot rail) shows when the page is in free play.
 setInterval(() => document.body.classList.toggle('freeplay', !!(S.scene && S.scene.mode === 'free')), 500);
 })();

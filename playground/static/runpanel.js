@@ -27,6 +27,7 @@ const css = `
 .rtg .thick{height:10px;border-radius:5px;background:#E5E7EB;display:flex;overflow:hidden}
 .rtg .thick i{height:100%}
 .rtg .pointer{width:0;height:0;border:7px solid transparent;border-bottom:0;border-top-color:#fff;align-self:center;margin-top:-1px}
+.rtg .ttl{font:650 14px Inter,sans-serif;color:#111827;max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rtg .badge{font:600 12px Inter,sans-serif;padding:1px 7px;border-radius:6px;background:#DCFCE7;color:#166534}
 .rtg .badge.bad{background:#FEE2E2;color:#991B1B}.rtg .badge.mid{background:#FEF3C7;color:#92400E}
 .rtg:focus-visible{outline:2px solid #2563EB;outline-offset:3px;border-radius:10px}
@@ -161,7 +162,7 @@ function tagHtml(uid, run, tl) {
   const k = many ? Math.min(b.total, b.results.length + (b.finished ? 0 : 1)) : 0;
   const batch = many ? `<div class="r" style="font-size:12.5px"><b>${b.finished ? `${b.results.filter(x => x === 'succeeded').length} of ${b.results.length} succeeded` : `Run ${k} of ${b.total}`}</b></div>${window.runSquares(b, live, false)}` : '';
   return `<div class="ftab"><img src="${LOGOS[m.provider] || LOGOS.anthropic}" alt="">${esc(m.label || '')}</div>
-    <div class="tbody">${batch}<div class="r">${first}<span><b>${fmt(secs)}</b>${live && limit ? ` <span class="mut">/ ${fmt(limit)}</span>` : ''}</span><span style="margin-left:auto"><b>${money}</b></span></div>
+    <div class="tbody">${run.title ? `<div class="ttl" title="${esc(run.task || '')}">${esc(run.title)}</div>` : ''}${batch}<div class="r">${first}<span><b>${fmt(secs)}</b>${live && limit ? ` <span class="mut">/ ${fmt(limit)}</span>` : ''}</span><span style="margin-left:auto"><b>${money}</b></span></div>
     <div class="thick" role="img" aria-label="What the robot has been doing over time">${bar}</div></div><div class="pointer"></div>`;
 }
 
@@ -189,7 +190,7 @@ function drawTags() {
         el.onclick = () => openRun(rb.id);
         tagsEl.appendChild(el);
       }
-      const key = JSON.stringify([run.active, run.status, Math.floor(run.elapsed || 0), run.cost_usd, run.tokens, run.doing, TL[rb.id] && TL[rb.id].duration, run.batch]);
+      const key = JSON.stringify([run.title, run.active, run.status, Math.floor(run.elapsed || 0), run.cost_usd, run.tokens, run.doing, TL[rb.id] && TL[rb.id].duration, run.batch]);
       if (el.dataset.key !== key) { el.dataset.key = key; el.innerHTML = tagHtml(rb.id, run, TL[rb.id]); }
       el.style.left = p.x + 'px'; el.style.top = p.y + 'px';
       el.style.setProperty('--s', Math.min(1, Math.max(0.8, ppm / TAG_PPM)).toFixed(3));

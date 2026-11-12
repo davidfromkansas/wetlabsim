@@ -41,6 +41,7 @@ from . import savestore as SAVE
 from . import scene3d as S3
 from . import settings as ST
 from . import accounts as ACCT
+from . import tasktitle
 
 HERE = pathlib.Path(__file__).parent
 PAGE = HERE / "static" / "index.html"
@@ -51,7 +52,7 @@ def _page() -> bytes:
     view3d.js (an hour, like every static file) loads the new one as soon as it changes."""
     import hashlib
     page = PAGE.read_bytes()
-    for name in ("view3d.js", "runpanel.js", "scenesettings.js", "results.js"):
+    for name in ("view3d.js", "runpanel.js", "scenesettings.js", "results.js", "gallery.js"):
         v = hashlib.sha1((HERE / "static" / name).read_bytes()).hexdigest()[:12]
         page = page.replace(f"/pg/static/{name}?v=HASH".encode(), f"/pg/static/{name}?v={v}".encode())
     return page
@@ -257,8 +258,15 @@ class Runner:
                     except Exception as e:  # noqa: BLE001
                         print("could not record the run:", e)
             threading.Thread(target=_ended, daemon=True).start()
-            self.info = {"model": mdl, "task": task, "started": time.time(), "time_limit": time_limit,
-                         "status": "starting"}
+            self.info = info = {"model": mdl, "task": task, "started": time.time(), "time_limit": time_limit,
+                                "status": "starting"}
+            # The task's short name (under six words) for the run tag and the Gallery: it stays
+            # with this run's info, so it lasts after the run and goes when the next one starts.
+            try:
+                own = ACCT.key_for("claude")
+            except RuntimeError:
+                own = ""
+            tasktitle.make(task, own, PUBLIC, lambda t: info.__setitem__("title", t))
             return self.status()
 
     def stop(self):
