@@ -929,7 +929,10 @@ class PGHandler(Handler):
         else:
             q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             sid = (q.get("s") or [None])[0] or self.headers.get("X-Session") or None
-        sess = get_session(sid) if sid else first_session()
+        # A request naming no session (the catalog, logos, thumbnails) goes to the oldest one,
+        # except for a share-link viewer: theirs is the session they may watch (the owner's
+        # oldest one is private, so the page would never finish loading).
+        sess = get_session(sid) if sid else (self._watching() or first_session())
         if sess is None:
             if sid:
                 self._err("no such session (it may have closed)", 404)
