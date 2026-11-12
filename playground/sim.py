@@ -213,8 +213,17 @@ class PlaygroundSim(Sim):
                 qpos += list(range(m.jnt_qposadr[j], m.jnt_qposadr[j] + nq))
                 qvel += list(range(m.jnt_dofadr[j], m.jnt_dofadr[j] + nv))
             # Soft objects: their flex vertices' bodies (in the same trees) are covered above.
+            # The same joints by name too, so Reset still works after the lab has been rebuilt.
+            named = {}
+            for j in range(m.njnt):
+                if int(m.body_rootid[m.jnt_bodyid[j]]) in roots and m.joint(j).name:
+                    t = m.jnt_type[j]
+                    nq = 7 if t == mujoco.mjtJoint.mjJNT_FREE else 4 if t == mujoco.mjtJoint.mjJNT_BALL else 1
+                    a = m.jnt_qposadr[j]
+                    named[m.joint(j).name] = d.qpos[a:a + nq].copy()
             return {"ver": self._model_ver, "uid": uid, "qpos_i": qpos, "qpos": d.qpos[qpos].copy(),
-                    "qvel_i": qvel, "qvel": d.qvel[qvel].copy(), "arm": arm.snapshot()}
+                    "qvel_i": qvel, "qvel": d.qvel[qvel].copy(), "arm": arm.snapshot(),
+                    "robot": st.robot, "named": named}
 
     def restore_station(self, snap: dict) -> bool:
         """Put a station back as station_snapshot saw it. False if the lab has been rebuilt
@@ -231,6 +240,40 @@ class PlaygroundSim(Sim):
             arm.motion = None
             mujoco.mj_forward(m, d)
             return True
+
+    def reset_station(self, snap: dict) -> str | None:
+        """Reset (the robot's menu): its robot and table back to the moment its last run
+        started. Works by joint name if the lab has been rebuilt since; objects added after
+        stay where they are. An error in plain words, or None."""
+        uid = snap["uid"]
+        st, arm = self.station(uid), self.arms.get(uid)
+        if st is None or arm is None:
+            return "This robot is no longer in the lab."
+        if snap.get("robot") and st.robot != snap["robot"]:
+            return "This robot was swapped since its last run, so there's nothing to go back to."
+        if self.restore_station(snap):
+            return None
+        with self.lock:
+            m, d = self.m, self.d
+            for name, v in (snap.get("named") or {}).items():
+                j = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, name)
+                if j < 0:
+                    continue
+                t = m.jnt_type[j]
+                nq = 7 if t == mujoco.mjtJoint.mjJNT_FREE else 4 if t == mujoco.mjtJoint.mjJNT_BALL else 1
+                nv = 6 if t == mujoco.mjtJoint.mjJNT_FREE else 3 if t == mujoco.mjtJoint.mjJNT_BALL else 1
+                if len(v) != nq:
+                    continue
+                d.qpos[m.jnt_qposadr[j]:m.jnt_qposadr[j] + nq] = v
+                d.qvel[m.jnt_dofadr[j]:m.jnt_dofadr[j] + nv] = 0.0
+            try:
+                arm.restore(snap["arm"])
+            except (ValueError, KeyError, IndexError):
+                pass
+            arm.reset_state()
+            arm.motion = None
+            mujoco.mj_forward(m, d)
+        return None
 
     def set_libero(self, task_id: str, setup: int = 0):
         t = LB.task(task_id)

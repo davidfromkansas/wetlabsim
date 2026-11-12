@@ -11,10 +11,10 @@ const DOING = {thinking: 'Thinking', reading: 'Reading docs', looking: 'Looking'
 const PRIORITY = ['moving', 'gripper', 'running', 'writing', 'looking', 'reading', 'thinking'];
 const STATUS = {running: 'Live', finished: 'Done', time_limit: 'Time limit', error: 'Error', stopped: 'Stopped', agent_error: 'Error'};
 const css = `
-#rtags{position:absolute;inset:0;pointer-events:none;z-index:6}
+#rtags{position:absolute;inset:0;pointer-events:none;z-index:5}
 .rtg{position:absolute;display:flex;flex-direction:column;align-items:flex-start;pointer-events:auto;cursor:pointer;border:0;padding:0;background:none;text-align:left;
-  transform:translate(-34px,-100%);filter:drop-shadow(0 0 .6px rgba(17,24,39,.45)) drop-shadow(0 4px 10px rgba(17,24,39,.14));transition:transform 160ms ease-out}
-.rtg:active{transform:translate(-34px,-100%) scale(.97)}
+  transform:translate(-50%,-100%) scale(var(--s,1));transform-origin:50% 100%;filter:drop-shadow(0 0 .6px rgba(17,24,39,.45)) drop-shadow(0 4px 10px rgba(17,24,39,.14))}
+.rtg:active{transform:translate(-50%,-100%) scale(calc(var(--s,1) * .97))}
 .rtg .ftab{display:flex;align-items:center;gap:6px;height:30px;padding:2px 10px 4px 8px;margin-bottom:-4px;background:#fff;border-radius:8px 8px 0 0;font:600 12.5px Inter,sans-serif;color:#111827;white-space:nowrap;position:relative;z-index:1}
 .rtg .ftab:after{content:"";position:absolute;right:-10px;bottom:0;width:10px;height:14px;background:radial-gradient(circle at 100% 0,transparent 9.5px,#fff 10px) 0 0/10px 10px no-repeat,linear-gradient(#fff,#fff) 0 10px/10px 4px no-repeat}
 .rtg .ftab img{width:14px;height:14px}
@@ -26,8 +26,7 @@ const css = `
 .rtg .dot{width:9px;height:9px;border-radius:50%;flex:none}
 .rtg .thick{height:10px;border-radius:5px;background:#E5E7EB;display:flex;overflow:hidden}
 .rtg .thick i{height:100%}
-.rtg .pointer{width:0;height:0;border:7px solid transparent;border-bottom:0;border-top-color:#fff;margin-left:27px;margin-top:-1px}
-.rtg.moved .pointer{visibility:hidden}
+.rtg .pointer{width:0;height:0;border:7px solid transparent;border-bottom:0;border-top-color:#fff;align-self:center;margin-top:-1px}
 .rtg .badge{font:600 12px Inter,sans-serif;padding:1px 7px;border-radius:6px;background:#DCFCE7;color:#166534}
 .rtg .badge.bad{background:#FEE2E2;color:#991B1B}.rtg .badge.mid{background:#FEF3C7;color:#92400E}
 .rtg:focus-visible{outline:2px solid #2563EB;outline-offset:3px;border-radius:10px}
@@ -167,6 +166,7 @@ function tagHtml(uid, run, tl) {
 }
 
 let lastPoll = 0;
+const TAG_PPM = 240;    // at this zoom (screen pixels per metre) or closer, a tag is full size
 function drawTags() {
   const sc = S.scene, V = window.V3;
   const runs = (sc && sc.mode === 'free' && sc.runs) || {};
@@ -175,8 +175,12 @@ function drawTags() {
     for (const rb of sc && sc.robots || []) {
       const run = runs[rb.id];
       if (!run || !run.started || run.queued || !rb.base) continue;
+      // Pinned in the world above the robot's middle: it stays with the robot as the camera
+      // moves (it never slides to the screen's edge), and shrinks with distance like the robot.
       const p = V.project([rb.base[0], rb.base[1], rb.base[2] + 1.05]);
       if (!p.visible) continue;
+      const q = V.project([rb.base[0], rb.base[1], rb.base[2] + 1.55]);
+      const ppm = Math.hypot(p.x - q.x, p.y - q.y) / 0.5;      // screen pixels per metre there
       keep.add(rb.id);
       let el = tagsEl.querySelector(`[data-uid="${rb.id}"]`);
       if (!el) {
@@ -187,11 +191,9 @@ function drawTags() {
       }
       const key = JSON.stringify([run.active, run.status, Math.floor(run.elapsed || 0), run.cost_usd, run.tokens, run.doing, TL[rb.id] && TL[rb.id].duration, run.batch]);
       if (el.dataset.key !== key) { el.dataset.key = key; el.innerHTML = tagHtml(rb.id, run, TL[rb.id]); }
-      // Keep the whole tag on screen, below the toolbar: when it has to move, it drops its pointer.
-      const sw = stage.clientWidth, h = el.offsetHeight, w = el.offsetWidth;
-      const x = Math.min(Math.max(p.x, 34 + 12), sw - w + 34 - 12), y = Math.max(p.y, h + 104);
-      el.style.left = x + 'px'; el.style.top = y + 'px';
-      el.classList.toggle('moved', Math.abs(x - p.x) > 2 || Math.abs(y - p.y) > 2);
+      el.style.left = p.x + 'px'; el.style.top = p.y + 'px';
+      el.style.setProperty('--s', Math.min(1, Math.max(0.8, ppm / TAG_PPM)).toFixed(3));
+      el.style.zIndex = Math.round(ppm);      // nearer robots' tags on top
     }
   }
   tagsEl.querySelectorAll('.rtg').forEach(el => { if (!keep.has(el.dataset.uid)) el.remove(); });

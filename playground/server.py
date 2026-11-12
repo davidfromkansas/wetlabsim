@@ -1573,7 +1573,9 @@ class PGHandler(Handler):
                                                   b.get("kind")))
             lock = self._locked()
             if (p in ("/pg/place", "/pg/move", "/pg/remove", "/pg/rotate", "/pg/orient", "/pg/clear") or p.startswith("/pg/station/")) and lock:
-                if p != "/pg/station/rename":
+                # Rename any time; Reset while physics plays too, but not while an AI works.
+                if p != "/pg/station/rename" and not (p == "/pg/station/reset" and self.sim.paused is False
+                                                      and not self._busy()):
                     return self._json({"ok": False, "error": lock})
             if p == "/pg/station/add":
                 kind = b.get("kind", "table")
@@ -1616,6 +1618,14 @@ class PGHandler(Handler):
             if p == "/pg/station/swap":
                 s.swap_robot(b["uid"], str(b.get("robot", "")))
                 s.frame_station(b["uid"])
+                return self._json({"ok": True})
+            if p == "/pg/station/reset":   # back to how it was right before its last run started
+                bt = self.sess.batches.get(b["uid"])
+                if not bt or not bt.get("snap"):
+                    return self._json({"ok": False, "error": "This robot hasn't run a task yet, so there's nothing to reset to."})
+                err = s.reset_station(bt["snap"])
+                if err:
+                    return self._json({"ok": False, "error": err})
                 return self._json({"ok": True})
             if p == "/pg/station/remove":
                 s.remove_station(b["uid"])

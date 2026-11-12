@@ -8,13 +8,13 @@
 (() => {
 const MAX = 30;
 const css = `
-.taskcard .runs{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:#F7F8FA}
-.taskcard .runs .lb{font-weight:600;font-size:14px;flex:1;display:flex;flex-direction:column;line-height:1.3;color:var(--ink)}
-.taskcard .runs .lb span{font-weight:400;font-size:12.5px;color:#4B5563}
-.taskcard .step{display:flex;align-items:center;height:40px;border:1px solid #D1D5DB;border-radius:9px;background:#fff;overflow:hidden;flex:none}
-.taskcard .step button{width:40px;height:40px;border:0;background:transparent;font:500 20px Inter,sans-serif;color:#111827;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.taskcard .runs{display:flex;align-items:center;gap:8px;padding:0 10px 2px}
+.taskcard .runs .lb{font:500 13px Inter,sans-serif;flex:1;color:#4B5563}
+.taskcard .step{display:flex;align-items:center;height:28px;border:1px solid #E5E7EB;border-radius:8px;background:#fff;overflow:hidden;flex:none}
+.taskcard .step button{width:26px;height:26px;border:0;background:transparent;font:500 15px Inter,sans-serif;color:#111827;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.taskcard .step button:hover:not(:disabled){background:#F3F4F6}
 .taskcard .step button:disabled{color:#C3C8D0;cursor:default}
-.taskcard .step output{width:48px;height:40px;border-left:1px solid #E5E7EB;border-right:1px solid #E5E7EB;display:flex;align-items:center;justify-content:center;font:600 16px 'JetBrains Mono',ui-monospace,monospace;color:#111827}
+.taskcard .step output{min-width:26px;height:26px;display:flex;align-items:center;justify-content:center;font:600 13px 'JetBrains Mono',ui-monospace,monospace;color:#111827}
 .sqs{display:flex;gap:4px;flex-wrap:wrap}
 .sq{width:16px;height:16px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;flex:none;box-sizing:border-box}
 .sq.lg{width:24px;height:24px;border-radius:6px}
