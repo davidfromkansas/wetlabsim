@@ -111,26 +111,52 @@ export function start({stage, base = '', onReady}) {
 
   const srgb = (rgb) => new THREE.Color().setRGB(rgb[0], rgb[1], rgb[2], THREE.SRGBColorSpace);
 
-  async function meshGeometry(id, hash) {
-    const key = id + ':' + hash;
-    if (!meshCache.has(key)) meshCache.set(key, (async () => {
-      const buf = await (await fetch(`${base}/pg/mesh/${id}.bin?h=${hash}`)).arrayBuffer();
-      const [nv, nf, hasUv] = new Uint32Array(buf, 0, 3);
-      let o = 12;
-      const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(buf, o, nv * 3), 3)); o += nv * 12;
-      g.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(buf, o, nv * 3), 3)); o += nv * 12;
-      if (hasUv) { g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(buf, o, nv * 2), 2)); o += nv * 8; }
-      g.setIndex(new THREE.BufferAttribute(new Uint32Array(buf, o, nf * 3), 1));
-      return g;
-    })());
-    return meshCache.get(key);
+  // Meshes and textures are kept by their contents (the server's hashes), not by session: the
+  // robots, tables and objects every session shares are fetched and built once per page.
+  function meshFrom(buf) {
+    const [nv, nf, hasUv] = new Uint32Array(buf, 0, 3);
+    let o = 12;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(buf, o, nv * 3), 3)); o += nv * 12;
+    g.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(buf, o, nv * 3), 3)); o += nv * 12;
+    if (hasUv) { g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(buf, o, nv * 2), 2)); o += nv * 8; }
+    g.setIndex(new THREE.BufferAttribute(new Uint32Array(buf, o, nf * 3), 1));
+    g.userData.shared = true;
+    return g;
+  }
+  // The meshes a world needs that the page doesn't have yet, in a few requests rather than one
+  // each (each request waits a round trip to the lab, and only a few go at once).
+  function fetchMeshes(hashes) {
+    const missing = [...new Set(hashes)].filter(h => !meshCache.has(h));
+    const per = Math.max(20, Math.ceil(missing.length / 3));
+    for (let i = 0; i < missing.length; i += per) {
+      const batch = missing.slice(i, i + per);
+      const p = fetch(`${base}/pg/meshes?h=${batch.join(',')}`).then(r => r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.status))).then(buf => {
+        const out = new Map(), dv = new DataView(buf);
+        let o = 0;
+        for (const h of batch) {
+          const n = dv.getUint32(o, true); o += 4;
+          if (n === 0xFFFFFFFF) continue;
+          out.set(h, meshFrom(buf.slice(o, o + n))); o += n;
+        }
+        return out;
+      });
+      for (const h of batch) {
+        const g = p.then(m => m.get(h) || Promise.reject(new Error('no mesh ' + h)));
+        g.catch(() => meshCache.delete(h));    // try again next time
+        meshCache.set(h, g);
+      }
+    }
+  }
+  function meshGeometry(hash) {
+    if (!meshCache.has(hash)) fetchMeshes([hash]);
+    return meshCache.get(hash);
   }
   // One texture per (image, repeat): a clone made before the image arrives would draw black.
-  function texture(id, version, rx, ry) {
-    const key = [id, version, rx, ry].join(':');
+  function texture(id, hash, rx, ry) {
+    const key = [hash, rx, ry].join(':');
     if (!texCache.has(key)) {
-      const t = new THREE.TextureLoader().load(`${base}/pg/tex/${id}.png?v=${encodeURIComponent(version)}`);
+      const t = new THREE.TextureLoader().load(`${base}/pg/tex/${id}.png?h=${hash}`);
       t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping;
       t.anisotropy = renderer.capabilities.getMaxAnisotropy();
       t.repeat.set(rx, ry);
@@ -139,7 +165,7 @@ export function start({stage, base = '', onReady}) {
     return texCache.get(key);
   }
 
-  async function geomObject(g, version, meshhash) {
+  async function geomObject(g, texhash, meshhash) {
     let geo;
     const s = g.size;
     if (g.type === 'box') geo = new THREE.BoxGeometry(2 * s[0], 2 * s[1], 2 * s[2]);
@@ -148,7 +174,7 @@ export function start({stage, base = '', onReady}) {
     else if (g.type === 'capsule') { geo = new THREE.CapsuleGeometry(s[0], 2 * s[1], 8, 24); geo.rotateX(Math.PI / 2); }
     else if (g.type === 'cylinder') { geo = new THREE.CylinderGeometry(s[0], s[0], 2 * s[1], 32); geo.rotateX(Math.PI / 2); }
     else if (g.type === 'plane') geo = new THREE.PlaneGeometry(2 * (s[0] || 40), 2 * (s[1] || 40));
-    else if (g.type === 'mesh') geo = await meshGeometry(g.mesh, meshhash[String(g.mesh)]);
+    else if (g.type === 'mesh') geo = await meshGeometry(meshhash[String(g.mesh)]);
     else return null;
     const mat = new THREE.MeshPhongMaterial({
       color: srgb(g.rgba), specular: new THREE.Color(g.specular * 0.3, g.specular * 0.3, g.specular * 0.3),
@@ -156,7 +182,7 @@ export function start({stage, base = '', onReady}) {
       emissive: srgb(g.rgba).multiplyScalar(g.emission)});
     if (g.tex >= 0) {
       const uni = g.type === 'plane' && g.texuniform;
-      mat.map = texture(g.tex, version, uni ? 2 * (s[0] || 40) * g.texrepeat[0] : g.texrepeat[0],
+      mat.map = texture(g.tex, texhash[String(g.tex)], uni ? 2 * (s[0] || 40) * g.texrepeat[0] : g.texrepeat[0],
                         uni ? 2 * (s[1] || 40) * g.texrepeat[1] : g.texrepeat[1]);
     }
     const obj = new THREE.Mesh(geo, mat);
@@ -184,7 +210,7 @@ export function start({stage, base = '', onReady}) {
     const mat = new THREE.MeshPhongMaterial({
       color: srgb(sk.rgba), specular: new THREE.Color(sk.specular * 0.3, sk.specular * 0.3, sk.specular * 0.3),
       shininess: 4 + 96 * sk.shininess, side: THREE.DoubleSide});
-    if (sk.tex >= 0) mat.map = texture(sk.tex, version, 1, 1);
+    if (sk.tex >= 0) mat.map = texture(sk.tex, (V.texhash || {})[String(sk.tex)], 1, 1);
     const obj = new THREE.Mesh(geo, mat);
     obj.castShadow = obj.receiveShadow = true; obj.frustumCulled = false;
     return {obj, geo, rest, body, w, bind, k, nv};
@@ -207,42 +233,64 @@ export function start({stage, base = '', onReady}) {
   }
 
   let gen = 0;     // bumped when the page switches to another session's world
-  async function loadScene() {
-    if (V.loading) return;
-    V.loading = true;
-    const g0 = gen;
-    try {
-      const sc = await (await fetch(`${base}/pg/scene3d`)).json();
-      if (g0 !== gen) { V.loading = false; return loadScene(); }
-      const next = new THREE.Group();
-      const bodies = Array.from({length: sc.nbody}, () => { const b = new THREE.Group(); next.add(b); return b; });
-      const objs = await Promise.all(sc.geoms.map(g => geomObject(g, sc.version, sc.meshhash).then(o => [g, o])));
-      for (const [g, o] of objs) if (o) bodies[g.body].add(o);
-      const skins = await Promise.all((sc.skins || []).map(sk => skinObject(sk, sc.version)));
-      for (const s of skins) next.add(s.obj);
-      // Lights: MuJoCo's headlight (ambient + a light at the eye) and the scene's own lights.
-      const amb = sc.headlight.ambient, dif = sc.headlight.diffuse;
-      next.add(new THREE.AmbientLight(new THREE.Color(amb[0], amb[1], amb[2]), Math.PI));
-      const head = new THREE.DirectionalLight(new THREE.Color(dif[0], dif[1], dif[2]), Math.PI);
-      head.position.set(0, 0, 1); camera.children.forEach(c => camera.remove(c)); camera.add(head); camera.add(head.target);
-      head.target.position.set(0, 0, -1);
-      for (const l of sc.lights) {
-        const L = new THREE.DirectionalLight(new THREE.Color(...l.diffuse), Math.PI);
-        L.position.set(...l.pos); L.target.position.set(l.pos[0] + l.dir[0], l.pos[1] + l.dir[1], l.pos[2] + l.dir[2]);
-        if (l.castshadow) {
-          L.castShadow = true; L.shadow.mapSize.set(2048, 2048); L.shadow.bias = -0.0005;
-          Object.assign(L.shadow.camera, {left: -4, right: 4, top: 4, bottom: -4, near: 0.1, far: 20});
+  let loading = null;
+  // Load the world (once at a time). A switch to another session meanwhile starts over for it.
+  // The world on screen stays until the new one is ready, then they swap in one frame.
+  function loadScene() {
+    if (!loading) loading = buildScene().finally(() => { loading = null; });
+    return loading;
+  }
+  async function buildScene() {
+    for (;;) {
+      const g0 = gen;
+      try {
+        const sc = await (await fetch(`${base}/pg/scene3d`)).json();
+        if (g0 !== gen) continue;
+        V.texhash = sc.texhash || {};
+        fetchMeshes(Object.values(sc.meshhash || {}));
+        const next = new THREE.Group();
+        const bodies = Array.from({length: sc.nbody}, () => { const b = new THREE.Group(); next.add(b); return b; });
+        const objs = await Promise.all(sc.geoms.map(g => geomObject(g, V.texhash, sc.meshhash).then(o => [g, o])));
+        for (const [g, o] of objs) if (o) bodies[g.body].add(o);
+        const skins = await Promise.all((sc.skins || []).map(sk => skinObject(sk, sc.version)));
+        for (const s of skins) next.add(s.obj);
+        // Lights: MuJoCo's headlight (ambient + a light at the eye) and the scene's own lights.
+        const amb = sc.headlight.ambient, dif = sc.headlight.diffuse;
+        next.add(new THREE.AmbientLight(new THREE.Color(amb[0], amb[1], amb[2]), Math.PI));
+        const head = new THREE.DirectionalLight(new THREE.Color(dif[0], dif[1], dif[2]), Math.PI);
+        head.position.set(0, 0, 1); head.target.position.set(0, 0, -1);
+        for (const l of sc.lights) {
+          const L = new THREE.DirectionalLight(new THREE.Color(...l.diffuse), Math.PI);
+          L.position.set(...l.pos); L.target.position.set(l.pos[0] + l.dir[0], l.pos[1] + l.dir[1], l.pos[2] + l.dir[2]);
+          if (l.castshadow) {
+            L.castShadow = true; L.shadow.mapSize.set(2048, 2048); L.shadow.bias = -0.0005;
+            Object.assign(L.shadow.camera, {left: -4, right: 4, top: 4, bottom: -4, near: 0.1, far: 20});
+          }
+          next.add(L); next.add(L.target);
         }
-        next.add(L); next.add(L.target);
-      }
-      if (g0 !== gen) { V.loading = false; return loadScene(); }
-      scene.remove(root); root = next; scene.add(root); V.bodies = bodies; V.skins = skins; V.version = sc.version;
-      if (floorFx) { scene.remove(floorFx); floorFx = null; }
-      if (sc.floorfx) floorFx = makeFloorFx();
-      if (floorFx) scene.add(floorFx);
-      if (!V.ready) { V.ready = true; onReady && onReady(); }
-    } catch (e) { console.warn('3D view: scene failed to load', e); }
-    V.loading = false;
+        if (g0 !== gen) { dispose(next); continue; }
+        camera.children.forEach(c => { camera.remove(c); c.dispose && c.dispose(); }); camera.add(head); camera.add(head.target);
+        // The old world is freed after the new one has been drawn once: its shaders are then in
+        // use again by the new world's materials, so they aren't thrown away and rebuilt.
+        const old = root; scene.remove(old); root = next; scene.add(root);
+        requestAnimationFrame(() => requestAnimationFrame(() => dispose(old)));
+        V.bodies = bodies; V.skins = skins; V.version = sc.version;
+        if (floorFx) { scene.remove(floorFx); floorFx = null; }
+        if (sc.floorfx) floorFx = makeFloorFx();
+        if (floorFx) scene.add(floorFx);
+        canvas.style.opacity = '';
+        if (!V.ready) { V.ready = true; onReady && onReady(); }
+      } catch (e) { console.warn('3D view: scene failed to load', e); }
+      return;
+    }
+  }
+  // A world taken off screen: free its GPU copies (not the meshes and textures kept for reuse).
+  function dispose(group) {
+    group.traverse(o => {
+      if (o.geometry && !o.geometry.userData.shared) o.geometry.dispose();
+      if (o.material) { o.material.dispose(); }
+      if (o.isLight && o.dispose) o.dispose();
+    });
   }
 
   function makeFloorFx() {
@@ -296,10 +344,11 @@ export function start({stage, base = '', onReady}) {
   const b64 = (s) => { const bin = atob(s), a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return new Float32Array(a.buffer); };
   let es = null;
   function connect() {
+    if (es) es.close();          // one stream at a time: each holds one of the few connections to the lab
     es = new EventSource(`${base}/pg/poses.sse`);
     es.onmessage = (ev) => {
       const f = JSON.parse(ev.data);
-      if (f.v !== V.version) { loadScene(); return; }
+      if (f.v !== V.version) { if (V.version !== null) loadScene(); return; }
       const p = b64(f.p), q = b64(f.q);
       for (let i = 0; i < V.bodies.length; i++) {
         V.bodies[i].position.set(p[3 * i], p[3 * i + 1], p[3 * i + 2]);
@@ -336,10 +385,9 @@ export function start({stage, base = '', onReady}) {
   V.setBase = (b) => {
     if (b === base) return;
     base = b; gen++; V.version = null; V.follow = true; V.lastLocal = 0;
-    texCache.clear(); meshCache.clear();
-    if (es) es.close();
-    scene.remove(root); root = new THREE.Group(); scene.add(root); V.bodies = []; V.skins = [];
-    loadScene().then(connect);
+    if (es) { es.close(); es = null; }
+    canvas.style.opacity = '0.55';      // the old world, dimmed, until the new one is ready
+    loadScene().then(() => { if (base === b) connect(); });
   };
   loadScene().then(connect);
   requestAnimationFrame(frame);
