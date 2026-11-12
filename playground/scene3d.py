@@ -270,6 +270,22 @@ def tex_cached(m, i: int) -> bytes:
     return _TEXTURES.get(_info(m)["tex"][i], lambda: tex_png(m, i))
 
 
+def tex_index(m, h: str, i: int) -> int:
+    """This model's texture with content hash h (i if that is it), else -1."""
+    tex = _info(m)["tex"]
+    if 0 <= i < len(tex) and tex[i] == h:
+        return i
+    return tex.index(h) if h in tex else -1
+
+
+def skin_cached(m, i: int) -> bytes:
+    info = _info(m)
+    skins = info.setdefault("skins", {})
+    if i not in skins:
+        skins[i] = skin_bin(m, i)
+    return skins[i]
+
+
 def warm(m):
     """Get everything the page will ask for about this model ready ahead of time: its hashes,
     and its meshes and textures (only the ones not already built for another session)."""
@@ -277,6 +293,8 @@ def warm(m):
     mesh_by_hash(m, list(sc["meshhash"].values()))
     for t in sc["texhash"]:
         tex_cached(m, int(t))
+    for sk in sc["skins"]:
+        skin_cached(m, sk["id"])
 
 
 def poses(xpos: np.ndarray, xquat: np.ndarray, extra: dict) -> str:

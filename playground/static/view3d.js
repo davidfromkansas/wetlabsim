@@ -126,12 +126,21 @@ export function start({stage, base = '', onReady}) {
   }
   // The meshes a world needs that the page doesn't have yet, in a few requests rather than one
   // each (each request waits a round trip to the lab, and only a few go at once).
-  function fetchMeshes(hashes) {
+  // A request to the lab that gives up after a while: a stuck one would leave the view loading
+  // for good, and a fresh try usually goes through.
+  function get(url, ms = 25000) {
+    const c = new AbortController(), t = setTimeout(() => c.abort(), ms);
+    return fetch(url, {signal: c.signal}).then(r => r.ok ? r : Promise.reject(new Error(url + ' ' + r.status)))
+      .finally(() => clearTimeout(t));
+  }
+  // Everything one load asks for goes to the session it is loading (src), even if the page has
+  // switched to another session meanwhile: that session's world has other shapes and images.
+  function fetchMeshes(hashes, src) {
     const missing = [...new Set(hashes)].filter(h => !meshCache.has(h));
     const per = Math.max(20, Math.ceil(missing.length / 3));
     for (let i = 0; i < missing.length; i += per) {
       const batch = missing.slice(i, i + per);
-      const p = fetch(`${base}/pg/meshes?h=${batch.join(',')}`).then(r => r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.status))).then(buf => {
+      const p = get(`${src}/pg/meshes?h=${batch.join(',')}`, 60000).then(r => r.arrayBuffer()).then(buf => {
         const out = new Map(), dv = new DataView(buf);
         let o = 0;
         for (const h of batch) {
@@ -148,15 +157,16 @@ export function start({stage, base = '', onReady}) {
       }
     }
   }
-  function meshGeometry(hash) {
-    if (!meshCache.has(hash)) fetchMeshes([hash]);
+  function meshGeometry(hash, src) {
+    if (!meshCache.has(hash)) fetchMeshes([hash], src);
     return meshCache.get(hash);
   }
   // One texture per (image, repeat): a clone made before the image arrives would draw black.
-  function texture(id, hash, rx, ry) {
+  function texture(id, hash, rx, ry, src) {
     const key = [hash, rx, ry].join(':');
     if (!texCache.has(key)) {
-      const t = new THREE.TextureLoader().load(`${base}/pg/tex/${id}.png?h=${hash}`);
+      const t = new THREE.TextureLoader().load(`${src}/pg/tex/${id}.png?h=${hash}`, undefined, undefined,
+                                               () => texCache.delete(key));   // try again next time
       t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping;
       t.anisotropy = renderer.capabilities.getMaxAnisotropy();
       t.repeat.set(rx, ry);
@@ -165,7 +175,7 @@ export function start({stage, base = '', onReady}) {
     return texCache.get(key);
   }
 
-  async function geomObject(g, texhash, meshhash) {
+  async function geomObject(g, texhash, meshhash, src) {
     let geo;
     const s = g.size;
     if (g.type === 'box') geo = new THREE.BoxGeometry(2 * s[0], 2 * s[1], 2 * s[2]);
@@ -174,7 +184,7 @@ export function start({stage, base = '', onReady}) {
     else if (g.type === 'capsule') { geo = new THREE.CapsuleGeometry(s[0], 2 * s[1], 8, 24); geo.rotateX(Math.PI / 2); }
     else if (g.type === 'cylinder') { geo = new THREE.CylinderGeometry(s[0], s[0], 2 * s[1], 32); geo.rotateX(Math.PI / 2); }
     else if (g.type === 'plane') geo = new THREE.PlaneGeometry(2 * (s[0] || 40), 2 * (s[1] || 40));
-    else if (g.type === 'mesh') geo = await meshGeometry(meshhash[String(g.mesh)]);
+    else if (g.type === 'mesh') geo = await meshGeometry(meshhash[String(g.mesh)], src);
     else return null;
     const mat = new THREE.MeshPhongMaterial({
       color: srgb(g.rgba), specular: new THREE.Color(g.specular * 0.3, g.specular * 0.3, g.specular * 0.3),
@@ -183,7 +193,7 @@ export function start({stage, base = '', onReady}) {
     if (g.tex >= 0) {
       const uni = g.type === 'plane' && g.texuniform;
       mat.map = texture(g.tex, texhash[String(g.tex)], uni ? 2 * (s[0] || 40) * g.texrepeat[0] : g.texrepeat[0],
-                        uni ? 2 * (s[1] || 40) * g.texrepeat[1] : g.texrepeat[1]);
+                        uni ? 2 * (s[1] || 40) * g.texrepeat[1] : g.texrepeat[1], src);
     }
     const obj = new THREE.Mesh(geo, mat);
     obj.position.set(...g.pos);
@@ -194,8 +204,8 @@ export function start({stage, base = '', onReady}) {
 
   // A soft object's mesh (a MuJoCo skin, scene3d.skin_bin): each vertex follows the bodies of
   // the simulated shape it is bound to, re-placed every pose frame (drawSkins).
-  async function skinObject(sk, version) {
-    const buf = await (await fetch(`${base}/pg/skin/${sk.id}.bin?v=${encodeURIComponent(version)}`)).arrayBuffer();
+  async function skinObject(sk, version, src, texhash) {
+    const buf = await (await get(`${src}/pg/skin/${sk.id}.bin?v=${encodeURIComponent(version)}`)).arrayBuffer();
     const [nv, nf, hasUv, k] = new Uint32Array(buf, 0, 4);
     let o = 16;
     const rest = new Float32Array(buf, o, nv * 3); o += nv * 12;
@@ -210,7 +220,7 @@ export function start({stage, base = '', onReady}) {
     const mat = new THREE.MeshPhongMaterial({
       color: srgb(sk.rgba), specular: new THREE.Color(sk.specular * 0.3, sk.specular * 0.3, sk.specular * 0.3),
       shininess: 4 + 96 * sk.shininess, side: THREE.DoubleSide});
-    if (sk.tex >= 0) mat.map = texture(sk.tex, (V.texhash || {})[String(sk.tex)], 1, 1);
+    if (sk.tex >= 0) mat.map = texture(sk.tex, texhash[String(sk.tex)], 1, 1, src);
     const obj = new THREE.Mesh(geo, mat);
     obj.castShadow = obj.receiveShadow = true; obj.frustumCulled = false;
     return {obj, geo, rest, body, w, bind, k, nv};
@@ -272,14 +282,12 @@ export function start({stage, base = '', onReady}) {
   }
   async function buildScene() {
     for (let tries = 0; ; tries++) {
-      const g0 = gen, fresh = V.version === null;
+      const g0 = gen, fresh = V.version === null, src = base;
       try {
-        const r = await fetch(`${base}/pg/scene3d`);
-        if (!r.ok) throw new Error('scene3d ' + r.status);
-        const sc = await r.json();
+        const sc = await (await get(`${src}/pg/scene3d`)).json();
         if (g0 !== gen) continue;
-        V.texhash = sc.texhash || {};
-        fetchMeshes(Object.values(sc.meshhash || {}));
+        const texhash = sc.texhash || {};
+        fetchMeshes(Object.values(sc.meshhash || {}), src);
         const next = new THREE.Group();
         const bodies = Array.from({length: sc.nbody}, () => { const b = new THREE.Group(); next.add(b); return b; });
         // Lights: MuJoCo's headlight (ambient + a light at the eye) and the scene's own lights.
@@ -301,8 +309,8 @@ export function start({stage, base = '', onReady}) {
         // Each shape goes in as soon as it is ready; one that fails doesn't hold up the rest.
         let failed = 0;
         await Promise.all([
-          ...sc.geoms.map(g => geomObject(g, V.texhash, sc.meshhash).then(o => { if (o) bodies[g.body].add(o); }, () => { failed++; })),
-          ...(sc.skins || []).map(sk => skinObject(sk, sc.version).then(s => { next.add(s.obj); skins.push(s); }, () => { failed++; }))]);
+          ...sc.geoms.map(g => geomObject(g, texhash, sc.meshhash, src).then(o => { if (o) bodies[g.body].add(o); }, () => { failed++; })),
+          ...(sc.skins || []).map(sk => skinObject(sk, sc.version, src, texhash).then(s => { next.add(s.obj); skins.push(s); }, () => { failed++; }))]);
         if (g0 !== gen) { if (!fresh) dispose(next); continue; }
         if (!fresh) install(next, sc, bodies, skins, head);
         showNote(false); freeRetired();
