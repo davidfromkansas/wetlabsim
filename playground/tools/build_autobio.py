@@ -100,7 +100,7 @@ def _write(id_: str, parts: list[Part], masses: list, turn=None, note=""):
             "visuals": [], "collision_parts": [], "bodies": bodies,
             "unstated_mass": [b["name"] for b in bodies if not b["mass"]]}
     (out / "asset.json").write_text(json.dumps(meta, indent=1))
-    _thumb(out, meta)
+    render_thumb(out, meta)
     return meta
 
 
@@ -194,12 +194,13 @@ BUILD = {
 }
 
 
-def _thumb(out: pathlib.Path, meta: dict):
-    """A 256 px picture for the library (AutoBio ships none), rendered by MuJoCo."""
+def render_thumb(out: pathlib.Path, meta: dict):
+    """A 256 px picture for the library (for items that ship none), rendered by MuJoCo."""
     sp = mujoco.MjSpec()
     sp.visual.global_.offwidth = sp.visual.global_.offheight = 512
     body = sp.worldbody.add_body()
-    for i, b in enumerate(meta["bodies"]):
+    bodies = meta.get("bodies") or [{"visuals": meta["visuals"], "frame": [0, 0, 0, 1, 0, 0, 0]}]
+    for i, b in enumerate(bodies):
         for k, v in enumerate(b["visuals"]):
             sp.add_mesh(name=f"v{i}_{k}", file=str(out / v["mesh"]),
                         inertia=mujoco.mjtMeshInertia.mjMESH_INERTIA_SHELL)

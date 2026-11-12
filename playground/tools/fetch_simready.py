@@ -14,7 +14,11 @@ import urllib.request
 
 # Where assets come from: NVIDIA's SimReady set, and Tripo's SimReady assets (the same packaging
 # under usd/ instead of simready_usd/, with jointed parts).
-REPOS = {"nvidia": "nvidia/simready-assets", "tripo": "VAST-AI/Tripo-Simready-Assets"}
+REPOS = {"nvidia": "nvidia/simready-assets", "tripo": "VAST-AI/Tripo-Simready-Assets",
+         # QUIKTECH's lab equipment (CC BY 4.0, NVIDIA SimReady packaging)
+         "quiktech": "quiktech/SimReady-Assets",
+         # NVIDIA's USDCraft-10K (Apache 2.0): physx/model.usdc + meta.json per item
+         "usdcraft": "nvidia/USDCraft-10K"}
 REPO = "https://huggingface.co/datasets/" + REPOS["nvidia"]
 
 
@@ -30,7 +34,8 @@ def wanted(path: str) -> bool:
     if "/.thumbs/" in path:
         return path.endswith(("_transparent.png", ".usd.png", ".usda.png")) and "/256x256/" in path \
             and ("simready_usd/.thumbs" in path or "/usd/.thumbs" in path)
-    return "/simready_usd/" in path or "/usd/" in path or path.endswith("LICENSE.txt")
+    return "/simready_usd/" in path or "/usd/" in path or "/physx/" in path \
+        or path.endswith(("LICENSE.txt", "/meta.json"))
 
 
 def fetch(folder: str, out: pathlib.Path, repo: str = "nvidia") -> pathlib.Path:

@@ -49,3 +49,13 @@ The files are unchanged; only the rack meshes were renamed.
   - dish: 23 g
   - 60-well rack: estimated at 45 g, because its mesh is a solid block. The two
     centrifuge-tube racks are fixed to the bench.
+
+## More items, from AutoBio's MuJoCo models
+
+`playground/tools/build_autobio_mjcf.py` builds these library items from AutoBio's own MuJoCo
+models at the same commit (`autobio/model/object` and `autobio/model/instrument`, with their
+meshes and textures from `autobio/assets`): pipette tip, 24-slot tip box, 96-well PCR plate,
+10 ml tube, 1.5 ml open tube, 1.8 ml cryovial, Eppendorf 5430 centrifuge, Tiangen mini
+centrifuge, Bio-Rad C1000 thermal cycler, Eppendorf ThermoMixer C and Vortex-Genie 2. The
+shapes, collision shapes, masses and joints are AutoBio's; its MuJoCo plugins (click-stop knobs,
+screw threads) are left out.

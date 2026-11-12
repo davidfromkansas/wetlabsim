@@ -1,0 +1,127 @@
+{
+ "source": "AutoBio",
+ "usd": null,
+ "mass": 0.00065,
+ "friction": 1.0,
+ "com": null,
+ "size": [
+  0.013,
+  0.013,
+  0.04
+ ],
+ "collision": "AutoBio's own collision shapes (MuJoCo model); mass is their volume of polypropylene",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "centrifuge_1500ul_no_lid",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      0.2
+     ],
+     "roughness": -1.0,
+     "metallic": -1.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 8.88965774213628e-08
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 3.992327368847994e-08
+    },
+    {
+     "mesh": "b0_col_2.obj",
+     "volume": 3.992327368847997e-08
+    },
+    {
+     "mesh": "b0_col_3.obj",
+     "volume": 3.992327368848006e-08
+    },
+    {
+     "mesh": "b0_col_4.obj",
+     "volume": 3.9923273688479904e-08
+    },
+    {
+     "mesh": "b0_col_5.obj",
+     "volume": 3.9923273688479885e-08
+    },
+    {
+     "mesh": "b0_col_6.obj",
+     "volume": 3.992327368847992e-08
+    },
+    {
+     "mesh": "b0_col_7.obj",
+     "volume": 3.992327368848006e-08
+    },
+    {
+     "mesh": "b0_col_8.obj",
+     "volume": 3.992327368847997e-08
+    },
+    {
+     "mesh": "b0_col_9.obj",
+     "volume": 3.992327368847994e-08
+    },
+    {
+     "mesh": "b0_col_10.obj",
+     "volume": 3.992327368847997e-08
+    },
+    {
+     "mesh": "b0_col_11.obj",
+     "volume": 3.992327368848006e-08
+    },
+    {
+     "mesh": "b0_col_12.obj",
+     "volume": 3.9923273688479904e-08
+    },
+    {
+     "mesh": "b0_col_13.obj",
+     "volume": 3.9923273688479885e-08
+    },
+    {
+     "mesh": "b0_col_14.obj",
+     "volume": 3.992327368847992e-08
+    },
+    {
+     "mesh": "b0_col_15.obj",
+     "volume": 3.992327368848006e-08
+    },
+    {
+     "mesh": "b0_col_16.obj",
+     "volume": 3.992327368847997e-08
+    }
+   ],
+   "frame": [
+    -9e-06,
+    -0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "mass": 0.000655,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    1,
+    0,
+    0,
+    0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

@@ -1,0 +1,79 @@
+{
+ "source": "Built in-house (Blender)",
+ "usd": null,
+ "mass": 0.018,
+ "friction": null,
+ "com": null,
+ "size": [
+  0.1287,
+  0.0864,
+  0.008
+ ],
+ "collision": "convex pieces; its skirt fits over the plate",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "lid",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.9,
+      0.94,
+      0.97,
+      0.38
+     ],
+     "roughness": 0.08,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 1.1113650800000013e-05
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 6.910399999999955e-07
+    },
+    {
+     "mesh": "b0_col_2.obj",
+     "volume": 6.910399999999955e-07
+    },
+    {
+     "mesh": "b0_col_3.obj",
+     "volume": 1.0292800000000014e-06
+    },
+    {
+     "mesh": "b0_col_4.obj",
+     "volume": 1.0292800000000014e-06
+    }
+   ],
+   "mass": 0.018,
+   "frame": [
+    0.0,
+    0.0,
+    0.0,
+    1,
+    0,
+    0,
+    0
+   ],
+   "parent": null,
+   "root": true,
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    1,
+    0,
+    0,
+    0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}
