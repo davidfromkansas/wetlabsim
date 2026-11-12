@@ -801,6 +801,24 @@ def new_session(owner: str, name: str | None = None, layout: dict | None = None,
     return sess
 
 
+def _warm_loop():
+    """Every session's 3D data (scene3d: hashes, meshes, textures) made ready in the background
+    as soon as its world is built or rebuilt, so the page can switch to it without waiting."""
+    done: dict[int, object] = {}
+    while True:
+        now = {}
+        for x in [x for x in list(SESSIONS.values()) if x is not None]:
+            m = x.sim.m
+            if done.get(id(x)) is not m:
+                try:
+                    S3.warm(m)
+                except Exception as e:  # noqa: BLE001
+                    print("could not prepare a session's 3D view:", e)
+            now[id(x)] = m
+        done = now
+        time.sleep(0.5)
+
+
 def get_session(sid: str | None) -> Session | None:
     return SESSIONS.get(sid) if sid else None
 
@@ -1934,6 +1952,7 @@ def main(argv=None):
             if QUEUE:
                 _start_queued()
     threading.Thread(target=_queue_loop, daemon=True, name="run-queue").start()
+    threading.Thread(target=_warm_loop, daemon=True, name="warm-3d").start()
     if LABS.shared():
         def live_runs():
             out = []
