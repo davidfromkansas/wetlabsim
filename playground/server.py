@@ -1384,15 +1384,18 @@ class PGHandler(Handler):
                                    "scores": self.bench.scoreboard(qs.get("task", [cur])[0]),
                                    "suite_board": self.bench.suite_board(study)})
             # The main view drawn in the browser (scene3d): the scene once, then a pose stream.
+            # No waiting on the simulator's lock here: a compiled model never changes, and a world
+            # with soft objects keeps the lock busy enough that these requests could wait for ages.
             if p == "/pg/scene3d":
-                with self.sim.lock:
-                    m, ver = self.sim.m, self.sim._model_ver
+                m, ver = self.sim.m, self.sim._model_ver
                 out = S3.scene(m, ver)
                 out["floorfx"] = self.sim.scene_mode == "free"      # the Tron floor, drawn by the page
                 return self._json(out)
             if p.startswith("/pg/skin/"):
-                with self.sim.lock:
-                    data = S3.skin_bin(self.sim.m, int(pathlib.Path(p).stem))
+                m, i = self.sim.m, int(pathlib.Path(p).stem)
+                if not 0 <= i < m.nskin:
+                    return self._err("no such skin", 404)
+                data = S3.skin_cached(m, i)
                 hdr = {"Cache-Control": "no-cache"}
                 if "gzip" in self.headers.get("Accept-Encoding", ""):
                     import gzip
@@ -1414,6 +1417,10 @@ class PGHandler(Handler):
             if p.startswith("/pg/mesh/") or p.startswith("/pg/tex/"):
                 m = self.sim.m
                 i = int(pathlib.Path(p).stem)
+                if p.startswith("/pg/tex/") and qs.get("h"):      # by its contents: this world's own index for it
+                    i = S3.tex_index(m, qs["h"][0], i)
+                if not 0 <= i < (m.nmesh if p.startswith("/pg/mesh/") else m.ntex):
+                    return self._err("not in this world", 404)
                 data, ctype = ((S3.mesh_bin(m, i), "application/octet-stream") if p.startswith("/pg/mesh/")
                                else (S3.tex_cached(m, i), "image/png"))
                 hdr = {"Cache-Control": "max-age=86400"}       # the URL carries the content's hash
