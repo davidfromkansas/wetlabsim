@@ -27,6 +27,9 @@ from . import world as W
 VIEW_W, VIEW_H = 1280, 800      # default size of the main view
 MAX_W, MAX_H = 1920, 1200        # the scene's offscreen buffer (offwidth/offheight)
 SOFT_MAX = 3       # soft objects a lab may hold: each is many bodies and contacts (see world._add_soft)
+# How far from a robot's base centre nothing may be dropped: its base (a Franka's is 0.2 m across,
+# a UR5e's 0.15 m) stands there. Objects nearer than that would sit inside it.
+BASE_RADIUS = 0.11
 FOVY = 45.0        # the free camera's vertical field of view (MuJoCo's default)
 
 
@@ -362,10 +365,58 @@ class PlaygroundSim(Sim):
                 raise RobotError("no such object")
             self._sync_placed()
             p.pos = tuple(pos)
-            if yaw is not None:
+            if yaw is not None:          # turned about the vertical; any tilt it has stays
+                if p.quat is not None:
+                    p.quat = W.rot_quat(W.axis_rot("z", math.degrees(yaw - p.yaw)) @ W._rot(p.quat))
                 p.yaw = yaw
-            p.quat = None if yaw is not None or p.quat is None else W.yaw_quat(p.yaw)
             self.rebuild(sync=False)     # synced above; its new place stands
+
+    def _obj_mid(self, p: W.Placed, R) -> np.ndarray:
+        """The middle of an object's box, in the world (where its rotate rings sit)."""
+        b = mujoco.mj_name2id(self.m, mujoco.mjtObj.mjOBJ_BODY, f"obj_{p.uid}")
+        o = self.d.xpos[b] if b >= 0 and not catalog.item(p.item)["soft"] else np.asarray(p.pos, float)
+        return o + R @ np.array([0.0, 0.0, catalog.meta(p.item)["size"][2] / 2])
+
+    def can_tilt(self, uid: str) -> str:
+        """Why an object can only turn about the vertical ("" if it can rotate every way)."""
+        it = catalog.item(self.find(uid).item)
+        if it["fixed"]:
+            return "furniture stays level"
+        if it["soft"]:
+            return "soft objects lie flat"
+        return ""
+
+    def orient(self, uid: str, euler=None, axis: str | None = None, degrees: float = 0.0):
+        """Rotate an object: to the angles euler (degrees about the world's X, Y, Z), or by
+        degrees about one world axis. It turns about its middle, then comes to rest on whatever
+        is under it (so it can't end up inside the table)."""
+        with self.lock:
+            p = self.find(uid)
+            if p is None:
+                raise RobotError("no such object")
+            self._sync_placed()
+            R0 = self.obj_rot(uid)
+            R = W.euler_rot(euler) if euler is not None else W.axis_rot(axis, float(degrees)) @ R0
+            why = self.can_tilt(uid)
+            if why:
+                if abs(R[2, 2] - 1) > 1e-6:
+                    raise RobotError(f"only Z: {why}")
+                yaw = math.atan2(R[1, 0], R[0, 0])
+                if catalog.item(p.item)["fixed"]:
+                    p.yaw, p.quat = yaw, None
+                else:                    # a soft object turns about its middle, flat as it lies
+                    p.yaw = yaw
+                self.rebuild(sync=False)
+                return
+            meta = catalog.meta(p.item)
+            mid = np.asarray(p.pos, float) + R0 @ np.array([0.0, 0.0, meta["size"][2] / 2])
+        spot = self.support(p.item, float(mid[0]), float(mid[1]), exclude_uid=uid, rot=R)
+        if not spot["valid"]:
+            raise RobotError(spot["reason"])
+        with self.lock:
+            p.pos, p.quat = tuple(spot["pos"]), W.rot_quat(R)
+            p.yaw = math.atan2(R[1, 0], R[0, 0])
+            self.rebuild(sync=False)
 
     def remove(self, uid: str):
         with self.lock:
@@ -646,7 +697,12 @@ class PlaygroundSim(Sim):
             items = []
             for p in self.placed:
                 it = catalog.item(p.item)
-                items.append({**p.as_dict(), "label": it["label"], "fixed": it["fixed"], "removable": True})
+                R = self.obj_rot(p.uid)
+                items.append({**p.as_dict(), "label": it["label"], "fixed": it["fixed"], "removable": True,
+                              "euler": W.rot_euler(R), "tilt": self.can_tilt(p.uid) == "",
+                              "tilt_why": self.can_tilt(p.uid),
+                              "mid": [round(float(v), 4) for v in self._obj_mid(p, R)],
+                              "bodies": sorted(b for b, u in self.body_uid.items() if u == p.uid)})
             return {"mode": "free", "objects": items, "paused": self.paused, "selected": self.selected,
                     "time": round(self.d.time, 3), "realtime_factor": round(self.rt_factor, 3),
                     "active": self.active_station,
@@ -800,37 +856,81 @@ class PlaygroundSim(Sim):
             out["removable"] = True
         return out
 
+    def _ray_past_robots(self, p0, d, exclude_body=-1):
+        """A ray that goes on through robots: (distance to the first thing that isn't a robot,
+        body, distance to the first robot it passed or None)."""
+        p0, d = np.asarray(p0, float), np.asarray(d, float)
+        robot_at, skipped, excl = None, 0.0, exclude_body
+        for _ in range(40):
+            dist, body = self._ray(p0 + skipped * d, d, excl)
+            if dist is None or body not in self.robot_bodies:
+                return (None if dist is None else dist + skipped), body, robot_at
+            if robot_at is None:
+                robot_at = skipped + dist
+            skipped += dist + 1e-4
+            excl = body
+        return None, -1, robot_at
+
+    def obj_rot(self, uid: str) -> np.ndarray:
+        """An object's orientation now (from the physics), as a rotation matrix."""
+        p = self.find(uid)
+        b = mujoco.mj_name2id(self.m, mujoco.mjtObj.mjOBJ_BODY, f"obj_{uid}")
+        if b >= 0 and self.m.body_jntnum[b] and not catalog.item(p.item)["soft"]:
+            return W._rot(self.d.xquat[b])
+        return W._rot(p.quat or W.yaw_quat(p.yaw))
+
     def support(self, item: str, x: float, y: float, yaw: float = 0.0, top: float = 3.0,
-                exclude_uid: str | None = None) -> dict:
-        """Where an item dropped at (x, y) comes to rest: on the highest surface under its
-        footprint (it stacks on whatever is there)."""
+                exclude_uid: str | None = None, rot=None) -> dict:
+        """Where an item dropped with its middle over (x, y) comes to rest: on the highest surface
+        under it (it stacks on whatever is there), turned by yaw, or by the rotation rot (a 3x3
+        matrix) when given. A robot arm above that surface is fine as long as the item fits
+        under it; a robot's base, or an arm lower than the item's top, is in the way."""
         meta = catalog.meta(item)
-        sx, sy, _ = meta["size"]
-        c, s = math.cos(yaw), math.sin(yaw)
+        R = W.euler_rot((0, 0, math.degrees(yaw))) if rot is None else np.asarray(rot, float)
+        pts = W.box_points(meta["size"]) @ R.T
+        mid = R @ np.array([0.0, 0.0, meta["size"][2] / 2])
+        ox, oy = x - mid[0], y - mid[1]          # the item's own origin (its bottom centre)
+        bottom, height = pts[:, 2].min(), pts[:, 2].max() - pts[:, 2].min()
         excl = -1
         if exclude_uid:
             with self.lock:
                 excl = self.m.body(f"obj_{exclude_uid}").id
-        zs, owners = [], set()
-        for fx in (-0.45, 0.0, 0.45):
-            for fy in (-0.45, 0.0, 0.45):
-                lx, ly = fx * sx, fy * sy
-                px, py = x + c * lx - s * ly, y + s * lx + c * ly
-                dist, body = self._ray((px, py, top), (0, 0, -1.0), excl)
-                if dist is None:
-                    zs.append(0.0)
-                    owners.add(("floor", None))
-                    continue
-                zs.append(top - dist)
-                owners.add(self._owner(body))
+        zs, owners, robot_low = [], set(), None
+        for px, py in {(round(float(a), 5), round(float(b), 5)) for a, b in pts[:, :2]}:
+            dist, body, robot_at = self._ray_past_robots((ox + px, oy + py, top), (0, 0, -1.0), excl)
+            if robot_at is not None:
+                robot_low = top - robot_at if robot_low is None else min(robot_low, top - robot_at)
+            if dist is None:
+                zs.append(0.0)
+                owners.add(("floor", None))
+                continue
+            zs.append(top - dist)
+            owners.add(self._owner(body))
         z = max(zs)
-        robot = any(k == "robot" for k, _ in owners)
+        reason = ""
+        feet = [(ox + px, oy + py) for px, py in pts[:, :2]]
+        if any(st.near_base(fx, fy, BASE_RADIUS) for st in self.stations for fx, fy in feet):
+            reason = "a robot's base is there"
+        elif robot_low is not None and robot_low < z + height + 0.005:
+            reason = ("a robot is in the way" if robot_low < z + 0.03 else
+                      f"the robot arm is in the way: it hangs {100 * (robot_low - z):.0f} cm above here "
+                      f"and this is {100 * height:.0f} cm tall")
         on = sorted({catalog.item(self.find(u).item)["label"] for k, u in owners if k == "object" and self.find(u)}
                     | {f"the table of {self.station(u).name}" for k, u in owners if k == "table" and self.station(u)})
         level = max(zs) - min(zs) < 0.03
         surface = on[0] if len(on) == 1 else ("the floor" if not on else " / ".join(on))
-        return {"pos": [round(x, 4), round(y, 4), round(z + 0.0005, 4)], "surface": surface,
-                "valid": not robot, "level": level, "reason": "too close to the robot" if robot else ""}
+        return {"pos": [round(ox, 4), round(oy, 4), round(z - bottom + 0.0005, 4)], "surface": surface,
+                "valid": not reason, "level": level, "reason": reason,
+                "box": self._ghost_box(meta["size"], R, (x, y, z + height / 2 + 0.0005), pts)}
+
+    @staticmethod
+    def _ghost_box(size, R, mid, pts):
+        """The space an item takes, as a box: its own box turned about the vertical if it stands
+        upright, else the upright box around it."""
+        upright = abs(R[2, 2] - 1) < 1e-6
+        half = [s / 2 for s in size] if upright else list((pts.max(0) - pts.min(0)) / 2)
+        return {"mid": [round(float(v), 4) for v in mid], "half": [round(float(v), 4) for v in half],
+                "yaw": round(math.atan2(R[1, 0], R[0, 0]), 4) if upright else 0.0}
 
     def probe(self, item: str, u: float, v: float, yaw: float = 0.0, exclude_uid: str | None = None) -> dict:
         """Where an item being dragged over the view at (u, v) would land."""
@@ -839,7 +939,8 @@ class PlaygroundSim(Sim):
         if exclude_uid:
             with self.lock:
                 excl = self.m.body(f"obj_{exclude_uid}").id
-        dist, body = self._ray(p0, d, excl)
+        # through a robot arm, to the surface under it (what's under the arm can be reached)
+        dist, body, _ = self._ray_past_robots(p0, d, excl)
         if dist is None:
             if d[2] >= -1e-6:
                 return {"valid": False, "reason": "off the floor"}
@@ -856,23 +957,29 @@ class PlaygroundSim(Sim):
                 hit = np.array([c[0], c[1], hit[2]])
         if abs(hit[0]) > 9.5 or abs(hit[1]) > 9.5:
             return {"valid": False, "reason": "off the floor"}
-        out = self.support(item, float(hit[0]), float(hit[1]), yaw, exclude_uid=exclude_uid)
+        rot = None
+        if exclude_uid:                 # a moved object keeps how it's turned
+            with self.lock:
+                rot = self.obj_rot(exclude_uid)
+            if yaw:
+                rot = W.axis_rot("z", math.degrees(yaw)) @ rot
+        out = self.support(item, float(hit[0]), float(hit[1]), yaw, exclude_uid=exclude_uid, rot=rot)
         self.set_ghost(item, out, yaw)
         return out
 
     def set_ghost(self, item, spot, yaw=0.0):
-        meta = catalog.meta(item)
-        sx, sy, sz = meta["size"]
-        x, y, z = spot["pos"]
         ok = spot.get("valid", False)
         col = [0.25, 0.55, 1.0] if ok else [1.0, 0.3, 0.25]
+        if "box" not in spot:
+            self.overlay = []
+            return
+        (x, y, zm), (hx, hy, hz) = spot["box"]["mid"], spot["box"]["half"]
         self.overlay = [
             # the drop spot, glowing on the surface it lands on
-            {"type": "box", "size": [sx / 2 + 0.02, sy / 2 + 0.02, 0.0015], "pos": [x, y, z + 0.0015],
-             "yaw": yaw, "rgba": [*col, 0.45]},
-            # the item's outline where it will sit
-            {"type": "box", "size": [sx / 2, sy / 2, sz / 2], "pos": [x, y, z + sz / 2], "yaw": yaw,
-             "rgba": [*col, 0.18]},
+            {"type": "box", "size": [hx + 0.02, hy + 0.02, 0.0015], "pos": [x, y, zm - hz + 0.001],
+             "yaw": spot["box"]["yaw"], "rgba": [*col, 0.45]},
+            # the space the item will take
+            {"type": "box", "size": [hx, hy, hz], "pos": [x, y, zm], "yaw": spot["box"]["yaw"], "rgba": [*col, 0.18]},
         ]
 
     def clear_ghost(self):
