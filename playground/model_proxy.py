@@ -1,10 +1,12 @@
-"""The model proxy: how an agent in a sandbox reaches Anthropic without ever holding the key.
+"""The model proxy: how an agent in a sandbox reaches Anthropic or OpenAI without ever holding the key.
 
-The agent's CLI is pointed here (ANTHROPIC_BASE_URL) with its run token where an API key
-would go. A request with a live run token is forwarded to Anthropic with the real key (from
-this process's ANTHROPIC_API_KEY); anything else is refused. Responses, streamed or not, are
-passed back as they arrive. Tokens and the dollars they cost are counted per run token, and a
-run over its budget is refused further calls.
+The agent's CLI is pointed here (Claude Code: ANTHROPIC_BASE_URL; Codex: OPENAI_BASE_URL, at
+/openai/v1) with its run token where an API key would go. A request with a live run token is
+forwarded to the company with the real key: the lab owner's own key for that run (KEYS, set when
+the run starts), else this process's ANTHROPIC_API_KEY. Anything else is refused. Responses,
+streamed or not, are passed back as they arrive. Tokens and the dollars they cost are counted per
+run token; a run on this process's own key is refused further calls once over its budget (a run
+on the owner's own key has no dollar cap: they pay for it, and the time limit still stops it).
 """
 from __future__ import annotations
 
@@ -18,6 +20,10 @@ from wetlabsim import robot_api as RA
 from wetlabsim.prices import ANTHROPIC_PRICES, anthropic_cost
 
 UPSTREAM = "api.anthropic.com"
+OPENAI_UPSTREAM = "api.openai.com"
+OPENAI_PREFIX = "/openai"           # Codex's base URL is <proxy>/openai/v1
+# The owner's own keys, per run token: {token: {"anthropic": key} or {"openai": key}}.
+KEYS: dict[str, dict[str, str]] = {}
 BUDGET_USD = float(os.environ.get("WETLAB_RUN_BUDGET_USD", "3"))
 PRICES = ANTHROPIC_PRICES      # dollars per million tokens, by model family (wetlabsim/prices.py)
 _spent: dict[str, float] = {}
@@ -53,19 +59,25 @@ class ProxyHandler(BaseHTTPRequestHandler):
         tok = self.headers.get("x-api-key") or RA.token_from(self.headers)
         if RA.TOKENS.lookup(tok) is None:
             return self._deny(401, "this endpoint takes a live run token")
-        if spent(tok) >= BUDGET_USD:
-            return self._deny(429, f"this run has used its ${BUDGET_USD:.2f} model budget")
-        key = os.environ.get("ANTHROPIC_API_KEY", "")
+        openai = self.path.startswith(OPENAI_PREFIX + "/")
+        own = KEYS.get(tok) or {}
+        key = own.get("openai") if openai else (own.get("anthropic") or os.environ.get("ANTHROPIC_API_KEY", ""))
         if not key:
-            return self._deny(503, "the proxy has no Anthropic key")
+            return self._deny(503, f"no {'OpenAI' if openai else 'Anthropic'} key for this run")
+        if not own and spent(tok) >= BUDGET_USD:
+            return self._deny(429, f"this run has used its ${BUDGET_USD:.2f} model budget")
+        path = self.path[len(OPENAI_PREFIX):] if openai else self.path
         n = int(self.headers.get("Content-Length") or 0)
         body = self.rfile.read(n) if n else None
         headers = {k: v for k, v in self.headers.items()
                    if k.lower() not in ("host", "x-api-key", "authorization", "content-length", "connection",
                                         "accept-encoding")}
-        headers["x-api-key"] = key
-        conn = http.client.HTTPSConnection(UPSTREAM, timeout=600)
-        conn.request(method, self.path, body=body, headers=headers)
+        if openai:
+            headers["Authorization"] = f"Bearer {key}"
+        else:
+            headers["x-api-key"] = key
+        conn = http.client.HTTPSConnection(OPENAI_UPSTREAM if openai else UPSTREAM, timeout=600)
+        conn.request(method, path, body=body, headers=headers)
         r = conn.getresponse()
         self.send_response(r.status)
         for k, v in r.getheaders():
@@ -99,7 +111,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 for k, v in u.items():
                     if isinstance(v, int):
                         usage[k] = max(usage.get(k, 0), v)
-        if usage:
+        if usage and not openai:
             _charge(tok, model, usage)
 
     def do_POST(self):

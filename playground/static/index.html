@@ -73,6 +73,12 @@ body.fixed .taskcard{display:none!important}
 .infopop{position:absolute;left:8px;right:8px;bottom:calc(100% + 6px);background:var(--ink);color:#F9FAFB;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;box-shadow:0 6px 18px rgba(17,24,39,.25);z-index:3}
 .infopop b{color:#fff}
 .tcrow{display:flex;align-items:center;gap:8px}
+.nomodel{display:none;flex-direction:column;align-items:flex-start;gap:6px;padding:10px 12px;border-radius:10px;background:#F7F8FA;margin:0 12px 12px}
+.nomodel b{font-size:14px}
+.nomodel span{font-size:13px;color:#4B5563}
+.nomodel .primary{width:auto;height:36px;padding:0 14px;border-radius:8px;margin-top:4px}
+.taskcard.nomodels .nomodel{display:flex}
+.taskcard.nomodels .tcrow,.taskcard.nomodels #runsRow{display:none!important}
 .tcrow .mdl{flex:1;min-width:0;display:flex;align-items:center;gap:6px;height:36px;padding:0 0 0 8px;border:1px solid #D1D5DB;border-radius:8px}
 .tcrow .mdl img{width:16px;height:16px;flex:none}
 .tcrow .mdl select{border:0;height:34px;flex:1;min-width:0;padding:0 4px;background:transparent}
@@ -735,6 +741,7 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
     <span class="snote">Every session is public. Anyone can watch it, but only you can change it.</span>
     <div class="acct" id="acct" hidden>
       <div class="acctmenu" id="acctMenu" role="menu" aria-label="Account" hidden>
+        <a role="menuitem" id="acctSettings" href="#"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</a>
         <a role="menuitem" id="acctRuns" href="#" target="_blank" rel="noopener"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#374151" stroke-width="1.5" stroke-linecap="round"><path d="M4 2h8M4 14h8M5 2c0 3 6 3 6 6s-6 3-6 6M11 2c0 3-6 3-6 6s6 3 6 6"/></svg>Your runs<span>all sessions</span></a>
         <i></i>
         <a role="menuitem" id="acctOut" href="#"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#374151" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3H4.5A1.5 1.5 0 003 4.5v7A1.5 1.5 0 004.5 13H10"/><path d="M7 8h7M11.5 5.5L14 8l-2.5 2.5"/></svg>Sign out</a>
@@ -914,6 +921,7 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
           <label for="task" class="small" style="position:absolute;left:-9999px">Task</label>
           <textarea id="task" rows="3" placeholder="Tell this robot what to do, in plain words. Example: put the apple in the bowl."></textarea>
           <div class="runs" id="runsRow"><span class="lb">Runs<span>Each run starts from this robot's table as it is now</span></span><div class="step" role="group" aria-label="How many runs"><button type="button" id="runsMinus" aria-label="One fewer run">&#8722;</button><output id="runsN" aria-live="polite">1</output><button type="button" id="runsPlus" aria-label="One more run">+</button></div></div>
+          <div class="nomodel" id="noModels"><b>No AI connected yet</b><span>Add your API key for OpenAI, Anthropic, Devin or Jev to give this robot tasks.</span><button type="button" class="primary" id="noModelsBtn">Open Connections</button></div>
           <div class="tcrow"><div class="mdl"><img id="modelLogo" src="/static/anthropic.svg" alt=""><select id="model" aria-label="AI model"></select></div><button class="primary" id="startBtn"><svg width="11" height="11" viewBox="0 0 14 14" fill="#fff" aria-hidden="true"><path d="M3 1.5 L12.5 7 L3 12.5 Z"/></svg>Run task</button></div>
         </div>
       </section>
@@ -940,7 +948,7 @@ const BID = (() => {
 })();
 // The session (one lab of its own) this page shows. Every /pg/ and /st/ request goes to it.
 let SID = '';
-const SESSIONLESS = /^\/pg\/(static\/|thumb\/|catalog$|sessions|runs$)/;
+const SESSIONLESS = /^\/pg\/(static\/|thumb\/|catalog$|account$|sessions|runs$)/;
 const U = (path) => (path.startsWith('/pg/') && !SESSIONLESS.test(path) || path.startsWith('/st/')) && SID ? `/s/${SID}${path}` : path;
 const PICK_PATHS = new Set(['/pg/pick', '/pg/probe', '/pg/place', '/pg/move', '/pg/station/probe', '/pg/station/add', '/pg/station/move']);
 const api = async (path, body) => {
@@ -1891,7 +1899,8 @@ function render() {
     // its last run used, else the first in the menu.
     S.taskFor = sc.active; $('task').value = S.drafts[sc.active] || '';
     const runModel = run.model && run.model.id;
-    $('model').value = S.stModels[sc.active] || runModel || (S.cat.models[0] || {}).id;
+    $('model').value = S.stModels[sc.active] || runModel || ((S.models || S.cat.models)[0] || {}).id;
+    if (!$('model').value && $('model').options.length) $('model').selectedIndex = 0;   // that model isn't connected
     $('modelLogo').src = LOGOS[modelInfo($('model').value).provider] || LOGOS.anthropic;
   }
   renderStations();
@@ -1903,8 +1912,8 @@ function render() {
   const jev = modelInfo($('model').value).provider === 'typesafe';
   $('infoText').textContent = (jev ? `Jev doesn't write code. Each step it gets your task, the site sheet, its two cameras, its sensors and the list of its earlier steps and what they did, and picks one move (a 1 or 5 cm step, a turn, or open/close the fingers), which is carried out for it. ` +
     `Its answers come with how sure it was, shown in the chat. ` : `Your task, the ${st.label || 'robot'}'s manuals, a site sheet naming what's on its table (not where), its two cameras and its sensors. It writes code to move the robot. `) +
-    (S.cat.public ? `It runs in its own locked-down cloud box. Each run stops at ${Math.round(S.cat.free_time_limit / 60)} minutes or about $3 of AI use, ${S.cat.max_active} runs go at a time (others wait in line), and every run is public: anyone can watch it live and look at it afterwards.`
-      : `There's no time limit: it runs until it says it's done, or you press Stop. Runs use your own Claude Code or Codex login.`);
+    (S.cat.public ? `It runs in its own locked-down cloud box on your own API key. Each run stops at your time limit (${(S.acct && S.acct.run_minutes) || 5} minutes, change it in Settings), ${S.cat.max_active} runs go at a time (others wait in line), and every run is public: anyone can watch it live and look at it afterwards.`
+      : `Each run stops at your time limit (${(S.acct && S.acct.run_minutes) || 5} minutes, change it in Settings). Runs use the API key you saved in Settings, else this computer's own Claude Code, Codex or Devin login.`);
   $('addStationBtn').disabled = !!sc.locked;
   const empty = free && !(sc.robots || []).length;
   document.body.classList.toggle('empty', empty);
@@ -2423,6 +2432,24 @@ $('wRunAll').onclick = () => { if (confirm('Run all 8 wet lab tasks one after an
 $('wStop').onclick = async () => { await api('/pg/wetlab/stop', {}); refresh(); };
 $('wModel').onchange = renderWet;
 
+function modelOptions(list) {
+  return [...new Set(list.map(m => m.via))].map(v => `<optgroup label="${v}">` + list.filter(m => m.via === v).map(m => `<option value="${m.id}"${m.needs ? ' disabled' : ''}>${m.label}${m.needs ? ' · needs ' + m.needs : ''}</option>`).join('') + '</optgroup>').join('');
+}
+// The task card's models: on the public site only those of the companies the owner has
+// connected (Settings > General); with none, the card asks them to connect one.
+function fillModels() {
+  const gate = S.cat.public && !S.watch;
+  const conn = new Set(((S.acct && S.acct.providers) || []).filter(p => p.connected).map(p => p.id));
+  S.models = gate ? S.cat.models.filter(m => conn.has(m.provider)) : S.cat.models;
+  const keep = $('model').value;
+  $('model').innerHTML = modelOptions(S.models);
+  if (S.models.some(m => m.id === keep)) $('model').value = keep;
+  else if ($('model').options.length) $('model').selectedIndex = 0;
+  $('modelLogo').src = LOGOS[modelInfo($('model').value).provider] || LOGOS.anthropic;
+  $('taskcard').classList.toggle('nomodels', gate && !S.models.length);
+}
+window.onAccount = (r) => { S.acct = r; fillModels(); if (S.scene) render(); };
+
 (async function init() {
   S.cat = await api('/pg/catalog');
   if (S.cat.public) {   // the public site: free play only, every run capped
@@ -2434,6 +2461,7 @@ $('wModel').onchange = renderWet;
     if (S.cat.website && S.cat.owner) {   // signed in through the website: account menu (Your runs, Sign out)
       const btn = $('acctBtn'), menu = $('acctMenu');
       $('acctRuns').href = S.cat.website + '/runs'; $('acctOut').href = S.cat.website + '/sign-out';
+      $('acctSettings').onclick = (e) => { e.preventDefault(); $('acctMenu').hidden = true; $('acctBtn').setAttribute('aria-expanded', 'false'); window.openSettings && window.openSettings('general'); };
       $('acct').hidden = false;
       const show = (on) => { menu.hidden = !on; btn.setAttribute('aria-expanded', String(on)); };
       btn.onclick = (e) => { e.stopPropagation(); show(menu.hidden); if (!menu.hidden) menu.querySelector('a').focus(); };
@@ -2445,7 +2473,10 @@ $('wModel').onchange = renderWet;
   }
   const items = S.cat.items;
   for (const it of items) { it.collision = it.collision || ''; }
-  $('wModel').innerHTML = $('lModel').innerHTML = $('model').innerHTML = [...new Set(S.cat.models.map(m => m.via))].map(v => `<optgroup label="${v}">` + S.cat.models.filter(m => m.via === v).map(m => `<option value="${m.id}"${m.needs ? ' disabled' : ''}>${m.label}${m.needs ? ' · needs ' + m.needs : ''}</option>`).join('') + '</optgroup>').join('');
+  $('wModel').innerHTML = $('lModel').innerHTML = modelOptions(S.cat.models);
+  if (!S.watch) S.acct = await api('/pg/account').then(r => r && r.ok ? r : null).catch(() => null);
+  fillModels();
+  $('noModelsBtn').onclick = () => window.openSettings && window.openSettings('general');
   renderTabs(); renderItems();
   view.onload = () => $('loading').style.display = 'none';
   try { setNav(localStorage.getItem('pgNav') !== '0'); } catch (e) {}

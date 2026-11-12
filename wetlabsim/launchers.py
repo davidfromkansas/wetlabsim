@@ -111,6 +111,8 @@ class _SandboxRun:
 
 # The Devin CLI release the sandbox image installs: its Linux build and published SHA-256
 # (from https://static.devin.ai/cli/current/manifest.json).
+# The Codex CLI release the sandbox image installs (npm @openai/codex).
+CODEX_CLI = "0.167.2"
 DEVIN_CLI = ("https://static.devin.ai/cli/3000.12.32/devin-3000.12.32-x86_64-unknown-linux.tar.gz",
              "c4f5a4e277f67190daed2f032515219b1fbfcb2320f46140cf0ce70019d41c58")
 
@@ -118,9 +120,10 @@ DEVIN_CLI = ("https://static.devin.ai/cli/3000.12.32/devin-3000.12.32-x86_64-unk
 class ModalSandboxLauncher:
     """The agent's CLI in a Modal Sandbox holding only its workspace and the robot client. Its
     only ways out are the robot API (run token) and the model's servers; every other address is
-    blocked. Claude Code reaches Anthropic through the model proxy (the run token where an API key
-    would go). Devin reaches Devin's own servers, logged in with the organization's key
-    (DEVIN_API_KEY, from a Modal secret on the lab)."""
+    blocked. Claude Code reaches Anthropic and Codex reaches OpenAI through the model proxy (the
+    run token where an API key would go; the proxy adds the lab owner's key). Devin reaches Devin's
+    own servers, logged in with the owner's Devin key (DEVIN_API_KEY, handed to run_agent for this
+    run only)."""
 
     name = "modal"
     APP = "wetlab-playground-agents"
@@ -134,7 +137,8 @@ class ModalSandboxLauncher:
                 modal.Image.debian_slim(python_version="3.12")
                 .apt_install("curl", "ca-certificates", "git")
                 .run_commands("curl -fsSL https://deb.nodesource.com/setup_22.x | bash -",
-                              "apt-get install -y nodejs", "npm install -g @anthropic-ai/claude-code")
+                              "apt-get install -y nodejs", "npm install -g @anthropic-ai/claude-code",
+                              f"npm install -g @openai/codex@{CODEX_CLI}")
                 # Devin CLI, the release's Linux build, checked against its published checksum
                 # (the install script ends with a browser sign-in, which an image build can't do).
                 .run_commands(f"curl -fsSL {DEVIN_CLI[0]} -o /tmp/devin.tgz",
@@ -157,11 +161,12 @@ class ModalSandboxLauncher:
 
         from . import devin_auth
         devin = len(cmd) > 1 and cmd[1].endswith("devin_acp.py")
-        if not cmd or not (cmd[0] == "claude" or devin):
-            raise SystemExit("the modal launcher runs Claude Code and Devin only")
+        codex = bool(cmd) and cmd[0] == "codex"
+        if not cmd or not (cmd[0] == "claude" or devin or codex):
+            raise SystemExit("the modal launcher runs Claude Code, Codex and Devin only")
         if devin and not devin_auth.key():
-            raise SystemExit("Devin needs the organization's key (DEVIN_API_KEY) on this server")
-        prompt = cmd[3] if devin else cmd[2]
+            raise SystemExit("Devin needs a Devin API key (DEVIN_API_KEY) for this run")
+        prompt = cmd[3] if devin else cmd[-1] if codex else cmd[2]
         model = cmd[cmd.index("--model") + 1] if "--model" in cmd else None
         robot_url, token = env["WETLAB_ROBOT_URL"], env.get("WETLAB_ROBOT_TOKEN", "")
         proxy = os.environ.get("WETLAB_MODEL_PROXY_URL", "")
@@ -170,7 +175,7 @@ class ModalSandboxLauncher:
         allow = [host(robot_url)] + (devin_auth.HOSTS if devin else [host(proxy)])
 
         app = modal.App.lookup(self.APP, create_if_missing=True)
-        sb = modal.Sandbox.create("sleep", "infinity", app=app, image=self.image(), timeout=1800,
+        sb = modal.Sandbox.create("sleep", "infinity", app=app, image=self.image(), timeout=2700,
                                   cpu=1.0, memory=2048, workdir="/workspace", outbound_domain_allowlist=allow)
         # Upload: the workspace, the robot client (plus its tool server) and the tools' config.
         buf = io.BytesIO()
@@ -202,6 +207,23 @@ class ModalSandboxLauncher:
             if model:
                 rcmd += ["--model", model]
             return _SandboxRun(sb, sb.exec(*rcmd, workdir="/workspace", env=base_env), "/tools/devin_acp.py")
+        if codex:
+            # Codex with an API key, through the model proxy (<proxy>/openai/v1), which adds the
+            # lab owner's OpenAI key. The sandbox is its jail, so Codex's own one is off (it can't
+            # set one up inside a Modal Sandbox anyway).
+            tool_env = "{" + ", ".join(f'{k}="{v}"' for k, v in base_env.items()) + "}"
+            rcmd = ["codex", "exec", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check", "--json",
+                    "-c", 'model_reasoning_summary="detailed"',
+                    "-c", 'mcp_servers.wetlab.command="python3"',
+                    "-c", 'mcp_servers.wetlab.args=["-m", "wetlabsim.mcp_server"]',
+                    "-c", f"mcp_servers.wetlab.env={tool_env}"]
+            if model:
+                rcmd += ["--model", model]
+            rcmd.append(prompt)
+            proc = sb.exec(*rcmd, workdir="/workspace", env={
+                **base_env, "OPENAI_BASE_URL": proxy.rstrip("/") + "/openai/v1", "OPENAI_API_KEY": token,
+                "CODEX_API_KEY": token, "CODEX_HOME": "/tmp/codex"})
+            return _SandboxRun(sb, proc, "codex exec")
         from .run_agent import MCP_TOOLS
         rcmd = ["claude", "-p", prompt, "--mcp-config", "/tools/mcp.json", "--strict-mcp-config",
                 "--allowedTools", "Bash", "Read", "Write", "Edit", *MCP_TOOLS,

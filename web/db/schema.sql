@@ -78,3 +78,19 @@ create index if not exists run_files_run on run_files (run_id)
 alter table sessions add column if not exists share_token text unique
 ;
 alter table runs add column if not exists share_token text unique
+;
+-- General settings: how long each of this person's AI runs may go (1 to 30 minutes).
+alter table users add column if not exists run_minutes integer not null default 5
+;
+-- This person's own AI keys, one per company (openai, anthropic, cognition = Devin, typesafe = Jev).
+-- key_ciphertext: AES-256-GCM with API_KEYS_ENCRYPTION_KEY (a Vercel setting, never in this
+-- database), as base64url(iv).base64url(tag).base64url(ciphertext). Only the last 4 letters are
+-- ever shown back.
+create table if not exists user_api_keys (
+  user_id        text not null references users (user_id) on delete cascade,
+  provider       text not null check (provider in ('openai', 'anthropic', 'cognition', 'typesafe')),
+  key_ciphertext text not null,
+  key_last4      text not null,
+  connected_at   timestamptz not null default now(),
+  primary key (user_id, provider)
+)

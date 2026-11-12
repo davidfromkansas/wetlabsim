@@ -6,18 +6,18 @@
 web (the front, Modal's stable web address): gives each visitor (a browser cookie, no sign-in)
   their own lab, at most WETLAB_MAX_LABS open at once; lists live runs to watch (/live) and
   every finished run (/pg/runs, each opening the replay viewer: chat, files, rewind).
-lab (one container per visitor): a playground server in public mode (free play only, Claude
-  models only, runs capped at 5 minutes and about $3, at most 4 runs at once across all labs,
-  more wait in a queue). Its page is reached through a tunnel of its own; only the owner's link
+lab (one container per visitor): a playground server in public mode (free play only, at most
+  4 runs at once across all labs, more wait in a queue). Every run uses the owner's own API key
+  for its company (Settings > General > Connections: OpenAI, Anthropic, Devin, Jev), kept
+  encrypted in the website's database and fetched by the lab for that run only; a company with
+  no key can't be used. Each run stops at the owner's time limit (1 to 30 minutes, default 5). Its page is reached through a tunnel of its own; only the owner's link
   (?key=) can change it, anyone else watches. It shuts down after 5 minutes with no clicks, typing or runs. The robot
   API and the model proxy leave through tunnels of their own, for the agents only: each run's
-  Claude Code runs in a Modal Sandbox that can reach those two and nothing else, and the
-  Anthropic key ("anthropic-secret") stays in the lab container.
-Devin: with the Modal secret "DEVIN_API_KEY" (holding DEVIN_API_KEY, a Devin organization's
-service-user key), labs also offer Devin's models, each run's Devin CLI in a Sandbox that can reach
-the robot and Devin's own servers only. Without that secret the site is Claude only.
-Jev: with the Modal secret "JEV_API_KEY" (holding JEV_API_KEY, a TypeSafe API key), labs also offer
-Jev 1.14. Its step loop runs in the lab itself (it runs no code from the model), so the key stays there.
+  Claude Code or Codex runs in a Modal Sandbox that can reach those two and nothing else, and the
+  owner's Anthropic or OpenAI key stays in the lab container (the proxy adds it).
+Devin: each run's Devin CLI runs in a Sandbox that can reach the robot and Devin's own servers
+only, logged in with the owner's Devin key.
+Jev: its step loop runs in the lab itself (it runs no code from the model), so the owner's key stays there.
 Run records go to the "wetlab-playground-runs" volume, shared by every lab and the front.
 """
 import os
@@ -57,8 +57,6 @@ image = (
     .add_local_dir(str(ROOT), "/app", ignore=IGNORE)
 )
 runs = modal.Volume.from_name(f"{APP}-runs", create_if_missing=True)
-DEVIN_SECRET = "DEVIN_API_KEY"
-JEV_SECRET = "JEV_API_KEY"
 
 
 def _optional_secret(name: str) -> list:
@@ -76,9 +74,8 @@ def _optional_secret(name: str) -> list:
 LINK_SECRET = "wetlab-link"
 # DATABASE_URL (the website's Neon database): a signed-in owner's lab saves its sessions and runs there.
 DB_SECRET = "wetlab-db"
-lab_secrets = [modal.Secret.from_name("anthropic-secret"), *_optional_secret(DEVIN_SECRET), *_optional_secret(JEV_SECRET),
-               *_optional_secret(LINK_SECRET),
-               *_optional_secret(DB_SECRET)]
+# No AI keys of the site's own: every run uses its owner's (from the website, with LINK_SECRET).
+lab_secrets = [*_optional_secret(LINK_SECRET), *_optional_secret(DB_SECRET)]
 app = modal.App(APP, image=image)
 
 
@@ -113,11 +110,11 @@ def lab(lab_id: str, owner_key: str, owner_user: str = ""):
     with modal.forward(8780) as page, modal.forward(8781) as robot, modal.forward(8782) as proxy:
         env = dict(os.environ, WETLAB_SESSION_DIR="/tmp/sessions", WETLAB_LAB_ID=lab_id, WETLAB_OWNER_KEY=owner_key, WETLAB_LAB_URL=page.url,
                    WETLAB_OWNER_USER=owner_user,
-                   WETLAB_RUN_TAG=lab_id, WETLAB_MODEL_PROXY_URL=proxy.url, WETLAB_RUN_BUDGET_USD="3")
+                   WETLAB_RUN_TAG=lab_id, WETLAB_MODEL_PROXY_URL=proxy.url)
         _commit_loop()
         proc = subprocess.Popen(
             ["python", "-m", "playground.server", "--host", "0.0.0.0", "--port", "8780", "--no-browser",
-             "--public", "--run-minutes", "5", "--max-active", "4", "--idle-minutes", "5",
+             "--public", "--max-active", "4", "--idle-minutes", "5",
              "--launcher", "modal", "--robot-port", "8781", "--agent-robot-url", robot.url,
              "--model-proxy-port", "8782", "--runs", "/data/runs"],
             cwd="/app", env=env)
