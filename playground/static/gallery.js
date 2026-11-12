@@ -5,8 +5,6 @@
 // (after a run: its last task, dimmed).
 (() => {
 const css = `
-#galBtn{position:absolute;right:14px;top:12px;z-index:6}
-@container (max-width:1060px){#galBtn{top:66px}}
 body:not(.freeplay) #galBtn{display:none}
 #gal{position:absolute;inset:0;z-index:30;background:#0B0D12;display:none;flex-direction:column;border-radius:inherit;overflow:hidden}
 #gal.open{display:flex;animation:galIn 180ms cubic-bezier(.23,1,.32,1)}
@@ -36,8 +34,8 @@ document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
 const stage = document.getElementById('stage');
 const TV = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="19" height="13" rx="2.5"/><path d="M8 3l4 4 4-4"/></svg>';
 const XI = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E5E7EB" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
-stage.insertAdjacentHTML('beforeend', `<button class="fbtn" id="galBtn" aria-haspopup="dialog" aria-expanded="false">${TV}Gallery</button>`
-  + `<div id="gal" role="dialog" aria-label="Gallery: every robot, live"><div class="gh"><b>Gallery</b><span class="n" id="galN"></span><button class="gx" id="galX" aria-label="Close gallery">${XI}</button></div><div class="gg" id="galG"></div></div>`);
+(document.getElementById('rcol') || stage).insertAdjacentHTML('beforeend', `<button class="fbtn" id="galBtn" aria-haspopup="dialog" aria-expanded="false">${TV}Gallery</button>`);
+stage.insertAdjacentHTML('beforeend', `<div id="gal" role="dialog" aria-label="Gallery: every robot, live"><div class="gh"><b>Gallery</b><span class="n" id="galN"></span><button class="gx" id="galX" aria-label="Close gallery">${XI}</button></div><div class="gg" id="galG"></div></div>`);
 const btn = document.getElementById('galBtn'), gal = document.getElementById('gal'), grid = document.getElementById('galG');
 const G = {open: false, key: '', seen: {}, busy: 0};
 const e = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
