@@ -1,4 +1,6 @@
-// Scene settings: every MuJoCo setting of this session's lab (MuJoCo's own <option>, its 28
+// Settings, two tabs. General (the owner's own, for every session): the time limit of each AI run
+// and their own API keys (Connections), each change saved at once (GET/POST /pg/account).
+// Scene: every MuJoCo setting of this session's lab (MuJoCo's own <option>, its 28
 // on/off flags, contact override and motor groups, the same groups as MuJoCo's own viewer) plus
 // the lab's material groups. Edits wait until Save, which asks first and restarts the scene.
 // Each setting has an (i) note: what it does (from MuJoCo's XML reference), MuJoCo's default,
@@ -100,6 +102,52 @@ body:not(.freeplay) #ssBtn{display:none}
 #ss .mh{display:flex;align-items:center;gap:14px;padding:16px 20px;border-bottom:1px solid #E5E7EB}
 #ss .mh h2{margin:0;font-size:20px}
 #ss .mh .sub{font-size:13px;color:#4B5563}
+#ss .mh.tabbed{padding:0 16px 0 28px;height:60px;flex:none}
+#ss .tabs{display:flex;gap:28px;align-self:stretch}
+#ss .tabs .tb{height:auto;border-radius:0;border:0;background:none;padding:0;font:500 15px Inter,sans-serif;color:#4B5563;border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer}
+#ss .tabs .tb:hover{color:#111827}
+#ss .tabs .tb.on{color:#111827;font-weight:600;border-bottom-color:#111827}
+#ss .mh.tabbed .x{margin-left:auto}
+#ss .mh.tabbed .srch+.x{margin-left:0}
+#ss .gs{flex:1;overflow:auto;padding:22px 28px 28px;display:flex;flex-direction:column;gap:22px}
+#ss .gs h3{margin:0 0 10px;font-size:17px}
+#ss .gs .note{margin:0 0 10px;color:#4B5563}
+#ss .tlr{display:flex;align-items:center;gap:16px;padding:12px 16px;border:1px solid #E5E7EB;border-radius:12px}
+#ss .tlr span{flex:1;color:#374151}
+#ss .stp{display:flex;align-items:center;height:40px;border:1px solid #D1D5DB;border-radius:9px;background:#fff;overflow:hidden}
+#ss .stp button{width:40px;height:40px;border:0;background:transparent;font:500 20px Inter,sans-serif;color:#111827;cursor:pointer}
+#ss .stp button:disabled{color:#C3C8D0;cursor:default}
+#ss .stp output{min-width:86px;height:40px;border-left:1px solid #E5E7EB;border-right:1px solid #E5E7EB;display:flex;align-items:center;justify-content:center;font:600 15px 'JetBrains Mono',ui-monospace,monospace}
+#ss .cons{border:1px solid #E5E7EB;border-radius:12px;overflow:hidden}
+#ss .con{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid #F0F1F3;flex-wrap:wrap}
+#ss .cons>:last-child{border-bottom:0}
+#ss .con .lg{width:40px;height:40px;border-radius:10px;background:#F7F8FA;box-shadow:0 0 0 1px #E5E7EB;display:flex;align-items:center;justify-content:center;flex:none}
+#ss .con .lg img{width:22px;height:22px}
+#ss .con .t{flex:1;min-width:200px}
+#ss .con .t b{font-size:15px;display:flex;align-items:center;gap:8px}
+#ss .con .d{font-size:13px;color:#4B5563;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#ss .con .d i{width:3px;height:3px;border-radius:50%;background:#9CA3AF;display:block}
+#ss .con .acts{display:flex;gap:8px}
+#ss .stt{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:999px;font-size:12px;font-weight:600;background:#F3F4F6;color:#374151}
+#ss .stt:before{content:"";width:7px;height:7px;border-radius:50%;background:#9CA3AF}
+#ss .stt.ok{background:#DCFCE7;color:#166534}
+#ss .stt.ok:before{background:#16A34A}
+#ss .mkey{font:500 12.5px 'JetBrains Mono',ui-monospace,monospace;color:#374151;background:#F3F4F6;border-radius:6px;padding:1px 7px}
+#ss .bt{height:38px;padding:0 14px;border-radius:9px;border:1px solid #D1D5DB;background:#fff;color:#111827;font:600 14px Inter,sans-serif;cursor:pointer;white-space:nowrap}
+#ss .bt.pri{background:#2563EB;border-color:#2563EB;color:#fff}
+#ss .bt.red{background:#DC2626;border-color:#DC2626;color:#fff}
+#ss .bt:disabled{opacity:.6;cursor:default}
+#ss .gexp{background:#FAFAFB;border-bottom:1px solid #F0F1F3;padding:4px 16px 16px 70px}
+#ss .way{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+#ss .way h4{margin:0;font-size:14.5px}
+#ss .way p{margin:0;font-size:13px;color:#4B5563}
+#ss .way a{color:#1D4ED8;font-weight:600}
+#ss .kin{height:40px;border:1px solid #D1D5DB;border-radius:9px;padding:0 10px;font:500 14px 'JetBrains Mono',ui-monospace,monospace;color:#111827;width:100%;outline:none}
+#ss .kin:focus{border-color:#2563EB;box-shadow:0 0 0 3px #DBEAFE}
+#ss .kin.bad{border-color:#DC2626;box-shadow:0 0 0 3px #FEE2E2}
+#ss .emsg{font-size:13px;color:#B91C1C;font-weight:500}
+#ss .way .row2{display:flex;gap:8px}
+#ss .gerr{padding:10px 14px;border-radius:10px;background:#FEF2F2;color:#991B1B;font-weight:600}
 #ss .srch{margin-left:auto;width:300px;max-width:40%;height:40px;border:1px solid #D1D5DB;border-radius:9px;display:flex;align-items:center;gap:8px;padding:0 10px;color:#6B7280}
 #ss .srch input{border:0;outline:none;flex:1;min-width:0;font:15px Inter,sans-serif;color:#111827;background:transparent}
 #ss .x{width:40px;height:40px;border-radius:9px;border:1px solid #D1D5DB;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
@@ -179,15 +227,15 @@ body:not(.freeplay) #ssBtn{display:none}
 #ssDlg .chl div:last-child{border-bottom:0}
 #ssDlg .chl code{font:500 13px 'JetBrains Mono',monospace;color:#111827;white-space:nowrap}
 #ssDlg .act{display:flex;justify-content:flex-end;gap:10px}
-@media (max-width:760px){#ss .snav{width:64px}#ss .snav .lb,#ss .snav .n,#ss .snav .chg{display:none}#ss .row{grid-template-columns:1fr}#ss .srch{display:none}}
+@media (max-width:760px){#ss .gexp{padding-left:16px}#ss .gs{padding:16px}#ss .mh.tabbed{padding-left:16px}#ss .snav{width:64px}#ss .snav .lb,#ss .snav .n,#ss .snav .chg{display:none}#ss .row{grid-template-columns:1fr}#ss .srch{display:none}}
 `;
 document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
 const stage = document.getElementById('stage');
-stage.insertAdjacentHTML('beforeend', `<button class="fbtn" id="ssBtn" aria-haspopup="dialog">${ic('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>')}Scene settings</button>`);
-document.body.insertAdjacentHTML('beforeend', `<div id="ssWrap"><div id="ss" role="dialog" aria-modal="true" aria-labelledby="ssTitle"></div></div><div id="ssTip" role="tooltip"></div>`);
+stage.insertAdjacentHTML('beforeend', `<button class="fbtn" id="ssBtn" aria-haspopup="dialog">${ic('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>')}Settings</button>`);
+document.body.insertAdjacentHTML('beforeend', `<div id="ssWrap"><div id="ss" role="dialog" aria-modal="true" aria-label="Settings"></div></div><div id="ssTip" role="tooltip"></div>`);
 const wrap = document.getElementById('ssWrap'), box = document.getElementById('ss'), tip = document.getElementById('ssTip');
 
-const M = {data: null, draft: null, group: 'solver', q: '', only: false, busy: false, err: '', opener: null};
+const M = {data: null, draft: null, group: 'solver', q: '', only: false, busy: false, err: '', opener: null, tab: 'scene'};
 const clone = (x) => JSON.parse(JSON.stringify(x));
 const num = (x) => typeof x === 'number' ? (Number.isInteger(x) ? String(x) : String(+x.toPrecision(10))) : String(x);
 const same = (a, b) => {
@@ -252,17 +300,35 @@ function locked() {
   return '';
 }
 
-async function open() {
+// General is the owner's (not for someone watching another person's lab).
+const hasGeneral = () => !S.watch;
+function tabsHtml() {
+  const t = (id, lab) => `<button class="tb${M.tab === id ? ' on' : ''}" role="tab" aria-selected="${M.tab === id}" data-tab="${id}">${lab}</button>`;
+  return `<nav class="tabs" role="tablist" aria-label="Settings">${hasGeneral() ? t('general', 'General') : ''}${t('scene', 'Scene')}</nav>`;
+}
+function wireTabs() {
+  box.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { if (b.dataset.tab !== M.tab) showTab(b.dataset.tab); });
+}
+async function open(tab) {
   M.opener = document.activeElement;
+  M.data = null; M.draft = null;
   wrap.classList.add('open');
-  box.innerHTML = '<div class="mh"><h2 id="ssTitle">Scene settings</h2><span class="sub">Loading…</span></div>';
+  await showTab(typeof tab === 'string' && (tab !== 'general' || hasGeneral()) ? tab : hasGeneral() ? 'general' : 'scene');
+}
+async function showTab(tab) {
+  M.tab = tab; hideTip(true);
+  if (tab === 'general') return G.load();
+  if (M.data) return draw(true);       // back to Scene: the edits made so far are kept
+  box.innerHTML = `<div class="mh tabbed">${tabsHtml()}<span class="sub">Loading…</span><button class="x" id="ssX" aria-label="Close settings">${XI}</button></div>`;
+  wireTabs(); box.querySelector('#ssX').onclick = () => close();
   const r = await fetch(U('/pg/settings'), {headers: {'X-Browser-Id': BID}}).then(x => x.json()).catch(() => null);
+  if (M.tab !== 'scene') return;
   if (!r || !r.ok) { box.querySelector('.sub').textContent = 'Could not load the settings. Try again.'; return; }
   M.data = r; M.draft = clone(r.current); M.err = ''; M.q = ''; M.only = false;
   draw(true);
 }
 async function close(force) {
-  const n = items().filter(changed).length;
+  const n = M.data ? items().filter(changed).length : 0;
   if (!force && n && !(await askConfirm('Discard your changes?', `You have ${n} unsaved change${n > 1 ? 's' : ''}. Closing throws ${n > 1 ? 'them' : 'it'} away.`, 'Discard'))) return;
   wrap.classList.remove('open'); hideTip(true);
   if (M.opener && M.opener.focus) M.opener.focus();
@@ -337,7 +403,7 @@ function draw(first) {
     return `<button class="${!q && !M.only && M.group === g[0] ? 'on' : ''}" data-g="${g[0]}">${ic(g[3])}<span class="lb">${g[1]}</span>${ch ? `<span class="chg">${ch} changed</span>` : `<span class="n">${cnt}</span>`}</button>`;
   }).join('');
   const differ = all.filter(fromPlayground).length;
-  box.innerHTML = `<div class="mh"><div><h2 id="ssTitle">Scene settings</h2><div class="sub">${esc((S.scene && S.scene.session && S.scene.session.name) || 'This session')} · MuJoCo's own settings for this lab</div></div>
+  box.innerHTML = `<div class="mh tabbed">${tabsHtml()}
     <label class="srch"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#6B7280" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="ssQ" type="search" placeholder="Search settings" aria-label="Search settings" value="${esc(M.q)}"></label>
     <button class="x" id="ssX" aria-label="Close settings">${XI}</button></div>
     ${lock ? `<div class="lock"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>${esc(lock)}</div>` : ''}
@@ -365,6 +431,7 @@ function check(el) {
 function wire() {
   const all = items(), byId = Object.fromEntries(all.map(it => [it.id, it]));
   box.querySelector('#ssX').onclick = () => close();
+  wireTabs();
   const qi = box.querySelector('#ssQ');
   qi.oninput = () => { M.q = qi.value; draw(); const n = box.querySelector('#ssQ'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); };
   box.querySelectorAll('.snav [data-g]').forEach(b => b.onclick = () => { M.group = b.dataset.g; M.q = ''; M.only = false; draw(); });
@@ -451,7 +518,107 @@ async function save() {
   if (M.opener && M.opener.focus) M.opener.focus();
 }
 
-document.getElementById('ssBtn').onclick = open;
+// ---------------------------------------------------------------- General tab
+const G = {data: null, open_: '', err: {}, busy: '', gerr: '', saveT: null};
+const PROV_INFO = {
+  openai: {what: 'GPT models, run through Codex', where: '<a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>. Paid per use from your OpenAI account.'},
+  anthropic: {what: 'Claude models, run through Claude Code', where: '<a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. Paid per use from your Anthropic account.'},
+  cognition: {what: 'SWE models, run through Devin', where: 'Devin\'s settings, under Service users (the key starts with cog_).'},
+  typesafe: {what: 'Jev, TypeSafe\'s decision model', where: 'your TypeSafe account.'},
+};
+const fmtDate = (s) => { try { return new Date(s).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'}); } catch (e) { return ''; } };
+G.load = async () => {
+  G.open_ = ''; G.err = {}; G.gerr = '';
+  if (!G.data) {
+    box.innerHTML = `<div class="mh tabbed">${tabsHtml()}<span class="sub">Loading…</span><button class="x" id="ssX" aria-label="Close settings">${XI}</button></div>`;
+    wireTabs(); box.querySelector('#ssX').onclick = () => close();
+  }
+  const r = await api('/pg/account').catch(() => null);
+  if (M.tab !== 'general') return;
+  if (!r || !r.ok) { G.data = null; G.gerr = (r && r.error) || 'Could not load your settings. Try again.'; }
+  else { G.data = r; if (window.onAccount) window.onAccount(r); }
+  G.draw();
+};
+G.draw = () => {
+  const d = G.data;
+  let body;
+  if (!d) body = `<div class="gerr">${esc(G.gerr)}</div>`;
+  else {
+    const n = d.run_minutes;
+    const rows = d.providers.map(p => {
+      const inf = PROV_INFO[p.id] || {what: '', where: ''}, open = G.open_ === p.id, busy = G.busy === p.id;
+      const facts = p.connected
+        ? [`API key <span class="mkey">••••${esc(p.last4 || '')}</span>`, p.spent_usd != null ? `Spent here: $${(+p.spent_usd).toFixed(2)}` : '', p.connected_at ? `Connected ${esc(fmtDate(p.connected_at))}` : ''].filter(Boolean).join('<i></i>')
+        : esc(inf.what);
+      const acts = open ? '' : p.connected
+        ? `<button class="bt" data-edit="${p.id}"${busy ? ' disabled' : ''}>Edit</button><button class="bt red" data-off="${p.id}"${busy ? ' disabled' : ''}>Disconnect</button>`
+        : `<button class="bt pri" data-edit="${p.id}">Connect</button>`;
+      const form = open ? `<div class="gexp"><div class="way"><h4>${p.connected ? 'Replace your API key' : 'Add an API key'}</h4><p>Get one from ${inf.where}</p>
+        <input class="kin${G.err[p.id] ? ' bad' : ''}" id="gsKey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste API key" aria-label="${esc(p.label)} API key"${G.err[p.id] ? ' aria-describedby="gsErr" aria-invalid="true"' : ''}>
+        ${G.err[p.id] ? `<span class="emsg" id="gsErr" role="alert">${esc(G.err[p.id])}</span>` : ''}
+        <div class="row2"><button class="bt pri" id="gsSave"${busy ? ' disabled' : ''}>${busy ? 'Checking…' : 'Save'}</button><button class="bt" id="gsCancel"${busy ? ' disabled' : ''}>Cancel</button></div></div></div>` : '';
+      return `<div class="con"><span class="lg"><img src="${LOGOS[p.id] || ''}" alt=""></span><div class="t"><b>${esc(p.label)} <span class="stt${p.connected ? ' ok' : ''}">${p.connected ? 'Connected' : 'Not connected'}</span></b><span class="d">${facts}</span></div><div class="acts">${acts}</div></div>${form}`;
+    }).join('');
+    body = `<section><h3>Time limit</h3><div class="tlr"><span id="gsTlLab">Max minutes per AI run (${d.min_minutes} to ${d.max_minutes}).</span>
+      <div class="stp" role="group" aria-labelledby="gsTlLab"><button id="gsMinus" aria-label="One minute less"${n <= d.min_minutes ? ' disabled' : ''}>&#8722;</button><output id="gsMin" aria-live="polite">${n} min</output><button id="gsPlus" aria-label="One minute more"${n >= d.max_minutes ? ' disabled' : ''}>+</button></div></div></section>
+      <section><h3>Connections</h3><div class="cons">${rows}</div></section>`;
+  }
+  const focusId = document.activeElement && box.contains(document.activeElement) ? document.activeElement.id : '';
+  box.innerHTML = `<div class="mh tabbed">${tabsHtml()}<button class="x" id="ssX" aria-label="Close settings">${XI}</button></div><div class="gs">${body}</div><div id="ssDlg"></div>`;
+  wireTabs(); box.querySelector('#ssX').onclick = () => close();
+  if (focusId && box.querySelector('#' + focusId) && !box.querySelector('#' + focusId).disabled) box.querySelector('#' + focusId).focus();
+  if (!d) return;
+  const step = (dx) => {
+    d.run_minutes = Math.max(d.min_minutes, Math.min(d.max_minutes, d.run_minutes + dx));
+    G.draw();
+    clearTimeout(G.saveT);      // saved once the clicking stops
+    G.saveT = setTimeout(async () => {
+      const r = await api('/pg/account', {action: 'minutes', minutes: d.run_minutes}).catch(() => null);
+      if (!r || !r.ok) toast((r && r.error) || 'Could not save the time limit');
+      else if (window.onAccount) window.onAccount(r);
+    }, 450);
+  };
+  box.querySelector('#gsMinus').onclick = () => step(-1);
+  box.querySelector('#gsPlus').onclick = () => step(1);
+  box.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => {
+    G.open_ = b.dataset.edit; G.err = {}; G.draw();
+    const k = box.querySelector('#gsKey'); if (k) k.focus();
+  });
+  box.querySelectorAll('[data-off]').forEach(b => b.onclick = async () => {
+    const p = d.providers.find(x => x.id === b.dataset.off);
+    if (!(await askConfirm(`Disconnect ${p.label}?`, `Your ${p.label} key is deleted. ${p.label} models can't run until you add a key again.`, 'Disconnect'))) return;
+    G.busy = p.id; G.draw();
+    const r = await api('/pg/account', {action: 'disconnect', provider: p.id}).catch(() => null);
+    G.busy = '';
+    if (r && r.ok) { G.data = r; if (window.onAccount) window.onAccount(r); toast(`${p.label} disconnected`); }
+    else toast((r && r.error) || 'Could not disconnect');
+    G.draw();
+  });
+  const save = async () => {
+    const pid = G.open_, key = box.querySelector('#gsKey').value.trim();
+    if (!key) { G.err = {[pid]: 'Paste your API key first.'}; G.draw(); box.querySelector('#gsKey').focus(); return; }
+    G.busy = pid; G.err = {}; G.draw(); box.querySelector('#gsKey').value = key;
+    const r = await api('/pg/account', {action: 'connect', provider: pid, key}).catch(() => null);
+    G.busy = '';
+    if (r && r.ok) {
+      G.data = r; G.open_ = ''; if (window.onAccount) window.onAccount(r); G.draw();
+      toast(`${(r.providers.find(x => x.id === pid) || {}).label || 'Account'} connected`);
+      return;
+    }
+    G.err = {[pid]: (r && r.error) || 'Couldn\'t connect. Try again.'};
+    G.draw();
+    const k2 = box.querySelector('#gsKey'); if (k2) { k2.value = key; k2.focus(); }
+  };
+  const sv = box.querySelector('#gsSave');
+  if (sv) {
+    sv.onclick = save;
+    box.querySelector('#gsKey').addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); });
+    box.querySelector('#gsCancel').onclick = () => { G.open_ = ''; G.err = {}; G.draw(); };
+  }
+};
+
+document.getElementById('ssBtn').onclick = () => open();
+window.openSettings = open;
 wrap.addEventListener('mousedown', (e) => { if (e.target === wrap) close(); });
 document.addEventListener('keydown', (e) => {
   if (!wrap.classList.contains('open') || e.key !== 'Escape') return;

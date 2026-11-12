@@ -40,6 +40,7 @@ from . import labs as LABS
 from . import savestore as SAVE
 from . import scene3d as S3
 from . import settings as ST
+from . import accounts as ACCT
 
 HERE = pathlib.Path(__file__).parent
 PAGE = HERE / "static" / "index.html"
@@ -55,6 +56,7 @@ def _page() -> bytes:
         page = page.replace(f"/pg/static/{name}?v=HASH".encode(), f"/pg/static/{name}?v={v}".encode())
     return page
 ROBOT_API_URL = ""      # set when the robot API listener is running (main)
+MODEL_PROXY = False     # whether the model proxy is running here (main)
 TIME_LIMIT = 180.0     # seconds: a LIBERO test run that hasn't finished by then is stopped
 # The public site (main --public): Claude (and Devin, with an org key) only, free play only,
 # every run capped, the AI in a cloud sandbox, a few runs at once with a queue.
@@ -149,14 +151,24 @@ JEV_KEY = bool(os.environ.get("JEV_API_KEY") or os.environ.get("TYPESAFE_API_KEY
 
 
 def _needs(m: dict) -> str:
-    if (m["agent"] == "devin" and DEVIN_ORG) or (m["agent"] == "jev" and JEV_KEY):
+    # The public site runs every model on the owner's own key (General settings, Connections),
+    # and locally a key saved there does the same.
+    if PUBLIC or (m["agent"] == "devin" and DEVIN_ORG) or (m["agent"] == "jev" and JEV_KEY):
+        return ""
+    if m["agent"] in ("devin", "jev") and ACCT.AGENT_PROVIDER[m["agent"]] in ACCT.connected():
         return ""
     return m.get("needs", "")
 
 
 def _site_agents() -> set:
-    """The agents the public site runs: Claude, plus Devin and Jev once their keys are set."""
-    return {"claude"} | ({"devin"} if DEVIN_ORG else set()) | ({"jev"} if JEV_KEY else set())
+    """The agents the public site runs, each on the lab owner's own key for its company."""
+    return set(ACCT.AGENT_PROVIDER)
+
+
+def _usable(m: dict) -> bool:
+    """Whether a run on this model can start here: on the public site, only with the owner's
+    key for its company saved."""
+    return not PUBLIC or ACCT.AGENT_PROVIDER.get(m["agent"]) in ACCT.connected()
 
 
 class Runner:
@@ -200,11 +212,33 @@ class Runner:
             self.log_path = self.runs / "runner-logs" / f"{time.strftime('%Y%m%d-%H%M%S')}-{secrets.token_hex(3)}.log"
             log = open(self.log_path, "a")
             env = dict(os.environ)
+            # The owner's own key for this model's company (General settings), if one is saved.
+            # The public site has no other: without one the run can't start.
+            try:
+                key = ACCT.key_for(mdl["agent"])
+            except RuntimeError as e:
+                raise RobotError(f"couldn't get your {mdl['via']} key: {e}") from None
+            if PUBLIC and not key:
+                raise RobotError(f"connect your {ACCT.PROVIDERS[ACCT.AGENT_PROVIDER[mdl['agent']]]['label']} "
+                                 "API key in Settings > General to run this model")
+            self.token = None
             if ROBOT_API_URL:
                 # The agent gets the robot API and a token for this robot, for this run only.
                 self.token = RA.TOKENS.issue(urllib.parse.urlparse(self.url).path, run=task[:60])
                 env["WETLAB_ROBOT_TOKEN"] = self.token
                 cmd += ["--robot-url", AGENT_ROBOT_URL or ROBOT_API_URL, "--launcher", RUN_LAUNCHER]
+            if key:
+                proxied = MODEL_PROXY and self.token and mdl["agent"] in ("claude", "codex")
+                if proxied:
+                    # Claude Code and Codex reach their company through the model proxy, which adds
+                    # the key: the agent never holds it.
+                    from . import model_proxy
+                    model_proxy.KEYS[self.token] = {ACCT.AGENT_PROVIDER[mdl["agent"]]: key}
+                else:
+                    env[{"claude": "ANTHROPIC_API_KEY", "codex": "OPENAI_API_KEY", "devin": "DEVIN_API_KEY",
+                         "jev": "JEV_API_KEY"}[mdl["agent"]]] = key
+                    if mdl["agent"] == "codex":
+                        env["CODEX_API_KEY"] = key
             self.proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
                                          start_new_session=True, cwd=str(HERE.parent), env=env)
             proc, tok = self.proc, getattr(self, "token", None)
@@ -213,6 +247,9 @@ class Runner:
                 proc.wait()
                 self.info["ended"] = time.time()
                 RA.TOKENS.revoke(tok)
+                if MODEL_PROXY and tok:
+                    from . import model_proxy
+                    model_proxy.KEYS.pop(tok, None)
                 LABS.free_slot(slot)
                 if self.on_done:
                     try:
@@ -830,6 +867,39 @@ class PGHandler(Handler):
     wetbench: WL.WetBench
     base_url = ""
 
+    def _account_info(self, fresh: bool = False) -> dict:
+        """General settings (the owner's own): time limit and which companies are connected."""
+        try:
+            st = ACCT.settings(fresh=fresh)
+        except RuntimeError as e:
+            return {"ok": False, "error": f"Couldn't load your settings: {e}"}
+        return {"ok": True, "run_minutes": st["run_minutes"], "min_minutes": ACCT.MIN_MINUTES,
+                "max_minutes": ACCT.MAX_MINUTES, "required": PUBLIC,
+                "providers": [{"id": k, "label": v["label"], **({"connected": True, **st["connections"][k]}
+                                                                if k in st["connections"] else {"connected": False})}
+                              for k, v in ACCT.PROVIDERS.items()]}
+
+    def _account_change(self):
+        """POST /pg/account {action: minutes|connect|disconnect, ...}: saved at once (no Save button)."""
+        b = self._body()
+        act = b.get("action")
+        try:
+            if act == "minutes":
+                ACCT.set_minutes(b.get("minutes"))
+            elif act == "connect":
+                if b.get("provider") not in ACCT.PROVIDERS:
+                    return self._json({"ok": False, "error": "unknown company"})
+                err = ACCT.connect(b["provider"], str(b.get("key") or "")[:400])
+                if err:
+                    return self._json({"ok": False, "error": err, "provider": b["provider"]})
+            elif act == "disconnect":
+                ACCT.disconnect(b.get("provider"))
+            else:
+                return self._json({"ok": False, "error": "unknown action"})
+        except (ValueError, RuntimeError) as e:
+            return self._json({"ok": False, "error": str(e)})
+        return self._json(self._account_info())
+
     def _bind_session(self) -> bool:
         """Which session this request is for: /s/<id>/... (the robot API and the page's links),
         else ?s=<id> or X-Session, else the oldest one. False (and an error sent) if it names
@@ -1213,11 +1283,16 @@ class PGHandler(Handler):
                     return self._send(200, f.read_bytes(), mimetypes.guess_type(f.name)[0] or "application/octet-stream",
                                       {"Cache-Control": "max-age=3600"})
                 return self._err("not found", 404)
+            if p == "/pg/account":
+                if not LABS.owner_ok(self.headers):
+                    return self._err("only this lab's owner can see its settings", 403)
+                return self._json(self._account_info(fresh=True))
             if p == "/pg/catalog":
                 return self._json({"tabs": catalog.TABS, "items": catalog.available(), "robots": catalog.robots(),
                                    "models": [{**{k: m[k] for k in ("id", "label", "via", "provider") if k in m},
                                                **({"needs": _needs(m)} if _needs(m) else {})}
                                               for m in MODELS if not PUBLIC or m["agent"] in _site_agents()],
+                                   "max_run_minutes": ACCT.MAX_MINUTES,
                                    "time_limit": TIME_LIMIT, "public": PUBLIC,
                                    "free_time_limit": FREE_TIME_LIMIT, "max_active": MAX_ACTIVE if PUBLIC else 0,
                                    "owner": LABS.owner_ok(self.headers), "front": LABS.FRONT_URL,
@@ -1394,6 +1469,8 @@ class PGHandler(Handler):
             return self._json({"ok": True, "idle_left": LABS.idle_left()})
         if urllib.parse.urlparse(self.path).path.rstrip("/") == "/pg/sessions/new":
             return self._new_session()
+        if urllib.parse.urlparse(self.path).path.rstrip("/") == "/pg/account":
+            return self._account_change()
         if not self._bind_session():
             return None
         # Someone else's session: watch only.
@@ -1675,12 +1752,14 @@ class PGHandler(Handler):
                     if runner.active() or _queue_position(self.sess.id, uid):
                         return self._json({"ok": False, "error": f"{station.name} is already running a task"})
                     model = b.get("model", "claude")
-                    if PUBLIC:
-                        if not any(m["id"] == model and m["agent"] in _site_agents() for m in MODELS):
-                            return self._json({"ok": False, "error": "this site doesn't run that model"})
-                        limit = FREE_TIME_LIMIT          # the site's cap, not the page's say
-                    else:
-                        limit = float(b.get("time_limit", FREE_TIME_LIMIT))
+                    mdl = next((m for m in MODELS if m["id"] == model), None)
+                    if PUBLIC and (mdl is None or mdl["agent"] not in _site_agents()):
+                        return self._json({"ok": False, "error": "this site doesn't run that model"})
+                    if mdl is not None and not _usable(mdl):
+                        prov = ACCT.PROVIDERS[ACCT.AGENT_PROVIDER[mdl["agent"]]]["label"]
+                        return self._json({"ok": False, "error": f"Connect your {prov} API key in Settings to run {mdl['label']}."})
+                    # The owner's time limit (General settings), in minutes.
+                    limit = ACCT.run_minutes() * 60.0
                     try:
                         repeat = max(1, min(30, int(b.get("repeat", 1))))
                     except (TypeError, ValueError):
@@ -1801,7 +1880,7 @@ def main(argv=None):
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8780)
     ap.add_argument("--public", action="store_true",
-                    help="the public site: Claude only, free play only, runs capped at --run-minutes, "
+                    help="the public site: free play only, every run on the lab owner's own API key, "
                          "at most --max-active at once, agents in cloud sandboxes (--launcher)")
     ap.add_argument("--front", action="store_true",
                     help="the public site's front: hands each visitor their own lab, lists live and past runs")
@@ -1819,7 +1898,7 @@ def main(argv=None):
     ap.add_argument("--runs", default="runs/playground")
     ap.add_argument("--no-browser", action="store_true")
     args = ap.parse_args(argv)
-    global PUBLIC, MAX_ACTIVE, RUN_LAUNCHER, AGENT_ROBOT_URL, FREE_TIME_LIMIT, FRONT
+    global PUBLIC, MAX_ACTIVE, RUN_LAUNCHER, AGENT_ROBOT_URL, FREE_TIME_LIMIT, FRONT, MODEL_PROXY
     FRONT = args.front
     PUBLIC, MAX_ACTIVE, RUN_LAUNCHER, AGENT_ROBOT_URL = args.public, args.max_active, args.launcher, args.agent_robot_url
     if PUBLIC:
@@ -1880,6 +1959,7 @@ def main(argv=None):
     if args.model_proxy_port:
         from . import model_proxy
         model_proxy.serve(args.host, args.model_proxy_port)
+        MODEL_PROXY = True
         print(f"Model proxy for agents on port {args.model_proxy_port} (run tokens only)")
     print(f"MuJoCo Playground is running at {url}")
     if not args.no_browser:
