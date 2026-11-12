@@ -548,6 +548,8 @@ body.rclosed #rrail{border-right:0}
 body.watch .radd{display:none}
 #rrail .rpast{margin-top:auto;flex:none;width:44px;height:44px;border-radius:12px;background:#fff;box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(17,24,39,.06);transition:box-shadow 120ms}
 #rrail .rpast:hover{background:#fff;box-shadow:0 0 0 2px #93B4FF}
+#rrail #rSet{margin-top:0;cursor:pointer;border:0;display:flex;align-items:center;justify-content:center;padding:0}
+body:not(.freeplay) #rSet{display:none}
 #pastLink{display:none!important}
 #rtip{position:fixed;z-index:80;background:var(--ink);color:#fff;border-radius:8px;padding:7px 11px;font:12px/1.4 Inter,sans-serif;white-space:nowrap;pointer-events:none}
 #rtip[hidden]{display:none}
@@ -597,6 +599,21 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
 
 /* ---------- play/pause = the physics world ---------- */
 #playBtn:disabled{opacity:.45;cursor:not-allowed}
+/* the physics on/off toggle, top right of the scene, above Gallery and as wide as it */
+#rcol{position:absolute;right:14px;top:12px;z-index:6;display:flex;flex-direction:column;align-items:stretch;gap:8px}
+#rcol .fbtn{justify-content:center}
+#physBtn{justify-content:space-between!important;gap:10px}
+#physBtn .tg{position:relative;width:30px;height:18px;border-radius:999px;background:#D1D5DB;flex:none;transition:background 160ms ease-out}
+#physBtn .tg i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform 160ms cubic-bezier(.23,1,.32,1)}
+#physBtn[aria-checked=true] .tg{background:var(--green)}#physBtn[aria-checked=true] .tg i{transform:translateX(12px)}
+#physBtn:disabled{cursor:not-allowed}#physBtn:disabled .tg{opacity:.5}
+body.watch #physBtn{display:none}
+#playpill:empty,#playpill.none{display:none}
+/* a session's "⋯" menu (Share) */
+.sroww{position:relative}.sroww .srow{padding-right:34px}
+.ssmore{position:absolute;right:6px;top:12px;width:24px;height:26px;border-radius:7px;border:0;background:transparent;color:#374151;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.ssmore:hover,.ssmore[aria-expanded=true]{background:rgba(17,24,39,.08)}
+#sharePop{position:fixed!important;right:auto!important}
 .cdlg{position:fixed;inset:0;z-index:120;background:rgba(17,24,39,.32);display:flex;align-items:center;justify-content:center}
 .cdlg[hidden]{display:none}
 .cdlg .bx{width:380px;max-width:calc(100vw - 32px);background:#fff;border-radius:14px;box-shadow:0 24px 60px rgba(17,24,39,.3);padding:20px 20px 16px;font:13px/1.5 Inter,sans-serif;color:var(--muted)}
@@ -604,7 +621,7 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
 .cdlg .act{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
 .cdlg button{height:36px;padding:0 14px;border-radius:9px;font:600 13px Inter,sans-serif;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink)}
 .cdlg button.ok{background:var(--blue);border-color:var(--blue);color:#fff}
-@container (max-width:1060px){#playpill{left:auto;right:14px;transform:none}}
+@container (max-width:1060px){#playpill{left:auto;right:14px;transform:none;top:112px}}
 
 /* ---------- the robot picker: one card for Add and Swap ---------- */
 #rpk{position:fixed;z-index:90;width:420px;max-width:calc(100vw - 24px);background:#fff;border-radius:16px;box-shadow:0 24px 60px -12px rgba(17,24,39,.35),0 0 0 1px rgba(17,24,39,.08);font:13px Inter,sans-serif;color:var(--ink);transform-origin:var(--o,right top);animation:rpkIn 160ms cubic-bezier(.23,1,.32,1)}
@@ -807,13 +824,14 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
 
   <section id="stage" aria-label="3D scene">
     <div id="playpill"></div>
-    <div id="vbtns"><button class="fbtn sq" id="openLeft" aria-label="Show sidebar" title="Show sidebar"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#374151" stroke-width="1.5"><rect x="1.75" y="2.75" width="14.5" height="12.5" rx="2.5"/><path d="M6.5 2.75 V15.25"/></svg></button><button class="fbtn" id="addStationTop"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg>Add station</button><button class="fbtn" id="addObjBtn" aria-expanded="false" aria-controls="objDrawer"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M8 1.5l6 3v7l-6 3-6-3v-7z"/><path d="M2 4.5l6 3 6-3M8 7.5v7"/></svg>Add objects</button></div>
+    <div id="rcol"><button class="fbtn" id="physBtn" role="switch" aria-checked="false"><span>Physics</span><span class="tg" aria-hidden="true"><i></i></span></button></div>
+    <div id="vbtns"><button class="fbtn sq" id="openLeft" aria-label="Show sidebar" title="Show sidebar"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#374151" stroke-width="1.5"><rect x="1.75" y="2.75" width="14.5" height="12.5" rx="2.5"/><path d="M6.5 2.75 V15.25"/></svg></button><button class="fbtn" id="addStationTop" aria-label="Add station"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg>Station</button><button class="fbtn" id="addObjBtn" aria-label="Add objects" aria-expanded="false" aria-controls="objDrawer"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg>Objects</button></div>
     <div id="objDrawer" role="dialog" aria-label="Objects"><div class="dh"><h2>Objects</h2><button class="iconbtn" id="objClose" aria-label="Close objects"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" stroke="#374151" stroke-width="1.7" stroke-linecap="round"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div></div>
     <div id="objTab" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#374151" stroke-width="1.8" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></div>
     <img id="view" alt="3D scene rendered live by MuJoCo" draggable="false">
     <div class="dock"><div class="dockin" id="dock" role="group" aria-label="Stations in the lab"></div></div>
     <div class="watchbanner glass" id="watchBanner"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#111827" stroke-width="1.5"><path d="M1 8 C3 4 5.5 3 8 3 C10.5 3 13 4 15 8 C13 12 10.5 13 8 13 C5.5 13 3 12 1 8 Z"/><circle cx="8" cy="8" r="2.2"/></svg><span>Watching someone else's lab · view only</span><button class="vb copyLab">Copy to my sessions</button></div>
-    <div class="emptyfloor"><b>No robots yet</b><span id="emptyMsg">Press “Add station”, then click the floor to place it.</span></div>
+    <div class="emptyfloor"><b>No robots yet</b><span id="emptyMsg">Press “+ Station”, then click the floor to place it.</span></div>
     <div id="objPanel" class="glass" style="display:none;flex-direction:column;gap:10px">
       <div class="ohd"><img id="objImg" alt=""><div><span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Selected object</span><h3 id="objName" style="margin:2px 0 0;font-size:15px;color:var(--ink)"></h3></div></div>
       <dl><dt>Size</dt><dd id="objSize"></dd><dt>Mass</dt><dd id="objMass"></dd><dt>Friction</dt><dd id="objFric"></dd><dt>Collision</dt><dd id="objCol" style="font-family:Inter;font-size:12px"></dd></dl>
@@ -1255,7 +1273,7 @@ function renderRobots() {
     S.robotKey = key;
     box.innerHTML = `<span class="rl">Robots</span>` + (list.length ? list.map(st => { const [d, t] = chipDot(st);
       return `<div class="rrow${st.id === sc.active ? ' on' : ''}"><button class="rsel" data-st="${esc(st.id)}" aria-current="${st.id === sc.active}"><img src="${ROBOT_IMG(st.robot)}" alt=""><span class="t"><b>${esc(st.name)}</b><span class="sub">${esc(st.label)}</span></span><span class="sdot ${d}" title="${esc(t)}"></span></button>${S.watch ? '' : `<button class="smore" data-more="${esc(st.id)}" aria-label="More actions for ${esc(st.name)}" aria-haspopup="menu" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg></button>`}</div>`; }).join('')
-      : `<span class="small" style="padding:2px 8px">No robots yet. Press “Add station”.</span>`);
+      : `<span class="small" style="padding:2px 8px">No robots yet. Press “+ Station”.</span>`);
     box.querySelectorAll('.rsel').forEach(b => b.onclick = () => pickRobot(b.dataset.st));
     box.querySelectorAll('.smore').forEach(b => b.onclick = (e) => {
       e.stopPropagation(); if (S.menu && S.menu.btn === b) { closeStMenu(); return; }
@@ -1319,7 +1337,11 @@ function renderRail() {
   $('rrail').innerHTML = tog + '<span class="sep"></span>' + list.map(st => { const [d] = chipDot(st);
     return `<button class="rbot" data-st="${esc(st.id)}" aria-current="${!!on && st.id === on.id}" aria-label="${esc(st.name)}, ${esc(st.label)}"><img src="${ROBOT_IMG(st.robot)}" alt=""><span class="bdg ${d}"></span></button>`; }).join('')
     + `<button class="radd${S.pick && S.pick.mode === 'add' ? ' on' : ''}" id="rAdd" aria-label="Add a robot" aria-haspopup="dialog">+</button>`
-    + `<a class="iconbtn rpast" id="rPast" href="${esc($('pastLink').href)}" target="_blank" rel="noopener" aria-label="Past runs" title="Past runs"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h11M6.5 21h11"/><path d="M7.5 3c0 4.5 4.5 6 4.5 9s-4.5 4.5-4.5 9"/><path d="M16.5 3c0 4.5-4.5 6-4.5 9s4.5 4.5 4.5 9"/><path d="M9.2 19.5c.8-1.6 1.8-2.3 2.8-2.3s2 .7 2.8 2.3z" fill="#374151" stroke-width="1"/></svg></a>`;
+    + `<a class="iconbtn rpast" id="rPast" href="${esc($('pastLink').href)}" target="_blank" rel="noopener" aria-label="Past runs" title="Past runs"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h11M6.5 21h11"/><path d="M7.5 3c0 4.5 4.5 6 4.5 9s-4.5 4.5-4.5 9"/><path d="M16.5 3c0 4.5-4.5 6-4.5 9s4.5 4.5 4.5 9"/><path d="M9.2 19.5c.8-1.6 1.8-2.3 2.8-2.3s2 .7 2.8 2.3z" fill="#374151" stroke-width="1"/></svg></a>`
+    + `<button class="iconbtn rpast" id="rSet" aria-label="Settings" aria-haspopup="dialog"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>`;
+  $('rSet').onclick = () => { $('rtip').hidden = true; window.openSettings && window.openSettings(); };
+  $('rSet').onmouseenter = () => showRtip($('rSet'), '<b>Settings</b>');
+  $('rSet').onmouseleave = () => { $('rtip').hidden = true; };
   $('rToggle').onclick = () => setRight(document.body.classList.contains('rclosed'));
   $('rAdd').onclick = () => { $('rtip').hidden = true; S.pick && S.pick.mode === 'add' ? closePicker() : openPicker('add'); };
   $('rAdd').onmouseenter = () => { if (!S.pick) showRtip($('rAdd'), '<b>Add a robot</b>'); };
@@ -1349,8 +1371,11 @@ try { if (localStorage.getItem('pgRight') === '0') setRight(false); } catch (e) 
 // play and past runs float over the top of the scene
 (() => {
   const pill = $('playpill');
-  pill.appendChild($('playBtn').parentElement);
-  ['pastLink', 'shareWrap', 'watchTag', 'lockmsg'].forEach(id => { if ($(id)) pill.appendChild($(id)); });
+  // Play is now the Physics toggle (top right) and Share is in the session's "⋯" menu: the pill
+  // only says when the scene is locked or watched.
+  $('playBtn').parentElement.style.display = 'none';
+  document.body.appendChild($('shareWrap')); $('shareBtn').style.display = 'none';
+  ['pastLink', 'watchTag', 'lockmsg'].forEach(id => { if ($(id)) pill.appendChild($(id)); });
 })();
 // the object library lives in a drawer over the scene
 (() => {
@@ -1661,6 +1686,7 @@ function drawAxisGuide() {
 }
 
 // ---------------------------------------------------------------- play, tasks, chat
+$('physBtn').onclick = () => $('playBtn').onclick();
 $('playBtn').onclick = async () => {
   if ($('playBtn').disabled) return;
   if (S.scene && !S.scene.paused) await api('/pg/pause', {}); else await api('/pg/play', {});
@@ -1897,9 +1923,12 @@ function render() {
     $('playBtn').disabled = playing && working > 0 && !S.fixed;
     $('playBtn').title = $('playBtn').disabled ? `${working === 1 ? 'A robot is' : working + ' robots are'} working. Stop ${working === 1 ? 'it' : 'them'} from the chat to pause the world.`
       : playing ? 'Freeze the physics world: every robot and object stops' : 'Run the physics world'; }
+  $('physBtn').setAttribute('aria-checked', String(playing)); $('physBtn').disabled = $('playBtn').disabled;
+  $('physBtn').title = $('playBtn').title; $('physBtn').setAttribute('aria-label', playing ? 'Physics on' : 'Physics off');
   $('playIcon').innerHTML = playing ? '<rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/>' : '<path d="M3 1.5 L12.5 7 L3 12.5 Z"/>';
   $('lockmsg').style.display = sc.locked && (active || S.fixed) ? '' : 'none'; $('lockmsg').textContent = S.fixed ? 'Scene locked for a fair test' : active ? 'Scene locked while a robot works' : 'Pause physics to edit the scene';
   $('right').classList.toggle('locked', !!sc.locked);
+  $('playpill').classList.toggle('none', $('lockmsg').style.display === 'none' && !S.watch);
   $('liveTag').style.display = playing ? '' : 'none';
   $('hintTag').style.display = playing ? 'none' : '';
   // stations: the list, and the selected one's cameras, task and chat
@@ -1927,7 +1956,7 @@ function render() {
   $('addStationBtn').disabled = !!sc.locked;
   const empty = free && !(sc.robots || []).length;
   document.body.classList.toggle('empty', empty);
-  $('emptyMsg').textContent = S.watch ? 'Nobody has added a robot to this lab yet.' : 'Press “Add station”, then click the floor to place it.';
+  $('emptyMsg').textContent = S.watch ? 'Nobody has added a robot to this lab yet.' : 'Press “+ Station”, then click the floor to place it.';
   const camKey = (stBase() || '/') + '|' + (free ? curStation().robot || '' : '');
   if (S.camFor !== camKey) { S.camFor = camKey; openCams(); }
   const obj = sc.objects.find(o => o.uid === S.sel);
@@ -2090,6 +2119,7 @@ window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.bigCam) 
 // new link. Only on a signed-in account's lab (the scene says so with "share").
 function renderShare(info) {
   $('shareWrap').style.display = info && !S.watch ? '' : 'none';
+  if (!!info !== !!S.canShare) { S.canShare = !!info; S.sessKey = null; renderSessions(); }
   $('sharedTag').style.display = info && info.on ? '' : 'none';
   if (!info) return;
   $('shareOn').setAttribute('aria-pressed', String(info.on));
@@ -2100,7 +2130,33 @@ function renderShare(info) {
   $('shareCopy').textContent = 'Copy';
 }
 $('shareBtn').onclick = () => { const p = $('sharePop'); p.hidden = !p.hidden; $('shareBtn').setAttribute('aria-expanded', String(!p.hidden)); };
-document.addEventListener('pointerdown', (e) => { if (!$('shareWrap').contains(e.target)) { $('sharePop').hidden = true; $('shareBtn').setAttribute('aria-expanded', 'false'); } });
+document.addEventListener('pointerdown', (e) => {
+  if (!$('sharePop').contains(e.target) && !e.target.closest('#sessMenu')) $('sharePop').hidden = true;
+  if (!e.target.closest('#sessMenu, .ssmore')) closeSessMenu();
+});
+// A session's "⋯" menu (its own row, when the session can be shared): Share opens the share card
+// beside the row.
+function closeSessMenu() { const m = $('sessMenu'); if (m) m.classList.remove('open'); document.querySelectorAll('.ssmore').forEach(b => b.setAttribute('aria-expanded', 'false')); }
+function openSessMenu(btn) {
+  let m = $('sessMenu');
+  if (!m) {
+    m = document.createElement('div'); m.id = 'sessMenu'; m.className = 'stmenu'; m.setAttribute('role', 'menu'); m.setAttribute('aria-label', 'Session actions');
+    m.innerHTML = '<button role="menuitem" data-act="share"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Share</button>';
+    document.body.appendChild(m);
+    m.querySelector('[data-act=share]').onclick = () => {
+      const r = ($('mineList').querySelector('.ssmore') || m).getBoundingClientRect(), p = $('sharePop');   // the row may have been redrawn
+      closeSessMenu(); p.hidden = false;
+      p.style.left = Math.min(r.right + 8, innerWidth - p.offsetWidth - 8) + 'px';
+      p.style.top = Math.max(8, Math.min(r.top - 8, innerHeight - p.offsetHeight - 8)) + 'px';
+      $('shareOn').focus();
+    };
+  }
+  if (m.classList.contains('open') && S.menuBtn === btn) return closeSessMenu();
+  S.menuBtn = btn; m.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
+  const r = btn.getBoundingClientRect();
+  m.style.left = Math.min(r.left, innerWidth - m.offsetWidth - 8) + 'px'; m.style.top = (r.bottom + 4) + 'px';
+}
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeSessMenu(); $('sharePop').hidden = true; } });
 $('shareOn').onclick = async () => {
   const on = $('shareOn').getAttribute('aria-pressed') !== 'true';
   const r = await api('/pg/session/share', {on});
@@ -2146,12 +2202,14 @@ async function loadSessions(starter = false) {
 }
 function renderSessions() {
   const {mine, live} = S.sess;
-  const key = JSON.stringify([SID, mine.map(x => [x.id, x.name, x.stations, x.status, Math.round((Date.now() / 1000 - x.used) / 60)]), live.map(x => [x.url, x.id, x.name, x.task])]);
+  const key = JSON.stringify([SID, S.canShare, mine.map(x => [x.id, x.name, x.stations, x.status, Math.round((Date.now() / 1000 - x.used) / 60)]), live.map(x => [x.url, x.id, x.name, x.task])]);
   if (key === S.sessKey) return; S.sessKey = key;
   const dot = {working: ['run', 'Working'], finished: ['ok', 'Finished'], empty: ['', 'Nothing run yet']};
   $('mineList').innerHTML = mine.map(x => { const [d, t] = dot[x.status] || dot.empty;
-    return `<button class="srow" data-sid="${esc(x.id)}" aria-current="${x.id === SID}"><span class="sico">${CUBE}</span><span class="t"><b>${esc(x.name)}${x.shared ? '<span class="sharedmini">Shared</span>' : ''}</b><span class="sub">${x.mode === 'free' ? nStations(x.stations) : x.mode === 'libero' ? 'LIBERO test' : 'Wet Lab'} · ${ago(x.used)}</span></span><span class="sdot ${d}" title="${t}"></span></button>`; }).join('')
+    const more = x.id === SID && S.canShare && !S.watch;
+    return `<div class="sroww"><button class="srow" data-sid="${esc(x.id)}" aria-current="${x.id === SID}"><span class="sico">${CUBE}</span><span class="t"><b>${esc(x.name)}${x.shared ? '<span class="sharedmini">Shared</span>' : ''}</b><span class="sub">${x.mode === 'free' ? nStations(x.stations) : x.mode === 'libero' ? 'LIBERO test' : 'Wet Lab'} · ${ago(x.used)}</span></span><span class="sdot ${d}" title="${t}"></span></button>${more ? `<button class="ssmore" aria-label="More actions for ${esc(x.name)}" aria-haspopup="menu" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="13" cy="8" r="1.5"/></svg></button>` : ''}</div>`; }).join('')
     || '<span class="snone">None yet. Press New session.</span>';
+  $('mineList').querySelectorAll('.ssmore').forEach(b => b.onclick = (e) => { e.stopPropagation(); openSessMenu(b); });
   $('liveList').innerHTML = live.map((x, i) => `<button class="srow" data-live="${i}" aria-current="${!x.url && x.id === SID}" title="${esc(x.task || '')}"><span class="sico">${EYE}</span><span class="t"><b>${esc(x.name)}</b><span class="sub">${esc(x.task || nStations(x.stations))}</span></span><span class="sdot run" title="Running now"></span></button>`).join('')
     || '<span class="snone">Nobody else is running anything right now.</span>';
   $('mineList').querySelectorAll('[data-sid]').forEach(b => b.onclick = () => switchSession(b.dataset.sid));
@@ -2530,5 +2588,6 @@ window.onAccount = (r) => { S.acct = r; fillModels(); if (S.scene) render(); };
 <script src="/pg/static/runpanel.js?v=HASH"></script>
 <script src="/pg/static/scenesettings.js?v=HASH"></script>
 <script src="/pg/static/results.js?v=HASH"></script>
+<script src="/pg/static/gallery.js?v=HASH"></script>
 </body>
 </html>
