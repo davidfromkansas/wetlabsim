@@ -38,6 +38,10 @@ def write_credits():
         if repo == "autobio":             # in the repo already (tools/build_autobio.py)
             lines.append(f"| {label} | {tab} | AutoBio (credit in NOTICE.md) | [`{folder}`]({AUTOBIO[1]}) |")
             continue
+        if repo == "mujoco":              # MuJoCo's own model gallery (Apache 2.0), kept as it is
+            lines.append(f"| {label} | {tab} | MuJoCo model gallery, by Kevin Zakka (Apache 2.0) | "
+                         f"[`{folder}`](https://github.com/google-deepmind/mujoco/tree/main/model/cube) |")
+            continue
         name, url = SOURCES[repo or "nvidia"]
         lines.append(f"| {label} | {tab} | {name} | [`{folder}`]({url}/tree/main/{folder}) |")
     (catalog.ASSETS / "CREDITS.md").write_text("\n".join(lines) + "\n")
@@ -48,13 +52,13 @@ def main(argv=None):
     ap.add_argument("ids", nargs="*")
     ap.add_argument("--cache", default="build/simready")
     a = ap.parse_args(argv)
-    ids = a.ids or [i[0] for i in catalog.ITEMS if not i[3].startswith("autobio:")]
+    ids = a.ids or [i[0] for i in catalog.ITEMS if not i[3].startswith(("autobio:", "mujoco:"))]
     for id_ in ids:
         it = catalog.item(id_)
         try:
             repo, _, folder = it["hf"].rpartition(":")
             src = fetch(folder, pathlib.Path(a.cache), repo or "nvidia")
-            m = convert(src, catalog.ASSETS / id_, hollow=it["hollow"], solid=id_ in catalog.SOLID)
+            m = convert(src, catalog.ASSETS / id_, hollow=it["hollow"])
             tdir = usd_dir(src) / ".thumbs" / "256x256"
             thumbs = sorted(tdir.glob("*_transparent.png")) or sorted(tdir.glob("*.usd*.png"))
             if thumbs:
