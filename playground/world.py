@@ -512,7 +512,7 @@ def save_parts(m: mujoco.MjModel, d: mujoco.MjData, p: Placed, root: int):
     joints, loose = {}, {}
     Tr = _pose(d.xpos[root], d.xquat[root])
     meta = catalog.meta(p.item)
-    if m.body_jntnum[root]:          # the item's place is its own frame's, not its main body's
+    if m.body_jntnum[root] and meta.get("bodies"):   # the item's place is its own frame's, not its main body's
         fr = next(b["frame"] for b in meta["bodies"] if b.get("root"))
         Ta = Tr @ np.linalg.inv(_pose(fr[:3], fr[3:]))
         p.pos, p.quat = tuple(float(v) for v in Ta[:3, 3]), tuple(_quat_of(Ta))
@@ -520,6 +520,9 @@ def save_parts(m: mujoco.MjModel, d: mujoco.MjData, p: Placed, root: int):
         for j in range(m.body_jntadr[b], m.body_jntadr[b] + m.body_jntnum[b]):
             if m.jnt_type[j] in (int(mujoco.mjtJoint.mjJNT_HINGE), int(mujoco.mjtJoint.mjJNT_SLIDE)):
                 joints[m.joint(j).name] = float(d.qpos[m.jnt_qposadr[j]])
+            elif m.jnt_type[j] == int(mujoco.mjtJoint.mjJNT_BALL):     # a puzzle cube's cubelet
+                a = m.jnt_qposadr[j]
+                joints[m.joint(j).name] = [float(v) for v in d.qpos[a:a + 4]]
         if m.body_parentid[b] == 0:
             rel = np.linalg.inv(Tr) @ _pose(d.xpos[b], d.xquat[b])
             loose[m.body(b).name] = (tuple(float(v) for v in rel[:3, 3]), tuple(_quat_of(rel)))
@@ -539,10 +542,28 @@ def restore_joints(m: mujoco.MjModel, d: mujoco.MjData, p: Placed):
     for name, q in (p.joints or {}).items():
         j = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, name)
         if j >= 0:
-            d.qpos[m.jnt_qposadr[j]] = q
+            a = m.jnt_qposadr[j]
+            if isinstance(q, (list, tuple)):
+                d.qpos[a:a + len(q)] = q
+            else:
+                d.qpos[a] = q
+
+
+def _add_mjcf(world: mujoco.MjSpec, p: Placed, meta: dict):
+    """An item that is a MuJoCo model of its own (asset.json "mjcf": the puzzle cube from MuJoCo's
+    model gallery), attached as it is: a free body "obj_<uid>" at the item's place, the model's
+    bodies inside it, named "obj_<uid>__<its body name>", with their own joints, shapes and
+    materials. The model's origin is its centre; the item's place is its bottom centre."""
+    child = mujoco.MjSpec.from_file(str(catalog.ASSETS / p.item / meta["mjcf"]))
+    body = world.worldbody.add_body(name=f"obj_{p.uid}", pos=list(p.pos), quat=list(p.quat or yaw_quat(p.yaw)))
+    body.add_freejoint(name=f"obj_{p.uid}_joint")
+    frame = body.add_frame(pos=[0, 0, meta["size"][2] / 2])
+    world.attach(child, frame=frame, prefix=f"obj_{p.uid}__")
 
 
 def _add_item(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_cache: set):
+    if meta.get("mjcf"):
+        return _add_mjcf(world, p, meta)
     if meta.get("bodies"):
         return _add_jointed(world, p, meta, fixed, mesh_cache)
     d = catalog.ASSETS / p.item

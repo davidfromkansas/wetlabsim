@@ -167,7 +167,7 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Digital multimeter | Electronics | NVIDIA SimReady | [`testingTool_multimeter_digital_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/testingTool_multimeter_digital_b01) |
 | Digital pressure gauge | Electronics | NVIDIA SimReady | [`serviceTool_gauge_pressureDigitalRemote_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/serviceTool_gauge_pressureDigitalRemote_a01) |
 | Golf ball | Toys & Basics | NVIDIA SimReady | [`misc_golfBall_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_golfBall_a01) |
-| Puzzle cube | Toys & Basics | NVIDIA SimReady | [`toys_rubiksCube_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/toys_rubiksCube_a01) |
+| Puzzle cube | Toys & Basics | MuJoCo model gallery, by Kevin Zakka (Apache 2.0) | [`cube_3x3x3`](https://github.com/google-deepmind/mujoco/tree/main/model/cube) |
 | Ping-pong ball | Toys & Basics | NVIDIA SimReady | [`misc_toy_pongPaddle_ball_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_toy_pongPaddle_ball_a01) |
 | Cleaning cloth | Soft | NVIDIA SimReady | [`cleaning_cloth_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_cloth_a01) |
 | Microfibre towel | Soft | NVIDIA SimReady | [`consumable_microfiber_towel_wrinkled_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/consumable_microfiber_towel_wrinkled_b01) |

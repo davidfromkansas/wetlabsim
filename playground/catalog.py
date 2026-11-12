@@ -174,7 +174,7 @@ ITEMS = [
     ("multimeter", "Electronics", "Digital multimeter", "testingTool_multimeter_digital_b01", False, False),
     ("pressure_gauge", "Electronics", "Digital pressure gauge", "serviceTool_gauge_pressureDigitalRemote_a01", False, False),
     ("golf_ball", "Toys & Basics", "Golf ball", "misc_golfBall_a01", False, False),
-    ("rubiks_cube", "Toys & Basics", "Puzzle cube", "toys_rubiksCube_a01", False, False),
+    ("rubiks_cube", "Toys & Basics", "Puzzle cube", "mujoco:cube_3x3x3", False, False),
     ("pong_ball", "Toys & Basics", "Ping-pong ball", "misc_toy_pongPaddle_ball_a01", False, False),
     ("cloth", "Soft", "Cleaning cloth", "cleaning_cloth_a01", False, False),
     ("towel", "Soft", "Microfibre towel", "consumable_microfiber_towel_wrinkled_b01", False, False),
@@ -186,11 +186,6 @@ ITEMS = [
     ("sponge", "Soft", "Kitchen sponge", "cleaning_sponge_b01", False, False),
     ("foam_brick", "Soft", "Foam brick", "primitives_brick_foam_a01", False, False),
 ]
-
-# Items kept as one rigid body although their asset has moving parts: the puzzle cube's 26
-# cubies are each hinged to its centre on a single axis (they can't turn as faces, and each
-# costs speed).
-SOLID = {"rubiks_cube"}
 
 # Glued-on parts kept as separate caps (on a weld) whose asset doesn't name them as a cap, lid,
 # cork or stopper (world.SEPARATE finds those): item -> part names.
