@@ -234,26 +234,54 @@ export function start({stage, base = '', onReady}) {
 
   let gen = 0;     // bumped when the page switches to another session's world
   let loading = null;
-  // Load the world (once at a time). A switch to another session meanwhile starts over for it.
-  // The world on screen stays until the new one is ready, then they swap in one frame.
+  const retired = [];   // worlds taken off screen, freed once the new one has been drawn
+  // A small "Loading" note over the view while a session's world fills in.
+  const note = document.createElement('div');
+  note.textContent = 'Loading this session…';
+  note.setAttribute('role', 'status');
+  Object.assign(note.style, {position: 'absolute', top: '64px', left: '50%', transform: 'translateX(-50%)', zIndex: 3,
+    padding: '6px 12px', borderRadius: '999px', background: 'rgba(17,24,39,.78)', color: '#fff', font: '500 13px/1.2 system-ui, sans-serif',
+    pointerEvents: 'none', opacity: '0', transition: 'opacity 150ms ease'});
+  stage.appendChild(note);
+  let noteT = null;
+  const showNote = (on) => { clearTimeout(noteT); if (on) noteT = setTimeout(() => { note.style.opacity = '1'; }, 150); else note.style.opacity = '0'; };
+  const pause = (ms) => new Promise(r => setTimeout(r, ms));
+
+  // Load the world (one load at a time; a switch to another session meanwhile starts over).
+  // A session just switched to shows at once: its lights and every shape already at hand, the
+  // rest filling in as they arrive. A rebuild of the same session (an object added, say) swaps
+  // in whole when ready, so nothing flickers.
   function loadScene() {
     if (!loading) loading = buildScene().finally(() => { loading = null; });
     return loading;
   }
+  function install(next, sc, bodies, skins, head) {
+    [...camera.children].forEach(c => { camera.remove(c); c.dispose && c.dispose(); }); camera.add(head); camera.add(head.target);
+    scene.remove(root); retired.push(root); root = next; scene.add(root);
+    V.bodies = bodies; V.skins = skins; V.version = sc.version;
+    if (floorFx) { scene.remove(floorFx); floorFx = null; }
+    if (sc.floorfx) floorFx = makeFloorFx();
+    if (floorFx) scene.add(floorFx);
+    if (!V.ready) { V.ready = true; onReady && onReady(); }
+  }
+  // Free the old worlds after the new one has been drawn: their shaders are then in use again
+  // by the new world's materials, so they aren't thrown away and rebuilt.
+  function freeRetired() {
+    const old = retired.splice(0);
+    requestAnimationFrame(() => requestAnimationFrame(() => old.forEach(dispose)));
+  }
   async function buildScene() {
-    for (;;) {
-      const g0 = gen;
+    for (let tries = 0; ; tries++) {
+      const g0 = gen, fresh = V.version === null;
       try {
-        const sc = await (await fetch(`${base}/pg/scene3d`)).json();
+        const r = await fetch(`${base}/pg/scene3d`);
+        if (!r.ok) throw new Error('scene3d ' + r.status);
+        const sc = await r.json();
         if (g0 !== gen) continue;
         V.texhash = sc.texhash || {};
         fetchMeshes(Object.values(sc.meshhash || {}));
         const next = new THREE.Group();
         const bodies = Array.from({length: sc.nbody}, () => { const b = new THREE.Group(); next.add(b); return b; });
-        const objs = await Promise.all(sc.geoms.map(g => geomObject(g, V.texhash, sc.meshhash).then(o => [g, o])));
-        for (const [g, o] of objs) if (o) bodies[g.body].add(o);
-        const skins = await Promise.all((sc.skins || []).map(sk => skinObject(sk, sc.version)));
-        for (const s of skins) next.add(s.obj);
         // Lights: MuJoCo's headlight (ambient + a light at the eye) and the scene's own lights.
         const amb = sc.headlight.ambient, dif = sc.headlight.diffuse;
         next.add(new THREE.AmbientLight(new THREE.Color(amb[0], amb[1], amb[2]), Math.PI));
@@ -268,19 +296,24 @@ export function start({stage, base = '', onReady}) {
           }
           next.add(L); next.add(L.target);
         }
-        if (g0 !== gen) { dispose(next); continue; }
-        camera.children.forEach(c => { camera.remove(c); c.dispose && c.dispose(); }); camera.add(head); camera.add(head.target);
-        // The old world is freed after the new one has been drawn once: its shaders are then in
-        // use again by the new world's materials, so they aren't thrown away and rebuilt.
-        const old = root; scene.remove(old); root = next; scene.add(root);
-        requestAnimationFrame(() => requestAnimationFrame(() => dispose(old)));
-        V.bodies = bodies; V.skins = skins; V.version = sc.version;
-        if (floorFx) { scene.remove(floorFx); floorFx = null; }
-        if (sc.floorfx) floorFx = makeFloorFx();
-        if (floorFx) scene.add(floorFx);
-        canvas.style.opacity = '';
-        if (!V.ready) { V.ready = true; onReady && onReady(); }
-      } catch (e) { console.warn('3D view: scene failed to load', e); }
+        const skins = [];
+        if (fresh) { install(next, sc, bodies, skins, head); showNote(true); }
+        // Each shape goes in as soon as it is ready; one that fails doesn't hold up the rest.
+        let failed = 0;
+        await Promise.all([
+          ...sc.geoms.map(g => geomObject(g, V.texhash, sc.meshhash).then(o => { if (o) bodies[g.body].add(o); }, () => { failed++; })),
+          ...(sc.skins || []).map(sk => skinObject(sk, sc.version).then(s => { next.add(s.obj); skins.push(s); }, () => { failed++; }))]);
+        if (g0 !== gen) { if (!fresh) dispose(next); continue; }
+        if (!fresh) install(next, sc, bodies, skins, head);
+        showNote(false); freeRetired();
+        if (failed) {       // a few shapes didn't come: build the world again shortly (all at once)
+          console.warn(`3D view: ${failed} shapes failed to load; trying again`);
+          if (tries < 5) { await pause(1500); if (g0 === gen) continue; }
+        }
+      } catch (e) {
+        console.warn('3D view: scene failed to load', e);
+        if (tries < 20) { if (g0 === gen) await pause(Math.min(4000, 500 * (tries + 1))); continue; }
+      }
       return;
     }
   }
@@ -348,7 +381,7 @@ export function start({stage, base = '', onReady}) {
     es = new EventSource(`${base}/pg/poses.sse`);
     es.onmessage = (ev) => {
       const f = JSON.parse(ev.data);
-      if (f.v !== V.version) { if (V.version !== null) loadScene(); return; }
+      if (f.v !== V.version) { loadScene(); return; }
       const p = b64(f.p), q = b64(f.q);
       V.rawP = p; V.rawQ = q;
       for (let i = 0; i < V.bodies.length; i++) {
@@ -490,11 +523,12 @@ export function start({stage, base = '', onReady}) {
   V.setBase = (b) => {
     if (b === base) return;
     base = b; gen++; V.version = null; V.follow = true; V.lastLocal = 0;
-    if (es) { es.close(); es = null; }
-    canvas.style.opacity = '0.55';      // the old world, dimmed, until the new one is ready
-    loadScene().then(() => { if (base === b) connect(); });
+    // The old session's world leaves the screen at once; the new one fills in as it loads.
+    scene.remove(root); retired.push(root); root = new THREE.Group(); scene.add(root); V.bodies = []; V.skins = [];
+    showNote(true);
+    connect(); loadScene();
   };
-  loadScene().then(connect);
+  loadScene(); connect();
   requestAnimationFrame(frame);
   return V;
 }

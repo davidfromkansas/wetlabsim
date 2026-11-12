@@ -84,8 +84,8 @@ def scene(m: mujoco.MjModel, version) -> dict:
     hl = m.vis.headlight
     return {"version": str(version), "nbody": int(m.nbody), "geoms": geoms, "skins": skins, "lights": lights,
             "headlight": {"ambient": _r(hl.ambient, 3), "diffuse": _r(hl.diffuse, 3)},
-            "meshhash": {str(i): mesh_hash(m, i) for i in {gg["mesh"] for gg in geoms if gg["mesh"] >= 0}},
-            "texhash": {str(i): tex_hash(m, i) for i in {gg["tex"] for gg in geoms if gg["tex"] >= 0}
+            "meshhash": {str(i): _info(m)["mesh"][i] for i in {gg["mesh"] for gg in geoms if gg["mesh"] >= 0}},
+            "texhash": {str(i): _info(m)["tex"][i] for i in {gg["tex"] for gg in geoms if gg["tex"] >= 0}
                         | {sk["tex"] for sk in skins if sk["tex"] >= 0}}}
 
 
@@ -201,7 +201,7 @@ def tex_png(m, i: int) -> bytes:
     a = int(m.tex_adr[i])
     img = np.asarray(m.tex_data[a:a + w * h * c], np.uint8).reshape(h, w, c)
     buf = io.BytesIO()
-    Image.fromarray(img[:, :, :3] if c >= 3 else img[:, :, 0]).save(buf, format="PNG")
+    Image.fromarray(img[:, :, :3] if c >= 3 else img[:, :, 0]).save(buf, format="PNG", compress_level=1)
     return buf.getvalue()
 
 
@@ -238,16 +238,45 @@ class _Cache:
 _MESHES, _TEXTURES = _Cache(400 << 20), _Cache(200 << 20)
 
 
+# Each model's content hashes, worked out once (hashing every mesh and texture of a lab full of
+# objects takes seconds): the last few models of every session, kept with the model itself.
+_MODELS: collections.OrderedDict = collections.OrderedDict()
+_MODELS_LOCK = threading.Lock()
+
+
+def _info(m) -> dict:
+    with _MODELS_LOCK:
+        hit = _MODELS.get(id(m))
+        if hit is not None and hit[0] is m:
+            _MODELS.move_to_end(id(m))
+            return hit[1]
+    mesh = [mesh_hash(m, i) for i in range(int(m.nmesh))]
+    info = {"mesh": mesh, "tex": [tex_hash(m, i) for i in range(int(m.ntex))],
+            "index": {h: i for i, h in reversed(list(enumerate(mesh)))}}
+    with _MODELS_LOCK:
+        _MODELS[id(m)] = (m, info)
+        while len(_MODELS) > 48:
+            _MODELS.popitem(last=False)
+    return info
+
+
 def mesh_by_hash(m, hashes: list[str]) -> list[bytes | None]:
     """Each named mesh of this model (None for a hash it doesn't have), from the lab's cache."""
-    index = {}
-    for i in range(int(m.nmesh)):
-        index.setdefault(mesh_hash(m, i), i)
+    index = _info(m)["index"]
     return [_MESHES.get(h, lambda i=index[h]: mesh_bin(m, i)) if h in index else None for h in hashes]
 
 
 def tex_cached(m, i: int) -> bytes:
-    return _TEXTURES.get(tex_hash(m, i), lambda: tex_png(m, i))
+    return _TEXTURES.get(_info(m)["tex"][i], lambda: tex_png(m, i))
+
+
+def warm(m):
+    """Get everything the page will ask for about this model ready ahead of time: its hashes,
+    and its meshes and textures (only the ones not already built for another session)."""
+    sc = scene(m, 0)
+    mesh_by_hash(m, list(sc["meshhash"].values()))
+    for t in sc["texhash"]:
+        tex_cached(m, int(t))
 
 
 def poses(xpos: np.ndarray, xquat: np.ndarray, extra: dict) -> str:
