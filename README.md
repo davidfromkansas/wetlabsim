@@ -124,7 +124,12 @@ Three modes, picked in the header:
 
 Runs use your existing Claude Code or Codex login.
 
-The SimReady objects are in `playground/assets` (to rebuild: `python -m playground.tools.build_assets`, from Hugging Face).
+The SimReady objects are in `playground/assets` (to rebuild: `python -m playground.tools.build_assets`, from Hugging Face:
+NVIDIA SimReady, Tripo, QUIKTECH and NVIDIA USDCraft-10K). AutoBio's lab items come from `playground.tools.build_autobio`
+and `playground.tools.build_autobio_mjcf` (AutoBio's own MuJoCo models), and the items we modelled ourselves (24-well
+plate and lid, glass test tubes, stirring rod, stir bar, hot plate, target mark) from `playground.tools.build_inhouse`
+(Blender's Python module, `pip install bpy`). Each library card shows where its item comes from. Credits:
+`playground/assets/CREDITS.md`.
 
 LIBERO's scenes are LIBERO's own: every task was built once in LIBERO's stack (robosuite 1.4,
 MuJoCo 2.3) and its compiled model saved (`playground/tools/libero_export.py`), then

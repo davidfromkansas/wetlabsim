@@ -1,0 +1,102 @@
+{
+ "source": "qt_lab_000008",
+ "usd": "qt_lab_000008.usd",
+ "mass": 0.45,
+ "friction": 0.4,
+ "com": null,
+ "size": [
+  0.1668,
+  0.2179,
+  0.0511
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.1853,
+    0.1853,
+    0.1853,
+    1.0
+   ],
+   "roughness": 0.3999999761581421,
+   "metallic": 1.0
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    0.278,
+    0.278,
+    0.278,
+    1.0
+   ],
+   "roughness": 0.3499999940395355,
+   "metallic": 1.0
+  },
+  {
+   "mesh": "vis_2.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.699999988079071,
+   "metallic": 1.0,
+   "texture": "tex_2.png"
+  },
+  {
+   "mesh": "vis_3.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.09999999403953552,
+   "metallic": 0.5,
+   "texture": "tex_3.png"
+  },
+  {
+   "mesh": "vis_4.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    0.3
+   ],
+   "roughness": 0.0,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_5.obj",
+   "rgba": [
+    0.7799,
+    0.7799,
+    0.7799,
+    1.0
+   ],
+   "roughness": 0.25999999046325684,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_6.obj",
+   "rgba": [
+    0.0309,
+    0.0309,
+    0.0309,
+    1.0
+   ],
+   "roughness": 0.19999998807907104,
+   "metallic": 0.0
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00166348402465354,
+   "friction": 0.4,
+   "restitution": 0.1
+  }
+ ]
+}

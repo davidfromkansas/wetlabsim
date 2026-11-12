@@ -1,0 +1,113 @@
+{
+ "source": "mask_nebulization_a01",
+ "usd": "sm_mask_nebulization_a01_01.usd",
+ "mass": 0.35657,
+ "friction": 0.53,
+ "com": [
+  0.06037,
+  -0.00201,
+  0.07447
+ ],
+ "size": [
+  0.1901,
+  0.1209,
+  0.186
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    0.2104,
+    0.4569,
+    0.2595,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_2.obj",
+   "rgba": [
+    0.2118,
+    0.5647,
+    0.2118,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_3.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_3.png"
+  },
+  {
+   "mesh": "vis_4.obj",
+   "rgba": [
+    0.7765,
+    0.7725,
+    0.7452,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_5.obj",
+   "rgba": [
+    0.3581,
+    0.3707,
+    0.3531,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.001428130682983493,
+   "friction": 0.5,
+   "restitution": 0.12
+  }
+ ],
+ "inertial": {
+  "mass": 0.356572,
+  "pos": [
+   0.060366,
+   -0.002009,
+   0.074472
+  ],
+  "diaginertia": [
+   0.00191613,
+   0.00429158,
+   0.00495546
+  ],
+  "quat": [
+   -0.0,
+   0.0,
+   0.707107,
+   0.707107
+  ]
+ }
+}

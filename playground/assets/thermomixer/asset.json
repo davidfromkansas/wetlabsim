@@ -1,0 +1,147 @@
+{
+ "source": "AutoBio",
+ "usd": null,
+ "mass": 6.65721,
+ "friction": 1.0,
+ "com": null,
+ "size": [
+  0.2058,
+  0.3061,
+  0.169
+ ],
+ "collision": "AutoBio's own collision shapes (MuJoCo model), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "body",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.0,
+      0.4314,
+      0.9686,
+      1.0
+     ],
+     "roughness": 1.0,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 1.0,
+     "metallic": 0.0,
+     "texture": "tex_0.png"
+    },
+    {
+     "mesh": "b0_vis_2.obj",
+     "rgba": [
+      0.6471,
+      0.6196,
+      0.6,
+      1.0
+     ],
+     "roughness": 1.0,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_3.obj",
+     "rgba": [
+      0.6902,
+      0.6706,
+      0.5843,
+      1.0
+     ],
+     "roughness": 1.0,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_4.obj",
+     "rgba": [
+      0.851,
+      0.851,
+      0.851,
+      1.0
+     ],
+     "roughness": 1.0,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.0036241393524945376
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 0.002074598979841745
+    },
+    {
+     "mesh": "b0_col_2.obj",
+     "volume": 0.0005267825933482436
+    },
+    {
+     "mesh": "b0_col_3.obj",
+     "volume": 9.852772476039253e-05
+    },
+    {
+     "mesh": "b0_col_4.obj",
+     "volume": 9.852772476039253e-05
+    },
+    {
+     "mesh": "b0_col_5.obj",
+     "volume": 0.000737114599897542
+    }
+   ],
+   "frame": [
+    0.008418,
+    -0.001589,
+    0.092498,
+    0.5,
+    0.5,
+    0.5,
+    0.5
+   ],
+   "mass": 6.657206,
+   "inertial": {
+    "mass": 6.657206,
+    "pos": [
+     0.008315,
+     -0.022321,
+     -0.008346
+    ],
+    "quat": [
+     0.49284,
+     0.487671,
+     0.511637,
+     0.507458
+    ],
+    "diaginertia": [
+     0.064518127,
+     0.0515321,
+     0.032051828
+    ]
+   },
+   "parent": null,
+   "root": true,
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    1,
+    0,
+    0,
+    0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

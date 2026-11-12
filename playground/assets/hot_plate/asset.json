@@ -1,0 +1,242 @@
+{
+ "source": "Built in-house (Blender)",
+ "usd": null,
+ "mass": 2.574,
+ "friction": null,
+ "com": null,
+ "size": [
+  0.205,
+  0.3,
+  0.09
+ ],
+ "collision": "convex pieces; knobs turn on their shafts",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "hot plate",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.84,
+      0.85,
+      0.86,
+      1
+     ],
+     "roughness": 0.45,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      0.97,
+      0.97,
+      0.96,
+      1
+     ],
+     "roughness": 0.12,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_2.obj",
+     "rgba": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "roughness": 0.3,
+     "metallic": 0.0,
+     "texture": "b0_tex_2.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.004906473623864116
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 0.00019227712879253534
+    }
+   ],
+   "mass": 2.55,
+   "frame": [
+    0.0,
+    0.0,
+    0.0,
+    1,
+    0,
+    0,
+    0
+   ],
+   "parent": null,
+   "root": true,
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    1,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "knob_heat",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.1,
+      0.1,
+      0.11,
+      1
+     ],
+     "roughness": 0.5,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b1_vis_1.obj",
+     "rgba": [
+      0.95,
+      0.95,
+      0.95,
+      1
+     ],
+     "roughness": 0.5,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 7.574295510298174e-06
+    }
+   ],
+   "mass": 0.012,
+   "frame": [
+    -0.0425,
+    -0.120192,
+    0.06023,
+    1,
+    0,
+    0,
+    0
+   ],
+   "parent": 0,
+   "collide": false,
+   "pos": [
+    -0.0425,
+    -0.120192,
+    0.06023
+   ],
+   "quat": [
+    1,
+    0,
+    0,
+    0
+   ],
+   "joint": {
+    "pos": [
+     0,
+     0,
+     0
+    ],
+    "name": "turn",
+    "type": "hinge",
+    "axis": [
+     0.0,
+     -0.640184,
+     0.768221
+    ],
+    "range": [
+     0.0,
+     4.71
+    ],
+    "damping": 0.002,
+    "frictionloss": 0.002
+   }
+  },
+  {
+   "name": "knob_stir",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.1,
+      0.1,
+      0.11,
+      1
+     ],
+     "roughness": 0.5,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b2_vis_1.obj",
+     "rgba": [
+      0.95,
+      0.95,
+      0.95,
+      1
+     ],
+     "roughness": 0.5,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 7.574295510298174e-06
+    }
+   ],
+   "mass": 0.012,
+   "frame": [
+    0.0425,
+    -0.120192,
+    0.06023,
+    1,
+    0,
+    0,
+    0
+   ],
+   "parent": 0,
+   "collide": false,
+   "pos": [
+    0.0425,
+    -0.120192,
+    0.06023
+   ],
+   "quat": [
+    1,
+    0,
+    0,
+    0
+   ],
+   "joint": {
+    "pos": [
+     0,
+     0,
+     0
+    ],
+    "name": "turn",
+    "type": "hinge",
+    "axis": [
+     0.0,
+     -0.640184,
+     0.768221
+    ],
+    "range": [
+     0.0,
+     4.71
+    ],
+    "damping": 0.002,
+    "frictionloss": 0.002
+   }
+  }
+ ],
+ "unstated_mass": []
+}

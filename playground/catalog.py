@@ -16,7 +16,7 @@ import pathlib
 
 ASSETS = pathlib.Path(__file__).parent / "assets"
 
-TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Instruments", "PPE", "Tools", "Kitchen", "Bins & Trays", "Cleaning", "Electronics", "Toys & Basics", "Soft"]
+TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Glassware", "Instruments", "PPE", "Tools", "Kitchen", "Bins & Trays", "Cleaning", "Electronics", "Toys & Basics", "Soft"]
 
 # id, tab, label, Hugging Face folder, hollow, fixed
 ITEMS = [
@@ -185,6 +185,52 @@ ITEMS = [
     ("hydraulic_hose", "Soft", "Hydraulic hose", "consumable_hose_hydraulic_a01", False, False),
     ("sponge", "Soft", "Kitchen sponge", "cleaning_sponge_b01", False, False),
     ("foam_brick", "Soft", "Foam brick", "primitives_brick_foam_a01", False, False),
+    # Nov 12 lab additions (glassware, Mecka WETLABS objects, AutoBio extras, in-house builds)
+    ("beaker_500", "Glassware", "Beaker, 500 ml", "quiktech:qt_lab_000015", True, False),
+    ("beaker_tall", "Glassware", "Beaker, tall form", "quiktech:qt_lab_000018", True, False),
+    ("erlenmeyer", "Glassware", "Erlenmeyer flask", "quiktech:qt_lab_000016", True, False),
+    ("round_flask", "Glassware", "Round-bottom flask", "quiktech:qt_lab_000017", True, False),
+    ("measuring_cylinder", "Glassware", "Measuring cylinder", "quiktech:qt_lab_000013", True, False),
+    ("reagent_bottle", "Glassware", "Reagent bottle", "quiktech:qt_lab_000002", False, False),
+    ("beaker_50", "Glassware", "Beaker, 50 ml", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R482_glass_beaker/06_mini_50_ml_beaker", True, False),
+    ("beaker_100_tall", "Glassware", "Beaker, 100 ml tall", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R482_glass_beaker/02_tall_form_100_ml_beaker", True, False),
+    ("test_tube", "Glassware", "Glass test tube, capped", "inhouse:test_tube_16x150", True, False),
+    ("test_tube_small", "Glassware", "Glass test tube, small", "inhouse:test_tube_13x100", True, False),
+    ("stirring_rod", "Glassware", "Glass stirring rod", "inhouse:stirring_rod", False, False),
+    ("stir_bar", "Glassware", "Magnetic stir bar", "inhouse:stir_bar", False, False),
+    ("rack_two_tier", "Lab & Medical", "Two-tier tube rack", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/01_two_tier_plastic_rack", True, False),
+    ("rack_compact", "Lab & Medical", "Single-row tube rack", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack", True, False),
+    ("rack_compact_blue", "Lab & Medical", "Tube rack, blue", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack", True, False),
+    ("rack_compact_pink", "Lab & Medical", "Tube rack, pink", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack", True, False),
+    ("rack_compact_yellow", "Lab & Medical", "Tube rack, yellow", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack", True, False),
+    ("rack_compact_orange", "Lab & Medical", "Tube rack, orange", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack", True, False),
+    ("rack_compact_green", "Lab & Medical", "Tube rack, green", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack", True, False),
+    ("rack_wire", "Lab & Medical", "Wire tube rack", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/10_coated_wire_test_tube_rack_25_x_10_x_7_cm_in_whi", True, False),
+    ("burette_stand", "Lab & Medical", "Burette stand", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R495_laboratory_ring_stand/04_tall_burette_stand", True, False),
+    ("plate_24well", "Lab & Medical", "24-well plate", "inhouse:plate_24well", True, False),
+    ("plate_24well_lid", "Lab & Medical", "24-well plate lid", "inhouse:plate_24well_lid", True, False),
+    ("target_mark", "Lab & Medical", "Target mark", "inhouse:target_mark", False, False),
+    ("pipette_tip", "Lab & Medical", "Pipette tip", "autobio:pipette_tip", False, False),
+    ("tip_box", "Lab & Medical", "Pipette tip box", "autobio:tip_box", True, False),
+    ("pcr_plate", "Lab & Medical", "96-well PCR plate", "autobio:pcr_plate_96well", True, False),
+    ("cryovial", "Lab & Medical", "Cryovial, 1.8 ml", "autobio:cryovial_1-8ml", False, False),
+    ("tube_10ml", "Lab & Medical", "10 ml tube", "autobio:centrifuge_10ml", False, False),
+    ("snap_tube", "Lab & Medical", "1.5 ml open tube", "autobio:centrifuge_1500ul_no_lid", False, False),
+    ("otoscope", "Lab & Medical", "Otoscope", "device_otoscope_a01", False, False),
+    ("bp_monitor", "Lab & Medical", "Blood pressure monitor", "device_blood_pressure_monitor_a01", False, False),
+    ("vein_finder", "Lab & Medical", "Vein finder", "device_vein_finder_a01", False, False),
+    ("nebulizer_mask", "Lab & Medical", "Nebulizer mask", "mask_nebulization_a01", False, False),
+    ("spatula", "Instruments", "Lab spatula", "instrument_spatula_a01", False, False),
+    ("electronic_scale", "Lab equipment", "Electronic scale", "quiktech:qt_lab_000008", False, False),
+    ("ultrasonic_cleaner", "Lab equipment", "Ultrasonic cleaner", "quiktech:qt_lab_000004", True, False),
+    ("hot_plate", "Lab equipment", "Hot plate stirrer", "inhouse:hot_plate", False, False),
+    ("centrifuge_5430", "Lab equipment", "Benchtop centrifuge", "autobio:centrifuge_eppendorf_5430", False, False),
+    ("mini_centrifuge", "Lab equipment", "Mini centrifuge", "autobio:centrifuge_tiangen_tgear_mini", False, False),
+    ("thermal_cycler", "Lab equipment", "Thermal cycler", "autobio:thermal_cycler_biorad_c1000", False, False),
+    ("thermomixer", "Lab equipment", "Thermal mixer", "autobio:thermal_mixer_eppendorf_c", False, False),
+    ("vortex_mixer", "Lab equipment", "Vortex mixer", "autobio:vortex_mixer_genie_2", False, False),
+    ("lab_oven", "Furniture", "Hot air oven", "quiktech:qt_lab_000005", False, True),
+    ("flow_cabinet", "Furniture", "Laminar flow cabinet", "quiktech:qt_lab_000012", True, True),
 ]
 
 # Glued-on parts kept as separate caps (on a weld) whose asset doesn't name them as a cap, lid,
@@ -239,6 +285,24 @@ def robots() -> list[dict]:
 DEFAULT_TABLE = "table_packing"
 
 
+# copies of one rack in the colours of the small polypropylene racks labs use (Mecka's WETLABS
+# benchmark has blue, pink, yellow, orange and green ones): item -> its visuals' colour
+RECOLOR = {"rack_compact_blue": [0.16, 0.45, 0.85, 1], "rack_compact_pink": [0.95, 0.5, 0.7, 1],
+           "rack_compact_yellow": [0.98, 0.82, 0.2, 1], "rack_compact_orange": [0.97, 0.55, 0.15, 1],
+           "rack_compact_green": [0.3, 0.75, 0.4, 1]}
+
+# Racks: their holes need finer convex pieces to stay open (tools/convert_simready.FINE)
+FINE_PIECES = {"rack_two_tier", "rack_compact", "rack_wire", *RECOLOR}
+
+# Where each item comes from, as the library's source chip names it (by its folder's prefix).
+SOURCE_NAMES = {"": "NVIDIA", "tripo": "Tripo", "quiktech": "QUIKTECH", "usdcraft": "USDCraft",
+                "autobio": "AutoBio", "mujoco": "MuJoCo", "inhouse": "Built in-house"}
+
+
+def source(hf: str) -> str:
+    return SOURCE_NAMES[hf.rpartition(":")[0]]
+
+
 def item(id_: str) -> dict:
     for i, tab, label, hf, hollow, fixed in ITEMS:
         if i == id_:
@@ -261,5 +325,5 @@ def available() -> list[dict]:
             out.append({"id": i, "tab": tab, "label": label, "fixed": fixed, "size": m["size"],
                         "mass": m["mass"], "friction": m.get("friction"),
                         "collision": m.get("collision", ""), "thumb": f"/pg/thumb/{i}.png",
-                        "soft": i in SOFT})
+                        "soft": i in SOFT, "source": source(hf)})
     return out

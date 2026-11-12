@@ -1,12 +1,16 @@
 # Object library credits
 
-Every object in the playground's library is a ready-made asset, used under the
+Most objects in the playground's library are ready-made assets, used under the
 [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/) licence
-it is published with. We converted each to MuJoCo (`playground/tools/convert_simready.py`)
-and changed nothing else. All rights stay with their authors.
+they are published with (USDCraft-10K's under [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)).
+We converted each to MuJoCo (`playground/tools/convert_simready.py`) and changed nothing else
+(the coloured tube racks are one USDCraft rack in five colours). All rights stay with their authors.
+Items marked "Built in-house" we modelled ourselves in Blender (`playground/tools/build_inhouse.py`).
 
 - **NVIDIA SimReady** (nvidia): https://huggingface.co/datasets/nvidia/simready-assets
 - **Tripo SimReady** (tripo): https://huggingface.co/datasets/VAST-AI/Tripo-Simready-Assets
+- **QUIKTECH SimReady** (quiktech): https://huggingface.co/datasets/quiktech/SimReady-Assets
+- **NVIDIA USDCraft-10K (Apache 2.0)** (usdcraft): https://huggingface.co/datasets/nvidia/USDCraft-10K
 
 AutoBio's lab models (the tubes, racks, dish, pipette and its stand) are used with credit to
 its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
@@ -178,3 +182,49 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Hydraulic hose | Soft | NVIDIA SimReady | [`consumable_hose_hydraulic_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/consumable_hose_hydraulic_a01) |
 | Kitchen sponge | Soft | NVIDIA SimReady | [`cleaning_sponge_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_sponge_b01) |
 | Foam brick | Soft | NVIDIA SimReady | [`primitives_brick_foam_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/primitives_brick_foam_a01) |
+| Beaker, 500 ml | Glassware | QUIKTECH SimReady | [`qt_lab_000015`](https://huggingface.co/datasets/quiktech/SimReady-Assets/tree/main/qt_lab_000015) |
+| Beaker, tall form | Glassware | QUIKTECH SimReady | [`qt_lab_000018`](https://huggingface.co/datasets/quiktech/SimReady-Assets/tree/main/qt_lab_000018) |
+| Erlenmeyer flask | Glassware | QUIKTECH SimReady | [`qt_lab_000016`](https://huggingface.co/datasets/quiktech/SimReady-Assets/tree/main/qt_lab_000016) |
+| Round-bottom flask | Glassware | QUIKTECH SimReady | [`qt_lab_000017`](https://huggingface.co/datasets/quiktech/SimReady-Assets/tree/main/qt_lab_000017) |
+| Measuring cylinder | Glassware | QUIKTECH SimReady | [`qt_lab_000013`](https://huggingface.co/datasets/quiktech/SimReady-Assets/tree/main/qt_lab_000013) |
+| Reagent bottle | Glassware | QUIKTECH SimReady | [`qt_lab_000002`](https://huggingface.co/datasets/quiktech/SimReady-Assets/tree/main/qt_lab_000002) |
+| Beaker, 50 ml | Glassware | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R482_glass_beaker/06_mini_50_ml_beaker`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R482_glass_beaker/06_mini_50_ml_beaker) |
+| Beaker, 100 ml tall | Glassware | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R482_glass_beaker/02_tall_form_100_ml_beaker`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R482_glass_beaker/02_tall_form_100_ml_beaker) |
+| Glass test tube, capped | Glassware | Built in-house (Blender) | `test_tube_16x150` |
+| Glass test tube, small | Glassware | Built in-house (Blender) | `test_tube_13x100` |
+| Glass stirring rod | Glassware | Built in-house (Blender) | `stirring_rod` |
+| Magnetic stir bar | Glassware | Built in-house (Blender) | `stir_bar` |
+| Two-tier tube rack | Lab & Medical | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/01_two_tier_plastic_rack`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/01_two_tier_plastic_rack) |
+| Single-row tube rack | Lab & Medical | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack) |
+| Tube rack, blue | Lab & Medical | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack) |
+| Tube rack, pink | Lab & Medical | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack) |
+| Tube rack, yellow | Lab & Medical | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack) |
+| Tube rack, orange | Lab & Medical | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack) |
+| Tube rack, green | Lab & Medical | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack) |
+| Wire tube rack | Lab & Medical | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/10_coated_wire_test_tube_rack_25_x_10_x_7_cm_in_whi`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/10_coated_wire_test_tube_rack_25_x_10_x_7_cm_in_whi) |
+| Burette stand | Lab & Medical | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R495_laboratory_ring_stand/04_tall_burette_stand`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R495_laboratory_ring_stand/04_tall_burette_stand) |
+| 24-well plate | Lab & Medical | Built in-house (Blender) | `plate_24well` |
+| 24-well plate lid | Lab & Medical | Built in-house (Blender) | `plate_24well_lid` |
+| Target mark | Lab & Medical | Built in-house (Blender) | `target_mark` |
+| Pipette tip | Lab & Medical | AutoBio (credit in NOTICE.md) | [`pipette_tip`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| Pipette tip box | Lab & Medical | AutoBio (credit in NOTICE.md) | [`tip_box`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| 96-well PCR plate | Lab & Medical | AutoBio (credit in NOTICE.md) | [`pcr_plate_96well`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| Cryovial, 1.8 ml | Lab & Medical | AutoBio (credit in NOTICE.md) | [`cryovial_1-8ml`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| 10 ml tube | Lab & Medical | AutoBio (credit in NOTICE.md) | [`centrifuge_10ml`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| 1.5 ml open tube | Lab & Medical | AutoBio (credit in NOTICE.md) | [`centrifuge_1500ul_no_lid`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| Pipette rack | Lab & Medical | AutoBio (credit in NOTICE.md) | [`pipette_rack`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| Otoscope | Lab & Medical | NVIDIA SimReady | [`device_otoscope_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/device_otoscope_a01) |
+| Blood pressure monitor | Lab & Medical | NVIDIA SimReady | [`device_blood_pressure_monitor_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/device_blood_pressure_monitor_a01) |
+| Vein finder | Lab & Medical | NVIDIA SimReady | [`device_vein_finder_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/device_vein_finder_a01) |
+| Nebulizer mask | Lab & Medical | NVIDIA SimReady | [`mask_nebulization_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/mask_nebulization_a01) |
+| Lab spatula | Instruments | NVIDIA SimReady | [`instrument_spatula_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/instrument_spatula_a01) |
+| Electronic scale | Lab equipment | QUIKTECH SimReady | [`qt_lab_000008`](https://huggingface.co/datasets/quiktech/SimReady-Assets/tree/main/qt_lab_000008) |
+| Ultrasonic cleaner | Lab equipment | QUIKTECH SimReady | [`qt_lab_000004`](https://huggingface.co/datasets/quiktech/SimReady-Assets/tree/main/qt_lab_000004) |
+| Hot plate stirrer | Lab equipment | Built in-house (Blender) | `hot_plate` |
+| Benchtop centrifuge | Lab equipment | AutoBio (credit in NOTICE.md) | [`centrifuge_eppendorf_5430`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| Mini centrifuge | Lab equipment | AutoBio (credit in NOTICE.md) | [`centrifuge_tiangen_tgear_mini`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| Thermal cycler | Lab equipment | AutoBio (credit in NOTICE.md) | [`thermal_cycler_biorad_c1000`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| Thermal mixer | Lab equipment | AutoBio (credit in NOTICE.md) | [`thermal_mixer_eppendorf_c`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| Vortex mixer | Lab equipment | AutoBio (credit in NOTICE.md) | [`vortex_mixer_genie_2`](../../wetlabsim/assets/autobio/NOTICE.md) |
+| Hot air oven | Furniture | QUIKTECH SimReady | [`qt_lab_000005`](https://huggingface.co/datasets/quiktech/SimReady-Assets/tree/main/qt_lab_000005) |
+| Laminar flow cabinet | Furniture | QUIKTECH SimReady | [`qt_lab_000012`](https://huggingface.co/datasets/quiktech/SimReady-Assets/tree/main/qt_lab_000012) |

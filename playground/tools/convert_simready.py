@@ -26,6 +26,13 @@ from PIL import Image
 from pxr import Usd, UsdGeom, UsdPhysics, UsdShade
 
 TEX = 512
+# CoACD's settings for convex pieces: (concavity threshold, most pieces). FINE keeps small holes
+# open (a tube rack's deck has dozens), at the cost of more pieces.
+COACD = (0.04, 24)
+FINE = (0.02, -1)
+# Clear glass and plastic, as the viewer draws them: never fainter than this (a stated opacity of
+# 8% would be invisible without the refraction a path tracer adds).
+GLASS_ALPHA = 0.3
 
 
 def open_stage(path: pathlib.Path) -> Usd.Stage:
@@ -69,7 +76,17 @@ def material_info(mat) -> dict:
                     info["tex"] = _tex_path(f)
             elif i and i.Get() is not None and info["tex"] is None:
                 info["rgba"][:3] = list(i.Get())
+            for name, key in (("roughness", "rough"), ("metallic", "metal")):
+                i = sh.GetInput(name)
+                if i and i.Get() is not None and not i.HasConnectedSource():
+                    info[key] = float(i.Get())
+            i = sh.GetInput("opacity")
+            if i and i.Get() is not None and not i.HasConnectedSource() and float(i.Get()) < 1:
+                info["rgba"][3] = max(float(i.Get()), GLASS_ALPHA)
             continue
+        src = sh.GetSourceAsset("mdl") if sh.GetImplementationSource() == "sourceAsset" else None
+        if src and "glass" in src.path.lower():     # NVIDIA's OmniGlass: clear
+            info["rgba"][3], info["rough"] = GLASS_ALPHA, 0.05
         for name, key in (("diffuse_color_constant", "rgb"), ("diffuse_tint", "tint"),
                           ("reflection_roughness_constant", "rough"), ("metallic_constant", "metal"),
                           ("texture_scale", "scale")):
@@ -89,6 +106,7 @@ def material_info(mat) -> dict:
             info["tex"] = _tex_path(i)
     if info["tex"] is not None:
         info["rgba"][:3] = info.get("tint", [1.0, 1.0, 1.0])
+    info["rgba"] = list(info["rgba"])
     return info
 
 
@@ -207,7 +225,9 @@ def read(stage, by_body: bool = False):
         if not prim.IsA(UsdGeom.Mesh):
             continue
         im = UsdGeom.Imageable(prim)
-        if im.ComputeVisibility() == "invisible":
+        is_collider = prim.HasAPI("PhysicsCollisionAPI") or bool(prim.GetAttribute("physics:approximation").Get()) \
+            if prim.GetAttribute("physics:approximation") else prim.HasAPI("PhysicsCollisionAPI")
+        if im.ComputeVisibility() == "invisible" and not is_collider:     # hidden colliders still collide
             continue
         mesh = UsdGeom.Mesh(prim)
         pts = np.array(mesh.GetPointsAttr().Get(), float)
@@ -290,8 +310,11 @@ def _merge_uv_mesh(V, UV):
 
 
 def usd_dir(src: pathlib.Path) -> pathlib.Path:
-    """NVIDIA's packages keep their USD under simready_usd/, Tripo's under usd/."""
-    return src / "simready_usd" if (src / "simready_usd").is_dir() else src / "usd"
+    """NVIDIA's packages keep their USD under simready_usd/, Tripo's under usd/, USDCraft's under physx/."""
+    for d in ("simready_usd", "usd", "physx"):
+        if (src / d).is_dir():
+            return src / d
+    return src / "usd"
 
 
 def _rigid(M: np.ndarray, mpu: float) -> np.ndarray:
@@ -490,19 +513,109 @@ def _surface(c: dict) -> dict:
     return out
 
 
-def _hulls(meshes: list, approx: list, out: pathlib.Path, prefix: str, surfaces=None) -> list[dict]:
+def _convex_polys(poly) -> list:
+    """A flat shape with holes (shapely) as convex polygons: triangulate it, then merge triangles
+    back together across every diagonal whose removal keeps the piece convex (Hertel-Mehlhorn)."""
+    V, F = trimesh.creation.triangulate_polygon(poly, engine="earcut")
+    pieces = [list(f) for f in F]
+    V = np.asarray(V)
+
+    def convex(ring):
+        P = V[ring]
+        d1 = np.roll(P, -1, 0) - P
+        d2 = np.roll(P, -2, 0) - np.roll(P, -1, 0)
+        cr = d1[:, 0] * d2[:, 1] - d1[:, 1] * d2[:, 0]
+        return np.all(cr >= -1e-12) or np.all(cr <= 1e-12)
+
+    merged = True
+    while merged:
+        merged = False
+        edge = {}
+        for k, r in enumerate(pieces):
+            for a, b in zip(r, r[1:] + r[:1]):
+                edge.setdefault((min(a, b), max(a, b)), []).append(k)
+        for (a, b), ks in edge.items():
+            if len(ks) != 2:
+                continue
+            i, j = ks
+            ri, rj = pieces[i], pieces[j]
+            # join along a-b: walk ri from b to a, then rj from a to b (without repeating them)
+            ia = ri.index(a)
+            ri2 = ri[ia:] + ri[:ia]                      # starts at a
+            if ri2[1] == b:                              # ri runs a->b: reverse so it ends ... b, a
+                ri2 = [a] + ri2[1:][::-1]
+            # ri2 = a, ..., b (going the long way round ri)
+            jb = rj.index(b)
+            rj2 = rj[jb:] + rj[:jb]                      # starts at b
+            if rj2[1] == a:
+                rj2 = [b] + rj2[1:][::-1]
+            ring = ri2 + rj2[1:-1]                       # a, ..., b, ..., (back to a)
+            if len(set(ring)) == len(ring) and convex(ring):
+                pieces[i] = ring
+                pieces.pop(j)
+                merged = True
+                break
+    return [V[r] for r in pieces]
+
+
+def plate_pieces(mesh: trimesh.Trimesh):
+    """A flat plate with holes in it (a rack's deck) as exact convex pieces: its outline at
+    mid-height, cut into convex polygons, each the plate's thickness. None if it isn't one."""
+    ext = mesh.extents
+    if ext[2] > 0.25 * min(ext[0], ext[1]):
+        return None
+    z0, z1 = mesh.bounds[:, 2]
+    sec = mesh.section(plane_origin=[0, 0, (z0 + z1) / 2], plane_normal=[0, 0, 1])
+    if sec is None:
+        return None
+    flat, T = sec.to_2D()
+    polys = flat.polygons_full
+    if not polys or not any(len(p.interiors) for p in polys):
+        return None
+    out = []
+    for poly in polys:
+        poly = poly.simplify(0.0002, preserve_topology=True)
+        for P2 in _convex_polys(poly):
+            P3 = np.c_[P2, np.zeros(len(P2)), np.ones(len(P2))] @ T.T
+            P3 = P3[:, :3]
+            out.append(trimesh.Trimesh(np.r_[np.c_[P3[:, :2], np.full(len(P3), z0)],
+                                             np.c_[P3[:, :2], np.full(len(P3), z1)]]).convex_hull)
+    return out
+
+
+def fine_pieces(mesh: trimesh.Trimesh, cfg=None) -> list:
+    """One collider as convex pieces that keep its holes open: itself if it is (near) convex,
+    exact pieces for a flat plate with holes, CoACD (fine) otherwise."""
+    hull = mesh.convex_hull
+    if mesh.is_watertight and mesh.volume > 0.92 * hull.volume:
+        return [hull]
+    plate = plate_pieces(mesh)
+    if plate:
+        return plate
+    import coacd
+    coacd.set_log_level("error")
+    th, mx = cfg or FINE
+    lo_c, hi_c = mesh.bounds
+    return [trimesh.Trimesh(np.clip(v, lo_c, hi_c), f).convex_hull for v, f in
+            coacd.run_coacd(coacd.Mesh(mesh.vertices, mesh.faces), threshold=th, max_convex_hull=mx,
+                            preprocess_mode="auto", seed=1)]
+
+
+def _hulls(meshes: list, approx: list, out: pathlib.Path, prefix: str, surfaces=None, pieces_cfg=COACD) -> list[dict]:
     """A body's collision shapes: each collider as the asset asks (its convex hull, or convex
     pieces by CoACD for a convex decomposition), each with its collider's surface."""
     parts = []
     surfaces = surfaces or [{}] * len(meshes)
     for m, a, sf in zip(meshes, approx, surfaces):
         pieces = [m.convex_hull]
-        if a == "convexDecomposition" and len(m.faces) > 20:
+        if a == "convexDecomposition" and pieces_cfg == FINE:
+            pieces = fine_pieces(m)
+        elif a == "convexDecomposition" and len(m.faces) > 20:
             import coacd
             coacd.set_log_level("error")
             lo_c, hi_c = m.bounds
             pieces = [trimesh.Trimesh(np.clip(v, lo_c, hi_c), f).convex_hull for v, f in
-                      coacd.run_coacd(coacd.Mesh(m.vertices, m.faces), threshold=0.04, max_convex_hull=24,
+                      coacd.run_coacd(coacd.Mesh(m.vertices, m.faces), threshold=pieces_cfg[0], max_convex_hull=pieces_cfg[1],
                                       preprocess_mode="auto", seed=1)]
         for piece in pieces:
             if len(piece.faces) < 4 or piece.volume <= 1e-12:
@@ -514,7 +627,7 @@ def _hulls(meshes: list, approx: list, out: pathlib.Path, prefix: str, surfaces=
 
 
 def convert_articulated(stage, src: pathlib.Path, usd: pathlib.Path, out: pathlib.Path, max_tris=60000,
-                        hollow=False) -> dict:
+                        hollow=False, pieces_cfg=COACD) -> dict:
     """An asset with moving parts: one MuJoCo body per USD rigid body, in a tree by its joints.
 
     Revolute and prismatic joints become hinge and slide joints with the asset's own axis,
@@ -566,7 +679,7 @@ def convert_articulated(stage, src: pathlib.Path, usd: pathlib.Path, out: pathli
         bmass = float(a.Get()) if a and a.Get() else (sum(c["mass"] for c in mine_c if c["mass"]) or None)
         rec = {"name": name, "visuals": _visuals(mine_g, origin, Tinv, out, f"b{i}_", max_tris, total),
                "collision_parts": _hulls(meshes, ["convexDecomposition" if hollow else c["approx"]
-                                                  for c in mine_c], out, f"b{i}_", [_surface(c) for c in mine_c]),
+                                                  for c in mine_c], out, f"b{i}_", [_surface(c) for c in mine_c], pieces_cfg),
                "mass": round(bmass, 6) if bmass else None}
         props = [c["props"] for c in mine_c]
         if props and all(props):          # the mass, centre and inertia the asset states, in this part's frame
@@ -610,14 +723,18 @@ def convert_articulated(stage, src: pathlib.Path, usd: pathlib.Path, out: pathli
     return meta
 
 
-def convert(src: pathlib.Path, out: pathlib.Path, hollow=False, max_tris=60000, solid=False) -> dict:
-    usd = next(p for p in sorted(usd_dir(src).glob("*.usd*")) if p.suffix in (".usd", ".usda"))
+def convert(src: pathlib.Path, out: pathlib.Path, hollow=False, max_tris=60000, solid=False, fine=False) -> dict:
+    pieces_cfg = FINE if fine else COACD
+    usd = next(p for p in sorted(usd_dir(src).glob("*.usd*")) if p.suffix in (".usd", ".usda", ".usdc"))
     stage = open_stage(usd)
     rigid = [p for p in Usd.PrimRange(stage.GetPseudoRoot(), Usd.TraverseInstanceProxies())
              if p.HasAPI(UsdPhysics.RigidBodyAPI)]
     if len(rigid) > 1 and not solid:
-        return convert_articulated(stage, src, usd, out, max_tris, hollow)
+        return convert_articulated(stage, src, usd, out, max_tris, hollow, pieces_cfg)
     groups, colliders, mass, com = read(stage)
+    if not mass:    # some packages (QUIKTECH, USDCraft) state the mass on the rigid body, not its colliders
+        mass = sum(float(p.GetAttribute("physics:mass").Get()) for p in rigid
+                   if p.GetAttribute("physics:mass") and p.GetAttribute("physics:mass").Get()) or None
     out.mkdir(parents=True, exist_ok=True)
     for f in out.glob("*"):
         f.unlink()
@@ -663,10 +780,20 @@ def convert(src: pathlib.Path, out: pathlib.Path, hollow=False, max_tris=60000, 
         [trimesh.Trimesh(np.vstack(g["V"]), np.arange(len(np.vstack(g["V"]))).reshape(-1, 3)) for g in groups.values()])
     col.apply_translation(-origin)
     parts = []
-    if hollow:
+    if hollow and pieces_cfg == FINE and colliders:     # each collider on its own, holes kept open
+        for c in colliders:
+            m = c["mesh"].copy()
+            m.apply_translation(-origin)
+            for piece in fine_pieces(m):
+                if len(piece.faces) < 4 or piece.volume <= 1e-12:
+                    continue
+                name = f"col_{len(parts)}.obj"
+                write_obj(out / name, piece.vertices, piece.faces)
+                parts.append({"mesh": name, "volume": float(piece.volume), **_surface(c)})
+    elif hollow:
         import coacd
         coacd.set_log_level("error")
-        pieces = coacd.run_coacd(coacd.Mesh(col.vertices, col.faces), threshold=0.04, max_convex_hull=24,
+        pieces = coacd.run_coacd(coacd.Mesh(col.vertices, col.faces), threshold=pieces_cfg[0], max_convex_hull=pieces_cfg[1],
                                  preprocess_mode="auto", seed=1)
         lo_c, hi_c = col.bounds
         for k, (v, f) in enumerate(pieces):
@@ -688,7 +815,7 @@ def convert(src: pathlib.Path, out: pathlib.Path, hollow=False, max_tris=60000, 
     meta = {
         "source": src.name, "usd": usd.name,
         "mass": round(float(mass), 5) if mass else None,
-        "friction": friction(stage),
+        "friction": friction(stage) or None,     # a stated 0 is a packaging slip (no glass is frictionless)
         "com": None if com is None else np.round(com - origin, 5).tolist(),
         "size": np.round(hi - lo, 4).tolist(),
         "collision": "convex pieces (CoACD)" if hollow else "convex hull (as the asset specifies)",

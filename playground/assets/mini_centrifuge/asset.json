@@ -1,0 +1,302 @@
+{
+ "source": "AutoBio",
+ "usd": null,
+ "mass": 1.76085,
+ "friction": 1.0,
+ "com": null,
+ "size": [
+  0.1456,
+  0.2506,
+  0.2509
+ ],
+ "collision": "AutoBio's own collision shapes (MuJoCo model), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "body",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.6235,
+      0.3686,
+      1.0,
+      1.0
+     ],
+     "roughness": 1.0,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 1.0,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_2.obj",
+     "rgba": [
+      0.298,
+      0.298,
+      0.298,
+      1.0
+     ],
+     "roughness": 1.0,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_3.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 1.0,
+     "metallic": 0.0,
+     "texture": "tex_0.png"
+    },
+    {
+     "mesh": "b0_vis_4.obj",
+     "rgba": [
+      0.102,
+      0.102,
+      0.102,
+      1.0
+     ],
+     "roughness": 1.0,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 5.382831140676353e-05
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 1.3011505750939538e-06
+    },
+    {
+     "mesh": "b0_col_2.obj",
+     "volume": 0.001501231598779007
+    },
+    {
+     "mesh": "b0_col_3.obj",
+     "volume": 2.4863972240523775e-05
+    }
+   ],
+   "frame": [
+    -9.7e-05,
+    -0.037377,
+    0.023406,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "mass": 1.653605,
+   "inertial": {
+    "mass": 1.653605,
+    "pos": [
+     -0.0,
+     -0.000319,
+     0.018639
+    ],
+    "quat": [
+     0.500578,
+     0.499421,
+     -0.499463,
+     0.500537
+    ],
+    "diaginertia": [
+     0.005340794,
+     0.003717232,
+     0.003536583
+    ]
+   },
+   "parent": null,
+   "root": true,
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    1,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "lid",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.8588,
+      0.8588,
+      0.8588,
+      0.3129
+     ],
+     "roughness": 1.0,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 1.8083886777735416e-05
+    },
+    {
+     "mesh": "b1_col_1.obj",
+     "volume": 0.0012565243908105818
+    }
+   ],
+   "frame": [
+    9.7e-05,
+    0.06771,
+    0.161745,
+    0.0,
+    0.0,
+    0.75624,
+    0.654295
+   ],
+   "mass": 0.093167,
+   "inertial": {
+    "mass": 0.093167,
+    "pos": [
+     0.0,
+     0.001227,
+     0.024749
+    ],
+    "quat": [
+     0.507919,
+     0.491953,
+     -0.491935,
+     0.507938
+    ],
+    "diaginertia": [
+     0.000480177,
+     0.000291713,
+     0.000283222
+    ]
+   },
+   "parent": 0,
+   "pos": [
+    0.000193,
+    0.105087,
+    0.138339
+   ],
+   "quat": [
+    0.0,
+    0.0,
+    0.75624,
+    0.654295
+   ],
+   "joint": {
+    "name": "lid",
+    "type": "hinge",
+    "pos": [
+     0.027484,
+     -0.080659,
+     -0.013824
+    ],
+    "axis": [
+     -1.0,
+     0.0,
+     0.0
+    ],
+    "range": [
+     0.0,
+     1.712
+    ]
+   },
+   "collide": false
+  },
+  {
+   "name": "rotor",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.102,
+      0.102,
+      0.102,
+      1.0
+     ],
+     "roughness": 1.0,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [],
+   "frame": [
+    -9.6e-05,
+    -0.037118,
+    0.110666,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "mass": 0.014079,
+   "inertial": {
+    "mass": 0.014079,
+    "pos": [
+     -0.0,
+     1e-06,
+     0.003391
+    ],
+    "quat": [
+     0.499978,
+     0.500021,
+     -0.499979,
+     0.500022
+    ],
+    "diaginertia": [
+     1.5266e-05,
+     1.0854e-05,
+     5.488e-06
+    ]
+   },
+   "parent": 0,
+   "pos": [
+    1e-06,
+    0.000259,
+    0.08726
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "joint": {
+    "name": "rotor",
+    "type": "hinge",
+    "pos": [
+     -1e-06,
+     1e-06,
+     -0.003001
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "range": [
+     -180.0,
+     180.0
+    ]
+   },
+   "collide": false
+  }
+ ],
+ "unstated_mass": []
+}

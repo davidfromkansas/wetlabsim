@@ -1,0 +1,63 @@
+{
+ "source": "Built in-house (Blender)",
+ "usd": null,
+ "mass": 0.00331,
+ "friction": null,
+ "com": null,
+ "size": [
+  0.025,
+  0.0091,
+  0.0091
+ ],
+ "collision": "convex pieces",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "bar",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.97,
+      0.97,
+      0.96,
+      1
+     ],
+     "roughness": 0.35,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 1.2182583791149194e-06
+    }
+   ],
+   "mass": 0.003312,
+   "frame": [
+    0.0,
+    0.0,
+    0.0,
+    1,
+    0,
+    0,
+    0
+   ],
+   "parent": null,
+   "root": true,
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    1,
+    0,
+    0,
+    0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

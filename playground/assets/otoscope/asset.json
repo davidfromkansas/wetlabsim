@@ -1,0 +1,289 @@
+{
+ "source": "device_otoscope_a01",
+ "usd": "sm_device_otoscope_a01_01.usd",
+ "mass": 2.08106,
+ "friction": 0.4,
+ "com": null,
+ "size": [
+  0.073,
+  0.049,
+  0.1907
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "button_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 2.1138792480966972e-07,
+     "friction": 0.3,
+     "restitution": 0.1
+    }
+   ],
+   "mass": 0.010559,
+   "inertial": {
+    "mass": 0.010559,
+    "pos": [
+     0.000662,
+     2.6e-05,
+     -0.00086
+    ],
+    "diaginertia": [
+     7.23308e-08,
+     1.35439e-07,
+     1.8996e-07
+    ],
+    "quat": [
+     0.707107,
+     0.0,
+     0.707107,
+     -0.0
+    ]
+   },
+   "parent": 2,
+   "collide": false,
+   "joint": {
+    "name": "joint_button_01_joint_00",
+    "type": "slide",
+    "range": [
+     0.0,
+     0.001
+    ],
+    "drive": {
+     "stiffness": 1.0,
+     "target": -0.001
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    -0.016202,
+    -0.0,
+    0.141745
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.016501,
+    -0.0,
+    0.141578,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "otoscopeGlass_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 2.1745933333213114e-05,
+     "friction": 0.4,
+     "restitution": 0.05
+    }
+   ],
+   "mass": 0.024622,
+   "inertial": {
+    "mass": 0.024622,
+    "pos": [
+     0.0,
+     -0.0,
+     -0.0
+    ],
+    "diaginertia": [
+     4.63078e-06,
+     2.06964e-05,
+     2.29321e-05
+    ],
+    "quat": [
+     -0.0,
+     0.0,
+     0.707107,
+     0.707107
+    ]
+   },
+   "parent": 2,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    -0.002491,
+    0.0,
+    0.170051
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.002491,
+    0.0,
+    0.170051,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "otoscope_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b2_tex_0.png"
+    },
+    {
+     "mesh": "b2_vis_1.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b2_tex_1.png"
+    },
+    {
+     "mesh": "b2_vis_2.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b2_tex_2.png"
+    },
+    {
+     "mesh": "b2_vis_3.obj",
+     "rgba": [
+      0.0,
+      0.7477,
+      0.0021,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b2_vis_4.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b2_tex_4.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 0.000522135239860097,
+     "friction": 0.3,
+     "restitution": 0.1
+    }
+   ],
+   "mass": 2.045876,
+   "inertial": {
+    "mass": 2.045876,
+    "pos": [
+     0.000858,
+     0.002093,
+     0.122245
+    ],
+    "diaginertia": [
+     0.00182215,
+     0.0321645,
+     0.0329535
+    ],
+    "quat": [
+     -0.5,
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   "parent": null,
+   "root": true,
+   "pos": [
+    -0.000299,
+    -0.0,
+    -0.000167
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.000299,
+    -0.0,
+    -0.000167,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

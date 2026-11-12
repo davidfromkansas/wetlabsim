@@ -316,6 +316,8 @@ BOUNCE_TIMECONST = 0.02
 def set_surface(g, c: dict, cls, friction=None):
     """A collision shape's surface, as its asset states: sliding friction (static, MuJoCo takes
     one coefficient), and how bouncy it is (restitution, or the asset's own MuJoCo solref)."""
+    if "contype" in c:       # the asset's own contact filter (MuJoCo's contype/conaffinity bits)
+        g.contype, g.conaffinity = c["contype"], c["conaffinity"]
     mu = c.get("friction", friction)
     if mu:
         g.friction = [mu, g.friction[1], g.friction[2]]
@@ -653,8 +655,9 @@ def _add_item(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_cac
     prefix = f"{p.item}__"
     if p.item not in mesh_cache:
         mesh_cache.add(p.item)
-        for k, v in enumerate(meta["visuals"]):
-            world.add_mesh(name=f"{prefix}vis{k}", file=str(d / v["mesh"]))
+        for k, v in enumerate(meta["visuals"]):         # weightless: a flat part (a scale's display) is fine
+            world.add_mesh(name=f"{prefix}vis{k}", file=str(d / v["mesh"]),
+                           inertia=mujoco.mjtMeshInertia.mjMESH_INERTIA_SHELL)
         _add_materials(world, d, prefix, meta)
         for k, c in enumerate(meta["collision_parts"]):
             world.add_mesh(name=f"{prefix}col{k}", file=str(d / c["mesh"]))

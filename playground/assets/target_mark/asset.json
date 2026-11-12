@@ -1,0 +1,64 @@
+{
+ "source": "Built in-house (Blender)",
+ "usd": null,
+ "mass": 0.0012,
+ "friction": null,
+ "com": null,
+ "size": [
+  0.05,
+  0.05,
+  0.0006
+ ],
+ "collision": "convex pieces",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "sticker",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 1.1730715644638713e-06
+    }
+   ],
+   "mass": 0.0012,
+   "frame": [
+    0.0,
+    0.0,
+    0.0,
+    1,
+    0,
+    0,
+    0
+   ],
+   "parent": null,
+   "root": true,
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    1,
+    0,
+    0,
+    0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}
