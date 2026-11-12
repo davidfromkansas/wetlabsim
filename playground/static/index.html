@@ -483,7 +483,9 @@ body.watch #vbtns .fbtn:not(#openLeft){display:none}
 .rrow img{width:32px;height:32px;border-radius:6px;object-fit:cover;flex:none}
 .rrow .t{flex:1;min-width:0;line-height:1.25}.rrow .t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rrow .sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
-.rrow .smore{position:static;opacity:.8}
+#robotList .rrow{gap:0}
+#robotList .rrow .smore{position:static;width:20px;height:28px;margin:0;padding:0;border:0;border-radius:6px;background:transparent;color:#4B5563;opacity:.8}
+#robotList .rrow .smore:hover,#robotList .rrow .smore[aria-expanded=true]{background:rgba(17,24,39,.06);opacity:1}
 /* the robot panel's header: which robot everything below is about */
 #rhead{position:relative;display:flex;align-items:center;gap:4px;padding:10px 10px 2px 10px;flex:none}
 #rpick{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:6px 10px 6px 6px;border-radius:12px;border:0;background:transparent;font:13px Inter,sans-serif;color:var(--ink);text-align:left;cursor:pointer}
@@ -872,6 +874,7 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
       <button role="menuitem" data-act="duplicate"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5" y="5" width="9" height="9" rx="2"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/></svg>Duplicate</button>
       <button role="menuitem" data-act="rename"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 2.5l3 3L6 13H3v-3z"/></svg>Rename</button>
       <button role="menuitem" data-act="rotate"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v2.5h-2.5"/></svg>Turn 90°</button>
+      <button role="menuitem" data-act="reset" id="resetItem"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 8a5 5 0 1 0 1.5-3.6M3 2.5v2.5h2.5"/></svg>Reset to before last run</button>
       <hr>
       <button role="menuitem" data-act="remove" class="danger"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5"/></svg>Remove robot</button>
       <div class="why" id="stMenuWhy" hidden></div>
@@ -920,7 +923,7 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
           <div class="infopop" id="infoPop" role="note" hidden><b>What the AI gets</b><br><span id="infoText"></span></div>
           <label for="task" class="small" style="position:absolute;left:-9999px">Task</label>
           <textarea id="task" rows="3" placeholder="Tell this robot what to do, in plain words. Example: put the apple in the bowl."></textarea>
-          <div class="runs" id="runsRow"><span class="lb">Runs<span>Each run starts from this robot's table as it is now</span></span><div class="step" role="group" aria-label="How many runs"><button type="button" id="runsMinus" aria-label="One fewer run">&#8722;</button><output id="runsN" aria-live="polite">1</output><button type="button" id="runsPlus" aria-label="One more run">+</button></div></div>
+          <div class="runs" id="runsRow"><span class="lb">Runs</span><div class="step" role="group" aria-label="How many runs"><button type="button" id="runsMinus" aria-label="One fewer run">&#8722;</button><output id="runsN" aria-live="polite">1</output><button type="button" id="runsPlus" aria-label="One more run">+</button></div></div>
           <div class="nomodel" id="noModels"><b>No AI connected yet</b><span>Add your API key for OpenAI, Anthropic, Devin or Jev to give this robot tasks.</span><button type="button" class="primary" id="noModelsBtn">Open Connections</button></div>
           <div class="tcrow"><div class="mdl"><img id="modelLogo" src="/static/anthropic.svg" alt=""><select id="model" aria-label="AI model"></select></div><button class="primary" id="startBtn"><svg width="11" height="11" viewBox="0 0 14 14" fill="#fff" aria-hidden="true"><path d="M3 1.5 L12.5 7 L3 12.5 Z"/></svg>Run task</button></div>
         </div>
@@ -1251,7 +1254,7 @@ function renderRobots() {
   if (key !== S.robotKey) {
     S.robotKey = key;
     box.innerHTML = `<span class="rl">Robots</span>` + (list.length ? list.map(st => { const [d, t] = chipDot(st);
-      return `<div class="rrow${st.id === sc.active ? ' on' : ''}"><button class="rsel" data-st="${esc(st.id)}" aria-current="${st.id === sc.active}"><img src="${ROBOT_IMG(st.robot)}" alt=""><span class="t"><b>${esc(st.name)}</b><span class="sub">${esc(st.label)}</span></span><span class="sdot ${d}" title="${esc(t)}"></span></button>${S.watch ? '' : `<button class="smore" data-more="${esc(st.id)}" aria-label="More actions for ${esc(st.name)}" aria-haspopup="menu" aria-expanded="false">⋯</button>`}</div>`; }).join('')
+      return `<div class="rrow${st.id === sc.active ? ' on' : ''}"><button class="rsel" data-st="${esc(st.id)}" aria-current="${st.id === sc.active}"><img src="${ROBOT_IMG(st.robot)}" alt=""><span class="t"><b>${esc(st.name)}</b><span class="sub">${esc(st.label)}</span></span><span class="sdot ${d}" title="${esc(t)}"></span></button>${S.watch ? '' : `<button class="smore" data-more="${esc(st.id)}" aria-label="More actions for ${esc(st.name)}" aria-haspopup="menu" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg></button>`}</div>`; }).join('')
       : `<span class="small" style="padding:2px 8px">No robots yet. Press “Add station”.</span>`);
     box.querySelectorAll('.rsel').forEach(b => b.onclick = () => pickRobot(b.dataset.st));
     box.querySelectorAll('.smore').forEach(b => b.onclick = (e) => {
@@ -1388,6 +1391,10 @@ function openStMenu(uid, x, y, btn) {
   const st = (sc.robots || []).find(r => r.id === uid); if (!st) return;
   const m = $('stMenu'), lock = sc.locked ? (typeof sc.locked === 'string' ? sc.locked : 'A robot is running a task.') : '';
   m.querySelectorAll('button').forEach(b => b.disabled = !!lock && b.dataset.act !== 'rename');
+  // Reset works while physics plays, but not while any robot is working on a task.
+  const last = (sc.runs || {})[uid], working = Object.values(sc.runs || {}).some(r => r && (r.active || r.queued));
+  $('resetItem').disabled = !last || !last.started || working;
+  $('resetItem').title = !last || !last.started ? 'This robot has no run yet' : '';
   $('swapLabel').textContent = st.robot === 'ur5e' ? 'Swap for Franka Emika Panda' : 'Swap for UR5e';
   $('stMenuWhy').hidden = !lock; $('stMenuWhy').textContent = lock ? `${lock} Stop it to change the lab.` : '';
   m.classList.add('open');
@@ -1417,6 +1424,9 @@ async function stAction(act, uid) {
     const r = await api('/pg/station/duplicate', {uid});
     if (!r.ok) toast(r.error || "Couldn't copy it");
     else { if (S.drafts[uid]) S.drafts[r.uid] = S.drafts[uid]; S.sel = 'robot'; toast(`Copied ${st.name}`); }
+  } else if (act === 'reset') {
+    const r = await api('/pg/station/reset', {uid});
+    if (!r.ok) toast(r.error || "Couldn't reset it"); else toast(`${st.name} is back to how it was before its last run`);
   } else if (act === 'remove') {
     if (!confirm(`Remove ${st.name} (${st.label})? Its table and what's on it stay in the lab.`)) return;
     const r = await api('/pg/station/remove', {uid}); if (!r.ok) toast(r.error); else delete S.drafts[uid];

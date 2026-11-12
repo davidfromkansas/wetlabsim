@@ -78,6 +78,35 @@ def test_apply_settings_and_station_reset():
     assert not sim.restore_station(snap)
 
 
+def test_reset_station_to_before_last_run():
+    """Reset (robot menu): back to the moment the last run started, even after a rebuild."""
+    sim = PlaygroundSim(stations=[])
+    uid = sim.add_station("franka", (0, 0), 0.0, "table")
+    st = sim.station(uid)
+    x, y, _ = st.to_world(st.robot_xy[0] + 0.45, st.robot_xy[1])
+    sim.placed = [W.Placed("t1", "tube_15ml", (x, y, st.top + 0.01), 0.0)]
+    sim.rebuild()
+    for _ in range(200):
+        mujoco.mj_step(sim.m, sim.d)
+    snap = sim.station_snapshot(uid)
+    b = mujoco.mj_name2id(sim.m, mujoco.mjtObj.mjOBJ_BODY, "obj_t1")
+    x0 = sim.d.xpos[b].copy()
+    sim.d.qpos[snap["qpos_i"]] += 0.05
+    mujoco.mj_forward(sim.m, sim.d)
+    assert sim.reset_station(snap) is None
+    assert np.allclose(sim.d.xpos[b], x0, atol=1e-6)
+    # The lab rebuilt since (new settings): Reset still puts the tube back, by joint name.
+    sim.apply_settings({"option": {"timestep": 0.002}})
+    b = mujoco.mj_name2id(sim.m, mujoco.mjtObj.mjOBJ_BODY, "obj_t1")
+    j = mujoco.mj_name2id(sim.m, mujoco.mjtObj.mjOBJ_JOINT, "obj_t1_joint")
+    sim.d.qpos[sim.m.jnt_qposadr[j]] += 0.1
+    mujoco.mj_forward(sim.m, sim.d)
+    assert sim.reset_station(snap) is None
+    assert np.allclose(sim.d.xpos[b], x0, atol=1e-6)
+    sim.remove_station(uid)
+    assert sim.reset_station(snap)          # the robot is gone: a plain-words error
+
+
 def test_run_video_layout_and_parts(tmp_path):
     from playground import runvideo as RV
     for n in (2, 3):
