@@ -144,7 +144,7 @@ def box_points(size, n: int = 3) -> np.ndarray:
 class Station:
     """A robot arm on its own table: the unit a lab is built from."""
     uid: str              # "st1", "st2", ...: also the prefix of the robot's names ("st1/joint1")
-    robot: str            # "franka" or "ur5e"
+    robot: str            # a key of wetlabsim.scene.ROBOTS ("franka", "ur5e", "aloha", "fr3_duo")
     pos: tuple            # world (x, y) of the table's centre (m)
     yaw: float = 0.0      # rotation about the vertical (rad)
     name: str = ""        # what the user calls it ("Station 1")
@@ -706,7 +706,7 @@ def add_station(world: mujoco.MjSpec, st: Station, cache: set):
     world.worldbody.add_site(name=st.prefix + "robot_mount", pos=list(st.to_world(rx, ry, top)),
                              quat=list(mount))
     c, s_ = math.cos(st.yaw), math.sin(st.yaw)
-    if st.robot != "aloha":           # an ALOHA brings its own (the real rig's four cameras)
+    if not S.ROBOTS[st.robot].get("sides"):   # a two-arm robot brings its own (ALOHA's four, the Duo's head)
         _camera(world, st.prefix + "overhead", st.to_world(rx + 0.75, ry, top + 1.0),
                 st.to_world(rx + 0.42, ry, top), 55, up=(-c, -s_, 0))
     _camera(world, st.prefix + "side", st.to_world(rx + 1.75, ry - 1.3, top + 0.8),

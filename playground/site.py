@@ -119,6 +119,53 @@ coordinates into the named frame. The lenses have no distortion.
 At the start of a run both arms are at joint angles `{ready}` (rad), gripper open, not in
 a protective stop.
 """
+FR3_DUO_TEMPLATE = """# Site sheet: this installation
+
+What the datasheets can't tell you: how this particular robot is set up.
+
+## Mounting
+
+- Franka FR3 Duo with the FR3 Duo Vision & Manipulation Kit: two Franka Research 3 arms
+  (`left` and `right`) on the FR3 Duo mount, standing on a riser block near the middle of one
+  long edge of {table} ({w_cm:.0f} x {d_cm:.0f} cm, top {top_cm:.1f} cm above the floor).
+  The FR3 Duo origin is {origin_cm:.0f} mm above the table top, as in Franka's reference
+  setup. Seen from behind the robot, `left` is on the left and `right` on the right.
+- Both arms report in one frame, the FR3 Duo origin frame: origin at the FR3 Duo origin,
+  x forward across the table, y to the robot's left, z up. All positions and poses in the
+  command interface, for both arms, are in this frame, in metres. (Each arm's own base is
+  mounted tilted on the Duo mount, as in Franka's reference kinematics.)
+- The table top is the plane z = {table_z:.2f}. It extends from x = {x0:.2f} m to x = {x1:.2f} m
+  and from y = {y0:.2f} m to y = {y1:.2f} m. Beyond it is the floor, {top_cm:.1f} cm lower.
+
+## Tool and payload settings
+
+- End effector: a Robotiq 2F-85 two-finger gripper (85 mm stroke) on each arm, with an
+  Intel RealSense D405 wrist camera on its mount between the flange and the gripper.
+- TCP: the point between the two finger pads.
+- Payload: the gripper and wrist camera. Each arm's force/torque reading (estimated by the
+  FR3 from its joint torque sensors) is at its flange, with that load's weight removed.
+- Tool orientation convention: a TCP pose of `[x, y, z, 3.14159, 0, 0]` points the
+  gripper straight down with the fingers closing along the frame's y axis.
+
+## Cameras
+
+Three cameras, 640 x 480, colour and depth (metres along the camera's z axis). The
+calibration is in `cameras.json`, once for each arm (`left`, `right`):
+
+- `head`: the Stereolabs ZED Mini on the Duo's head (its left eye), looking forward and
+  down at the table. Its pose is given in the FR3 Duo origin frame.
+- `wrist`: that arm's D405, on its gripper. Its pose is given in that arm's TCP frame
+  (hand-eye calibration). The robot's command interface names them `left_wrist` and
+  `right_wrist`.
+
+Poses use OpenCV camera axes (x right, y down, z forward); `rotation` maps camera
+coordinates into the named frame. The lenses have no distortion.
+
+## Start state
+
+At the start of a run the left arm is at joint angles `{ready_l}` and the right arm at
+`{ready_r}` (rad): both grippers pointing down, open, not in a protective stop.
+"""
 TABLES = {"table": "a heavy-duty packing table", "wetlab": "a stainless steel lab bench"}
 
 
@@ -143,6 +190,13 @@ def site_sheet(placed: list[W.Placed], station: W.Station | None = None,
                                      d_cm=min(tw, td) * 100, gap=2 * by, gap_cm=200 * by, x0=x0, x1=x1,
                                      y0=y0, y1=y1, ry0=-y1, ry1=-y0,
                                      ready="[" + ", ".join(f"{v:g}" for v in ready) + "]")
+    if station.robot == "fr3_duo":
+        h = WS.FR3_DUO_ORIGIN_HEIGHT
+        fmt = lambda q: "[" + ", ".join(f"{v:g}" for v in q) + "]"
+        return FR3_DUO_TEMPLATE.format(top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100,
+                                       d_cm=min(tw, td) * 100, origin_cm=h * 1000, table_z=-h,
+                                       x0=-sx / 2 - rx, x1=sx / 2 - rx, y0=-sy / 2 - ry, y1=sy / 2 - ry,
+                                       ready_l=fmt(WS.FR3_DUO_READY["left"]), ready_r=fmt(WS.FR3_DUO_READY["right"]))
     return TEMPLATE.format(top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100,
                            d_cm=min(tw, td) * 100, x0=-sx / 2 - rx, x1=sx / 2 - rx, y0=-sy / 2 - ry,
                            y1=sy / 2 - ry, robot_name=P["name"],

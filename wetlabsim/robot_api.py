@@ -19,7 +19,7 @@ import time
 # A two-arm robot (ALOHA) has the same API for each arm, under /left and /right, and its
 # four cameras (overhead, low, and a wrist camera per arm).
 SIDE = r"(/(left|right))?"
-GET_PATHS = re.compile(r"^" + SIDE + r"/(state|info|camera/(overhead|wrist|low|left_wrist|right_wrist)"
+GET_PATHS = re.compile(r"^" + SIDE + r"/(state|info|camera/(head|overhead|wrist|low|left_wrist|right_wrist)"
                        r"\.(png|jpg|rgbd\.npz|depth\.npy))$")
 POST_PATHS = {"/move_l", "/move_j", "/move_j_pose", "/stop", "/unlock_protective_stop",
               "/zero_ft_sensor", "/gripper"}

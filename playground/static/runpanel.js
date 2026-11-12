@@ -108,10 +108,12 @@ const usd = (x) => x == null ? '' : '$' + (x < 0.1 && x > 0 ? x.toFixed(3) : x.t
 const ktok = (n) => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1000 ? Math.round(n / 1000) + 'k' : String(n || 0);
 const robotBase = (uid) => `/s/${SID}/st/${uid}`;
 // The popup's pictures: the scene, the overhead camera and the wrist camera, or both wrists
-// on a two-arm robot (ALOHA). [img id, camera, caption]
+// on a two-arm robot (ALOHA, FR3 Duo: its head camera in place of the overhead). [img id, camera, caption]
 const popCams = (uid) => {
-  const two = ((S.scene && S.scene.robots || []).find(r => r.id === uid) || {}).robot === 'aloha';
-  return [['rpSide', 'side', 'Scene'], ['rpOver', 'overhead', 'Overhead camera'],
+  const robot = ((S.scene && S.scene.robots || []).find(r => r.id === uid) || {}).robot;
+  const two = robot === 'aloha' || robot === 'fr3_duo';
+  return [['rpSide', 'side', 'Scene'],
+          robot === 'fr3_duo' ? ['rpOver', 'head', 'Head camera'] : ['rpOver', 'overhead', 'Overhead camera'],
           ...(two ? [['rpWristL', 'left_wrist', 'Left wrist camera'], ['rpWristR', 'right_wrist', 'Right wrist camera']]
                   : [['rpWrist', 'wrist', 'Wrist camera']])];
 };
@@ -317,7 +319,7 @@ function render(tl) {
       <div class="track" id="rpTrack"></div><div class="ph${live && P.follow ? ' live' : ''}" id="rpPh"></div>
     </div>
     <div class="pv" style="--pics:${popCams(tl.uid).length}"><figure><img id="rpSide" alt="The scene at the playhead"><figcaption>Scene</figcaption></figure>
-      <figure><img id="rpOver" alt="The overhead camera at the playhead"><figcaption>Overhead camera (AI sees)</figcaption></figure>
+      <figure><img id="rpOver" alt="The ${popCams(tl.uid)[1][2].toLowerCase()} at the playhead"><figcaption>${popCams(tl.uid)[1][2]} (AI sees)</figcaption></figure>
       ${popCams(tl.uid).slice(2).map(([id, , cap]) => `<figure><img id="${id}" alt="The ${cap.toLowerCase()} at the playhead"><figcaption>${cap} (AI sees)</figcaption></figure>`).join('')}
       <div class="what"><b id="rpT"></b><span id="rpWhat"></span><span id="rpSpent" class="mono"></span></div></div>`;
   document.getElementById('rpX').onclick = closeRun;

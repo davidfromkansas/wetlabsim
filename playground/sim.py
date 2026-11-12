@@ -1034,7 +1034,9 @@ class PlaygroundSim(Sim):
             if self.scene_mode == "free" and len(self.stations) > 1:
                 a = self.arms.get(self.active_station)
                 if a is not None:    # the station the page is looking at: a ring at its robot's foot
-                    bp = self.d.xpos[a.base_body]
+                    bp = self.d.xpos[a.base_body].copy()
+                    if a.robot == "fr3_duo":   # its origin stands 20 cm above the table, on its riser
+                        bp[2] -= WS.FR3_DUO_ORIGIN_HEIGHT
                     out.append({"type": "cylinder", "size": [0.17, 0.002, 0], "pos": [bp[0], bp[1], bp[2] + 0.002],
                                 "yaw": 0.0, "rgba": [0.15, 0.45, 0.95, 0.55]})
             sel = self.selected
