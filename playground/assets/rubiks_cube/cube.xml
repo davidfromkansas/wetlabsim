@@ -1,7 +1,9 @@
 <!-- A 3x3x3 puzzle cube whose faces turn, from MuJoCo's own model gallery (model/cube/cube_3x3x3.xml
      in github.com/google-deepmind/mujoco, contributed by Kevin Zakka; Apache License 2.0).
      Kept as it is, except: the scene parts (option, light, skybox, camera) and the six face motors
-     are left out, so only a robot can turn a face. -->
+     are left out, so only a robot can turn a face; and the pieces' contacts are made stiff (MuJoCo's
+     solref/solimp), so a robot's grip (tens of newtons) can't push pieces out of line, as a real
+     cube's locked pieces aren't. -->
 <mujoco model="Cube 3x3x3">
   <compiler autolimits="true" texturedir="tex"/>
 
@@ -9,7 +11,7 @@
     <geom mass="0.00253704"/>
     <default class="cubelet">
       <joint type="ball" armature="0.0001" damping="0.0005" frictionloss="0.001"/>
-      <geom type="mesh" condim="1" mesh="cubelet" euler="0 0 90"/>
+      <geom type="mesh" condim="1" mesh="cubelet" euler="0 0 90" solref="0.002 1" solimp="0.99 0.999 0.0005"/>
     </default>
     <default class="core">
       <geom type="sphere" contype="0" conaffinity="0" group="4" size="0.01"/>
