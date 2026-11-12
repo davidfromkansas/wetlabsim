@@ -98,6 +98,48 @@ def yaw_quat(yaw: float):
     return (math.cos(yaw / 2), 0.0, 0.0, math.sin(yaw / 2))
 
 
+# Rotating an object: its orientation as three angles about the world's fixed X, Y and Z axes
+# (applied X first, then Y, then Z), the numbers the page shows and takes.
+def euler_rot(deg) -> np.ndarray:
+    x, y, z = (math.radians(float(v)) for v in deg)
+    cx, sx, cy, sy, cz, sz = math.cos(x), math.sin(x), math.cos(y), math.sin(y), math.cos(z), math.sin(z)
+    Rx = np.array([[1, 0, 0], [0, cx, -sx], [0, sx, cx]])
+    Ry = np.array([[cy, 0, sy], [0, 1, 0], [-sy, 0, cy]])
+    Rz = np.array([[cz, -sz, 0], [sz, cz, 0], [0, 0, 1]])
+    return Rz @ Ry @ Rx
+
+
+def rot_euler(R: np.ndarray) -> list:
+    y = math.asin(max(-1.0, min(1.0, -R[2, 0])))
+    if abs(R[2, 0]) < 0.9999:
+        x, z = math.atan2(R[2, 1], R[2, 2]), math.atan2(R[1, 0], R[0, 0])
+    else:                       # straight up or down about Y: X and Z turn the same way
+        x, z = 0.0, math.atan2(-R[0, 1], R[1, 1])
+    # every turn has a second set of angles (X + 180, 180 - Y, Z + 180): show the smaller one
+    wrap = lambda a: (a + 180.0) % 360.0 - 180.0 if (a + 180.0) % 360.0 else 180.0
+    a = [math.degrees(v) for v in (x, y, z)]
+    b = [wrap(a[0] + 180), wrap(180 - a[1]), wrap(a[2] + 180)]
+    best = min((a, b), key=lambda e: sum(abs(v) for v in e) + 1e-6 * (e is b))
+    return [round(v, 1) + 0.0 for v in best]
+
+
+def axis_rot(axis: str, degrees: float) -> np.ndarray:
+    return euler_rot({"x": (degrees, 0, 0), "y": (0, degrees, 0), "z": (0, 0, degrees)}[axis])
+
+
+def rot_quat(R: np.ndarray) -> tuple:
+    q = np.zeros(4)
+    mujoco.mju_mat2Quat(q, np.ascontiguousarray(R, float).ravel())
+    return tuple(float(v) for v in q)
+
+
+def box_points(size, n: int = 3) -> np.ndarray:
+    """Points over an item's box in its own frame (bottom centre at the origin): n per side."""
+    sx, sy, sz = size
+    t = np.linspace(-0.5, 0.5, n)
+    return np.array([(a * sx, b * sy, (c + 0.5) * sz) for a in t for b in t for c in t])
+
+
 @dataclass
 class Station:
     """A robot arm on its own table: the unit a lab is built from."""

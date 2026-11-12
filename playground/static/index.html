@@ -362,8 +362,31 @@ body.fixed .tl{top:12px}
 .bigcam img{display:block;width:100%;aspect-ratio:4/3;max-height:calc(100vh - 220px);object-fit:contain;background:#1F2937}
 .vb{height:32px;padding:0 10px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;font:500 12px Inter,sans-serif;color:var(--ink);cursor:pointer;white-space:nowrap}
 /* the selected object, floating at the top right */
-#objPanel{position:absolute;right:14px;top:84px;width:250px;border-radius:12px;padding:12px 14px;z-index:3}
+#objPanel{position:absolute;right:14px;top:84px;width:300px;border-radius:12px;padding:12px 14px;z-index:3;max-height:calc(100% - 100px);overflow:auto}
 #objPanel dl{gap:4px 10px;font-size:12.5px}
+/* rotating the selected object: one row per world axis, the same letters and colours as its rings */
+.ohd{display:flex;gap:10px;align-items:center}.ohd img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex:none;background:#2B2B2E}
+.osec{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:flex;align-items:baseline;gap:8px}
+.osec span{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:500;font-size:12px}
+.rrow{display:grid;grid-template-columns:30px 48px minmax(0,1fr) 48px;gap:6px;align-items:center}
+.rrow .lt{width:30px;height:30px;border-radius:8px;color:#fff;font:700 15px 'JetBrains Mono',monospace;display:flex;align-items:center;justify-content:center}
+.rrow button{height:36px;width:48px;flex:none;border-radius:8px;border:1px solid #D1D5DB;background:#fff;font:600 13px 'JetBrains Mono',monospace;color:var(--ink);cursor:pointer;padding:0}
+.rrow input{height:36px;width:100%;min-width:0;box-sizing:border-box;border:1px solid #D1D5DB;border-radius:8px;text-align:center;font:700 15px 'JetBrains Mono',monospace;color:var(--ink);background:#fff;-moz-appearance:textfield}
+.rrow input::-webkit-inner-spin-button{-webkit-appearance:none}
+.rrow.off{opacity:.38}.rrow.off button,.rrow.off input{cursor:not-allowed}
+.rrow.act input{box-shadow:0 0 0 2px var(--ax);border-color:var(--ax)}
+.poses{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.poses button{height:78px;border:1px solid #D1D5DB;border-radius:10px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 12px Inter,sans-serif;color:var(--ink);cursor:pointer;padding:4px}
+.poses img{width:40px;height:40px;border-radius:7px;object-fit:cover;background:#2B2B2E}
+.ofoot{display:flex;gap:8px;align-items:center}.ofoot .ghostbtn{flex:none;padding:0 12px}
+.snap{display:flex;align-items:center;gap:6px;font-size:12.5px;color:#374151;flex:1;cursor:pointer}
+.snap input{width:16px;height:16px;accent-color:var(--blue)}
+#rotTag{position:absolute;transform:translate(14px,-130%);white-space:nowrap;font:700 16px 'JetBrains Mono',monospace;color:#fff;background:var(--ink);padding:5px 10px;border-radius:8px;box-shadow:0 6px 16px rgba(17,24,39,.35);pointer-events:none;display:none;z-index:6}
+#rotTag b{font-weight:700}
+#axisGuide{position:absolute;left:14px;top:84px;width:84px;height:84px;border-radius:12px;display:none;z-index:2;pointer-events:none}
+body.rotating #axisGuide{display:block}
+body.rotating .tl{left:108px}
+#view.ringhover{cursor:grab}
 /* the right panel's Data tab: the robot's readings, as in the robot cell viewer */
 #datapane{flex:1;display:none;flex-direction:column;gap:12px;min-height:0;overflow:auto;padding:14px 16px}
 body.dataing #datapane{display:flex}
@@ -783,10 +806,26 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
     <div class="watchbanner glass" id="watchBanner"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#111827" stroke-width="1.5"><path d="M1 8 C3 4 5.5 3 8 3 C10.5 3 13 4 15 8 C13 12 10.5 13 8 13 C5.5 13 3 12 1 8 Z"/><circle cx="8" cy="8" r="2.2"/></svg><span>Watching someone else's lab · view only</span><button class="vb copyLab">Copy to my sessions</button></div>
     <div class="emptyfloor"><b>No robots yet</b><span id="emptyMsg">Press “Add station”, then click the floor to place it.</span></div>
     <div id="objPanel" class="glass" style="display:none;flex-direction:column;gap:10px">
-      <div><span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Selected object</span><h3 id="objName" style="margin:2px 0 0;font-size:15px;color:var(--ink)"></h3><span class="small">NVIDIA SimReady · physics from the asset</span></div>
+      <div class="ohd"><img id="objImg" alt=""><div><span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Selected object</span><h3 id="objName" style="margin:2px 0 0;font-size:15px;color:var(--ink)"></h3></div></div>
       <dl><dt>Size</dt><dd id="objSize"></dd><dt>Mass</dt><dd id="objMass"></dd><dt>Friction</dt><dd id="objFric"></dd><dt>Collision</dt><dd id="objCol" style="font-family:Inter;font-size:12px"></dd></dl>
-      <div class="acts" style="display:flex;gap:8px"><button class="ghostbtn" id="rotBtn">Rotate 90°</button><button class="ghostbtn" id="delBtn">Remove</button></div>
+      <div class="acts" style="display:flex;flex-direction:column;gap:10px">
+        <div class="osec">Rotate<span>drag a ring, or type</span></div>
+        <div class="rrow" data-ax="x" style="--ax:#DC2626"><span class="lt" style="background:#DC2626">X</span><button data-d="-15" aria-label="Rotate X by minus 15 degrees">−15</button><input id="rotx" type="number" step="1" aria-label="Rotation about X, degrees"><button data-d="15" aria-label="Rotate X by 15 degrees">+15</button></div>
+        <div class="rrow" data-ax="y" style="--ax:#16A34A"><span class="lt" style="background:#16A34A">Y</span><button data-d="-15" aria-label="Rotate Y by minus 15 degrees">−15</button><input id="roty" type="number" step="1" aria-label="Rotation about Y, degrees"><button data-d="15" aria-label="Rotate Y by 15 degrees">+15</button></div>
+        <div class="rrow" data-ax="z" style="--ax:#2563EB"><span class="lt" style="background:#2563EB">Z</span><button data-d="-15" aria-label="Rotate Z by minus 15 degrees">−15</button><input id="rotz" type="number" step="1" aria-label="Rotation about Z, degrees"><button data-d="15" aria-label="Rotate Z by 15 degrees">+15</button></div>
+        <div class="small" id="rotWhy" style="display:none"></div>
+        <div id="setDown" style="display:flex;flex-direction:column;gap:8px"><div class="osec">Set down</div>
+          <div class="poses"><button data-pose="0"><img alt="">As placed</button><button data-pose="90"><img alt="" style="transform:rotate(90deg)">On its side</button><button data-pose="180"><img alt="" style="transform:rotate(180deg)">Upside down</button></div></div>
+        <div class="ofoot"><label class="snap"><input type="checkbox" id="snapChk" checked>Snap to 15°</label><button class="ghostbtn" id="resetRot">Reset</button><button class="ghostbtn" id="delBtn">Remove</button></div>
+      </div>
     </div>
+    <div id="rotTag"></div>
+    <svg id="axisGuide" class="glass" viewBox="-42 -42 84 84" role="img" aria-label="Which way X, Y and Z point">
+      <line id="agx" x1="0" y1="0" x2="0" y2="0" stroke="#DC2626" stroke-width="4" stroke-linecap="round"/><text id="agxt" font-family="JetBrains Mono" font-weight="700" font-size="13" fill="#DC2626" text-anchor="middle" dominant-baseline="middle">X</text>
+      <line id="agy" x1="0" y1="0" x2="0" y2="0" stroke="#16A34A" stroke-width="4" stroke-linecap="round"/><text id="agyt" font-family="JetBrains Mono" font-weight="700" font-size="13" fill="#16A34A" text-anchor="middle" dominant-baseline="middle">Y</text>
+      <line id="agz" x1="0" y1="0" x2="0" y2="0" stroke="#2563EB" stroke-width="4" stroke-linecap="round"/><text id="agzt" font-family="JetBrains Mono" font-weight="700" font-size="13" fill="#2563EB" text-anchor="middle" dominant-baseline="middle">Z</text>
+      <circle r="3.5" fill="#111827"/>
+    </svg>
     <div class="pips" id="pips">
       <div class="pip"><img id="camOver" alt="Overhead camera, what the AI sees"><div class="pcap">Overhead<span>AI SEES</span><button class="exp" data-cam="overhead" aria-label="Expand overhead camera" title="Expand"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M7 1 H11 V5 M5 11 H1 V7 M11 1 L7 5 M1 11 L5 7"/></svg></button></div></div>
       <div class="pip"><img id="camWrist" alt="Wrist camera, what the AI sees"><div class="pcap">Wrist<span>AI SEES</span><button class="exp" data-cam="wrist" aria-label="Expand wrist camera" title="Expand"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M7 1 H11 V5 M5 11 H1 V7 M11 1 L7 5 M1 11 L5 7"/></svg></button></div></div>
@@ -995,6 +1034,14 @@ let drag = null;
 view.addEventListener('contextmenu', e => e.preventDefault());
 view.addEventListener('mousedown', async (e) => {
   const p = uv(e);
+  // on a rotate ring of the selected object: turn it about that axis
+  const o = selObj(), ring = e.button === 0 && o && window.V3 && document.body.classList.contains('rotating') && window.V3.gizmoHit(e.clientX, e.clientY);
+  if (ring) {
+    const a = window.V3.gizmoAngle(ring, e.clientX, e.clientY);
+    drag = {x: e.clientX, y: e.clientY, btn: 0, moved: false, p0: p, obj: null, rot: {k: ring, prev: a, sum: 0, deg: 0, obj: o}};
+    window.V3.setGizmo({active: ring});
+    return;
+  }
   drag = {x: e.clientX, y: e.clientY, btn: e.button, shift: e.shiftKey, moved: false, p0: p, obj: null};
   if (e.button === 0 && !S.armed && S.scene && !S.scene.locked) {
     const hit = await api('/pg/pick', {u: p.u, v: p.v});
@@ -1004,6 +1051,22 @@ view.addEventListener('mousedown', async (e) => {
 window.addEventListener('mousemove', (e) => {
   if (S.placing && e.target === view && !drag) probeStation(uv(e));
   if (S.armed && e.target === view) probe(S.armed, uv(e));
+  if (!drag && window.V3 && document.body.classList.contains('rotating') && e.target === view) {
+    const k = window.V3.gizmoHit(e.clientX, e.clientY) || null;
+    window.V3.setGizmo({hover: k}); view.classList.toggle('ringhover', !!k);
+  }
+  if (drag && drag.rot) {
+    const r = drag.rot, a = window.V3.gizmoAngle(r.k, e.clientX, e.clientY);
+    let d = a - r.prev; d = Math.atan2(Math.sin(d), Math.cos(d)); r.prev = a; r.sum += d;
+    let deg = r.sum * 180 / Math.PI;
+    if ($('snapChk').checked && !e.shiftKey) deg = Math.round(deg / 15) * 15; else deg = Math.round(deg);
+    r.deg = deg; drag.moved = true;
+    window.V3.setPreview({bodies: r.obj.bodies, center: r.obj.mid, axis: r.k, angle: deg * Math.PI / 180});
+    const t = $('rotTag'), sp = stage.getBoundingClientRect();
+    t.style.display = 'block'; t.style.left = (e.clientX - sp.left) + 'px'; t.style.top = (e.clientY - sp.top) + 'px';
+    t.innerHTML = `<b style="color:${{x: '#F87171', y: '#4ADE80', z: '#60A5FA'}[r.k]}">${r.k.toUpperCase()}</b> ${deg > 0 ? '+' : ''}${deg}°`;
+    return;
+  }
   if (!drag) return;
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
   if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
@@ -1017,6 +1080,17 @@ window.addEventListener('mousemove', (e) => {
 window.addEventListener('mouseup', async (e) => {
   if (!drag) return;
   const d = drag; drag = null; view.classList.remove('dragging');
+  if (d.rot) {
+    $('rotTag').style.display = 'none';
+    window.V3.setGizmo({active: null});
+    if (d.rot.deg) {
+      const r = await api('/pg/orient', {uid: d.rot.obj.uid, axis: d.rot.k, degrees: d.rot.deg});
+      if (!r.ok) toast(r.error);
+      await refresh();
+      setTimeout(() => window.V3.setPreview(null), 150);    // once the new pose has streamed in
+    } else window.V3.setPreview(null);
+    return;
+  }
   if (d.moved && d.obj) { probeNext = null; hideTag(); const r = await api('/pg/move', {uid: d.obj.uid, u: uv(e).u, v: uv(e).v}); if (!r.ok) toast(r.error); S.sel = d.obj.uid; refresh(); return; }
   if (d.moved || e.target !== view) return;
   const p = uv(e);
@@ -1518,7 +1592,55 @@ async function placeStation(p) {
   await refresh(); setSideTab('chat'); $('task').focus();
 }
 async function rotateSel() { const r = await api('/pg/rotate', {uid: S.sel, degrees: 90}); if (!r.ok) toast(r.error); refresh(); }
-$('delBtn').onclick = removeSel; $('rotBtn').onclick = rotateSel;
+$('delBtn').onclick = removeSel;
+// ---------------------------------------------------------------- rotating the selected object
+const selObj = () => S.scene && (S.scene.objects || []).find(o => o.uid === S.sel);
+async function orient(body) {
+  const o = selObj(); if (!o) return;
+  const r = await api('/pg/orient', {uid: o.uid, ...body}); if (!r.ok) toast(r.error);
+  await refresh();
+}
+document.querySelectorAll('.rrow').forEach(row => {
+  const ax = row.dataset.ax;
+  row.querySelectorAll('button').forEach(b => b.onclick = () => orient({axis: ax, degrees: +b.dataset.d}));
+  row.querySelector('input').addEventListener('change', () => {
+    const v = ['x', 'y', 'z'].map(k => parseFloat($('rot' + k).value) || 0);
+    orient({euler: v});
+  });
+});
+document.querySelectorAll('.poses button').forEach(b => b.onclick = () => { const o = selObj(); if (o) orient({euler: [+b.dataset.pose, 0, o.euler[2]]}); });
+$('resetRot').onclick = () => orient({euler: [0, 0, 0]});
+function drawRotPanel(obj, it) {
+  const why = obj.tilt_why || '';
+  for (const k of ['x', 'y', 'z']) {
+    const inp = $('rot' + k), row = inp.closest('.rrow'), off = k !== 'z' && !obj.tilt;
+    if (document.activeElement !== inp) inp.value = Math.round(obj.euler[{x: 0, y: 1, z: 2}[k]]);
+    row.classList.toggle('off', off);
+    row.querySelectorAll('button,input').forEach(c => { c.disabled = off || !!(S.scene || {}).locked; });
+    row.title = off ? `Only Z: ${why}` : '';
+  }
+  $('rotWhy').style.display = obj.tilt ? 'none' : 'block';
+  $('rotWhy').textContent = obj.tilt ? '' : `Only Z here: ${why}.`;
+  $('setDown').style.display = obj.tilt ? 'flex' : 'none';
+  document.querySelectorAll('.poses img').forEach(i => { if (it.thumb && i.getAttribute('src') !== it.thumb) i.src = it.thumb; });
+  $('resetRot').disabled = !!(S.scene || {}).locked;
+}
+function showRings(obj) {
+  const on = !!(obj && window.V3 && !S.watch && !(S.scene && S.scene.locked));
+  document.body.classList.toggle('rotating', on);
+  if (!window.V3) return;
+  if (!on) { window.V3.setGizmo(null); return; }
+  if (!(drag && drag.rot)) window.V3.setGizmo({center: obj.mid, axes: obj.tilt ? 'xyz' : 'z', active: null});
+}
+function drawAxisGuide() {
+  if (!window.V3 || !document.body.classList.contains('rotating')) return;
+  const a = window.V3.axesOnScreen();
+  for (const k of ['x', 'y', 'z']) {
+    const [x, y] = a[k], L = 26;
+    const l = $('ag' + k); l.setAttribute('x2', x * L); l.setAttribute('y2', y * L);
+    const t = $('ag' + k + 't'); t.setAttribute('x', x * (L + 9)); t.setAttribute('y', y * (L + 9));
+  }
+}
 
 // ---------------------------------------------------------------- play, tasks, chat
 $('playBtn').onclick = async () => {
@@ -1795,11 +1917,14 @@ function render() {
   if (S.camFor !== camKey) { S.camFor = camKey; openCams(); }
   const obj = sc.objects.find(o => o.uid === S.sel);
   $('objPanel').style.display = obj ? 'flex' : 'none';
+  showRings(obj);
   if (obj) {
     const it = S.cat.items.find(i => i.id === obj.item) || {};
     $('objName').textContent = obj.label; $('objSize').textContent = it.size ? fmtSize(it.size) : '';
     $('objMass').textContent = fmtMass(it.mass); $('objFric').textContent = it.friction != null ? it.friction : '';
-    $('objCol').textContent = it.collision || ''; $('delBtn').disabled = !obj.removable || sc.locked; $('rotBtn').disabled = sc.locked;
+    $('objCol').textContent = it.collision || ''; $('delBtn').disabled = !obj.removable || sc.locked;
+    if (it.thumb && $('objImg').getAttribute('src') !== it.thumb) $('objImg').src = it.thumb;
+    if (obj.euler) drawRotPanel(obj, it);
     $('delBtn').textContent = obj.removable ? 'Remove' : 'Always here';
   }
   // In free play the chat takes the object library's place while a run is on, and stays
@@ -2358,7 +2483,7 @@ $('wModel').onchange = renderWet;
   try {
     const m = await import('/pg/static/view3d.js?v=HASH');   // the server puts in the file's hash
     const v = m.start({stage, base: `/s/${SID}`, onReady: () => { $('loading').style.display = 'none'; }});
-    if (v) { window.V3 = v; document.body.classList.add('v3'); }
+    if (v) { window.V3 = v; document.body.classList.add('v3'); v.onFrame = drawAxisGuide; }
   } catch (e) { console.warn('3D view unavailable, using video', e); }
   openStreams();
   setTimeout(() => $('loading').style.display = 'none', 8000);

@@ -1463,7 +1463,7 @@ class PGHandler(Handler):
                 return self._json(s.probe_station(float(b["u"]), float(b["v"]), float(b.get("yaw", 0.0)), b.get("uid"),
                                                   b.get("kind")))
             lock = self._locked()
-            if (p in ("/pg/place", "/pg/move", "/pg/remove", "/pg/rotate", "/pg/clear") or p.startswith("/pg/station/")) and lock:
+            if (p in ("/pg/place", "/pg/move", "/pg/remove", "/pg/rotate", "/pg/orient", "/pg/clear") or p.startswith("/pg/station/")) and lock:
                 if p != "/pg/station/rename":
                     return self._json({"ok": False, "error": lock})
             if p == "/pg/station/add":
@@ -1566,12 +1566,23 @@ class PGHandler(Handler):
                     return self._json({"ok": False, "error": spot.get("reason") or "can't go there"})
                 s.move(b["uid"], spot["pos"], float(b.get("yaw", 0.0)) if "yaw" in b else None)
                 return self._json({"ok": True, "spot": spot})
-            if p == "/pg/rotate":
-                pl = s.find(b["uid"])
-                if pl is None:
+            if p == "/pg/rotate":        # a turn about the vertical (the R key)
+                if s.find(b["uid"]) is None:
                     return self._err("no such object", 404)
-                import math
-                s.move(pl.uid, pl.pos, pl.yaw + math.radians(float(b.get("degrees", 90))))
+                s.orient(b["uid"], axis="z", degrees=float(b.get("degrees", 90)))
+                return self._json({"ok": True})
+            if p == "/pg/orient":        # rotate: to angles about X, Y, Z, or by some degrees about one
+                if s.find(b["uid"]) is None:
+                    return self._err("no such object", 404)
+                if b.get("euler") is not None:
+                    e = [float(v) for v in b["euler"]][:3]
+                    if len(e) != 3:
+                        return self._err("euler takes three angles")
+                    s.orient(b["uid"], euler=e)
+                else:
+                    if b.get("axis") not in ("x", "y", "z"):
+                        return self._err("axis is x, y or z")
+                    s.orient(b["uid"], axis=b["axis"], degrees=float(b.get("degrees", 0)))
                 return self._json({"ok": True})
             if p == "/pg/remove":
                 s.remove(b["uid"])

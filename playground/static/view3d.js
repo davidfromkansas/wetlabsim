@@ -301,6 +301,7 @@ export function start({stage, base = '', onReady}) {
       const f = JSON.parse(ev.data);
       if (f.v !== V.version) { loadScene(); return; }
       const p = b64(f.p), q = b64(f.q);
+      V.rawP = p; V.rawQ = q;
       for (let i = 0; i < V.bodies.length; i++) {
         V.bodies[i].position.set(p[3 * i], p[3 * i + 1], p[3 * i + 2]);
         V.bodies[i].quaternion.set(q[4 * i + 1], q[4 * i + 2], q[4 * i + 3], q[4 * i]);
@@ -317,10 +318,114 @@ export function start({stage, base = '', onReady}) {
   function frame() {
     const {pos, look} = camFrame(V.cam);
     camera.position.copy(pos); camera.lookAt(look);
+    drawPreview(); drawGizmo();
+    if (V.onFrame) V.onFrame();
     if (floorFx) drawFloorFx(performance.now() / 1000);
     renderer.render(scene, camera);
     requestAnimationFrame(frame);
   }
+
+
+  // ---------------------------------------------------------------- rotate rings
+  // Three rings around the selected object, one per world axis (X red, Y green, Z blue), the
+  // same size on screen whatever the object's size. Dragging one turns the object about that
+  // axis: the page shows it turning here (a preview over the pose stream) and tells the server
+  // the angle on release.
+  const AXES = {x: [1, 0, 0], y: [0, 1, 0], z: [0, 0, 1]};
+  const RING_COL = {x: 0xDC2626, y: 0x16A34A, z: 0x2563EB};
+  const gizmo = new THREE.Group(); gizmo.visible = false; scene.add(gizmo);
+  const rings = {}, hitRings = {};
+  const torus = (k, tube, seg = 120) => {
+    const geo = new THREE.TorusGeometry(1, tube, 12, seg);
+    if (k === 'x') geo.rotateY(Math.PI / 2);
+    if (k === 'y') geo.rotateX(Math.PI / 2);
+    return geo;
+  };
+  for (const k of ['x', 'y', 'z']) {
+    const mat = new THREE.MeshBasicMaterial({color: RING_COL[k], depthTest: false, transparent: true});
+    const halo = new THREE.Mesh(torus(k, 0.055), new THREE.MeshBasicMaterial({color: 0xffffff, depthTest: false, transparent: true}));
+    const ring = new THREE.Mesh(torus(k, 0.03), mat), fat = new THREE.Mesh(torus(k, 0.055), mat);
+    halo.renderOrder = 998; ring.renderOrder = fat.renderOrder = 999;
+    const hit = new THREE.Mesh(torus(k, 0.12, 60), new THREE.MeshBasicMaterial({visible: false}));
+    const g = new THREE.Group(); g.add(halo, ring, fat, hit); gizmo.add(g);
+    rings[k] = {g, ring, fat, halo}; hitRings[k] = hit;
+  }
+  let G = null;        // {center, axes: 'xyz' | 'z', active, hover}
+  function ringScale() {
+    if (!G) return 1;
+    const c = new THREE.Vector3(...G.center);
+    return camera.position.distanceTo(c) * Math.tan(FOVY * D2R / 2) * 0.16;
+  }
+  function drawGizmo() {
+    gizmo.visible = !!G;
+    if (!G) return;
+    gizmo.position.set(...G.center);
+    gizmo.scale.setScalar(ringScale());
+    for (const k of ['x', 'y', 'z']) {
+      const r = rings[k], dim = !!G.active && G.active !== k, big = G.active === k || (!G.active && G.hover === k);
+      r.g.visible = G.axes.includes(k);
+      r.ring.material.opacity = dim ? 0.18 : 1;
+      r.halo.visible = !dim; r.halo.scale.setScalar(1); r.halo.material.opacity = 0.9;
+      r.ring.visible = !big; r.fat.visible = big;
+    }
+  }
+  const ray = new THREE.Raycaster();
+  function rayAt(clientX, clientY) {
+    const rc = canvas.getBoundingClientRect();
+    ray.setFromCamera(new THREE.Vector2((clientX - rc.left) / rc.width * 2 - 1, -((clientY - rc.top) / rc.height) * 2 + 1), camera);
+    return ray;
+  }
+  V.setGizmo = (g) => { G = g ? {...(G || {}), ...g} : null; };
+  V.gizmoHit = (clientX, clientY) => {
+    if (!G) return null;
+    gizmo.updateMatrixWorld(true);
+    const r = rayAt(clientX, clientY);
+    let best = null;
+    for (const k of G.axes.split('')) {
+      const h = r.intersectObject(hitRings[k], false)[0];
+      if (h && (!best || h.distance < best.d)) best = {k, d: h.distance};
+    }
+    return best && best.k;
+  };
+  // The angle (radians) of the pointer around the ring of axis k, seen from the camera.
+  V.gizmoAngle = (k, clientX, clientY) => {
+    const n = new THREE.Vector3(...AXES[k]), c = new THREE.Vector3(...G.center);
+    const r = rayAt(clientX, clientY).ray;
+    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(n, c);
+    const p = new THREE.Vector3();
+    let v;
+    if (Math.abs(r.direction.dot(n)) > 0.15 && r.intersectPlane(plane, p)) v = p.sub(c);
+    else {            // the ring is seen edge-on: use where the pointer is on screen instead
+      const s = c.clone().project(camera), m = new THREE.Vector3(r.origin.x, r.origin.y, r.origin.z).add(r.direction).project(camera);
+      v = new THREE.Vector3(m.x - s.x, m.y - s.y, 0).applyQuaternion(camera.quaternion);
+    }
+    const u = new THREE.Vector3(...(k === 'z' ? [1, 0, 0] : k === 'x' ? [0, 1, 0] : [0, 0, 1]));
+    const w = new THREE.Vector3().crossVectors(n, u);
+    return Math.atan2(v.dot(w), v.dot(u));
+  };
+  // Show bodies turned by angle (radians) about axis k through center, until cleared.
+  let PV = null;
+  V.setPreview = (pv) => { PV = pv; };
+  function drawPreview() {
+    if (!PV || !V.rawP) return;
+    const qd = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(...AXES[PV.axis]), PV.angle);
+    const c = new THREE.Vector3(...PV.center), p = V.rawP, q = V.rawQ;
+    for (const i of PV.bodies) {
+      const b = V.bodies[i]; if (!b) continue;
+      const v = new THREE.Vector3(p[3 * i], p[3 * i + 1], p[3 * i + 2]).sub(c).applyQuaternion(qd).add(c);
+      b.position.copy(v);
+      b.quaternion.copy(qd).multiply(new THREE.Quaternion(q[4 * i + 1], q[4 * i + 2], q[4 * i + 3], q[4 * i]));
+    }
+  }
+  // Where the world's X, Y and Z point on screen (unit 2D vectors, y down), for the axis guide.
+  V.axesOnScreen = () => {
+    const out = {};
+    for (const k of ['x', 'y', 'z']) {
+      const v = new THREE.Vector3(...AXES[k]).applyQuaternion(camera.quaternion.clone().invert());
+      out[k] = [v.x, -v.y];
+    }
+    return out;
+  };
 
   V._scene = scene;   // for debugging from the console
   V.applyDelta = (d) => { V.cam = applyDelta(V.cam, d); V.lastLocal = performance.now(); };
