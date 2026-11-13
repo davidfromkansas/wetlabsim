@@ -104,3 +104,17 @@ def test_device_login_failure_says_why(fake_codex, monkeypatch):
     st = _until(login, ("done", "failed"))
     assert st["state"] == "failed" and "not enabled" in st["error"]
     CL.cancel()
+
+
+def test_sandbox_script_makes_codex_home_and_keeps_its_errors(fake_codex, tmp_path):
+    # Real Codex refuses a CODEX_HOME that doesn't exist (on stderr); the sandbox's script makes it
+    # and sends stderr to the reader. Here the fake Codex checks the folder the same way.
+    import subprocess
+    home = tmp_path / "new" / "codex-login"
+    script = CL.sandbox_script(str(home)).replace("exec codex", '[ -d "$CODEX_HOME" ] || { echo "Error: CODEX_HOME missing" >&2; exit 1; }; exec codex')
+    out = subprocess.run(["sh", "-c", script], env={**os.environ, "CODEX_HOME": str(home)},
+                         capture_output=True, text=True, timeout=20).stdout
+    assert "GIAU-6AP7X" in out and (home / "auth.json").exists()
+    out = subprocess.run(["sh", "-c", f"exec codex 2>&1"], env={**os.environ, "CODEX_HOME": str(tmp_path / "gone"), "FAIL": "1"},
+                         capture_output=True, text=True, timeout=20).stdout
+    assert "not enabled" in out       # an error on the merged stream reaches the page

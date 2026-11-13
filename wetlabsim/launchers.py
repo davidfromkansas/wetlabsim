@@ -211,7 +211,8 @@ class ModalSandboxLauncher:
                 info.size, info.mode = len(data), 0o600
                 t.addfile(info, io.BytesIO(data))
         sb.filesystem.write_bytes(buf.getvalue(), "/tmp/up.tar")
-        sb.exec("sh", "-c", "mkdir -p /workspace && tar -xf /tmp/up.tar -C / && rm /tmp/up.tar").wait()
+        # (/tmp/codex: Codex's home folder, which Codex won't make itself.)
+        sb.exec("sh", "-c", "mkdir -p /workspace /tmp/codex && tar -xf /tmp/up.tar -C / && rm /tmp/up.tar").wait()
         base_env = {"PYTHONPATH": "/client", "WETLAB_ROBOT_URL": robot_url, "WETLAB_ROBOT_TOKEN": token}
         if devin:
             # The same bridge as a local run (streams Devin's steps as JSON lines), with the robot's

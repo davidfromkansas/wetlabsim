@@ -30,6 +30,12 @@ HOSTS = ["auth.openai.com", "api.openai.com", "chatgpt.com"]
 CMD = ["codex", "login", "--device-auth", "-c", 'cli_auth_credentials_store="file"']
 
 
+def sandbox_script(home: str) -> str:
+    """The sandbox's command: Codex's sign-in in its own (new) home folder, stderr with stdout."""
+    import shlex
+    return f"mkdir -p {shlex.quote(home)} && chmod 700 {shlex.quote(home)} && exec {shlex.join(CMD)} 2>&1"
+
+
 class _Local:
     """Codex on this machine, with a login folder of its own (not this user's ~/.codex)."""
 
@@ -65,7 +71,9 @@ class _Sandbox:
         app = modal.App.lookup(ModalSandboxLauncher.APP, create_if_missing=True)
         self.sb = modal.Sandbox.create("sleep", "infinity", app=app, image=ModalSandboxLauncher.image(),
                                        timeout=EXPIRES_S + 300, cpu=0.25, memory=512, outbound_domain_allowlist=HOSTS)
-        self.proc = self.sb.exec(*CMD, env={"CODEX_HOME": self.HOME, "NO_COLOR": "1"})
+        # Codex refuses a CODEX_HOME that doesn't exist, and says why on stderr: make the folder,
+        # and hand both streams to the page's reader.
+        self.proc = self.sb.exec("sh", "-c", sandbox_script(self.HOME), env={"CODEX_HOME": self.HOME, "NO_COLOR": "1"})
         self.stdout = self.proc.stdout
 
     def poll(self):
