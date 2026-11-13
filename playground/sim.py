@@ -30,6 +30,7 @@ SOFT_MAX = 3       # soft objects a lab may hold: each is many bodies and contac
 # How far from a robot's base centre nothing may be dropped: its base (a Franka's is 0.2 m across,
 # a UR5e's 0.15 m) stands there. Objects nearer than that would sit inside it.
 BASE_RADIUS = 0.11
+LIFT_MAX = 1.0    # how high (m) an object can be lifted off what it stands on, with Move
 FOVY = 45.0        # the free camera's vertical field of view (MuJoCo's default)
 
 
@@ -414,6 +415,56 @@ class PlaygroundSim(Sim):
                 p.yaw = yaw
             self.rebuild(sync=False)     # synced above; its new place stands
 
+    def can_lift(self, uid: str) -> str:
+        """Why an object can't be lifted off what it stands on ("" if it can)."""
+        it = catalog.item(self.find(uid).item)
+        if it["fixed"]:
+            return "furniture stays on the floor"
+        if it["soft"]:
+            return "soft objects lie flat"
+        return ""
+
+    def obj_at(self, uid: str) -> list:
+        """Where an object is, for the Move rows: its middle's X and Y, and how high (m) its
+        bottom is above the surface under it (0: resting on it)."""
+        with self.lock:
+            p = self.find(uid)
+            R = self.obj_rot(uid)
+            mid = self._obj_mid(p, R)
+        spot = self.support(p.item, float(mid[0]), float(mid[1]), exclude_uid=uid, rot=R)
+        lift = 0.0 if self.can_lift(uid) else float(p.pos[2]) - spot["pos"][2]
+        return [round(float(mid[0]), 4), round(float(mid[1]), 4), round(lift if lift > 0.002 else 0.0, 4)]
+
+    def translate(self, uid: str, x: float | None = None, y: float | None = None, lift: float | None = None):
+        """Move an object along the world's X, Y or Z: its middle to (x, y), its bottom lift (m)
+        above whatever is under it there. It keeps how it's turned, can't go into the table, the
+        floor or another object (it lands on top of what's under it), and stays where it's put
+        until physics plays again."""
+        with self.lock:
+            p = self.find(uid)
+            if p is None:
+                raise RobotError("no such object")
+            self._sync_placed()
+        x0, y0, l0 = self.obj_at(uid)
+        x, y = x0 if x is None else float(x), y0 if y is None else float(y)
+        lift = l0 if lift is None else max(0.0, float(lift))
+        if lift and self.can_lift(uid):
+            raise RobotError(f"only X and Y: {self.can_lift(uid)}")
+        if lift > LIFT_MAX:
+            raise RobotError(f"at most {LIFT_MAX * 100:.0f} cm up")
+        if abs(x) > 9.5 or abs(y) > 9.5:
+            raise RobotError("off the floor")
+        with self.lock:
+            R = self.obj_rot(uid)
+        spot = self.support(p.item, x, y, exclude_uid=uid, rot=R, lift=lift)
+        if not spot["valid"]:
+            raise RobotError(spot["reason"])
+        with self.lock:
+            p.pos = tuple(spot["pos"])
+            if not catalog.item(p.item)["soft"]:
+                p.quat = W.rot_quat(R)
+            self.rebuild(sync=False)
+
     def _obj_mid(self, p: W.Placed, R) -> np.ndarray:
         """The middle of an object's box, in the world (where its rotate rings sit)."""
         b = mujoco.mj_name2id(self.m, mujoco.mjtObj.mjOBJ_BODY, f"obj_{p.uid}")
@@ -719,7 +770,7 @@ class PlaygroundSim(Sim):
                 and abs(g["distance"] - c.distance) < 0.005) or time.time() - g["t0"] > 2.0:
             self._set_view(g, False)
 
-    def scene_info(self) -> dict:
+    def scene_info(self, sel: str | None = None) -> dict:
         if self.scene_mode == "wetlab":
             t = WT.TASKS[self.wetlab_task]
             return {"mode": "wetlab", "objects": [], "paused": self.paused, "selected": self.selected,
@@ -745,7 +796,9 @@ class PlaygroundSim(Sim):
                               "euler": W.rot_euler(R), "tilt": self.can_tilt(p.uid) == "",
                               "tilt_why": self.can_tilt(p.uid),
                               "mid": [round(float(v), 4) for v in self._obj_mid(p, R)],
-                              "bodies": sorted(b for b, u in self.body_uid.items() if u == p.uid)})
+                              "bodies": sorted(b for b, u in self.body_uid.items() if u == p.uid),
+                              "lift": self.can_lift(p.uid) == "", "lift_why": self.can_lift(p.uid),
+                              **({"at": self.obj_at(p.uid)} if p.uid == sel else {})})
             return {"mode": "free", "objects": items, "paused": self.paused, "selected": self.selected,
                     "time": round(self.d.time, 3), "realtime_factor": round(self.rt_factor, 3),
                     "active": self.active_station,
@@ -923,11 +976,12 @@ class PlaygroundSim(Sim):
         return W._rot(p.quat or W.yaw_quat(p.yaw))
 
     def support(self, item: str, x: float, y: float, yaw: float = 0.0, top: float = 3.0,
-                exclude_uid: str | None = None, rot=None) -> dict:
+                exclude_uid: str | None = None, rot=None, lift: float = 0.0) -> dict:
         """Where an item dropped with its middle over (x, y) comes to rest: on the highest surface
         under it (it stacks on whatever is there), turned by yaw, or by the rotation rot (a 3x3
-        matrix) when given. A robot arm above that surface is fine as long as the item fits
-        under it; a robot's base, or an arm lower than the item's top, is in the way."""
+        matrix) when given; lift (m) holds it that far above that surface instead. A robot arm
+        above that surface is fine as long as the item fits under it; a robot's base, or an arm
+        lower than the item's top, is in the way."""
         meta = catalog.meta(item)
         R = W.euler_rot((0, 0, math.degrees(yaw))) if rot is None else np.asarray(rot, float)
         pts = W.box_points(meta["size"]) @ R.T
@@ -954,7 +1008,7 @@ class PlaygroundSim(Sim):
         feet = [(ox + px, oy + py) for px, py in pts[:, :2]]
         if any(st.near_base(fx, fy, BASE_RADIUS) for st in self.stations for fx, fy in feet):
             reason = "a robot's base is there"
-        elif robot_low is not None and robot_low < z + height + 0.005:
+        elif robot_low is not None and robot_low < z + lift + height + 0.005:
             reason = ("a robot is in the way" if robot_low < z + 0.03 else
                       f"the robot arm is in the way: it hangs {100 * (robot_low - z):.0f} cm above here "
                       f"and this is {100 * height:.0f} cm tall")
@@ -962,9 +1016,9 @@ class PlaygroundSim(Sim):
                     | {f"the table of {self.station(u).name}" for k, u in owners if k == "table" and self.station(u)})
         level = max(zs) - min(zs) < 0.03
         surface = on[0] if len(on) == 1 else ("the floor" if not on else " / ".join(on))
-        return {"pos": [round(ox, 4), round(oy, 4), round(z - bottom + 0.0005, 4)], "surface": surface,
+        return {"pos": [round(ox, 4), round(oy, 4), round(z - bottom + 0.0005 + lift, 4)], "surface": surface,
                 "valid": not reason, "level": level, "reason": reason,
-                "box": self._ghost_box(meta["size"], R, (x, y, z + height / 2 + 0.0005), pts)}
+                "box": self._ghost_box(meta["size"], R, (x, y, z + lift + height / 2 + 0.0005), pts)}
 
     @staticmethod
     def _ghost_box(size, R, mid, pts):

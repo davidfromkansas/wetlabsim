@@ -1332,8 +1332,9 @@ class PGHandler(Handler):
                 if f.is_file():
                     return self._send(200, f.read_bytes(), "image/png", {"Cache-Control": "max-age=86400"})
                 return self._err("not found", 404)
-            if p == "/pg/scene":
-                info = self.sim.scene_info()
+            if p == "/pg/scene":         # sel: the object the page has selected (its place, for Move)
+                info = self.sim.scene_info(sel=(qs.get("sel") or [None])[0]) if self.sim.scene_mode == "free" \
+                    else self.sim.scene_info()
                 runs = self._runs_status() if info["mode"] == "free" else {}
                 run = runs.get(info["active"], {"active": False}) if info["mode"] == "free" else self.runner.status()
                 return self._json({**info, "run": run, "runs": runs, "locked": self._locked(),
@@ -1590,7 +1591,7 @@ class PGHandler(Handler):
                 return self._json(s.probe_station(float(b["u"]), float(b["v"]), float(b.get("yaw", 0.0)), b.get("uid"),
                                                   b.get("kind")))
             lock = self._locked()
-            if (p in ("/pg/place", "/pg/move", "/pg/remove", "/pg/rotate", "/pg/orient", "/pg/clear") or p.startswith("/pg/station/")) and lock:
+            if (p in ("/pg/place", "/pg/move", "/pg/remove", "/pg/rotate", "/pg/orient", "/pg/translate", "/pg/clear") or p.startswith("/pg/station/")) and lock:
                 # Rename any time; Reset while physics plays too, but not while an AI works.
                 if p != "/pg/station/rename" and not (p == "/pg/station/reset" and self.sim.paused is False
                                                       and not self._busy()):
@@ -1707,6 +1708,11 @@ class PGHandler(Handler):
                 if s.find(b["uid"]) is None:
                     return self._err("no such object", 404)
                 s.orient(b["uid"], axis="z", degrees=float(b.get("degrees", 90)))
+                return self._json({"ok": True})
+            if p == "/pg/translate":     # move: the middle to x, y (m), the bottom lift (m) above what's under it
+                if s.find(b["uid"]) is None:
+                    return self._err("no such object", 404)
+                s.translate(b["uid"], **{k: float(b[k]) for k in ("x", "y", "lift") if b.get(k) is not None})
                 return self._json({"ok": True})
             if p == "/pg/orient":        # rotate: to angles about X, Y, Z, or by some degrees about one
                 if s.find(b["uid"]) is None:
