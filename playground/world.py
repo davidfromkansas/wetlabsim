@@ -33,12 +33,15 @@ STATION_TABLE = "table_packing"
 # station's frame (the robot always faces +x), where the robot stands, and what starts on it.
 # The wet lab bench is a stainless lab table, turned so its long side runs beside the arm,
 # with lab glassware and instruments laid out within reach (item, x, y, yaw in the
-# station's frame, on the table top).
+# station's frame, on the table top). "overhead" is where a one-arm robot's overhead camera
+# hangs: (x it hangs over, x it looks down at, height above the table top), in the station's
+# frame. It must stay inside the station's work box (over the table, below the walls' top),
+# or the camera sees the box's walls from outside: the bench is only 0.7 m deep.
 KINDS = {
     "table": {"label": "Table with arm", "table": STATION_TABLE, "turn": 0.0, "robot_xy": ROBOT_XY,
-              "layout": []},
+              "overhead": (0.33, 0.0, 1.0), "layout": []},
     "wetlab": {"label": "Wet lab bench", "table": "lab_bench", "turn": math.pi / 2, "robot_xy": (-0.2, 0.0),
-               "layout": [
+               "overhead": (0.3, 0.0, 1.25), "layout": [
                    ("sterilising_tray", 0.12, -0.5, 0.0),
                    ("syringe", 0.17, -0.27, 0.0),
                    ("syringe_small", 0.24, -0.2, 0.0),
@@ -726,8 +729,9 @@ def add_station(world: mujoco.MjSpec, st: Station, cache: set):
                              quat=list(mount))
     c, s_ = math.cos(st.yaw), math.sin(st.yaw)
     if not S.ROBOTS[st.robot].get("sides"):   # a two-arm robot brings its own (ALOHA's four, the Duo's head)
-        _camera(world, st.prefix + "overhead", st.to_world(rx + 0.75, ry, top + 1.0),
-                st.to_world(rx + 0.42, ry, top), 55, up=(-c, -s_, 0))
+        cx, look_x, above = st.spec["overhead"]
+        _camera(world, st.prefix + "overhead", st.to_world(cx, ry, top + above),
+                st.to_world(look_x, ry, top), 55, up=(-c, -s_, 0))
     _camera(world, st.prefix + "side", st.to_world(rx + 1.75, ry - 1.3, top + 0.8),
             st.to_world(rx + 0.4, ry, top + 0.1), 45)
     S.add_robot(world, st.robot, st.prefix + "robot_mount", st.prefix)

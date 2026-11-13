@@ -105,3 +105,17 @@ def test_work_box_walls_seen_only_by_robot_cameras():
         p = sim.d.cam_xpos[sim.m.camera(cam).id]
         lx, ly = st.to_local(p[0], p[1])
         assert abs(lx) < hx and abs(ly) < hy and p[2] < h, k
+
+
+def test_overhead_camera_inside_work_box():
+    """Every one-arm station's overhead camera hangs inside its own work box (over its table,
+    below the walls' top), so it sees its table and not the box's walls from outside."""
+    import math
+    for kind in W.KINDS:
+        for yaw in (0.0, 1.0, math.pi):
+            st = W.Station("st1", "franka", (1.0, -2.0), yaw, kind=kind)
+            m = W.build([], [st])
+            hx, hy, h = st.work_box()
+            x, y, z = m.cam_pos[m.camera("st1/overhead").id]
+            lx, ly = st.to_local(x, y)
+            assert abs(lx) < hx - 0.05 and abs(ly) < hy - 0.05 and z < h, (kind, yaw, lx, ly, z)
