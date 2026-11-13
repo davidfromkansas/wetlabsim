@@ -6,7 +6,8 @@ objects, every one put down with the same drop check as drag and drop (Playgroun
 
 Models: the owner's own Anthropic or OpenAI key (Settings > General); on a computer of one's
 own, ANTHROPIC_API_KEY / OPENAI_API_KEY too. With one company connected its most capable model
-is used; with both, the page shows a picker. Devin and Jev can't do this (Devin is a coding
+is used; with both, the page shows a picker. An OpenAI connection made by ChatGPT sign-in
+(not an API key) can't be used here: it runs Codex only. Devin and Jev can't do this (Devin is a coding
 agent that is slow and costly for one answer; Jev only answers moves for a robot).
 
 WETLAB_SCENEGEN_FAKE=1 answers without any model (tests, screenshots)."""
@@ -53,8 +54,10 @@ def fake() -> bool:
 
 def _key(provider: str, public: bool) -> str:
     try:
-        k = ACCT.key_for(_AGENT[provider])
+        kind, k = ACCT.credential_for(_AGENT[provider])
     except Exception:  # noqa: BLE001      no store reachable: no saved key
+        kind, k = "key", ""
+    if kind != "key":       # a ChatGPT sign-in runs Codex, but isn't an API key for one call
         k = ""
     return k or ("" if public else os.environ.get(_ENV[provider], ""))
 
@@ -68,7 +71,7 @@ def providers(public: bool) -> list[str]:
         conn = ACCT.connected()
     except Exception:  # noqa: BLE001
         conn = set()
-    return [p for p in ("anthropic", "openai") if p in conn or (not public and os.environ.get(_ENV[p]))]
+    return [p for p in ("anthropic", "openai") if (p in conn and _key(p, public)) or (not public and os.environ.get(_ENV[p]))]
 
 
 def models(public: bool) -> list[dict]:
