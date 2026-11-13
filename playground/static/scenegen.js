@@ -11,7 +11,11 @@ body:not(.freeplay) #sgBar, body.watch #sgBar, body.sgHide #sgBar{display:none}
 #sgBar:active{transform:translateX(-50%) scale(.98)}
 #sgBar .k{font:600 11px Inter,sans-serif;color:#4B5563;border:1px solid #E5E7EB;border-radius:5px;padding:1px 6px;margin-left:10px}
 #sgBar.busy{cursor:default;color:#111827;font-weight:600}
-#sgBar .stop{height:28px;padding:0 10px;border-radius:8px;border:1px solid #E5E7EB;background:#fff;font:600 12.5px Inter,sans-serif;color:#111827;cursor:pointer}
+#sgBar.busy{padding:0 6px 0 12px;gap:10px}
+#sgBar .ct{font-weight:500;color:#6B7280;font-variant-numeric:tabular-nums}
+#sgBar .sep{width:1px;height:18px;background:#E5E7EB}
+#sgBar .stop{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:8px;background:#F3F4F6;font:600 12.5px/1 Inter,sans-serif;color:#111827;cursor:pointer}
+#sgBar .stop:hover{background:#E5E7EB}
 #sgBar .spin{width:14px;height:14px;border-radius:50%;border:2px solid #DBE5FF;border-top-color:#2563EB;animation:sgSpin .8s linear infinite;flex:none}
 @keyframes sgSpin{to{transform:rotate(360deg)}}
 @container (max-width:780px){#sgBar{left:14px;top:58px;transform:none}#sgBar:active{transform:scale(.98)}#sgProg,#sgProg.open{left:14px;top:104px;transform:none;animation:none}}
@@ -79,20 +83,45 @@ body:not(.freeplay) #sgBar, body.watch #sgBar, body.sgHide #sgBar{display:none}
 #sgCard .sk{border-radius:12px;background:linear-gradient(90deg,#F3F4F6 0%,#E9EBEF 50%,#F3F4F6 100%);background-size:200% 100%;animation:sgSk 1.2s ease-in-out infinite}
 @keyframes sgSk{from{background-position:200% 0}to{background-position:-200% 0}}
 #sgCard .wait{display:flex;align-items:center;gap:8px;font-size:13px;color:#4B5563;margin:2px 0 12px}
-#sgProg{position:absolute;left:50%;top:58px;transform:translateX(-50%);z-index:7;width:min(380px,calc(100% - 32px));background:rgba(255,255,255,.97);border-radius:14px;box-shadow:0 12px 28px -10px rgba(17,24,39,.3),0 0 0 1px rgba(17,24,39,.07);padding:12px 14px;font:13px/1.45 Inter,sans-serif;color:#111827;display:none}
+#sgProg{position:absolute;left:50%;top:58px;transform:translateX(-50%);z-index:7;width:min(368px,calc(100% - 32px));background:#fff;border-radius:14px;box-shadow:0 12px 28px -12px rgba(17,24,39,.28),0 0 0 1px rgba(17,24,39,.06);overflow:hidden;font:13px/1.45 Inter,sans-serif;color:#111827;display:none}
 #sgProg.open{display:block;animation:sgIn2 200ms cubic-bezier(.23,1,.32,1)}
 @keyframes sgIn2{from{opacity:0;transform:translateX(-50%) translateY(-4px)}}
-#sgProg .pl{color:#4B5563;margin:0 0 8px}
-#sgProg ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
-#sgProg li{display:flex;align-items:center;gap:8px}
-#sgProg li i{width:14px;height:14px;flex:none;display:flex;align-items:center;justify-content:center}
-#sgProg li.todo{color:#9CA3AF}
-#sgProg li small{margin-left:auto;color:#6B7280;font-variant-numeric:tabular-nums}
-#sgProg .end{display:flex;align-items:center;gap:8px;margin-top:10px}
-#sgProg .end span{flex:1}
-#sgProg .end button{height:30px;padding:0 12px;border-radius:8px;border:1px solid #E5E7EB;background:#fff;font:600 12.5px Inter,sans-serif;color:#111827;cursor:pointer}
-#sgProg .end button.blue{background:#2563EB;border-color:#2563EB;color:#fff}
-#sgProg .sk2{color:#6B7280;font-size:12.5px;margin-top:6px}
+#sgProg .bar{height:3px;background:#EEF0F3}
+#sgProg .bar i{display:block;height:100%;background:#2563EB;border-radius:0 2px 2px 0;transition:width 400ms cubic-bezier(.23,1,.32,1)}
+#sgProg .plan{display:flex;gap:10px;padding:14px 16px 12px;border-bottom:1px solid #F1F2F4}
+#sgProg .plan .pi{width:28px;height:28px;border-radius:8px;background:#EFF4FF;color:#2563EB;display:flex;align-items:center;justify-content:center;flex:none}
+#sgProg .plan b{display:block;font:600 12px Inter,sans-serif;margin-bottom:2px}
+#sgProg .plan p{margin:0;color:#4B5563;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#sgProg .plan .skl{height:9px;border-radius:5px;margin-top:7px;background:linear-gradient(90deg,#EEF0F3 0%,#E3E6EB 50%,#EEF0F3 100%);background-size:200% 100%;animation:sgSk 1.2s ease-in-out infinite}
+#sgProg ul{list-style:none;margin:0;padding:8px 8px 10px}
+#sgProg li{display:flex;align-items:center;gap:10px;height:40px;padding:0 8px;border-radius:9px}
+#sgProg li.now{background:#F7F8FA}
+#sgProg .ti{width:28px;height:28px;border-radius:8px;background:#F3F4F6;color:#374151;display:flex;align-items:center;justify-content:center;position:relative;flex:none}
+#sgProg li.todo .ti{color:#9CA3AF;background:#F7F8FA}
+#sgProg li.todo .nm{color:#9CA3AF}
+#sgProg .bd{position:absolute;right:-4px;bottom:-4px;width:15px;height:15px;border-radius:50%;background:#16A34A;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px #fff}
+#sgProg li.now .bd{background:#fff}
+#sgProg .nm{flex:1;min-width:0;font-weight:500}
+#sgProg .nm small{display:block;font-weight:400;font-size:11.5px;color:#6B7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sgProg .n{font-variant-numeric:tabular-nums;color:#6B7280;font-size:12.5px;white-space:nowrap}
+#sgProg li.now .n{color:#111827;font-weight:600}
+#sgProg .mini{width:56px;height:4px;border-radius:2px;background:#E5E7EB;overflow:hidden;flex:none}
+#sgProg .mini i{display:block;height:100%;background:#2563EB}
+#sgProg .res{display:flex;gap:12px;padding:16px 16px 4px}
+#sgProg .res .ri{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}
+#sgProg .res b{display:block;font:650 14px Inter,sans-serif;margin-bottom:2px}
+#sgProg .res p{margin:0;color:#4B5563}
+#sgProg .chips{display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px 0 60px}
+#sgProg .chip{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 8px;border-radius:7px;background:#F3F4F6;font:500 12px Inter,sans-serif;color:#374151}
+#sgProg .skip{display:flex;gap:8px;align-items:flex-start;margin:10px 16px 0 60px;color:#6B7280;font-size:12.5px}
+#sgProg .skip svg{flex:none;margin-top:2px}
+#sgProg .acts{display:flex;justify-content:flex-end;gap:8px;padding:14px 16px 16px}
+#sgProg .gb{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:9px;border:0;font:600 13px Inter,sans-serif;cursor:pointer;transition:transform 120ms ease-out}
+#sgProg .gb:active{transform:scale(.97)}
+#sgProg .gb.g{background:#fff;color:#111827;box-shadow:inset 0 0 0 1px #E5E7EB}
+#sgProg .gb.g:hover{background:#F9FAFB}
+#sgProg .gb.p{background:#111827;color:#fff}
+.sgRing{width:16px;height:16px;flex:none;display:block;animation:sgSpin .8s linear infinite}
 `;
 document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
 const stage = document.getElementById('stage');
@@ -256,7 +285,8 @@ async function find() {
 async function create() {
   if (!G.pick || !nRobots()) return;
   G.err = '';
-  const r = await api('/pg/scenegen/build', {prompt: G.prompt, model: G.model, pick: G.pick});
+  G.last = {prompt: G.prompt, model: G.model, pick: JSON.parse(JSON.stringify(G.pick))};
+  const r = await api('/pg/scenegen/build', G.last);
   if (!r || !r.ok) { G.err = (r && r.error) || 'Something went wrong.'; draw(); return; }
   closeCard();
   follow(r.build);
@@ -284,34 +314,84 @@ function follow(b) {
   }, 700);
 }
 
+const IC = {
+  plan: '<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/>',
+  robots: '<path d="M5 21h8"/><path d="M9 21v-4"/><circle cx="9" cy="14" r="3"/><path d="M11 12l5-6"/><circle cx="17" cy="5" r="2"/><path d="M18.5 6.5L21 9"/>',
+  furniture: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 12h18M12 4v16"/><path d="M8 8h1M15 8h1M8 16h1M15 16h1"/>',
+  objects: '<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>',
+  stop: '<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/>',
+  undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+  alert: '<path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17h.01"/>',
+  pause: '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>',
+  retry: '<path d="M20 11a8 8 0 10-2.3 5.7"/><path d="M20 4v7h-7"/>',
+};
+const ic = (k, s = 16, c = 'currentColor', w = 1.75) => `<svg aria-hidden="true" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg>`;
+const ring = (s = 16) => { const r = s / 2 - 1.5; return `<svg class="sgRing" style="width:${s}px;height:${s}px" viewBox="0 0 ${s} ${s}" aria-hidden="true"><circle cx="${s / 2}" cy="${s / 2}" r="${r}" fill="none" stroke="#DBE5FF" stroke-width="2"/><path d="M${s / 2} ${s / 2 - r}a${r} ${r} 0 0 1 ${r} ${r}" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/></svg>`; };
+const cap = (s) => String(s || '').replace(/^./, c => c.toUpperCase());
+const list = (a, n = 3) => (a || []).length <= n ? (a || []).join(', ') : a.slice(0, n).join(', ') + '…';
+const REST = () => `${SPARK}<span id="sgBarT">Describe a scene…</span><span class="k" aria-hidden="true">/</span>`;
+
 function drawProg() {
   const b = G.build;
-  if (!b || b.undone) { prog.classList.remove('open'); bar.classList.remove('busy'); bar.innerHTML = `${SPARK}<span id="sgBarT">Describe a scene…</span><span class="k" aria-hidden="true">/</span>`; return; }
+  const key = JSON.stringify(b);
+  if (key === G.progKey) return;          // redraw only on a change (keeps the spinners smooth)
+  G.progKey = key;
+  if (!b || b.undone) { prog.classList.remove('open'); bar.classList.remove('busy'); bar.innerHTML = REST(); return; }
   const c = b.counts, done = c.robots[0] + c.furniture[0] + c.objects[0], all = c.robots[1] + c.furniture[1] + c.objects[1];
   if (b.active) {
     bar.classList.add('busy');
-    bar.innerHTML = `<span class="spin"></span><span>${b.phase === 'plan' ? 'Planning the scene' : `Creating scene · ${done} of ${all}`}</span><span class="stop" id="sgStop" role="button" tabindex="0">Stop</span>`;
-    document.getElementById('sgStop').onclick = async (ev) => { ev.stopPropagation(); await api('/pg/scenegen/stop', {}); };
+    bar.innerHTML = `${ring()}<span>${b.phase === 'plan' ? 'Planning' : 'Creating'} ${e(b.title)}</span>${b.phase !== 'plan' ? `<span class="ct">${done} of ${all}</span>` : ''}<span class="sep"></span><span class="stop" id="sgStop" role="button" tabindex="0">${ic('stop', 10)}Stop</span>`;
+    const st = document.getElementById('sgStop');
+    st.onclick = async (ev) => { ev.stopPropagation(); await api('/pg/scenegen/stop', {}); };
+    st.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); st.click(); } };
   } else {
     bar.classList.remove('busy');
-    bar.innerHTML = `${SPARK}<span id="sgBarT">Describe a scene…</span><span class="k" aria-hidden="true">/</span>`;
+    bar.innerHTML = REST();
   }
-  const order = ['plan', 'robots', 'furniture', 'objects'], at = order.indexOf(b.phase);
-  const row = (k, label, cnt) => {
-    const i = order.indexOf(k), st = !b.active && b.phase === 'done' ? 'ok' : (at > i ? 'ok' : at === i ? 'now' : 'todo');
-    const ic = st === 'ok' ? OK : st === 'now' ? '<span class="spin" style="width:10px;height:10px;border-width:2px"></span>' : '';
-    return `<li class="${st === 'todo' ? 'todo' : ''}"><i>${ic}</i>${label}${cnt ? `<small>${cnt[0]} of ${cnt[1]}</small>` : ''}</li>`;
-  };
-  let end = '';
-  if (!b.active) {
-    const msg = b.phase === 'done' ? `<b>${e(b.title)}</b> is ready. Move anything you like.` : b.phase === 'stopped' ? 'Stopped. What was placed stays.' : e(b.error || 'Something went wrong.');
-    end = `<div class="end"><span>${msg}</span>${b.stations.length || b.objects ? '<button id="sgUndo">Undo</button>' : ''}<button class="blue" id="sgOk">${b.phase === 'error' ? 'Close' : 'Done'}</button></div>`
-      + (b.skipped && b.skipped.length ? `<div class="sk2">Didn't fit: ${e(b.skipped.join(', '))}</div>` : '');
+  let html;
+  if (b.active) {
+    const order = ['plan', 'robots', 'furniture', 'objects'], at = order.indexOf(b.phase);
+    const pct = b.phase === 'plan' ? 6 : 10 + 90 * done / Math.max(1, all);
+    const plan = b.plan
+      ? `<div class="plan"><span class="pi">${ic('plan')}</span><div><b>Layout plan</b><p>${e(b.plan)}</p></div></div>`
+      : `<div class="plan"><span class="pi">${ic('plan')}</span><div style="flex:1"><b>${e(b.model || 'The model')} is writing the layout plan…</b><div class="skl" style="width:92%"></div><div class="skl" style="width:70%"></div></div></div>`;
+    const row = (k, label, sub) => {
+      const i = order.indexOf(k), st = at > i ? 'ok' : at === i ? 'now' : 'todo', [d, n] = c[k];
+      const badge = st === 'ok' ? `<span class="bd">${ic('check', 9, '#fff', 3)}</span>` : st === 'now' ? `<span class="bd">${ring(13)}</span>` : '';
+      const mini = st === 'now' ? `<span class="mini"><i style="width:${Math.round(100 * d / Math.max(1, n))}%"></i></span>` : '';
+      return `<li class="${st}"><span class="ti">${ic(k)}${badge}</span><span class="nm">${label}${sub ? `<small>${e(sub)}</small>` : ''}</span>${mini}<span class="n">${d} of ${n}</span></li>`;
+    };
+    const nm = b.names || {};
+    const objSub = b.phase === 'objects' && b.now ? `Placing the ${b.now.toLowerCase()}` : list(nm.objects);
+    const furSub = b.phase === 'furniture' && b.now ? `Placing the ${b.now.toLowerCase()}` : list(nm.furniture);
+    html = `<div class="bar"><i style="width:${pct}%"></i></div>${plan}<ul>${row('robots', c.robots[1] === 1 ? 'Robot' : 'Robots', list(nm.robots))}${c.furniture[1] ? row('furniture', 'Furniture', furSub) : ''}${row('objects', 'Objects', objSub)}</ul>`;
+  } else {
+    const undo = b.stations.length || b.objects ? `<button class="gb g" id="sgUndo">${ic('undo', 14)}Undo</button>` : '';
+    if (b.phase === 'done') {
+      const chips = [['robots', c.robots[0], 'robot'], ['furniture', c.furniture[0], 'furniture'], ['objects', c.objects[0], 'object']]
+        .filter(x => x[1]).map(([k, n, w]) => `<span class="chip">${ic(k, 13)}${n} ${w}${n !== 1 && w !== 'furniture' ? 's' : ''}</span>`).join('');
+      html = `<div class="res"><span class="ri" style="background:#ECFDF3">${ic('check', 16, '#16A34A', 2.4)}</span><div><b>${e(b.title)} is ready</b><p>Move anything you like.${b.task ? ' The task is filled in for the robot.' : ''}</p></div></div>
+<div class="chips">${chips}</div>${b.skipped && b.skipped.length ? `<div class="skip">${ic('info', 14, '#9CA3AF')}<span>Didn't fit: ${e(b.skipped.join(', '))}</span></div>` : ''}
+<div class="acts">${undo}<button class="gb p" id="sgOk">Done</button></div>`;
+    } else if (b.phase === 'stopped') {
+      html = `<div class="res"><span class="ri" style="background:#F3F4F6;color:#374151">${ic('pause', 15)}</span><div><b>Stopped</b><p>${done ? `${done} of ${all} placed. What's placed stays, or undo all of it.` : 'Nothing was placed.'}</p></div></div>
+<div class="acts">${undo}<button class="gb p" id="sgOk">Done</button></div>`;
+    } else {
+      html = `<div class="res"><span class="ri" style="background:#FEF2F2">${ic('alert', 16, '#DC2626')}</span><div><b>Couldn't build the scene</b><p>${e(cap(b.error || 'something went wrong'))}.</p></div></div>
+<div class="acts">${undo}<button class="gb g" id="sgOk">Close</button>${G.last ? `<button class="gb p" id="sgRetry">${ic('retry', 14)}Try again</button>` : ''}</div>`;
+    }
   }
-  prog.innerHTML = (b.plan ? `<p class="pl">${e(b.plan)}</p>` : '') + `<ul>${row('plan', 'Plan the layout')}${row('robots', c.robots[1] === 1 ? 'Robot' : 'Robots', c.robots)}${c.furniture[1] ? row('furniture', 'Furniture', c.furniture) : ''}${row('objects', 'Objects', c.objects)}</ul>` + end;
+  prog.innerHTML = html;
   prog.classList.add('open');
-  const ok = document.getElementById('sgOk'), un = document.getElementById('sgUndo');
-  if (ok) ok.onclick = () => { prog.classList.remove('open'); G.build = null; drawProg(); };
+  const ok = document.getElementById('sgOk'), un = document.getElementById('sgUndo'), re = document.getElementById('sgRetry');
+  if (ok) ok.onclick = () => { G.build = null; drawProg(); };
+  if (re) re.onclick = async () => {
+    const r = await api('/pg/scenegen/build', G.last);
+    if (!r || !r.ok) { toast((r && r.error) || 'Something went wrong.'); return; }
+    follow(r.build);
+  };
   if (un) un.onclick = async () => {
     const r = await api('/pg/scenegen/undo', {id: b.id});
     if (!r.ok) { toast(r.error); return; }
