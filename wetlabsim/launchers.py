@@ -31,8 +31,9 @@ def get(name: str):
 class _SandboxRun:
     """A process-like handle on an agent CLI running in a Modal Sandbox."""
 
-    def __init__(self, sb, proc, mark: str):
+    def __init__(self, sb, proc, mark: str, pull: dict | None = None):
         self.sb, self.proc, self.mark = sb, proc, mark   # mark: in the agent's command line
+        self.pull = pull or {}     # {file in the sandbox: local path}, copied back before it ends
         self.stdout = self._lines(proc.stdout)
 
     @staticmethod
@@ -89,7 +90,14 @@ class _SandboxRun:
         self.send_signal(signal.SIGKILL)
 
     def close(self):
-        """End the sandbox."""
+        """Copy back the files asked for, then end the sandbox."""
+        import pathlib
+        for remote, local in self.pull.items():
+            try:
+                pathlib.Path(local).write_bytes(self.sb.filesystem.read_bytes(remote))
+            except Exception:  # noqa: BLE001  (kept as it was)
+                pass
+        self.pull = {}
         try:
             self.sb.terminate()
         except Exception:  # noqa: BLE001
@@ -113,6 +121,9 @@ class _SandboxRun:
 # (from https://static.devin.ai/cli/current/manifest.json).
 # The Codex CLI release the sandbox image installs (npm @openai/codex).
 CODEX_CLI = "0.167.2"
+# What Codex reaches when signed in with ChatGPT: ChatGPT's Codex service and OpenAI's sign-in
+# server (to refresh its tokens).
+CHATGPT_HOSTS = ["chatgpt.com", "auth.openai.com"]
 DEVIN_CLI = ("https://static.devin.ai/cli/3000.12.32/devin-3000.12.32-x86_64-unknown-linux.tar.gz",
              "c4f5a4e277f67190daed2f032515219b1fbfcb2320f46140cf0ce70019d41c58")
 
@@ -172,7 +183,10 @@ class ModalSandboxLauncher:
         proxy = os.environ.get("WETLAB_MODEL_PROXY_URL", "")
         client = pathlib.Path(env["PYTHONPATH"])
         host = lambda u: urllib.parse.urlparse(u).hostname  # noqa: E731
-        allow = [host(robot_url)] + (devin_auth.HOSTS if devin else [host(proxy)])
+        # A ChatGPT sign-in (Codex only): Codex's login file, from the playground's Settings. Codex
+        # then talks to OpenAI itself (ChatGPT's Codex service), not through the model proxy.
+        login_dir = env.get("WETLAB_CODEX_AUTH_DIR", "") if codex else ""
+        allow = [host(robot_url)] + (devin_auth.HOSTS if devin else CHATGPT_HOSTS if login_dir else [host(proxy)])
 
         app = modal.App.lookup(self.APP, create_if_missing=True)
         sb = modal.Sandbox.create("sleep", "infinity", app=app, image=self.image(), timeout=2700,
@@ -190,6 +204,8 @@ class ModalSandboxLauncher:
             if devin:
                 files["tools/devin_acp.py"] = pathlib.Path(__file__).with_name("devin_acp.py").read_bytes()
                 files["root/.local/share/devin/credentials.toml"] = devin_auth.credentials(devin_auth.key()).encode()
+            if login_dir:
+                files["tmp/codex/auth.json"] = (pathlib.Path(login_dir) / "auth.json").read_bytes()
             for name, data in files.items():
                 info = tarfile.TarInfo(name)
                 info.size, info.mode = len(data), 0o600
@@ -219,6 +235,12 @@ class ModalSandboxLauncher:
                     "-c", f"mcp_servers.wetlab.env={tool_env}"]
             if model:
                 rcmd += ["--model", model]
+            if login_dir:
+                # Signed in with ChatGPT: Codex uses the login file and the person's ChatGPT plan.
+                rcmd += ["-c", 'cli_auth_credentials_store="file"', "-c", 'forced_login_method="chatgpt"', prompt]
+                proc = sb.exec(*rcmd, workdir="/workspace", env={**base_env, "CODEX_HOME": "/tmp/codex"})
+                return _SandboxRun(sb, proc, "codex exec",
+                                   pull={"/tmp/codex/auth.json": str(pathlib.Path(login_dir) / "auth.json")})
             rcmd.append(prompt)
             proc = sb.exec(*rcmd, workdir="/workspace", env={
                 **base_env, "OPENAI_BASE_URL": proxy.rstrip("/") + "/openai/v1", "OPENAI_API_KEY": token,

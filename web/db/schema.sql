@@ -91,6 +91,8 @@ create table if not exists user_api_keys (
   provider       text not null check (provider in ('openai', 'anthropic', 'cognition', 'typesafe')),
   key_ciphertext text not null,
   key_last4      text not null,
+  kind           text not null default 'key',   -- 'key', or 'chatgpt': Codex's ChatGPT sign-in (OpenAI only)
+  login_email    text,                          -- a ChatGPT sign-in's email, shown instead of last4
   connected_at   timestamptz not null default now(),
   primary key (user_id, provider)
 )

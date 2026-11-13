@@ -15,6 +15,7 @@ import os
 import re
 import pathlib
 import secrets
+import shutil
 import signal
 import struct
 import subprocess
@@ -217,7 +218,7 @@ class Runner:
             # The owner's own key for this model's company (General settings), if one is saved.
             # The public site has no other: without one the run can't start.
             try:
-                key = ACCT.key_for(mdl["agent"])
+                kind, key = ACCT.credential_for(mdl["agent"])
             except RuntimeError as e:
                 raise RobotError(f"couldn't get your {mdl['via']} key: {e}") from None
             if PUBLIC and not key:
@@ -229,7 +230,19 @@ class Runner:
                 self.token = RA.TOKENS.issue(urllib.parse.urlparse(self.url).path, run=task[:60])
                 env["WETLAB_ROBOT_TOKEN"] = self.token
                 cmd += ["--robot-url", AGENT_ROBOT_URL or ROBOT_API_URL, "--launcher", RUN_LAUNCHER]
-            if key:
+            login_dir = None
+            if key and kind == "chatgpt":
+                # A ChatGPT sign-in (Codex only): Codex's login file goes to the agent's Codex for
+                # this run (WETLAB_CODEX_AUTH_DIR), and comes back there afterwards in case Codex
+                # refreshed its tokens; it's kept again when the run ends.
+                login_dir = pathlib.Path(tempfile.mkdtemp(prefix="wetlab-codex-auth-"))
+                os.chmod(login_dir, 0o700)
+                (login_dir / "auth.json").touch(mode=0o600)
+                (login_dir / "auth.json").write_text(key)
+                env["WETLAB_CODEX_AUTH_DIR"] = str(login_dir)
+                for k in ("OPENAI_API_KEY", "CODEX_API_KEY", "OPENAI_BASE_URL"):
+                    env.pop(k, None)
+            elif key:
                 proxied = MODEL_PROXY and self.token and mdl["agent"] in ("claude", "codex")
                 if proxied:
                     # Claude Code and Codex reach their company through the model proxy, which adds
@@ -248,6 +261,14 @@ class Runner:
             def _ended():
                 proc.wait()
                 self.info["ended"] = time.time()
+                if login_dir:
+                    try:
+                        after = (login_dir / "auth.json").read_text()
+                        if after != key:
+                            ACCT.update_login("openai", after)
+                    except (OSError, RuntimeError) as e:
+                        print("could not keep the refreshed ChatGPT sign-in:", e)
+                    shutil.rmtree(login_dir, ignore_errors=True)
                 RA.TOKENS.revoke(tok)
                 if MODEL_PROXY and tok:
                     from . import model_proxy
@@ -988,11 +1009,39 @@ class PGHandler(Handler):
                     return self._json({"ok": False, "error": err, "provider": b["provider"]})
             elif act == "disconnect":
                 ACCT.disconnect(b.get("provider"))
+            elif act in ("chatgpt_start", "chatgpt_status", "chatgpt_cancel"):
+                return self._chatgpt_login(act)
             else:
                 return self._json({"ok": False, "error": "unknown action"})
         except (ValueError, RuntimeError) as e:
             return self._json({"ok": False, "error": str(e)})
         return self._json(self._account_info())
+
+    def _chatgpt_login(self, act: str):
+        """Sign in with ChatGPT (OpenAI, for Codex runs): start Codex's device code sign-in, then
+        poll it until the person has approved the code on OpenAI's page; the login is then saved
+        as the OpenAI connection (playground/chatgpt_login.py)."""
+        from . import chatgpt_login as CL
+        if act == "chatgpt_cancel":
+            CL.cancel()
+            return self._json({"ok": True})
+        if act == "chatgpt_start":
+            if isinstance(ACCT.store(), ACCT.NoStore):
+                return self._json({"ok": False, "error": "sign in on the website to change your settings"})
+            CL.start(RUN_LAUNCHER)
+        login = CL.current()
+        if login is None:
+            return self._json({"ok": False, "error": "No ChatGPT sign-in is going. Start again."})
+        st = login.status()
+        if st["state"] == "done":
+            CL.cancel()
+            err = ACCT.connect_chatgpt(login.login)
+            if err:
+                return self._json({"ok": False, "error": err, "provider": "openai"})
+            return self._json({**self._account_info(), "chatgpt": {"state": "done"}})
+        if st["state"] in ("failed", "cancelled"):
+            return self._json({"ok": False, "error": st.get("error") or "Sign-in cancelled.", "provider": "openai"})
+        return self._json({"ok": True, "chatgpt": st})
 
     def _bind_session(self) -> bool:
         """Which session this request is for: /s/<id>/... (the robot API and the page's links),
