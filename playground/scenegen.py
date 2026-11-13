@@ -497,12 +497,18 @@ class Build:
         self.zone = None
         self.undone = False
         self.started = time.time()
+        self.now = ""                 # what is being put down right now ("the mug")
+        rl = {r["id"]: r["label"].replace(" (two arms)", "") for r in catalog.robots()}
+        self.names = {"robots": [rl.get(r["robot"], r["robot"]) for r in pck["robots"]],
+                      "furniture": [catalog.item(i["id"])["label"] for i in pck["items"] if catalog.item(i["id"])["fixed"]],
+                      "objects": [catalog.item(i["id"])["label"] for i in pck["items"] if not catalog.item(i["id"])["fixed"]]}
 
     def status(self) -> dict:
         return {"id": self.id, "phase": self.phase, "plan": self.plan_text, "error": self.error,
                 "counts": self.counts, "title": self.pick["title"], "stations": self.stations,
                 "objects": len(self.objects), "skipped": self.skipped, "task": self.task,
-                "undone": self.undone, "active": self.phase in ("plan", "robots", "furniture", "objects")}
+                "undone": self.undone, "now": self.now, "names": self.names,
+                "model": next((m["label"] for m in SCENE_MODELS if m["id"] == self.model_id), ""), "active": self.phase in ("plan", "robots", "furniture", "objects")}
 
     def start(self):
         threading.Thread(target=self._run, daemon=True, name="scene-build").start()
@@ -539,12 +545,15 @@ class Build:
             for f in furniture:
                 if self.stop:
                     return self._end("stopped")
+                self.now = catalog.item(f["item"])["label"]
                 fixed_uids.append(self._place_furniture(f, off))
             self.phase = "objects"
             for o in objects:
                 if self.stop:
                     return self._end("stopped")
+                self.now = catalog.item(o["item"])["label"]
                 self._place_object(o, off, fixed_uids)
+            self.now = ""
             if self.stations and self.task:
                 for u in self.stations:
                     self.sess.unsent[u] = {"task": self.task, "model": ""}
