@@ -519,6 +519,15 @@ def _add_jointed(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_
         tn.damping[0] = t.get("damping", 0.0)
         if "springlength" in t:
             tn.springlength = t["springlength"]
+    for sc in meta.get("screws", []):
+        # a screw thread (the asset's own unscrew clip): lift = ratio x turn, written as the turn
+        # following the lift. MuJoCo sizes a joint equality's softness by its joints' weights, not
+        # its coefficient: written the other way (lift from turn), the light lid's thread is so
+        # soft that the lid sags off it
+        if sc["slide"] in joint_of and sc["hinge"] in joint_of:
+            world.add_equality(type=mujoco.mjtEq.mjEQ_JOINT, name=f"obj_{p.uid}__{sc['hinge']}_thread",
+                               objtype=mujoco.mjtObj.mjOBJ_JOINT, name1=joint_of[sc["hinge"]], name2=joint_of[sc["slide"]],
+                               data=[0, 1 / sc["ratio"], 0, 0, 0] + [0] * 7)
     for i, b in enumerate(bodies):
         if kind[i] == "rigid":
             continue

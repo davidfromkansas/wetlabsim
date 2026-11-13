@@ -21,6 +21,7 @@ SOURCES = {
     "tripo": ("Tripo SimReady", "https://huggingface.co/datasets/VAST-AI/Tripo-Simready-Assets"),
     "quiktech": ("QUIKTECH SimReady", "https://huggingface.co/datasets/quiktech/SimReady-Assets"),
     "usdcraft": ("NVIDIA USDCraft-10K (Apache 2.0)", "https://huggingface.co/datasets/nvidia/USDCraft-10K"),
+    "forgecad": ("ForgeCAD SimReady", "https://huggingface.co/datasets/ForgeCAD/simready-assets"),
 }
 AUTOBIO = ("AutoBio", "../../wetlabsim/assets/autobio/NOTICE.md")
 

@@ -2,7 +2,8 @@
 
 Every item comes from AutoBio (in wetlabsim/assets/autobio; "autobio:..." items, built by
 tools/build_autobio.py) or from NVIDIA's SimReady set (nvidia/simready-assets) or Tripo's SimReady
-assets (VAST-AI/Tripo-Simready-Assets, folder names "tripo:...") on Hugging Face, and ships with
+assets (VAST-AI/Tripo-Simready-Assets, folder names "tripo:...") or ForgeCAD's (ForgeCAD/simready-assets,
+"forgecad:...") on Hugging Face, and ships with
 its own physics (mass, collision shapes, and moving parts on their joints). `hollow` items are containers:
 they collide as convex pieces so things fit inside (see tools/convert_simready.py).
 `fixed` items are furniture: they stand where they are dropped and don't move.
@@ -198,6 +199,7 @@ ITEMS = [
     ("test_tube_small", "Glassware", "Glass test tube, small", "inhouse:test_tube_13x100", True, False),
     ("stirring_rod", "Glassware", "Glass stirring rod", "inhouse:stirring_rod", False, False),
     ("stir_bar", "Glassware", "Magnetic stir bar", "inhouse:stir_bar", False, False),
+    ("screw_top_jar", "Glassware", "Screw-top jar", "forgecad:screw_top_jar", False, False),
     ("rack_two_tier", "Lab & Medical", "Two-tier tube rack", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/01_two_tier_plastic_rack", True, False),
     ("rack_compact", "Lab & Medical", "Single-row tube rack", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack", True, False),
     ("rack_compact_blue", "Lab & Medical", "Tube rack, blue", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack", True, False),
@@ -298,7 +300,8 @@ FINE_PIECES = {"rack_two_tier", "rack_compact", "rack_wire", *RECOLOR}
 
 # Where each item comes from, as the library's source chip names it (by its folder's prefix).
 SOURCE_NAMES = {"": "NVIDIA", "tripo": "Tripo", "quiktech": "QUIKTECH", "usdcraft": "USDCraft",
-                "autobio": "AutoBio", "mujoco": "MuJoCo", "inhouse": "Built in-house"}
+                "autobio": "AutoBio", "mujoco": "MuJoCo", "inhouse": "Built in-house",
+                "forgecad": "ForgeCAD"}
 
 
 def source(hf: str) -> str:
