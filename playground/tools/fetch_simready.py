@@ -18,7 +18,9 @@ REPOS = {"nvidia": "nvidia/simready-assets", "tripo": "VAST-AI/Tripo-Simready-As
          # QUIKTECH's lab equipment (CC BY 4.0, NVIDIA SimReady packaging)
          "quiktech": "quiktech/SimReady-Assets",
          # NVIDIA's USDCraft-10K (Apache 2.0): physx/model.usdc + meta.json per item
-         "usdcraft": "nvidia/USDCraft-10K"}
+         "usdcraft": "nvidia/USDCraft-10K",
+         # ForgeCAD's parametric models (CC BY 4.0, NVIDIA SimReady packaging, physics under simready_usd/forgecad/)
+         "forgecad": "ForgeCAD/simready-assets"}
 REPO = "https://huggingface.co/datasets/" + REPOS["nvidia"]
 
 

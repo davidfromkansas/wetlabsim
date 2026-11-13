@@ -74,6 +74,7 @@ def material_info(mat) -> dict:
                 f = src.GetInput("file") if src else None
                 if f and info["tex"] is None:
                     info["tex"] = _tex_path(f)
+                    info.update(_uv_placement(UsdShade.Shader(src.GetPrim())))
             elif i and i.Get() is not None and info["tex"] is None:
                 info["rgba"][:3] = list(i.Get())
             for name, key in (("roughness", "rough"), ("metallic", "metal")):
@@ -108,6 +109,41 @@ def material_info(mat) -> dict:
         info["rgba"][:3] = info.get("tint", [1.0, 1.0, 1.0])
     info["rgba"] = list(info["rgba"])
     return info
+
+
+def _uv_placement(tex) -> dict:
+    """How a UsdUVTexture places its image (UsdPreviewSurface spec): a UsdTransform2d on its
+    st input (scale, then a counter-clockwise rotation in degrees, then translation), and its wrap
+    modes ("clamp": coordinates outside 0..1 take the edge's colour)."""
+    out = {}
+    st = tex.GetInput("st")
+    if st and st.HasConnectedSource():
+        src, _, _ = st.GetConnectedSource()
+        sh = UsdShade.Shader(src.GetPrim()) if src else None
+        if sh and sh.GetIdAttr().Get() == "UsdTransform2d":
+            get = lambda n, d: sh.GetInput(n).Get() if sh.GetInput(n) and sh.GetInput(n).Get() is not None else d
+            out["uv_transform"] = {"scale": [float(v) for v in get("scale", (1, 1))],
+                                   "rotation": float(get("rotation", 0.0)),
+                                   "translation": [float(v) for v in get("translation", (0, 0))]}
+    wrap = [tex.GetInput(n).Get() if tex.GetInput(n) else None for n in ("wrapS", "wrapT")]
+    out["uv_clamp"] = [w == "clamp" for w in wrap]
+    return out
+
+
+def _place_uv(UV: np.ndarray, info: dict) -> np.ndarray:
+    """Texture coordinates as the material places its image (_uv_placement, or an MDL texture_scale),
+    baked in: our viewers draw every texture repeating, so a clamped one is clamped here."""
+    UV = UV * np.array(info["scale"])
+    t = info.get("uv_transform")
+    if t:
+        UV = UV * np.array(t["scale"])
+        a = np.radians(t["rotation"])
+        c, s = np.cos(a), np.sin(a)
+        UV = np.c_[c * UV[:, 0] - s * UV[:, 1], s * UV[:, 0] + c * UV[:, 1]] + np.array(t["translation"])
+    for k, clamp in enumerate(info.get("uv_clamp", [False, False])):
+        if clamp:
+            UV[:, k] = np.clip(UV[:, k], 0.0, 1.0)
+    return UV
 
 
 def _uv(prim, n_idx, n_pts):
@@ -444,6 +480,52 @@ def joint_extras(usd: pathlib.Path) -> dict:
     return out
 
 
+def _screw_couplings(usd: pathlib.Path, joints: list[dict]) -> list[dict]:
+    """A screw thread, as the asset's own animation clips show it (ForgeCAD's "Unscrew_and_screw"):
+    a slide and a hinge whose keyframes (xformOps named after the joints) move in step, as
+    {"slide", "hinge", "ratio": metres per radian, "clip"}. The joints themselves are independent
+    in USD Physics, which has no screw joint; MuJoCo couples them with a joint equality."""
+    stage = Usd.Stage.Open(str(usd))
+    root = stage.GetDefaultPrim()
+    vs = root.GetVariantSets()
+    if "animation" not in vs.GetNames():
+        return []
+    mpu = UsdGeom.GetStageMetersPerUnit(stage)
+    stage.SetEditTarget(stage.GetSessionLayer())
+    out = []
+    for clip in vs.GetVariantSet("animation").GetVariantNames():
+        vs.GetVariantSet("animation").SetVariantSelection(clip)
+        keys = {}
+        for j in joints:
+            if j["type"] not in ("hinge", "slide"):
+                continue
+            jp = stage.GetPrimAtPath(j["path"])
+            axis = "XYZ".index(jp.GetAttribute("physics:axis").Get() or "X")
+            body = stage.GetPrimAtPath(j["body1"])
+            for a in body.GetAttributes():
+                n = a.GetName()
+                if not (n.startswith("xformOp:") and n.endswith(":" + j["name"]) and a.GetNumTimeSamples() > 1):
+                    continue
+                times = a.GetTimeSamples()
+                vals = [a.Get(t) for t in times]
+                if j["type"] == "slide":
+                    q = [float(v[axis] if hasattr(v, "__len__") else v) * mpu for v in vals]
+                else:
+                    q = [np.radians(float(v)) for v in vals]
+                keys[j["name"]] = (j["type"], list(times), np.array(q))
+        slides = [k for k, v in keys.items() if v[0] == "slide"]
+        hinges = [k for k, v in keys.items() if v[0] == "hinge"]
+        for sl in slides:
+            for hg in hinges:
+                (_, ts, qs), (_, th, qh) = keys[sl], keys[hg]
+                if ts != th or np.ptp(qh) == 0 or np.ptp(qs) == 0:
+                    continue
+                ratio = float(np.ptp(qs) / np.ptp(qh)) * (1 if np.corrcoef(qs, qh)[0, 1] > 0 else -1)
+                if np.allclose(qs - qs[0], ratio * (qh - qh[0]), atol=1e-7):
+                    out.append({"slide": sl, "hinge": hg, "ratio": round(ratio, 9), "clip": clip})
+    return out
+
+
 def _tendons(stage, joint_names: dict) -> list[dict]:
     """The asset's MuJoCo tendons (Tripo's door closers and seals): fixed tendons over its joints,
     with their stiffness and spring length (MuJoCo's own tendon attributes)."""
@@ -474,7 +556,7 @@ def _visuals(groups: dict, origin, T_inv, out: pathlib.Path, prefix: str, budget
         UV = np.vstack(g["UV"])
         has_tex = info["tex"] is not None and g["hasuv"]
         if has_tex:
-            UV = UV * np.array(info["scale"])
+            UV = _place_uv(UV, info)
             Vw, UVw, F = _merge_uv_mesh(V, UV)
         else:
             tm = trimesh.Trimesh(V, np.arange(len(V)).reshape(-1, 3), process=True)
@@ -682,6 +764,14 @@ def convert_articulated(stage, src: pathlib.Path, usd: pathlib.Path, out: pathli
                                                   for c in mine_c], out, f"b{i}_", [_surface(c) for c in mine_c], pieces_cfg),
                "mass": round(bmass, 6) if bmass else None}
         props = [c["props"] for c in mine_c]
+        if not (props and all(props)) and mine_c:
+            # stated on the rigid body itself (ForgeCAD), not its colliders: used if its centre
+            # lies within the part's colliders' bounds
+            bp = mass_props(prim, np.array(xc.GetLocalToWorldTransform(prim)).T, mpu)
+            b_lo = np.min([c["mesh"].bounds[0] for c in mine_c], axis=0)
+            b_hi = np.max([c["mesh"].bounds[1] for c in mine_c], axis=0)
+            if bp is not None and np.all(bp[1] >= b_lo - 1e-6) and np.all(bp[1] <= b_hi + 1e-6):
+                props = [bp]
         if props and all(props):          # the mass, centre and inertia the asset states, in this part's frame
             Tw = np.linalg.inv(T[p]) @ np.r_[np.c_[np.eye(3), -origin], [[0, 0, 0, 1]]]
             rec["inertial"] = combine_inertia(props, Tw)
@@ -716,6 +806,9 @@ def convert_articulated(stage, src: pathlib.Path, usd: pathlib.Path, out: pathli
         "visuals": [], "collision_parts": [], "bodies": bodies,
         "unstated_mass": [b["name"] for b in bodies if not b["mass"]],
     }
+    screws = _screw_couplings(usd, joints)
+    if screws:
+        meta["screws"] = screws
     tendons = _tendons(stage, {j["path"]: j["name"] for j in joints})
     if tendons:
         meta["tendons"] = tendons
@@ -750,7 +843,7 @@ def convert(src: pathlib.Path, out: pathlib.Path, hollow=False, max_tris=60000, 
         UV = np.vstack(g["UV"])
         has_tex = info["tex"] is not None and g["hasuv"]
         if has_tex:
-            UV = UV * np.array(info["scale"])
+            UV = _place_uv(UV, info)
             Vw, UVw, F = _merge_uv_mesh(V, UV)
         else:
             tm = trimesh.Trimesh(V, np.arange(len(V)).reshape(-1, 3), process=True)

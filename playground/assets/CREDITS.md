@@ -11,6 +11,7 @@ Items marked "Built in-house" we modelled ourselves in Blender (`playground/tool
 - **Tripo SimReady** (tripo): https://huggingface.co/datasets/VAST-AI/Tripo-Simready-Assets
 - **QUIKTECH SimReady** (quiktech): https://huggingface.co/datasets/quiktech/SimReady-Assets
 - **NVIDIA USDCraft-10K (Apache 2.0)** (usdcraft): https://huggingface.co/datasets/nvidia/USDCraft-10K
+- **ForgeCAD SimReady** (forgecad): https://huggingface.co/datasets/ForgeCAD/simready-assets
 
 AutoBio's lab models (the tubes, racks, dish, pipette and its stand) are used with credit to
 its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
@@ -194,6 +195,7 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Glass test tube, small | Glassware | Built in-house (Blender) | `test_tube_13x100` |
 | Glass stirring rod | Glassware | Built in-house (Blender) | `stirring_rod` |
 | Magnetic stir bar | Glassware | Built in-house (Blender) | `stir_bar` |
+| Screw-top jar | Glassware | ForgeCAD SimReady | [`screw_top_jar`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/screw_top_jar) |
 | Two-tier tube rack | Lab & Medical | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/01_two_tier_plastic_rack`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/01_two_tier_plastic_rack) |
 | Single-row tube rack | Lab & Medical | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack) |
 | Tube rack, blue | Lab & Medical | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack) |

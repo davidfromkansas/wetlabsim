@@ -149,3 +149,18 @@ def test_a_fridge_door_closes_itself_near_shut_and_stays_open_wide():
         mujoco.mj_step(m, d, int(3.0 / m.opt.timestep))
         q = d.qpos[m.jnt_qposadr[j]]
         assert (q < 0.02) if shut else (q > 1.1), (start, q)
+
+
+def test_screw_top_jar_lid_unscrews_on_its_thread():
+    """ForgeCAD's jar: the lid turns up to 540 degrees and rises 6.35 mm as it turns (its unscrew
+    clip), stays seated under its own weight, and the jar keeps the mass and centre it states."""
+    sim, uid = _lab("screw_top_jar")
+    m, d = sim.m, sim.d
+    mujoco.mj_step(m, d, int(0.5 / m.opt.timestep))
+    lift, turn = _joint(sim, uid, "lid_lift"), _joint(sim, uid, "lid_turn")
+    q = lambda j: d.qpos[m.jnt_qposadr[j]]
+    assert abs(q(lift)) < 1e-4 and abs(q(turn)) < 0.01         # seated
+    assert abs(m.body_subtreemass[m.body(f"obj_{uid}").id] - 0.2306) < 1e-3
+    _push(sim, turn, 0.02, 2.0)
+    assert np.degrees(q(turn)) > 500
+    assert abs(q(lift) - 0.00635 * q(turn) / np.radians(540)) < 3e-4
