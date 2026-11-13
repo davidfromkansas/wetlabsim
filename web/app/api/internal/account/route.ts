@@ -1,8 +1,9 @@
 // A lab reads and changes its signed-in owner's General settings (with LAB_LINK_SECRET):
-// POST {user, action: get | set_minutes | save_key | remove_key | key, ...}. Only "key" returns a
-// whole API key, for the run the lab is starting; nothing here is reachable from a browser.
+// POST {user, action: get | set_minutes | save_key | save_login | update_login | remove_key | key, ...}.
+// Only "key" returns a whole API key (or ChatGPT sign-in), for the run the lab is starting;
+// nothing here is reachable from a browser.
 import { timingSafeEqual } from "node:crypto";
-import { getKey, getSettings, isProvider, removeKey, saveKey, setMinutes } from "@/lib/account";
+import { getKey, getSettings, isProvider, removeKey, saveKey, saveLogin, setMinutes, updateLogin } from "@/lib/account";
 
 export const dynamic = "force-dynamic";
 
@@ -36,13 +37,21 @@ export async function POST(req: Request) {
         if (!isProvider(b.provider) || typeof b.key !== "string") return Response.json({ error: "bad request" }, { status: 400 });
         await saveKey(user, b.provider, b.key);
         return Response.json({ ok: true });
+      case "save_login":
+        if (!isProvider(b.provider) || typeof b.login !== "string") return Response.json({ error: "bad request" }, { status: 400 });
+        await saveLogin(user, b.provider, b.login, typeof b.email === "string" ? b.email : "");
+        return Response.json({ ok: true });
+      case "update_login":
+        if (!isProvider(b.provider) || typeof b.login !== "string") return Response.json({ error: "bad request" }, { status: 400 });
+        await updateLogin(user, b.provider, b.login);
+        return Response.json({ ok: true });
       case "remove_key":
         if (!isProvider(b.provider)) return Response.json({ error: "bad request" }, { status: 400 });
         await removeKey(user, b.provider);
         return Response.json({ ok: true });
       case "key":
         if (!isProvider(b.provider)) return Response.json({ error: "bad request" }, { status: 400 });
-        return Response.json({ key: await getKey(user, b.provider) }, { headers: noStore });
+        return Response.json(await getKey(user, b.provider), { headers: noStore });
       default:
         return Response.json({ error: "unknown action" }, { status: 400 });
     }
