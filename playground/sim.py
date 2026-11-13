@@ -90,6 +90,7 @@ class PlaygroundSim(Sim):
         self._glide: dict | None = None         # where the camera is gliding to
         self.view_size = (VIEW_W, VIEW_H)
         self.overlay: list[dict] = []           # ghost and highlight shapes for the main view
+        self.zone: list[dict] = []              # where a described scene is being built (scenegen)
         self.selected: str | None = None        # uid of the selected object
         self._frame = (0, b"")                  # (sequence, jpeg) of the latest main view
         self._frame_cv = threading.Condition()
@@ -542,7 +543,9 @@ class PlaygroundSim(Sim):
         return [p for p in self.placed if not catalog.item(p.item)["fixed"]
                 and st.holds(p.pos[0], p.pos[1]) and p.pos[2] > top - 0.05]
 
-    def add_station(self, robot: str, pos, yaw: float = 0.0, kind: str = "table") -> str:
+    def add_station(self, robot: str, pos, yaw: float = 0.0, kind: str = "table", starter: bool = True) -> str:
+        """A new station; starter=False leaves off what its kind starts with on the table (a
+        described scene puts down its own objects)."""
         if robot not in WS.ROBOTS:
             raise RobotError(f"unknown robot {robot!r}")
         if kind not in W.KINDS:
@@ -554,7 +557,7 @@ class PlaygroundSim(Sim):
             st = W.Station(uid, robot, (float(pos[0]), float(pos[1])), float(yaw), f"Robot {n}", kind)
             self.stations.append(st)
             top = st.top
-            for item, lx, ly, iyaw in st.spec["layout"]:     # what the station starts with
+            for item, lx, ly, iyaw in (st.spec["layout"] if starter else []):     # what the station starts with
                 x, y, _ = st.to_world(lx, ly)
                 if st.near_base(x, y):        # where another robot's base stands (an ALOHA's two)
                     continue
@@ -1226,7 +1229,7 @@ class PlaygroundSim(Sim):
             sc = r.scene
             if self.scene_mode == "free":
                 tron.draw(sc, time.time())
-            for g in self.overlay + self._selection_overlay():
+            for g in self.overlay + self.zone + self._selection_overlay():
                 if sc.ngeom >= sc.maxgeom:
                     break
                 mat = np.zeros(9)
