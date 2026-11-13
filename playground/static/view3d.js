@@ -381,6 +381,43 @@ export function start({stage, base = '', onReady}) {
     for (const k of ['box', 'cylinder']) for (let i = used[k]; i < pool[k].length; i++) pool[k][i].visible = false;
   }
 
+  // Work boxes: around each robot at work, the space it works in. Nearly clear, with a thin
+  // outline that glows in and out (the robots' own cameras see solid walls there instead).
+  const zonesGroup = new THREE.Group(); scene.add(zonesGroup);
+  const zonePool = [];
+  const ZONE_COL = new THREE.Color(0x38BDF8);
+  function setZones(zones) {
+    zones = zones || [];
+    for (let i = 0; i < zones.length; i++) {
+      let z = zonePool[i];
+      if (!z) {
+        const box = new THREE.BoxGeometry(2, 2, 2);
+        const fill = new THREE.Mesh(box, new THREE.MeshBasicMaterial({color: ZONE_COL, transparent: true, opacity: 0.035, depthWrite: false, side: THREE.DoubleSide}));
+        const edges = new THREE.LineSegments(new THREE.EdgesGeometry(box), new THREE.LineBasicMaterial({color: ZONE_COL, transparent: true, opacity: 0.6, depthWrite: false}));
+        fill.renderOrder = edges.renderOrder = 5;
+        const g = new THREE.Group(); g.add(fill, edges); zonesGroup.add(g);
+        z = zonePool[i] = {g, fill, edges};
+      }
+      const d = zones[i];
+      z.g.visible = true;
+      z.g.scale.set(d.half[0], d.half[1], d.height / 2);
+      z.g.position.set(d.pos[0], d.pos[1], d.height / 2);
+      z.g.rotation.set(0, 0, d.yaw || 0);
+      z.waiting = !!d.waiting;
+    }
+    for (let i = zones.length; i < zonePool.length; i++) zonePool[i].g.visible = false;
+  }
+  function pulseZones(t) {
+    const k = 0.5 + 0.5 * Math.sin(t * 2.6);           // a slow breath, about 2.4 s
+    for (const z of zonePool) {
+      if (!z.g.visible) continue;
+      const lo = z.waiting ? 0.18 : 0.35, hi = z.waiting ? 0.35 : 0.95;
+      z.edges.material.opacity = lo + (hi - lo) * k;
+      z.fill.material.opacity = (z.waiting ? 0.015 : 0.03) + 0.03 * k;
+    }
+  }
+  V.setZones = setZones;
+
   // The pose stream.
   const b64 = (s) => { const bin = atob(s), a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return new Float32Array(a.buffer); };
   let es = null;
@@ -411,6 +448,7 @@ export function start({stage, base = '', onReady}) {
     drawPreview(); drawGizmo();
     if (V.onFrame) V.onFrame();
     if (floorFx) drawFloorFx(performance.now() / 1000);
+    pulseZones(performance.now() / 1000);
     renderer.render(scene, camera);
     requestAnimationFrame(frame);
   }

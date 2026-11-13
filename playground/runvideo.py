@@ -94,7 +94,10 @@ def make(run_dir, cams: list[tuple[str, str]], out, title: str = "", fps: int = 
             img = Image.new("RGB", (W, H), (243, 244, 246))
             for i, ((cam, label), (x, y, w, h)) in enumerate(zip(cams, boxes)):
                 r = rend[(w, h)]
-                r.update_scene(d, camera=cam)
+                # The robot's own cameras (all but the big scene view) draw its work-box walls, as it saw them.
+                opt = mujoco.MjvOption()
+                opt.geomgroup[5] = int(i > 0)
+                r.update_scene(d, camera=cam, scene_option=opt)
                 # Software OpenGL draws shadows slowly: the big view keeps them (they show what
                 # touches what), the small cameras go without, and no floor reflections.
                 r.scene.flags[mujoco.mjtRndFlag.mjRND_SHADOW] = i == 0

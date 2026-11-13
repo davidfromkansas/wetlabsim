@@ -604,6 +604,20 @@ class PlaygroundSim(Sim):
                 self.active_station = self.stations[0].uid if self.stations else None
             self.rebuild()
 
+    def remove_stations(self, uids: list[str]):
+        """Remove whole stations at once (robot, table and what is on it), one rebuild."""
+        with self.lock:
+            self._sync_placed()
+            gone = [st for st in self.stations if st.uid in set(uids)]
+            riders = {p.uid for st in gone for p in self._on_table(st)}
+            self.placed = [p for p in self.placed if p.uid not in riders]
+            self.stations = [st for st in self.stations if st.uid not in set(uids)]
+            for u in uids:
+                self.arms.pop(u, None)
+            if self.active_station not in {st.uid for st in self.stations}:
+                self.active_station = self.stations[0].uid if self.stations else None
+            self.rebuild(sync=False)
+
     def duplicate_station(self, uid: str) -> str:
         """Copy a station (robot, table and what is on the table) into the nearest free spot
         beside it. The copy becomes the active station."""
@@ -643,6 +657,72 @@ class PlaygroundSim(Sim):
             self.rebuild()
             self.active_station = new
         return new
+
+    def copy_station(self, uid: str, n: int) -> tuple[list[str], str]:
+        """Up to n exact copies of a station (robot, table and everything on the table, as it
+        is now: poses, joints and parts), each in free floor space: clear of every station,
+        furniture and anything lying on the floor. The lab is rebuilt once. Returns the new
+        stations' uids, and in plain words why there are fewer than asked (or "")."""
+        import copy as _copy
+        with self.lock:
+            st = self.station(uid)
+            if st is None:
+                raise RobotError("no such station")
+            self._sync_placed()
+            riders = self._on_table(st)
+            soft = sum(1 for p in riders if catalog.item(p.item)["soft"])
+            why = ""
+            if soft and (SOFT_MAX - W.soft_count(self.placed)) // soft < n:
+                n = max(0, (SOFT_MAX - W.soft_count(self.placed)) // soft)
+                why = f"a scene holds at most {SOFT_MAX} soft objects"
+            sx, sy = st.footprint()
+            c, s = float(np.cos(st.yaw)), float(np.sin(st.yaw))
+            ride = {p.uid for p in riders}
+            loose = [p for p in self.placed if p.uid not in ride and not catalog.item(p.item)["fixed"]]
+            # Candidate spots in the station's own frame: rings around it, nearest first.
+            cands = sorted({(i * (sx + 0.4), j * (sy + 0.5)) for i in range(-6, 7) for j in range(-6, 7)
+                            if (i, j) != (0, 0)}, key=lambda v: (v[0] ** 2 + v[1] ** 2, -v[0], v[1]))
+            made = []
+            base = (st.name or f"Robot {uid[2:]}").strip()
+            for lx, ly in cands:
+                if len(made) >= n:
+                    break
+                dx, dy = c * lx - s * ly, s * lx + c * ly
+                x, y = st.pos[0] + dx, st.pos[1] + dy
+                if not self.station_spot(x, y, st.yaw, kind=st.kind)["valid"]:
+                    continue
+                probe = W.Station("probe", st.robot, (x, y), st.yaw, kind=st.kind)
+                if any(probe.holds(p.pos[0], p.pos[1], 0.15) for p in loose):
+                    continue          # something lies on the floor there
+                new = self._new_station_uid()
+                self.stations.append(W.Station(new, st.robot, (x, y), st.yaw,
+                                               f"{base} · copy {len(made) + 1}"[:40], st.kind))
+                for p in riders:
+                    self.placed.append(W.Placed(self.new_uid(p.item), p.item,
+                                                (p.pos[0] + dx, p.pos[1] + dy, p.pos[2]), p.yaw, p.quat,
+                                                _copy.deepcopy(p.joints), _copy.deepcopy(p.parts)))
+                made.append(new)
+            if len(made) < n and not why:
+                why = "there was no more free floor space next to this robot"
+            if made:
+                self.rebuild(sync=False)
+                for u in made:                # each copy's arm exactly as the original's is now
+                    self._copy_arm(uid, u)
+                mujoco.mj_forward(self.m, self.d)
+        return made, why
+
+    def _copy_arm(self, src_uid: str, dst_uid: str):
+        """One robot's joints and motor commands onto a copy of it (same model, so its joints
+        line up one for one). Call with the lock held."""
+        a, b = self.arm_of(src_uid), self.arm_of(dst_uid)
+        m, d = self.m, self.d
+        for ja, jb in zip(a.own_joints, b.own_joints):
+            qa, qb = m.joint(ja).qposadr[0], m.joint(jb).qposadr[0]
+            d.qpos[qb] = d.qpos[qa]
+        d.ctrl[b.arm_act] = d.ctrl[a.arm_act]
+        sa, sb = getattr(a, "sides", None), getattr(b, "sides", None)
+        for x, y in (zip(sa.values(), sb.values()) if sa and sb else [(a, b)]):
+            d.ctrl[y.grip_act] = d.ctrl[x.grip_act]
 
     def swap_robot(self, uid: str, robot: str):
         """Put a different robot arm on a station's table. The table and objects stay put."""

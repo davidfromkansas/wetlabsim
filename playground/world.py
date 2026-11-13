@@ -197,6 +197,16 @@ class Station:
         dx, dy = x - self.pos[0], y - self.pos[1]
         return (c * dx + s * dy, -s * dx + c * dy)
 
+    WALL_MARGIN = 0.1        # the work box: this far out from the table's edge
+    WALL_ABOVE = 1.3         # and this high above the table top (over the overhead camera)
+
+    def work_box(self):
+        """The space this station's robot works in: its table's footprint plus a margin, from
+        the floor to well above its cameras. (half x, half y, height), in the station's frame,
+        centred on the table."""
+        sx, sy = self.footprint()
+        return sx / 2 + self.WALL_MARGIN, sy / 2 + self.WALL_MARGIN, self.top + self.WALL_ABOVE
+
     def footprint(self):
         """The table's size along the station's own x and y."""
         sx, sy, _ = catalog.meta(self.table_item)["size"]
@@ -721,6 +731,25 @@ def add_station(world: mujoco.MjSpec, st: Station, cache: set):
     _camera(world, st.prefix + "side", st.to_world(rx + 1.75, ry - 1.3, top + 0.8),
             st.to_world(rx + 0.4, ry, top + 0.1), 45)
     S.add_robot(world, st.robot, st.prefix + "robot_mount", st.prefix)
+    _add_walls(world, st)
+
+
+WALL_GROUP = 5          # MuJoCo geom group of the work box's walls: hidden in MuJoCo's default
+                        # view (groups 0-2) and in the page's 3D view; the robots' own cameras show it
+WALL_RGBA = [0.86, 0.87, 0.89, 1.0]
+
+
+def _add_walls(world: mujoco.MjSpec, st: Station):
+    """The four walls of a station's work box: seen only by its robots' cameras (geom group
+    WALL_GROUP), so a robot sees its own table and not the stations around it. Nothing touches
+    them (contype and conaffinity 0): they are not part of the physics."""
+    hx, hy, h = st.work_box()
+    t = 0.005
+    for k, (lx, ly, ax, ay) in enumerate(((hx, 0, t, hy), (-hx, 0, t, hy), (0, hy, hx, t), (0, -hy, hx, t))):
+        x, y, _ = st.to_world(lx, ly)
+        world.worldbody.add_geom(name=f"{st.prefix}wall{k}", type=mujoco.mjtGeom.mjGEOM_BOX,
+                                 size=[ax, ay, h / 2], pos=[x, y, h / 2], quat=list(yaw_quat(st.yaw)),
+                                 group=WALL_GROUP, contype=0, conaffinity=0, rgba=WALL_RGBA)
 
 
 def read_obj(path):
