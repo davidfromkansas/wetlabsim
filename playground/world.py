@@ -27,6 +27,9 @@ TABLE_UID = "table"     # (older saved scenes) the one table a robot stood on
 BASE_CLEARANCE = 0.25
 # A station's robot stands on its table, near one long edge, facing across it (+x).
 ROBOT_XY = (-0.42, 0.0)
+# A humanoid stands on the floor instead, its pelvis this far back from the table's near edge (m):
+# close enough for its hands to work over the table, its feet clear of the table's frame.
+HUMANOID_GAP = 0.15
 STATION_TABLE = "table_packing"
 
 # The kinds of station: which table the robot stands on, how that table is turned in the
@@ -167,9 +170,17 @@ class Station:
         return self.yaw + self.spec["turn"]
 
     @property
+    def standing(self) -> bool:
+        """A humanoid (the G1) stands on the floor at the table, not on it."""
+        from wetlabsim import scene as WS
+        return bool(WS.ROBOTS[self.robot].get("humanoid"))
+
+    @property
     def robot_xy(self) -> tuple:
         if self.robot == "aloha":     # two arms facing each other across the middle of the table
             return (0.0, 0.0)
+        if self.standing:             # on the floor, facing the table's near edge, HUMANOID_GAP from it
+            return (-self.footprint()[0] / 2 - HUMANOID_GAP, 0.0)
         return self.spec["robot_xy"]
 
     def bases(self) -> list:
@@ -205,7 +216,9 @@ class Station:
         the floor to well above its cameras. (half x, half y, height), in the station's frame,
         centred on the table."""
         sx, sy = self.footprint()
-        return sx / 2 + self.WALL_MARGIN, sy / 2 + self.WALL_MARGIN, self.top + self.WALL_ABOVE
+        # A humanoid stands outside the table's footprint: the box takes in where it stands too.
+        mx = HUMANOID_GAP + 0.35 if self.standing else self.WALL_MARGIN
+        return sx / 2 + mx, sy / 2 + self.WALL_MARGIN, self.top + self.WALL_ABOVE
 
     def footprint(self):
         """The table's size along the station's own x and y."""
@@ -722,7 +735,7 @@ def add_station(world: mujoco.MjSpec, st: Station, cache: set):
               tmeta, True, cache)
     rx, ry = st.robot_xy
     mount = _quat_mul(yaw_quat(st.yaw), [float(v) for v in S.ROBOTS[st.robot]["mount_quat"].split()])
-    world.worldbody.add_site(name=st.prefix + "robot_mount", pos=list(st.to_world(rx, ry, top)),
+    world.worldbody.add_site(name=st.prefix + "robot_mount", pos=list(st.to_world(rx, ry, 0.0 if st.standing else top)),
                              quat=list(mount))
     c, s_ = math.cos(st.yaw), math.sin(st.yaw)
     if not S.ROBOTS[st.robot].get("sides"):   # a two-arm robot brings its own (ALOHA's four, the Duo's head)
