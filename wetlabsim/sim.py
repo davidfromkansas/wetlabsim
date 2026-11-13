@@ -93,6 +93,19 @@ class Motion:
 
 
 # ------------------------------------------------------------------- one robot
+WALL_GROUP = 5     # geom group of a playground station's work-box walls (playground/world.py)
+
+
+def _robot_view(camera: str) -> mujoco.MjvOption:
+    """What a robot's own camera draws: MuJoCo's default groups, plus the walls of the work
+    box around its station (so it sees its own table, not the stations around it). The
+    "side" camera is the audience's view from outside the box: no walls."""
+    opt = mujoco.MjvOption()
+    if camera != "side":
+        opt.geomgroup[WALL_GROUP] = 1
+    return opt
+
+
 class Arm:
     """One robot in the world: its controller, gripper, wrist sensor and cameras.
 
@@ -1075,7 +1088,7 @@ class Sim:
                     om, od, orr = other[id(model)]
                     od.qpos[:] = qpos
                     mujoco.mj_forward(om, od)
-                    orr.update_scene(od, camera=arm.P["cameras"][camera])
+                    orr.update_scene(od, camera=arm.P["cameras"][camera], scene_option=_robot_view(camera))
                     box["rgb"] = orr.render().copy()
                     box["time"] = round(at_time or 0.0, 4)
                 except Exception as e:  # noqa: BLE001
@@ -1099,10 +1112,10 @@ class Sim:
                     cam_name = arm.P["cameras"][camera]
                 mujoco.mj_forward(m, rd)
                 cid = m.camera(cam_name).id
-                rgb_r.update_scene(rd, camera=cam_name)
+                rgb_r.update_scene(rd, camera=cam_name, scene_option=_robot_view(camera))
                 box["rgb"] = rgb_r.render().copy()
                 if depth:
-                    dep_r.update_scene(rd, camera=cam_name)
+                    dep_r.update_scene(rd, camera=cam_name, scene_option=_robot_view(camera))
                     box["depth"] = dep_r.render().astype(np.float32)
                 fovy = np.deg2rad(m.cam_fovy[cid])
                 f = (CAM_H / 2) / np.tan(fovy / 2)

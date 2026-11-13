@@ -95,9 +95,10 @@ function squares(b, running, big) {
   const out = [];
   b.results.forEach((r, i) => out.push(sq(r === 'succeeded' ? 'ok' : 'no', big, `Run ${i + 1}: ${r}`)));
   if (!b.finished) {
-    const now = b.results.length;
-    if (now < b.total) out.push(sq(running ? 'run' : 'todo', big, `Run ${now + 1}: ${running ? 'running' : 'waiting'}`));
-    for (let i = now + 1; i < b.total; i++) out.push(sq('todo', big, `Run ${i + 1}: not started`));
+    // Side by side (copies of the robot), several run at once.
+    const now = b.results.length, going = Math.min(b.total - now, b.running != null ? b.running : (running ? 1 : 0));
+    for (let i = now; i < now + going; i++) out.push(sq('run', big, `Run ${i + 1}: running`));
+    for (let i = now + going; i < b.total; i++) out.push(sq('todo', big, `Run ${i + 1}: not started`));
   }
   return `<div class="sqs">${out.join('')}</div>`;
 }
@@ -136,14 +137,17 @@ function drawBatch() {
   box.style.display = 'flex';
   if (box.dataset.key === key) return;
   box.dataset.key = key;
-  const k = Math.min(b.total, b.results.length + (b.finished ? 0 : 1));
-  const head = b.finished ? `Done: ${ok} of ${b.results.length} succeeded` : `Run ${k} of ${b.total}`;
+  const k = Math.min(b.total, b.results.length + (b.finished ? 0 : 1)), side = (b.stations || []).length;
+  const head = b.finished ? `Done: ${ok} of ${b.results.length} succeeded`
+    : side > 1 ? `${b.results.length} of ${b.total} done · ${b.running || 0} running` : `Run ${k} of ${b.total}`;
   const tail = b.finished ? (b.results.length < b.total ? `${b.total - b.results.length} not run` : '') : `${ok} succeeded · ${bad} failed`;
   box.innerHTML = `<div class="bh"><b>${head}</b><span>${tail}</span></div>${squares(b, running, true)}${b.finished ? '' : KEY}
     ${b.note ? `<div class="note">${esc(b.note)}</div>` : ''}
-    <div class="acts">${b.finished ? '<button class="lnk" id="bResults">See every run in Results</button>'
-      : b.stop_after ? '<span class="small" style="align-self:center">Stopping after this run</span>' : '<button id="bAfter">Stop after this run</button>'}</div>`;
+    ${side > 1 && !b.finished ? `<div class="small">${side} robots running side by side: this one and ${side - 1} cop${side > 2 ? 'ies' : 'y'}.</div>` : ''}
+    <div class="acts">${b.finished ? `<button class="lnk" id="bResults">See every run in Results</button>${(b.copies || []).length ? `<button id="bCopies">Remove ${b.copies.length} cop${b.copies.length > 1 ? 'ies' : 'y'}</button>` : ''}`
+      : b.stop_after ? `<span class="small" style="align-self:center">Stopping after ${side > 1 ? 'the runs going now' : 'this run'}</span>` : `<button id="bAfter">Stop after ${side > 1 ? 'the runs going now' : 'this run'}</button>`}</div>`;
   const a = $('bAfter'); if (a) a.onclick = async () => { await api('/pg/stop', {station: uid, after_this: true}); };
+  const cp = $('bCopies'); if (cp) cp.onclick = async () => { cp.disabled = true; const r = await api('/pg/station/remove_copies', {uid}); if (r && r.ok === false && window.toast) window.toast(r.error); };
   const rr = $('bResults'); if (rr) rr.onclick = () => $('tabResults').click();
   $('stopBtn').textContent = b.finished ? 'Stop' : 'Stop all';
 }
@@ -190,13 +194,13 @@ function drawResults() {
       const vid = x.video_url ? (x.video_url.startsWith('/') ? `<button class="vbtn" data-video="${esc(x.video_url)}" data-title="${esc((of > 1 ? `Run ${x.index} of ${of}` : 'Run') + ' · ' + (x.task || ''))}">${PLAY}Watch video</button>`
           : `<a class="vbtn" href="${esc(x.video_url)}" target="_blank" rel="noopener">${PLAY}Watch video ↗</a>`)
         : x.video === 'making' ? '<span class="vnote">Video is being made…</span>' : x.video === 'failed' ? '<span class="vnote">No video for this run</span>' : '';
-      return `<div class="rrow" role="button" tabindex="0" data-run="${esc(x.run_id)}" aria-label="Open run ${of > 1 ? `${x.index} of ${of}` : ''}: ${esc(why)}">${sq(x.ok ? 'ok' : 'no', false, why)}<span class="n">${of > 1 ? `Run ${x.index} of ${of}` : 'Run'} <span class="st">· ${esc(lab)}</span></span><span class="mono">${fmt(x.seconds)}</span><span class="mono">${x.cost_usd != null ? usd(x.cost_usd) : ''}</span>${CHEV}<span class="why${x.ok ? '' : ' bad'}">${esc(why)}${said}${err}</span>${vid ? `<span class="acts">${vid}</span>` : ''}</div>`;
+      return `<div class="rrow" role="button" tabindex="0" data-run="${esc(x.run_id)}" data-uid="${esc(x.uid || '')}" aria-label="Open run ${of > 1 ? `${x.index} of ${of}` : ''}: ${esc(why)}">${sq(x.ok ? 'ok' : 'no', false, why)}<span class="n">${of > 1 ? `Run ${x.index} of ${of}` : 'Run'} <span class="st">· ${esc(lab)}</span></span><span class="mono">${fmt(x.seconds)}</span><span class="mono">${x.cost_usd != null ? usd(x.cost_usd) : ''}</span>${CHEV}<span class="why${x.ok ? '' : ' bad'}">${esc(why)}${said}${err}</span>${vid ? `<span class="acts">${vid}</span>` : ''}</div>`;
     }).join('');
     return `<div class="grp">${head}${rows}</div>`;
   }).join('');
   el.querySelectorAll('[data-run]').forEach(b => {
-    b.onclick = (e) => { if (!e.target.closest('.vbtn')) window.openRunPage(R.uid, b.dataset.run); };
-    b.onkeydown = (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === b) { e.preventDefault(); window.openRunPage(R.uid, b.dataset.run); } };
+    b.onclick = (e) => { if (!e.target.closest('.vbtn')) window.openRunPage(b.dataset.uid || R.uid, b.dataset.run); };
+    b.onkeydown = (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === b) { e.preventDefault(); window.openRunPage(b.dataset.uid || R.uid, b.dataset.run); } };
   });
   el.querySelectorAll('button[data-video]').forEach(b => b.onclick = (e) => { e.stopPropagation(); openVideo(U(b.dataset.video), b.dataset.title); });
 }

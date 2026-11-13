@@ -64,6 +64,7 @@ TIME_LIMIT = 180.0     # seconds: a LIBERO test run that hasn't finished by then
 PUBLIC = False
 FRONT = False               # the public site's front: hands out labs, lists live runs and past runs
 MAX_ACTIVE = 4              # runs at once on the public site; more wait in a queue
+LOCAL_PARALLEL = 4          # Run task N times on this computer: robots side by side at most
 RUN_LAUNCHER = "local"      # where agents run (wetlabsim.launchers)
 AGENT_ROBOT_URL = ""        # the robot API as agents outside this machine reach it ("" = ROBOT_API_URL)
 FREE_TIME_LIMIT = 0.0  # free play: no limit, the run goes until the AI finishes or you stop it
@@ -562,7 +563,8 @@ class Session:
         entry["reason"] = _end_reason(status, runner.info.get("time_limit"), entry["ai_done"], b)
         if b and not b.get("finished"):
             b["results"].append("succeeded" if entry["ok"] else "failed")
-            entry.update(batch=b["id"], index=len(b["results"]), of=b["total"])
+            idx = b.setdefault("running", {}).pop(uid, None)
+            entry.update(batch=b["id"], index=idx or len(b["results"]), of=b["total"])
         if entry["run_id"]:
             self.history.setdefault(uid, []).append(entry)
             del self.history[uid][:-200]
@@ -592,16 +594,67 @@ class Session:
         return True
 
     def _next_in_batch(self, uid: str, b: dict):
-        if len(b["results"]) >= b["total"] or b.get("stop_after") or b.get("cancelled"):
+        """This station's run of a batch has ended: its next run (if the batch has runs left
+        that no other station has taken), from the station as it was when the batch started.
+        The batch is finished once none of its stations has a run going."""
+        b.setdefault("running", {}).pop(uid, None)
+        snap = (b.get("snaps") or {}).get(uid) or (b["snap"] if uid == b.get("home", uid) else None)
+        if b.get("started", len(b["results"])) >= b["total"] or b.get("stop_after") or b.get("cancelled"):
+            pass
+        elif snap is None or self.sim.station(uid) is None or not self.sim.restore_station(snap):
+            b["note"] = "the lab changed, so the remaining runs were not started"
+            b["cancelled"] = True
+        else:
+            self._queue_batch_run(uid, b)
+        if not b["running"]:
             b["finished"] = True
-            return
-        if self.sim.station(uid) is None or not self.sim.restore_station(b["snap"]):
-            b.update(finished=True, note="the lab changed, so the remaining runs were not started")
-            return
+
+    def _queue_batch_run(self, uid: str, b: dict):
+        b["started"] = b.get("started", 0) + 1
+        b.setdefault("running", {})[uid] = b["started"]
         with QUEUE_LOCK:
             QUEUE.append({"session": self.id, "station": uid, "task": b["task"], "model": b["model"],
                           "limit": b["limit"], "queued": time.time()})
         _start_queued()
+
+    def drop_batch(self, b: dict):
+        """Stop a batch: its waiting runs never start; the ones going are stopped."""
+        b["cancelled"] = True
+        mine = set(b.get("stations") or [])
+        with QUEUE_LOCK:
+            gone = [q["station"] for q in QUEUE if q["session"] == self.id and q["station"] in mine]
+            QUEUE[:] = [q for q in QUEUE if not (q["session"] == self.id and q["station"] in mine)]
+        for u in gone:
+            b.setdefault("running", {}).pop(u, None)
+        for u in mine:
+            r = self.runners.get(u)
+            if r and r.active():
+                r.stop()
+            else:
+                b.setdefault("running", {}).pop(u, None)
+        if not b.get("running"):
+            b["finished"] = True
+
+    def batch_history(self, uid: str) -> list[tuple[str, dict]]:
+        """A robot's Results list, oldest first, with the runs its batches' copies did too
+        (Run task N times side by side): (station uid, entry) pairs."""
+        own = self.history.get(uid, [])
+        ids = {e.get("batch") for e in own if e.get("batch")}
+        b = self.batches.get(uid)
+        if b:
+            ids.add(b["id"])
+        out = [(uid, e) for e in own]
+        for u, h in self.history.items():
+            if u != uid:
+                out += [(u, e) for e in h if e.get("batch") in ids]
+        # a batch's runs together, in run order, where its first run started
+        first = {}
+        for _, e in out:
+            k = e.get("batch") or e.get("run_id")
+            first[k] = min(first.get(k, 1e18), e.get("started") or 0)
+        out.sort(key=lambda ue: (first[ue[1].get("batch") or ue[1].get("run_id")], ue[1].get("batch") or "",
+                                 ue[1].get("index") or 0, ue[1].get("started") or 0))
+        return out
 
     def batch_status(self, uid: str) -> dict | None:
         b = self.batches.get(uid)
@@ -609,7 +662,10 @@ class Session:
             return None
         return {"id": b["id"], "total": b["total"], "results": list(b["results"]),
                 "finished": bool(b.get("finished")), "stop_after": bool(b.get("stop_after")),
-                "note": b.get("note", "")}
+                "note": b.get("note", ""), "running": len(b.get("running") or {}),
+                "stations": list(b.get("stations") or [uid]), "copies": [u for u in b.get("copies") or []
+                                                                         if self.sim.station(u) is not None],
+                "home": b.get("home", uid), "index": (b.get("running") or {}).get(uid)}
 
     def record_run(self, uid: str, runner: "Runner"):
         """A finished run, into the website's database: its runs row (which robot, starter kit,
@@ -675,6 +731,10 @@ class Session:
     def stop(self):
         for b in self.batches.values():
             b["cancelled"] = True
+            b["running"] = {u: i for u, i in (b.get("running") or {}).items()
+                            if self.runners.get(u) and self.runners[u].active()}
+            if not b["running"]:
+                b["finished"] = True
         with QUEUE_LOCK:
             QUEUE[:] = [q for q in QUEUE if q["session"] != self.id]
         self.bench.stop()
@@ -1205,10 +1265,13 @@ class PGHandler(Handler):
                     mine=self._owns())
         # Its batch (Run task N times): every run of it, for the page's run list.
         if e.get("batch"):
-            page["runs"] = [{"run_id": x["run_id"], "index": x.get("index"), "ok": bool(x.get("ok")),
+            mates = [(u, x) for u, x in self.sess.batch_history(uid) if x.get("batch") == e["batch"]]
+            mates.sort(key=lambda ux: ux[1].get("index") or 0)
+            page["runs"] = [{"run_id": x["run_id"], "uid": u, "index": x.get("index"), "ok": bool(x.get("ok")),
                              "status": x.get("status"), "reason": x.get("reason"), "seconds": x.get("seconds"),
-                             "cost_usd": x.get("cost_usd")}
-                            for x in hist if x.get("batch") == e["batch"]]
+                             "cost_usd": x.get("cost_usd"),
+                             "station": (self.sess.sim.station(u).name if self.sess.sim.station(u) else "")}
+                            for u, x in mates]
             page["batch_total"] = e.get("of")
         return self._json(page)
 
@@ -1390,6 +1453,16 @@ class PGHandler(Handler):
                     else self.sim.scene_info()
                 runs = self._runs_status() if info["mode"] == "free" else {}
                 run = runs.get(info["active"], {"active": False}) if info["mode"] == "free" else self.runner.status()
+                # Robots at work: their work boxes, drawn in the 3D view (a glowing outline).
+                zones = []
+                if info["mode"] == "free":
+                    for st in list(self.sim.stations):
+                        r = runs.get(st.uid) or {}
+                        if r.get("active") or r.get("queued"):
+                            hx, hy, h = st.work_box()
+                            zones.append({"uid": st.uid, "pos": [st.pos[0], st.pos[1]], "yaw": st.yaw,
+                                          "half": [hx, hy], "height": h, "waiting": not r.get("active")})
+                info["zones"] = zones
                 return self._json({**info, "run": run, "runs": runs, "locked": self._locked(),
                                    "bench": self.bench.status(), "wetbench": self.wetbench.status(),
                                    "session": {"id": self.sess.id, "name": self.sess.name,
@@ -1401,10 +1474,11 @@ class PGHandler(Handler):
             if p == "/pg/results":          # a robot's finished runs, newest first, for its Results tab
                 uid = qs.get("uid", [""])[0]
                 runs = []
-                for e in reversed(self.sess.history.get(uid, [])):
+                for u, e in reversed(self.sess.batch_history(uid)):
                     x = {k: v for k, v in e.items() if k != "run"}
-                    if self._video_url(uid, e):
-                        x["video_url"] = self._video_url(uid, e)
+                    x["uid"] = u
+                    if self._video_url(u, e):
+                        x["video_url"] = self._video_url(u, e)
                     runs.append(x)
                 return self._json({"ok": True, "runs": runs, "batch": self.sess.batch_status(uid)})
             if p in ("/pg/run_page", "/pg/run_file", "/pg/run_image"):   # one past run's results page
@@ -1645,8 +1719,8 @@ class PGHandler(Handler):
             lock = self._locked()
             if (p in ("/pg/place", "/pg/move", "/pg/remove", "/pg/rotate", "/pg/orient", "/pg/translate", "/pg/clear") or p.startswith("/pg/station/")) and lock:
                 # Rename any time; Reset while physics plays too, but not while an AI works.
-                if p != "/pg/station/rename" and not (p == "/pg/station/reset" and self.sim.paused is False
-                                                      and not self._busy()):
+                if p != "/pg/station/rename" and not (p in ("/pg/station/reset", "/pg/station/remove_copies")
+                                                      and self.sim.paused is False and not self._busy()):
                     return self._json({"ok": False, "error": lock})
             if p == "/pg/station/add":
                 kind = b.get("kind", "table")
@@ -1694,7 +1768,7 @@ class PGHandler(Handler):
                 bt = self.sess.batches.get(b["uid"])
                 if not bt or not bt.get("snap"):
                     return self._json({"ok": False, "error": "This robot hasn't run a task yet, so there's nothing to reset to."})
-                err = s.reset_station(bt["snap"])
+                err = s.reset_station((bt.get("snaps") or {}).get(b["uid"]) or bt["snap"])
                 if err:
                     return self._json({"ok": False, "error": err})
                 return self._json({"ok": True})
@@ -1702,6 +1776,22 @@ class PGHandler(Handler):
                 s.remove_station(b["uid"])
                 self.runners.pop(b["uid"], None)
                 return self._json({"ok": True})
+            if p == "/pg/station/remove_copies":   # the copies a Run task N times made, all at once
+                bt = self.sess.batches.get(b["uid"])
+                if not bt or not bt.get("finished"):
+                    return self._json({"ok": False, "error": "The runs are still going."})
+                home = bt.get("home", b["uid"])
+                gone = [u for u in bt.get("copies") or [] if s.station(u) is not None]
+                if gone:
+                    s.remove_stations(gone)
+                for u in gone:
+                    self.runners.pop(u, None)
+                    self.sess.batches.pop(u, None)
+                bt["copies"] = []
+                if s.station(home) is not None:
+                    s.active_station = home
+                    s.frame_station(home)
+                return self._json({"ok": True, "removed": len(gone), "active": s.active_station})
             if p == "/pg/session/share":   # the share link: on (a new random token) or off
                 if not (SAVE.enabled() and self.sess.db_id and SAVE.WEBSITE_URL):
                     return self._err("sharing needs a signed-in account's lab", 400)
@@ -1879,16 +1969,39 @@ class PGHandler(Handler):
                     except (TypeError, ValueError):
                         repeat = 1
                     s.selected = None
+                    # Run task N times: exact copies of this station, side by side in free floor
+                    # space, run at the same time (as many as may run at once); every run starts
+                    # from its station as it is now, and a station that finishes takes the next run.
+                    copies, note = [], ""
+                    want = min(repeat, MAX_ACTIVE if PUBLIC else LOCAL_PARALLEL) - 1
+                    if want > 0:
+                        with QUEUE_LOCK:
+                            waiting = any(q["session"] == self.sess.id for q in QUEUE)
+                        if self._busy() or waiting:
+                            note = "Other robots are working, so these runs go one after another on this robot."
+                        else:
+                            try:
+                                copies, why = s.copy_station(uid, want)
+                            except RobotError as e:
+                                copies, why = [], str(e)
+                            if len(copies) < want:
+                                note = (f"Only {len(copies) + 1} side by side: {why}. " if why else "") + \
+                                       "The other runs go one after another."
                     s.play()
-                    # Every run of the batch starts from the station as it is now (Run task N times).
-                    self.sess.batches[uid] = {"id": secrets.token_hex(4), "total": repeat, "results": [],
-                                              "task": task[:4000], "model": model, "limit": limit,
-                                              "snap": s.station_snapshot(uid)}
-                    job = {"session": self.sess.id, "station": uid, "task": task[:4000], "model": model,
-                           "limit": limit, "queued": time.time()}
-                    with QUEUE_LOCK:
-                        QUEUE.append(job)
-                    _start_queued()
+                    stations = [uid] + copies
+                    bt = {"id": secrets.token_hex(4), "total": repeat, "results": [], "task": task[:4000],
+                          "model": model, "limit": limit, "home": uid, "stations": stations, "copies": copies,
+                          "snaps": {u: s.station_snapshot(u) for u in stations}, "started": 0, "running": {},
+                          "note": note}
+                    bt["snap"] = bt["snaps"][uid]
+                    for u in stations:
+                        self.sess.batches[u] = bt
+                        if u != uid:
+                            self.sess.unsent.pop(u, None)
+                    for u in stations:
+                        self.sess._queue_batch_run(u, bt)
+                    if copies:
+                        s.frame_lab()
                     pos = _queue_position(self.sess.id, uid)
                     return self._json({"ok": True, "run": self.station_runner(uid).status() if pos is None
                                        else {"active": False, "queued": pos}})
@@ -1902,15 +2015,23 @@ class PGHandler(Handler):
                 s.pause()
                 return self._json({"ok": True})
             if p == "/pg/stop":
-                if b.get("station") and b.get("after_this"):     # let this run finish, start no more
+                if b.get("station") and b.get("after_this"):     # let the runs going finish, start no more
                     bt = self.sess.batches.get(b["station"])
                     if bt and not bt.get("finished"):
                         bt["stop_after"] = True
+                        mine = set(bt.get("stations") or [])
+                        with QUEUE_LOCK:      # copies still waiting for a turn don't start
+                            gone = [q["station"] for q in QUEUE if q["session"] == self.sess.id and q["station"] in mine]
+                            QUEUE[:] = [q for q in QUEUE if not (q["session"] == self.sess.id and q["station"] in mine)]
+                        for u in gone:
+                            bt["running"].pop(u, None)
+                        if not bt["running"]:
+                            bt["finished"] = True
                     return self._json({"ok": True})
-                if b.get("station"):          # one station's run (and the rest of its batch)
+                if b.get("station"):          # one station's run (and the rest of its batch, on every copy)
                     bt = self.sess.batches.get(b["station"])
-                    if bt:
-                        bt["cancelled"] = True
+                    if bt and not bt.get("finished"):
+                        self.sess.drop_batch(bt)
                     with QUEUE_LOCK:
                         QUEUE[:] = [q for q in QUEUE if not (q["session"] == self.sess.id and q["station"] == b["station"])]
                     r = self.runners.get(b["station"])

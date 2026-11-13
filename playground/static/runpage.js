@@ -204,11 +204,11 @@ function draw() {
   bindBack();
   $('rpTimeline').onclick = () => window.openRunTimeline(P.uid, P.run);
   if (many) {
-    const go = (k) => { const x = runs[i + k]; if (x) open(P.uid, x.run_id); };
+    const go = (k) => { const x = runs[i + k]; if (x) open(x.uid || P.uid, x.run_id); };
     const pv = $('rpPrev'), nx = $('rpNext');
     if (pv) pv.onclick = () => go(-1);
     if (nx) nx.onclick = () => go(1);
-    root.querySelectorAll('[data-runid]').forEach(b => b.onclick = () => open(P.uid, b.dataset.runid));
+    root.querySelectorAll('[data-runid]').forEach(b => b.onclick = () => open(b.dataset.uid || P.uid, b.dataset.runid));
     const on = root.querySelector('.side .row.on'); if (on) on.scrollIntoView({block: 'nearest'});
   }
   bindVideo(); drawSteps(); bindFiles();
@@ -221,7 +221,7 @@ function side(d, runs) {
   return `<nav class="side" aria-label="Every run of this task">
     <div class="sum"><b>${ok} of ${runs.length} succeeded</b>
       <span>${runs.length < of ? `${of - runs.length} of ${of} not run · ` : ''}Avg time ${clock(secs / runs.length)}${costs.length ? ` · Total ${usd(cost)}` : ''}</span></div>
-    <div class="list">${runs.map(x => `<button class="row${x.run_id === d.run_id ? ' on' : ''}" data-runid="${e(x.run_id)}" ${x.run_id === d.run_id ? 'aria-current="true"' : ''}>
+    <div class="list">${runs.map(x => `<button class="row${x.run_id === d.run_id ? ' on' : ''}" data-runid="${e(x.run_id)}" data-uid="${e(x.uid || '')}" ${x.run_id === d.run_id ? 'aria-current="true"' : ''}>
       ${SQ(x.ok, x.reason || '')}<b>Run ${x.index}</b><span class="mono" style="font-size:13px;color:#374151">${clock(x.seconds)}${x.cost_usd != null ? ` · ${usd(x.cost_usd)}` : ''}</span>
       <span class="why">${e(x.reason || OUTCOME[x.status] || x.status || '')}</span></button>`).join('')}</div>
     <div class="keys"><kbd>↑</kbd> <kbd>↓</kbd> go through the runs</div></nav>`;
@@ -452,7 +452,7 @@ window.addEventListener('keydown', (ev) => {
   const runs = (P.d && P.d.runs) || [];
   if (runs.length < 2 || (ev.key !== 'ArrowUp' && ev.key !== 'ArrowDown')) return;
   const i = runs.findIndex(x => x.run_id === P.run), x = runs[i + (ev.key === 'ArrowUp' ? -1 : 1)];
-  if (x) { ev.preventDefault(); open(P.uid, x.run_id); }
+  if (x) { ev.preventDefault(); open(x.uid || P.uid, x.run_id); }
 });
 window.openRunPage = open;
 })();

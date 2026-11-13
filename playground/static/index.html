@@ -2011,6 +2011,7 @@ async function pollTrace() {
 function render() {
   const sc = S.scene; if (!sc) return;
   applyMode();
+  if (window.V3 && window.V3.setZones) window.V3.setZones(sc.mode === 'free' ? sc.zones : []);   // robots at work: their work boxes
   const run = sc.run || {}, active = !!run.active, playing = !sc.paused;
   $('playBtn').classList.toggle('on', playing);
   $('playLabel').textContent = playing ? 'Pause physics' : 'Play physics';
