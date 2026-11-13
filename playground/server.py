@@ -52,7 +52,7 @@ def _page() -> bytes:
     view3d.js (an hour, like every static file) loads the new one as soon as it changes."""
     import hashlib
     page = PAGE.read_bytes()
-    for name in ("view3d.js", "runpanel.js", "scenesettings.js", "results.js", "gallery.js"):
+    for name in ("view3d.js", "runpanel.js", "scenesettings.js", "results.js", "runpage.js", "gallery.js"):
         v = hashlib.sha1((HERE / "static" / name).read_bytes()).hexdigest()[:12]
         page = page.replace(f"/pg/static/{name}?v=HASH".encode(), f"/pg/static/{name}?v={v}".encode())
     return page
@@ -571,17 +571,25 @@ class Session:
         except Exception as e:  # noqa: BLE001
             print("could not record the run:", e)
         if entry["run_id"] and VIDEOS_ON:
-            arm, st_ = self.sim.arms.get(uid), self.sim.station(uid)
-            if arm is not None:
-                entry["video"] = "making"
-                cams = [("side", "Scene"), ("overhead", "Overhead camera")] + \
-                    [(k, k.replace("_", " ").capitalize() + " camera") for k in arm.P["cameras"] if "wrist" in k]
-                VIDEOS.add(self, uid, entry, runner.runs / entry["run_id"],
-                           [(arm.P["cameras"][k], lab) for k, lab in cams if k in arm.P["cameras"]],
-                           " · ".join(x for x in ((st_.name if st_ else uid), entry["model_label"] or "",
-                                                  " ".join(entry["task"].split())) if x))
+            self.make_video(uid, entry)
         if b and not b.get("finished"):
             self._next_in_batch(uid, b)
+
+    def make_video(self, uid: str, entry: dict) -> bool:
+        """Queue a run's video (its robot's scene, overhead and wrist cameras). False when it can't
+        be made: the robot is gone, or the run didn't save its replay."""
+        arm, st_ = self.sim.arms.get(uid), self.sim.station(uid)
+        run_dir = self.runs / entry["run_id"]
+        if arm is None or not ((run_dir / "replay.npz").exists() and (run_dir / "model.ref").exists()):
+            return False
+        entry["video"] = "making"
+        cams = [("side", "Scene"), ("overhead", "Overhead camera")] + \
+            [(k, k.replace("_", " ").capitalize() + " camera") for k in arm.P["cameras"] if "wrist" in k]
+        VIDEOS.add(self, uid, entry, run_dir,
+                   [(arm.P["cameras"][k], lab) for k, lab in cams if k in arm.P["cameras"]],
+                   " · ".join(x for x in ((st_.name if st_ else uid), entry.get("model_label") or "",
+                                          " ".join((entry.get("task") or "").split())) if x))
+        return True
 
     def _next_in_batch(self, uid: str, b: dict):
         if len(b["results"]) >= b["total"] or b.get("stop_after") or b.get("cancelled"):
@@ -1159,6 +1167,51 @@ class PGHandler(Handler):
                 uniq.append(o)
         return {"mine": mine, "live": uniq, "max": MAX_SESSIONS, "owner": owner}
 
+    def _video_url(self, uid: str, e: dict) -> str | None:
+        """A run's video: here while this lab has it, else on the website (saved runs)."""
+        if e.get("video") == "ready" and (self.runs_dir / e["run_id"] / "video.mp4").exists():
+            return f"/pg/run_video?uid={urllib.parse.quote(uid)}&run={urllib.parse.quote(e['run_id'])}"
+        if e.get("video_saved") and SAVE.WEBSITE_URL:
+            return f"{SAVE.WEBSITE_URL}/runs/{urllib.parse.quote(e['run_id'])}"
+        return None
+
+    def _run_page(self, p: str, qs: dict):
+        """One run from a robot's Results list: everything its page shows (/pg/run_page), one of
+        its files (/pg/run_file?path=), or a picture the AI looked at (/pg/run_image?n=)."""
+        from . import runpage as RP
+        uid, run_id = qs.get("uid", [""])[0], qs.get("run", [""])[0]
+        hist = self.sess.history.get(uid, [])
+        e = next((x for x in hist if x.get("run_id") == run_id), None)
+        if e is None or not re.match(r"^[\w.-]{1,120}$", run_id):
+            return self._err("no such run", 404)
+        run_dir = self.runs_dir / run_id
+        if p == "/pg/run_file":
+            f = RP.file_path(run_dir, qs.get("path", [""])[0])
+            if f is None:
+                return self._err("no such file", 404)
+            return self._send_file(f, RP.content_type(f))
+        if p == "/pg/run_image":
+            try:
+                img = RP.image(run_dir, int(qs.get("n", ["0"])[0]))
+            except ValueError:
+                img = None
+            if img is None:
+                return self._err("no such picture", 404)
+            return self._send(200, img[1], img[0])
+        page = RP.build(run_dir, e)
+        st = self.sess.sim.station(uid)
+        page.update(uid=uid, station=st.name if st else uid, video=e.get("video"), video_url=self._video_url(uid, e),
+                    can_make=bool(VIDEOS_ON and page["replay"] and self.sess.sim.arms.get(uid) is not None),
+                    mine=self._owns())
+        # Its batch (Run task N times): every run of it, for the page's run list.
+        if e.get("batch"):
+            page["runs"] = [{"run_id": x["run_id"], "index": x.get("index"), "ok": bool(x.get("ok")),
+                             "status": x.get("status"), "reason": x.get("reason"), "seconds": x.get("seconds"),
+                             "cost_usd": x.get("cost_usd")}
+                            for x in hist if x.get("batch") == e["batch"]]
+            page["batch_total"] = e.get("of")
+        return self._json(page)
+
     def _send_file(self, path: pathlib.Path, ctype: str):
         """A file, with byte ranges (a video player seeks with them)."""
         if not path.is_file():
@@ -1350,13 +1403,12 @@ class PGHandler(Handler):
                 runs = []
                 for e in reversed(self.sess.history.get(uid, [])):
                     x = {k: v for k, v in e.items() if k != "run"}
-                    # The video: here while this lab has it, else on the website (saved runs).
-                    if e.get("video") == "ready" and (self.runs_dir / e["run_id"] / "video.mp4").exists():
-                        x["video_url"] = f"/pg/run_video?uid={urllib.parse.quote(uid)}&run={urllib.parse.quote(e['run_id'])}"
-                    elif e.get("video_saved") and SAVE.WEBSITE_URL:
-                        x["video_url"] = f"{SAVE.WEBSITE_URL}/runs/{urllib.parse.quote(e['run_id'])}"
+                    if self._video_url(uid, e):
+                        x["video_url"] = self._video_url(uid, e)
                     runs.append(x)
                 return self._json({"ok": True, "runs": runs, "batch": self.sess.batch_status(uid)})
+            if p in ("/pg/run_page", "/pg/run_file", "/pg/run_image"):   # one past run's results page
+                return self._run_page(p, qs)
             if p == "/pg/run_video":        # one of a robot's run videos (only runs in its Results list)
                 uid, run_id = qs.get("uid", [""])[0], qs.get("run", [""])[0]
                 if not any(e.get("run_id") == run_id for e in self.sess.history.get(uid, [])) \
@@ -1658,6 +1710,16 @@ class PGHandler(Handler):
                 SAVE.set_session_share(self.sess.db_id, tok)
                 self.sess.share_token = tok
                 return self._json({"ok": True, **self._share_info()})
+            if p == "/pg/run_video/make":   # make a past run's video now (runs from before videos were made)
+                uid, run_id = str(b.get("uid", "")), str(b.get("run", ""))
+                e = next((x for x in self.sess.history.get(uid, []) if x.get("run_id") == run_id), None)
+                if e is None:
+                    return self._err("no such run", 404)
+                if e.get("video") in ("making", "ready"):
+                    return self._json({"ok": True, "video": e["video"]})
+                if not self.sess.make_video(uid, e):
+                    return self._err("this run's video can't be made: its robot is gone or it saved no replay", 400)
+                return self._json({"ok": True, "video": "making"})
             if p == "/pg/drafts":      # typed-but-unsent tasks and chosen models, kept with the session
                 tasks, models = b.get("tasks") or {}, b.get("models") or {}
                 self.sess.unsent = {str(k): {"task": str(tasks.get(k, ""))[:8000], "model": str(models.get(k, ""))[:80]}
