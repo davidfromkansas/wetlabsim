@@ -1,10 +1,10 @@
 // Repeat runs and results: the Runs stepper on the task card (1 to 30 runs, each starting from
 // the robot's table as it was when you pressed Run), a square per run in the chat (not started,
 // running, succeeded, failed) while a batch goes, and the Results tab: every finished run of the
-// selected robot, newest first; a click opens that run's timeline.
+// selected robot, newest first; a click opens that run's results page (runpage.js).
 // A run "succeeded" when the AI finished on its own (no error, not stopped, not out of time).
 // Data: /pg/scene (runs[uid].batch), /pg/results?uid=. Loaded after the page's own script and
-// runpanel.js (uses S, SID, U, BID, api, esc, $, LOGOS, openRunTimeline).
+// runpanel.js (uses S, SID, U, BID, api, esc, $, LOGOS, openRunTimeline; openRunPage from runpage.js).
 (() => {
 const MAX = 30;
 const css = `
@@ -195,8 +195,8 @@ function drawResults() {
     return `<div class="grp">${head}${rows}</div>`;
   }).join('');
   el.querySelectorAll('[data-run]').forEach(b => {
-    b.onclick = (e) => { if (!e.target.closest('.vbtn')) window.openRunTimeline(R.uid, b.dataset.run); };
-    b.onkeydown = (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === b) { e.preventDefault(); window.openRunTimeline(R.uid, b.dataset.run); } };
+    b.onclick = (e) => { if (!e.target.closest('.vbtn')) window.openRunPage(R.uid, b.dataset.run); };
+    b.onkeydown = (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === b) { e.preventDefault(); window.openRunPage(R.uid, b.dataset.run); } };
   });
   el.querySelectorAll('button[data-video]').forEach(b => b.onclick = (e) => { e.stopPropagation(); openVideo(U(b.dataset.video), b.dataset.title); });
 }
