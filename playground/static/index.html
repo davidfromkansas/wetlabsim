@@ -1815,6 +1815,7 @@ $('startBtn').onclick = async () => {
   }
   const r = await api('/pg/play', {task, model: $('model').value, station, repeat: window.runsFor ? window.runsFor(station) : 1});
   if (!r.ok) { toast(r.error); return; }
+  try { localStorage.setItem('pgLastModel', $('model').value); } catch (e) {}   // Describe a scene's default model
   S.runTask = task; S.follow = true; S.feedKey = ''; setSideTab('chat');
   refresh();
 };
@@ -2687,5 +2688,6 @@ window.onAccount = (r) => { S.acct = r; fillModels(); if (S.scene) render(); };
 <script src="/pg/static/results.js?v=HASH"></script>
 <script src="/pg/static/runpage.js?v=HASH"></script>
 <script src="/pg/static/gallery.js?v=HASH"></script>
+<script src="/pg/static/scenegen.js?v=HASH"></script>
 </body>
 </html>

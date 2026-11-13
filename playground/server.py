@@ -43,6 +43,7 @@ from . import scene3d as S3
 from . import settings as ST
 from . import accounts as ACCT
 from . import tasktitle
+from . import scenegen as SG
 
 HERE = pathlib.Path(__file__).parent
 PAGE = HERE / "static" / "index.html"
@@ -1381,6 +1382,51 @@ class PGHandler(Handler):
                            "act_groups": ST.ACT_GROUPS, "materials": ST.MATERIALS, "condims": list(ST.CONDIMS)},
                 "doc": ST.DOC}
 
+    def _scenegen(self, what: str, b: dict):
+        """Describe a scene (playground/scenegen.py): the models it can use, the model's pick of
+        robots and objects, then the build on a free spot of the floor, Stop and Undo."""
+        s, cur = self.sim, getattr(self.sess, "scenegen", None)
+        if what == "info":
+            return self._json({"ok": True, "models": SG.models(PUBLIC), "max_robots": SG.MAX_ROBOTS,
+                               "from_run": SG.FROM_RUN, "build": cur.status() if cur else None})
+        if what == "status":
+            return self._json({"ok": True, "build": cur.status() if cur else None})
+        if what == "stop":
+            if cur is not None:
+                cur.stop = True
+            return self._json({"ok": True})
+        if what == "undo":
+            if cur is None or cur.id != b.get("id"):
+                return self._json({"ok": False, "error": "nothing to undo"})
+            err = cur.undo()
+            return self._json({"ok": not err, "error": err or ""})
+        if s.scene_mode != "free":
+            return self._json({"ok": False, "error": "scenes are built in free play"})
+        model = str(b.get("model") or "")
+        if model not in {m["id"] for m in SG.models(PUBLIC)}:
+            return self._json({"ok": False, "error": "Connect an Anthropic or OpenAI API key in Settings to build a scene."})
+        prompt = str(b.get("prompt") or "").strip()[:2000]
+        if not prompt:
+            return self._json({"ok": False, "error": "describe the scene first"})
+        if what == "pick":
+            try:
+                return self._json({"ok": True, "pick": SG.pick(prompt, model, PUBLIC)})
+            except SG.ModelError as e:
+                return self._json({"ok": False, "error": str(e)[:1].upper() + str(e)[1:] + "."})
+        if what == "build":
+            if self._busy():
+                return self._json({"ok": False, "error": "A robot is working on a task. Stop it first to build a scene."})
+            if cur is not None and cur.status()["active"]:
+                return self._json({"ok": False, "error": "a scene is already being built"})
+            pick = SG.clean_pick(b.get("pick") or {})
+            if not pick["robots"]:
+                return self._json({"ok": False, "error": "a scene needs at least one robot"})
+            build = SG.Build(s, self.sess, prompt, pick, model, PUBLIC)
+            self.sess.scenegen = build
+            build.start()
+            return self._json({"ok": True, "build": build.status()})
+        return self._err("not found", 404)
+
     def _locked(self) -> str:
         if self.sim.scene_mode == "libero":
             return "LIBERO scenes are fixed: switch to Free play to build your own"
@@ -1388,6 +1434,9 @@ class PGHandler(Handler):
             return "the wet lab bench is fixed for a fair test: switch to Free play to build your own"
         if self.runner.active() or any(r.active() for r in self.runners.values()):
             return "the scene is locked while an AI is running; stop the run to edit"
+        b = getattr(self.sess, "scenegen", None)
+        if b is not None and b.status()["active"]:
+            return "a scene is being built; wait for it to finish or stop it"
         if not self.sim.paused:
             return "the scene is locked while playing; pause to edit"
         return ""
@@ -1635,7 +1684,7 @@ class PGHandler(Handler):
                     c = s.view
                     cam = {"lookat": [round(float(v), 4) for v in c.lookat], "distance": round(float(c.distance), 4),
                            "azimuth": round(float(c.azimuth), 3), "elevation": round(float(c.elevation), 3)}
-                shapes = list(s.overlay) + s._selection_overlay()
+                shapes = list(s.overlay) + list(s.zone) + s._selection_overlay()
                 frame = S3.poses(xpos, xquat, {"v": str(ver), "t": round(float(s.d.time), 3), "cam": cam,
                                                "shapes": shapes, "paused": s.paused})
                 self.wfile.write(b"data: " + frame.encode() + b"\n\n")
@@ -1765,6 +1814,8 @@ class PGHandler(Handler):
                     return self._json({"valid": False, "reason": lock})
                 return self._json(s.probe_station(float(b["u"]), float(b["v"]), float(b.get("yaw", 0.0)), b.get("uid"),
                                                   b.get("kind")))
+            if p.startswith("/pg/scenegen/"):
+                return self._scenegen(p[len("/pg/scenegen/"):], b)
             lock = self._locked()
             if (p in ("/pg/place", "/pg/move", "/pg/remove", "/pg/rotate", "/pg/orient", "/pg/translate", "/pg/clear") or p.startswith("/pg/station/")) and lock:
                 # Rename any time; Reset while physics plays too, but not while an AI works.
@@ -2185,6 +2236,7 @@ def main(argv=None):
     global PUBLIC, MAX_ACTIVE, RUN_LAUNCHER, AGENT_ROBOT_URL, FREE_TIME_LIMIT, FRONT, MODEL_PROXY
     FRONT = args.front
     PUBLIC, MAX_ACTIVE, RUN_LAUNCHER, AGENT_ROBOT_URL = args.public, args.max_active, args.launcher, args.agent_robot_url
+    SG.WHERE = RUN_LAUNCHER       # Describe a scene asks Codex there for a ChatGPT sign-in
     if PUBLIC:
         FREE_TIME_LIMIT = args.run_minutes * 60
     runs = pathlib.Path(args.runs).resolve()
