@@ -22,6 +22,7 @@ SOURCES = {
     "quiktech": ("QUIKTECH SimReady", "https://huggingface.co/datasets/quiktech/SimReady-Assets"),
     "usdcraft": ("NVIDIA USDCraft-10K (Apache 2.0)", "https://huggingface.co/datasets/nvidia/USDCraft-10K"),
     "forgecad": ("ForgeCAD SimReady", "https://huggingface.co/datasets/ForgeCAD/simready-assets"),
+    "palatial": ("Palatial SimReady", "https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library"),
 }
 AUTOBIO = ("AutoBio", "../../wetlabsim/assets/autobio/NOTICE.md")
 
@@ -61,14 +62,16 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("ids", nargs="*")
     ap.add_argument("--cache", default="build/simready")
+    ap.add_argument("--by-repo", action="store_true", help="cache each source in its own folder")
     a = ap.parse_args(argv)
     ids = a.ids or [i[0] for i in catalog.ITEMS if not i[3].startswith(("autobio:", "mujoco:", "inhouse:"))]
     for id_ in ids:
         it = catalog.item(id_)
         try:
             repo, _, folder = it["hf"].rpartition(":")
-            src = fetch(folder, pathlib.Path(a.cache), repo or "nvidia")
-            m = convert(src, catalog.ASSETS / id_, hollow=it["hollow"], fine=id_ in catalog.FINE_PIECES)
+            src = fetch(folder, pathlib.Path(a.cache) / (repo or "nvidia") if a.by_repo else pathlib.Path(a.cache), repo or "nvidia")
+            m = convert(src, catalog.ASSETS / id_, hollow=it["hollow"], fine=id_ in catalog.FINE_PIECES,
+                        per_collider=id_ in catalog.PER_COLLIDER, max_tris=catalog.MAX_TRIS.get(id_, 60000))
             tdir = usd_dir(src) / ".thumbs" / "256x256"
             thumbs = sorted(tdir.glob("*_transparent.png")) or sorted(tdir.glob("*.usd*.png"))
             if id_ in catalog.RECOLOR:      # one rack in another colour: plain colour, no texture

@@ -364,14 +364,23 @@ def set_inertia(body, parts: list) -> bool:
     return True
 
 
+SHAPES = {"box": mujoco.mjtGeom.mjGEOM_BOX, "cylinder": mujoco.mjtGeom.mjGEOM_CYLINDER,
+          "capsule": mujoco.mjtGeom.mjGEOM_CAPSULE, "sphere": mujoco.mjtGeom.mjGEOM_SPHERE}
+
+
 def _part_geoms(world, body, name: str, rec: dict, prefix: str, cls, friction, at=None):
     """A part's collision shapes (its stated mass spread over them by volume) and its visuals;
     at: where the part sits in the body, for a part fixed onto another."""
     off = {} if at is None else {"pos": list(at[:3, 3]), "quat": _quat_of(at)}
     total = sum(c["volume"] for c in rec["collision_parts"]) or 1.0
     for k, c in enumerate(rec["collision_parts"]):
-        g = body.add_geom(name=f"{name}_col{k}", type=mujoco.mjtGeom.mjGEOM_MESH, meshname=f"{prefix}col{k}",
-                          default=cls, group=3, rgba=[0, 0, 0, 0], **off)
+        if "shape" in c:          # one of MuJoCo's own shapes (a box, cylinder, capsule, sphere), as the asset states
+            T = _pose(c["pos"], c["quat"]) if at is None else at @ _pose(c["pos"], c["quat"])
+            g = body.add_geom(name=f"{name}_col{k}", type=SHAPES[c["shape"]], size=list(c["size"]) + [0] * (3 - len(c["size"])),
+                              pos=list(T[:3, 3]), quat=_quat_of(T), default=cls, group=3, rgba=[0, 0, 0, 0])
+        else:
+            g = body.add_geom(name=f"{name}_col{k}", type=mujoco.mjtGeom.mjGEOM_MESH, meshname=f"{prefix}col{k}",
+                              default=cls, group=3, rgba=[0, 0, 0, 0], **off)
         if rec.get("mass"):
             g.mass = rec["mass"] * c["volume"] / total
         set_surface(g, c, cls, friction)
@@ -402,7 +411,7 @@ def part_kind(b: dict, fixed: bool, item: str = "") -> str:
         return "top" if SEPARATE.search(b["name"]) or any(c in b["name"] for c in caps) else "rigid"
     if "range" not in b["joint"] and not joint_damping(b["joint"]):
         return "rigid"
-    if BUTTON.search(b["name"]) and (fixed or not BUTTONS_MOVE):
+    if BUTTON.search(b["name"]) and (fixed and item not in catalog.FURNITURE_CONTROLS_MOVE or not BUTTONS_MOVE):
         return "rigid"
     return "joint"
 
@@ -445,7 +454,8 @@ def _add_jointed(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_
                                inertia=mujoco.mjtMeshInertia.mjMESH_INERTIA_SHELL)
             _add_materials(world, d, pre[i], b)
             for k, c in enumerate(b["collision_parts"]):
-                world.add_mesh(name=f"{pre[i]}col{k}", file=str(d / c["mesh"]))
+                if "mesh" in c:
+                    world.add_mesh(name=f"{pre[i]}col{k}", file=str(d / c["mesh"]))
     cls = world.find_default("furniture" if fixed else "prop")
     T0 = _pose(p.pos, p.quat or yaw_quat(p.yaw))
     names = [f"obj_{p.uid}" if b.get("root") else f"obj_{p.uid}__{i}" for i, b in enumerate(bodies)]
@@ -538,6 +548,18 @@ def _add_jointed(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_
             world.add_equality(type=mujoco.mjtEq.mjEQ_JOINT, name=f"obj_{p.uid}__{sc['hinge']}_thread",
                                objtype=mujoco.mjtObj.mjOBJ_JOINT, name1=joint_of[sc["hinge"]], name2=joint_of[sc["slide"]],
                                data=[0, 1 / sc["ratio"], 0, 0, 0] + [0] * 7)
+    fitted = catalog.FITTED_PARTS.get(p.item, {})
+    for part, into in fitted.items():               # a loose part fitted inside another (catalog.FITTED_PARTS)
+        k = next(i for i, b in enumerate(bodies) if b["name"] == part)
+        h = host[next(i for i, b in enumerate(bodies) if b["name"] == into)]
+        sub = {k}
+        while True:
+            more = {i for i, b in enumerate(bodies) if b.get("parent") in sub and kind[i] != "top"} - sub
+            if not more:
+                break
+            sub |= more
+        for i in {host[i] for i in sub} - {h}:
+            world.add_exclude(bodyname1=h, bodyname2=i)
     for i, b in enumerate(bodies):
         if kind[i] == "rigid":
             continue
