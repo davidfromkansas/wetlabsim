@@ -364,6 +364,14 @@ def main(argv=None):
     if args.agent != "jev":
         env.pop("JEV_API_KEY", None)
         env.pop("TYPESAFE_API_KEY", None)
+    # A ChatGPT sign-in for Codex (the playground's Settings): a folder holding Codex's login file.
+    # Locally Codex uses that folder as its home for this run; the modal launcher takes the file
+    # into its sandbox and brings it back afterwards (Codex may refresh its tokens).
+    codex_login = env.pop("WETLAB_CODEX_AUTH_DIR", "")
+    if codex_login and args.agent == "codex":
+        for k in ("OPENAI_API_KEY", "CODEX_API_KEY", "OPENAI_BASE_URL"):
+            env.pop(k, None)
+        env["CODEX_HOME" if launcher.name == "local" else "WETLAB_CODEX_AUTH_DIR"] = codex_login
     devin_home = None
     if args.agent == "devin" and devin_auth.key() and launcher.name == "local":
         # Devin logs in with the organization's key (a login of its own for this run, outside

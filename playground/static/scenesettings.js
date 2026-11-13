@@ -143,6 +143,11 @@ const css = `
 #ss .kin:focus{border-color:#2563EB;box-shadow:0 0 0 3px #DBEAFE}
 #ss .kin.bad{border-color:#DC2626;box-shadow:0 0 0 3px #FEE2E2}
 #ss .emsg{font-size:13px;color:#B91C1C;font-weight:500}
+#ss .gexp .way+.way{margin-top:10px}
+#ss .way ol{margin:0;padding-left:20px;font-size:13px;color:#374151;display:flex;flex-direction:column;gap:8px}
+#ss .cgcode{font:600 18px 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.06em;color:#111827;background:#F3F4F6;border-radius:8px;padding:4px 10px;display:inline-block;margin:6px 6px 0 0}
+#ss .way .note{font-size:12.5px;color:#6B7280}
+#ss .cgwait{font-size:13px;color:#4B5563;flex:1;align-self:center}
 #ss .way .row2{display:flex;gap:8px}
 #ss .gerr{padding:10px 14px;border-radius:10px;background:#FEF2F2;color:#991B1B;font-weight:600}
 #ss .srch{margin-left:auto;width:300px;max-width:40%;height:40px;border:1px solid #D1D5DB;border-radius:9px;display:flex;align-items:center;gap:8px;padding:0 10px;color:#6B7280}
@@ -514,7 +519,7 @@ async function save() {
 }
 
 // ---------------------------------------------------------------- General tab
-const G = {data: null, open_: '', err: {}, busy: '', gerr: '', saveT: null};
+const G = {data: null, open_: '', err: {}, busy: '', gerr: '', saveT: null, cg: null, cgT: null};
 const PROV_INFO = {
   openai: {what: 'GPT models, run through Codex', where: '<a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>. Paid per use from your OpenAI account.'},
   anthropic: {what: 'Claude models, run through Claude Code', where: '<a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. Paid per use from your Anthropic account.'},
@@ -542,13 +547,15 @@ G.draw = () => {
     const n = d.run_minutes;
     const rows = d.providers.map(p => {
       const inf = PROV_INFO[p.id] || {what: '', where: ''}, open = G.open_ === p.id, busy = G.busy === p.id;
-      const facts = p.connected
-        ? [`API key <span class="mkey">••••${esc(p.last4 || '')}</span>`, p.spent_usd != null ? `Spent here: $${(+p.spent_usd).toFixed(2)}` : '', p.connected_at ? `Connected ${esc(fmtDate(p.connected_at))}` : ''].filter(Boolean).join('<i></i>')
-        : esc(inf.what);
+      const chatgpt = p.connected && p.kind === 'chatgpt';
+      const facts = !p.connected ? esc(inf.what) : (chatgpt
+        ? ['ChatGPT plan', p.email ? esc(p.email) : '', p.connected_at ? `Connected ${esc(fmtDate(p.connected_at))}` : '']
+        : [`API key <span class="mkey">••••${esc(p.last4 || '')}</span>`, p.spent_usd != null ? `Spent here: $${(+p.spent_usd).toFixed(2)}` : '', p.connected_at ? `Connected ${esc(fmtDate(p.connected_at))}` : '']
+      ).filter(Boolean).join('<i></i>');
       const acts = open ? '' : p.connected
         ? `<button class="bt" data-edit="${p.id}"${busy ? ' disabled' : ''}>Edit</button><button class="bt red" data-off="${p.id}"${busy ? ' disabled' : ''}>Disconnect</button>`
         : `<button class="bt pri" data-edit="${p.id}">Connect</button>`;
-      const form = open ? `<div class="gexp"><div class="way"><h4>${p.connected ? 'Replace your API key' : 'Add an API key'}</h4><p>Get one from ${inf.where}</p>
+      const form = open ? `<div class="gexp">${p.id === 'openai' ? G.cgHtml(p) : ''}<div class="way"><h4>${p.id === 'openai' ? (p.connected && !chatgpt ? 'Or replace your API key' : 'Or add an API key') : p.connected ? 'Replace your API key' : 'Add an API key'}</h4><p>Get one from ${inf.where}</p>
         <input class="kin${G.err[p.id] ? ' bad' : ''}" id="gsKey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste API key" aria-label="${esc(p.label)} API key"${G.err[p.id] ? ' aria-describedby="gsErr" aria-invalid="true"' : ''}>
         ${G.err[p.id] ? `<span class="emsg" id="gsErr" role="alert">${esc(G.err[p.id])}</span>` : ''}
         <div class="row2"><button class="bt pri" id="gsSave"${busy ? ' disabled' : ''}>${busy ? 'Checking…' : 'Save'}</button><button class="bt" id="gsCancel"${busy ? ' disabled' : ''}>Cancel</button></div></div></div>` : '';
@@ -581,7 +588,8 @@ G.draw = () => {
   });
   box.querySelectorAll('[data-off]').forEach(b => b.onclick = async () => {
     const p = d.providers.find(x => x.id === b.dataset.off);
-    if (!(await askConfirm(`Disconnect ${p.label}?`, `Your ${p.label} key is deleted. ${p.label} models can't run until you add a key again.`, 'Disconnect'))) return;
+    const what = p.kind === 'chatgpt' ? 'ChatGPT sign-in' : `${p.label} key`;
+    if (!(await askConfirm(`Disconnect ${p.label}?`, `Your ${what} is deleted here. ${p.label} models can't run until you connect again.`, 'Disconnect'))) return;
     G.busy = p.id; G.draw();
     const r = await api('/pg/account', {action: 'disconnect', provider: p.id}).catch(() => null);
     G.busy = '';
@@ -608,8 +616,64 @@ G.draw = () => {
   if (sv) {
     sv.onclick = save;
     box.querySelector('#gsKey').addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); });
-    box.querySelector('#gsCancel').onclick = () => { G.open_ = ''; G.err = {}; G.draw(); };
+    box.querySelector('#gsCancel').onclick = () => { G.cgStop(true); G.open_ = ''; G.err = {}; G.draw(); };
   }
+  const cgb = box.querySelector('#gsCg');
+  if (cgb) cgb.onclick = G.cgStart;
+  const cgc = box.querySelector('#gsCgCancel');
+  if (cgc) cgc.onclick = () => { G.cgStop(true); G.draw(); };
+  const cgy = box.querySelector('#gsCgCopy');
+  if (cgy) cgy.onclick = () => { try { navigator.clipboard.writeText(G.cg.code); toast('Code copied'); } catch (e) {} };
+};
+
+// Sign in with ChatGPT (OpenAI only): Codex's own device code sign-in, run on the server. The
+// page shows Codex's link and one-time code, then asks the server every few seconds whether the
+// person has approved it on OpenAI's page.
+G.cgHtml = (p) => {
+  const cg = G.cg || {};
+  let inner;
+  if (cg.state === 'starting') inner = `<div class="row2"><span class="cgwait">Getting a sign-in code from Codex…</span><button class="bt" id="gsCgCancel">Cancel</button></div>`;
+  else if (cg.state === 'waiting') inner = `<ol>
+      <li>In ChatGPT, open Settings, then Security, and turn on <b>Enable device code sign-in for Codex</b>.</li>
+      <li>Open <a href="${esc(cg.url)}" target="_blank" rel="noopener">${esc(cg.url.replace(/^https:[/][/]/, ''))}</a>, sign in, and enter this code:<br><span class="cgcode">${esc(cg.code)}</span><button class="bt" id="gsCgCopy">Copy</button></li>
+    </ol>
+    <p class="note">OpenAI's page warns about codes that come from a website. This code was made just now by Codex on your Playground server, because you clicked Sign in with ChatGPT. Only continue if you did. The code expires in 15 minutes.</p>
+    <div class="row2"><span class="cgwait">Waiting for you to approve it…</span><button class="bt" id="gsCgCancel">Cancel</button></div>`;
+  else inner = `<div class="row2"><button class="bt pri" id="gsCg">Sign in with ChatGPT</button></div>`;
+  return `<div class="way"><h4>${p.connected && p.kind === 'chatgpt' ? 'Sign in with ChatGPT again' : 'Use your ChatGPT plan'}</h4>
+    <p>Codex runs count toward your ChatGPT plan instead of being paid per use. Only Codex models can use it.</p>
+    ${inner}${cg.err ? `<span class="emsg" role="alert">${esc(cg.err)}</span>` : ''}</div>`;
+};
+G.cgStop = (cancel) => {
+  clearTimeout(G.cgT); G.cgT = null;
+  const going = G.cg && (G.cg.state === 'starting' || G.cg.state === 'waiting');
+  G.cg = null;
+  if (cancel && going) api('/pg/account', {action: 'chatgpt_cancel'}).catch(() => null);
+};
+G.cgStart = async () => {
+  G.cgStop(false);
+  const mine = G.cg = {state: 'starting'}; G.draw();
+  const r = await api('/pg/account', {action: 'chatgpt_start'}).catch(() => null);
+  if (G.cg === mine) G.cgPoll(r);
+};
+G.cgPoll = (r) => {
+  if (!G.cg) return;      // cancelled meanwhile
+  if (!r || !r.ok) { G.cg = {err: (r && r.error) || "Couldn't sign in to ChatGPT. Try again."}; G.draw(); return; }
+  const st = r.chatgpt || {};
+  if (st.state === 'done') {
+    G.cg = null; G.data = r; G.open_ = ''; if (window.onAccount) window.onAccount(r); G.draw();
+    toast('OpenAI connected with your ChatGPT plan');
+    return;
+  }
+  const changed = st.state !== G.cg.state;
+  const mine = G.cg = {...G.cg, ...st};
+  if (changed && wrap.classList.contains('open') && M.tab === 'general') G.draw();
+  G.cgT = setTimeout(async () => {
+    if (G.cg !== mine) return;
+    if (!wrap.classList.contains('open')) return G.cgStop(true);
+    const r2 = await api('/pg/account', {action: 'chatgpt_status'}).catch(() => null);
+    if (G.cg === mine) G.cgPoll(r2);
+  }, 3000);
 };
 
 window.openSettings = open;
