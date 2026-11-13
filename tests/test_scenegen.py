@@ -74,3 +74,33 @@ def test_stop_keeps_what_was_placed(monkeypatch):
     while b.status()["active"] and time.time() - t < 30:
         time.sleep(0.1)
     assert b.status()["phase"] == "stopped" and sim.stations == []
+
+
+def test_chatgpt_sign_in_asks_through_codex(monkeypatch, tmp_path):
+    """An OpenAI connection made by ChatGPT sign-in isn't an API key: the question goes to
+    `codex exec` with the login file, and a login Codex refreshed is kept."""
+    import json
+    import os
+    import stat
+    fake = tmp_path / "codex"
+    fake.write_text("#!/usr/bin/env python3\n"
+                    "import os, sys, json\n"
+                    "a = sys.argv\n"
+                    "assert a[1] == 'exec' and 'forced_login_method=\"chatgpt\"' in a\n"
+                    "home = os.environ['CODEX_HOME']\n"
+                    "assert json.load(open(os.path.join(home, 'auth.json')))['tok'] == 'old'\n"
+                    "assert 'OPENAI_API_KEY' not in os.environ\n"
+                    "open(a[a.index('--output-last-message') + 1], 'w').write('Sure: {\"title\": \"T\", \"robots\": [{\"robot\": \"ur5e\", \"count\": 1}], \"items\": []}')\n"
+                    "open(os.path.join(home, 'auth.json'), 'w').write(json.dumps({'tok': 'new'}))\n")
+    fake.chmod(fake.stat().st_mode | stat.S_IEXEC)
+    monkeypatch.setenv("PATH", f"{tmp_path}{os.pathsep}{os.environ['PATH']}")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-should-not-be-used")
+    monkeypatch.delenv("WETLAB_SCENEGEN_FAKE", raising=False)
+    kept = {}
+    monkeypatch.setattr(G.ACCT, "credential_for", lambda agent: ("chatgpt", json.dumps({"tok": "old"}))
+                        if agent == "codex" else ("key", ""))
+    monkeypatch.setattr(G.ACCT, "update_login", lambda prov, login: kept.update({prov: login}))
+    monkeypatch.setattr(G, "WHERE", "local")
+    out = G.pick("a robot", "gpt-6-astra", True)
+    assert out["robots"] == [{"robot": "ur5e", "count": 1}]
+    assert json.loads(kept["openai"]) == {"tok": "new"}

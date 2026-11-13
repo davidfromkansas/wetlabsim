@@ -2236,6 +2236,7 @@ def main(argv=None):
     global PUBLIC, MAX_ACTIVE, RUN_LAUNCHER, AGENT_ROBOT_URL, FREE_TIME_LIMIT, FRONT, MODEL_PROXY
     FRONT = args.front
     PUBLIC, MAX_ACTIVE, RUN_LAUNCHER, AGENT_ROBOT_URL = args.public, args.max_active, args.launcher, args.agent_robot_url
+    SG.WHERE = RUN_LAUNCHER       # Describe a scene asks Codex there for a ChatGPT sign-in
     if PUBLIC:
         FREE_TIME_LIMIT = args.run_minutes * 60
     runs = pathlib.Path(args.runs).resolve()

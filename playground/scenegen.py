@@ -7,7 +7,8 @@ objects, every one put down with the same drop check as drag and drop (Playgroun
 Models: the owner's own Anthropic or OpenAI key (Settings > General); on a computer of one's
 own, ANTHROPIC_API_KEY / OPENAI_API_KEY too. With one company connected its most capable model
 is used; with both, the page shows a picker. An OpenAI connection made by ChatGPT sign-in
-(not an API key) can't be used here: it runs Codex only. Devin and Jev can't do this (Devin is a coding
+(Codex's login, not an API key) asks through Codex instead (`codex exec`, where task runs go:
+a Modal Sandbox on the hosted site), on the person's ChatGPT plan. Devin and Jev can't do this (Devin is a coding
 agent that is slow and costly for one answer; Jev only answers moves for a robot).
 
 WETLAB_SCENEGEN_FAKE=1 answers without any model (tests, screenshots)."""
@@ -52,14 +53,19 @@ def fake() -> bool:
     return os.environ.get("WETLAB_SCENEGEN_FAKE", "") not in ("", "0")
 
 
-def _key(provider: str, public: bool) -> str:
+def _cred(provider: str, public: bool) -> tuple[str, str]:
+    """("key", an API key) or ("chatgpt", Codex's login file) for this company, or ("key", "")."""
     try:
         kind, k = ACCT.credential_for(_AGENT[provider])
     except Exception:  # noqa: BLE001      no store reachable: no saved key
         kind, k = "key", ""
-    if kind != "key":       # a ChatGPT sign-in runs Codex, but isn't an API key for one call
-        k = ""
-    return k or ("" if public else os.environ.get(_ENV[provider], ""))
+    if k:
+        return kind, k
+    return "key", ("" if public else os.environ.get(_ENV[provider], ""))
+
+
+def _key(provider: str, public: bool) -> str:
+    return _cred(provider, public)[1]
 
 
 def providers(public: bool) -> list[str]:
@@ -71,7 +77,7 @@ def providers(public: bool) -> list[str]:
         conn = ACCT.connected()
     except Exception:  # noqa: BLE001
         conn = set()
-    return [p for p in ("anthropic", "openai") if (p in conn and _key(p, public)) or (not public and os.environ.get(_ENV[p]))]
+    return [p for p in ("anthropic", "openai") if p in conn or (not public and os.environ.get(_ENV[p]))]
 
 
 def models(public: bool) -> list[dict]:
@@ -138,16 +144,116 @@ def _openai(model: str, system: str, user: str, key: str, effort: str) -> str:
                    for c in o.get("content", []) if c.get("type") in ("output_text", "text"))
 
 
+WHERE = "local"     # where Codex runs for a ChatGPT sign-in: "local", or "modal" (server.RUN_LAUNCHER)
+CODEX_TIMEOUT = 300
+
+
+def _codex_cmd(model: str, effort: str, out: str, jail: bool) -> list:
+    return ["codex", "exec", "--skip-git-repo-check",
+            *(["--dangerously-bypass-approvals-and-sandbox"] if jail else ["--sandbox", "read-only"]),
+            "--model", model, "-c", f'model_reasoning_effort="{effort}"',
+            "-c", 'cli_auth_credentials_store="file"', "-c", 'forced_login_method="chatgpt"',
+            "--output-last-message", out]
+
+
+def _codex(model: str, system: str, user: str, login: str, effort: str) -> str:
+    """One answer from an OpenAI model through Codex, signed in with the person's ChatGPT login
+    file (the OpenAI API takes API keys only). Codex may refresh the login's tokens: the new file
+    is kept, as after a run."""
+    prompt = (system + "\n\n" + user + "\n\nDon't run any commands or change any files: answer with "
+              "the JSON only, as your final message.")
+    if WHERE == "modal":
+        text, new = _codex_modal(model, prompt, login, effort)
+    else:
+        text, new = _codex_local(model, prompt, login, effort)
+    if new and new.strip() != login.strip():
+        try:
+            ACCT.update_login("openai", new)
+        except Exception as e:  # noqa: BLE001
+            print("could not keep Codex's refreshed login:", e)
+    if not text.strip():
+        raise ModelError("Codex gave no answer (is the ChatGPT sign-in still good? Try signing in again in Settings)")
+    return text
+
+
+def _codex_local(model: str, prompt: str, login: str, effort: str) -> tuple[str, str]:
+    import shutil
+    import subprocess
+    import tempfile
+    home = tempfile.mkdtemp(prefix="wetlab-scene-codex-")
+    try:
+        os.chmod(home, 0o700)
+        auth = os.path.join(home, "auth.json")
+        with open(os.open(auth, os.O_WRONLY | os.O_CREAT, 0o600), "w") as f:
+            f.write(login)
+        out = os.path.join(home, "answer.txt")
+        env = {k: v for k, v in os.environ.items() if k not in ("OPENAI_API_KEY", "CODEX_API_KEY", "OPENAI_BASE_URL")}
+        env.update(CODEX_HOME=home, NO_COLOR="1")
+        try:
+            p = subprocess.run(_codex_cmd(model, effort, out, jail=False) + [prompt], env=env, cwd=home,
+                               capture_output=True, text=True, timeout=CODEX_TIMEOUT, stdin=subprocess.DEVNULL)
+        except FileNotFoundError:
+            raise ModelError("Codex isn't installed on this machine (npm install -g @openai/codex)") from None
+        except subprocess.TimeoutExpired:
+            raise ModelError("Codex took too long to answer") from None
+        text = open(out).read() if os.path.exists(out) else ""
+        if p.returncode != 0 and not text:
+            tail = " ".join((p.stderr or p.stdout or "").strip().splitlines()[-2:])[:300]
+            raise ModelError(f"Codex couldn't answer{': ' + tail if tail else ''}")
+        return text, open(auth).read()
+    finally:
+        shutil.rmtree(home, ignore_errors=True)
+
+
+def _codex_modal(model: str, prompt: str, login: str, effort: str) -> tuple[str, str]:
+    """The same, in a Modal Sandbox with the agents' image, reaching ChatGPT only."""
+    import modal
+
+    from wetlabsim.launchers import CHATGPT_HOSTS, ModalSandboxLauncher
+    app = modal.App.lookup(ModalSandboxLauncher.APP, create_if_missing=True)
+    sb = modal.Sandbox.create("sleep", "infinity", app=app, image=ModalSandboxLauncher.image(),
+                              timeout=CODEX_TIMEOUT + 120, cpu=0.5, memory=1024,
+                              outbound_domain_allowlist=CHATGPT_HOSTS)
+    try:
+        sb.exec("mkdir", "-p", "/tmp/codex", "/tmp/w").wait()
+        sb.filesystem.write_bytes(login.encode(), "/tmp/codex/auth.json")
+        sb.exec("chmod", "600", "/tmp/codex/auth.json").wait()
+        proc = sb.exec(*_codex_cmd(model, effort, "/tmp/w/answer.txt", jail=True), prompt, workdir="/tmp/w",
+                       env={"CODEX_HOME": "/tmp/codex", "NO_COLOR": "1"}, timeout=CODEX_TIMEOUT)
+        log = proc.stdout.read() + proc.stderr.read()
+        proc.wait()
+        try:
+            text = sb.filesystem.read_bytes("/tmp/w/answer.txt").decode()
+        except Exception:  # noqa: BLE001
+            text = ""
+        if proc.returncode != 0 and not text:
+            tail = " ".join(log.strip().splitlines()[-2:])[:300]
+            raise ModelError(f"Codex couldn't answer{': ' + tail if tail else ''}")
+        try:
+            new = sb.filesystem.read_bytes("/tmp/codex/auth.json").decode()
+        except Exception:  # noqa: BLE001
+            new = ""
+        return text, new
+    finally:
+        try:
+            sb.terminate()
+        except Exception:  # noqa: BLE001
+            pass
+
+
 def ask_json(model_id: str, system: str, user: str, public: bool, effort: str = "medium") -> dict:
     m = next((m for m in SCENE_MODELS if m["id"] == model_id), None)
     if m is None:
         raise ModelError("that model can't build scenes")
-    key = _key(m["provider"], public)
+    kind, key = _cred(m["provider"], public)
     if not key:
         label = ACCT.PROVIDERS[m["provider"]]["label"]
         raise ModelError(f"connect your {label} API key in Settings to use {m['label']}")
-    call = _anthropic if m["provider"] == "anthropic" else _openai
-    text = call(m["id"], system, user, key, effort)
+    if kind == "chatgpt":
+        text = _codex(m["id"], system, user, key, effort)
+    else:
+        call = _anthropic if m["provider"] == "anthropic" else _openai
+        text = call(m["id"], system, user, key, effort)
     return parse_json(text)
 
 
