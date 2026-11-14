@@ -1,0 +1,70 @@
+{
+ "source": "kitchenware_fork_a01",
+ "usd": "sm_kitchenware_fork_a01_01.usd",
+ "mass": 0.27729,
+ "friction": 0.5,
+ "com": [
+  6e-05,
+  0.0206,
+  0.01013
+ ],
+ "size": [
+  0.025,
+  0.2,
+  0.0231
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_1.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 5.988691837436512e-05,
+   "friction": 0.3,
+   "restitution": 0.1
+  }
+ ],
+ "inertial": {
+  "mass": 0.277287,
+  "pos": [
+   5.9e-05,
+   0.020602,
+   0.010129
+  ],
+  "diaginertia": [
+   1.33545e-05,
+   0.000930214,
+   0.000931709
+  ],
+  "quat": [
+   0.707107,
+   0.0,
+   0.0,
+   -0.707107
+  ]
+ }
+}

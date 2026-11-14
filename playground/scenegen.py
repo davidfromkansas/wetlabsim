@@ -324,8 +324,12 @@ How the playground works:
 - Every robot stands on its own station table, near one long edge, facing across it (+x in \
 the station's own frame). A station is "table" (a packing table 1.87 m along x by 1.22 m along \
 y, top 0.99 m high, the robot's base at x -0.42, y 0) or "wetlab" (a stainless lab bench 0.70 m \
-along x by 1.80 m along y, top 0.85 m high, the robot's base at x -0.20, y 0). An ALOHA stands in \
-the middle of a "table" with its two arm bases at y -0.47 and +0.47. The FR3 Duo has two arms on \
+along x by 1.80 m along y, top 0.85 m high, the robot's base at x -0.20, y 0) or "island" (a \
+kitchen island 0.63 m along x by 1.24 m along y, top 0.90 m high, the robot's base at x -0.17, y 0) \
+or "counter" (a kitchen counter over cabinets, 0.60 m along x by 2.30 m along y, worktop 0.75 m high, \
+the robot's base at x -0.15, y 0). Use "island" or "counter" for kitchens. A Unitree G1 humanoid \
+stands on the floor at its station's near edge instead. An ALOHA stands in \
+the middle of its station with its two arm bases at y -0.47 and +0.47. The FR3 Duo has two arms on \
 one base at x -0.42.
 - A station's position is its table's centre on the floor, in the scene's own frame (x, y, \
 metres), and yaw is its turn about the vertical in degrees. Keep stations at least 0.5 m apart.
@@ -333,7 +337,8 @@ metres), and yaw is its turn about the vertical in degrees. Keep stations at lea
 over a station table, and at least 0.3 m from every table and from other furniture.
 - Objects for the robots' task go on their station's table, within reach of the robot: station \
 frame x from -0.15 to 0.75 and y from -0.5 to 0.5 (for the wet lab bench x from -0.1 to 0.3 and y \
-from -0.8 to 0.8), at least 0.25 m from the robot's base. Small things can go in a hollow object \
+from -0.8 to 0.8; the island x from -0.05 to 0.25, y from -0.55 to 0.55; the counter x from -0.05 \
+to 0.25, y from -1.05 to 1.05), at least 0.25 m from the robot's base. Small things can go in a hollow object \
 (an apple in a bowl): give them the same spot. Objects can also go on top of a piece of furniture \
 (its index, and dx, dy from its centre) or on the floor (scene frame).
 - Leave space between objects (about their size plus 3 cm) so a gripper can get to each.
@@ -438,6 +443,109 @@ def fake_layout(pick: dict) -> dict:
             "task": pick.get("task", "")}
 
 
+# Ready-made scenes (Add station, no prompt and no model): a layout in the same shape a model
+# writes (metres, yaw in degrees), each station with its own task. Furniture faces the robots:
+# most assets' fronts face their -y (yaw 0 faces -y); Tripo's (lab fridge, CO2 incubator,
+# countertops) face +y. Objects on a station: x, y and yaw in the station's frame (the robot
+# faces +x), appliances turned to face the robot.
+PRESETS = {
+    "kitchen": {
+        "title": "Kitchen", "label": "Kitchen",
+        "plan": "A kitchen: a counter along the back wall with the espresso machine, an island in the middle "
+                "with the toaster, a second counter on the left with the microwave, and a humanoid at a "
+                "second island by the fridge.",
+        "stations": [
+            {"robot": "franka", "kind": "counter", "x": 0.0, "y": 2.0, "yaw": 90,
+             "task": "Put the mug under the espresso machine's spout and pull the brew lever."},
+            {"robot": "fr3_duo", "kind": "island", "x": 0.0, "y": 0.2, "yaw": 90,
+             "task": "Put the slice of toast in the toaster and push the lever down."},
+            {"robot": "aloha", "kind": "counter", "x": -2.6, "y": 0.3, "yaw": 180,
+             "task": "Open the microwave, put the bowl on the turntable, and close the door."},
+            {"robot": "g1", "kind": "island", "x": 2.0, "y": -0.1, "yaw": 90,
+             "task": "Put the banana and the orange in the bowl."},
+        ],
+        "furniture": [
+            {"item": "french_door_fridge", "x": 2.05, "y": 2.0, "yaw": 0},
+            {"item": "dishwasher", "x": -1.55, "y": 2.0, "yaw": 0},
+            {"item": "range_oven", "x": -2.3, "y": 2.0, "yaw": 0},
+            {"item": "bar_stool", "x": -0.3, "y": -0.8, "yaw": 0},
+            {"item": "bar_stool", "x": 0.3, "y": -0.8, "yaw": 0},
+        ],
+        "objects": [
+            {"item": "espresso_machine", "on": "station", "station": 0, "x": 0.12, "y": 0.5, "yaw": -90},
+            {"item": "mug_white", "on": "station", "station": 0, "x": 0.12, "y": 0.2, "yaw": 0},
+            {"item": "electric_kettle", "on": "station", "station": 0, "x": 0.12, "y": -0.55, "yaw": -90},
+            {"item": "knife_block", "on": "station", "station": 0, "x": 0.15, "y": -0.9, "yaw": -90},
+            {"item": "pop_up_toaster", "on": "station", "station": 1, "x": 0.12, "y": -0.3, "yaw": -90},
+            {"item": "toast", "on": "station", "station": 1, "x": 0.12, "y": 0.05, "yaw": 0},
+            {"item": "plate", "on": "station", "station": 1, "x": 0.12, "y": 0.38, "yaw": 0},
+            {"item": "microwave", "on": "station", "station": 2, "x": 0.08, "y": 0.0, "yaw": -90},
+            {"item": "bowl", "on": "station", "station": 2, "x": 0.2, "y": -0.3, "yaw": 0},
+            {"item": "bowl", "on": "station", "station": 3, "x": 0.1, "y": 0.2, "yaw": 0},
+            {"item": "banana", "on": "station", "station": 3, "x": 0.12, "y": -0.2, "yaw": 0},
+            {"item": "orange", "on": "station", "station": 3, "x": 0.1, "y": -0.42, "yaw": 0},
+            {"item": "milk", "on": "station", "station": 3, "x": 0.12, "y": 0.45, "yaw": 0},
+            {"item": "pedal_bin", "on": "floor", "x": 3.1, "y": 0.6, "yaw": 90},
+        ],
+    },
+    "wetlab": {
+        "title": "Wet lab", "label": "Wet lab",
+        "plan": "A wet lab: four stainless benches in two rows, with a biosafety cabinet, fume hood, CO2 "
+                "incubator and lab fridge along the back wall.",
+        "stations": [
+            {"robot": "ur5e", "kind": "wetlab", "x": 0.0, "y": 0.0, "yaw": 90,
+             "task": "Open the centrifuge, put the two 15 ml tubes in opposite slots of the rotor so it is balanced, and close the lid."},
+            {"robot": "franka", "kind": "wetlab", "x": 2.4, "y": 0.0, "yaw": 90,
+             "task": "Open the plate reader's drawer, put the 96-well plate in it, and close the drawer."},
+            {"robot": "fr3_duo", "kind": "wetlab", "x": -2.4, "y": 0.0, "yaw": 90,
+             "task": "Hold the jar and unscrew its lid all the way."},
+            {"robot": "g1", "kind": "wetlab", "x": 0.0, "y": -2.3, "yaw": 90,
+             "task": "Move the four 15 ml tubes into the blue rack."},
+        ],
+        "furniture": [
+            {"item": "biosafety_cabinet", "x": -2.4, "y": 1.95, "yaw": 0},
+            {"item": "fume_hood", "x": -0.8, "y": 1.95, "yaw": 0},
+            {"item": "co2_incubator", "x": 0.6, "y": 1.95, "yaw": 180},
+            {"item": "lab_fridge", "x": 1.75, "y": 1.95, "yaw": 180},
+        ],
+        "objects": [
+            {"item": "centrifuge_5430", "on": "station", "station": 0, "x": 0.12, "y": -0.5, "yaw": -90},
+            {"item": "tube_rack", "on": "station", "station": 0, "x": 0.15, "y": 0.2, "yaw": 0},
+            {"item": "tube_15ml", "on": "station", "station": 0, "x": 0.1, "y": 0.5, "yaw": 0},
+            {"item": "tube_15ml", "on": "station", "station": 0, "x": 0.2, "y": 0.5, "yaw": 0},
+            {"item": "plate_reader", "on": "station", "station": 1, "x": 0.12, "y": -0.5, "yaw": -90},
+            {"item": "microplate_96", "on": "station", "station": 1, "x": 0.15, "y": 0.1, "yaw": 0},
+            {"item": "tip_box", "on": "station", "station": 1, "x": 0.15, "y": 0.4, "yaw": 0},
+            {"item": "pipette", "on": "station", "station": 1, "x": 0.18, "y": 0.6, "yaw": 0},
+            {"item": "screw_top_jar", "on": "station", "station": 2, "x": 0.12, "y": -0.15, "yaw": 0},
+            {"item": "beaker_500", "on": "station", "station": 2, "x": 0.15, "y": -0.5, "yaw": 0},
+            {"item": "erlenmeyer", "on": "station", "station": 2, "x": 0.15, "y": 0.25, "yaw": 0},
+            {"item": "hot_plate", "on": "station", "station": 2, "x": 0.12, "y": 0.6, "yaw": -90},
+            {"item": "rack_compact_blue", "on": "station", "station": 3, "x": 0.12, "y": 0.35, "yaw": 0},
+            {"item": "tube_15ml", "on": "station", "station": 3, "x": 0.12, "y": -0.2, "yaw": 0},
+            {"item": "tube_15ml", "on": "station", "station": 3, "x": 0.12, "y": -0.3, "yaw": 0},
+            {"item": "tube_15ml", "on": "station", "station": 3, "x": 0.2, "y": -0.2, "yaw": 0},
+            {"item": "tube_15ml", "on": "station", "station": 3, "x": 0.2, "y": -0.3, "yaw": 0},
+            {"item": "sharps_box", "on": "station", "station": 3, "x": 0.15, "y": -0.65, "yaw": 0},
+            {"item": "pedal_bin", "on": "floor", "x": 3.9, "y": 0.0, "yaw": 90},
+        ],
+    },
+}
+
+
+def preset_pick(name: str) -> dict:
+    """A ready-made scene's robots and objects, in the shape of a model's pick."""
+    pr = PRESETS[name]
+    robots: dict[str, int] = {}
+    for st in pr["stations"]:
+        robots[st["robot"]] = robots.get(st["robot"], 0) + 1
+    items: dict[str, int] = {}
+    for o in pr["furniture"] + pr["objects"]:
+        items[o["item"]] = items.get(o["item"], 0) + 1
+    return {"title": pr["title"], "robots": [{"robot": r, "count": n} for r, n in robots.items()],
+            "items": [{"id": i, "count": n} for i, n in items.items()], "missing": [], "task": ""}
+
+
 def pick(prompt: str, model_id: str, public: bool) -> dict:
     if fake():
         time.sleep(0.6)
@@ -478,8 +586,10 @@ class Build:
     """One scene being built: its layout put down step by step in a session's sim (in a thread
     of its own), with progress the page polls, Stop, and Undo."""
 
-    def __init__(self, sim, sess, prompt: str, pck: dict, model_id: str, public: bool):
+    def __init__(self, sim, sess, prompt: str, pck: dict, model_id: str, public: bool, preset: str = ""):
         self.sim, self.sess, self.prompt, self.pick = sim, sess, prompt, pck
+        self.preset = preset          # a ready-made scene (PRESETS): its own layout, no model
+        self.station_tasks: dict[str, str] = {}
         self.model_id, self.public = model_id, public
         self.id = os.urandom(4).hex()
         self.phase = "plan"           # plan, robots, furniture, objects, done, stopped, error
@@ -518,7 +628,9 @@ class Build:
         s = self.sim
         was_playing = not s.paused
         try:
-            if fake():
+            if self.preset:
+                lay = PRESETS[self.preset]
+            elif fake():
                 time.sleep(0.8)
                 lay = fake_layout(self.pick)
             else:
@@ -557,6 +669,8 @@ class Build:
             if self.stations and self.task:
                 for u in self.stations:
                     self.sess.unsent[u] = {"task": self.task, "model": ""}
+            for u, t in self.station_tasks.items():     # a ready-made scene's own task per robot
+                self.sess.unsent[u] = {"task": t, "model": ""}
             self._end("done")
         except Exception as e:  # noqa: BLE001
             self.error = str(e) if isinstance(e, (ModelError,)) else f"something went wrong: {e}"
@@ -584,7 +698,7 @@ class Build:
                 want_r.remove(rb)
                 kind = st.get("kind") if st.get("kind") in W.KINDS else "table"
                 stations.append({"robot": rb, "kind": kind, "x": _f(st.get("x")), "y": _f(st.get("y")),
-                                 "yaw": math.radians(_f(st.get("yaw")))})
+                                 "yaw": math.radians(_f(st.get("yaw"))), "task": str(st.get("task") or "")})
         for rb in want_r:
             stations.append({"robot": rb, "kind": "table", "x": 0.0, "y": 2.0 * len(stations), "yaw": 0.0})
         items = [i["id"] for i in self.pick["items"] for _ in range(i["count"])]
@@ -696,6 +810,8 @@ class Build:
             self.counts["robots"][1] -= 1
             return
         uid = s.add_station(st["robot"], spot["pos"], yaw, st["kind"], starter=False)
+        if self.preset and st.get("task"):
+            self.station_tasks[uid] = st["task"]
         title = self.pick["title"]
         s.rename_station(uid, title if n == 1 else f"{title} {k + 1}")
         self.stations.append(uid)

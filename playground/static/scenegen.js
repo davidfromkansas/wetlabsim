@@ -412,6 +412,14 @@ document.addEventListener('click', (ev) => { const dd = document.getElementById(
 const pill = document.getElementById('playpill');
 const sync = () => document.body.classList.toggle('sgHide', !!pill && !pill.classList.contains('none') && pill.innerHTML.trim() !== '' && !(G.build && G.build.active));
 if (pill) new MutationObserver(sync).observe(pill, {attributes: true, childList: true, subtree: true});
-window.sceneGen = {open: openCard};
+// A ready-made scene (Add station): built the same way, from its own layout, no model.
+async function preset(name) {
+  if (G.build && G.build.active) { toast('A scene is already being built'); return; }
+  const r = await api('/pg/scenegen/preset', {name});
+  if (!r || !r.ok) { toast((r && r.error) || 'Something went wrong.'); return; }
+  G.last = null;
+  follow(r.build);
+}
+window.sceneGen = {open: openCard, preset};
 setTimeout(loadInfo, 1500);
 })();

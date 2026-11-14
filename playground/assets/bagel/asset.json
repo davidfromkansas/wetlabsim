@@ -1,0 +1,58 @@
+{
+ "source": "food_prepared_bagel_b01",
+ "usd": "sm_food_prepared_bagel_b01_01.usd",
+ "mass": 0.07411,
+ "friction": 0.55,
+ "com": [
+  0.00084,
+  0.00137,
+  0.01585
+ ],
+ "size": [
+  0.0881,
+  0.0982,
+  0.0355
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00019716393356504147,
+   "friction": 0.55,
+   "restitution": 0.1
+  }
+ ],
+ "inertial": {
+  "mass": 0.074112,
+  "pos": [
+   0.000844,
+   0.001366,
+   0.015849
+  ],
+  "diaginertia": [
+   5.32606e-05,
+   6.53353e-05,
+   9.6434e-05
+  ],
+  "quat": [
+   0.707107,
+   0.0,
+   0.0,
+   -0.707107
+  ]
+ }
+}

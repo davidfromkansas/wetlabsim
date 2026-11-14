@@ -1,0 +1,58 @@
+{
+ "source": "food_prepared_croissant_a01",
+ "usd": "sm_food_prepared_croissant_a01_01.usd",
+ "mass": 0.06232,
+ "friction": 0.55,
+ "com": [
+  -0.00175,
+  -0.00033,
+  0.01804
+ ],
+ "size": [
+  0.0669,
+  0.14,
+  0.0433
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00016610938262145566,
+   "friction": 0.55,
+   "restitution": 0.1
+  }
+ ],
+ "inertial": {
+  "mass": 0.062322,
+  "pos": [
+   -0.001751,
+   -0.000325,
+   0.018038
+  ],
+  "diaginertia": [
+   2.83053e-05,
+   7.8421e-05,
+   8.63376e-05
+  ],
+  "quat": [
+   0.707107,
+   0.0,
+   0.0,
+   -0.707107
+  ]
+ }
+}
