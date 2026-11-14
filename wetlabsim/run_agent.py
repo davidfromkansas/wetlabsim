@@ -106,12 +106,13 @@ DOCS_LEVELS = ("standard", "assisted")
 
 
 # The robots with a "standard" kit (the maker's own documents): the model folder each gets.
-STANDARD_KITS = {"franka": "franka_emika_panda", "aloha": "aloha", "fr3_duo": "franka_fr3_duo"}
+STANDARD_KITS = {"franka": "franka_emika_panda", "aloha": "aloha", "fr3_duo": "franka_fr3_duo", "g1": "unitree_g1"}
 # Left out of the robot model folder: notes, and for the ALOHA Menagerie's table scene and
 # its MJX patches (the robot only, as for the Franka).
 KIT_LEAVE_OUT = ("*.md", "scene.xml", "*.patch", "*.png", "tablelegs.obj", "tabletop.obj",
                  "small_meta_table_diffuse.png", "extrusion_*.stl", "overhead_mount.stl", "wormseye_mount.stl",
-                 "corner_bracket.stl", "angled_extrusion.stl")
+                 "corner_bracket.stl", "angled_extrusion.stl",
+                 "locomotion")   # the G1's balance/walking policy runs in its controller, not the agent's
 
 # Written per run from the task and the station's site, not part of the robot's starter kit.
 PER_RUN_FILES = {"GOAL.md", "SITE.md", "cameras.json"}
@@ -153,7 +154,7 @@ def prepare_workspace(workspace: pathlib.Path, client: pathlib.Path, robot: str,
                      " from the manual's lab bench, SITE.md is right.")
     else:
         if robot not in STANDARD_KITS:
-            raise SystemExit("the standard docs level exists only for the Franka, the ALOHA and the FR3 Duo; use --docs assisted")
+            raise SystemExit("the standard docs level exists only for the Franka, the ALOHA, the FR3 Duo and the G1; use --docs assisted")
         kit = STANDARD_KITS[robot]
         from .datasheets import DIRS, fetch
         fetch(robot=robot)
@@ -328,7 +329,7 @@ def main(argv=None):
     # the full package, whose scene and simulator code would reveal where everything is.
     info = _eval_call(args.url, token, "/info")
     robot = info.get("robot_id", "ur5e")
-    if args.agent == "jev" and robot in ("aloha", "fr3_duo"):
+    if args.agent == "jev" and robot in ("aloha", "fr3_duo", "g1"):
         raise SystemExit("Jev drives one arm at a time; it can't run a two-arm robot yet")
     workspace = pathlib.Path(tempfile.mkdtemp(prefix=f"wetlab-{run_id}-"))
     client = pathlib.Path(tempfile.mkdtemp(prefix=f"wetlab-{run_id}-client-"))

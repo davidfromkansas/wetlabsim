@@ -441,6 +441,19 @@ ROBOTS = {
         "cameras": {"head": "head", "left_wrist": "wrist_cam_left", "right_wrist": "wrist_cam_right",
                     "side": "side"},      # the station's audience camera (people only)
     },
+    # Unitree's G1 humanoid (29 joints: legs, waist, two 7-joint arms) with two Dex3-1 three-finger
+    # hands, DeepMind's Menagerie model (assets/unitree_g1), unchanged. It stands on its own feet:
+    # NVIDIA's GR00T balance and walking policies (wetlabsim/locomotion.py) drive the legs and
+    # waist, as LeRobot's G1 support runs them. Each arm with its hand is a robot of its own
+    # (g1_side below); this entry is the whole robot.
+    "g1": {
+        "name": "Unitree G1 humanoid", "gripper": "Dex3-1 three-finger hand (x2)",
+        "sides": ("left", "right"), "humanoid": True,
+        "mount_quat": "1 0 0 0",       # the model's +x is forward, as the station's robot faces
+        # The head's RealSense D435i and a camera on each wrist (LeRobot's G1 simulation).
+        "cameras": {"head": "head", "left_wrist": "wrist_cam_left", "right_wrist": "wrist_cam_right",
+                    "side": "side"},      # the station's audience camera (people only)
+    },
 }
 DEFAULT_ROBOT = "franka"
 # The robots the robot cell (and LIBERO, Wet Lab) can stand at its bench; the ALOHA is for the
@@ -525,7 +538,189 @@ def fr3_duo_side(side: str) -> dict:
     }
 
 
-SIDE_PROFILES = {"aloha": lambda side: aloha_side(side), "fr3_duo": lambda side: fr3_duo_side(side)}
+# ---------------------------------------------------------------- Unitree G1
+# Joint order of the G1's 29 body motors (Unitree's own order, the order of its low-level
+# commands): left leg, right leg, waist, left arm, right arm.
+G1_LEG = ["hip_pitch", "hip_roll", "hip_yaw", "knee", "ankle_pitch", "ankle_roll"]
+G1_ARM = ["shoulder_pitch", "shoulder_roll", "shoulder_yaw", "elbow", "wrist_roll", "wrist_pitch", "wrist_yaw"]
+G1_BODY = ([f"left_{j}_joint" for j in G1_LEG] + [f"right_{j}_joint" for j in G1_LEG]
+           + ["waist_yaw_joint", "waist_roll_joint", "waist_pitch_joint"]
+           + [f"left_{j}_joint" for j in G1_ARM] + [f"right_{j}_joint" for j in G1_ARM])
+# Dex3-1 hand joints, in Unitree's order: thumb 0-2, middle 0-1, index 0-1.
+G1_HAND = ["thumb_0", "thumb_1", "thumb_2", "middle_0", "middle_1", "index_0", "index_1"]
+# LeRobot's default position gains for the G1 (lerobot/robots/unitree_g1/g1_embodiments.py,
+# kp in Nm/rad, kd in Nm s/rad), the gains its locomotion controllers are run with.
+G1_GAINS = {"hip_pitch": (150, 2), "hip_roll": (150, 2), "hip_yaw": (150, 2), "knee": (300, 4),
+            "ankle_pitch": (40, 2), "ankle_roll": (40, 2),
+            "waist_yaw": (250, 5), "waist_roll": (250, 5), "waist_pitch": (250, 5),
+            "shoulder_pitch": (50, 3), "shoulder_roll": (50, 3), "shoulder_yaw": (80, 3), "elbow": (80, 3),
+            "wrist_roll": (40, 1.5), "wrist_pitch": (40, 1.5), "wrist_yaw": (40, 1.5)}
+# Joint speed limits from Unitree's G1 URDF (g1_29dof_with_hand: <limit velocity>, rad/s).
+G1_ARM_VMAX = np.array([37, 37, 37, 37, 37, 22, 22], float)
+G1_HAND_VMAX = np.array([6.857, 12, 12, 12, 12, 12, 12], float)
+# The stance the GR00T policies balance around (LeRobot's GROOT_DEFAULT_ANGLES): knees slightly
+# bent. Arms: our ready pose, upper arms a little back and forearms raised in front of the
+# chest, the hands above either station table's top and behind its near edge (so they can move
+# straight out over the table without first passing under it), palms facing in.
+G1_STANCE = {"left_hip_pitch_joint": -0.1, "right_hip_pitch_joint": -0.1, "left_knee_joint": 0.3,
+             "right_knee_joint": 0.3, "left_ankle_pitch_joint": -0.2, "right_ankle_pitch_joint": -0.2}
+G1_READY = {"left": np.array([0.2, 0.3, 0.0, -1.0, 0.0, 0.0, 0.0]),
+            "right": np.array([0.2, -0.3, 0.0, -1.0, 0.0, 0.0, 0.0])}
+G1_STANDING_HEIGHT = 0.755   # the pelvis height once it stands balancing (measured, m)
+G1_PELVIS_HEIGHT = 0.79      # where the pelvis starts, standing (m): the feet just above the floor
+# Unitree's G1 URDF: the head's RealSense D435i (d435_link) and Livox MID-360 lidar (mid360_link),
+# on the torso. Camera vertical field of view: the D435i's depth stream, 58 degrees (Intel's
+# datasheet: 87 x 58), as for the D405s.
+G1_D435 = ([0.0576235, 0.01753, 0.42987], 0.8307767239493009)
+# The Mid-360 lidar: Unitree's mid360_link (position, pitch), mounted inverted (Unitree's G1 lidar
+# service docs), so its -7..52 degree field of view looks 7 degrees up to 52 degrees down.
+G1_MID360 = ([0.0002835, 0.00003, 0.41618], 0.04014257279586953)
+# LeRobot's G1 simulation (lerobot/unitree-g1-mujoco, g1_29dof_with_hand_cameras.xml): a camera on
+# each wrist (wrist_yaw_link), 95 degrees vertical field of view.
+G1_WRIST_CAM = ([0.0915, 0, 0.075], [0, -1, 0, 0.660627894892, 0, 0.750713516923], 95.0)
+# Dex3-1 pressure sensors (Unitree's Dex3-1 page): 9 arrays per hand, 33 sensors: 3 on the palm
+# (2 x 2 each), one on each finger pad (2 x 2), one on each fingertip (3 x 1); 10 g to 2500 g.
+G1_TOUCH_RANGE_N = (0.098, 24.5)
+# Each finger link's collision mesh, measured on Menagerie's left hand: centre and half-size of its
+# box in the link frame, 4 mm bigger all round (contacts sit on the surface). The right hand mirrors it.
+G1_TOUCH_BOXES = {
+    "hand_thumb_2_link": ((-0.0001, -0.0225, -0.0001), (0.0128, 0.0335, 0.017)),
+    "hand_index_0_link": ((0.0239, -0.001, 0.0001), (0.0349, 0.0176, 0.0169)),
+    "hand_index_1_link": ((0.0225, 0.0001, 0.0001), (0.0335, 0.0128, 0.017)),
+    "hand_middle_0_link": ((0.0239, -0.001, 0.0001), (0.0349, 0.0176, 0.0169)),
+    "hand_middle_1_link": ((0.0225, 0.0001, 0.0001), (0.0335, 0.0128, 0.017)),
+}
+
+
+def g1_hand_open(side: str) -> np.ndarray:
+    """The Dex3-1 opened flat: every joint at zero (thumb 1 a little back for clearance)."""
+    return np.zeros(7)
+
+
+def g1_hand_closed(side: str) -> np.ndarray:
+    """The Dex3-1 closed into a fist: the two fingers at the end of their travel (Menagerie's
+    joint ranges, as on Unitree's Dex3-1 page), the thumb folded over them as far as it goes
+    without pressing into them (measured on the model: thumb 1 at 0.6 rad, thumb 2 at 1.0 rad).
+    The right hand is the left one mirrored."""
+    s = 1.0 if side == "left" else -1.0
+    # thumb 0 (rotation), thumb 1, thumb 2, middle 0, middle 1, index 0, index 1
+    return np.array([0.0, s * 0.6, s * 1.0, -s * 1.5708, -s * 1.74533, -s * 1.5708, -s * 1.74533])
+
+
+def g1_side(side: str) -> dict:
+    """One arm of a G1 with its Dex3-1 hand, as a robot of its own."""
+    return {
+        "name": f"Unitree G1 {side} arm", "gripper": "Dex3-1 three-finger hand", "side": side,
+        "arm_joints": [f"{side}_{j}_joint" for j in G1_ARM],
+        "arm_actuators": [f"{side}_{j}_joint" for j in G1_ARM],
+        "hand_joints": [f"{side}_hand_{j}_joint" for j in G1_HAND],
+        "hand_actuators": [f"{side}_hand_{j}_joint" for j in G1_HAND],
+        "home_q": np.zeros(7), "ready_q": G1_READY[side].copy(),
+        "tcp_site": f"{side}_hand_tcp", "base_body": f"{side}_shoulder_pitch_link",
+        "frame_body": "pelvis",       # poses in the pelvis frame, as LeRobot's G1 arm kinematics
+        "ft_site": None,              # no wrist force/torque sensor
+        "grip_actuator": f"{side}_hand_index_0_joint", "grip_joint": f"{side}_hand_index_0_joint",
+        "grip_open": 0.0, "grip_closed": -1.5708 if side == "left" else 1.5708,
+        "grip_ctrl_open": 0.0,
+        "max_opening_mm": 120,
+        "cameras": {"head": "head", "wrist": f"wrist_cam_{side}"},
+        "joint_vmax": G1_ARM_VMAX, "joint_amax": np.full(7, 20.0),
+        "cart_vmax": 1.0, "rot_vmax": 3.0,
+    }
+
+
+def _g1(world, mount_site="robot_mount", prefix=""):
+    """DeepMind Menagerie's Unitree G1 with Dex3-1 hands (assets/unitree_g1, unchanged file),
+    standing on the floor at the mount. Set here, with MuJoCo's own features: LeRobot's position
+    gains on the 29 body joints, a feed-forward torque input on each arm joint (the G1's motors
+    take position, gains and a torque; it carries the arm's gravity compensation), the head's
+    camera and lidar position and the wrist cameras, the pelvis IMU, and the hands' pressure pads."""
+    g1 = mujoco.MjSpec.from_file(str(ASSETS / "unitree_g1" / "g1_with_hands.xml"))
+    for k in list(g1.keys):          # Menagerie's keyframe: our controller sets the start pose
+        g1.delete(k)
+    for a in g1.actuators:
+        key = a.target.removeprefix("left_").removeprefix("right_").removesuffix("_joint")
+        if key in G1_GAINS:
+            kp, kd = G1_GAINS[key]
+            a.gainprm[0] = kp
+            a.biasprm[0], a.biasprm[1], a.biasprm[2] = 0.0, -kp, -kd
+    for side in ("left", "right"):
+        for j in G1_ARM:
+            jn = f"{side}_{j}_joint"
+            act = g1.actuator(jn)
+            # The motor's torque limit applies to everything it puts out, position loop and torque
+            # input together (the joint's actuatorfrcrange, MuJoCo's per-joint actuator force limit).
+            jnt = g1.joint(jn)
+            jnt.actfrclimited = mujoco.mjtLimited.mjLIMITED_TRUE
+            jnt.actfrcrange = list(act.forcerange)
+            act.forcelimited = mujoco.mjtLimited.mjLIMITED_FALSE
+            g1.add_actuator(name=f"{jn}_tau", target=jn, trntype=mujoco.mjtTrn.mjTRN_JOINT,
+                            gainprm=[1] + [0] * 9, ctrllimited=mujoco.mjtLimited.mjLIMITED_FALSE)
+    for g in g1.geoms:
+        if g.contype or g.conaffinity:
+            hand = "_hand_" in (g.parent.name or "")
+            _set_material(g, "rubber_pad" if hand else "robot")
+    torso = g1.body("torso_link")
+    pos, pitch = G1_D435
+    sp, cp = np.sin(pitch), np.cos(pitch)
+    cam = torso.add_camera(name="head", pos=pos, fovy=D405_FOVY)
+    cam.alt.type = mujoco.mjtOrientation.mjORIENTATION_XYAXES
+    cam.alt.xyaxes = [0, -1, 0, sp, 0, cp]          # looking along the d435_link's x, pitched down
+    pos, pitch = G1_MID360
+    q = np.zeros(4)
+    mujoco.mju_axisAngle2Quat(q, np.array([0, 1.0, 0]), pitch)
+    flip = np.zeros(4)                                 # mounted upside down in the head (Unitree's
+    mujoco.mju_axisAngle2Quat(flip, np.array([1.0, 0, 0]), np.pi)   # G1 lidar docs): it looks down
+    mujoco.mju_mulQuat(q, q.copy(), flip)
+    torso.add_site(name="lidar", pos=pos, quat=q.tolist(), size=[0.01] * 3, group=5)
+    pelvis = g1.body("pelvis")
+    imu = g1.site("imu_in_pelvis")
+    g1.add_sensor(name="imu_quat", type=mujoco.mjtSensor.mjSENS_FRAMEQUAT,
+                  objtype=mujoco.mjtObj.mjOBJ_SITE, objname=imu.name)
+    for side in ("left", "right"):
+        wrist = g1.body(f"{side}_wrist_yaw_link")
+        cpos, xy, fovy = G1_WRIST_CAM
+        cam = wrist.add_camera(name=f"wrist_cam_{side}", pos=cpos, fovy=fovy)
+        cam.alt.type = mujoco.mjtOrientation.mjORIENTATION_XYAXES
+        cam.alt.xyaxes = xy
+        # Grasp point: inside the hand, between the thumb and the two fingers.
+        # The palm faces the robot's middle (-y on the left hand, +y on the right).
+        y = -1.0 if side == "left" else 1.0
+        wrist.add_site(name=f"{side}_hand_tcp", pos=[0.125, 0.045 * y, 0.0], size=[0.006] * 3, group=5)
+        # The pressure arrays: the palm, and each finger's pad (inner link) and tip (outer link).
+        _g1_touch_site(g1, wrist, f"{side}_palm", [0.085, 0.019 * y, 0.0], [0.043, 0.006, 0.044])
+        for f, (pad, tip) in {"thumb": ("1", "2"), "index": ("0", "1"), "middle": ("0", "1")}.items():
+            for part, n in (("pad", pad), ("tip", tip)):
+                b = g1.body(f"{side}_hand_{f}_{n}_link")
+                _g1_touch_site(g1, b, f"{side}_{f}_{part}", None, None)
+    pelvis.pos = [0, 0, G1_PELVIS_HEIGHT]
+    _match_options(g1, world=world)
+    site = world.site(mount_site)
+    frame = world.worldbody.add_frame(pos=list(site.pos), quat=list(site.quat))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        world.attach(g1, frame=frame, prefix=prefix)
+
+
+def _g1_touch_site(spec, body, name, pos, size):
+    """A pressure array: a touch sensor over a hand link (MuJoCo's touch sensor sums the normal
+    force of the contacts inside its site). By default the site is the link's own collision box."""
+    if pos is None:
+        g = next(g for g in body.geoms if g.contype or g.conaffinity)
+        if g.type == mujoco.mjtGeom.mjGEOM_BOX:
+            pos, size = list(g.pos), [s + 0.004 for s in g.size]
+        else:   # a mesh: its centre and half-size, measured on the compiled mesh (g1_touch_boxes)
+            side, part = body.name.split("_", 1)
+            (x, y, z), size = G1_TOUCH_BOXES[part]
+            pos = [x, y if side == "left" else -y, z if side == "left" else -z]
+    body.add_site(name=f"touch_{name}", type=mujoco.mjtGeom.mjGEOM_BOX, pos=list(pos), size=list(size),
+                  group=5, rgba=[1, 0.4, 0, 0.3])
+    spec.add_sensor(name=f"touch_{name}", type=mujoco.mjtSensor.mjSENS_TOUCH,
+                    objtype=mujoco.mjtObj.mjOBJ_SITE, objname=f"touch_{name}")
+
+
+SIDE_PROFILES = {"aloha": lambda side: aloha_side(side), "fr3_duo": lambda side: fr3_duo_side(side),
+                 "g1": lambda side: g1_side(side)}
 
 
 def side_profile(robot: str) -> dict:
@@ -718,6 +913,8 @@ def add_robot(world, robot: str, mount: str = "robot_mount", prefix: str = ""):
         return _aloha(world, mount, prefix)      # no wrist force/torque sensors on a ViperX
     if robot == "fr3_duo":
         return _fr3_duo(world, mount, prefix)
+    if robot == "g1":
+        return _g1(world, mount, prefix)
     ft_site = _franka(world, mount, prefix) if robot == "franka" else _ur5e(world, mount, prefix)
     # Wrist force/torque sensor (UR5e: built in at the flange; Panda: estimated from joint torques).
     world.add_sensor(name=prefix + "ft_force", type=mujoco.mjtSensor.mjSENS_FORCE,
@@ -742,6 +939,9 @@ def profile_for(robot: str, prefix: str = "", world_cameras: str | None = None) 
     if "sides" in ROBOTS[robot]:        # a two-arm robot's cameras come with it (under its prefix)
         wc = prefix
     for k in ("arm_joints", "arm_actuators"):
+        if k in P:
+            P[k] = [prefix + n for n in P[k]]
+    for k in ("hand_joints", "hand_actuators"):
         if k in P:
             P[k] = [prefix + n for n in P[k]]
     for k in ("tcp_site", "ft_site", "ft_body", "base_body", "frame_body", "grip_actuator", "grip_joint"):

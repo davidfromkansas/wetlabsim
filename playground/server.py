@@ -551,7 +551,7 @@ class Session:
     def station_runner(self, uid: str) -> Runner:
         r = self.runners.get(uid)
         st = self.sim.station(uid)
-        docs = "standard" if st is None or st.robot in ("franka", "aloha", "fr3_duo") else "assisted"
+        docs = "standard" if st is None or st.robot in ("franka", "aloha", "fr3_duo", "g1") else "assisted"
         if r is None or r.docs != docs and not r.active():
             r = self.runners[uid] = Runner(f"{self.base_url}/s/{self.id}/st/{uid}", self.runs, docs)
             r.on_done = lambda runner, uid=uid: self.run_ended(uid, runner)
@@ -1757,7 +1757,9 @@ class PGHandler(Handler):
                 return self._err("evaluator token required", 403)
             self._body()      # read it all: an unread request body makes the close drop the reply
             prefix = urllib.parse.urlparse(self.path).path[:-len("/eval/robot_token")]
-            return self._json({"ok": True, "token": RA.TOKENS.issue(prefix, run="external")})
+            # The session the URL named (its /s/<id> was taken off the path above): without it
+            # the token would open that station in the oldest session instead.
+            return self._json({"ok": True, "token": RA.TOKENS.issue(f"/s/{self.sess.id}{prefix}", run="external")})
         if self._station_request():
             if self.path.startswith("/pg/"):
                 return self._err("not found", 404)

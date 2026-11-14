@@ -166,6 +166,63 @@ coordinates into the named frame. The lenses have no distortion.
 At the start of a run the left arm is at joint angles `{ready_l}` and the right arm at
 `{ready_r}` (rad): both grippers pointing down, open, not in a protective stop.
 """
+G1_TEMPLATE = """# Site sheet: this installation
+
+What the datasheets can't tell you: how this particular robot is set up.
+
+## Mounting
+
+- Unitree G1 humanoid (29 body joints) with a Dex3-1 three-finger hand on each arm (`left`
+  and `right`). It is not mounted: it stands on its own feet on the floor, facing the middle of one
+  edge of {table} ({w_cm:.0f} x {d_cm:.0f} cm, top {top_cm:.1f} cm above the floor), balancing
+  under its locomotion controller.
+- Both arms report in one frame, the pelvis frame: origin at the pelvis (about {pelvis_cm:.0f} cm
+  above the floor when standing), x forward, y to the robot's left, z up. All positions and
+  poses in the command interface, for both arms, are in this frame, in metres. The frame
+  moves with the robot: after it walks, turns, crouches or leans, the table is somewhere
+  else in it.
+- At the start the table's near edge is about x = {x0:.2f} m, its top is about z = {table_z:.2f} m,
+  and it extends to about x = {x1:.2f} m and from about y = {y0:.2f} m to y = {y1:.2f} m.
+  Check with the cameras: the robot settles a few centimetres as it starts balancing.
+- The hands work best from about x = 0.30 m to 0.45 m (10 to 25 cm past the table's edge),
+  pointing forward or tilted down. Closer to the chest the arms run out of room, and
+  straight-down (top) grasps are mostly out of reach. To work further away, walk closer.
+
+## Tool and payload settings
+
+- End effector: a Unitree Dex3-1 hand on each wrist (thumb with 3 joints, index and middle
+  fingers with 2 each), with 33 tactile sensors.
+- TCP: a point between the fingertips of the open hand, 125 mm from the wrist.
+- Tool orientation convention: a TCP pose of `[x, y, z, 0, 0, 0]` points the fingers forward
+  (along x) with the palm facing the robot's middle (the left palm faces -y, the right +y);
+  the fingers close toward the palm, so an upright object is gripped from the side.
+- Payload: each arm's joint torques are reported with the arm's own weight held by the
+  controller.
+
+## Cameras
+
+Three cameras, 640 x 480, colour and depth (metres along the camera's z axis). The
+calibration is in `cameras.json`, once for each arm (`left`, `right`):
+
+- `head`: the Intel RealSense D435i in the head, looking forward and down. Its pose is
+  given in the pelvis frame, standing upright as at the start (it is on the torso, so it
+  moves when the torso leans).
+- `wrist`: a camera on each wrist, looking along the hand. Its pose is given in that arm's
+  TCP frame. The robot's command interface names them `left_wrist` and `right_wrist`.
+
+Poses use OpenCV camera axes (x right, y down, z forward); `rotation` maps camera
+coordinates into the named frame. The lenses have no distortion.
+
+The robot also has a Livox Mid-360 lidar in its head, mounted upside down so it looks from
+7° above level to 52° below (a point cloud, see COMMANDS.md); it also sees the robot's own
+arms and body.
+
+## Start state
+
+At the start of a run the robot stands still, the left arm is at joint angles `{ready_l}`
+and the right arm at `{ready_r}` (rad): forearms raised in front of the chest, hands open,
+above the table top and behind its edge. Nothing is in a protective stop.
+"""
 TABLES = {"table": "a heavy-duty packing table", "wetlab": "a stainless steel lab bench"}
 
 
@@ -190,6 +247,14 @@ def site_sheet(placed: list[W.Placed], station: W.Station | None = None,
                                      d_cm=min(tw, td) * 100, gap=2 * by, gap_cm=200 * by, x0=x0, x1=x1,
                                      y0=y0, y1=y1, ry0=-y1, ry1=-y0,
                                      ready="[" + ", ".join(f"{v:g}" for v in ready) + "]")
+    if station.robot == "g1":
+        fmt = lambda q: "[" + ", ".join(f"{v:g}" for v in q) + "]"
+        h = WS.G1_STANDING_HEIGHT
+        e = W.HUMANOID_GAP + 0.07           # the edge, after the robot settles back a little
+        return G1_TEMPLATE.format(top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100,
+                                  d_cm=min(tw, td) * 100, pelvis_cm=h * 100, table_z=top - h,
+                                  x0=e, x1=e + sx, y0=-sy / 2 - ry, y1=sy / 2 - ry,
+                                  ready_l=fmt(WS.G1_READY["left"]), ready_r=fmt(WS.G1_READY["right"]))
     if station.robot == "fr3_duo":
         h = WS.FR3_DUO_ORIGIN_HEIGHT
         fmt = lambda q: "[" + ", ".join(f"{v:g}" for v in q) + "]"
