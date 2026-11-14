@@ -279,6 +279,8 @@ ROBOTS = [
      "reach_mm": 750, "payload_kg": 0.75, "joints": "2 × 6", "arms": 2, "thumb": "/pg/static/station_aloha.png"},
     {"id": "fr3_duo", "label": "FR3 Duo (two arms)", "maker": "Franka Robotics", "gripper": "2 × 2F-85",
      "reach_mm": 855, "payload_kg": 3, "joints": "2 × 7", "arms": 2, "thumb": "/pg/static/station_fr3_duo.png"},
+    {"id": "g1", "label": "Unitree G1 (humanoid)", "maker": "Unitree Robotics", "gripper": "2 × Dex3-1 hands",
+     "reach_mm": 500, "payload_kg": 3, "joints": "29 + 2 × 7", "arms": 2, "thumb": "/pg/static/station_g1.png"},
 ]
 
 

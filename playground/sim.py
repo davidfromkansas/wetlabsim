@@ -17,7 +17,7 @@ from PIL import Image
 
 from wetlabsim import scene as WS
 from wetlabsim import tasks as WT
-from wetlabsim.sim import Arm, RobotError, Sim, TwoArm
+from wetlabsim.sim import Arm, Humanoid, RobotError, Sim, TwoArm
 
 from . import catalog
 from . import libero as LB
@@ -111,9 +111,13 @@ class PlaygroundSim(Sim):
 
     def _make_arms(self) -> dict[str, Arm]:
         if self.scene_mode == "free":
-            return {st.uid: (TwoArm if WS.ROBOTS[st.robot].get("sides") else Arm)(self, st.robot, st.prefix, st.uid)
-                    for st in self.stations}
+            return {st.uid: self._arm_class(st.robot)(self, st.robot, st.prefix, st.uid) for st in self.stations}
         return {"robot": Arm(self, self.robot)}
+
+    @staticmethod
+    def _arm_class(robot: str):
+        P = WS.ROBOTS[robot]
+        return Humanoid if P.get("humanoid") else TwoArm if P.get("sides") else Arm
 
     def station(self, uid: str | None = None) -> W.Station | None:
         uid = uid or self.active_station
@@ -719,6 +723,9 @@ class PlaygroundSim(Sim):
         line up one for one). Call with the lock held."""
         a, b = self.arm_of(src_uid), self.arm_of(dst_uid)
         m, d = self.m, self.d
+        if isinstance(a, Humanoid):      # it stands by itself: its pose relative to where it was put down
+            b.restore(a.snapshot())
+            return
         for ja, jb in zip(a.own_joints, b.own_joints):
             qa, qb = m.joint(ja).qposadr[0], m.joint(jb).qposadr[0]
             d.qpos[qb] = d.qpos[qa]
@@ -1174,6 +1181,8 @@ class PlaygroundSim(Sim):
                     bp = self.d.xpos[a.base_body].copy()
                     if a.robot == "fr3_duo":   # its origin stands 20 cm above the table, on its riser
                         bp[2] -= WS.FR3_DUO_ORIGIN_HEIGHT
+                    elif isinstance(a, Humanoid):   # it stands on the floor: the ring at its feet
+                        bp[2] = 0.0
                     out.append({"type": "cylinder", "size": [0.17, 0.002, 0], "pos": [bp[0], bp[1], bp[2] + 0.002],
                                 "yaw": 0.0, "rgba": [0.15, 0.45, 0.95, 0.55]})
             sel = self.selected

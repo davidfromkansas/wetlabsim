@@ -28,7 +28,7 @@ def look(camera: str = "overhead") -> list:
     camera: "overhead" (fixed above the bench, sees the whole work area) or
     "wrist" (mounted on the gripper, looks where the fingers point). A two-arm
     robot has its own: the ALOHA "overhead", "low", "left_wrist" and "right_wrist"; the
-    FR3 Duo "head", "left_wrist" and "right_wrist".
+    FR3 Duo and the G1 humanoid "head", "left_wrist" and "right_wrist".
     Returns the image plus the camera's calibration so you can relate pixels
     to robot coordinates (see Frame.pixel_to_point in the robot manual).
     """
@@ -57,7 +57,7 @@ def robot_state() -> str:
 
 @server.tool()
 def emergency_stop() -> str:
-    """Stop the arm (both arms on a two-arm robot) immediately."""
+    """Stop the arm (both arms on a two-arm robot; a humanoid's arms and walking) immediately."""
     try:
         robot.stop()
         return "stopped"
