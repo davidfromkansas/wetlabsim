@@ -12,6 +12,7 @@ Items marked "Built in-house" we modelled ourselves in Blender (`playground/tool
 - **QUIKTECH SimReady** (quiktech): https://huggingface.co/datasets/quiktech/SimReady-Assets
 - **NVIDIA USDCraft-10K (Apache 2.0)** (usdcraft): https://huggingface.co/datasets/nvidia/USDCraft-10K
 - **ForgeCAD SimReady** (forgecad): https://huggingface.co/datasets/ForgeCAD/simready-assets
+- **Palatial SimReady** (palatial): https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library
 
 AutoBio's lab models (the tubes, racks, dish, pipette and its stand) are used with credit to
 its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
@@ -214,7 +215,6 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Cryovial, 1.8 ml | Lab & Medical | AutoBio (credit in NOTICE.md) | [`cryovial_1-8ml`](../../wetlabsim/assets/autobio/NOTICE.md) |
 | 10 ml tube | Lab & Medical | AutoBio (credit in NOTICE.md) | [`centrifuge_10ml`](../../wetlabsim/assets/autobio/NOTICE.md) |
 | 1.5 ml open tube | Lab & Medical | AutoBio (credit in NOTICE.md) | [`centrifuge_1500ul_no_lid`](../../wetlabsim/assets/autobio/NOTICE.md) |
-| Pipette rack | Lab & Medical | AutoBio (credit in NOTICE.md) | [`pipette_rack`](../../wetlabsim/assets/autobio/NOTICE.md) |
 | Otoscope | Lab & Medical | NVIDIA SimReady | [`device_otoscope_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/device_otoscope_a01) |
 | Blood pressure monitor | Lab & Medical | NVIDIA SimReady | [`device_blood_pressure_monitor_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/device_blood_pressure_monitor_a01) |
 | Vein finder | Lab & Medical | NVIDIA SimReady | [`device_vein_finder_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/device_vein_finder_a01) |
@@ -230,3 +230,37 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Vortex mixer | Lab equipment | AutoBio (credit in NOTICE.md) | [`vortex_mixer_genie_2`](../../wetlabsim/assets/autobio/NOTICE.md) |
 | Hot air oven | Furniture | QUIKTECH SimReady | [`qt_lab_000005`](https://huggingface.co/datasets/quiktech/SimReady-Assets/tree/main/qt_lab_000005) |
 | Laminar flow cabinet | Furniture | QUIKTECH SimReady | [`qt_lab_000012`](https://huggingface.co/datasets/quiktech/SimReady-Assets/tree/main/qt_lab_000012) |
+| Chest of drawers | Furniture | ForgeCAD SimReady | [`chest_of_drawers`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/chest_of_drawers) |
+| Kitchen base cabinet | Furniture | ForgeCAD SimReady | [`kitchen_base_cabinet`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/kitchen_base_cabinet) |
+| Kitchen wall cabinet | Furniture | ForgeCAD SimReady | [`kitchen_wall_cabinet`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/kitchen_wall_cabinet) |
+| Front-load washer | Furniture | ForgeCAD SimReady | [`front_load_washer`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/front_load_washer) |
+| Range oven | Furniture | ForgeCAD SimReady | [`range_oven`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/range_oven) |
+| French-door fridge | Furniture | ForgeCAD SimReady | [`refrigerator`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/refrigerator) |
+| Gondola shelf | Furniture | ForgeCAD SimReady | [`gondola_shelf`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/gondola_shelf) |
+| Bakery display rack | Furniture | Palatial SimReady | [`D00326`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00326) |
+| Metal shelving unit | Furniture | Palatial SimReady | [`D00661`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00661) |
+| Workbench with drawers | Furniture | NVIDIA SimReady | [`furniture_workbench_standard_e01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/furniture_workbench_standard_e01) |
+| Fridge freezer | Furniture | NVIDIA SimReady | [`appliance_refrigerator_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/appliance_refrigerator_a01) |
+| Kitchen island | Furniture | NVIDIA SimReady | [`fixture_island_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fixture_island_a01) |
+| Kitchenette module | Furniture | NVIDIA SimReady | [`facilitySystem_kitchenette_module_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/facilitySystem_kitchenette_module_a01) |
+| Drug cabinet, 8 drawers | Furniture | NVIDIA SimReady | [`cabinet_for_drugs_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cabinet_for_drugs_a02) |
+| Benchtop incubator | Lab equipment | ForgeCAD SimReady | [`laboratory_incubator`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/laboratory_incubator) |
+| Microplate reader | Lab equipment | ForgeCAD SimReady | [`microplate_reader`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/microplate_reader) |
+| 96-well microplate | Lab & Medical | ForgeCAD SimReady | [`microplate`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/microplate) |
+| Air fryer | Kitchen | ForgeCAD SimReady | [`air_fryer`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/air_fryer) |
+| Microwave oven | Kitchen | ForgeCAD SimReady | [`microwave_oven`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/microwave_oven) |
+| Stand mixer | Kitchen | ForgeCAD SimReady | [`stand_mixer`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/stand_mixer) |
+| Pop-up toaster | Kitchen | ForgeCAD SimReady | [`toaster`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/toaster) |
+| Saucepan with lid | Kitchen | ForgeCAD SimReady | [`cookware_set`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/cookware_set) |
+| Dish drying rack | Kitchen | ForgeCAD SimReady | [`dish_drying_rack`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/dish_drying_rack) |
+| Latching food container | Kitchen | ForgeCAD SimReady | [`latching_food_container`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/latching_food_container) |
+| Mug, white gloss | Kitchen | ForgeCAD SimReady | [`mug`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/mug) |
+| Espresso machine | Kitchen | Palatial SimReady | [`D00154`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00154) |
+| Toaster with crumb tray | Kitchen | Palatial SimReady | [`D00866`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00866) |
+| Camping gas stove | Kitchen | Palatial SimReady | [`D00336`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00336) |
+| Kitchen scale | Kitchen | Palatial SimReady | [`D00505`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00505) |
+| Knife block | Kitchen | Palatial SimReady | [`D00477`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00477) |
+| Chef's knife | Kitchen | Palatial SimReady | [`D00478`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00478) |
+| Paper towel holder | Kitchen | Palatial SimReady | [`D00587`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00587) |
+| Paper towel roll | Kitchen | Palatial SimReady | [`D00588`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00588) |
+| Slice of toast | Kitchen | Palatial SimReady | [`D00865`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00865) |

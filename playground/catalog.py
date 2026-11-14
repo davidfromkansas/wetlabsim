@@ -233,7 +233,56 @@ ITEMS = [
     ("vortex_mixer", "Lab equipment", "Vortex mixer", "autobio:vortex_mixer_genie_2", False, False),
     ("lab_oven", "Furniture", "Hot air oven", "quiktech:qt_lab_000005", False, True),
     ("flow_cabinet", "Furniture", "Laminar flow cabinet", "quiktech:qt_lab_000012", True, True),
+    # Nov 13 articulated kitchen, lab and furniture assets (ForgeCAD, Palatial, NVIDIA): doors,
+    # drawers, lids and knobs on the joints and limits their assets state
+    ("chest_of_drawers", "Furniture", "Chest of drawers", "forgecad:chest_of_drawers", False, True),
+    ("kitchen_base_cabinet", "Furniture", "Kitchen base cabinet", "forgecad:kitchen_base_cabinet", False, True),
+    ("kitchen_wall_cabinet", "Furniture", "Kitchen wall cabinet", "forgecad:kitchen_wall_cabinet", False, True),
+    ("washer", "Furniture", "Front-load washer", "forgecad:front_load_washer", False, True),
+    ("range_oven", "Furniture", "Range oven", "forgecad:range_oven", False, True),
+    ("french_door_fridge", "Furniture", "French-door fridge", "forgecad:refrigerator", False, True),
+    ("gondola_shelf", "Furniture", "Gondola shelf", "forgecad:gondola_shelf", False, True),
+    ("bakery_rack", "Furniture", "Bakery display rack", "palatial:D00326", False, True),
+    ("metal_shelving", "Furniture", "Metal shelving unit", "palatial:D00661", False, True),
+    ("workbench_drawers", "Furniture", "Workbench with drawers", "furniture_workbench_standard_e01", True, True),
+    ("fridge_freezer", "Furniture", "Fridge freezer", "appliance_refrigerator_a01", True, True),
+    ("kitchen_island", "Furniture", "Kitchen island", "fixture_island_a01", True, True),
+    ("kitchenette", "Furniture", "Kitchenette module", "facilitySystem_kitchenette_module_a01", True, True),
+    ("drug_cabinet_2", "Furniture", "Drug cabinet, 8 drawers", "cabinet_for_drugs_a02", True, True),
+    ("lab_incubator", "Lab equipment", "Benchtop incubator", "forgecad:laboratory_incubator", False, False),
+    ("plate_reader", "Lab equipment", "Microplate reader", "forgecad:microplate_reader", False, False),
+    ("microplate_96", "Lab & Medical", "96-well microplate", "forgecad:microplate", False, False),
+    ("air_fryer", "Kitchen", "Air fryer", "forgecad:air_fryer", False, False),
+    ("microwave", "Kitchen", "Microwave oven", "forgecad:microwave_oven", False, False),
+    ("stand_mixer", "Kitchen", "Stand mixer", "forgecad:stand_mixer", False, False),
+    ("pop_up_toaster", "Kitchen", "Pop-up toaster", "forgecad:toaster", False, False),
+    ("cookware_pot", "Kitchen", "Saucepan with lid", "forgecad:cookware_set", False, False),
+    ("dish_rack", "Kitchen", "Dish drying rack", "forgecad:dish_drying_rack", False, False),
+    ("food_container", "Kitchen", "Latching food container", "forgecad:latching_food_container", False, False),
+    ("mug_white", "Kitchen", "Mug, white gloss", "forgecad:mug", False, False),
+    ("espresso_machine", "Kitchen", "Espresso machine", "palatial:D00154", False, False),
+    ("toaster_tray", "Kitchen", "Toaster with crumb tray", "palatial:D00866", False, False),
+    ("camping_stove", "Kitchen", "Camping gas stove", "palatial:D00336", False, False),
+    ("kitchen_scale", "Kitchen", "Kitchen scale", "palatial:D00505", False, False),
+    ("knife_block", "Kitchen", "Knife block", "palatial:D00477", False, False),
+    ("chef_knife", "Kitchen", "Chef's knife", "palatial:D00478", False, False),
+    ("towel_holder", "Kitchen", "Paper towel holder", "palatial:D00587", False, False),
+    ("paper_towel", "Kitchen", "Paper towel roll", "palatial:D00588", False, False),
+    ("toast", "Kitchen", "Slice of toast", "palatial:D00865", False, False),
 ]
+
+# Triangles an item's visuals may keep before they are simplified (tools/convert_simready; the
+# default is 60,000). Simplifying drops a texture, so items whose whole look is one texture keep
+# all their detail (Palatial's are about 100,000 to 160,000 triangles).
+MAX_TRIS = {i[0]: 200_000 for i in ITEMS if i[3].startswith("palatial:")}
+
+# Furniture whose knobs, dials and buttons turn and press through their range (on other
+# furniture they are fixed, world.part_kind): a cooker's hob knobs, a washer's programme dial
+FURNITURE_CONTROLS_MOVE = {"range_oven", "washer", "kitchenette"}
+
+# One-part items that collide as each of the colliders their asset lays out (a shelf's boards, a
+# mug's handle and walls), not one hull around them all (tools/convert_simready.convert)
+PER_COLLIDER = {i[0] for i in ITEMS if i[3].startswith(("forgecad:", "palatial:"))}
 
 # Glued-on parts kept as separate caps (on a weld) whose asset doesn't name them as a cap, lid,
 # cork or stopper (world.SEPARATE finds those): item -> part names.
@@ -299,11 +348,16 @@ RECOLOR = {"rack_compact_blue": [0.16, 0.45, 0.85, 1], "rack_compact_pink": [0.9
 
 # Racks: their holes need finer convex pieces to stay open (tools/convert_simready.FINE)
 FINE_PIECES = {"rack_two_tier", "rack_compact", "rack_wire", *RECOLOR}
+# Loose parts that sit fitted inside another part of their item, and don't collide with it (nor
+# do the parts on their joints): item -> {part: the part it sits in}. The kitchenette's mini
+# fridge stands in its housing's recess; our convex pieces of the housing are coarser than its
+# shape and fill the recess (finer ones cost a lot of speed and still overlap the fridge by 2 cm).
+FITTED_PARTS = {"kitchenette": {"refrigeratorBody_01_obj_00": "body_01_obj_00"}}
 
 # Where each item comes from, as the library's source chip names it (by its folder's prefix).
 SOURCE_NAMES = {"": "NVIDIA", "tripo": "Tripo", "quiktech": "QUIKTECH", "usdcraft": "USDCraft",
                 "autobio": "AutoBio", "mujoco": "MuJoCo", "inhouse": "Built in-house",
-                "forgecad": "ForgeCAD"}
+                "forgecad": "ForgeCAD", "palatial": "Palatial"}
 
 
 def source(hf: str) -> str:
