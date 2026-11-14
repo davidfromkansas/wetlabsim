@@ -61,6 +61,14 @@ KINDS = {
                    ("disinfectant", -0.12, 0.7, 0.0),
                    ("glove_box", 0.0, 0.8, math.pi / 2),
                ]},
+    # A kitchen island: the arm stands on the worktop near one long edge (its long side runs
+    # beside the arm, like the lab bench), a humanoid on the floor beside it. Starts empty.
+    "island": {"label": "Kitchen island", "table": "kitchen_island", "turn": 0.0, "robot_xy": (-0.17, 0.0),
+               "layout": []},
+    # A kitchen counter run (Tripo's worktop over cabinets whose doors and drawers open), turned
+    # so its long side runs beside the arm. Starts empty.
+    "counter": {"label": "Kitchen counter", "table": "countertop_2", "turn": math.pi / 2, "robot_xy": (-0.15, 0.0),
+                "layout": []},
 }
 
 # Contact properties for library items, as a MuJoCo default class like the cell's
@@ -196,7 +204,7 @@ class Station:
 
     @property
     def top(self) -> float:
-        return table_top(catalog.meta(self.table_item))
+        return table_top(self.table_item)
 
     def to_world(self, x: float, y: float, z: float = 0.0):
         """A point given in the station's own frame (table centre, robot along -x) in the world."""
@@ -733,8 +741,10 @@ def _add_item(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_cac
     set_inertia(body, [(meta.get("inertial"), np.eye(4))])
 
 
-def table_top(meta: dict) -> float:
-    return float(meta["size"][2])
+def table_top(item: str) -> float:
+    """Where a station's robot and objects stand: the item's height, or its worktop when a
+    backsplash rises above it (catalog.WORKTOP)."""
+    return float(catalog.WORKTOP.get(item, catalog.meta(item)["size"][2]))
 
 
 def _quat_mul(a, b):
@@ -752,7 +762,7 @@ def _camera(world, name, pos, target, fovy, up=(0, 0, 1)):
 def add_station(world: mujoco.MjSpec, st: Station, cache: set):
     """A station's table, its robot on it, and the robot's overhead and side cameras."""
     tmeta = catalog.meta(st.table_item)
-    top = table_top(tmeta)
+    top = table_top(st.table_item)
     _add_item(world, Placed(table_uid(st), st.table_item, (st.pos[0], st.pos[1], 0.0), st.table_yaw),
               tmeta, True, cache)
     rx, ry = st.robot_xy

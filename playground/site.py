@@ -223,7 +223,9 @@ At the start of a run the robot stands still, the left arm is at joint angles `{
 and the right arm at `{ready_r}` (rad): forearms raised in front of the chest, hands open,
 above the table top and behind its edge. Nothing is in a protective stop.
 """
-TABLES = {"table": "a heavy-duty packing table", "wetlab": "a stainless steel lab bench"}
+TABLES = {"table": "a heavy-duty packing table", "wetlab": "a stainless steel lab bench",
+          "island": "a kitchen island's worktop",
+          "counter": "a kitchen counter's worktop"}
 
 
 def site_sheet(placed: list[W.Placed], station: W.Station | None = None,

@@ -41,7 +41,7 @@ def test_new_item_rests_on_the_floor(item):
     for b in _bodies(m, "a"):
         assert d.xpos[b][2] > -0.08, f"{m.body(b).name} fell through"
     root = m.body("obj_a").id
-    assert np.linalg.norm(d.xpos[root][:2]) < 0.3
+    assert np.linalg.norm(d.xpos[root][:2] - m.body_pos[root][:2]) < 0.3   # it didn't wander off
 
 
 @pytest.mark.parametrize("item,yaw", [("beaker_50", 0.0), ("tube_10ml", 0.0), ("cryovial", 0.0),

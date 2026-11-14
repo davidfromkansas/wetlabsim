@@ -1,0 +1,58 @@
+{
+ "source": "food_produce_lemon_a01",
+ "usd": "sm_food_produce_lemon_a01_01.usd",
+ "mass": 0.12793,
+ "friction": 0.45,
+ "com": [
+  0.00522,
+  -0.00059,
+  0.02935
+ ],
+ "size": [
+  0.0745,
+  0.0601,
+  0.0594
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00013410368093788746,
+   "friction": 0.45,
+   "restitution": 0.4
+  }
+ ],
+ "inertial": {
+  "mass": 0.127925,
+  "pos": [
+   0.005222,
+   -0.000589,
+   0.029347
+  ],
+  "diaginertia": [
+   7.78864e-05,
+   9.09754e-05,
+   9.21211e-05
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ }
+}

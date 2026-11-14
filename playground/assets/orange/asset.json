@@ -1,0 +1,58 @@
+{
+ "source": "food_produce_orange_a01",
+ "usd": "sm_food_produce_orange_a01_01.usd",
+ "mass": 0.28075,
+ "friction": 0.45,
+ "com": [
+  -0.00034,
+  0.00171,
+  0.04445
+ ],
+ "size": [
+  0.0997,
+  0.1,
+  0.0793
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.0003975056385256839,
+   "friction": 0.45,
+   "restitution": 0.4
+  }
+ ],
+ "inertial": {
+  "mass": 0.280746,
+  "pos": [
+   -0.000343,
+   0.001707,
+   0.044448
+  ],
+  "diaginertia": [
+   0.000376142,
+   0.000381504,
+   0.000459556
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ }
+}

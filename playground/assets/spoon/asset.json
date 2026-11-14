@@ -1,0 +1,58 @@
+{
+ "source": "kitchenware_spoon_b01",
+ "usd": "sm_kitchenware_spoon_b01_01.usd",
+ "mass": 0.19149,
+ "friction": 0.3,
+ "com": [
+  -0.0,
+  8e-05,
+  0.00687
+ ],
+ "size": [
+  0.035,
+  0.191,
+  0.0136
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 2.5294516675639707e-05,
+   "friction": 0.3,
+   "restitution": 0.1
+  }
+ ],
+ "inertial": {
+  "mass": 0.191491,
+  "pos": [
+   -0.0,
+   7.7e-05,
+   0.006873
+  ],
+  "diaginertia": [
+   2.33884e-05,
+   0.000586084,
+   0.00060342
+  ],
+  "quat": [
+   0.707107,
+   0.0,
+   0.0,
+   -0.707107
+  ]
+ }
+}

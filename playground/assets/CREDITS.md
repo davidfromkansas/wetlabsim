@@ -264,3 +264,44 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Paper towel holder | Kitchen | Palatial SimReady | [`D00587`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00587) |
 | Paper towel roll | Kitchen | Palatial SimReady | [`D00588`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00588) |
 | Slice of toast | Kitchen | Palatial SimReady | [`D00865`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00865) |
+| Dishwasher | Furniture | ForgeCAD SimReady | [`dishwasher`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/dishwasher) |
+| Range hood | Furniture | ForgeCAD SimReady | [`range_hood`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/range_hood) |
+| Bar stool | Furniture | ForgeCAD SimReady | [`gas_lift_bar_stool`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/gas_lift_bar_stool) |
+| Chest freezer | Furniture | ForgeCAD SimReady | [`chest_freezer`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/chest_freezer) |
+| Sink basin | Kitchen | NVIDIA SimReady | [`fixture_sink_basin_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fixture_sink_basin_a01) |
+| Kitchen counter | Furniture | NVIDIA SimReady | [`fixture_counter_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fixture_counter_a01) |
+| Countertop with cabinets | Furniture | Tripo SimReady | [`countertop_C019`](https://huggingface.co/datasets/VAST-AI/Tripo-Simready-Assets/tree/main/countertop_C019) |
+| Countertop with cabinets, 2 | Furniture | Tripo SimReady | [`countertop_C020`](https://huggingface.co/datasets/VAST-AI/Tripo-Simready-Assets/tree/main/countertop_C020) |
+| Lab stool | Furniture | NVIDIA SimReady | [`stool_mobile_padded_vinyl_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/stool_mobile_padded_vinyl_a01) |
+| Fume hood | Furniture | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R480_fume_hood/09_fume_hood_with_a_base_cabinet_120_x_80_x_230_cm`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R480_fume_hood/09_fume_hood_with_a_base_cabinet_120_x_80_x_230_cm) |
+| Biosafety cabinet | Furniture | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R490_biosafety_cabinet/01_class_ii_biosafety_cabinet`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R490_biosafety_cabinet/01_class_ii_biosafety_cabinet) |
+| Kitchen tap | Kitchen | NVIDIA SimReady | [`fixture_faucet_singleLever_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fixture_faucet_singleLever_a01) |
+| Electric kettle | Kitchen | ForgeCAD SimReady | [`electric_kettle`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/electric_kettle) |
+| Drip coffee maker | Kitchen | ForgeCAD SimReady | [`drip_coffee_maker`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/drip_coffee_maker) |
+| French press | Kitchen | ForgeCAD SimReady | [`french_press`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/french_press) |
+| Rice cooker | Kitchen | ForgeCAD SimReady | [`rice_cooker`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/rice_cooker) |
+| Kitchen tongs | Kitchen | ForgeCAD SimReady | [`kitchen_tongs`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/kitchen_tongs) |
+| Pedal bin | Kitchen | ForgeCAD SimReady | [`pedal_trash_can`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/pedal_trash_can) |
+| Dinner plate | Kitchen | ForgeCAD SimReady | [`plate`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/plate) |
+| Cutlery set | Kitchen | ForgeCAD SimReady | [`cutlery_set`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/cutlery_set) |
+| Drinking glass | Kitchen | ForgeCAD SimReady | [`drinking_glass`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/drinking_glass) |
+| Glass tumbler | Kitchen | NVIDIA SimReady | [`dishware_glass_tumbler_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_glass_tumbler_a01) |
+| Wine glass | Kitchen | NVIDIA SimReady | [`dishware_glass_wine_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_glass_wine_a01) |
+| Fork | Kitchen | NVIDIA SimReady | [`kitchenware_fork_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/kitchenware_fork_a01) |
+| Spoon | Kitchen | NVIDIA SimReady | [`kitchenware_spoon_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/kitchenware_spoon_b01) |
+| Table knife | Kitchen | NVIDIA SimReady | [`kitchenware_knife_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/kitchenware_knife_a01) |
+| Frying pan | Kitchen | NVIDIA SimReady | [`kitchenware_pan_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/kitchenware_pan_a01) |
+| Spatula | Kitchen | NVIDIA SimReady | [`kitchenware_spatula_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/kitchenware_spatula_b01) |
+| Egg | Kitchen | NVIDIA SimReady | [`food_egg_chicken_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/food_egg_chicken_a01) |
+| Bread loaf | Kitchen | NVIDIA SimReady | [`food_packaged_bread_loaf_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/food_packaged_bread_loaf_a01) |
+| Bagel | Kitchen | NVIDIA SimReady | [`food_prepared_bagel_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/food_prepared_bagel_b01) |
+| Croissant | Kitchen | NVIDIA SimReady | [`food_prepared_croissant_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/food_prepared_croissant_a01) |
+| Banana | Kitchen | NVIDIA SimReady | [`food_produce_banana_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/food_produce_banana_a01) |
+| Orange | Kitchen | NVIDIA SimReady | [`food_produce_orange_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/food_produce_orange_a01) |
+| Lemon | Kitchen | NVIDIA SimReady | [`food_produce_lemon_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/food_produce_lemon_a01) |
+| Tomato | Kitchen | NVIDIA SimReady | [`food_produce_tomato_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/food_produce_tomato_a01) |
+| Strawberry | Kitchen | NVIDIA SimReady | [`food_produce_strawberry_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/food_produce_strawberry_a01) |
+| Trigger spray bottle | Cleaning | ForgeCAD SimReady | [`spray_bottle`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/spray_bottle) |
+| Reagent reservoir | Lab & Medical | ForgeCAD SimReady | [`reagent_reservoir`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/reagent_reservoir) |
+| Screw-cap bottle | Glassware | ForgeCAD SimReady | [`screw_cap_bottle`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/screw_cap_bottle) |
+| Sharps box | Lab & Medical | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R492_sharps_container/06_tabletop_mini_sharps_box`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R492_sharps_container/06_tabletop_mini_sharps_box) |
