@@ -1265,7 +1265,7 @@ function stationStatus(st) {
   if (draft.trim() || st.libero || st.wetrobo) return {color: '#16A34A', text: 'Task ready'};
   return {color: '#9CA3AF', text: 'No task yet'};
 }
-const STATION_IMG = {franka: '/pg/static/station_franka.png', ur5e: '/pg/static/station_ur5e.png', aloha: '/pg/static/station_aloha.png', fr3_duo: '/pg/static/station_fr3_duo.png', g1: '/pg/static/station_g1.png', piper: '/pg/static/station_piper.png'};
+const STATION_IMG = {franka: '/pg/static/station_franka.png', ur5e: '/pg/static/station_ur5e.png', aloha: '/pg/static/station_aloha.png', fr3_duo: '/pg/static/station_fr3_duo.png', g1: '/pg/static/station_g1.png', piper: '/pg/static/station_piper.png', n220: '/pg/static/station_n220.png', crx30ia: '/pg/static/station_crx30ia.png'};
 function chipDot(st) {
   const sc = S.scene, run = (sc.runs || {})[st.id];
   if (run && run.active) return ['run', 'Working on its task'];
@@ -1305,7 +1305,7 @@ function renderDock() {
 
 // ---------------------------------------------------------------- layout v3: robots are the unit
 // The lab's robots, listed under the open session in the sidebar, and the robot panel's header.
-const ROBOT_PIC = {franka: '/pg/static/robot_franka.png', ur5e: '/pg/static/robot_ur5e.png', aloha: '/pg/static/robot_aloha.png', fr3_duo: '/pg/static/robot_fr3_duo.png', g1: '/pg/static/robot_g1.png', piper: '/pg/static/robot_piper.png'};
+const ROBOT_PIC = {franka: '/pg/static/robot_franka.png', ur5e: '/pg/static/robot_ur5e.png', aloha: '/pg/static/robot_aloha.png', fr3_duo: '/pg/static/robot_fr3_duo.png', g1: '/pg/static/robot_g1.png', piper: '/pg/static/robot_piper.png', n220: '/pg/static/robot_n220.png', crx30ia: '/pg/static/robot_crx30ia.png'};
 const ROBOT_IMG = (r) => ROBOT_PIC[r] || ROBOT_PIC.franka;
 async function pickRobot(id) {
   $('rmenu').hidden = true; $('rpick').setAttribute('aria-expanded', 'false');
@@ -1554,7 +1554,13 @@ function drawStarter() {
     <button class="primary" data-preset="kitchen">Add to lab</button></div></div>
     <div class="tcard"><img src="/pg/static/scene_wetlab.jpg" alt="Four robots in a wet lab"><div class="rx"><div><b>Wet lab scene</b><div class="small">A whole wet lab: four benches, biosafety cabinet, fume hood, CO2 incubator and lab fridge. Four robots, each with a task ready: centrifuge, plate reader, jar lid and tube rack.</div></div>
     <div class="tags"><span class="tag">4 robots · UR5e, Franka, FR3 Duo, G1</span></div>
-    <button class="primary" data-preset="wetlab">Add to lab</button></div></div>`;
+    <button class="primary" data-preset="wetlab">Add to lab</button></div></div>
+    <div class="tcard"><img src="/pg/static/scene_factory.jpg" alt="Seven robots on a factory assembly line"><div class="rx"><div><b>Factory scene</b><div class="small">An assembly line: a roller conveyor with totes and boxes, six assembly benches, pallet racks and a forklift. Seven robots, each with a task ready: pegs, a task board, a gearbox, breakers, cable plugs, a valve and stacking boxes.</div></div>
+    <div class="tags"><span class="tag">7 robots · Franka, UR5e, FR3 Duo, ALOHA, PiPER, G1, FANUC CRX-30iA</span></div>
+    <button class="primary" data-preset="factory">Add to lab</button></div></div>
+    <div class="tcard"><img src="/pg/static/scene_car.jpg" alt="Seven robots building a car"><div class="rx"><div><b>Car assembly scene</b><div class="small">A car body with a 220 kg Comau arm that lifts the hood on by vacuum, a FANUC arm, and benches for brakes, engine parts, electrics and tools. Seven robots, each with a task ready.</div></div>
+    <div class="tags"><span class="tag">7 robots · Comau N-220, FANUC CRX-30iA, FR3 Duo, Franka, ALOHA, G1, UR5e</span></div>
+    <button class="primary" data-preset="car">Add to lab</button></div></div>`;
   $('rcards').querySelectorAll('button[data-r]').forEach(b => b.onclick = () => startPlacing(b.dataset.r, b.dataset.kind || 'table'));
   $('rcards').querySelectorAll('button[data-preset]').forEach(b => b.onclick = () => { closeAdd(); window.sceneGen && window.sceneGen.preset(b.dataset.preset); });
 }
@@ -2545,8 +2551,10 @@ function renderData() {
       rows.push(['Wrist force (x, y, z)', f.slice(0, 3).map(f2).join(', ') + ' N'],
                 ['Wrist torque (x, y, z)', f.slice(3).map(f2).join(', ') + ' Nm']);
     }
+    const vac = stn.robot === 'n220' || stn.robot === 'crx30ia';     // a vacuum tool: on or off, no fingers
     rows.push([(n ? n + 'arm' : 'Arm') + ' moving', a.moving ? 'Yes' : 'No'],
-              [(n ? n + 'gripper' : 'Gripper') + ' opening', openMm(g).toFixed(0) + ' mm (' + Math.round(g.position || 0) + '/255)'],
+              vac ? ['Vacuum', (g.position || 0) > 1 ? 'On (' + Math.round(g.position || 0) + '/255)' : 'Off']
+                  : [(n ? n + 'gripper' : 'Gripper') + ' opening', openMm(g).toFixed(0) + ' mm (' + Math.round(g.position || 0) + '/255)'],
               [(n ? n + 'gripper' : 'Holding') + (n ? ' holding something' : ' something'), g.object_detected ? 'Yes' : 'No']);
     if (n && a.mode === 'protective_stop') rows.push([n + 'arm stop reason', a.protective_stop_reason || '']);
   }

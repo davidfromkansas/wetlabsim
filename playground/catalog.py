@@ -341,7 +341,7 @@ ITEMS = [
     ("test_bench", "Factory", "Controls test bench", "forgecad:articulation_test_bench", False, False),
     ("pallet_jack", "Factory", "Pallet jack", "forgecad:manual_pallet_jack", False, True),
     ("pallet_rack", "Factory", "Pallet rack bay", "forgecad:pallet_rack_bay", False, True),
-    ("roller_conveyor", "Factory", "Roller conveyor", "conveyor_belt_a05", False, True),
+    ("roller_conveyor", "Factory", "Roller conveyor", "conveyor_belt_a05", True, True),
     ("factory_workstation", "Factory", "Factory workstation", "workstation_factory_a01", False, True),
     ("modular_workbench", "Factory", "Workbench with cabinet", "furniture_workbench_modular_a01", False, True),
     ("machine_guard", "Factory", "Machine guard", "machineGuard_a01", False, False),
@@ -397,12 +397,10 @@ ITEMS = [
     ("car_dolly", "Garage", "Rolling car dolly", "vehicleSupport_rolling_dolly_a01", False, True),
     ("engine_stand", "Garage", "Engine stand", "serviceTool_engine_stand_a01", False, True),
     ("engine_crane", "Garage", "Engine crane", "serviceTool_engine_crane_a01", False, True),
-    ("tire_changer", "Garage", "Tire changer", "tireTool_tire_changer_a01", False, True),
     ("wheel_balancer", "Garage", "Wheel balancer", "testingTool_wheel_balancing_machine_a01", False, True),
     ("mechanic_cart", "Garage", "Mechanic's tool cart", "equipment_mechanic_tool_cart_g01", False, True),
     ("tool_cabinet", "Garage", "Rolling tool cabinet", "equipment_rolling_tool_cabinet_a01", False, True),
     ("tire_rack", "Garage", "Tire rack", "storage_tire_rack_a01", False, True),
-    ("grease_gun", "Garage", "Grease gun", "serviceTool_greaseGun_lever_a01", False, False),
     ("air_compressor", "Garage", "Air compressor", "equipment_airCompressor_a01", False, True),
     ("wheel_chock", "Garage", "Wheel chock", "vehicleSupport_wheel_chock_a01", False, False),
     ("engine_oil", "Garage", "Engine oil", "consumable_engine_oil_a01", False, False),
@@ -467,6 +465,8 @@ MAX_TRIS = {i[0]: 200_000 for i in ITEMS if i[3].startswith("palatial:")}
 # The worktop of a counter whose backsplash stands higher than it (the asset's height is the
 # backsplash's): the top of its worktop collider.
 WORKTOP = {"countertop": 0.738, "countertop_2": 0.754}
+# The roller conveyor carries things on its rollers, below its side rails: the top of a roller.
+WORKTOP["roller_conveyor"] = 0.768
 
 FURNITURE_CONTROLS_MOVE = {"range_oven", "washer", "kitchenette", "dishwasher", "range_hood"}
 

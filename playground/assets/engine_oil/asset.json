@@ -1,0 +1,80 @@
+{
+ "source": "consumable_engine_oil_a01",
+ "usd": "sm_consumable_engine_oil_a01_01.usd",
+ "mass": 0.39108,
+ "friction": 0.5,
+ "com": [
+  -0.0,
+  -0.04755,
+  0.25082
+ ],
+ "size": [
+  0.0829,
+  0.2102,
+  0.2887
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.0043,
+    0.0069,
+    0.0093,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    0.3868,
+    0.1904,
+    0.0101,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_2.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_2.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.003481999933051302,
+   "friction": 0.4,
+   "restitution": 0.4
+  }
+ ],
+ "inertial": {
+  "mass": 0.391083,
+  "pos": [
+   -0.0,
+   -0.047555,
+   0.250821
+  ],
+  "diaginertia": [
+   0.00273071,
+   0.0092596,
+   0.0112442
+  ],
+  "quat": [
+   0.707107,
+   0.0,
+   0.707107,
+   -0.0
+  ]
+ }
+}

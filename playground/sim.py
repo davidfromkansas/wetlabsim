@@ -6,6 +6,8 @@ agent drives the Franka here exactly as it does in the wet lab evals.
 """
 from __future__ import annotations
 
+import ctypes
+import gc
 import io
 import math
 import threading
@@ -65,6 +67,17 @@ def _ray_flex(m, d, f: int, p0, dn):
     r = np.linalg.norm(P - t[..., None] * dn, axis=2)
     near = (t > 0) & (r < m.flex_radius[f] + 0.005)
     return float(t[near].min()) if near.any() else None
+
+
+def _release_memory():
+    """Hand the last model's memory back to the system. A big scene's model is hundreds of MB
+    and every edit compiles a new one; the C library otherwise keeps each freed one's pages
+    (glibc's malloc_trim returns them), and a scene built piece by piece grew past 12 GB."""
+    gc.collect()
+    try:
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except (OSError, AttributeError):       # not glibc (macOS): nothing to do
+        pass
 
 
 class PlaygroundSim(Sim):
@@ -178,6 +191,16 @@ class PlaygroundSim(Sim):
             self._model_ver += 1
             self.reset()
             self.paused = True
+
+    def merge_settings(self, more: dict):
+        """A ready-made scene's own scene settings (scenegen.PRESETS), added to the session's:
+        the person's own changes stay. They take effect at the next rebuild (the scene's first
+        station), and show in Scene settings like any other change."""
+        with self.lock:
+            out = {k: (dict(v) if isinstance(v, dict) else v) for k, v in self.settings.items()}
+            for group, vals in more.items():
+                out[group] = {**vals, **out.get(group, {})}
+            self.settings = out
 
     def apply_settings(self, settings: dict):
         """New scene settings: the lab is compiled with them (first, so a combination MuJoCo
@@ -518,6 +541,8 @@ class PlaygroundSim(Sim):
             mujoco.mj_forward(m, d)
             self._wall0, self._sim0 = time.perf_counter(), d.time
             self._model_ver += 1
+            del old_d, snaps
+            _release_memory()
 
     def add(self, item: str, pos, yaw: float = 0.0) -> str:
         if catalog.item(item)["soft"] and W.soft_count(self.placed) >= SOFT_MAX:

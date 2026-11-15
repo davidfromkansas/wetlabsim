@@ -47,7 +47,7 @@ FLOOR_ARMS = {"n220": {"gap": 1.15, "base": 0.75, "above": 3.4, "ahead": 1.6},
               "crx30ia": {"gap": 0.55, "base": 0.35, "above": 2.3, "ahead": 0.9}}
 
 CAR_TURN = math.pi / 2       # the car body's long side faces its robot
-CAR_STAND_Y = 0.0
+CAR_STAND_Y = 1.0
 
 # The kinds of station: which table the robot stands on, how that table is turned in the
 # station's frame (the robot always faces +x), where the robot stands, and what starts on it.
@@ -728,7 +728,10 @@ def _add_jointed(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_
         # its coefficient: written the other way (lift from turn), the light lid's thread is so
         # soft that the lid sags off it
         if sc["slide"] in joint_of and sc["hinge"] in joint_of:
-            world.add_equality(type=mujoco.mjtEq.mjEQ_JOINT, name=f"obj_{p.uid}__{sc['hinge']}_thread",
+            # a hinge several slides drive (a pallet jack's lever linkage): one coupling each
+            many = sum(1 for o in meta["screws"] if o["hinge"] == sc["hinge"]) > 1
+            nm = f"{sc['slide']}_{sc['hinge']}" if many else sc["hinge"]
+            world.add_equality(type=mujoco.mjtEq.mjEQ_JOINT, name=f"obj_{p.uid}__{nm}_thread",
                                objtype=mujoco.mjtObj.mjOBJ_JOINT, name1=joint_of[sc["hinge"]], name2=joint_of[sc["slide"]],
                                data=[0, 1 / sc["ratio"], 0, 0, 0] + [0] * 7)
     fitted = catalog.FITTED_PARTS.get(p.item, {})

@@ -1,0 +1,80 @@
+{
+ "source": "machineGuard_a01",
+ "usd": "sm_machineGuard_a01_01.usd",
+ "mass": 19.3788,
+ "friction": 0.5,
+ "com": [
+  0.00021,
+  0.00034,
+  0.02337
+ ],
+ "size": [
+  0.9769,
+  0.17,
+  0.231
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.7529,
+    0.4452,
+    0.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_1.png"
+  },
+  {
+   "mesh": "vis_2.obj",
+   "rgba": [
+    0.0194,
+    0.0194,
+    0.0194,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.02522659616322385,
+   "friction": 0.5,
+   "restitution": 0.15
+  }
+ ],
+ "inertial": {
+  "mass": 19.378798,
+  "pos": [
+   0.000205,
+   0.000345,
+   0.023367
+  ],
+  "diaginertia": [
+   0.798931,
+   2.36181,
+   3.02703
+  ],
+  "quat": [
+   -0.0,
+   0.0,
+   0.707107,
+   0.707107
+  ]
+ }
+}

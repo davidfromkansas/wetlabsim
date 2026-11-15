@@ -1,0 +1,57 @@
+{
+ "source": "wheelAssembly_wheel_rim_a01",
+ "usd": "sm_wheelAssembly_wheel_rim_a01_01.usd",
+ "mass": 38.09847,
+ "friction": 0.3,
+ "com": [
+  0.05321,
+  0.00011,
+  0.25047
+ ],
+ "size": [
+  0.255,
+  0.5053,
+  0.5053
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.7284,
+    0.7289,
+    0.7264,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.05024867941877717,
+   "friction": 0.3,
+   "restitution": 0.1
+  }
+ ],
+ "inertial": {
+  "mass": 38.098469,
+  "pos": [
+   0.053213,
+   0.000106,
+   0.250475
+  ],
+  "diaginertia": [
+   1.09981,
+   1.10035,
+   1.62015
+  ],
+  "quat": [
+   0.707107,
+   0.0,
+   0.707107,
+   -0.0
+  ]
+ }
+}

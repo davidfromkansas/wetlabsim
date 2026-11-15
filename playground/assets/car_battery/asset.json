@@ -1,0 +1,206 @@
+{
+ "source": "electricalSystem_battery_a01",
+ "usd": "sm_electricalSystem_battery_a01_01.usd",
+ "mass": 1.37102,
+ "friction": 0.5,
+ "com": null,
+ "size": [
+  0.19,
+  0.26,
+  0.1919
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "battery_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.2056,
+      0.2111,
+      0.2051,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      0.6173,
+      0.6173,
+      0.6173,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_2.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_2.png"
+    },
+    {
+     "mesh": "b0_vis_3.obj",
+     "rgba": [
+      0.8,
+      0.8,
+      0.8,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.009149742650715746,
+     "friction": 0.4,
+     "restitution": 0.4
+    }
+   ],
+   "mass": 1.289072,
+   "inertial": {
+    "mass": 1.289072,
+    "pos": [
+     0.0014,
+     0.001885,
+     0.096546
+    ],
+    "diaginertia": [
+     0.0141422,
+     0.0184824,
+     0.0185009
+    ],
+    "quat": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "parent": null,
+   "root": true,
+   "pos": [
+    -0.0,
+    -0.0,
+    -7.7e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.0,
+    -0.0,
+    -7.7e-05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "handle_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.2056,
+      0.2111,
+      0.2051,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 0.00022470635925212317,
+     "friction": 0.4,
+     "restitution": 0.4
+    }
+   ],
+   "mass": 0.081953,
+   "inertial": {
+    "mass": 0.081953,
+    "pos": [
+     0.054019,
+     -8e-06,
+     -0.000548
+    ],
+    "diaginertia": [
+     6.95415e-05,
+     0.000166235,
+     0.000230995
+    ],
+    "quat": [
+     0.707107,
+     0.0,
+     0.0,
+     -0.707107
+    ]
+   },
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_handle_01_joint_00",
+    "type": "hinge",
+    "range": [
+     -1.570796,
+     0.0
+    ],
+    "drive": {
+     "damping": 5.72957804
+    },
+    "physx_joint_friction": 0.10000000149011612,
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     1.0,
+     0.0
+    ]
+   },
+   "pos": [
+    -0.0,
+    -0.0,
+    0.180077
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.0,
+    -0.0,
+    0.18,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

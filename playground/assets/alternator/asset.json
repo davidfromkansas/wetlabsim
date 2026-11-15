@@ -1,0 +1,112 @@
+{
+ "source": "electricalSystem_alternator_a01",
+ "usd": "sm_electricalSystem_alternator_a01_01.usd",
+ "mass": 92.78358,
+ "friction": 0.4,
+ "com": [
+  0.00339,
+  -0.00077,
+  0.10974
+ ],
+ "size": [
+  0.3055,
+  0.2964,
+  0.2463
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.4997,
+    0.4997,
+    0.4997,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    0.1324,
+    0.1391,
+    0.1407,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_2.obj",
+   "rgba": [
+    0.2607,
+    0.2678,
+    0.2712,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_3.obj",
+   "rgba": [
+    0.2333,
+    0.1917,
+    0.1445,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_4.obj",
+   "rgba": [
+    0.0523,
+    0.0523,
+    0.0523,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_5.obj",
+   "rgba": [
+    0.1157,
+    0.0356,
+    0.0156,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.01245360368647598,
+   "friction": 0.3,
+   "restitution": 0.1
+  }
+ ],
+ "inertial": {
+  "mass": 92.783577,
+  "pos": [
+   0.003392,
+   -0.000768,
+   0.109739
+  ],
+  "diaginertia": [
+   1.72114,
+   1.72239,
+   2.10983
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ }
+}

@@ -53,6 +53,10 @@ def write_credits():
             lines.append(f"| {label} | {tab} | MuJoCo model gallery, by Kevin Zakka (Apache 2.0) | "
                          f"[`{folder}`](https://github.com/google-deepmind/mujoco/tree/main/model/cube) |")
             continue
+        if repo == "libero":              # LIBERO's own models (tools/build_libero_objects.py)
+            lines.append(f"| {label} | {tab} | LIBERO (MIT) | "
+                         f"[`{folder}`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/{folder}) |")
+            continue
         name, url = SOURCES[repo or "nvidia"]
         lines.append(f"| {label} | {tab} | {name} | [`{folder}`]({url}/tree/main/{folder}) |")
     (catalog.ASSETS / "CREDITS.md").write_text("\n".join(lines) + "\n")
