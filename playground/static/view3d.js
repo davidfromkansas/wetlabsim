@@ -42,7 +42,7 @@ function applyDelta(c, d) {
 
 // ---------------------------------------------------------------- the light Tron floor (tron.py)
 const TRON = {CYAN: [0.0, 0.85, 1.0], STEP: 0.5, REACH: 4.0, SEG: 0.5, Z: 0.0015, WIDTH: 0.012,
-              RIPPLE_SPEED: 1.1, RIPPLE_EVERY: 4.0, STREAKS: 10, STREAK_SPEED: 1.6, TRAIL: 6, FLOOR: [0.975, 0.975, 0.965]};
+              RIPPLE_SPEED: 1.1, RIPPLE_EVERY: 4.0, STREAKS: 10, STREAK_SPEED: 1.6, TRAIL: 6, FLOOR: [0.852, 0.851, 0.828]}  // FLOOR: the vinyl tiles' average colour;
 const hash = (i, k) => { const x = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return x - Math.floor(x); };
 function tronShapes(t) {
   const T = TRON, out = [], lines = [], pieces = [];
