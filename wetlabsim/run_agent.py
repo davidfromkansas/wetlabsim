@@ -89,13 +89,22 @@ def transcript_text(run_dir: pathlib.Path) -> str:
 
 def workspace_leaks(*dirs: pathlib.Path) -> list[pathlib.Path]:
     """Files the agent can read that name the cell's own folder. From that path an agent could
-    import the full package (simulator, scene) instead of only the robot client."""
-    root, out = str(ROOT), []
+    import the full package (simulator, scene) instead of only the robot client.
+
+    The folder counts when it appears as a path of its own: on its own, or followed by one of
+    its own files or folders. A web page's links ("/app/g1" on unitree.com, ".../_app/..." on
+    huggingface.co) don't name it, though they contain the same letters when the cell runs in
+    /app."""
+    import re
+    own = "|".join(re.escape(p.name) for p in ROOT.iterdir())
+    leak = re.compile(r"(?<![\w.\-/])" + re.escape(str(ROOT).rstrip("/"))
+                      + r"(?:/(?:" + own + r")(?![\w.\-])|/?(?![\w.\-/]))")
+    out = []
     for base in dirs:
         for f in base.rglob("*"):
             if f.is_file() and f.suffix.lower() not in (".pdf", ".stl", ".obj", ".png", ".jpg"):
                 try:
-                    if root in f.read_text(errors="ignore"):
+                    if leak.search(f.read_text(errors="ignore")):
                         out.append(f)
                 except OSError:
                     pass
