@@ -2179,6 +2179,10 @@ class PGHandler(Handler):
                     except (TypeError, ValueError):
                         repeat = 1
                     s.selected = None
+                    if station.wetrobo and station.task:
+                        err = s.wetrobo_run_start(uid)
+                        if err:
+                            return self._json({"ok": False, "error": err})
                     # Run task N times: exact copies of this station, side by side in free floor
                     # space, run at the same time (as many as may run at once); every run starts
                     # from its station as it is now, and a station that finishes takes the next run.
