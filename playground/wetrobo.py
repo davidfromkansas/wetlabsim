@@ -26,6 +26,12 @@ import numpy as np
 PAPER = "https://arxiv.org/abs/2609.18435"
 INCUBATOR, BOTTLE, DISH, LID = "lab_incubator", "screw_cap_bottle", "petri_dish_60", "petri_dish_60_lid"
 KIT = (INCUBATOR, BOTTLE, DISH, LID)
+# The arms a WetRobo station can have: the playground's Franka Panda, or the paper's own arm, the
+# AgileX PiPER (smaller, so each lab seats it nearer the kit: world.KINDS "robot_xy_by").
+ROBOTS = ("franka", "piper")
+ROBOT_BLURBS = {"franka": "The playground's usual arm.", "piper": "The paper's own arm: smaller, seated nearer the kit."}
+ROBOT_LABELS = {"franka": "Franka Panda", "piper": "AgileX PiPER"}
+ROBOT_NAMES = {"franka": "Franka Emika Panda", "piper": "AgileX PiPER"}
 DOOR_OPEN = math.radians(60)          # the incubator door: open this far or more
 CAP_OFF = 0.95                        # the cap: unscrewed this share of its thread or more
 LID_SEAT = 0.007                      # the lid on its dish: its bottom edge this far above the dish's
@@ -123,13 +129,16 @@ def done_when(t: Task) -> str:
 
 
 def board(rows: list[dict]) -> dict:
-    """Scores, model by model: passed / tried for each task in each lab (every run counts),
-    and the totals per lab."""
-    by: dict[str, dict] = {}
+    """Scores, model by model and robot by robot: passed / tried for each task in each lab (every
+    run counts), and the totals per lab. A run recorded before the PiPER was added was a Franka's."""
+    by: dict[tuple, dict] = {}
     for r in rows:
-        b = by.setdefault(r["model"], {"model": r["model"], "label": r.get("model_label") or r["model"],
-                                       "cells": {}, "labs": {k: {"tried": 0, "passed": 0} for k in LABS},
-                                       "seconds": [], "cost": 0.0})
+        robot = r.get("robot") or "franka"
+        b = by.setdefault((r["model"], robot),
+                          {"model": r["model"], "label": r.get("model_label") or r["model"],
+                           "robot": robot, "robot_label": ROBOT_LABELS.get(robot, robot),
+                           "cells": {}, "labs": {k: {"tried": 0, "passed": 0} for k in LABS},
+                           "seconds": [], "cost": 0.0})
         c = b["cells"].setdefault(f'{r["task"]}:{r["lab"]}', {"tried": 0, "passed": 0})
         c["tried"] += 1
         c["passed"] += bool(r["passed"])

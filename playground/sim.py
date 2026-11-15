@@ -670,12 +670,13 @@ class PlaygroundSim(Sim):
                 raise RobotError("pick one of LIBERO's tasks") from None
             robot = "franka"
         bench = WR.lab_of(kind)
-        if bench:                    # a WetRobo lab: its task, with the playground's Franka
+        if bench:                    # a WetRobo lab: its task, with the Franka or the paper's PiPER
             try:
                 wt = WR.task(task)
             except KeyError:
                 raise RobotError("pick one of WetRobo's tasks") from None
-            robot = "franka"
+            if robot not in WR.ROBOTS:
+                robot = "franka"
         with self.lock:
             self._sync_placed()
             uid = self._new_station_uid()
@@ -686,7 +687,7 @@ class PlaygroundSim(Sim):
                            task=task if kind == "libero" or bench else "")
             self.stations.append(st)
             top = st.top
-            for item, lx, ly, iyaw, *up in (st.spec["layout"] if starter else []):     # what the station starts with
+            for item, lx, ly, iyaw, *up in (st.spec.get("layout_by", {}).get(st.robot, st.spec["layout"]) if starter else []):     # what the station starts with
                 x, y, _ = st.to_world(lx, ly)                                         # (up: its height above the table top)
                 if st.near_base(x, y):        # where another robot's base stands (an ALOHA's two)
                     continue
@@ -872,7 +873,7 @@ class PlaygroundSim(Sim):
             if st.libero:
                 raise RobotError("a LIBERO station keeps LIBERO's own robot, the Franka Panda")
             if st.wetrobo:
-                raise RobotError("a WetRobo station keeps its Franka Panda, so every run is the same test")
+                raise RobotError("a WetRobo station keeps its robot, so every run is the same test")
             self._sync_placed()
             new = W.Station(st.uid, robot, st.pos, st.yaw, st.name, st.kind)
             if any(new.holds(p.pos[0], p.pos[1]) and new.near_base(p.pos[0], p.pos[1]) for p in self.placed):

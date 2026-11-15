@@ -115,7 +115,8 @@ DOCS_LEVELS = ("standard", "assisted")
 
 
 # The robots with a "standard" kit (the maker's own documents): the model folder each gets.
-STANDARD_KITS = {"franka": "franka_emika_panda", "aloha": "aloha", "fr3_duo": "franka_fr3_duo", "g1": "unitree_g1"}
+STANDARD_KITS = {"franka": "franka_emika_panda", "aloha": "aloha", "fr3_duo": "franka_fr3_duo", "g1": "unitree_g1",
+                 "piper": "agilex_piper"}
 # Left out of the robot model folder: notes, and for the ALOHA Menagerie's table scene and
 # its MJX patches (the robot only, as for the Franka).
 KIT_LEAVE_OUT = ("*.md", "scene.xml", "*.patch", "*.png", "tablelegs.obj", "tabletop.obj",
@@ -163,7 +164,7 @@ def prepare_workspace(workspace: pathlib.Path, client: pathlib.Path, robot: str,
                      " from the manual's lab bench, SITE.md is right.")
     else:
         if robot not in STANDARD_KITS:
-            raise SystemExit("the standard docs level exists only for the Franka, the ALOHA, the FR3 Duo and the G1; use --docs assisted")
+            raise SystemExit("the standard docs level exists only for the Franka, the ALOHA, the FR3 Duo, the G1 and the PiPER; use --docs assisted")
         kit = STANDARD_KITS[robot]
         from .datasheets import DIRS, fetch
         fetch(robot=robot)

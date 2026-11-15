@@ -125,6 +125,11 @@ Three modes, picked in the header:
   (`playground/wetrobo.py`). Results go to `runs/playground/wetrobo_results.jsonl`, with a
   scoreboard that puts Lab X beside Lab Y. The AI gets no demos and no lab notes: only the
   robot's manuals, its cameras and its own state.
+  A WetRobo station has the Franka Panda or the paper's own arm, the AgileX PiPER (the
+  robot picker has it too: Menagerie's `agilex_piper` model with AgileX's user manual,
+  `agent/piper`). The PiPER is smaller (626 mm reach, and pointing straight down it reaches no
+  higher than 12 cm above its base), so each lab has its own layout for it, with the arm
+  nearer the kit; the scoreboard lists each model with each robot.
 - **Wet Lab**: the robot cell's own bench and its 8 tasks (`wetlabsim/tasks.py`), each scored
   at the end by the task's own check, as in the robot cell's evals. Results go to
   `runs/playground/wetlab_results.jsonl`. 15 minutes per run.

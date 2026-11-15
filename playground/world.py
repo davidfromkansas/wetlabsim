@@ -31,6 +31,8 @@ FLOOR_PATCH = 4 * 0.3048          # metres the picture covers
 TABLE_UID = "table"     # (older saved scenes) the one table a robot stood on
 # Kept clear around a robot's base when a station starts with items, or when an arm is swapped in.
 BASE_CLEARANCE = 0.25
+# A small arm needs less (the PiPER's base is a 10 cm square).
+BASE_CLEARANCE_BY = {"piper": 0.18}
 # A station's robot stands on its table, near one long edge, facing across it (+x).
 ROBOT_XY = (-0.42, 0.0)
 # A humanoid stands on the floor instead, its pelvis this far back from the table's near edge (m):
@@ -84,7 +86,21 @@ KINDS = {
     # Lab X: the stainless lab bench, the arm near one end looking along it: the incubator ahead
     # (turned a little, its handle 0.6 m from the arm, its door swinging open toward the arm's left), the dish
     # and bottle ahead on its right, clear of the door's swing.
+    # The paper's own arm, the AgileX PiPER, is smaller (626 mm reach; straight down it reaches
+    # no higher than 12 cm above its base), so each lab has a layout of its own for it
+    # ("robot_xy_by", "layout_by"): the same kit and the same incubator spot, the arm straight
+    # in front of the incubator's handle, 0.6 m from it, and the dish and bottle 0.3 to 0.45 m
+    # from the arm, on its right, clear of the door's swing.
     "wetrobo_x": {"label": "WetRobo Lab X", "table": "lab_bench", "turn": 0.0, "robot_xy": (-0.6, -0.2),
+                  "robot_xy_by": {"piper": (-0.607, -0.066)},
+                  "layout_by": {"piper": [
+                      ("lab_incubator", 0.26, 0.0, -math.pi / 2 - 0.15),
+                      ("screw_cap_bottle", -0.367, -0.286, 0.0),
+                      ("petri_dish_60", -0.287, -0.106, 0.0),
+                      ("petri_dish_60_lid", -0.287, -0.106, 0.0, WR.LID_SEAT + 0.001),
+                      ("lab_bottle", -0.85, 0.22, 0.0),
+                      ("glass_vial", -0.85, 0.05, 0.0),
+                  ]},
                   "layout": [
                       ("lab_incubator", 0.26, 0.0, -math.pi / 2 - 0.15),
                       ("screw_cap_bottle", -0.32, -0.29, 0.0),
@@ -96,6 +112,17 @@ KINDS = {
     # Lab Y: the taller wooden packing table, the incubator ahead of the arm on its left, the
     # bottle and dish on the right (all within the arm's easy reach), and other lab things around.
     "wetrobo_y": {"label": "WetRobo Lab Y", "table": STATION_TABLE, "turn": 0.0, "robot_xy": ROBOT_XY,
+                  "robot_xy_by": {"piper": (-0.40, 0.10)},
+                  "layout_by": {"piper": [
+                      ("lab_incubator", 0.45, 0.3, -math.pi / 2),
+                      ("screw_cap_bottle", -0.18, -0.26, 0.0),
+                      ("petri_dish_60", -0.10, -0.04, 0.0),
+                      ("petri_dish_60_lid", -0.10, -0.04, 0.0, WR.LID_SEAT + 0.001),
+                      ("sterilising_tray", 0.55, -0.42, 0.0),
+                      ("reagent_bottle", 0.3, -0.12, 0.0),
+                      ("glove_box", 0.68, -0.12, math.pi / 2),
+                      ("disinfectant", -0.15, -0.5, 0.0),
+                  ]},
                   "layout": [
                       ("lab_incubator", 0.45, 0.3, -math.pi / 2),
                       ("screw_cap_bottle", 0.05, -0.33, 0.0),
@@ -256,7 +283,8 @@ class Station:
             ox, oy = self.room_origin()
             bx, by, _ = self.room()["base"]["pos"]
             return (ox + bx, oy + by)
-        return self.spec["robot_xy"]
+        # a benchmark lab seats a smaller arm nearer its kit (WetRobo: the PiPER)
+        return self.spec.get("robot_xy_by", {}).get(self.robot, self.spec["robot_xy"])
 
     def bases(self) -> list:
         """Where the robot stands on the table, in the station's frame: one base, or an ALOHA's two."""
@@ -264,8 +292,10 @@ class Station:
             return [(-0.019, 0.469), (-0.019, -0.469)]
         return [self.robot_xy]
 
-    def near_base(self, x: float, y: float, r: float = BASE_CLEARANCE) -> bool:
+    def near_base(self, x: float, y: float, r: float | None = None) -> bool:
         """Whether a world point is within r of the robot's base (or bases)."""
+        if r is None:
+            r = BASE_CLEARANCE_BY.get(self.robot, BASE_CLEARANCE)
         lx, ly = self.to_local(x, y)
         return any(math.hypot(lx - bx, ly - by) < r for bx, by in self.bases())
 

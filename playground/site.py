@@ -62,8 +62,17 @@ TOOL = {
 - Payload: none beyond the gripper. The force/torque reading has the gripper's weight removed.
 - Tool orientation convention: a TCP pose of `[x, y, z, 3.14159, 0, 0]` points the
   gripper straight down with the fingers closing along the base y axis.""",
+    "piper": """- End effector: AgileX's two-finger gripper (70 mm stroke, rubber contact surfaces), on
+  the J6 flange.
+- TCP: the point between the two finger pads, 15 mm back from the fingertips.
+- Tool orientation convention: the TCP's z axis points out of the gripper, between the
+  fingers; the fingers close along the TCP's y axis. A TCP pose of
+  `[x, y, z, 0, 3.14159, 0]` points the gripper straight down with the fingers closing
+  along the base y axis; `[x, y, z, 0, 1.5708, 0]` points it straight ahead along the base
+  x axis.
+- No force/torque sensing.""",
 }
-HAND = {"franka": "hand", "ur5e": "tool"}
+HAND = {"franka": "hand", "ur5e": "tool", "piper": "gripper"}
 
 # An ALOHA: two arms facing each other across the middle of the table. Each arm's base, in
 # the station's frame (table centre, x away from the operator's side): Menagerie's mounts.

@@ -364,6 +364,12 @@ def _world_xml(mount_quat: str) -> str:
 
 # Everything that differs between the two robots. Joint, actuator, site and camera names
 # are as they appear in the compiled model.
+# The PiPER's starting pose: gripper pointing straight down 25 cm ahead of the base, 10 cm above
+# the table, fingers closing along y (solved once on the model). Its wrist bends 70 degrees
+# at most, so straight down it reaches no higher than about 12 cm above its base.
+PIPER_READY = np.array([0.0, 1.5313, -0.963, 0.0, 1.0898, 0.0])
+
+
 ROBOTS = {
     "franka": {
         "name": "Franka Emika Panda", "gripper": "Franka Hand",
@@ -453,6 +459,30 @@ ROBOTS = {
         # The head's RealSense D435i and a camera on each wrist (LeRobot's G1 simulation).
         "cameras": {"head": "head", "left_wrist": "wrist_cam_left", "right_wrist": "wrist_cam_right",
                     "side": "side"},      # the station's audience camera (people only)
+    },
+    # AgileX Robotics' PiPER: a light 6-joint arm (626 mm reach, 1.5 kg payload) with AgileX's
+    # two-finger gripper, the arm the WetRobo paper's lab kit uses. DeepMind's Menagerie model
+    # (assets/agilex_piper), unchanged. Limits from AgileX's PiPER user manual, section 1.2
+    # (agent/piper/datasheets/SOURCES.md).
+    "piper": {
+        "name": "AgileX PiPER", "gripper": "AgileX two-finger gripper",
+        "arm_joints": [f"joint{i}" for i in range(1, 7)],
+        "arm_actuators": [f"joint{i}" for i in range(1, 7)],
+        "home_q": np.array([0.0, 1.57, -1.3485, 0.0, 0.0, 0.0]),       # Menagerie's home keyframe
+        "ready_q": PIPER_READY,
+        "tcp_site": "tcp", "base_body": "base_link",
+        "ft_site": None,      # the PiPER has no wrist force/torque sensor
+        "grip_actuator": "gripper", "grip_joint": "joint7",
+        # Finger travel from the middle (m): Menagerie's range, 0 closed to 35 mm open.
+        "grip_open": 0.035, "grip_closed": 0.0, "grip_ctrl_range": (0.035, 0.0),
+        "grip_force_at": "actuator",       # the force setting scales the gripper motor's limit
+        "grip_ctrl_open": 0.0,
+        "max_opening_mm": 70,
+        "cameras": {"overhead": "overhead", "wrist": "wrist", "side": "side"},
+        "mount_quat": "1 0 0 0",
+        "joint_vmax": np.radians([180.0, 195.0, 180.0, 225.0, 225.0, 225.0]),   # manual: max joint speed
+        "joint_amax": np.full(6, 10.0),            # not published; ours
+        "cart_vmax": 0.5, "rot_vmax": 3.0,         # not published; ours
     },
 }
 DEFAULT_ROBOT = "franka"
@@ -833,6 +863,36 @@ def _ur5e(world, mount_site="robot_mount", prefix=""):
     return prefix + "gripper/ft_site"
 
 
+# The PiPER's tool centre point: between the finger pads, 15 mm back from the fingertips (the
+# pads end 135 mm past the gripper's mounting face, link6's origin in Menagerie's model).
+PIPER_TCP = 0.12
+
+
+def _piper(world, mount_site="robot_mount", prefix=""):
+    arm = mujoco.MjSpec.from_file(str(ASSETS / "agilex_piper" / "piper.xml"))
+    # The gripper's contact surface is rubber (AgileX's manual); every other colliding shape is
+    # the robot's hard shell.
+    for g in arm.geoms:
+        if g.type == mujoco.mjtGeom.mjGEOM_BOX:
+            _set_material(g, "rubber_pad")
+        elif g.contype or g.conaffinity:
+            _set_material(g, "robot")
+    # Menagerie's gripper servo is soft (40 N/m: about 1 N of squeeze on a 60 mm dish). Stiffen it
+    # so the motor's force limit decides the grip, as for the Franka Hand: Menagerie's 10 N.
+    act = arm.actuator("gripper")
+    kp, kv = 1000.0, 20.0
+    act.gainprm[0] = kp
+    act.biasprm[1], act.biasprm[2] = -kp, -kv
+    hand = arm.body("link6")
+    # Tool centre point between the finger pads; z out of the gripper, the fingers close along y.
+    hand.add_site(name="tcp", pos=[0, 0, PIPER_TCP], size=[0.004] * 3, group=5)
+    _add_wrist_camera(hand, [-0.07, 0.0, 0.03], [0.0, 0.0, 0.22])
+    _match_options(arm, world=world)       # every body has gravity compensation already
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        world.site(mount_site).attach_body(arm.body("base_link"), prefix, "")
+
+
 # The ALOHA 2 rig's fixed cameras, from Menagerie's aloha/scene.xml (in its frame, table top at
 # z = 0): the overhead camera on the top bar, and the low "worm's-eye" camera at the front edge.
 ALOHA_CAMERAS = {"overhead": ([0, -0.303794, 1.02524], [0.976332, 0.216277, 0, 0]),
@@ -915,6 +975,8 @@ def add_robot(world, robot: str, mount: str = "robot_mount", prefix: str = ""):
         return _fr3_duo(world, mount, prefix)
     if robot == "g1":
         return _g1(world, mount, prefix)
+    if robot == "piper":
+        return _piper(world, mount, prefix)      # no wrist force/torque sensor on a PiPER
     ft_site = _franka(world, mount, prefix) if robot == "franka" else _ur5e(world, mount, prefix)
     # Wrist force/torque sensor (UR5e: built in at the flange; Panda: estimated from joint torques).
     world.add_sensor(name=prefix + "ft_force", type=mujoco.mjtSensor.mjSENS_FORCE,
