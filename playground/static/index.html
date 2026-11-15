@@ -2295,6 +2295,21 @@ function openStreams() {
   else window.V3.setBase(`/s/${SID}`);
   openCams();
 }
+// A browser opens at most six connections to one site, and each live stream (the 3D view's poses,
+// each camera's video) holds one for as long as it plays. So a tab in the background closes its
+// streams and opens them again when it comes back: otherwise two tabs of the lab use up all six
+// and every other request (clicks, saves, the chat) waits forever.
+function pauseStreams() {
+  if (window.V3) window.V3.pause(); else view.removeAttribute('src');
+  clearTimeout(openCams.poll);
+  $('pips').querySelectorAll('img[data-cam]').forEach(im => im.removeAttribute('src'));
+  $('bigCam').removeAttribute('src');
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { pauseStreams(); return; }
+  if (window.V3) window.V3.resume(); else view.src = U('/pg/view.mjpg') + '?r=' + Date.now();
+  openCams();
+});
 // The selected station's cameras (what its AI sees), small in the lower left: two for a one-arm
 // robot, the four of a two-arm ALOHA, the head and two wrists of an FR3 Duo.
 const CAM_NAMES = {head: 'Head', overhead: 'Overhead', wrist: 'Wrist', low: 'Low', left_wrist: 'Left wrist', right_wrist: 'Right wrist'};
@@ -2305,6 +2320,7 @@ function stationCams() {
     : r === 'fr3_duo' || r === 'g1' || r === 'rby1' ? ['head', 'left_wrist', 'right_wrist'] : ['overhead', 'wrist'];
 }
 function openCams() {
+  if (document.hidden) return;    // opened when the tab comes back (pauseStreams)
   const t = Date.now(), base = stBase(), none = S.scene && S.scene.mode === 'free' && !S.scene.active;
   const cams = stationCams(), key = cams.join();
   if ($('pips').dataset.cams !== key) {

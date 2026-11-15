@@ -101,6 +101,7 @@ class PlaygroundSim(Sim):
         cam.distance, cam.azimuth, cam.elevation = 2.8, 145.0, -28.0
         self.view = cam
         self._glide: dict | None = None         # where the camera is gliding to
+        self.view_gen = 0                       # counts the server's own camera moves (presets, framing a station)
         self.view_size = (VIEW_W, VIEW_H)
         self.overlay: list[dict] = []           # ghost and highlight shapes for the main view
         self.zone: list[dict] = []              # where a described scene is being built (scenegen)
@@ -1018,6 +1019,7 @@ class PlaygroundSim(Sim):
         self._set_view(target, glide)
 
     def _set_view(self, target: dict, glide: bool):
+        self.view_gen += 1          # pages drawing their own view follow only these moves, not their own echoes
         if not glide:
             c = self.view
             c.lookat[:] = target["lookat"]

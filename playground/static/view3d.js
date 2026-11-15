@@ -485,6 +485,8 @@ export function start({stage, base = '', onReady}) {
   let es = null;
   function connect() {
     if (es) es.close();          // one stream at a time: each holds one of the few connections to the lab
+    es = null;
+    if (document.hidden) return; // a tab in the background holds none (V.resume reconnects it)
     es = new EventSource(`${base}/pg/poses.sse`);
     es.onmessage = (ev) => {
       const f = JSON.parse(ev.data);
@@ -497,8 +499,12 @@ export function start({stage, base = '', onReady}) {
       }
       drawSkins(p);
       drawShapes(f.shapes);
-      // Follow the server's camera (glides, presets, other tabs) unless moved here just now.
-      if (V.follow && performance.now() - V.lastLocal > 800) V.cam = f.cam;
+      // Follow the server's own camera moves (glides, presets, framing a station) unless moved here
+      // just now. Not its echo of this page's own zooms and drags: those can reach the server late
+      // or not at all, and following them pulled the view back to where it was.
+      const serverMove = f.camgen === undefined || f.camgen !== V.camGen || f.gliding;
+      V.camGen = f.camgen;
+      if (V.follow && serverMove && performance.now() - V.lastLocal > 800) V.cam = f.cam;
     };
     const mine = es;
     es.onerror = () => { mine.close(); if (es === mine) setTimeout(connect, 1500); };
@@ -671,11 +677,14 @@ export function start({stage, base = '', onReady}) {
     const w = parseFloat(canvas.style.width) || 0, h = parseFloat(canvas.style.height) || 0;
     return {x: (v.x + 1) / 2 * w, y: (1 - v.y) / 2 * h, visible: v.z < 1 && Math.abs(v.x) <= 1.2 && Math.abs(v.y) <= 1.2};
   };
+  // A tab in the background lets go of its pose stream, so other tabs of the same lab keep working.
+  V.pause = () => { if (es) { es.close(); es = null; } };
+  V.resume = () => { if (!es) connect(); };
   V.setFollow = (on) => { V.follow = on; if (on) V.lastLocal = 0; };
   // Another session: its own world (scene, meshes, textures and pose stream), drawn at once.
   V.setBase = (b) => {
     if (b === base) return;
-    base = b; gen++; V.version = null; V.follow = true; V.lastLocal = 0;
+    base = b; gen++; V.version = null; V.follow = true; V.lastLocal = 0; V.camGen = null;
     // The old session's world leaves the screen at once; the new one fills in as it loads.
     scene.remove(root); retired.push(root); root = new THREE.Group(); scene.add(root); V.bodies = []; V.skins = [];
     showNote(true);
