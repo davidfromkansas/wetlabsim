@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import functools
 import json
+import re
 import pathlib
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
@@ -404,6 +405,39 @@ def _site_words(t: Task, s: str) -> str:
             return f"the {part + ' compartment of the ' if part else ''}{what}"
         return f"the {what} ({rest.replace('_', ' ')})"
     return "the marked spot on the table"
+
+
+def _scene_key(t: Task) -> str:
+    """Which of LIBERO's rooms a task is set in: a Long task's own scene (KITCHEN_SCENE3...), else
+    its suite's one room."""
+    m = re.match(r"^([A-Z_]+_SCENE\d+)_", t.id)
+    return m.group(1) if m else t.suite
+
+
+def room_name(t: Task) -> str:
+    """A task's room, named for a free station: "Kitchen 3", "Living room 2", "Kitchen table (Goal)"."""
+    m = re.match(r"^[A-Z_]+_SCENE(\d+)_", t.id)
+    return f"{room_kind(t)} {m.group(1)}" if m else \
+        "Floor" if t.suite == "libero_object" else f"{room_kind(t)} ({SUITE_NAMES[t.suite]})"
+
+
+@functools.lru_cache(maxsize=1)
+def rooms() -> list[dict]:
+    """LIBERO's different rooms, each once (for free stations): the first task set in each, with
+    what stands in it. A suite whose tasks share one room (Goal, Spatial, Object) gives one room."""
+    out, seen = [], set()
+    for t in _all():
+        k = _scene_key(t)
+        if k in seen:
+            continue
+        seen.add(k)
+        things = []
+        for name in t.meta["objects"]:
+            w = label(t, name)
+            if w not in things:
+                things.append(w)
+        out.append({"id": t.id, "name": room_name(t), "kind": room_kind(t), "things": things})
+    return out
 
 
 def goal_parts(t: Task) -> list[str]:
