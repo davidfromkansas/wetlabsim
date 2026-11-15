@@ -1,0 +1,131 @@
+<mujoco model="fanuc_crx30ia">
+  <compiler angle="radian" meshdir="assets" autolimits="true" />
+  <option integrator="implicitfast" />
+  <default>
+    <mesh inertia="shell" />
+    <default class="fanuc_crx30ia">
+      <general dyntype="none" biastype="affine" />
+      <default class="visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2" />
+      </default>
+      <default class="collision">
+        <geom type="mesh" group="3" />
+      </default>
+    </default>
+  </default>
+  <asset>
+    <material name="c0" rgba="0 0 0 1" specular="0.5" shininess="0.5" reflectance="0" />
+    <mesh name="base_0" file="base_0.obj" />
+    <material name="c1" rgba="0 1 0 1" specular="0.5" shininess="0.5" reflectance="0" />
+    <mesh name="base_1" file="base_1.obj" />
+    <material name="c2" rgba="0.698 0.698 0.698 1" specular="0.5" shininess="0.5" reflectance="0" />
+    <mesh name="base_2" file="base_2.obj" />
+    <material name="c3" rgba="0.733 0.733 0.733 1" specular="0.5" shininess="0.5" reflectance="0" />
+    <mesh name="base_3" file="base_3.obj" />
+    <material name="c4" rgba="1 1 1 1" specular="0.5" shininess="0.5" reflectance="0" />
+    <mesh name="link1_0" file="link1_0.obj" />
+    <mesh name="link1_1" file="link1_1.obj" />
+    <mesh name="link2_0" file="link2_0.obj" />
+    <mesh name="link3_0" file="link3_0.obj" />
+    <mesh name="link3_1" file="link3_1.obj" />
+    <mesh name="link4_0" file="link4_0.obj" />
+    <mesh name="link4_1" file="link4_1.obj" />
+    <material name="c5" rgba="1 0 0 1" specular="0.5" shininess="0.5" reflectance="0" />
+    <mesh name="link4_2" file="link4_2.obj" />
+    <mesh name="link5_0" file="link5_0.obj" />
+    <mesh name="link5_1" file="link5_1.obj" />
+    <mesh name="link6_0" file="link6_0.obj" />
+    <mesh name="link6_1" file="link6_1.obj" />
+    <mesh name="base_collision_0" file="base_collision_0.obj" />
+    <mesh name="link1_collision_0" file="link1_collision_0.obj" />
+    <mesh name="link2_collision_0" file="link2_collision_0.obj" />
+    <mesh name="link3_collision_0" file="link3_collision_0.obj" />
+    <mesh name="link4_collision_0" file="link4_collision_0.obj" />
+    <mesh name="link5_collision_0" file="link5_collision_0.obj" />
+    <mesh name="link6_collision_0" file="link6_collision_0.obj" />
+  </asset>
+  <worldbody>
+    <body name="base" childclass="fanuc_crx30ia">
+      <inertial pos="-0.00536 0.00024 0.09678" quat="0.999572 0.001393 0.026847 -0.011545" mass="21.685" diaginertia="0.12511 0.13815 0.181659" />
+      <geom class="visual" mesh="base_0" material="c0" />
+      <geom class="visual" mesh="base_1" material="c1" />
+      <geom class="visual" mesh="base_2" material="c2" />
+      <geom class="visual" mesh="base_3" material="c3" />
+      <geom class="collision" mesh="base_collision_0" name="base_collision_0" />
+      <body name="link1" pos="0 0 0.37" quat="1 0 0 0">
+        <inertial pos="0.00035 -0.06889 -0.05678" quat="0.611169 -0.370887 -0.651992 0.252629" mass="41.083" diaginertia="0.390511 0.72848 0.823609" />
+        <joint name="joint1" pos="0 0 0" axis="0 0 1" range="-3.13985 3.13985" />
+        <geom class="visual" mesh="link1_0" material="c4" />
+        <geom class="visual" mesh="link1_1" material="c1" />
+        <geom class="collision" mesh="link1_collision_0" name="link1_collision_0" />
+        <body name="link2" pos="0 0 0" quat="1 0 0 0">
+          <inertial pos="-9e-05 -0.27645 0.42608" quat="0.019084 -0.70677 -0.016393 0.706996" mass="41.783" diaginertia="0.29312 7.20615 7.23047" />
+          <joint name="joint2" pos="0 0 0" axis="0 1 0" range="-3.13985 3.13985" />
+          <geom class="visual" mesh="link2_0" material="c4" />
+          <geom class="collision" mesh="link2_collision_0" name="link2_collision_0" />
+          <body name="link3" pos="0 0 0.95" quat="1 0 0 0">
+            <inertial pos="0.04858 -0.05541 -2e-05" quat="0.664343 -0.666288 0.239018 -0.239956" mass="11.493" diaginertia="0.04995 0.113441 0.115175" />
+            <joint name="joint3" pos="0 0 0" axis="0 -1 0" range="-4.71239 4.71239" />
+            <geom class="visual" mesh="link3_0" material="c4" />
+            <geom class="visual" mesh="link3_1" material="c1" />
+            <geom class="collision" mesh="link3_collision_0" name="link3_collision_0" />
+            <body name="link4" pos="0 0 0" quat="1 0 0 0">
+              <inertial pos="0.47486 -0.01068 0.00284" quat="0.997852 -0.058779 -0.007693 0.027872" mass="10.453" diaginertia="0.0313617 0.587603 0.59207" />
+              <joint name="joint4" pos="0 0 0" axis="-1 0 0" range="-3.31613 3.31613" />
+              <geom class="visual" mesh="link4_0" material="c4" />
+              <geom class="visual" mesh="link4_1" material="c0" />
+              <geom class="visual" mesh="link4_2" material="c5" />
+              <geom class="collision" mesh="link4_collision_0" name="link4_collision_0" />
+              <body name="link5" pos="0.75 0 0" quat="1 0 0 0">
+                <inertial pos="0.02013 -0.1566 0.00022" quat="-0.438114 -0.005359 -0.002945 0.898899" mass="4.247" diaginertia="0.0114174 0.0170754 0.0202992" />
+                <joint name="joint5" pos="0 0 0" axis="0 -1 0" range="-3.13985 3.13985" />
+                <geom class="visual" mesh="link5_0" material="c4" />
+                <geom class="visual" mesh="link5_1" material="c1" />
+                <geom class="collision" mesh="link5_collision_0" name="link5_collision_0" />
+                <body name="link6" pos="0 -0.185 0" quat="1 0 0 0">
+                  <inertial pos="0.13104 0.00101 -0.00108" quat="0.641017 -0.28973 -0.604797 0.373328" mass="2.075" diaginertia="0.00297337 0.00309119 0.0034214" />
+                  <joint name="joint6" pos="0 0 0" axis="-1 0 0" range="-3.92699 3.92699" />
+                  <geom class="visual" mesh="link6_0" material="c0" />
+                  <geom class="visual" mesh="link6_1" material="c2" />
+                  <geom class="collision" mesh="link6_collision_0" name="link6_collision_0" />
+                  <site name="flange" pos="0.18 0 0" quat="0.707107 0 0.707107 0" size="0.01" group="5" />
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <contact>
+    <exclude body1="base" body2="link1" />
+    <exclude body1="base" body2="link2" />
+    <exclude body1="base" body2="link3" />
+    <exclude body1="base" body2="link4" />
+    <exclude body1="base" body2="link5" />
+    <exclude body1="base" body2="link6" />
+    <exclude body1="link1" body2="link2" />
+    <exclude body1="link1" body2="link3" />
+    <exclude body1="link1" body2="link4" />
+    <exclude body1="link1" body2="link5" />
+    <exclude body1="link1" body2="link6" />
+    <exclude body1="link2" body2="link3" />
+    <exclude body1="link2" body2="link4" />
+    <exclude body1="link2" body2="link5" />
+    <exclude body1="link2" body2="link6" />
+    <exclude body1="link3" body2="link4" />
+    <exclude body1="link3" body2="link5" />
+    <exclude body1="link3" body2="link6" />
+    <exclude body1="link4" body2="link5" />
+    <exclude body1="link4" body2="link6" />
+    <exclude body1="link5" body2="link6" />
+  </contact>
+  <actuator>
+    <general class="fanuc_crx30ia" name="joint1" joint="joint1" gainprm="143239" biasprm="0 -143239 -5729.58" ctrlrange="-3.13985 3.13985" forcerange="-1500 1500" />
+    <general class="fanuc_crx30ia" name="joint2" joint="joint2" gainprm="143239" biasprm="0 -143239 -5729.58" ctrlrange="-3.13985 3.13985" forcerange="-1500 1500" />
+    <general class="fanuc_crx30ia" name="joint3" joint="joint3" gainprm="143239" biasprm="0 -143239 -5729.58" ctrlrange="-4.71239 4.71239" forcerange="-700 700" />
+    <general class="fanuc_crx30ia" name="joint4" joint="joint4" gainprm="143239" biasprm="0 -143239 -5729.58" ctrlrange="-3.31613 3.31613" forcerange="-150 150" />
+    <general class="fanuc_crx30ia" name="joint5" joint="joint5" gainprm="143239" biasprm="0 -143239 -5729.58" ctrlrange="-3.13985 3.13985" forcerange="-150 150" />
+    <general class="fanuc_crx30ia" name="joint6" joint="joint6" gainprm="143239" biasprm="0 -143239 -5729.58" ctrlrange="-3.92699 3.92699" forcerange="-120 120" />
+  </actuator>
+</mujoco>

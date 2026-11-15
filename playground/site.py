@@ -71,8 +71,69 @@ TOOL = {
   along the base y axis; `[x, y, z, 0, 1.5708, 0]` points it straight ahead along the base
   x axis.
 - No force/torque sensing.""",
+    "n220": """- End effector: a vacuum lifting frame on the axis 6 flange: a steel frame with six rubber
+  suction cups (150 mm across) in two rows of three, 360 mm apart along the tool's x and
+  560 mm apart along its y. It weighs 32 kg.
+- TCP: the middle of the plane of the cup faces, 300 mm from the flange.
+- Tool orientation convention: the TCP's z axis points out of the cups. A TCP pose of
+  `[x, y, z, 0, 3.14159, 0]` points the cups straight down with the frame's long side (three
+  cups) along the base x axis; `[x, y, z, 0, 1.5708, 0]` points them straight ahead along the
+  base x axis.
+- A cup starts to pull about 10 mm from a surface.
+- No force/torque sensing.""",
+    "crx30ia": """- End effector: a vacuum gripper on the J6 flange: a light frame with four rubber suction
+  cups (80 mm across) at the corners of a 400 x 260 mm rectangle (400 mm along the tool's x).
+  It weighs 2.8 kg.
+- TCP: the middle of the plane of the cup faces, 160 mm from the flange.
+- Tool orientation convention: the TCP's z axis points out of the cups. A TCP pose of
+  `[x, y, z, 0, 3.14159, 0]` points the cups straight down with the frame's long side along
+  the base x axis; `[x, y, z, 0, 1.5708, 0]` points them straight ahead along the base x axis.
+- A cup starts to pull about 10 mm from a surface.
+- The arm's contact-stop and hand-guiding functions are not available here: no force/torque
+  readings.""",
 }
-HAND = {"franka": "hand", "ur5e": "tool", "piper": "gripper"}
+HAND = {"franka": "hand", "ur5e": "tool", "piper": "gripper", "n220": "vacuum tool", "crx30ia": "vacuum tool"}
+
+# A big floor-standing arm (the Comau N-220, the FANUC CRX-30iA): on the floor, facing its
+# table, pallet, conveyor or car body.
+FLOOR_ARM_TEMPLATE = """# Site sheet: this installation
+
+What the datasheets can't tell you: how this particular robot is set up.
+
+## Mounting
+
+- {robot_name}, bolted upright to the floor.
+- The robot base frame has its origin at the centre of the base, on the floor. x points
+  forward, y to the robot's left, z up. All positions and poses in the command interface are
+  in this frame, in metres.
+- The floor is the plane z = 0.
+- In front of the robot stands {table} ({w_cm:.0f} x {d_cm:.0f} cm, top {top_cm:.1f} cm above
+  the floor). It extends from x = {x0:.2f} m to x = {x1:.2f} m and from y = {y0:.2f} m to
+  y = {y1:.2f} m.
+
+## Tool settings
+
+{tool}
+
+## Cameras
+
+Two RGB-D cameras, 640 x 480, colour and depth (metres along the camera's z axis). The
+calibration is in `cameras.json`:
+
+- `overhead`: fixed high above the robot's work area, looking straight down. Its pose is given
+  in the robot base frame.
+- `wrist`: on the tool, under its frame between the cups, looking the way the cups face. Its
+  pose is given in the TCP frame (hand-eye calibration).
+
+Poses use OpenCV camera axes (x right, y down, z forward); `rotation` maps camera
+coordinates into the named frame. The lenses have no distortion.
+
+## Start state
+
+At the start of a run the arm is at joint angles
+`{ready}` (rad), {hand} pointing down, vacuum off, not in a
+protective stop.
+"""
 
 # An ALOHA: two arms facing each other across the middle of the table. Each arm's base, in
 # the station's frame (table centre, x away from the operator's side): Menagerie's mounts.
@@ -233,6 +294,8 @@ and the right arm at `{ready_r}` (rad): forearms raised in front of the chest, h
 above the table top and behind its edge. Nothing is in a protective stop.
 """
 TABLES = {"table": "a heavy-duty packing table", "wetlab": "a stainless steel lab bench",
+          "pallet": "a wooden pallet on the floor", "car": "a car body on stands, side on to the robot",
+          "conveyor": "a roller conveyor section", "workbench": "a steel workbench",
           "island": "a kitchen island's worktop",
           "counter": "a kitchen counter's worktop",
           "wetrobo_x": "a stainless steel lab bench", "wetrobo_y": "a heavy-duty packing table"}
@@ -274,6 +337,12 @@ def site_sheet(placed: list[W.Placed], station: W.Station | None = None,
                                        d_cm=min(tw, td) * 100, origin_cm=h * 1000, table_z=-h,
                                        x0=-sx / 2 - rx, x1=sx / 2 - rx, y0=-sy / 2 - ry, y1=sy / 2 - ry,
                                        ready_l=fmt(WS.FR3_DUO_READY["left"]), ready_r=fmt(WS.FR3_DUO_READY["right"]))
+    if station.floor_arm:
+        return FLOOR_ARM_TEMPLATE.format(
+            top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100, d_cm=min(tw, td) * 100,
+            x0=-sx / 2 - rx, x1=sx / 2 - rx, y0=-sy / 2 - ry, y1=sy / 2 - ry, robot_name=P["name"],
+            tool=TOOL[station.robot], hand=HAND[station.robot],
+            ready="[" + ", ".join(f"{v:g}" for v in P["ready_q"]) + "]")
     return TEMPLATE.format(top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100,
                            d_cm=min(tw, td) * 100, x0=-sx / 2 - rx, x1=sx / 2 - rx, y0=-sy / 2 - ry,
                            y1=sy / 2 - ry, robot_name=P["name"],

@@ -156,8 +156,11 @@ class Arm:
         self.arm_dadr = np.array([m.joint(j).dofadr[0] for j in P["arm_joints"]])
         self.arm_act = np.array([m.actuator(a).id for a in P["arm_actuators"]])
         self.grip_act = m.actuator(P["grip_actuator"]).id
-        self.grip_qadr = m.joint(P["grip_joint"]).qposadr[0]
-        self.grip_dadr = m.joint(P["grip_joint"]).dofadr[0]
+        # A vacuum tool (the big arms') has no fingers: its "gripper" is the vacuum itself.
+        self.suction = bool(P.get("suction"))
+        if not self.suction:
+            self.grip_qadr = m.joint(P["grip_joint"]).qposadr[0]
+            self.grip_dadr = m.joint(P["grip_joint"]).dofadr[0]
         self.tcp_site = m.site(P["tcp_site"]).id
         # A wrist force/torque sensor, where the robot has one (the ViperX has none).
         self.has_ft = bool(P.get("ft_site"))
@@ -171,9 +174,14 @@ class Arm:
         self.joint_lo = m.jnt_range[[m.joint(j).id for j in P["arm_joints"]], 0]
         self.joint_hi = m.jnt_range[[m.joint(j).id for j in P["arm_joints"]], 1]
         self.grip_force_base = m.actuator_forcerange[self.grip_act].copy()
+        self.grip_force_full = float(m.actuator_gainprm[self.grip_act, 0])     # a vacuum tool's rated pull (N)
         # A servo-driven gripper (ALOHA) is limited at its joint (the servo's effort limit).
-        self.grip_jnt = m.joint(P["grip_joint"]).id
-        self.grip_jnt_force_base = m.jnt_actfrcrange[self.grip_jnt].copy()
+        if self.suction:
+            tool = m.body(P["tool_body"]).id
+            self.cup_geoms = {g for g in range(m.ngeom) if m.geom_bodyid[g] == tool and m.geom_margin[g] > 0}
+        else:
+            self.grip_jnt = m.joint(P["grip_joint"]).id
+            self.grip_jnt_force_base = m.jnt_actfrcrange[self.grip_jnt].copy()
         self.sensors = P.get("sensors", ("ft_force", "ft_torque"))
         self._ik_data = mujoco.MjData(m)
         # this robot's own joints (arm, gripper, fingers): kept when the scene is rebuilt
@@ -465,7 +473,11 @@ class Arm:
             self.grip_target = position
             sp = float(np.clip(speed, 0, 255)) / 255.0
             fo = float(np.clip(force, 0, 255)) / 255.0
-            if "grip_speed_mm_s" in P:
+            if self.suction:
+                # The vacuum builds and vents in about a quarter of a second; `force` sets its level.
+                self.grip_rate = 255.0 / 0.25
+                m.actuator_gainprm[self.grip_act, 0] = self.grip_force_full * (0.2 + 0.8 * fo)
+            elif "grip_speed_mm_s" in P:
                 # Both fingers move at up to the rated speed; 0..255 spans the full stroke.
                 full = 255.0 * 2 * P["grip_speed_mm_s"] / P["grip_stroke_mm"]
                 self.grip_rate = max(0.1, sp) * full
@@ -534,6 +546,18 @@ class Arm:
 
     def gripper_status(self):
         d, P = self.sim.d, self.P
+        if self.suction:
+            # Like a vacuum switch: with the vacuum on, "object detected" when a cup is on something.
+            pos = float(np.clip(d.ctrl[self.grip_act], 0, 1) * 255.0)
+            moving = bool(abs(self.grip_cmd - self.grip_target) > 0.5)
+            m = self.sim.m
+            held = pos > 0 and any(
+                (c.geom1 in self.cup_geoms and m.geom_bodyid[c.geom2] not in self.bodies)
+                or (c.geom2 in self.cup_geoms and m.geom_bodyid[c.geom1] not in self.bodies)
+                for c in d.contact[:d.ncon])
+            obj = 0 if moving else 2 if held else 3
+            return {"position": round(pos, 1), "requested": round(self.grip_target, 1),
+                    "object_detected": bool(held and not moving), "status_code": obj, "moving": moving}
         q_open, q_closed = P["grip_open"], P.get("grip_closed", 0.0)
         pos = float(np.clip((d.qpos[self.grip_qadr] - q_open) / (q_closed - q_open) * 255.0, 0, 255))
         vel = abs(float(d.qvel[self.grip_dadr]))

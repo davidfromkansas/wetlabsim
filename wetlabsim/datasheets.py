@@ -17,7 +17,8 @@ import urllib.request
 AGENT = pathlib.Path(__file__).resolve().parent.parent / "agent"
 DIRS = {"franka": AGENT / "datasheets", "aloha": AGENT / "aloha" / "datasheets",
         "fr3_duo": AGENT / "fr3_duo" / "datasheets", "g1": AGENT / "g1" / "datasheets",
-        "piper": AGENT / "piper" / "datasheets"}
+        "piper": AGENT / "piper" / "datasheets", "n220": AGENT / "n220" / "datasheets",
+        "crx30ia": AGENT / "crx30ia" / "datasheets"}
 DIR = DIRS["franka"]
 
 
