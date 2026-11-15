@@ -2168,7 +2168,7 @@ function render() {
     $('task').readOnly = true;
     if ($('task').value !== wr.language) $('task').value = wr.language;
     $('lbDone').innerHTML = '<b>Done when</b> ' + esc(wr.goal.join(', and ')) + '. Checked every 0.1 s.';
-    $('lbRunsCopy').textContent = `Every run starts from ${wr.lab_label} as it is now.`;
+    $('lbRunsCopy').textContent = `Every run starts from ${wr.lab_label} as it was before its first run.`;
     $('startBtn').classList.remove('blank');
     const now = wr.now || [];
     $('goalState').textContent = now.length && now.every(Boolean) ? '✓ Goal reached' : 'Not yet';

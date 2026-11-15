@@ -304,6 +304,21 @@ class PlaygroundSim(Sim):
                 self.paused = True
 
     # ------------------------------------------------------- LIBERO stations
+    def wetrobo_run_start(self, uid: str) -> str | None:
+        """A WetRobo run is about to start: its station goes back to how it was before its first
+        run, never left where the last run ended (a lid still in the hand would pass at once).
+        An error in plain words if the task is already done there, or None."""
+        starts = self.__dict__.setdefault("_wr_start", {})
+        start = starts.get(uid)
+        if start is not None and self.reset_station(start):
+            start = None                  # its robot was swapped: this run's start is the new one
+        if all(self.wetrobo_goal(uid) or [False]):
+            return ("This task is already done here, so a run would pass at once. "
+                    "Add a fresh WetRobo station to run it again.")
+        if start is None:
+            starts[uid] = self.station_snapshot(uid)
+        return None
+
     def wetrobo_goal(self, uid: str) -> list[bool] | None:
         """Each part of a WetRobo station's goal: whether it holds now (read from its own kit's
         joints and bodies: the incubator, bottle, dish and lid on its table). None for any other station."""

@@ -178,3 +178,25 @@ def test_the_arm_opens_the_door(lab):
     assert s.wetrobo_goal(uid) == [True] and arm.mode == "running"
     for k, p0 in start.items():
         assert np.linalg.norm(d.xpos[m.body("obj_" + kit[k].uid).id] - p0) < 0.005, k
+
+
+def test_every_run_starts_from_the_first_start():
+    """A second run doesn't start where the first one ended (the lid lifted: an instant pass)."""
+    s, uid = _station("y", "lid")
+    st = s.station(uid)
+    kit = {p.item: p for p in s._on_table(st) if p.item in WR.KIT}
+    lid = s.m.body("obj_" + kit[WR.LID].uid)
+    adr = s.m.jnt_qposadr[lid.jntadr[0]]
+    at = s.d.qpos[adr:adr + 3].copy()
+    assert s.wetrobo_run_start(uid) is None and s.wetrobo_goal(uid) == [False, True]
+    s.d.qpos[adr:adr + 3] = at + [0.10, 0.0, 0.0]            # the run's end: the lid beside its dish
+    for _ in range(500):
+        mujoco.mj_step(s.m, s.d)
+    assert all(s.wetrobo_goal(uid))
+    assert s.wetrobo_run_start(uid) is None                  # the next run: back to the start
+    assert s.wetrobo_goal(uid) == [False, True] and np.allclose(s.d.qpos[adr:adr + 3], at, atol=1e-6)
+    s._wr_start.clear()                                      # no start known and the task done: refused
+    s.d.qpos[adr:adr + 3] = at + [0.10, 0.0, 0.0]
+    for _ in range(500):
+        mujoco.mj_step(s.m, s.d)
+    assert "already done" in s.wetrobo_run_start(uid)
