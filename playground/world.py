@@ -700,21 +700,33 @@ def restore_joints(m: mujoco.MjModel, d: mujoco.MjData, p: Placed):
                 d.qpos[a] = q
 
 
-def _add_mjcf(world: mujoco.MjSpec, p: Placed, meta: dict):
+def _add_mjcf(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool = False):
     """An item that is a MuJoCo model of its own (asset.json "mjcf": the puzzle cube from MuJoCo's
-    model gallery), attached as it is: a free body "obj_<uid>" at the item's place, the model's
-    bodies inside it, named "obj_<uid>__<its body name>", with their own joints, shapes and
-    materials. The model's origin is its centre; the item's place is its bottom centre."""
+    model gallery, LIBERO's objects), attached as it is: a body "obj_<uid>" at the item's place
+    (free unless the item is fixed), the model's bodies inside it, named "obj_<uid>__<its body
+    name>", with their own joints, shapes and materials. The item's place is its bottom centre;
+    the model sits where asset.json "frame" puts it (LIBERO's turned upright), else centred on it.
+    "free_damping" is the free joint's damping the model's source gives it (LIBERO's 0.0005), and
+    "hide_collision" draws the model's collision shapes (group 0) only when debugging, as its
+    source does."""
     child = mujoco.MjSpec.from_file(str(catalog.ASSETS / p.item / meta["mjcf"]))
+    if meta.get("hide_collision"):
+        for g in child.geoms:
+            if g.group == 0 and (g.contype or g.conaffinity):
+                g.group = 3
     body = world.worldbody.add_body(name=f"obj_{p.uid}", pos=list(p.pos), quat=list(p.quat or yaw_quat(p.yaw)))
-    body.add_freejoint(name=f"obj_{p.uid}_joint")
-    frame = body.add_frame(pos=[0, 0, meta["size"][2] / 2])
+    if not fixed:
+        j = body.add_freejoint(name=f"obj_{p.uid}_joint")
+        if meta.get("free_damping"):
+            j.damping = [meta["free_damping"], 0, 0]      # as XML damping="..." sets it
+    fr = meta.get("frame") or {"pos": [0, 0, meta["size"][2] / 2]}
+    frame = body.add_frame(pos=fr["pos"], quat=fr.get("quat", [1, 0, 0, 0]))
     world.attach(child, frame=frame, prefix=f"obj_{p.uid}__")
 
 
 def _add_item(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_cache: set):
     if meta.get("mjcf"):
-        return _add_mjcf(world, p, meta)
+        return _add_mjcf(world, p, meta, fixed)
     if meta.get("bodies"):
         return _add_jointed(world, p, meta, fixed, mesh_cache)
     d = catalog.ASSETS / p.item
