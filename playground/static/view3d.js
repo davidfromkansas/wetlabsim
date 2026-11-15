@@ -42,7 +42,7 @@ function applyDelta(c, d) {
 
 // ---------------------------------------------------------------- the light Tron floor (tron.py)
 const TRON = {CYAN: [0.0, 0.85, 1.0], STEP: 0.5, REACH: 4.0, SEG: 0.5, Z: 0.0015, WIDTH: 0.012,
-              RIPPLE_SPEED: 1.1, RIPPLE_EVERY: 4.0, STREAKS: 10, STREAK_SPEED: 1.6, TRAIL: 6, FLOOR: [0.852, 0.851, 0.828]}  // FLOOR: the vinyl tiles' average colour;
+              RIPPLE_SPEED: 1.1, RIPPLE_EVERY: 4.0, STREAKS: 10, STREAK_SPEED: 1.6, TRAIL: 6, FLOOR: [0.852, 0.851, 0.828]};   // FLOOR: the vinyl tiles' average colour
 const hash = (i, k) => { const x = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return x - Math.floor(x); };
 function tronShapes(t) {
   const T = TRON, out = [], lines = [], pieces = [];
@@ -381,13 +381,11 @@ export function start({stage, base = '', onReady}) {
     for (const k of ['box', 'cylinder']) for (let i = used[k]; i < pool[k].length; i++) pool[k][i].visible = false;
   }
 
-  // Work boxes: around each robot at work, the space it works in. Its walls show green "digital
-  // rain" falling down them (Matrix style), with a thin outline that glows in and out (the
-  // robots' own cameras see plain solid walls there instead).
-  const zonesGroup = new THREE.Group(); scene.add(zonesGroup);
-  const zonePool = [];
-  const ZONE_COL = new THREE.Color(0x38BDF8);
-  const RAIN = {PX: 528, CELL: 22, TILE: 0.9, FPS: 20};      // TILE: metres of wall one picture covers
+  // ---------------------------------------------------------------- the Matrix room
+  // The playground's own walls (the 3D view only): a room around the whole floor, with green
+  // "digital rain" falling down dark walls. Nothing in the physics, and the robots' cameras
+  // never see it.
+  const RAIN = {PX: 528, CELL: 22, TILE: 2.2, FPS: 20};      // TILE: metres of wall one picture covers
   const rainCanvas = document.createElement('canvas'); rainCanvas.width = rainCanvas.height = RAIN.PX;
   const rainCtx = rainCanvas.getContext('2d');
   const rainTex = new THREE.CanvasTexture(rainCanvas);
@@ -425,48 +423,60 @@ export function start({stage, base = '', onReady}) {
     rainMaps.push(map);
     return new THREE.MeshBasicMaterial({map, transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide});
   }
-  const NO_FACE = new THREE.MeshBasicMaterial({visible: false});
-  const GLASS = new THREE.MeshBasicMaterial({color: 0x00140a, transparent: true, opacity: 0.32, depthWrite: false, side: THREE.DoubleSide});
+  const ROOM = {HALF: 10, HEIGHT: 6};            // the floor plane is 20 m square (world.py)
+  function makeRoom() {
+    const g = new THREE.Group();
+    for (let k = 0; k < 4; k++) {
+      const plane = new THREE.PlaneGeometry(2 * ROOM.HALF, ROOM.HEIGHT);
+      const wall = new THREE.Group();
+      wall.add(new THREE.Mesh(plane, new THREE.MeshBasicMaterial({color: 0x020a05})));
+      const mat = rainMaterial(); mat.opacity = 1; mat.side = THREE.FrontSide;   // seen from inside only: zoomed out, you see in
+      mat.map.repeat.set(2 * ROOM.HALF / RAIN.TILE, ROOM.HEIGHT / RAIN.TILE);
+      const code = new THREE.Mesh(plane, mat); code.position.z = 0.01; wall.add(code);
+      // stand it up (z up), facing into the room, on the floor's edge
+      wall.rotation.set(Math.PI / 2, 0, 0); wall.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), k * Math.PI / 2 + Math.PI);
+      const a = k * Math.PI / 2 - Math.PI / 2;
+      wall.position.set(Math.cos(a) * ROOM.HALF, Math.sin(a) * ROOM.HALF, ROOM.HEIGHT / 2);
+      g.add(wall);
+    }
+    return g;
+  }
+  scene.add(makeRoom());
+
+  // Work boxes: around each robot at work, the space it works in. Nearly clear, with a thin
+  // outline that glows in and out (the robots' own cameras see solid walls there instead).
+  const zonesGroup = new THREE.Group(); scene.add(zonesGroup);
+  const zonePool = [];
+  const ZONE_COL = new THREE.Color(0x38BDF8);
   function setZones(zones) {
     zones = zones || [];
     for (let i = 0; i < zones.length; i++) {
       let z = zonePool[i];
       if (!z) {
-        // turned so each wall's picture stands upright (z up): faces 0-1 face x, 2-3 the top and
-        // floor, 4-5 face y
-        const box = new THREE.BoxGeometry(2, 2, 2).rotateX(Math.PI / 2);
-        const wx = rainMaterial(), wy = rainMaterial();  // the walls facing x, and those facing y
-        const fill = new THREE.Mesh(box, [wx, wx, NO_FACE, NO_FACE, wy, wy]);  // no rain on the top or floor
-        const glass = new THREE.Mesh(box, [GLASS, GLASS, NO_FACE, NO_FACE, GLASS, GLASS]);   // dark glass behind the code
-        glass.renderOrder = 4;
+        const box = new THREE.BoxGeometry(2, 2, 2);
+        const fill = new THREE.Mesh(box, new THREE.MeshBasicMaterial({color: ZONE_COL, transparent: true, opacity: 0.035, depthWrite: false, side: THREE.DoubleSide}));
         const edges = new THREE.LineSegments(new THREE.EdgesGeometry(box), new THREE.LineBasicMaterial({color: ZONE_COL, transparent: true, opacity: 0.6, depthWrite: false}));
         fill.renderOrder = edges.renderOrder = 5;
-        const g = new THREE.Group(); g.add(glass, fill, edges); zonesGroup.add(g);
-        z = zonePool[i] = {g, fill, edges, wx, wy};
+        const g = new THREE.Group(); g.add(fill, edges); zonesGroup.add(g);
+        z = zonePool[i] = {g, fill, edges};
       }
       const d = zones[i];
       z.g.visible = true;
       z.g.scale.set(d.half[0], d.half[1], d.height / 2);
       z.g.position.set(d.pos[0], d.pos[1], d.height / 2);
       z.g.rotation.set(0, 0, d.yaw || 0);
-      // glyphs the same size on every wall, whatever the box's size
-      z.wx.map.repeat.set(2 * d.half[1] / RAIN.TILE, d.height / RAIN.TILE);
-      z.wy.map.repeat.set(2 * d.half[0] / RAIN.TILE, d.height / RAIN.TILE);
       z.waiting = !!d.waiting;
     }
     for (let i = zones.length; i < zonePool.length; i++) zonePool[i].g.visible = false;
   }
   function pulseZones(t) {
     const k = 0.5 + 0.5 * Math.sin(t * 2.6);           // a slow breath, about 2.4 s
-    let any = false;
     for (const z of zonePool) {
       if (!z.g.visible) continue;
-      any = true;
       const lo = z.waiting ? 0.18 : 0.35, hi = z.waiting ? 0.35 : 0.95;
       z.edges.material.opacity = lo + (hi - lo) * k;
-      z.wx.opacity = z.wy.opacity = (z.waiting ? 0.35 : 0.7) + 0.2 * k;
+      z.fill.material.opacity = (z.waiting ? 0.015 : 0.03) + 0.03 * k;
     }
-    if (any) drawRain(t);
   }
   V.setZones = setZones;
 
@@ -501,6 +511,7 @@ export function start({stage, base = '', onReady}) {
     if (V.onFrame) V.onFrame();
     if (floorFx) drawFloorFx(performance.now() / 1000);
     pulseZones(performance.now() / 1000);
+    drawRain(performance.now() / 1000);
     renderer.render(scene, camera);
     requestAnimationFrame(frame);
   }
