@@ -225,7 +225,8 @@ above the table top and behind its edge. Nothing is in a protective stop.
 """
 TABLES = {"table": "a heavy-duty packing table", "wetlab": "a stainless steel lab bench",
           "island": "a kitchen island's worktop",
-          "counter": "a kitchen counter's worktop"}
+          "counter": "a kitchen counter's worktop",
+          "wetrobo_x": "a stainless steel lab bench", "wetrobo_y": "a heavy-duty packing table"}
 
 
 def site_sheet(placed: list[W.Placed], station: W.Station | None = None,

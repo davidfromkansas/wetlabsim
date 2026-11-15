@@ -17,8 +17,9 @@ _LOCK = threading.Lock()
 
 
 class LiberoScores:
-    def __init__(self, results: pathlib.Path):
+    def __init__(self, results: pathlib.Path, suites: bool = True):
         self.results = results
+        self.suites = suites        # LIBERO's rows carry their suite (WetRobo's file has none)
 
     def record(self, row: dict):
         """One finished run (a stopped one doesn't count)."""
@@ -35,7 +36,7 @@ class LiberoScores:
                 r = json.loads(line)
             except ValueError:
                 continue
-            if "suite" not in r:          # rows from before the other suites existed
+            if self.suites and "suite" not in r:          # rows from before the other suites existed
                 try:
                     r["suite"] = LB.task(r["task"]).suite
                 except KeyError:

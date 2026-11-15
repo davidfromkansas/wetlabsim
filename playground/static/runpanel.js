@@ -162,7 +162,7 @@ function tagHtml(uid, run, tl) {
   // Repeat runs (more than one): which run this is, and a square per run.
   const b = run.batch, many = b && b.total > 1 && window.runSquares;
   const k = many ? (b.index || Math.min(b.total, b.results.length + (b.finished ? 0 : 1))) : 0;   // this robot's own run (side by side: each copy has one)
-  const batch = many ? `<div class="r" style="font-size:12.5px"><b>${b.finished ? `${b.results.filter(x => x === 'succeeded').length} of ${b.results.length} ${(S.scene.robots || []).some(r => r.libero && (b.stations || []).includes(r.id)) ? 'passed' : 'succeeded'}` : `Run ${k} of ${b.total}`}</b></div>${window.runSquares(b, live, false)}` : '';
+  const batch = many ? `<div class="r" style="font-size:12.5px"><b>${b.finished ? `${b.results.filter(x => x === 'succeeded').length} of ${b.results.length} ${(S.scene.robots || []).some(r => (r.libero || r.wetrobo) && (b.stations || []).includes(r.id)) ? 'passed' : 'succeeded'}` : `Run ${k} of ${b.total}`}</b></div>${window.runSquares(b, live, false)}` : '';
   return `<div class="ftab"><img src="${LOGOS[m.provider] || LOGOS.anthropic}" alt="">${esc(m.label || '')}</div>
     <div class="tbody">${run.title ? `<div class="ttl" title="${esc(run.task || '')}">${esc(run.title)}</div>` : ''}${batch}<div class="r">${first}<span><b>${fmt(secs)}</b>${live && limit ? ` <span class="mut">/ ${fmt(limit)}</span>` : ''}</span><span style="margin-left:auto"><b>${money}</b></span></div>
     <div class="thick" role="img" aria-label="What the robot has been doing over time">${bar}</div></div><div class="pointer"></div>`;

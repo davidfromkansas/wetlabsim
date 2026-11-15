@@ -208,6 +208,9 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Burette stand | Lab & Medical | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R495_laboratory_ring_stand/04_tall_burette_stand`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R495_laboratory_ring_stand/04_tall_burette_stand) |
 | 24-well plate | Lab & Medical | Built in-house (Blender) | `plate_24well` |
 | 24-well plate lid | Lab & Medical | Built in-house (Blender) | `plate_24well_lid` |
+| 100 mm cell dish lid | Lab & Medical | Built in-house (Blender) | `petri_dish_lid` |
+| 60 mm Petri dish | Lab & Medical | Built in-house (Blender) | `petri_dish_60` |
+| 60 mm Petri dish lid | Lab & Medical | Built in-house (Blender) | `petri_dish_60_lid` |
 | Target mark | Lab & Medical | Built in-house (Blender) | `target_mark` |
 | Pipette tip | Lab & Medical | AutoBio (credit in NOTICE.md) | [`pipette_tip`](../../wetlabsim/assets/autobio/NOTICE.md) |
 | Pipette tip box | Lab & Medical | AutoBio (credit in NOTICE.md) | [`tip_box`](../../wetlabsim/assets/autobio/NOTICE.md) |

@@ -2,7 +2,7 @@
 
     python -m playground.tools.build_inhouse [ids ...]
 
-24-well plate and its lid (ANSI/SLAS standard footprint), glass test tubes (16 x 150 mm with a
+24-well plate and its lid (ANSI/SLAS standard footprint), the 100 mm cell dish's lid, a 60 mm Petri dish and its lid, glass test tubes (16 x 150 mm with a
 screw cap, and 13 x 100 mm), a glass stirring rod, a magnetic stir bar, a hot plate stirrer, and
 a target mark (a sticker for the bench). Each is written in the library's form
 (playground/assets/<id>/asset.json): visual meshes made in Blender (lathed glass, bevelled and
@@ -224,7 +224,13 @@ class Part:
         return self
 
 
-def _write(id_, parts: list[Part], masses, note=""):
+# A thin hard wall (a 1 mm polystyrene dish): its contacts stiff, and its own stiffness the one
+# used against a soft fingertip pad (MuJoCo's solimp and priority), so a pad closing on the wall
+# stops at it and does not sink through.
+THIN_WALL = {"solimp": [0.99, 0.999, 0.0005], "priority": 2}
+
+
+def _write(id_, parts: list[Part], masses, note="", surface=None):
     """Write the parts in the library's form, the item's bottom centre at its origin. Part 0 is
     the main body; others carry a joint (a knob) or sit on by a weld (a cap)."""
     out = catalog.ASSETS / id_
@@ -252,7 +258,7 @@ def _write(id_, parts: list[Part], masses, note=""):
             h = m.convex_hull
             name = f"b{i}_col_{k}.obj"
             write_obj(out / name, h.vertices + shift - c, h.faces)
-            col.append({"mesh": name, "volume": float(h.volume)})
+            col.append({"mesh": name, "volume": float(h.volume), **(surface or {})})
         b = {"name": p.name, "visuals": vis, "collision_parts": col, "mass": round(mass, 6),
              "frame": [*np.round(c, 6).tolist(), 1, 0, 0, 0]}
         if i == 0:
@@ -439,6 +445,57 @@ def plate_24well_lid():
     return _write("plate_24well_lid", [p], [0.018], "; its skirt fits over the plate")
 
 
+def _dish_lid(id_, r_dish, depth, ring):
+    """A Petri dish's lid: a polystyrene cover that drops over a dish r_dish in radius and rests
+    on its rim, its skirt (depth tall) 0.8 mm clear of the dish's wall, with the stacking ring
+    such lids carry on top (ring: its radius)."""
+    _reset()
+    Ri, t = r_dish + 0.8 * MM, 1.0 * MM
+    Ro, H = Ri + t, depth + t
+    bump = [(ring, H), (ring + 0.3 * MM, H + 0.5 * MM), (ring + 1.3 * MM, H + 0.5 * MM), (ring + 1.6 * MM, H)]
+    prof = [(0.0, H)] + bump + arc(Ro - 1.0 * MM, H - 1.0 * MM, 1.0 * MM, 90, 0, 8) + \
+        arc(Ro - t / 2, t / 2, t / 2, 0, -180, 8) + \
+        arc(Ri - 0.5 * MM, depth - 0.5 * MM, 0.5 * MM, 0, 90, 5) + [(0.0, depth)]
+    lid = _arrays(lathe(prof, 96, 0))
+    p = Part("lid").visual(lid, CLEAR_PS)
+    a = np.linspace(0, 2 * math.pi, 24, endpoint=False)
+    top = _hull([(Ro * math.cos(x), Ro * math.sin(x), z) for x in a for z in (depth, H)])
+    p.collide([top] + shell(lambda z: Ro, lambda z: Ri, [0.0, depth], 24))
+    return _write(id_, [p], [_solid_mass(lid, POLYSTYRENE)], "; its skirt fits over the dish",
+                  surface=THIN_WALL)
+
+
+def petri_dish_lid():
+    """The lid of the 100 mm cell dish (AutoBio's cell_dish_100: 89 mm across, 20 mm tall)."""
+    return _dish_lid("petri_dish_lid", 44.5 * MM, 8.0 * MM, 40.0 * MM)
+
+
+DISH60_R, DISH60_H = 27.0 * MM, 14.0 * MM
+
+
+def petri_dish_60():
+    """A 60 x 15 mm polystyrene Petri dish (the size a robot's hand spans): its base, 54 mm
+    across and 14 mm tall, with a 1 mm wall and floor, a rounded rim and a foot ring."""
+    _reset()
+    R, H, t = DISH60_R, DISH60_H, 1.0 * MM
+    prof = [(0.0, 0.3 * MM), (R - 3.0 * MM, 0.3 * MM), (R - 2.7 * MM, 0.0), (R - 1.0 * MM, 0.0)] + \
+        arc(R - 1.0 * MM, 1.0 * MM, 1.0 * MM, -90, 0, 6)[1:] + \
+        arc(R - t / 2, H - t / 2, t / 2, 0, 180, 8) + \
+        arc(R - t - 0.6 * MM, t + 0.3 * MM + 0.6 * MM, 0.6 * MM, 0, -90, 5) + [(0.0, t + 0.3 * MM)]
+    dish = _arrays(lathe(prof, 96, 0))
+    p = Part("dish").visual(dish, CLEAR_PS)
+    a = np.linspace(0, 2 * math.pi, 24, endpoint=False)
+    floor = _hull([(R * math.cos(x), R * math.sin(x), z) for x in a for z in (0.0, t + 0.3 * MM)])
+    p.collide([floor] + shell(lambda z: R, lambda z: R - t, [t + 0.3 * MM, H], 24))
+    return _write("petri_dish_60", [p], [_solid_mass(dish, POLYSTYRENE)], "; an open dish, so things go in",
+                  surface=THIN_WALL)
+
+
+def petri_dish_60_lid():
+    """The 60 mm dish's lid (57.6 mm across, 8 mm tall)."""
+    return _dish_lid("petri_dish_60_lid", DISH60_R, 7.0 * MM, 23.0 * MM)
+
+
 def hot_plate():
     """A ceramic-top hot plate stirrer: 180 mm square top, a sloped control panel and two knobs."""
     _reset()
@@ -514,6 +571,9 @@ BUILD = {
     "target_mark": target_mark,
     "plate_24well": plate_24well,
     "plate_24well_lid": plate_24well_lid,
+    "petri_dish_lid": petri_dish_lid,
+    "petri_dish_60": petri_dish_60,
+    "petri_dish_60_lid": petri_dish_60_lid,
     "hot_plate": hot_plate,
 }
 
