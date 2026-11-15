@@ -30,6 +30,9 @@ ROBOT_XY = (-0.42, 0.0)
 # A humanoid stands on the floor instead, its pelvis this far back from the table's near edge (m):
 # close enough for its hands to work over the table, its feet clear of the table's frame.
 HUMANOID_GAP = 0.15
+# A wheeled humanoid (the RB-Y1) stands on the floor too: its base's centre this far back from the
+# table's near edge (m), the front of its base (30 cm ahead of the centre) 6 cm clear of the edge.
+MOBILE_GAP = 0.36
 STATION_TABLE = "table_packing"
 
 # The kinds of station: which table the robot stands on, how that table is turned in the
@@ -171,16 +174,23 @@ class Station:
 
     @property
     def standing(self) -> bool:
-        """A humanoid (the G1) stands on the floor at the table, not on it."""
+        """A humanoid (the G1, the wheeled RB-Y1) stands on the floor at the table, not on it."""
         from wetlabsim import scene as WS
-        return bool(WS.ROBOTS[self.robot].get("humanoid"))
+        P = WS.ROBOTS[self.robot]
+        return bool(P.get("humanoid") or P.get("mobile"))
+
+    @property
+    def stand_gap(self) -> float:
+        """How far back from the table's near edge a robot on the floor stands (m)."""
+        from wetlabsim import scene as WS
+        return MOBILE_GAP if WS.ROBOTS[self.robot].get("mobile") else HUMANOID_GAP
 
     @property
     def robot_xy(self) -> tuple:
         if self.robot == "aloha":     # two arms facing each other across the middle of the table
             return (0.0, 0.0)
         if self.standing:             # on the floor, facing the table's near edge, HUMANOID_GAP from it
-            return (-self.footprint()[0] / 2 - HUMANOID_GAP, 0.0)
+            return (-self.footprint()[0] / 2 - self.stand_gap, 0.0)
         return self.spec["robot_xy"]
 
     def bases(self) -> list:
@@ -217,7 +227,7 @@ class Station:
         centred on the table."""
         sx, sy = self.footprint()
         # A humanoid stands outside the table's footprint: the box takes in where it stands too.
-        mx = HUMANOID_GAP + 0.35 if self.standing else self.WALL_MARGIN
+        mx = self.stand_gap + 0.35 if self.standing else self.WALL_MARGIN
         return sx / 2 + mx, sy / 2 + self.WALL_MARGIN, self.top + self.WALL_ABOVE
 
     def footprint(self):

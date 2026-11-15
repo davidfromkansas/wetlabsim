@@ -2,7 +2,7 @@
 
 The files are the makers', unchanged. Their sources and checksums are in
 agent/datasheets/sources.json (Franka), agent/aloha/datasheets/sources.json (ALOHA) and
-agent/fr3_duo/datasheets/sources.json (FR3 Duo) and agent/g1/datasheets/sources.json (Unitree G1);
+agent/fr3_duo/datasheets/sources.json (FR3 Duo) agent/g1/datasheets/sources.json (Unitree G1) and agent/rby1/datasheets/sources.json (RB-Y1);
 this fetches any that are missing and checks them:
 
     python -m wetlabsim.datasheets
@@ -16,7 +16,8 @@ import urllib.request
 
 AGENT = pathlib.Path(__file__).resolve().parent.parent / "agent"
 DIRS = {"franka": AGENT / "datasheets", "aloha": AGENT / "aloha" / "datasheets",
-        "fr3_duo": AGENT / "fr3_duo" / "datasheets", "g1": AGENT / "g1" / "datasheets"}
+        "fr3_duo": AGENT / "fr3_duo" / "datasheets", "g1": AGENT / "g1" / "datasheets",
+        "rby1": AGENT / "rby1" / "datasheets"}
 DIR = DIRS["franka"]
 
 

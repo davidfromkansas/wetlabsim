@@ -330,6 +330,8 @@ ROBOTS = [
      "reach_mm": 855, "payload_kg": 3, "joints": "2 × 7", "arms": 2, "thumb": "/pg/static/station_fr3_duo.png"},
     {"id": "g1", "label": "Unitree G1 (humanoid)", "maker": "Unitree Robotics", "gripper": "2 × Dex3-1 hands",
      "reach_mm": 500, "payload_kg": 3, "joints": "29 + 2 × 7", "arms": 2, "thumb": "/pg/static/station_g1.png"},
+    {"id": "rby1", "label": "RB-Y1 (wheeled humanoid)", "maker": "Rainbow Robotics", "gripper": "2 × two-finger",
+     "reach_mm": 600, "payload_kg": 3, "joints": "2 wheels + 6 + 2 × 7 + 2", "arms": 2, "thumb": "/pg/static/station_rby1.png"},
 ]
 
 
