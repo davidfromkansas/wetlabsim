@@ -54,6 +54,13 @@ def load_sessions(limit: int) -> list[dict]:
                   order by last_saved_at desc limit $2""", [OWNER_USER, limit])
 
 
+def list_sessions(limit: int) -> list[dict]:
+    """The owner's saved sessions, most recently saved first: id, name and when (unix seconds) only."""
+    return sql("""select session_id::text, session_name, extract(epoch from last_saved_at)::float8 as saved
+                  from sessions where owner_user_id = $1 and deleted_at is null
+                  order by last_saved_at desc limit $2""", [OWNER_USER, limit])
+
+
 def load_session(session_id: str) -> dict | None:
     rows = sql("""select session_id::text, session_name, scene_layout, unsent_tasks, save_version, share_token
                   from sessions where session_id = $1::uuid and owner_user_id = $2 and deleted_at is null""",

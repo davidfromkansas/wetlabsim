@@ -465,8 +465,11 @@ class PlaygroundSim(Sim):
         def to_room(p):
             x, y = p[0] - org[0], p[1] - org[1]
             return (c * x - s_ * y, s_ * x + c * y, p[2])
+
+        def from_room(p):
+            return (c * p[0] + s_ * p[1] + org[0], -s_ * p[0] + c * p[1] + org[1], p[2])
         with self.lock:
-            return LB.site_sheet(LB.task(st.task), self.m, self.d, st.prefix, to_room)
+            return LB.site_sheet(LB.task(st.task), self.m, self.d, to_room, from_room)
 
     def _lay_out(self, task):
         """Free play: every object starts where the user put it (the model's own pose), and each
