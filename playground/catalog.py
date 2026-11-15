@@ -375,7 +375,6 @@ ITEMS = [
     ("brake_caliper", "Car parts", "Brake caliper", "brakeSystem_caliper_b01", False, False),
     ("brake_pad", "Car parts", "Brake pad", "brakeSystem_brake_pad_a01", False, False),
     ("wheel_hub", "Car parts", "Wheel hub", "suspension_wheelHubABS_assembly_a01", False, False),
-    ("strut", "Car parts", "Suspension strut", "suspension_strut_assembly_a01", False, False),
     ("steering_wheel", "Car parts", "Steering wheel", "steeringSystem_steering_wheel_b01", False, False),
     ("car_seat", "Car parts", "Bucket seat", "interiorPart_bucket_seat_c01", False, False),
     ("gauge_cluster", "Car parts", "Gauge cluster", "interiorPart_dashboard_a01", False, False),

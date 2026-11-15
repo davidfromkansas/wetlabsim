@@ -366,7 +366,6 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Brake caliper | Car parts | NVIDIA SimReady | [`brakeSystem_caliper_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/brakeSystem_caliper_b01) |
 | Brake pad | Car parts | NVIDIA SimReady | [`brakeSystem_brake_pad_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/brakeSystem_brake_pad_a01) |
 | Wheel hub | Car parts | NVIDIA SimReady | [`suspension_wheelHubABS_assembly_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/suspension_wheelHubABS_assembly_a01) |
-| Suspension strut | Car parts | NVIDIA SimReady | [`suspension_strut_assembly_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/suspension_strut_assembly_a01) |
 | Steering wheel | Car parts | NVIDIA SimReady | [`steeringSystem_steering_wheel_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/steeringSystem_steering_wheel_b01) |
 | Bucket seat | Car parts | NVIDIA SimReady | [`interiorPart_bucket_seat_c01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/interiorPart_bucket_seat_c01) |
 | Gauge cluster | Car parts | NVIDIA SimReady | [`interiorPart_dashboard_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/interiorPart_dashboard_a01) |
