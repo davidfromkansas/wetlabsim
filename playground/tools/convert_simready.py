@@ -248,6 +248,41 @@ def _owner(prim) -> str:
     return ""
 
 
+# USD primitive colliders and the MuJoCo geom each one is (the same shape, exactly)
+PRIMS = {"Cube": "box", "Cylinder": "cylinder", "Capsule": "capsule", "Sphere": "sphere"}
+
+
+def primitive(prim, M: np.ndarray, mpu: float) -> dict:
+    """A USD primitive collider as a MuJoCo geom: {"shape", "size" (MuJoCo's: box half-sizes;
+    cylinder and capsule radius and half-length; sphere radius), "T" (its pose in the world, metres),
+    "mesh" (the same shape as a mesh in the world, for bounds and volumes)}. USD's Cube is a cube of
+    side `size` scaled by its transform; Cylinder and Capsule run along their `axis` (height is the
+    straight part, a capsule's caps come on top); MuJoCo's run along z."""
+    get = lambda a, d: prim.GetAttribute(a).Get() if prim.GetAttribute(a) and prim.GetAttribute(a).Get() is not None else d
+    t = PRIMS[prim.GetTypeName()]
+    R = M[:3, :3]
+    s = np.linalg.norm(R, axis=0) * mpu           # each local axis's scale, in metres
+    T = _rigid(M, mpu)
+    axis = get("axis", "Z")
+    if t in ("cylinder", "capsule") and axis != "Z":    # turn the local axis onto z
+        A = {"X": np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]]), "Y": np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]])}[axis]
+        T[:3, :3] = T[:3, :3] @ A.T
+        s = np.abs(A @ s)
+    if t == "box":
+        size = float(get("size", 2.0)) / 2 * s
+        mesh = trimesh.creation.box(extents=2 * size)
+    elif t == "sphere":
+        size = np.array([float(get("radius", 1.0)) * s.max()])
+        mesh = trimesh.creation.icosphere(subdivisions=2, radius=size[0])
+    else:
+        r, h = float(get("radius", 1.0)) * max(s[0], s[1]), float(get("height", 2.0)) * s[2]
+        size = np.array([r, h / 2])
+        mesh = trimesh.creation.cylinder(radius=r, height=h, sections=24) if t == "cylinder" else \
+            trimesh.creation.capsule(radius=r, height=h, count=[24, 12])
+    mesh.apply_transform(T)
+    return {"shape": t, "size": [float(v) for v in size], "T": T, "mesh": mesh}
+
+
 def read(stage, by_body: bool = False):
     """Visual groups by material, colliders, and the stated total mass and centre of mass. Each
     collider: its mesh (world frame, metres), rigid body, stated mass, approximation, physics
@@ -258,6 +293,13 @@ def read(stage, by_body: bool = False):
     groups: dict = {}
     colliders, mass, com = [], None, None
     for prim in Usd.PrimRange(stage.GetPseudoRoot(), Usd.TraverseInstanceProxies()):
+        if prim.GetTypeName() in PRIMS and prim.HasAPI("PhysicsCollisionAPI"):
+            # a primitive collider (ForgeCAD's boxes, cylinders, capsules): MuJoCo's own shape
+            M = np.array(xc.GetLocalToWorldTransform(prim)).T
+            shape = primitive(prim, M, mpu)
+            colliders.append({"body": _owner(prim), "mesh": shape.pop("mesh"), "mass": None, "approx": "primitive",
+                              "material": phys_material(prim), "props": None, "solref": None, "prim": shape})
+            continue
         if not prim.IsA(UsdGeom.Mesh):
             continue
         im = UsdGeom.Imageable(prim)
@@ -689,6 +731,12 @@ def _hulls(meshes: list, approx: list, out: pathlib.Path, prefix: str, surfaces=
     parts = []
     surfaces = surfaces or [{}] * len(meshes)
     for m, a, sf in zip(meshes, approx, surfaces):
+        if isinstance(a, dict):        # a primitive: MuJoCo's own shape, where it sits in the body
+            T = a["T"]
+            parts.append({"shape": a["shape"], "size": [round(v, 6) for v in a["size"]],
+                          "pos": [round(float(v), 6) for v in T[:3, 3]], "quat": _quat(T[:3, :3]),
+                          "volume": float(m.volume), **sf})
+            continue
         pieces = [m.convex_hull]
         if a == "convexDecomposition" and pieces_cfg == FINE:
             pieces = fine_pieces(m)
@@ -724,6 +772,13 @@ def convert_articulated(stage, src: pathlib.Path, usd: pathlib.Path, out: pathli
     groups, colliders, _, _ = read(stage, by_body=True)
     joints = _joints(stage, mpu)
     extras = joint_extras(usd)
+    # USD Physics: shapes under no rigid body are static (ForgeCAD's gondola frame); they are the
+    # item's fixed main part, in the frame of its root prim
+    static = str(stage.GetDefaultPrim().GetPath())
+    if any(k[0] == "" for k in groups) or any(c["body"] == "" for c in colliders):
+        groups = {((k[0] or static), k[1]): g for k, g in groups.items()}
+        for c in colliders:
+            c["body"] = c["body"] or static
     paths = sorted({k[0] for k in groups} | {c["body"] for c in colliders})
     paths = [p for p in paths if p]
     allV = np.vstack([np.vstack(g["V"]) for g in groups.values()])
@@ -742,7 +797,7 @@ def convert_articulated(stage, src: pathlib.Path, usd: pathlib.Path, out: pathli
         if j["body1"] in T and j["body0"] in T:
             parent[j["body1"]], joint_of[j["body1"]] = j["body0"], j
     vols = {p: sum(c["mesh"].convex_hull.volume for c in colliders if c["body"] == p) for p in paths}
-    main_root = max((p for p in paths if p not in parent), key=lambda p: vols.get(p, 0))
+    main_root = static if static in paths else max((p for p in paths if p not in parent), key=lambda p: vols.get(p, 0))
     total = sum(len(np.vstack(g["V"])) // 3 for g in groups.values())
     bodies = []
     for i, p in enumerate(paths):
@@ -751,17 +806,22 @@ def convert_articulated(stage, src: pathlib.Path, usd: pathlib.Path, out: pathli
         mine_g = {k[1]: g for k, g in groups.items() if k[0] == p}
         mine_c = [c for c in colliders if c["body"] == p]
         Tinv = np.linalg.inv(T[p])
-        meshes = []
+        meshes, approx = [], []
         for c in mine_c:
             m = c["mesh"].copy()
             m.apply_translation(-origin)
             m.apply_transform(Tinv)
             meshes.append(m)
+            if c.get("prim"):
+                Tp = c["prim"]["T"].copy()
+                Tp[:3, 3] -= origin
+                approx.append({**c["prim"], "T": Tinv @ Tp})
+            else:
+                approx.append("convexDecomposition" if hollow else c["approx"])
         a = prim.GetAttribute("physics:mass")
         bmass = float(a.Get()) if a and a.Get() else (sum(c["mass"] for c in mine_c if c["mass"]) or None)
         rec = {"name": name, "visuals": _visuals(mine_g, origin, Tinv, out, f"b{i}_", max_tris, total),
-               "collision_parts": _hulls(meshes, ["convexDecomposition" if hollow else c["approx"]
-                                                  for c in mine_c], out, f"b{i}_", [_surface(c) for c in mine_c], pieces_cfg),
+               "collision_parts": _hulls(meshes, approx, out, f"b{i}_", [_surface(c) for c in mine_c], pieces_cfg),
                "mass": round(bmass, 6) if bmass else None}
         props = [c["props"] for c in mine_c]
         if not (props and all(props)) and mine_c:
@@ -816,13 +876,16 @@ def convert_articulated(stage, src: pathlib.Path, usd: pathlib.Path, out: pathli
     return meta
 
 
-def convert(src: pathlib.Path, out: pathlib.Path, hollow=False, max_tris=60000, solid=False, fine=False) -> dict:
+def convert(src: pathlib.Path, out: pathlib.Path, hollow=False, max_tris=60000, solid=False, fine=False,
+            per_collider=False) -> dict:
+    """per_collider: a one-part item still collides as each of its colliders, as the asset lays
+    them out (a shelf's boards, a mug's handle), instead of one hull around them all."""
     pieces_cfg = FINE if fine else COACD
     usd = next(p for p in sorted(usd_dir(src).glob("*.usd*")) if p.suffix in (".usd", ".usda", ".usdc"))
     stage = open_stage(usd)
     rigid = [p for p in Usd.PrimRange(stage.GetPseudoRoot(), Usd.TraverseInstanceProxies())
              if p.HasAPI(UsdPhysics.RigidBodyAPI)]
-    if len(rigid) > 1 and not solid:
+    if (len(rigid) > 1 or per_collider) and not solid:
         return convert_articulated(stage, src, usd, out, max_tris, hollow, pieces_cfg)
     groups, colliders, mass, com = read(stage)
     if not mass:    # some packages (QUIKTECH, USDCraft) state the mass on the rigid body, not its colliders

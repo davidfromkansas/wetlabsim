@@ -26,7 +26,7 @@ import numpy as np
 from PIL import Image
 
 from . import traces
-from .sim import RobotError, Sim
+from .sim import HandArm, RobotError, Sim
 
 VIEWER_PATH = pathlib.Path(__file__).parent / "viewer.html"
 
@@ -193,6 +193,14 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(self.sim_info())
             if p.startswith("/camera/"):
                 return self._camera(p[len("/camera/"):], qs)
+            if p == "/lidar.npz":          # a humanoid's head lidar: one scan
+                if not hasattr(self.sim, "lidar"):
+                    return self._err("this robot has no lidar")
+                sc = self.sim.lidar()
+                buf = io.BytesIO()
+                np.savez(buf, points=sc["points"], distance=sc["distance"])
+                return self._send(200, buf.getvalue(), "application/octet-stream",
+                                  {"X-Frame-Meta": json.dumps({"time": sc["time"]})})
             if p.startswith("/stream/"):
                 return self._stream(p[len("/stream/"):].removesuffix(".mjpg"), qs)
             if p.startswith("/static/"):
@@ -405,6 +413,33 @@ class Handler(BaseHTTPRequestHandler):
             if p == "/move_j_pose":
                 mo = s.move_j_ik(b["pose"], b.get("speed", 1.0))
                 return self._json(self._wait(mo, wait, timeout))
+            if p in ("/walk", "/stand", "/body"):     # a humanoid's legs
+                if not hasattr(s, "walk"):
+                    if isinstance(getattr(s, "arm", s), HandArm):
+                        raise RobotError("walking moves the whole robot: send it to Robot(), not to one arm")
+                    raise RobotError("this robot doesn't walk")
+                if p == "/stand":
+                    s.stand()
+                    return self._json({"ok": True})
+                if p == "/body":
+                    return self._json({"ok": True, "body": s.body_pose(b.get("height"), b.get("pitch"))})
+                mo = s.walk(b.get("vx", 0.0), b.get("vy", 0.0), b.get("yaw_rate", 0.0), b.get("seconds", 1.0))
+                return self._json(self._wait(mo, wait, max(timeout, float(b.get("seconds", 1.0)) + 5)))
+            if p == "/hand":                         # a Dex3-1 hand's seven joints
+                if not hasattr(s, "hand_move"):
+                    raise RobotError("this robot has no hand joints to set: use /gripper")
+                s.hand_move(b["joints"], b.get("speed", 255), b.get("force", 150))
+                if wait:
+                    t0 = still = time.time()
+                    time.sleep(0.05)
+                    while time.time() - t0 < 5:
+                        g = s.gripper_status()
+                        if g["moving"]:
+                            still = time.time()
+                        elif g["status_code"] == 3 or time.time() - still > 0.3:
+                            break
+                        time.sleep(0.02)
+                return self._json({"ok": True, "gripper": s.gripper_status(), "hand": s.hand_state()})
             if p == "/stop":
                 s.stop()
                 return self._json({"ok": True})

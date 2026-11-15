@@ -185,6 +185,35 @@ class Robot:
         """position (0-255, measured), requested, moving, object_detected."""
         return self.get_state()["gripper"]
 
+    # ------------------------------------------- a humanoid's hands and legs
+    def hand_move(self, joints, speed: int = 255, force: int = 150, wait: bool = True) -> dict:
+        """A dexterous hand (the G1's Dex3-1): set its 7 joints (rad), in the maker's order:
+        thumb 0, thumb 1, thumb 2, middle 0, middle 1, index 0, index 1. Returns the gripper
+        status and the hand's readings."""
+        out = self._cmd("/hand", {"joints": list(map(float, joints)), "speed": speed, "force": force, "wait": wait})
+        return {"gripper": out["gripper"], "hand": out["hand"]}
+
+    def walk(self, vx: float = 0.0, vy: float = 0.0, yaw_rate: float = 0.0, seconds: float = 1.0,
+             wait: bool = True) -> dict:
+        """A humanoid: walk at vx forward and vy to the left (m/s), turning at yaw_rate (rad/s,
+        counter-clockwise), for `seconds`, then stand. Send it to the whole robot (Robot())."""
+        return self._cmd("/walk", {"vx": vx, "vy": vy, "yaw_rate": yaw_rate, "seconds": seconds, "wait": wait})
+
+    def stand(self):
+        """A humanoid: stop walking and stand where it is."""
+        self._cmd("/stand", {})
+
+    def set_body(self, height: float | None = None, pitch: float | None = None) -> dict:
+        """A humanoid: the balance controller's pelvis height (m) and forward lean of the torso
+        (rad). Leave one out to keep it."""
+        return self._cmd("/body", {"height": height, "pitch": pitch})["body"]
+
+    def get_lidar_points(self) -> np.ndarray:
+        """A humanoid's head lidar: one scan, as an N x 3 array of the points it hit (m, in the
+        robot's frame)."""
+        raw, _ = self._req("GET", "/lidar.npz", raw=True)
+        return np.load(io.BytesIO(raw))["points"]
+
     # --------------------------------------------------------------- cameras
     def cameras(self) -> list[str]:
         return [c for c in self._req("GET", "/info")["cameras"] if c != "side"]

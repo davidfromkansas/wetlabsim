@@ -22,6 +22,7 @@ import numpy as np
 
 from . import scene as S
 from . import tasks as T
+from . import locomotion as L
 
 CTRL_DT = 0.008                # trajectory sample period (s)
 TRACKING_LIMIT = 0.25          # rad of joint tracking error before a protective stop
@@ -355,6 +356,8 @@ class Arm:
         with self.lock:
             self._check_running()
             q_start = self.sim.d.ctrl[self.arm_act].copy()
+            # Solve on the robot as it stands now (a humanoid's arms ride on its moving body).
+            self._ik_data.qpos[:] = self.sim.d.qpos
             p0, R0 = self._fk(q_start)
             p1, R1 = self.to_world(pose[:3], mat_from_quat(quat_from_rotvec(pose[3:])))
         q0, q1 = quat_from_mat(R0), quat_from_mat(R1)
@@ -397,8 +400,18 @@ class Arm:
         pose = np.asarray(pose, float)
         with self.lock:
             q0 = self.sim.d.ctrl[self.arm_act].copy()
+            self._ik_data.qpos[:] = self.sim.d.qpos
             pw, Rw = self.to_world(pose[:3], mat_from_quat(quat_from_rotvec(pose[3:])))
         sol = self.ik(pw, quat_from_mat(Rw), q0)
+        if sol is None:
+            # The solver can stall from the current arm angles (far moves, joint limits): retry
+            # from the ready pose and a few fixed starting angles, keep the one nearest the arm.
+            rng = np.random.default_rng(0)
+            seeds = [self.ready_q, (self.joint_lo + self.joint_hi) / 2]
+            seeds += [rng.uniform(self.joint_lo, self.joint_hi) for _ in range(6)]
+            sols = [s for s in (self.ik(pw, quat_from_mat(Rw), q, iters=400) for q in seeds)
+                    if s is not None]
+            sol = min(sols, key=lambda s: np.max(np.abs(s - q0))) if sols else None
         if sol is None:
             raise RobotError("target pose is unreachable")
         return self.move_j(sol, speed)
@@ -761,6 +774,433 @@ class TwoArm(Arm):
         """Each arm's calibration, in that arm's own frames: the fixed cameras in its base frame,
         its wrist camera in its TCP frame."""
         return {s: a.calibration() for s, a in self.sides.items()}
+
+
+class HandArm(Arm):
+    """One arm of a Unitree G1 with its Dex3-1 hand. The arm moves like any other (its joints
+    follow the controller's trajectory, solved in the pelvis frame); the hand's seven joints close
+    together on the 0..255 gripper scale (open flat to a fist), or are set one by one (hand_move).
+    The arm's motors also get a feed-forward torque that holds the arm up against gravity."""
+
+    def _index(self):
+        super()._index()
+        P, m = self.P, self.sim.m
+        self.hand_act = np.array([m.actuator(a).id for a in P["hand_actuators"]])
+        self.hand_jnt = np.array([m.joint(j).id for j in P["hand_joints"]])
+        self.hand_qadr = m.jnt_qposadr[self.hand_jnt]
+        self.hand_dadr = m.jnt_dofadr[self.hand_jnt]
+        self.hand_lo, self.hand_hi = m.jnt_range[self.hand_jnt, 0].copy(), m.jnt_range[self.hand_jnt, 1].copy()
+        self.hand_open = S.g1_hand_open(self.side)
+        self.hand_closed = S.g1_hand_closed(self.side)
+        self.hand_force_base = m.actuator_forcerange[self.hand_act].copy()
+        self.tau_act = np.array([m.actuator(a + "_tau").id for a in P["arm_actuators"]])
+        pre = P["tcp_site"][: -len(f"{self.side}_hand_tcp")]
+        self.touch = {n: pre + f"touch_{self.side}_{n}" for n in
+                      ("palm", "thumb_pad", "thumb_tip", "index_pad", "index_tip", "middle_pad", "middle_tip")}
+
+    def reset_pose(self):
+        d = self.sim.d
+        d.qpos[self.arm_qadr] = self.ready_q
+        d.ctrl[self.arm_act] = self.ready_q
+        d.qpos[self.hand_qadr] = self.hand_open
+        d.ctrl[self.hand_act] = self.hand_open
+
+    def reset_state(self):
+        super().reset_state()
+        self.hand_target = self.hand_open.copy()
+        self.hand_cmd = self.sim.d.ctrl[self.hand_act].copy()
+        self.hand_rate = S.G1_HAND_VMAX.copy()
+        self.sim.m.actuator_forcerange[self.hand_act] = self.hand_force_base * (0.2 + 0.8 * 150 / 255)
+
+    def snapshot(self) -> dict:
+        out = super().snapshot()
+        out["hand_ctrl"] = self.sim.d.ctrl[self.hand_act].copy()
+        return out
+
+    def restore(self, snap: dict):
+        super().restore(snap)
+        if "hand_ctrl" in snap:
+            self.sim.d.ctrl[self.hand_act] = snap["hand_ctrl"]
+
+    def _control(self):
+        super()._control()
+        d, dt = self.sim.d, self.sim.m.opt.timestep
+        # The hand's motors move toward their targets at up to their rated speed.
+        step = self.hand_rate * dt
+        self.hand_cmd += np.clip(self.hand_target - self.hand_cmd, -step, step)
+        d.ctrl[self.hand_act] = self.hand_cmd
+        # Gravity compensation through each arm motor's torque input (LeRobot's G1 gravity
+        # compensation): the torque that holds the arm and hand where they are.
+        d.ctrl[self.tau_act] = d.qfrc_bias[self.arm_dadr]
+
+    def gripper_move(self, position, speed=255, force=150):
+        position = float(np.clip(position, 0, 255))
+        target = self.hand_open + (self.hand_closed - self.hand_open) * position / 255.0
+        self._hand_to(target, speed, force)
+        with self.lock:
+            self.grip_target = position
+            self.grip_cmd = position
+            self.log_event("command", kind="gripper", position=position, speed=speed, force=force)
+
+    def hand_move(self, joints, speed=255, force=150):
+        """Set the hand's seven joints (rad), Unitree's order: thumb 0, 1, 2, middle 0, 1, index 0, 1."""
+        q = np.asarray(joints, float)
+        if q.shape != (7,):
+            raise RobotError("a Dex3-1 hand has 7 joints: thumb 0, thumb 1, thumb 2, middle 0, middle 1, index 0, index 1")
+        if np.any(q < self.hand_lo - 1e-6) or np.any(q > self.hand_hi + 1e-6):
+            raise RobotError("hand joint target outside the joint limits "
+                             f"({np.round(self.hand_lo, 3).tolist()} .. {np.round(self.hand_hi, 3).tolist()})")
+        self._hand_to(q, speed, force)
+        with self.lock:
+            self.grip_target = self._closure(q)
+            self.grip_cmd = self.grip_target
+            self.log_event("command", kind="hand", joints=q.round(4).tolist(), speed=speed, force=force)
+
+    def _hand_to(self, q, speed, force):
+        sp = float(np.clip(speed, 0, 255)) / 255.0
+        fo = float(np.clip(force, 0, 255)) / 255.0
+        with self.lock:
+            self.hand_target = np.clip(q, self.hand_lo, self.hand_hi)
+            self.hand_rate = S.G1_HAND_VMAX * max(0.05, sp)
+            self.sim.m.actuator_forcerange[self.hand_act] = self.hand_force_base * (0.2 + 0.8 * fo)
+
+    def _closure(self, q) -> float:
+        """How closed the hand is on the 0 (open) .. 255 (fist) scale: the mean over its joints."""
+        span = self.hand_closed - self.hand_open
+        moving = np.abs(span) > 1e-6
+        return float(np.clip(np.mean((q[moving] - self.hand_open[moving]) / span[moving]) * 255, 0, 255))
+
+    def gripper_status(self):
+        d = self.sim.d
+        q = d.qpos[self.hand_qadr]
+        pos = self._closure(q)
+        vel = float(np.max(np.abs(d.qvel[self.hand_dadr])))
+        moving = bool(np.max(np.abs(self.hand_cmd - self.hand_target)) > 1e-3 or vel > 0.1)
+        err = self.hand_target - q
+        closing = (self.hand_closed - self.hand_open) * err > 0
+        if moving:
+            code = 0
+        elif np.any(np.abs(err) > 0.1):     # a finger stopped short of its target: it's touching something
+            code = 2 if np.any(closing & (np.abs(err) > 0.1)) else 1
+        else:
+            code = 3
+        return {"position": round(pos, 1), "requested": round(self.grip_target, 1),
+                "object_detected": code in (1, 2), "status_code": code, "moving": moving}
+
+    def hand_state(self) -> dict:
+        d, m = self.sim.d, self.sim.m
+        lo, hi = S.G1_TOUCH_RANGE_N
+        # A pressure array reads nothing below its threshold and saturates at its maximum.
+        touch = {}
+        for n, s in self.touch.items():
+            f = float(d.sensor(s).data[0])
+            touch[n] = round(min(f, hi), 3) if f >= lo else 0.0
+        return {"joint_positions": d.qpos[self.hand_qadr].round(4).tolist(),
+                "joint_velocities": d.qvel[self.hand_dadr].round(3).tolist(),
+                "joint_torques": d.actuator_force[self.hand_act].round(3).tolist(),
+                "pressure": touch}
+
+    def state(self) -> dict:
+        out = super().state()
+        with self.lock:
+            d = self.sim.d
+            # Each motor's torque estimate: its position loop plus its torque input.
+            out["joint_torques"] = (d.actuator_force[self.arm_act] + d.actuator_force[self.tau_act]).round(3).tolist()
+            out["hand"] = self.hand_state()
+        return out
+
+
+class Humanoid(TwoArm):
+    """A Unitree G1: two arms with Dex3-1 hands (HandArm, "left" and "right", each driven by its
+    own commands) on a body that stands and walks by itself. NVIDIA's GR00T policies
+    (locomotion.py) keep it balanced and walk it at the commanded speed, as LeRobot runs them; the
+    robot API gives the commands LeRobot's G1 teleoperation gives them: walking speed and turn
+    rate, pelvis height and torso lean."""
+
+    def __init__(self, sim: "Sim", robot: str, prefix: str = "", uid: str = "robot",
+                 world_cameras: str | None = None):
+        super().__init__(sim, robot, prefix, uid, world_cameras)
+        for side in list(self.sides):
+            a = HandArm(sim, f"{self.robot}:{side}", prefix, uid)
+            a.parent = self
+            self.sides[side] = a
+        self.loco = L.GrootLocomotion()
+        self.walk_motion: Motion | None = None
+        self.fallen = ""
+
+    @property
+    def mode(self):
+        if self.fallen:
+            return "protective_stop"
+        return super().mode
+
+    @property
+    def stop_reason(self):
+        return self.fallen or super().stop_reason
+
+    @property
+    def motion(self):
+        if self.walk_motion is not None and not self.walk_motion.done.is_set():
+            return self.walk_motion
+        return TwoArm.motion.fget(self)
+
+    @motion.setter
+    def motion(self, v):
+        if v is None:
+            self.walk_motion = None
+            for a in self.sides.values():
+                a.motion = None
+
+    def _index(self):
+        m = self.sim.m
+        for a in self.sides.values():
+            a._index()
+        arms = list(self.sides.values())
+        pre = self.prefix
+        self.base_body = self.frame_body = m.body(pre + "pelvis").id
+        self.bodies = {b for b in range(m.nbody) if self._in_subtree(b, self.base_body)}
+        self.own_joints = [m.joint(j).name for j in range(m.njnt) if m.jnt_bodyid[j] in self.bodies]
+        self.free_jnt = m.joint(pre + "floating_base_joint").id
+        self.free_qadr = m.jnt_qposadr[self.free_jnt]
+        self.free_dadr = m.jnt_dofadr[self.free_jnt]
+        body = [pre + n for n in S.G1_BODY]
+        self.body_qadr = np.array([m.joint(n).qposadr[0] for n in body])
+        self.body_dadr = np.array([m.joint(n).dofadr[0] for n in body])
+        self.body_act = np.array([m.actuator(n).id for n in body])
+        self.leg_act = self.body_act[:15]
+        self.n_arm = sum(a.n_arm for a in arms)
+        self.arm_qadr = np.concatenate([a.arm_qadr for a in arms])
+        self.arm_dadr = np.concatenate([a.arm_dadr for a in arms])
+        self.arm_act = np.concatenate([a.arm_act for a in arms])
+        self.joint_lo = np.concatenate([a.joint_lo for a in arms])
+        self.joint_hi = np.concatenate([a.joint_hi for a in arms])
+        self.ready_q = np.concatenate([a.ready_q for a in arms])
+        self.P["arm_joints"] = [j for a in arms for j in a.P["arm_joints"]]
+        self.leg_names = S.G1_BODY[:15]
+        self.feet = [m.body(pre + f"{s}_ankle_roll_link").id for s in ("left", "right")]
+        self.lidar_site = m.site(pre + "lidar").id
+        self.torso = m.body(pre + "torso_link").id      # the lidar sits on it: its rays start inside
+        self.imu = {k: pre + n for k, n in (("quat", "imu_quat"), ("gyro", "imu-pelvis-angular-velocity"),
+                                             ("acc", "imu-pelvis-linear-acceleration"))}
+        self._next_policy = None
+
+    def reset_pose(self):
+        d, m = self.sim.d, self.sim.m
+        a = self.free_qadr
+        d.qpos[a:a + 7] = m.qpos0[a:a + 7]
+        d.qvel[self.free_dadr:self.free_dadr + 6] = 0
+        stance = L.DEFAULT_ANGLES[:15]
+        d.qpos[self.body_qadr[:15]] = stance
+        d.ctrl[self.leg_act] = stance
+        for s in self.sides.values():
+            s.reset_pose()
+
+    def reset_state(self):
+        super().reset_state()
+        self.loco.reset()
+        self.walk_motion = None
+        self.fallen = ""
+        self._next_policy = None
+
+    def _start_frame(self):
+        """Where the robot was put down (its mount): the model's starting pose of its free joint."""
+        a = self.free_qadr
+        q0 = self.sim.m.qpos0[a:a + 7]
+        return q0[:3].copy(), q0[3:].copy()
+
+    def snapshot(self) -> dict:
+        # The body's pose relative to where the robot was put down, so that it moves along when
+        # its station is moved (an arm's base moves with its table; a humanoid stands by itself).
+        d = self.sim.d
+        a = self.free_qadr
+        p0, q0 = self._start_frame()
+        qi = np.zeros(4)
+        mujoco.mju_negQuat(qi, q0)
+        rel_q = np.zeros(4)
+        mujoco.mju_mulQuat(rel_q, qi, d.qpos[a + 3:a + 7])
+        rel_p = mat_from_quat(q0).T @ (d.qpos[a:a + 3] - p0)
+        return {**super().snapshot(), "base": (rel_p, rel_q), "legs": d.qpos[self.body_qadr[:15]].copy(),
+                "leg_ctrl": d.ctrl[self.leg_act].copy()}
+
+    def restore(self, snap: dict):
+        super().restore(snap)
+        d = self.sim.d
+        if "base" in snap:
+            a = self.free_qadr
+            p0, q0 = self._start_frame()
+            rel_p, rel_q = snap["base"]
+            d.qpos[a:a + 3] = p0 + mat_from_quat(q0) @ rel_p
+            q = np.zeros(4)
+            mujoco.mju_mulQuat(q, q0, rel_q)
+            d.qpos[a + 3:a + 7] = q
+            d.qpos[self.body_qadr[:15]] = snap["legs"]
+            d.ctrl[self.leg_act] = snap["leg_ctrl"]
+
+    # ------------------------------------------------------------- control
+    def _upright(self) -> str:
+        """Why the robot has fallen, or "" while it stands."""
+        d = self.sim.d
+        g = L.gravity_orientation(d.sensor(self.imu["quat"]).data)
+        if g[2] > -0.5:
+            return "the robot fell over (its body tipped past 60 degrees)"
+        foot = min(d.xpos[b][2] for b in self.feet)
+        if d.xpos[self.base_body][2] - foot < 0.3:
+            return "the robot fell over (its pelvis dropped to the floor)"
+        return ""
+
+    def _control(self):
+        for a in self.sides.values():
+            a._control()
+        d = self.sim.d
+        if self.fallen:
+            return
+        if self._next_policy is None or d.time + 1e-9 >= self._next_policy:
+            self._next_policy = (self._next_policy or d.time) + L.CONTROL_DT
+            reason = self._upright()
+            if reason:
+                # The G1 drops into its damping mode when it falls: the legs go limp.
+                self.fallen = reason
+                d.ctrl[self.leg_act] = d.qpos[self.body_qadr[:15]]
+                for a in self.sides.values():
+                    a._protective_stop(reason)
+                if self.walk_motion:
+                    self.walk_motion.result = "protective_stop: " + reason
+                    self.walk_motion.done.set()
+                    self.walk_motion = None
+                self.log_event("protective_stop", reason=reason)
+                return
+            wm = self.walk_motion
+            if wm is not None and d.time - wm.t0 >= wm.times[-1]:
+                self.loco.cmd[:] = 0
+                wm.result = "done"
+                wm.done.set()
+                self.walk_motion = None
+            d.ctrl[self.leg_act] = self.loco.step(d.sensor(self.imu["quat"]).data, d.sensor(self.imu["gyro"]).data,
+                                                  d.qpos[self.body_qadr], d.qvel[self.body_dadr])
+
+    # ------------------------------------------------------------ commands
+    def _check_standing(self):
+        if self.fallen:
+            raise RobotError(f"{self.fallen}; it needs to be picked up (reset the robot)")
+
+    def walk(self, vx=0.0, vy=0.0, yaw_rate=0.0, seconds=1.0) -> Motion:
+        """Walk at a velocity for some seconds, then stand: vx forward, vy to the left (m/s),
+        yaw_rate counter-clockwise (rad/s), as the G1 controller's joystick commands them."""
+        cmd = np.array([vx, vy, yaw_rate], float)
+        lo = np.array([L.VX_RANGE[0], L.VY_RANGE[0], L.YAW_RANGE[0]])
+        hi = np.array([L.VX_RANGE[1], L.VY_RANGE[1], L.YAW_RANGE[1]])
+        if np.any(cmd < lo) or np.any(cmd > hi):
+            raise RobotError(f"walking command outside the controller's range: vx {L.VX_RANGE}, "
+                             f"vy {L.VY_RANGE} m/s, yaw_rate {L.YAW_RANGE} rad/s")
+        seconds = float(seconds)
+        if not 0 < seconds <= 60:
+            raise RobotError("seconds must be between 0 and 60")
+        with self.lock:
+            self._check_standing()
+            if self.walk_motion:
+                self.walk_motion.result = "replaced by a new command"
+                self.walk_motion.done.set()
+            self.loco.cmd[:] = cmd
+            mo = Motion(self.sim.d.time, np.array([0.0, seconds]), np.zeros((2, 0)))
+            self.walk_motion = mo
+            self.log_event("command", kind="walk", seconds=round(seconds, 3), target=cmd.round(3).tolist())
+            return mo
+
+    def stand(self):
+        """Stop walking and stand where it is."""
+        with self.lock:
+            self.loco.cmd[:] = 0
+            if self.walk_motion:
+                self.walk_motion.result = "stopped"
+                self.walk_motion.done.set()
+                self.walk_motion = None
+            self.log_event("command", kind="stand")
+
+    def body_pose(self, height=None, pitch=None) -> dict:
+        """The balance controller's pelvis height (m) and torso lean forward (rad)."""
+        with self.lock:
+            self._check_standing()
+            if height is not None:
+                h = float(height)
+                if not L.HEIGHT_RANGE[0] <= h <= L.HEIGHT_RANGE[1]:
+                    raise RobotError(f"height must be within {L.HEIGHT_RANGE} m")
+                self.loco.height = h
+            if pitch is not None:
+                p = float(pitch)
+                if not L.LEAN_RANGE[0] <= p <= L.LEAN_RANGE[1]:
+                    raise RobotError(f"pitch must be within {L.LEAN_RANGE} rad")
+                self.loco.lean[1] = p
+            self.log_event("command", kind="body", height=round(self.loco.height, 3),
+                           pitch=round(float(self.loco.lean[1]), 3))
+            return {"height": round(self.loco.height, 3), "pitch": round(float(self.loco.lean[1]), 3)}
+
+    def stop(self):
+        self.stand()
+        super().stop()
+
+    def unlock(self):
+        self._check_standing()
+        super().unlock()
+
+    # ------------------------------------------------------------- sensors
+    def body_state(self) -> dict:
+        d, m = self.sim.d, self.sim.m
+        q = d.qpos[self.body_qadr[:15]]
+        return {
+            "joint_names": self.leg_names,
+            "joint_positions": q.round(4).tolist(),
+            "joint_velocities": d.qvel[self.body_dadr[:15]].round(3).tolist(),
+            "joint_torques": d.actuator_force[self.leg_act].round(2).tolist(),
+            "imu": {"quaternion": d.sensor(self.imu["quat"]).data.round(5).tolist(),
+                    "gyroscope": d.sensor(self.imu["gyro"]).data.round(4).tolist(),
+                    "accelerometer": d.sensor(self.imu["acc"]).data.round(3).tolist()},
+            "walk_command": self.loco.cmd.round(3).tolist(),
+            "height_command": round(self.loco.height, 3),
+            "pitch_command": round(float(self.loco.lean[1]), 3),
+            "walking": self.walk_motion is not None,
+            "fallen": bool(self.fallen),
+        }
+
+    def state(self) -> dict:
+        out = super().state()
+        with self.lock:
+            out["body"] = self.body_state()
+        return out
+
+    # The MID-360's field of view (Livox's specifications: 360 x 59 degrees, -7 to +52 degrees),
+    # range 0.1 m to 40 m (10 % reflectivity); one scan here is a 1 degree x 2 degree grid.
+    LIDAR_V = (-7.0, 52.0)
+    LIDAR_RANGE = (0.1, 40.0)
+
+    def lidar(self, h_step=1.0, v_step=2.0) -> dict:
+        """One lidar scan: the points it hit, in the pelvis frame (m), with each ray's distance."""
+        m = self.sim.m
+        with self.lock:
+            rd = mujoco.MjData(m)
+            rd.qpos[:] = self.sim.d.qpos
+            t = self.sim.d.time
+        mujoco.mj_kinematics(m, rd)
+        p0 = rd.site_xpos[self.lidar_site].copy()
+        R = rd.site_xmat[self.lidar_site].reshape(3, 3)
+        az = np.deg2rad(np.arange(0.0, 360.0, h_step))
+        el = np.deg2rad(np.arange(self.LIDAR_V[0], self.LIDAR_V[1] + 1e-9, v_step))
+        A, E = np.meshgrid(az, el)
+        dirs = np.stack([np.cos(E) * np.cos(A), np.cos(E) * np.sin(A), np.sin(E)], -1).reshape(-1, 3) @ R.T
+        n = len(dirs)
+        geomid = np.zeros(n, np.int32)
+        dist = np.zeros(n)
+        groups = np.array([1, 1, 1, 0, 0, 1], np.uint8)     # what the cameras see (visible shapes, work-box walls)
+        mujoco.mj_multiRay(m, rd, p0, dirs.reshape(-1).copy(), groups, 1, self.torso, geomid, dist, None, n,
+                           self.LIDAR_RANGE[1])
+        hit = (geomid >= 0) & (dist >= self.LIDAR_RANGE[0])
+        bp, bR = rd.xpos[self.base_body], rd.xmat[self.base_body].reshape(3, 3)
+        pts = p0 + dirs[hit] * dist[hit, None]
+        return {"time": round(t, 4), "points": ((pts - bp) @ bR).astype(np.float32),
+                "distance": dist[hit].astype(np.float32)}
+
+    def base_tf(self):
+        d = self.sim.d
+        return d.xpos[self.base_body].copy(), d.xmat[self.base_body].reshape(3, 3).copy()
 
 
 class RobotView:

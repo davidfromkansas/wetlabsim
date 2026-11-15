@@ -111,9 +111,9 @@ const robotBase = (uid) => `/s/${SID}/st/${uid}`;
 // on a two-arm robot (ALOHA, FR3 Duo: its head camera in place of the overhead). [img id, camera, caption]
 const popCams = (uid) => {
   const robot = ((S.scene && S.scene.robots || []).find(r => r.id === uid) || {}).robot;
-  const two = robot === 'aloha' || robot === 'fr3_duo';
+  const two = robot === 'aloha' || robot === 'fr3_duo' || robot === 'g1';
   return [['rpSide', 'side', 'Scene'],
-          robot === 'fr3_duo' ? ['rpOver', 'head', 'Head camera'] : ['rpOver', 'overhead', 'Overhead camera'],
+          robot === 'fr3_duo' || robot === 'g1' ? ['rpOver', 'head', 'Head camera'] : ['rpOver', 'overhead', 'Overhead camera'],
           ...(two ? [['rpWristL', 'left_wrist', 'Left wrist camera'], ['rpWristR', 'right_wrist', 'Right wrist camera']]
                   : [['rpWrist', 'wrist', 'Wrist camera']])];
 };

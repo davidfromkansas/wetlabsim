@@ -8,10 +8,10 @@ from playground import world as W
 from playground.sim import PlaygroundSim
 
 
-def _lab(item, fixed=False):
+def _lab(item, fixed=False, away=None):
     sim = PlaygroundSim(stations=[])
     st = sim.station(sim.add_station("franka", (0, 0), 0.0, "table"))
-    x, y, _ = st.to_world(st.robot_xy[0] + (1.6 if fixed else 0.5), st.robot_xy[1])
+    x, y, _ = st.to_world(st.robot_xy[0] + (away or (1.6 if fixed else 0.5)), st.robot_xy[1])
     uid = sim.add(item, (x, y, 0.0 if fixed else st.top + 0.002))
     return sim, uid
 
@@ -164,3 +164,65 @@ def test_screw_top_jar_lid_unscrews_on_its_thread():
     _push(sim, turn, 0.02, 2.0)
     assert np.degrees(q(turn)) > 500
     assert abs(q(lift) - 0.00635 * q(turn) / np.radians(540)) < 3e-4
+
+
+def _drive_to(sim, j, target, sec=3.0):
+    """Move one joint toward a target as a hand would (a PD force on that joint only); the closest
+    it got."""
+    m, d = sim.m, sim.d
+    a, v, b = m.jnt_qposadr[j], m.jnt_dofadr[j], m.jnt_bodyid[j]
+    M = max(m.body_subtreemass[b], 0.01)
+    lever = 1.0 if m.jnt_type[j] == mujoco.mjtJoint.mjJNT_SLIDE else max(0.05, np.linalg.norm(d.xipos[b] - d.xanchor[j]))
+    kp, kd, span = 400 * M * lever ** 2, 40 * M * lever ** 2, m.jnt_range[j][1] - m.jnt_range[j][0]
+    best = d.qpos[a]
+    for _ in range(int(sec / m.opt.timestep)):
+        d.qfrc_applied[:] = 0
+        d.qfrc_applied[v] = kp * np.clip(target - d.qpos[a], -0.2 * span, 0.2 * span) - kd * d.qvel[v] + d.qfrc_bias[v]
+        mujoco.mj_step(m, d)
+        best = d.qpos[a] if abs(d.qpos[a] - target) < abs(best - target) else best
+    d.qfrc_applied[:] = 0
+    return best
+
+
+def test_forgecad_primitive_colliders_and_full_door_travel():
+    """ForgeCAD's fridge collides as the boxes, cylinders and capsules its asset states (MuJoCo's
+    own shapes), and each door and drawer travels its whole stated range."""
+    sim, uid = _lab("french_door_fridge", fixed=True, away=2.6)      # clear of the robot's table
+    m = sim.m
+    shapes = {int(m.geom_type[g]) for g in range(m.ngeom) if m.geom(g).name.startswith(f"obj_{uid}") and m.geom_group[g] == 3}
+    assert {int(mujoco.mjtGeom.mjGEOM_BOX), int(mujoco.mjtGeom.mjGEOM_CYLINDER), int(mujoco.mjtGeom.mjGEOM_CAPSULE)} <= shapes
+    for part in ("door_1", "door_2", "freezer", "crisper_1"):
+        j = _joint(sim, uid, part)
+        lo, hi = m.jnt_range[j]
+        assert _drive_to(sim, j, hi) > hi - 0.02 * (hi - lo), part
+
+
+def test_static_frame_holds_loose_shelves():
+    """The gondola's frame has no rigid body in its asset (USD Physics: static); it is the item's
+    main part, and its six lift-out shelves rest on their brackets."""
+    sim, uid = _lab("gondola_shelf", fixed=True, away=2.6)
+    m, d = sim.m, sim.d
+    shelves = W.part_bodies(m, uid)[:6]
+    mujoco.mj_step(m, d, int(2.0 / m.opt.timestep))
+    p = d.xipos[shelves].copy()
+    mujoco.mj_step(m, d, int(2.0 / m.opt.timestep))
+    assert np.abs(d.xipos[shelves] - p).max() < 1e-3
+    assert d.xipos[shelves][:, 2].min() > 0.3              # on their brackets, not on the floor
+
+
+def test_new_appliances_open_through_their_full_range():
+    """Doors, drawers, baskets and lids of the Nov 13 kitchen and lab items reach both ends of the
+    range their assets state."""
+    for item, parts in (("microwave", ["door"]), ("air_fryer", ["basket"]), ("plate_reader", ["DrawerTravel"]),
+                        ("lab_incubator", ["DoorOpen"]), ("toaster_tray", ["tray_slide"]),
+                        ("espresso_machine", ["steam_wand_pivot"])):
+        sim, uid = _lab(item)
+        m, d = sim.m, sim.d
+        mujoco.mj_step(m, d, int(0.5 / m.opt.timestep))
+        snap = d.qpos.copy()
+        for part in parts:
+            j = _joint(sim, uid, part)
+            lo, hi = m.jnt_range[j]
+            for end in (hi, lo):
+                d.qpos[:], d.qvel[:] = snap, 0
+                assert abs(_drive_to(sim, j, end) - end) < 0.03 * (hi - lo), (item, part, end)

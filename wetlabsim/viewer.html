@@ -255,11 +255,11 @@ function renderHeader() {
     $('costSub').textContent = run.agent === 'claude' && run.status === 'running' ? '$ shown when the run ends' : (run.agent_label || 'This agent') + " doesn't report $"; }
   else { $('cost').textContent = '—'; $('costSub').textContent = run.run_id ? 'reported as the agent works' : ''; }
   if (run.cached_tokens) $('costSub').title = kfmt(run.cached_tokens) + ' of the input tokens were read from cache';
-  if (run.robot === 'fr3_duo' && $('cam-overhead').dataset.cam === 'overhead') {   // its head camera in place of an overhead one
+  if ((run.robot === 'fr3_duo' || run.robot === 'g1') && $('cam-overhead').dataset.cam === 'overhead') {   // its head camera in place of an overhead one
     $('cam-overhead').dataset.cam = 'head';
     $('cam-overhead').parentElement.querySelector('figcaption b').textContent = 'Head camera';
   }
-  if ((run.robot === 'aloha' || run.robot === 'fr3_duo') && $('cam-wrist').dataset.cam === 'wrist') {   // two arms: show the left wrist's
+  if ((run.robot === 'aloha' || run.robot === 'fr3_duo' || run.robot === 'g1') && $('cam-wrist').dataset.cam === 'wrist') {   // two arms: show the left wrist's
     $('cam-wrist').dataset.cam = 'left_wrist';
     $('cam-wrist').parentElement.querySelector('figcaption b').textContent = 'Left wrist camera';
   }
@@ -366,7 +366,8 @@ function renderTwoArms(s) {
     rows.push([n + ' hand position (x, y, z)', p.slice(0, 3).map(f3).join(', ') + ' m'],
               [n + ' hand orientation (rot. vector)', p.slice(3).map(f3).join(', ') + ' rad'],
               [n + ' arm moving', a.moving ? 'Yes' : 'No'],
-              [n + ' gripper opening', (run.robot === 'fr3_duo' ? 85 * (1 - (g.position || 0) / 255)    // Robotiq 2F-85
+              [n + ' gripper opening', (run.robot === 'g1' ? 120 * (1 - (g.position || 0) / 255)       // Dex3-1
+                                        : run.robot === 'fr3_duo' ? 85 * (1 - (g.position || 0) / 255)    // Robotiq 2F-85
                                         : 2 * (37 - 35 * (g.position || 0) / 255)).toFixed(0) + ' mm (' + Math.round(g.position || 0) + '/255)'],
               [n + ' gripper holding something', g.object_detected ? 'Yes' : 'No']);
     if (a.mode === 'protective_stop') rows.unshift([n + ' arm stop reason', a.protective_stop_reason || '']);

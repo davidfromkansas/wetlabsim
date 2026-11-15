@@ -28,6 +28,14 @@ def get(name: str):
         raise SystemExit(f"unknown launcher {name!r}; choose from {', '.join(LAUNCHERS)}") from None
 
 
+def _no_input(proc):
+    """Close a Sandbox process's stdin. `codex exec` reads more of its prompt from a piped stdin
+    until it ends, and a Sandbox process's stdin stays open, so Codex waited forever ("Reading
+    additional input from stdin..."). Local runs use DEVNULL for the same reason."""
+    proc.stdin.write_eof()
+    proc.stdin.drain()
+
+
 class _SandboxRun:
     """A process-like handle on an agent CLI running in a Modal Sandbox."""
 
@@ -240,12 +248,14 @@ class ModalSandboxLauncher:
                 # Signed in with ChatGPT: Codex uses the login file and the person's ChatGPT plan.
                 rcmd += ["-c", 'cli_auth_credentials_store="file"', "-c", 'forced_login_method="chatgpt"', prompt]
                 proc = sb.exec(*rcmd, workdir="/workspace", env={**base_env, "CODEX_HOME": "/tmp/codex"})
+                _no_input(proc)
                 return _SandboxRun(sb, proc, "codex exec",
                                    pull={"/tmp/codex/auth.json": str(pathlib.Path(login_dir) / "auth.json")})
             rcmd.append(prompt)
             proc = sb.exec(*rcmd, workdir="/workspace", env={
                 **base_env, "OPENAI_BASE_URL": proxy.rstrip("/") + "/openai/v1", "OPENAI_API_KEY": token,
                 "CODEX_API_KEY": token, "CODEX_HOME": "/tmp/codex"})
+            _no_input(proc)
             return _SandboxRun(sb, proc, "codex exec")
         from .run_agent import MCP_TOOLS
         rcmd = ["claude", "-p", prompt, "--mcp-config", "/tools/mcp.json", "--strict-mcp-config",

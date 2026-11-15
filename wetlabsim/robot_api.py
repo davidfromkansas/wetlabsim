@@ -19,10 +19,12 @@ import time
 # A two-arm robot (ALOHA) has the same API for each arm, under /left and /right, and its
 # four cameras (overhead, low, and a wrist camera per arm).
 SIDE = r"(/(left|right))?"
-GET_PATHS = re.compile(r"^" + SIDE + r"/(state|info|camera/(head|overhead|wrist|low|left_wrist|right_wrist)"
+# A humanoid (the G1) also walks (/walk, /stand, /body), sets its hands' joints (/hand) and has a
+# head lidar (/lidar.npz).
+GET_PATHS = re.compile(r"^" + SIDE + r"/(state|info|lidar\.npz|camera/(head|overhead|wrist|low|left_wrist|right_wrist)"
                        r"\.(png|jpg|rgbd\.npz|depth\.npy))$")
 POST_PATHS = {"/move_l", "/move_j", "/move_j_pose", "/stop", "/unlock_protective_stop",
-              "/zero_ft_sensor", "/gripper"}
+              "/zero_ft_sensor", "/gripper", "/hand", "/walk", "/stand", "/body"}
 POST_RE = re.compile(r"^" + SIDE + r"(" + "|".join(re.escape(x) for x in POST_PATHS) + r")$")
 # The robot's commands: on the app's listener these are refused once a robot API is running.
 ROBOT_COMMANDS = POST_PATHS

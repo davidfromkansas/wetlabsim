@@ -1266,7 +1266,7 @@ function stationStatus(st) {
   if (draft.trim()) return {color: '#16A34A', text: 'Task ready'};
   return {color: '#9CA3AF', text: 'No task yet'};
 }
-const STATION_IMG = {franka: '/pg/static/station_franka.png', ur5e: '/pg/static/station_ur5e.png', aloha: '/pg/static/station_aloha.png', fr3_duo: '/pg/static/station_fr3_duo.png'};
+const STATION_IMG = {franka: '/pg/static/station_franka.png', ur5e: '/pg/static/station_ur5e.png', aloha: '/pg/static/station_aloha.png', fr3_duo: '/pg/static/station_fr3_duo.png', g1: '/pg/static/station_g1.png'};
 function chipDot(st) {
   const sc = S.scene, run = (sc.runs || {})[st.id];
   if (run && run.active) return ['run', 'Working on its task'];
@@ -1306,7 +1306,7 @@ function renderDock() {
 
 // ---------------------------------------------------------------- layout v3: robots are the unit
 // The lab's robots, listed under the open session in the sidebar, and the robot panel's header.
-const ROBOT_PIC = {franka: '/pg/static/robot_franka.png', ur5e: '/pg/static/robot_ur5e.png', aloha: '/pg/static/robot_aloha.png', fr3_duo: '/pg/static/robot_fr3_duo.png'};
+const ROBOT_PIC = {franka: '/pg/static/robot_franka.png', ur5e: '/pg/static/robot_ur5e.png', aloha: '/pg/static/robot_aloha.png', fr3_duo: '/pg/static/robot_fr3_duo.png', g1: '/pg/static/robot_g1.png'};
 const ROBOT_IMG = (r) => ROBOT_PIC[r] || ROBOT_PIC.franka;
 async function pickRobot(id) {
   $('rmenu').hidden = true; $('rpick').setAttribute('aria-expanded', 'false');
@@ -2165,7 +2165,7 @@ const EXP_ICON = '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12
 function stationCams() {
   const r = S.scene && S.scene.mode === 'free' ? curStation().robot : '';
   return r === 'aloha' ? ['overhead', 'low', 'left_wrist', 'right_wrist']
-    : r === 'fr3_duo' ? ['head', 'left_wrist', 'right_wrist'] : ['overhead', 'wrist'];
+    : r === 'fr3_duo' || r === 'g1' ? ['head', 'left_wrist', 'right_wrist'] : ['overhead', 'wrist'];
 }
 function openCams() {
   const t = Date.now(), base = stBase(), none = S.scene && S.scene.mode === 'free' && !S.scene.active;
@@ -2407,7 +2407,8 @@ function renderData() {
   const arms = d.left ? [['Left ', d.left], ['Right ', d.right]] : [['', d]];
   $('dJoints').innerHTML = arms.map(([n, a]) => a.joint_positions.map((q, i) => `<tr><td>${n}${n ? 'j' : 'J'}oint ${i + 1}</td><td>${f3(q)}</td><td>${f2((a.joint_velocities || [])[i] || 0)}</td></tr>`).join('')).join('');
   // Gripper opening from its 0-255 command, as the robot cell's viewer shows it.
-  const openMm = (g) => stn.robot === 'ur5e' || stn.robot === 'fr3_duo' ? 85 * (1 - (g.position || 0) / 255)
+  const openMm = (g) => stn.robot === 'g1' ? 120 * (1 - (g.position || 0) / 255)    // Dex3-1: fingertips apart
+    : stn.robot === 'ur5e' || stn.robot === 'fr3_duo' ? 85 * (1 - (g.position || 0) / 255)
     : stn.robot === 'aloha' ? 2 * (37 - 35 * (g.position || 0) / 255) : 3 + 80 * (1 - (g.position || 0) / 255);
   const rows = [];
   for (const [n, a] of arms) {
