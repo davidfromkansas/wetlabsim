@@ -113,6 +113,10 @@ class Arm:
     A scene usually has one (the robot cell, LIBERO); the playground's lab can have several,
     each attached with its own name prefix. The world (physics, time, rendering) is the Sim's.
     """
+    # Defaults for the robots built on Arm without its __init__ (a two-arm robot, the RB-Y1).
+    busy = ""
+    driven = False
+    parent = None
 
     def __init__(self, sim: "Sim", robot: str, prefix: str = "", uid: str = "robot",
                  world_cameras: str | None = None):
