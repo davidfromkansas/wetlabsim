@@ -815,6 +815,14 @@ SESSIONS_LOCK = threading.Lock()
 ACCOUNT_OWNER = "account-owner"     # a signed-in account's lab: its owner, on any browser
 SAVED_AT_START = 4                  # saved sessions a lab opens with; older ones open on request
 _OLDER = {"t": 0.0, "rows": []}     # the saved sessions list, read from the database at most every 20 s
+# A saved session that isn't open here but was saved this recently is still open somewhere else
+# (a tab left on the lab of an older build, say): opening it here too would make two live copies
+# that save over each other, so it waits until that one has closed.
+OPEN_ELSEWHERE_S = 120
+
+
+def _saved_recently(row: dict) -> bool:
+    return time.time() - (row.get("saved") or 0) < OPEN_ELSEWHERE_S
 
 
 def _older_sessions(open_ids: set) -> list[dict]:
@@ -828,7 +836,7 @@ def _older_sessions(open_ids: set) -> list[dict]:
             print("could not list saved sessions:", e)
         _OLDER["t"] = time.time()
     return [{"db": r["session_id"], "name": r["session_name"], "saved": r.get("saved") or 0}
-            for r in _OLDER["rows"] if r["session_id"] not in open_ids]
+            for r in _OLDER["rows"] if r["session_id"] not in open_ids and not _saved_recently(r)]
 
 
 def _snapshot(sess: Session):
@@ -2349,6 +2357,14 @@ class PGHandler(Handler):
         db = str(b.get("db", ""))
         if not (SAVE.enabled() and re.match(r"^[0-9a-f-]{36}$", db)):
             return self._json({"ok": False, "error": "no such session"})
+        if not any(x is not None and x.db_id == db for x in SESSIONS.values()):
+            try:
+                row = next((r for r in SAVE.list_sessions(50) if r["session_id"] == db), None)
+            except Exception:  # noqa: BLE001
+                row = None
+            if row and _saved_recently(row):
+                return self._json({"ok": False, "error": "that session is still open in another tab; "
+                                                         "close it there first, or try again in a minute or two"})
         try:
             sess = open_saved(db)
         except RobotError as e:
@@ -2490,7 +2506,8 @@ def main(argv=None):
                                     "share": f"{SAVE.WEBSITE_URL}/s/{sess.share_token}" if sess.share_token and SAVE.WEBSITE_URL else ""})
             return out
         LABS.start_reporting(live_runs, args.idle_minutes,
-                             lambda: bool(QUEUE) or VIDEOS.busy() or any(r.active() for r in _all_runners()))
+                             lambda: bool(QUEUE) or VIDEOS.busy() or any(r.active() for r in _all_runners()),
+                             before_exit=lambda: AUTOSAVE and AUTOSAVE.tick())
     if args.robot_port:
         global ROBOT_API_URL
         rsrv = ThreadingHTTPServer((args.host, args.robot_port), RobotAPIHandler)
