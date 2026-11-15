@@ -85,7 +85,7 @@ body.fixed .taskcard{display:none!important}
 .tcrow .primary{width:auto;height:36px;padding:0 16px;border-radius:8px;display:flex;align-items:center;gap:6px}
 /* add-a-station picker */
 #addModal{position:fixed;inset:0;background:rgba(17,24,39,.35);z-index:8;align-items:center;justify-content:center;padding:16px}
-#addModal .am{background:#fff;border-radius:14px;padding:22px 24px;max-width:640px;width:100%;display:flex;flex-direction:column;gap:14px;box-shadow:0 10px 30px rgba(17,24,39,.2)}
+#addModal .am{background:#fff;border-radius:14px;padding:22px 24px;max-width:640px;width:100%;display:flex;flex-direction:column;gap:14px;box-shadow:0 10px 30px rgba(17,24,39,.2);max-height:calc(100vh - 32px);overflow:auto}
 .rcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
 .rcard{border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;background:#fff}
 .rcard img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--bg)}
@@ -230,12 +230,32 @@ input[type=search]{height:36px;padding:0 12px;border-radius:8px;border:1px solid
 dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13px}
 dt{color:var(--muted)}dd{margin:0;text-align:right;font-family:'JetBrains Mono',monospace}
 #loading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;z-index:9;font-size:15px;color:var(--muted)}
-.libero{display:none}
-body.lib .libero{display:flex}
 body.fixed .freeonly{display:none!important}
 .wetlab{display:none}
 body.wet .wetlab{display:flex}
-#liberoPane{flex-direction:column;gap:12px;flex:1;overflow:auto;border:0}
+body.lbst #goalCard{display:flex}
+#goalCard .gk{display:flex;gap:6px;align-items:baseline;color:var(--ink)}
+#goalCard .gk i{font-style:normal;width:12px;flex:none;color:var(--muted)}
+#goalCard .gk.ok i{color:var(--green)}
+/* + Station > Benchmarks, and a LIBERO station's task card */
+#addModal .am.wide{max-width:680px}
+.amseg{align-self:flex-start}
+.lbpick{display:flex;flex-direction:column;gap:12px}
+.lbpick .hero{width:100%;aspect-ratio:16/8;object-fit:cover;border-radius:10px;background:var(--bg);display:block}
+.lbpick select{width:100%;height:38px;border:1px solid #D1D5DB;border-radius:8px;padding:0 10px;font:14px Inter,sans-serif;color:var(--ink);background:#fff}
+.lbfoot{display:flex;align-items:center;gap:12px}
+.lbfoot .small{flex:1}
+.lbfoot .primary{flex:none;width:auto;padding:0 18px}
+.backbtn{height:32px;border:0;background:transparent;font:600 13px Inter,sans-serif;color:#374151;padding:0 4px 0 0;cursor:pointer}
+.lbchip{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--blue2);background:var(--blueBg);border-radius:999px;padding:2px 9px 2px 7px}
+.lbchip[hidden],.lblock[hidden],#lbDone[hidden],#lbRunsCopy[hidden]{display:none}
+.lblock{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.taskcard.lbst #task{color:#374151;min-height:44px!important}
+.taskcard .lbchip{margin:12px 14px 0}
+.taskcard .lblock{margin:0 14px 8px}
+.taskcard #lbDone{margin:0 14px 10px}
+body.lbst #goalCard{right:12px;top:116px}
+.runs .lb small{display:block;font-weight:400;font-size:12px;color:var(--muted);line-height:1.3}
 .official{font-size:15px;font-weight:600;color:var(--ink);line-height:1.35}
 .setrow{display:flex;align-items:center;gap:8px}
 .setrow button{height:30px;width:30px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;cursor:pointer;font-size:15px;color:var(--ink)}
@@ -715,7 +735,8 @@ body.watch #physBtn{display:none}
 </div>
 <div id="addModal" role="dialog" aria-modal="true" aria-labelledby="amTitle" style="display:none">
   <div class="am">
-    <div style="display:flex;align-items:flex-start;gap:12px"><div style="flex:1"><h2 id="amTitle" style="margin:0;font-size:20px;color:var(--ink)">Add a starter station</h2><p class="small" style="margin:2px 0 0">A ready-made setup to get you going. Once it's in your lab, you can move, remove or swap anything in it.</p></div><button class="round" id="amClose" aria-label="Close">✕</button></div>
+    <div style="display:flex;align-items:flex-start;gap:12px"><div style="flex:1"><h2 id="amTitle" style="margin:0;font-size:20px;color:var(--ink)">Add a station</h2><p class="small" style="margin:2px 0 0">A ready-made setup to get you going. Once it's in your lab, you can move, remove or swap anything in it.</p></div><button class="round" id="amClose" aria-label="Close">✕</button></div>
+    <div class="seg amseg" role="tablist" aria-label="Kind of station" id="amSeg"><button role="tab" id="amStarter" aria-pressed="true">Starter stations</button><button role="tab" id="amBench" aria-pressed="false">Benchmarks</button></div>
     <div class="rcards" id="rcards"></div>
   </div>
 </div>
@@ -728,7 +749,6 @@ body.watch #physBtn{display:none}
     <span class="brand">MuJoCo Playground</span><span class="crumb" aria-hidden="true">/</span><button class="sessname" id="sessName" title="Rename this session"></button><span class="sharedtag" id="sharedTag" style="display:none">Shared</span>
     <div class="seg" role="group" aria-label="Mode">
       <button id="modeFree" aria-pressed="true">Free play</button>
-      <button id="modeLibero" aria-pressed="false">LIBERO test</button>
       <button id="modeWet" aria-pressed="false">Wet Lab</button>
     </div>
     <span class="chip" id="modechip">Free play · not saved</span>
@@ -787,32 +807,6 @@ body.watch #physBtn{display:none}
         <div class="cams">
 
         </div>
-      </div>
-      <div id="liberoPane" class="sec libero">
-        <div><h2 class="cap" style="margin-bottom:6px">Suite</h2>
-          <div id="lSuites" class="suites" role="group" aria-label="LIBERO suite"></div>
-          <p class="small" id="lSuiteWhat" style="margin:6px 0 0;color:#374151"></p></div>
-        <div><h2 class="cap" style="margin-bottom:6px">Official task</h2>
-          <select id="lTask" aria-label="LIBERO task" style="width:100%"></select></div>
-        <div class="official" id="lLang"></div>
-        <div class="note"><b style="color:var(--ink)">Done when</b><br><span id="lDone"></span><br><span class="small">Checked live by LIBERO's own rule. The task text can't be edited.</span></div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <div class="setrow"><button id="lPrev" aria-label="Previous setup">‹</button><span style="flex:1;text-align:center;font-weight:600;color:var(--ink)">Setup <span id="lSetupN">1</span> of <span id="lSetupTotal">50</span></span><button id="lNext" aria-label="Next setup">›</button></div>
-          <div id="lDots" aria-label="The 50 starting setups"></div>
-          <div class="legend"><span><i style="background:var(--blue)"></i>passed</span><span><i style="background:#F59E0B"></i>failed</span><span><i style="background:#D1D5DB"></i>not run</span><span style="flex:1;text-align:right" id="lDotsFor"></span></div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:4px"><label for="lModel" class="small" style="font-weight:600">AI model</label><select id="lModel"></select></div>
-        <div style="display:flex;gap:8px"><button class="primary" id="lRun1">Run this setup</button><button class="ghostbtn" id="lRunAll" style="height:42px;flex:none;padding:0 14px;white-space:nowrap">All 50 setups</button></div>
-        <button class="studybtn" id="lStudy">Run the study set: 40 tasks × 5 setups</button>
-        <span class="small" style="margin-top:-6px">The same 200 runs as Anthropic's study: setups 1 to 5 of every task in all four suites. Up to about 10 hours at 3 minutes each.</span>
-        <button class="ghostbtn" id="lStop" style="display:none;flex:none">Stop</button>
-        <span class="small" id="lStatus"></span>
-        <div><h2 class="cap">Scoreboard · this task</h2>
-          <table class="board"><thead><tr><th>Model</th><th class="n">Passed</th><th class="n">Avg time</th><th class="n">Cost</th></tr></thead><tbody id="lBoard"></tbody></table>
-          <p class="small" style="margin:6px 0 0">Our Franka controller and AI setup, so scores aren't comparable with LIBERO's published leaderboard. Avg time counts passed runs only.</p></div>
-        <div><div style="display:flex;align-items:baseline;justify-content:space-between"><h2 class="cap">By suite · study set</h2><span class="small" id="lSuiteFor"></span></div>
-          <table class="board"><thead><tr><th>Suite</th><th class="n">Passed</th><th class="n">Runs</th></tr></thead><tbody id="lSuiteBoard"></tbody></table>
-          <button class="linkbtn" id="lFullBoard">Full scoreboard, all models →</button></div>
       </div>
       <div id="wetPane" class="sec wetlab" style="flex-direction:column;gap:12px;flex:1;overflow:auto;border:0">
         <h2 class="cap" style="margin:0">Wet lab tasks · <span id="wCount">8</span></h2>
@@ -876,7 +870,7 @@ body.watch #physBtn{display:none}
       <div class="pip"><img id="camWrist" alt="Wrist camera, what the AI sees"><div class="pcap">Wrist<span>AI SEES</span><button class="exp" data-cam="wrist" aria-label="Expand wrist camera" title="Expand"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M7 1 H11 V5 M5 11 H1 V7 M11 1 L7 5 M1 11 L5 7"/></svg></button></div></div>
     </div>
     <div id="bigCamWrap" role="dialog" aria-modal="true" aria-label="Camera, large"><div class="bigcam"><img id="bigCam" alt=""><div class="pcap" style="padding:8px 10px 8px 14px;font-size:13px"><b id="bigName" style="font-weight:600"></b><span>AI SEES THIS</span><button class="exp wide" id="shrinkBtn" aria-label="Shrink camera"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M11 5 H7 V1 M1 7 H5 V11 M7 5 L11 1 M5 7 L1 11"/></svg>Shrink</button></div></div></div>
-    <div class="tl"><span class="live" id="liveTag" style="display:none">● Running · real time</span><span class="libtag libero wetlab" id="libTag"></span><span class="hint" id="hintTag"></span></div>
+    <div class="tl"><span class="live" id="liveTag" style="display:none">● Running · real time</span><span class="libtag wetlab" id="libTag"></span><span class="hint" id="hintTag"></span></div>
     <div class="bl"><button class="fbtn" id="openRight" aria-label="Show robot panel" title="Show robot panel"><img id="openRightImg" alt=""><span id="openRightName">Robot</span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#374151" stroke-width="1.5"><rect x="1.75" y="2.75" width="14.5" height="12.5" rx="2.5"/><path d="M11.5 2.75 V15.25"/></svg></button></div>
     <div class="campad" role="group" aria-label="Camera">
       <div class="joy" id="joy" tabindex="0" role="application" aria-label="Camera joystick: drag to slide the view, or use the arrow keys" title="Drag to slide the view (arrow keys too)">
@@ -892,7 +886,7 @@ body.watch #physBtn{display:none}
         <button class="rk" data-move="0,0,-1" aria-label="Lower camera" title="Lower (− or Page Down)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#E5E7EB" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 8 H13"/></svg></button>
       </div>
     </div>
-    <div id="goalCard" class="libero wetlab"><b>Goal check</b><span id="goalState"></span><span class="small" id="goalText"></span></div>
+    <div id="goalCard" class="wetlab"><b>Goal check</b><span id="goalState"></span><span class="small" id="goalText"></span></div>
     <div id="droptag"></div>
     <div id="toast"></div>
     <div class="idlecard" id="idleCard" role="alertdialog" aria-live="assertive" aria-labelledby="idleTitle" hidden>
@@ -958,8 +952,11 @@ body.watch #physBtn{display:none}
           <div class="tchead"><b id="taskFor">Task for Station 1 · Franka Panda</b><button class="infobtn" id="infoBtn" aria-label="What the AI gets" aria-expanded="false" aria-controls="infoPop">i</button></div>
           <div class="infopop" id="infoPop" role="note" hidden><b>What the AI gets</b><br><span id="infoText"></span></div>
           <label for="task" class="small" style="position:absolute;left:-9999px">Task</label>
+          <span class="lbchip" id="lbChip" hidden><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="5.5" width="7" height="5" rx="1"/><path d="M4 5.5V4a2 2 0 0 1 4 0v1.5"/></svg><span id="lbChipText"></span></span>
           <textarea id="task" rows="3" placeholder="Tell this robot what to do, in plain words. Example: put the apple in the bowl."></textarea>
-          <div class="runs" id="runsRow"><span class="lb">Runs</span><div class="step" role="group" aria-label="How many runs"><button type="button" id="runsMinus" aria-label="One fewer run">&#8722;</button><output id="runsN" aria-live="polite">1</output><button type="button" id="runsPlus" aria-label="One more run">+</button></div></div>
+          <span class="lblock" id="lbLock" hidden>LIBERO's own wording, so it can't be edited.</span>
+          <div class="note" id="lbDone" hidden></div>
+          <div class="runs" id="runsRow"><span class="lb">Runs<small id="lbRunsCopy" hidden>Each run starts from the next official layout: 1, 2, 3…</small></span><div class="step" role="group" aria-label="How many runs"><button type="button" id="runsMinus" aria-label="One fewer run">&#8722;</button><output id="runsN" aria-live="polite">1</output><button type="button" id="runsPlus" aria-label="One more run">+</button></div></div>
           <div class="nomodel" id="noModels"><b>No AI connected yet</b><span>Add your API key for OpenAI, Anthropic, Devin or Jev to give this robot tasks.</span><button type="button" class="primary" id="noModelsBtn">Open Connections</button></div>
           <div class="tcrow"><div class="mdl"><img id="modelLogo" src="/static/anthropic.svg" alt=""><select id="model" aria-label="AI model"></select></div><button class="primary" id="startBtn"><svg width="11" height="11" viewBox="0 0 14 14" fill="#fff" aria-hidden="true"><path d="M3 1.5 L12.5 7 L3 12.5 Z"/></svg>Run task</button></div>
         </div>
@@ -1263,8 +1260,8 @@ function stationStatus(st) {
   const draft = (sc.mode === 'free' ? S.drafts[st.id] : '') || '';
   if (run && run.active) return {color: '#DC2626', text: 'Working on its task'};
   if (run && run.queued) return {color: '#F59E0B', text: `Waiting for a free slot · ${run.queued - 1} ahead`};
-  if (run && run.started) return {color: run.status === 'error' ? '#F59E0B' : '#2563EB', text: {finished: 'Finished', error: 'Stopped with an error', stopped: 'Stopped', time_limit: 'Time limit reached'}[run.status] || run.status};
-  if (draft.trim()) return {color: '#16A34A', text: 'Task ready'};
+  if (run && run.started) return {color: run.status === 'error' ? '#F59E0B' : '#2563EB', text: {passed: 'Passed LIBERO\'s goal check', finished: 'Finished', error: 'Stopped with an error', stopped: 'Stopped', time_limit: 'Time limit reached'}[run.status] || run.status};
+  if (draft.trim() || st.libero) return {color: '#16A34A', text: 'Task ready'};
   return {color: '#9CA3AF', text: 'No task yet'};
 }
 const STATION_IMG = {franka: '/pg/static/station_franka.png', ur5e: '/pg/static/station_ur5e.png', aloha: '/pg/static/station_aloha.png', fr3_duo: '/pg/static/station_fr3_duo.png', g1: '/pg/static/station_g1.png'};
@@ -1272,8 +1269,8 @@ function chipDot(st) {
   const sc = S.scene, run = (sc.runs || {})[st.id];
   if (run && run.active) return ['run', 'Working on its task'];
   if (run && run.queued) return ['wait', 'Waiting for a free slot'];
-  if (run && run.started) return ['ok', {finished: 'Finished', error: 'Stopped with an error', stopped: 'Stopped', time_limit: 'Time limit reached'}[run.status] || 'Finished'];
-  return ['', (S.drafts[st.id] || '').trim() ? 'Task ready' : 'No task yet'];
+  if (run && run.started) return ['ok', {passed: 'Passed', finished: 'Finished', error: 'Stopped with an error', stopped: 'Stopped', time_limit: 'Time limit reached'}[run.status] || 'Finished'];
+  return ['', (S.drafts[st.id] || '').trim() || st.libero ? 'Task ready' : 'No task yet'];
 }
 // The stations bar floating over the lab: one chip per station, the selected one ringed.
 function renderDock() {
@@ -1382,7 +1379,7 @@ function renderRail() {
   const on = list.find(r => r.id === sc.active) || list[0];
   if (on) { const [d, t] = chipDot(on); $('rtName').textContent = on.name; $('rtSub').textContent = `${on.label} · ${t}`; $('rtDot').className = 'sdot ' + d; }
   else { $('rtName').textContent = 'No robot yet'; $('rtSub').textContent = 'Press + to add a robot'; $('rtDot').className = 'sdot'; }
-  $('rSwap').hidden = !on || !!S.watch;
+  $('rSwap').hidden = !on || !!S.watch || !!on.libero; $('rSwap').style.display = $('rSwap').hidden ? 'none' : '';
   $('rSwap').disabled = !!runLock(sc);
   $('rSwap').title = runLock(sc) ? 'A robot is working on a task. Stop it to swap.' : 'Swap this robot for another arm';
   if (key === S.railKey) return; S.railKey = key;
@@ -1527,6 +1524,17 @@ window.addEventListener('resize', () => closeStMenu());
 // The picker: one card per robot. "Add to lab" then click the floor to place its station.
 function openAdd() {
   if (S.scene && S.scene.locked) { toast(S.scene.locked); return; }
+  amTab(S.amTab || 'starter');
+  $('addModal').style.display = 'flex';
+}
+function amTab(tab) {
+  S.amTab = tab;
+  $('amStarter').setAttribute('aria-pressed', tab === 'starter'); $('amBench').setAttribute('aria-pressed', tab !== 'starter');
+  $('addModal').querySelector('.am').classList.toggle('wide', tab === 'libero');
+  if (tab === 'starter') drawStarter(); else if (tab === 'bench') drawBench(); else drawLiberoPick();
+}
+$('amStarter').onclick = () => amTab('starter'); $('amBench').onclick = () => amTab('bench');
+function drawStarter() {
   $('rcards').className = 'tcards';
   $('rcards').innerHTML = `<div class="tcard"><img src="/pg/static/station_franka.png" alt="A robot arm on a packing table"><div class="rx"><div><b>Table with arm</b><div class="small">A robot arm on a packing table. Put objects on it and give the robot a task.</div></div>
     <div class="tags"><span class="tag">1 robot · Franka Emika Panda</span></div>
@@ -1548,7 +1556,31 @@ function openAdd() {
     <button class="primary" data-preset="wetlab">Add to lab</button></div></div>`;
   $('rcards').querySelectorAll('button[data-r]').forEach(b => b.onclick = () => startPlacing(b.dataset.r, b.dataset.kind || 'table'));
   $('rcards').querySelectorAll('button[data-preset]').forEach(b => b.onclick = () => { closeAdd(); window.sceneGen && window.sceneGen.preset(b.dataset.preset); });
-  $('addModal').style.display = 'flex';
+}
+function drawBench() {
+  $('rcards').className = 'tcards';
+  $('rcards').innerHTML = `<div class="tcard"><img src="/pg/static/libero/KITCHEN_SCENE3_turn_on_the_stove_and_put_the_moka_pot_on_it.jpg" alt="A robot arm in a LIBERO kitchen" onerror="this.style.visibility='hidden'"><div class="rx"><div><b>LIBERO</b><div class="small">The LIBERO benchmark: 40 tasks in 4 suites, each in its own room. Every run starts from one of LIBERO's 50 official layouts and is scored by LIBERO's own goal check.</div></div>
+    <div class="tags"><span class="tag">40 tasks · 4 suites</span><span class="tag">1 robot · Franka Emika Panda</span></div>
+    <button class="primary" id="lbChoose">Choose a task</button></div></div>`;
+  $('lbChoose').onclick = () => amTab('libero');
+}
+async function drawLiberoPick() {
+  if (!S.LB) S.LB = await api('/pg/libero');
+  const L = S.LB; if (!L || !L.suites) { toast("Couldn't load LIBERO's tasks"); amTab('bench'); return; }
+  const su = L.suites.find(x => x.id === S.lbSuite) || L.suites[0]; S.lbSuite = su.id;
+  const t = su.tasks.find(x => x.id === S.lbTask) || su.tasks[0]; S.lbTask = t.id;
+  $('rcards').className = 'lbpick';
+  $('rcards').innerHTML = `<div><button class="backbtn" id="lbBack">← Benchmarks</button></div>
+    <img class="hero" src="/pg/static/libero/${esc(t.id)}.jpg" alt="${esc(t.room)} for this task">
+    <div class="suites" role="group" aria-label="Suite">${L.suites.map(x => `<button data-s="${x.id}" aria-pressed="${x.id === su.id}">${esc(x.name)}<span>${x.tasks.length} tasks</span></button>`).join('')}</div>
+    <div class="small">${esc(su.blurb)}</div>
+    <select id="lbTaskSel" aria-label="Task">${su.tasks.map((x, i) => `<option value="${x.id}"${x.id === t.id ? ' selected' : ''}>${i + 1}. ${esc(x.language)}</option>`).join('')}</select>
+    <div class="note"><b>Done when</b> ${esc(t.done_when)}</div>
+    <div class="lbfoot"><span class="small">${esc(t.room)} · ${t.setups} official layouts · Franka Emika Panda</span><button class="primary" id="lbAdd">Add to lab</button></div>`;
+  $('lbBack').onclick = () => amTab('bench');
+  $('rcards').querySelectorAll('.suites button').forEach(b => b.onclick = () => { S.lbSuite = b.dataset.s; S.lbTask = null; drawLiberoPick(); });
+  $('lbTaskSel').onchange = () => { S.lbTask = $('lbTaskSel').value; drawLiberoPick(); };
+  $('lbAdd').onclick = async () => { await holdPhysics(); startPlacing('franka', 'libero', S.lbTask); };
 }
 
 // ---------------------------------------------------------------- the robot picker (Add and Swap share it)
@@ -1674,12 +1706,12 @@ $('addStationBtn').onclick = openAdd; $('amClose').onclick = closeAdd;
 $('addModal').onclick = (e) => { if (e.target === $('addModal')) closeAdd(); };
 // What each kind of station starts as (the server's world.KINDS).
 const STATION_KINDS = {table: {label: 'Table', items: 0}, wetlab: {label: 'Wet lab bench', items: 18},
-  island: {label: 'Kitchen island', items: 0}, counter: {label: 'Kitchen counter', items: 0}};
-function startPlacing(robot, kind = 'table') {
-  closeAdd(); S.placing = robot; S.placeKind = kind; S.placeYaw = 0; S.armed = null; renderItems();
+  island: {label: 'Kitchen island', items: 0}, counter: {label: 'Kitchen counter', items: 0}, libero: {label: 'LIBERO room', items: 0}};
+function startPlacing(robot, kind = 'table', task = '') {
+  closeAdd(); S.placing = robot; S.placeKind = kind; S.placeTask = task; S.placeYaw = 0; S.armed = null; renderItems();
   api('/pg/camera', {preset: 'lab'});
   const lab = ((S.cat.robots || []).find(x => x.id === robot) || {}).label || 'the robot';
-  $('hintTag').textContent = kind !== 'table' ? `Click the floor to place the ${STATION_KINDS[kind].label.toLowerCase()} with the ${lab}. R turns it, Esc cancels.`
+  $('hintTag').textContent = kind !== 'table' ? `Click the floor to place the ${kind === 'libero' ? 'LIBERO room' : STATION_KINDS[kind].label.toLowerCase()} with the ${lab}. R turns it, Esc cancels.`
     : `Click the floor to place the ${lab}. R turns it, Esc cancels.`;
 }
 function cancelPlacing() { S.placing = null; hideTag(); api('/pg/ghost/clear', {}); resumePhysics(); render(); }
@@ -1689,7 +1721,7 @@ async function probeStation(p) {
   if (stProbeBusy) { stProbeNext = p; return; }
   stProbeBusy = true;
   try {
-    const r = await api('/pg/station/probe', {u: p.u, v: p.v, yaw: S.placeYaw, kind: S.placeKind});
+    const r = await api('/pg/station/probe', {u: p.u, v: p.v, yaw: S.placeYaw, kind: S.placeKind, task: S.placeTask || ''});
     if (!S.placing) { hideTag(); api('/pg/ghost/clear', {}); return; }
     const label = (S.cat.robots.find(x => x.id === S.placing) || {}).label || '';
     const what = S.placeKind !== 'table' ? `${STATION_KINDS[S.placeKind].label} · ${label}` : `${label} station`;
@@ -1697,7 +1729,7 @@ async function probeStation(p) {
   } finally { stProbeBusy = false; if (stProbeNext) { const n = stProbeNext; stProbeNext = null; probeStation(n); } }
 }
 async function placeStation(p) {
-  const r = await api('/pg/station/add', {robot: S.placing, kind: S.placeKind, u: p.u, v: p.v, yaw: S.placeYaw});
+  const r = await api('/pg/station/add', {robot: S.placing, kind: S.placeKind, task: S.placeTask || '', u: p.u, v: p.v, yaw: S.placeYaw});
   if (!r.ok) { toast(r.error || "Can't go there"); return; }
   S.placing = null; hideTag(); S.sel = 'robot';
   await resumePhysics();
@@ -1900,7 +1932,7 @@ function renderFeed() {
   S.feedKey = key;
   const m = run.model || {}, logo = LOGOS[m.provider] || '', who = esc(info.model_label || m.label || 'The AI');
   const start = info.sim_start || 0, out = [];
-  if (!run.started) out.push(`<li class="empty">${S.mode === 'libero' ? 'Press “Run this setup” and the AI\'s messages show up here.' : S.mode === 'wetlab' ? 'Press “Run this task” and the AI\'s messages show up here.' : `<b>No messages yet</b>Give ${esc(curStation().name || 'this robot')} a task below. The AI\'s thinking, code and replies show up here.`}</li>`);
+  if (!run.started) out.push(`<li class="empty">${S.mode === 'wetlab' ? 'Press “Run this task” and the AI\'s messages show up here.' : `<b>No messages yet</b>Give ${esc(curStation().name || 'this robot')} a task below. The AI\'s thinking, code and replies show up here.`}</li>`);
   else out.push(`<li class="prompt"><div class="lbl">Your task</div><div class="bub">${esc(run.task || '')}</div></li>`);
   let prevT = null, prevKind = null;
   for (let i = 0; i < trace.length; i++) {
@@ -2099,6 +2131,22 @@ function render() {
   if (S.sideTab === 'data') renderData();
   $('libhint').textContent = sc.locked ? 'Pause physics to add or move objects.' : (S.armed ? $('libhint').textContent : LIBHINT);
   $('task').readOnly = active;
+  // A LIBERO station: LIBERO's own task, locked, with its goal check live on the stage.
+  const lb = free && st.libero;
+  $('taskcard').classList.toggle('lbst', !!lb); document.body.classList.toggle('lbst', !!lb);
+  for (const id of ['lbChip', 'lbLock', 'lbDone', 'lbRunsCopy']) $(id).hidden = !lb;
+  if (lb) {
+    $('lbChipText').textContent = `LIBERO · ${lb.suite_name} · task ${lb.index}`;
+    $('task').readOnly = true;
+    if ($('task').value !== lb.language) $('task').value = lb.language;
+    $('lbDone').innerHTML = '<b>Done when</b> ' + esc(lb.goal.map((g, i) => i ? g[0].toLowerCase() + g.slice(1) : g).join(', and ')) + '. LIBERO\'s own check, every 0.1 s.';
+    $('lbRunsCopy').textContent = `Each run starts from the next official layout: ${[0, 1, 2].map(i => (lb.setup + i) % lb.setups + 1).join(', ')}…`;
+    $('startBtn').classList.remove('blank');
+    const now = lb.now || [];
+    $('goalState').textContent = now.length && now.every(Boolean) ? '✓ Goal reached' : `Layout ${lb.setup + 1} of ${lb.setups}`;
+    $('goalState').style.color = now.length && now.every(Boolean) ? 'var(--green)' : 'var(--muted)';
+    $('goalText').innerHTML = lb.goal.map((g, i) => `<span class="gk${now[i] ? ' ok' : ''}"><i>${now[i] ? '✓' : '○'}</i>${esc(g)}</span>`).join('');
+  }
   const queued = !!run.queued;     // public site: waiting for one of the few run slots
   $('stopBtn').style.display = active || queued ? '' : 'none';
   $('taskcard').style.display = active || queued || S.watch || empty ? 'none' : '';
@@ -2108,13 +2156,12 @@ function render() {
   if (run.started) {
     const left = Math.max(0, run.time_limit - run.elapsed);
     const mmss = (x) => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
-    $('runStatus').textContent = active ? (run.time_limit ? `Working · ${mmss(left)} left` : `Working · ${mmss(run.elapsed)}`) : ({finished: 'Finished', error: 'The AI stopped with an error', stopped: 'Stopped', time_limit: 'Time limit reached'}[run.status] || run.status);
+    $('runStatus').textContent = active ? (run.time_limit ? `Working · ${mmss(left)} left` : `Working · ${mmss(run.elapsed)}`) : ({passed: 'Passed: LIBERO\'s goal check held', finished: 'Finished', error: 'The AI stopped with an error', stopped: 'Stopped', time_limit: 'Time limit reached'}[run.status] || run.status);
     const m = run.model || {}; $('chatLogo').src = LOGOS[m.provider] || LOGOS.anthropic;
     if (!$('chatModel').dataset.set) $('chatModel').textContent = m.label || '';
   }
   $('startBtn').disabled = active;
   if (!S.placing) $('hintTag').textContent = '';   // the scene hint only shows while placing a station
-  if (S.mode === 'libero') renderLiberoLive();
   if (S.mode === 'wetlab') renderWetLive();
 }
 // A hosted lab closes after 5 minutes without real use (clicks, typing, scrolling, a run).
@@ -2467,75 +2514,33 @@ function renderData() {
   $('dTel').innerHTML = rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
 }
 
-// ---------------------------------------------------------------- LIBERO test mode
-S.mode = null; S.fixed = false; S.L = null; S.lDone = null; S.W = null; S.wDone = null;
+// ---------------------------------------------------------------- modes (Free play, Wet Lab)
+S.mode = null; S.fixed = false; S.W = null; S.wDone = null;
 function applyMode() {
   const mode = S.scene.mode, prev = S.mode;
   if (mode === S.mode) return;
   S.mode = mode;
-  const lib = mode === 'libero', wet = mode === 'wetlab';
-  S.fixed = lib || wet;
-  document.body.classList.toggle('lib', lib);
+  const wet = mode === 'wetlab';
+  S.fixed = wet;
   document.body.classList.toggle('wet', wet);
   document.body.classList.toggle('fixed', S.fixed);
-  $('modeFree').setAttribute('aria-pressed', mode === 'free'); $('modeLibero').setAttribute('aria-pressed', lib); $('modeWet').setAttribute('aria-pressed', wet);
-  $('modechip').textContent = lib ? 'LIBERO · results saved' : wet ? 'Wet lab bench · results saved' : 'Free play · not saved';
+  $('modeFree').setAttribute('aria-pressed', mode === 'free'); $('modeWet').setAttribute('aria-pressed', wet);
+  $('modechip').textContent = wet ? 'Wet lab bench · results saved' : 'Free play · not saved';
   S.feedKey = '';
-  if (lib) loadLibero();
-  else if (wet) loadWet();
+  if (wet) loadWet();
   else if (prev) { S.sideTab = 'objects'; }
 }
 async function setMode(mode) {
   if (S.scene && S.scene.mode === mode) return;
-  toast(mode === 'libero' ? 'Loading LIBERO… (the first time it downloads LIBERO\'s objects, about 200 MB)' : mode === 'wetlab' ? 'Loading the wet lab bench…' : 'Back to your own scene…');
+  toast(mode === 'wetlab' ? 'Loading the wet lab bench…' : 'Back to your own scene…');
   const r = await api('/pg/mode', {mode});
   if (!r.ok) { toast(r.error); return; }
   S.sel = 'robot'; S.runKey = null; refresh();
 }
 $('modeFree').onclick = () => setMode('free');
-$('modeLibero').onclick = () => setMode('libero');
 $('modeWet').onclick = () => setMode('wetlab');
-async function loadLibero() {
-  const sc = S.scene, task = sc && sc.task;
-  S.L = await api('/pg/libero' + (task ? '?task=' + encodeURIComponent(task) : ''));
-  renderLibero();
-}
 function fmtSecs(x) { return x == null ? '–' : x >= 60 ? Math.floor(x / 60) + 'm ' + Math.round(x % 60) + 's' : x.toFixed(0) + 's'; }
-function curSuite() { const L = S.L; return L.suites.find(x => x.id === (S.lSuite || L.suite)) || L.suites[0]; }
-function allTasks() { return S.L.suites.flatMap(x => x.tasks); }
-function renderLibero() {
-  const L = S.L; if (!L) return;
-  if (!S.lSuite) S.lSuite = L.suite;
-  const su = curSuite();
-  $('lSuites').innerHTML = L.suites.map(x => `<button data-s="${x.id}" aria-pressed="${x.id === su.id}">${x.name}<span>${x.tasks.length} tasks</span></button>`).join('');
-  $('lSuites').querySelectorAll('button').forEach(b => b.onclick = () => { const x = L.suites.find(y => y.id === b.dataset.s); S.lSuite = x.id; if (x.id !== L.suite) loadSetup(0, x.tasks[0].id); else renderLibero(); });
-  $('lSuiteWhat').textContent = su.blurb;
-  const sel = $('lTask');
-  if (sel.dataset.suite !== su.id) { sel.innerHTML = su.tasks.map((t, i) => `<option value="${t.id}">${i + 1}. ${esc(t.language)}</option>`).join(''); sel.dataset.suite = su.id; }
-  const t = allTasks().find(x => x.id === L.task) || su.tasks[0];
-  sel.value = t.id;
-  $('lLang').textContent = '“' + t.language + '”'; $('lDone').textContent = t.done_when;
-  $('goalText').textContent = t.done_when;
-  $('lSetupTotal').textContent = t.setups;
-  const board = L.scores.board;
-  const mine = board.find(b => b.model === $('lModel').value);
-  $('lDotsFor').textContent = mine ? 'for ' + mine.label : '';
-  const res = mine ? mine.setups : {};
-  $('lDots').innerHTML = Array.from({length: t.setups}, (_, i) => { const r = res[i + 1]; return `<button data-k="${i}" class="${r === true ? 'p' : r === false ? 'f' : ''}" title="Setup ${i + 1}${r === true ? ' · passed' : r === false ? ' · failed' : ''}"></button>`; }).join('');
-  $('lDots').querySelectorAll('button').forEach(b => b.onclick = () => loadSetup(+b.dataset.k));
-  $('lBoard').innerHTML = board.length ? board.map(b => `<tr><td>${esc(b.label)}</td><td class="n">${b.passed}/${b.tried}</td><td class="n">${fmtSecs(b.avg_seconds)}</td><td class="n">${b.avg_cost == null ? '–' : '$' + b.avg_cost.toFixed(2)}</td></tr>`).join('')
-    : '<tr><td colspan="4" class="small" style="color:var(--muted)">No runs yet for this task.</td></tr>';
-  // By suite, for the chosen model: study set (setups 1-5) only
-  const sb = L.suite_board, me = sb.board.find(b => b.model === $('lModel').value);
-  $('lSuiteFor').textContent = $('lModel').selectedOptions[0] ? $('lModel').selectedOptions[0].textContent.split(' · ')[0] : '';
-  let tp = 0, tt = 0;
-  const rows = L.suites.map(x => { const c = me ? me.suites[x.id] || {tried: 0, passed: 0} : {tried: 0, passed: 0}; tp += c.passed; tt += c.tried;
-    return `<tr><td>${x.name}</td><td class="n">${c.tried ? c.passed : '–'}</td><td class="n">${c.tried} / ${sb.sizes[x.id]}</td></tr>`; });
-  const all = Object.values(sb.sizes).reduce((a, b) => a + b, 0);
-  rows.push(`<tr><td style="font-weight:600">LIBERO-40</td><td class="n" style="font-weight:600">${tt ? (100 * tp / tt).toFixed(1) + '%' : '–'}</td><td class="n" style="font-weight:600">${tt} / ${all}</td></tr>`);
-  $('lSuiteBoard').innerHTML = rows.join('');
-  renderLiberoLive();
-}
+// LIBERO's scoreboard: every model, every suite (opened from a LIBERO run's results).
 async function openBoard(study) {
   S.bmStudy = study;
   const L = await api('/pg/libero?study=' + (study ? 1 : 0));
@@ -2548,51 +2553,10 @@ async function openBoard(study) {
   $('bmBody').innerHTML = rows.join('');
   $('boardModal').style.display = 'flex';
 }
-$('lFullBoard').onclick = () => openBoard(true);
 $('bmStudy').onclick = () => openBoard(true); $('bmAll').onclick = () => openBoard(false);
 $('bmClose').onclick = () => $('boardModal').style.display = 'none';
 $('boardModal').onclick = (e) => { if (e.target === $('boardModal')) $('boardModal').style.display = 'none'; };
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('boardModal').style.display = 'none'; });
-function renderLiberoLive() {
-  const sc = S.scene, b = sc.bench || {}, busy = !!b.active || !!(sc.run && sc.run.active);
-  const k = sc.setup || 0, n = sc.setups || 50;
-  $('lSetupN').textContent = k + 1;
-  const sn = S.L && S.L.suites.find(x => x.id === sc.suite);
-  $('libTag').textContent = 'LIBERO-' + (sn ? sn.name : '') + ' · Setup ' + (k + 1);
-  $('lDots').querySelectorAll('button').forEach(d => { d.classList.toggle('cur', +d.dataset.k === k); d.disabled = busy; });
-  for (const id of ['lPrev', 'lNext', 'lRun1', 'lRunAll', 'lStudy', 'lTask', 'lModel', 'modeFree', 'modeWet']) $(id).disabled = busy;
-  $('lSuites').querySelectorAll('button').forEach(x => x.disabled = busy);
-  $('lPrev').disabled = busy || k === 0; $('lNext').disabled = busy || k === n - 1;
-  $('lStop').style.display = b.active ? '' : 'none';
-  $('goalState').textContent = sc.goal_met ? '✓ Goal reached' : 'Not yet';
-  $('goalState').style.color = sc.goal_met ? 'var(--green)' : 'var(--muted)';
-  let st = '';
-  if (b.active) { const c = b.current || {}; st = b.total > 1 ? `Running setup ${(c.setup ?? 0) + 1}${b.tasks.length > 1 ? ' of task ' + c.task.replaceAll('_', ' ') : ''} · ${b.done} of ${b.total} done, ${b.passed} passed` : `Running setup ${(c.setup ?? 0) + 1}…`; }
-  else if (b.last) st = `Last: setup ${b.last.setup} ${b.last.passed ? 'passed' : 'failed'} (${b.last.how}, ${b.last.seconds}s)`;
-  $('lStatus').textContent = st;
-  if (sc.run && sc.run.started && !sc.run.active && !b.active && b.last) $('runStatus').textContent = b.last.passed ? '✓ Passed · goal reached in ' + b.last.seconds + 's' : 'Failed · ' + b.last.how;
-  const key = (b.done || 0) + ':' + !!b.active + ':' + sc.task;
-  if (S.lDone !== key) { S.lDone = key; S.lSuite = sc.suite; loadLibero(); }
-}
-async function loadSetup(k, task) {
-  const r = await api('/pg/libero/setup', {task: task || S.scene.task, setup: k});
-  if (!r.ok) { toast(r.error); return; }
-  await refresh(); loadLibero();
-}
-$('lPrev').onclick = () => loadSetup(Math.max(0, S.scene.setup - 1));
-$('lNext').onclick = () => loadSetup(Math.min(S.scene.setups - 1, S.scene.setup + 1));
-$('lTask').onchange = () => loadSetup(0, $('lTask').value);
-$('lModel').onchange = renderLibero;
-async function runBench(all, study) {
-  const r = await api('/pg/libero/run', {model: $('lModel').value, all, study});
-  if (!r.ok) { toast(r.error); return; }
-  refresh();
-}
-$('lRun1').onclick = () => runBench(false);
-$('lRunAll').onclick = () => { if (confirm('Run all 50 setups one after another? Each can take up to 3 minutes, so this can take about 2½ hours.')) runBench(true); };
-$('lStudy').onclick = () => { if (confirm('Run the study set? That is 200 runs (40 tasks × setups 1 to 5), one after another. Each can take up to 3 minutes, so this can take about 10 hours. You can stop it at any time; finished runs are kept.')) runBench(false, true); };
-$('lStop').onclick = async () => { await api('/pg/libero/stop', {}); refresh(); };
-
 // ---------------------------------------------------------------- Wet Lab mode
 async function loadWet() { S.W = await api('/pg/wetlab'); renderWet(); }
 function renderWet() {
@@ -2614,7 +2578,7 @@ function renderWet() {
 function renderWetLive() {
   const sc = S.scene, b = sc.wetbench || {}, busy = !!b.active || !!(sc.run && sc.run.active);
   $('libTag').textContent = 'Wet Lab · ' + sc.task + ' ' + (sc.title || '');
-  for (const id of ['wRun1', 'wRunAll', 'wModel', 'modeFree', 'modeLibero']) $(id).disabled = busy;
+  for (const id of ['wRun1', 'wRunAll', 'wModel', 'modeFree']) $(id).disabled = busy;
   $('wTasks').querySelectorAll('button').forEach(x => x.disabled = busy);
   $('wStop').style.display = b.active ? '' : 'none';
   $('goalState').textContent = b.active ? 'Running…' : b.last ? (b.last.passed ? '✓ Passed' : 'Failed') : 'Not run yet';
@@ -2658,7 +2622,7 @@ window.onAccount = (r) => { S.acct = r; fillModels(); if (S.scene) render(); };
 (async function init() {
   S.cat = await api('/pg/catalog');
   if (S.cat.public) {   // the public site: free play only, every run capped
-    $('modeLibero').style.display = $('modeWet').style.display = 'none';
+    $('modeWet').style.display = 'none';
     document.body.classList.add('public');
     if (S.cat.front) {   // a hosted lab: the front lists live and past runs
       $('pastLink').href = S.cat.front + '/pg/runs'; S.railKey = null;
@@ -2678,7 +2642,7 @@ window.onAccount = (r) => { S.acct = r; fillModels(); if (S.scene) render(); };
   }
   const items = S.cat.items;
   for (const it of items) { it.collision = it.collision || ''; }
-  $('wModel').innerHTML = $('lModel').innerHTML = modelOptions(S.cat.models);
+  $('wModel').innerHTML = modelOptions(S.cat.models);
   if (!S.watch) S.acct = await api('/pg/account').then(r => r && r.ok ? r : null).catch(() => null);
   fillModels();
   $('noModelsBtn').onclick = () => window.openSettings && window.openSettings('general');

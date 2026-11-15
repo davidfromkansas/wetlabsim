@@ -12,8 +12,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import pathlib
+import re
 import secrets
 import shutil
 import signal
@@ -26,24 +26,22 @@ import time
 import urllib.parse
 from http.server import ThreadingHTTPServer
 
+from wetlabsim import robot_api as RA
+from wetlabsim import tasks as WT
 from wetlabsim.server import Handler, RunBoard
 from wetlabsim.sim import RobotError, RobotView
 
-from . import catalog
-from . import libero as LB
-from . import site
-from .bench import Bench
-from . import wetlab as WL
-from wetlabsim import tasks as WT
-from .sim import PlaygroundSim
-from wetlabsim import robot_api as RA
+from . import accounts as ACCT
+from . import catalog, site, tasktitle
 from . import labs as LABS
+from . import libero as LB
 from . import savestore as SAVE
 from . import scene3d as S3
-from . import settings as ST
-from . import accounts as ACCT
-from . import tasktitle
 from . import scenegen as SG
+from . import settings as ST
+from . import wetlab as WL
+from .bench import LiberoScores
+from .sim import PlaygroundSim
 
 HERE = pathlib.Path(__file__).parent
 PAGE = HERE / "static" / "index.html"
@@ -60,7 +58,7 @@ def _page() -> bytes:
     return page
 ROBOT_API_URL = ""      # set when the robot API listener is running (main)
 MODEL_PROXY = False     # whether the model proxy is running here (main)
-TIME_LIMIT = 180.0     # seconds: a LIBERO test run that hasn't finished by then is stopped
+TIME_LIMIT = 180.0     # seconds: a run's default time limit (Wet Lab sets its own)
 # The public site (main --public): Claude (and Devin, with an org key) only, free play only,
 # every run capped, the AI in a cloud sandbox, a few runs at once with a queue.
 PUBLIC = False
@@ -540,12 +538,12 @@ class Session:
         self.share_token: str | None = None     # its share link is on (anyone with the link watches)
         self.sim = sim
         self.base_url, self.runs = base_url, runs
-        self.runner = Runner(f"{base_url}/s/{sid}", runs)      # LIBERO, Wet Lab: the scene's one robot
+        self.runner = Runner(f"{base_url}/s/{sid}", runs)      # Wet Lab: the scene's one robot
         self.board = self.runner.board
         self.runners: dict[str, Runner] = {}                     # free play: one per station
         self.history: dict[str, list] = {}       # free play: each station's finished runs, oldest first
         self.batches: dict[str, dict] = {}       # free play: each station's repeat runs (Run task N times)
-        self.bench = Bench(sim, self.runner, self, runs / "libero_results.jsonl")
+        self.bench = LiberoScores(runs / "libero_results.jsonl")     # every LIBERO station's runs
         self.wetbench = WL.WetBench(sim, self.runner, self, runs / "wetlab_results.jsonl")
 
     def station_runner(self, uid: str) -> Runner:
@@ -583,6 +581,26 @@ class Session:
                                     or str(x.get("text", "")).startswith("Jev says the task is done"))
                                for x in list(runner.board.trace))
         entry["reason"] = _end_reason(status, runner.info.get("time_limit"), entry["ai_done"], b)
+        lb = runner.info.get("libero")
+        if lb:
+            # LIBERO's own grade: passed if its goal held at any moment of the run
+            t = LB.task(lb["task"])
+            checks = lb.get("checks") or self.sim.libero_goal(uid) or [False] * len(t.goal)
+            passed = bool(lb.get("passed")) or all(checks)
+            if passed:
+                status = "finished"
+            entry.update(status=status, ok=passed,
+                         libero={"task": t.id, "suite": t.suite, "index": t.index + 1, "setup": lb["setup"] + 1,
+                                 "passed": passed, "checks": [{"text": g, "ok": bool(c)}
+                                                              for g, c in zip(LB.goal_parts(t), checks)]})
+            entry["reason"] = ("Passed: LIBERO's goal check held" if passed else
+                               "Not passed: " + entry["reason"][0].lower() + entry["reason"][1:])
+            if passed or status != "stopped":     # a run you stopped doesn't count
+                self.bench.record({"task": t.id, "suite": t.suite, "language": t.language, "setup": lb["setup"] + 1,
+                                   "model": entry["model"], "model_label": entry["model_label"] or entry["model"],
+                                   "passed": passed, "how": entry["reason"], "seconds": lb.get("passed_at") or entry["seconds"],
+                                   "cost_usd": entry["cost_usd"], "tokens": entry["tokens"], "run_id": entry["run_id"],
+                                   "when": time.strftime("%Y-%m-%d %H:%M:%S")})
         if b and not b.get("finished"):
             b["results"].append("succeeded" if entry["ok"] else "failed")
             idx = b.setdefault("running", {}).pop(uid, None)
@@ -621,9 +639,12 @@ class Session:
         The batch is finished once none of its stations has a run going."""
         b.setdefault("running", {}).pop(uid, None)
         snap = (b.get("snaps") or {}).get(uid) or (b["snap"] if uid == b.get("home", uid) else None)
+        st_ = self.sim.station(uid)
         if b.get("started", len(b["results"])) >= b["total"] or b.get("stop_after") or b.get("cancelled"):
             pass
-        elif snap is None or self.sim.station(uid) is None or not self.sim.restore_station(snap):
+        elif st_ is not None and st_.libero:      # its next layout is laid out as its run starts
+            self._queue_batch_run(uid, b)
+        elif snap is None or st_ is None or not self.sim.restore_station(snap):
             b["note"] = "the lab changed, so the remaining runs were not started"
             b["cancelled"] = True
         else:
@@ -634,9 +655,12 @@ class Session:
     def _queue_batch_run(self, uid: str, b: dict):
         b["started"] = b.get("started", 0) + 1
         b.setdefault("running", {})[uid] = b["started"]
+        job = {"session": self.id, "station": uid, "task": b["task"], "model": b["model"],
+               "limit": b["limit"], "queued": time.time()}
+        if "setup0" in b:            # a LIBERO station: this run's official starting layout
+            job["setup"] = (b["setup0"] + b["started"] - 1) % b["setups"]
         with QUEUE_LOCK:
-            QUEUE.append({"session": self.id, "station": uid, "task": b["task"], "model": b["model"],
-                          "limit": b["limit"], "queued": time.time()})
+            QUEUE.append(job)
         _start_queued()
 
     def drop_batch(self, b: dict):
@@ -717,7 +741,7 @@ class Session:
         SAVE.record_files(run_id, files)
 
     def active(self) -> bool:
-        return (self.runner.active() or self.bench.active() or self.wetbench.active()
+        return (self.runner.active() or self.wetbench.active()
                 or any(r.active() for r in self.runners.values())
                 or any(q["session"] == self.id for q in QUEUE))
 
@@ -744,7 +768,7 @@ class Session:
                 s._sync_placed()
             return {"name": self.name,
                     "stations": [{"uid": st.uid, "robot": st.robot, "pos": list(st.pos), "yaw": st.yaw, "name": st.name,
-                                  "kind": st.kind}
+                                  "kind": st.kind, **({"task": st.task, "setup": st.setup} if st.libero else {})}
                                  for st in s.stations],
                     "objects": [{"uid": o.uid, "item": o.item, "pos": list(o.pos), "yaw": o.yaw,
                                  "quat": list(o.quat) if o.quat is not None else None} for o in s.placed],
@@ -759,7 +783,6 @@ class Session:
                 b["finished"] = True
         with QUEUE_LOCK:
             QUEUE[:] = [q for q in QUEUE if q["session"] != self.id]
-        self.bench.stop()
         self.wetbench.stop()
         self.runner.stop()
         for r in self.runners.values():
@@ -830,6 +853,7 @@ AUTOSAVE = None
 def _world_from_layout(layout: dict | None):
     """Stations and objects from a layout (checked: known robots and objects only)."""
     from wetlabsim import scene as WS
+
     from . import world as W
     if not layout:
         return [], []
@@ -839,9 +863,18 @@ def _world_from_layout(layout: dict | None):
             continue
         if any(x.uid == st["uid"] for x in stations):
             continue
-        stations.append(W.Station(st["uid"], st["robot"], (float(st["pos"][0]), float(st["pos"][1])),
-                                  float(st.get("yaw", 0.0)), str(st.get("name") or "")[:40],
-                                  st.get("kind") if st.get("kind") in W.KINDS else "table"))
+        kind = st.get("kind") if st.get("kind") in W.KINDS else "table"
+        task, setup = "", 0
+        if kind == "libero":
+            from . import libero as LB
+            try:
+                t = LB.task(str(st.get("task", "")))
+            except KeyError:
+                continue
+            task, setup = t.id, int(st.get("setup", 0)) % t.n_setups
+        stations.append(W.Station(st["uid"], st["robot"] if kind != "libero" else "franka",
+                                  (float(st["pos"][0]), float(st["pos"][1])),
+                                  float(st.get("yaw", 0.0)), str(st.get("name") or "")[:40], kind, task, setup))
     known = {i["id"] for i in catalog.available()}
     for o in (layout.get("objects") or [])[:200]:
         if o.get("item") not in known or not re.match(r"^[\w.-]{1,80}$", str(o.get("uid", ""))):
@@ -929,8 +962,9 @@ def first_session() -> Session | None:
 
 def _mat_base(cls: str) -> dict:
     """A material class's own contact numbers in the Playground (before a session's changes)."""
-    from . import world as W
     from wetlabsim import scene as WS
+
+    from . import world as W
     return {"prop": W.PROP, "furniture": W.FURNITURE}.get(cls) or WS.MATERIALS[cls]
 
 
@@ -944,6 +978,24 @@ def _queue_position(sid, uid):
         if q["session"] == sid and q["station"] == uid:
             return i + 1
     return None
+
+
+def _watch_libero(sess: Session, uid: str, r: Runner):
+    """A LIBERO station's run: it passes the moment LIBERO's goal holds (LIBERO ends an episode on
+    success), and the AI is then stopped."""
+    info = r.info
+    while r.active() and r.info is info:
+        each = sess.sim.libero_goal(uid)
+        if each is None:
+            return
+        if all(each):
+            info["libero"]["passed"] = True
+            info["libero"]["checks"] = each
+            info["libero"]["passed_at"] = round(time.time() - info["started"], 1)
+            time.sleep(1.0)               # its last messages arrive first
+            r.stop()
+            return
+        time.sleep(0.1)
 
 
 def _all_runners():
@@ -967,7 +1019,15 @@ def _start_queued():
             try:
                 r = sess.station_runner(job["station"])
                 r.slot = slot
-                r.start(job["task"], job["model"], site.site_sheet(sess.sim.placed, st, sess.sim.stations), job["limit"])
+                if st.libero:
+                    # LIBERO: the run's official starting layout, LIBERO's site sheet, and its goal
+                    # check watched while the run goes
+                    sess.sim.libero_layout(st.uid, job.get("setup", st.setup))
+                    r.start(job["task"], job["model"], sess.sim.libero_sheet(st.uid), job["limit"])
+                    r.info["libero"] = {"task": st.task, "setup": job.get("setup", st.setup)}
+                    threading.Thread(target=_watch_libero, args=(sess, st.uid, r), daemon=True).start()
+                else:
+                    r.start(job["task"], job["model"], site.site_sheet(sess.sim.placed, st, sess.sim.stations), job["limit"])
             except Exception as e:  # noqa: BLE001
                 LABS.free_slot(slot)
                 print("could not start a queued run:", e)
@@ -979,7 +1039,7 @@ class PGHandler(Handler):
     sim: PlaygroundSim
     runner: Runner              # the scene's one robot (LIBERO, Wet Lab, and the robot cell's own URLs)
     runners: dict               # free play: one per station, by station id
-    bench: Bench
+    bench: LiberoScores
     wetbench: WL.WetBench
     base_url = ""
 
@@ -1088,7 +1148,7 @@ class PGHandler(Handler):
         return bool(self.sess.owner) and secrets.compare_digest(self._browser(), self.sess.owner)
 
     def _busy(self) -> bool:
-        return (self.runner.active() or self.bench.active() or self.wetbench.active()
+        return (self.runner.active() or self.wetbench.active()
                 or any(r.active() for r in self.runners.values()))
 
     def station_runner(self, uid: str) -> Runner:
@@ -1231,6 +1291,10 @@ class PGHandler(Handler):
 
     def _runs_status(self) -> dict:
         out = {uid: {**self.runners[uid].status(), **_run_live(self.sess, uid)} for uid in list(self.runners)}
+        for uid, r in list(self.runners.items()):      # a LIBERO run stopped because it passed
+            lb = r.info.get("libero") or {}
+            if lb.get("passed") and uid in out and out[uid].get("status") == "stopped":
+                out[uid]["status"] = "passed"
         for i, q in enumerate(list(QUEUE)):
             if q["session"] == self.sess.id:
                 out[q["station"]] = {"active": False, "queued": i + 1, "task": q["task"], "model": q["model"]}
@@ -1440,8 +1504,6 @@ class PGHandler(Handler):
         return self._err("not found", 404)
 
     def _locked(self) -> str:
-        if self.sim.scene_mode == "libero":
-            return "LIBERO scenes are fixed: switch to Free play to build your own"
         if self.sim.scene_mode == "wetlab":
             return "the wet lab bench is fixed for a fair test: switch to Free play to build your own"
         if self.runner.active() or any(r.active() for r in self.runners.values()):
@@ -1532,7 +1594,9 @@ class PGHandler(Handler):
                 from wetlabsim.server import VIEWER_PATH
                 return self._send(200, VIEWER_PATH.read_bytes(), "text/html; charset=utf-8")
             if p.startswith("/pg/static/"):
-                f = HERE / "static" / pathlib.Path(p).name
+                rel = p[len("/pg/static/"):]
+                # flat files, plus LIBERO's task pictures in static/libero/
+                f = HERE / "static" / ("libero/" + pathlib.Path(rel).name if rel.startswith("libero/") else pathlib.Path(rel).name)
                 if f.is_file():
                     import mimetypes
                     return self._send(200, f.read_bytes(), mimetypes.guess_type(f.name)[0] or "application/octet-stream",
@@ -1574,7 +1638,7 @@ class PGHandler(Handler):
                                           "half": [hx, hy], "height": h, "waiting": not r.get("active")})
                 info["zones"] = zones
                 return self._json({**info, "run": run, "runs": runs, "locked": self._locked(),
-                                   "bench": self.bench.status(), "wetbench": self.wetbench.status(),
+                                   "wetbench": self.wetbench.status(),
                                    "session": {"id": self.sess.id, "name": self.sess.name,
                                                "mine": self._owns()}, "stale": LABS.stale(),
                                    "unsent": self.sess.unsent, "share": self._share_info(),
@@ -1606,19 +1670,17 @@ class PGHandler(Handler):
                                               "needs_answer": t.needs_answer} for t in WT.TASKS.values()],
                                    "task": self.sim.wetlab_task, "time_limit": WL.TIME_LIMIT,
                                    "scores": self.wetbench.scoreboard()})
-            if p == "/pg/libero":
-                cur = self.sim.libero_task.id if self.sim.libero_task else None
+            if p == "/pg/libero":           # LIBERO's tasks (for + Station > Benchmarks) and its scores
                 suites = [{"id": k, "name": n, "blurb": bl,
                            "tasks": [{"id": t.id, "index": t.index, "language": t.language,
-                                      "goal": [list(g) for g in t.goal], "done_when": LB.done_when(t),
-                                      "setups": len(t.states)} for t in LB.tasks(k)]}
+                                      "goal": LB.goal_parts(t), "done_when": LB.done_when(t),
+                                      "setups": t.n_setups, "room": LB.room_kind(t)} for t in LB.tasks(k)]}
                           for k, n, bl in LB.SUITES]
-                study = qs.get("study", ["1"])[0] != "0"
-                return self._json({"suites": suites, "task": cur, "setup": self.sim.setup,
-                                   "suite": self.sim.libero_task.suite if self.sim.libero_task else None,
-                                   "study_setups": LB.STUDY_SETUPS,
-                                   "scores": self.bench.scoreboard(qs.get("task", [cur])[0]),
-                                   "suite_board": self.bench.suite_board(study)})
+                study = qs.get("study", ["0"])[0] == "1"
+                out = {"suites": suites, "suite_board": self.bench.suite_board(study)}
+                if qs.get("task"):
+                    out["scores"] = self.bench.scoreboard(qs["task"][0])
+                return self._json(out)
             # The main view drawn in the browser (scene3d): the scene once, then a pose stream.
             # No waiting on the simulator's lock here: a compiled model never changes, and a world
             # with soft objects keeps the lock busy enough that these requests could wait for ages.
@@ -1844,7 +1906,8 @@ class PGHandler(Handler):
                 s.clear_ghost()
                 if not spot.get("valid"):
                     return self._json({"ok": False, "error": spot.get("reason") or "can't go there"})
-                uid = s.add_station(b.get("robot", "franka"), spot["pos"], float(b.get("yaw", 0.0)), kind)
+                uid = s.add_station(b.get("robot", "franka"), spot["pos"], float(b.get("yaw", 0.0)), kind,
+                                    task=str(b.get("task") or ""))
                 s.frame_station(uid)
                 return self._json({"ok": True, "uid": uid})
             if p == "/pg/station/move":
@@ -2002,13 +2065,11 @@ class PGHandler(Handler):
                 s.clear()
                 return self._json({"ok": True})
             if p == "/pg/mode":
-                if PUBLIC and b.get("mode") in ("libero", "wetlab"):
+                if PUBLIC and b.get("mode") == "wetlab":
                     return self._json({"ok": False, "error": "this site runs free play only"})
                 if self._busy():
                     return self._json({"ok": False, "error": "stop the run first"})
-                if b.get("mode") == "libero":
-                    s.set_libero(b.get("task") or LB.tasks()[0].id, int(b.get("setup", 0)))
-                elif b.get("mode") == "wetlab":
+                if b.get("mode") == "wetlab":
                     s.set_wetlab(b.get("task") or s.wetlab_task or WL.ORDER[0])
                 else:
                     s.set_free()
@@ -2032,35 +2093,8 @@ class PGHandler(Handler):
             if p == "/pg/wetlab/stop":
                 self.wetbench.stop()
                 return self._json({"ok": True})
-            if p == "/pg/libero/setup":
-                if self._busy():
-                    return self._json({"ok": False, "error": "stop the run first"})
-                s.set_libero(b.get("task") or s.libero_task.id, int(b.get("setup", 0)))
-                return self._json({"ok": True})
-            if p == "/pg/libero/run":
-                if s.scene_mode != "libero":
-                    return self._json({"ok": False, "error": "load a LIBERO task first"})
-                t = s.libero_task
-                if b.get("study"):
-                    # The study set: setups 1-5 of every task in the chosen suites (all four by default).
-                    chosen = b.get("suites") or [k for k, _, _ in LB.SUITES]
-                    jobs = [(x.id, k) for suite in chosen for x in LB.tasks(suite) for k in range(LB.STUDY_SETUPS)]
-                elif b.get("all"):
-                    jobs = [(t.id, k) for k in range(len(t.states))]
-                else:
-                    jobs = [(t.id, s.setup)]
-                try:
-                    self.bench.start(b.get("model", "claude"), jobs, float(b.get("time_limit", TIME_LIMIT)))
-                except RuntimeError as e:
-                    return self._json({"ok": False, "error": str(e)})
-                return self._json({"ok": True})
-            if p == "/pg/libero/stop":
-                self.bench.stop()
-                return self._json({"ok": True})
             if p == "/pg/play":
                 task = (b.get("task") or "").strip()
-                if s.scene_mode == "libero" and task:
-                    return self._json({"ok": False, "error": "in LIBERO mode, use Run this setup"})
                 if s.scene_mode == "wetlab" and task:
                     return self._json({"ok": False, "error": "in Wet Lab mode, use Run this task"})
                 if task:
@@ -2071,6 +2105,8 @@ class PGHandler(Handler):
                     runner = self.station_runner(uid)
                     if runner.active() or _queue_position(self.sess.id, uid):
                         return self._json({"ok": False, "error": f"{station.name} is already running a task"})
+                    if station.libero:         # LIBERO's own words for its task, never edited
+                        task = LB.task(station.task).language
                     model = b.get("model", "claude")
                     mdl = next((m for m in MODELS if m["id"] == model), None)
                     if PUBLIC and (mdl is None or mdl["agent"] not in _site_agents()):
@@ -2110,6 +2146,14 @@ class PGHandler(Handler):
                           "snaps": {u: s.station_snapshot(u) for u in stations}, "started": 0, "running": {},
                           "note": note}
                     bt["snap"] = bt["snaps"][uid]
+                    if station.libero:
+                        # each run starts from the next of LIBERO's official layouts: 1, 2, 3...
+                        n = LB.task(station.task).n_setups
+                        bt["setup0"] = station.setup
+                        bt["setups"] = n
+                        for u in copies:
+                            s.station(u).setup = station.setup
+                        station.setup = (station.setup + repeat) % n
                     for u in stations:
                         self.sess.batches[u] = bt
                         if u != uid:

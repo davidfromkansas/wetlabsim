@@ -1,99 +1,30 @@
-"""LIBERO test runs: one setup, all 50, or a whole study set across suites, each graded by
-LIBERO's own success check.
+"""LIBERO scores: every run on a LIBERO station, graded by LIBERO's own success check.
 
 A run passes the moment the goal holds (LIBERO ends an episode on success) and fails if the
 AI finishes, errors or reaches the time limit without it. Results are kept in
-runs/playground/libero_results.jsonl and summed up on the scoreboard.
+runs/playground/libero_results.jsonl (the same file, and rows, as the old LIBERO test mode's)
+and summed up on the scoreboard.
 """
 from __future__ import annotations
 
 import json
 import pathlib
 import threading
-import time
 
 from . import libero as LB
 
+_LOCK = threading.Lock()
 
-class Bench:
-    def __init__(self, sim, runner, handler_cls, results: pathlib.Path):
-        self.sim, self.runner, self.H = sim, runner, handler_cls
+
+class LiberoScores:
+    def __init__(self, results: pathlib.Path):
         self.results = results
-        self.thread: threading.Thread | None = None
-        self.cancel = threading.Event()
-        self.state: dict = {}
 
-    def active(self) -> bool:
-        return self.thread is not None and self.thread.is_alive()
-
-    def start(self, model_id: str, jobs: list[tuple[str, int]], time_limit: float):
-        """Run (task id, setup index) pairs one after another."""
-        if self.active() or self.runner.active():
-            raise RuntimeError("a run is already going")
-        self.cancel.clear()
-        self.state = {"model": model_id, "total": len(jobs), "done": 0, "passed": 0,
-                      "current": None, "last": None, "tasks": sorted({j[0] for j in jobs})}
-        self.thread = threading.Thread(target=self._loop, args=(model_id, jobs, time_limit), daemon=True)
-        self.thread.start()
-
-    def stop(self):
-        self.cancel.set()
-        self.runner.stop()
-
-    def _loop(self, model_id: str, jobs: list[tuple[str, int]], time_limit: float):
-        for task_id, k in jobs:
-            if self.cancel.is_set():
-                break
-            task = LB.task(task_id)
-            self.state["current"] = {"task": task.id, "suite": task.suite, "setup": k}
-            self.sim.set_libero(task.id, k)
-            self.sim.play()
-            with self.sim.lock:
-                sheet = LB.site_sheet(task, self.sim.m, self.sim.d)
-            self.runner.start(task.language, model_id, sheet, time_limit)
-            t0 = time.time()
-            passed, how = False, ""
-            while True:
-                if self.sim.goal_met():
-                    passed, how = True, "goal reached"
-                    break
-                if not self.runner.active():
-                    st = self.runner.status()
-                    how = {"finished": "the AI stopped without reaching the goal",
-                           "stopped": "stopped"}.get(st.get("status"), "the AI stopped with an error")
-                    if time.time() - t0 >= time_limit - 1:
-                        how = "time limit"
-                    break
-                if self.cancel.is_set():
-                    how = "stopped"
-                    break
-                time.sleep(0.1)
-            secs = round(time.time() - t0, 1)
-            # Let the agent's last messages arrive before it's stopped (the run's cost comes last).
-            if passed:
-                time.sleep(1.0)
-                self.runner.stop()
-            for _ in range(50):
-                if not self.runner.active():
-                    break
-                time.sleep(0.1)
-            time.sleep(0.5)
-            self.sim.pause()
-            info = dict(self.H.board.run)
-            row = {"task": task.id, "suite": task.suite, "language": task.language, "setup": k + 1,
-                   "model": model_id, "model_label": info.get("model_label") or model_id, "passed": passed,
-                   "how": how, "seconds": secs, "cost_usd": info.get("cost_usd"), "tokens": info.get("tokens"),
-                   "run_id": info.get("run_id"), "when": time.strftime("%Y-%m-%d %H:%M:%S")}
-            if how != "stopped":
-                with open(self.results, "a") as f:
-                    f.write(json.dumps(row) + "\n")
-                self.state["done"] += 1
-                self.state["passed"] += int(passed)
-            self.state["last"] = row
-        self.state["current"] = None
-
-    def status(self) -> dict:
-        return {**self.state, "active": self.active()}
+    def record(self, row: dict):
+        """One finished run (a stopped one doesn't count)."""
+        self.results.parent.mkdir(parents=True, exist_ok=True)
+        with _LOCK, open(self.results, "a") as f:
+            f.write(json.dumps(row) + "\n")
 
     def rows(self) -> list[dict]:
         if not self.results.exists():

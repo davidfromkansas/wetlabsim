@@ -61,6 +61,11 @@ const css = `
 #results .rrow .n{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #results .rrow .why{grid-column:2 / -1;font-size:12.5px;color:#4B5563;line-height:1.4;margin-top:-4px}
 #results .rrow .why.bad{color:#991B1B}
+#results .rrow .why .lbck{display:flex;flex-direction:column;gap:2px;margin-top:4px;color:#374151}
+#results .rrow .why .lbck span{display:flex;gap:6px}
+#results .rrow .why .lbck i{font-style:normal;width:12px;flex:none}
+#results .rrow .why .lbck .ok i{color:#16A34A}#results .rrow .why .lbck .no i{color:#DC2626}
+#results .lbboard{align-self:flex-start;border:0;background:transparent;padding:0;font:600 12.5px Inter,sans-serif;color:#1D4ED8;cursor:pointer}
 #results .rrow .why .err{display:block;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11.5px;color:#991B1B;background:#FEF2F2;border-radius:6px;padding:4px 6px;margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:4.4em;overflow:hidden}
 #results .rrow .mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;color:#374151;white-space:nowrap}
 `;
@@ -138,9 +143,10 @@ function drawBatch() {
   if (box.dataset.key === key) return;
   box.dataset.key = key;
   const k = Math.min(b.total, b.results.length + (b.finished ? 0 : 1)), side = (b.stations || []).length;
-  const head = b.finished ? `Done: ${ok} of ${b.results.length} succeeded`
+  const won = (S.scene.robots || []).some(r => r.id === uid && r.libero) ? ['passed', 'not passed'] : ['succeeded', 'failed'];
+  const head = b.finished ? `Done: ${ok} of ${b.results.length} ${won[0]}`
     : side > 1 ? `${b.results.length} of ${b.total} done · ${b.running || 0} running` : `Run ${k} of ${b.total}`;
-  const tail = b.finished ? (b.results.length < b.total ? `${b.total - b.results.length} not run` : '') : `${ok} succeeded · ${bad} failed`;
+  const tail = b.finished ? (b.results.length < b.total ? `${b.total - b.results.length} not run` : '') : `${ok} ${won[0]} · ${bad} ${won[1]}`;
   box.innerHTML = `<div class="bh"><b>${head}</b><span>${tail}</span></div>${squares(b, running, true)}${b.finished ? '' : KEY}
     ${b.note ? `<div class="note">${esc(b.note)}</div>` : ''}
     ${side > 1 && !b.finished ? `<div class="small">${side} robots running side by side: this one and ${side - 1} cop${side > 2 ? 'ies' : 'y'}.</div>` : ''}
@@ -179,29 +185,34 @@ function drawResults() {
   }
   const live = r.batch && !r.batch.finished ? r.batch : null;
   el.innerHTML = groups.map(g => {
-    const x0 = g.runs[0], of = x0.of || 1, ok = g.runs.filter(x => x.ok).length;
+    const x0 = g.runs[0], of = x0.of || 1, ok = g.runs.filter(x => x.ok).length, lb = !!x0.libero;
+    const won = lb ? 'passed' : 'succeeded';
     const logo = LOGOS[x0.provider] || LOGOS.anthropic;
     const cost = g.runs.reduce((a, x) => a + (x.cost_usd || 0), 0), anyCost = g.runs.some(x => x.cost_usd != null);
     const when = x0.started ? new Date(x0.started * 1000).toLocaleString([], {month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'}) : '';
     const going = live && live.id === g.batch;
     const sqs = of > 1 ? (going ? squares(live, ((S.scene.runs || {})[R.uid] || {}).active, false)
       : `<div class="sqs">${[...g.runs].reverse().map(x => sq(x.ok ? 'ok' : 'no', false, `Run ${x.index}: ${LABEL[x.status] || x.status}`)).join('')}</div>`) : '';
-    const head = `<div class="gh"><span class="t">${esc(x0.task || '')}</span><span class="m"><img src="${logo}" alt="">${esc(x0.model_label || '')}${when ? ` · ${when}` : ''}${of > 1 ? ` · <b>${ok} of ${g.runs.length} succeeded</b>${going ? ' so far' : ''}` : ''}${anyCost ? ` · ${usd(cost)}` : ''}</span>${sqs}</div>`;
+    const head = `<div class="gh"><span class="t">${esc(x0.task || '')}</span><span class="m"><img src="${logo}" alt="">${esc(x0.model_label || '')}${when ? ` · ${when}` : ''}${of > 1 ? ` · <b>${ok} of ${g.runs.length} ${won}</b>${going ? ' so far' : ''}` : ''}${anyCost ? ` · ${usd(cost)}` : ''}</span>${sqs}</div>`;
     const rows = g.runs.map(x => {
-      const lab = LABEL[x.status] || x.status, why = x.reason || lab;
+      const lab = x.libero ? (x.libero.passed ? 'Passed' : 'Not passed') : LABEL[x.status] || x.status, why = x.reason || lab;
+      const checks = x.libero && (x.libero.checks || []).length ? `<span class="lbck">${x.libero.checks.map(c => `<span class="${c.ok ? 'ok' : 'no'}"><i>${c.ok ? '✓' : '✕'}</i>${esc(c.text)}</span>`).join('')}</span>` : '';
+      const layout = x.libero ? ` · layout ${x.libero.setup}` : "";
       const err = x.status === 'error' && x.error_text ? `<span class="err">${esc(String(x.error_text).split('\n').slice(-2).join('\n').slice(0, 240))}</span>` : '';
       const said = x.status !== 'finished' && x.ai_done != null ? (x.ai_done ? ' · The AI had said DONE' : '') : '';
       const vid = x.video_url ? (x.video_url.startsWith('/') ? `<button class="vbtn" data-video="${esc(x.video_url)}" data-title="${esc((of > 1 ? `Run ${x.index} of ${of}` : 'Run') + ' · ' + (x.task || ''))}">${PLAY}Watch video</button>`
           : `<a class="vbtn" href="${esc(x.video_url)}" target="_blank" rel="noopener">${PLAY}Watch video ↗</a>`)
         : x.video === 'making' ? '<span class="vnote">Video is being made…</span>' : x.video === 'failed' ? '<span class="vnote">No video for this run</span>' : '';
-      return `<div class="rrow" role="button" tabindex="0" data-run="${esc(x.run_id)}" data-uid="${esc(x.uid || '')}" aria-label="Open run ${of > 1 ? `${x.index} of ${of}` : ''}: ${esc(why)}">${sq(x.ok ? 'ok' : 'no', false, why)}<span class="n">${of > 1 ? `Run ${x.index} of ${of}` : 'Run'} <span class="st">· ${esc(lab)}</span></span><span class="mono">${fmt(x.seconds)}</span><span class="mono">${x.cost_usd != null ? usd(x.cost_usd) : ''}</span>${CHEV}<span class="why${x.ok ? '' : ' bad'}">${esc(why)}${said}${err}</span>${vid ? `<span class="acts">${vid}</span>` : ''}</div>`;
+      return `<div class="rrow" role="button" tabindex="0" data-run="${esc(x.run_id)}" data-uid="${esc(x.uid || '')}" aria-label="Open run ${of > 1 ? `${x.index} of ${of}` : ''}: ${esc(why)}">${sq(x.ok ? 'ok' : 'no', false, why)}<span class="n">${of > 1 ? `Run ${x.index} of ${of}` : 'Run'} <span class="st">· ${esc(lab)}${layout}</span></span><span class="mono">${fmt(x.seconds)}</span><span class="mono">${x.cost_usd != null ? usd(x.cost_usd) : ''}</span>${CHEV}<span class="why${x.ok ? '' : ' bad'}">${esc(why)}${said}${err}${checks}</span>${vid ? `<span class="acts">${vid}</span>` : ''}</div>`;
     }).join('');
-    return `<div class="grp">${head}${rows}</div>`;
+    const board = lb ? '<button class="lbboard" data-board>Full scoreboard, all models →</button>' : '';
+    return `<div class="grp">${head}${rows}${board}</div>`;
   }).join('');
   el.querySelectorAll('[data-run]').forEach(b => {
     b.onclick = (e) => { if (!e.target.closest('.vbtn')) window.openRunPage(b.dataset.uid || R.uid, b.dataset.run); };
     b.onkeydown = (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === b) { e.preventDefault(); window.openRunPage(b.dataset.uid || R.uid, b.dataset.run); } };
   });
+  el.querySelectorAll('[data-board]').forEach(b => b.onclick = () => window.openBoard && window.openBoard(true));
   el.querySelectorAll('button[data-video]').forEach(b => b.onclick = (e) => { e.stopPropagation(); openVideo(U(b.dataset.video), b.dataset.title); });
 }
 
