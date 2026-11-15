@@ -220,6 +220,11 @@ def _codex_modal(model: str, prompt: str, login: str, effort: str) -> tuple[str,
         sb.exec("chmod", "600", "/tmp/codex/auth.json").wait()
         proc = sb.exec(*_codex_cmd(model, effort, "/tmp/w/answer.txt", jail=True), prompt, workdir="/tmp/w",
                        env={"CODEX_HOME": "/tmp/codex", "NO_COLOR": "1"}, timeout=CODEX_TIMEOUT)
+        # Close Codex's input right away: `codex exec` reads more of the prompt from a piped stdin
+        # until it ends, and a Sandbox process's stdin stays open, so Codex sat waiting until it
+        # timed out ("Reading additional input from stdin..."). The local path uses DEVNULL.
+        proc.stdin.write_eof()
+        proc.stdin.drain()
         log = proc.stdout.read() + proc.stderr.read()
         proc.wait()
         try:

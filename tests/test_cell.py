@@ -196,3 +196,10 @@ def test_agent_workspace_never_names_the_cell_folder(tmp_path):
     assert RA.workspace_leaks(ws, client) == []
     (ws / "oops.json").write_text(str(RA.ROOT))
     assert RA.workspace_leaks(ws, client) == [ws / "oops.json"]
+    # A web page's own links with the same letters (unitree.com's "/app/g1" when the cell is in
+    # /app) don't name the cell's folder; one of its files does.
+    (ws / "oops.json").unlink()
+    (ws / "page.html").write_text(f'<a href="{RA.ROOT}x/g1">, {RA.ROOT}/no_such_file')
+    assert RA.workspace_leaks(ws, client) == []
+    (ws / "page.html").write_text(f"see {RA.ROOT}/wetlabsim/sim.py")
+    assert RA.workspace_leaks(ws, client) == [ws / "page.html"]
