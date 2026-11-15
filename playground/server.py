@@ -1833,6 +1833,7 @@ class PGHandler(Handler):
                            "azimuth": round(float(c.azimuth), 3), "elevation": round(float(c.elevation), 3)}
                 shapes = list(s.overlay) + list(s.zone) + s._selection_overlay()
                 frame = S3.poses(xpos, xquat, {"v": str(ver), "t": round(float(s.d.time), 3), "cam": cam,
+                                               "camgen": s.view_gen, "gliding": s._glide is not None,
                                                "shapes": shapes, "paused": s.paused})
                 self.wfile.write(b"data: " + frame.encode() + b"\n\n")
                 self.wfile.flush()
