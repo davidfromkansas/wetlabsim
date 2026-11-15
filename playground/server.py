@@ -551,7 +551,7 @@ class Session:
     def station_runner(self, uid: str) -> Runner:
         r = self.runners.get(uid)
         st = self.sim.station(uid)
-        docs = "standard" if st is None or st.robot in ("franka", "aloha", "fr3_duo", "g1") else "assisted"
+        docs = "standard" if st is None or st.robot in ("franka", "aloha", "fr3_duo", "g1", "piper") else "assisted"
         if r is None or r.docs != docs and not r.active():
             r = self.runners[uid] = Runner(f"{self.base_url}/s/{self.id}/st/{uid}", self.runs, docs)
             r.on_done = lambda runner, uid=uid: self.run_ended(uid, runner)
@@ -617,7 +617,7 @@ class Session:
             entry["reason"] = ("Passed: the task's check held" if passed else
                                "Not passed: " + entry["reason"][0].lower() + entry["reason"][1:])
             if passed or status != "stopped":     # a run you stopped doesn't count
-                self.wetrobo.record({"task": t.id, "lab": wr["lab"], "model": entry["model"],
+                self.wetrobo.record({"task": t.id, "lab": wr["lab"], "robot": wr.get("robot", "franka"), "model": entry["model"],
                                      "model_label": entry["model_label"] or entry["model"], "passed": passed,
                                      "how": entry["reason"], "seconds": wr.get("passed_at") or entry["seconds"],
                                      "cost_usd": entry["cost_usd"], "tokens": entry["tokens"], "run_id": entry["run_id"],
@@ -897,7 +897,7 @@ def _world_from_layout(layout: dict | None):
             if str(st.get("task", "")) not in WR.TASKS:
                 continue
             task = str(st["task"])
-        stations.append(W.Station(st["uid"], st["robot"] if kind != "libero" and not WR.lab_of(kind) else "franka",
+        stations.append(W.Station(st["uid"], "franka" if kind == "libero" or WR.lab_of(kind) and st["robot"] not in WR.ROBOTS else st["robot"],
                                   (float(st["pos"][0]), float(st["pos"][1])),
                                   float(st.get("yaw", 0.0)), str(st.get("name") or "")[:40], kind, task, setup))
     known = {i["id"] for i in catalog.available()}
@@ -1072,7 +1072,7 @@ def _start_queued():
                 else:
                     r.start(job["task"], job["model"], site.site_sheet(sess.sim.placed, st, sess.sim.stations), job["limit"])
                     if st.wetrobo and st.task:      # WetRobo: its goal check watched while the run goes
-                        r.info["wetrobo"] = {"task": st.task, "lab": st.wetrobo}
+                        r.info["wetrobo"] = {"task": st.task, "lab": st.wetrobo, "robot": st.robot}
                         threading.Thread(target=_watch_bench, args=(sess, st.uid, r, "wetrobo",
                                                                     sess.sim.wetrobo_goal), daemon=True).start()
             except Exception as e:  # noqa: BLE001
@@ -1723,6 +1723,8 @@ class PGHandler(Handler):
                                    "tasks": [{"id": t.id, "title": t.title, "language": t.language,
                                               "goal": list(t.goal), "done_when": WR.done_when(t)} for t in WR.TASKS.values()],
                                    "labs": [{"id": k, "kind": v[0], "label": v[1], "blurb": v[2]} for k, v in WR.LABS.items()],
+                                   "robots": [{"id": r, "label": WR.ROBOT_NAMES[r], "blurb": WR.ROBOT_BLURBS[r]}
+                                              for r in WR.ROBOTS],
                                    "scores": WR.board(self.sess.wetrobo.rows())})
             if p == "/pg/libero":           # LIBERO's tasks (for + Station > Benchmarks) and its scores
                 suites = [{"id": k, "name": n, "blurb": bl,

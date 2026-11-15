@@ -129,8 +129,9 @@ def robot_readings(st: dict) -> dict:
         "hand_position_m": {"x_forward": p[0], "y_left": p[1], "z_up": p[2]},
         "hand_rotation_vector_rad": p[3:],
         "joint_angles_rad": st["joint_positions"],
-        "wrist_force_N": st["tcp_force"][:3],
-        "wrist_torque_Nm": st["tcp_force"][3:],
+        # a robot without a wrist force/torque sensor (the PiPER) reports none
+        **({"wrist_force_N": st["tcp_force"][:3], "wrist_torque_Nm": st["tcp_force"][3:]}
+           if "tcp_force" in st else {}),
         "gripper": {"opening_0_open_255_closed": g.get("position"), "moving": g.get("moving"),
                     "holding_something": g.get("object_detected")},
     }

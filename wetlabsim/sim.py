@@ -475,7 +475,10 @@ class Arm:
                 m.actuator_forcerange[self.grip_act] = [-f, f]
             elif "grip_ctrl_range" in P:
                 self.grip_rate = 40.0 + 360.0 * sp
-                m.jnt_actfrcrange[self.grip_jnt] = self.grip_jnt_force_base * (0.2 + 0.8 * fo)
+                if P.get("grip_force_at") == "actuator":     # limited at the gripper's motor (PiPER)
+                    m.actuator_forcerange[self.grip_act] = self.grip_force_base * (0.2 + 0.8 * fo)
+                else:
+                    m.jnt_actfrcrange[self.grip_jnt] = self.grip_jnt_force_base * (0.2 + 0.8 * fo)
             else:
                 self.grip_rate = 40.0 + 360.0 * sp
                 m.actuator_forcerange[self.grip_act] = self.grip_force_base * (0.2 + 0.8 * fo)
