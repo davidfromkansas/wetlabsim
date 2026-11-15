@@ -278,7 +278,9 @@ At the start of a run the robot stands still with the torso upright (all six tor
 `{ready_l}` and the right arm at `{ready_r}` (rad): elbows bent, grippers open and pointing
 forward and down, above the table and past its edge. Nothing is in a protective stop.
 """
-TABLES = {"table": "a heavy-duty packing table", "wetlab": "a stainless steel lab bench"}
+TABLES = {"table": "a heavy-duty packing table", "wetlab": "a stainless steel lab bench",
+          "island": "a kitchen island's worktop",
+          "counter": "a kitchen counter's worktop"}
 
 
 def site_sheet(placed: list[W.Placed], station: W.Station | None = None,

@@ -22,6 +22,7 @@ import io
 import json
 import struct
 import threading
+import weakref
 
 import mujoco
 import numpy as np
@@ -239,7 +240,9 @@ _MESHES, _TEXTURES = _Cache(400 << 20), _Cache(200 << 20)
 
 
 # Each model's content hashes, worked out once (hashing every mesh and texture of a lab full of
-# objects takes seconds): the last few models of every session, kept with the model itself.
+# objects takes seconds): the last few models of every session. Each is held by a weak reference,
+# so a model no session uses any more (a scene build makes one per piece it puts down, a few
+# hundred MB each in a big kitchen) is freed, not kept here.
 _MODELS: collections.OrderedDict = collections.OrderedDict()
 _MODELS_LOCK = threading.Lock()
 
@@ -247,14 +250,16 @@ _MODELS_LOCK = threading.Lock()
 def _info(m) -> dict:
     with _MODELS_LOCK:
         hit = _MODELS.get(id(m))
-        if hit is not None and hit[0] is m:
+        if hit is not None and hit[0]() is m:
             _MODELS.move_to_end(id(m))
             return hit[1]
     mesh = [mesh_hash(m, i) for i in range(int(m.nmesh))]
     info = {"mesh": mesh, "tex": [tex_hash(m, i) for i in range(int(m.ntex))],
             "index": {h: i for i, h in reversed(list(enumerate(mesh)))}}
     with _MODELS_LOCK:
-        _MODELS[id(m)] = (m, info)
+        for k in [k for k, (ref, _) in _MODELS.items() if ref() is None]:
+            del _MODELS[k]
+        _MODELS[id(m)] = (weakref.ref(m), info)
         while len(_MODELS) > 48:
             _MODELS.popitem(last=False)
     return info

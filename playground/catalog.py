@@ -269,6 +269,49 @@ ITEMS = [
     ("towel_holder", "Kitchen", "Paper towel holder", "palatial:D00587", False, False),
     ("paper_towel", "Kitchen", "Paper towel roll", "palatial:D00588", False, False),
     ("toast", "Kitchen", "Slice of toast", "palatial:D00865", False, False),
+    # Nov 14 kitchen and wet lab showcase scenes: ForgeCAD appliances and kitchenware, NVIDIA
+    # SimReady sink, tap, cookware, tableware, food, and USDCraft lab enclosures
+    ("dishwasher", "Furniture", "Dishwasher", "forgecad:dishwasher", False, True),
+    ("range_hood", "Furniture", "Range hood", "forgecad:range_hood", False, True),
+    ("bar_stool", "Furniture", "Bar stool", "forgecad:gas_lift_bar_stool", False, True),
+    ("chest_freezer", "Furniture", "Chest freezer", "forgecad:chest_freezer", False, True),
+    ("sink_basin", "Kitchen", "Sink basin", "fixture_sink_basin_a01", True, False),
+    ("kitchen_counter", "Furniture", "Kitchen counter", "fixture_counter_a01", False, True),
+    ("countertop", "Furniture", "Countertop with cabinets", "tripo:countertop_C019", False, True),
+    ("countertop_2", "Furniture", "Countertop with cabinets, 2", "tripo:countertop_C020", False, True),
+    ("lab_stool", "Furniture", "Lab stool", "stool_mobile_padded_vinyl_a01", False, True),
+    ("fume_hood", "Furniture", "Fume hood", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R480_fume_hood/09_fume_hood_with_a_base_cabinet_120_x_80_x_230_cm", True, True),
+    ("biosafety_cabinet", "Furniture", "Biosafety cabinet", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R490_biosafety_cabinet/01_class_ii_biosafety_cabinet", True, True),
+    ("faucet", "Kitchen", "Kitchen tap", "fixture_faucet_singleLever_a01", False, False),
+    ("electric_kettle", "Kitchen", "Electric kettle", "forgecad:electric_kettle", False, False),
+    ("drip_coffee_maker", "Kitchen", "Drip coffee maker", "forgecad:drip_coffee_maker", False, False),
+    ("french_press", "Kitchen", "French press", "forgecad:french_press", False, False),
+    ("rice_cooker", "Kitchen", "Rice cooker", "forgecad:rice_cooker", False, False),
+    ("kitchen_tongs", "Kitchen", "Kitchen tongs", "forgecad:kitchen_tongs", False, False),
+    ("pedal_bin", "Kitchen", "Pedal bin", "forgecad:pedal_trash_can", True, False),
+    ("plate", "Kitchen", "Dinner plate", "forgecad:plate", False, False),
+    ("cutlery_set", "Kitchen", "Cutlery set", "forgecad:cutlery_set", False, False),
+    ("drinking_glass", "Kitchen", "Drinking glass", "forgecad:drinking_glass", True, False),
+    ("tumbler", "Kitchen", "Glass tumbler", "dishware_glass_tumbler_a01", True, False),
+    ("wine_glass", "Kitchen", "Wine glass", "dishware_glass_wine_a01", True, False),
+    ("fork", "Kitchen", "Fork", "kitchenware_fork_a01", False, False),
+    ("spoon", "Kitchen", "Spoon", "kitchenware_spoon_b01", False, False),
+    ("table_knife", "Kitchen", "Table knife", "kitchenware_knife_a01", False, False),
+    ("frying_pan", "Kitchen", "Frying pan", "kitchenware_pan_a01", True, False),
+    ("spatula_kitchen", "Kitchen", "Spatula", "kitchenware_spatula_b01", False, False),
+    ("egg", "Kitchen", "Egg", "food_egg_chicken_a01", False, False),
+    ("bread_loaf", "Kitchen", "Bread loaf", "food_packaged_bread_loaf_a01", False, False),
+    ("bagel", "Kitchen", "Bagel", "food_prepared_bagel_b01", False, False),
+    ("croissant", "Kitchen", "Croissant", "food_prepared_croissant_a01", False, False),
+    ("banana", "Kitchen", "Banana", "food_produce_banana_a01", False, False),
+    ("orange", "Kitchen", "Orange", "food_produce_orange_a01", False, False),
+    ("lemon", "Kitchen", "Lemon", "food_produce_lemon_a01", False, False),
+    ("tomato", "Kitchen", "Tomato", "food_produce_tomato_a01", False, False),
+    ("strawberry", "Kitchen", "Strawberry", "food_produce_strawberry_a01", False, False),
+    ("spray_bottle", "Cleaning", "Trigger spray bottle", "forgecad:spray_bottle", False, False),
+    ("reagent_reservoir", "Lab & Medical", "Reagent reservoir", "forgecad:reagent_reservoir", True, False),
+    ("screw_cap_bottle", "Glassware", "Screw-cap bottle", "forgecad:screw_cap_bottle", False, False),
+    ("sharps_box", "Lab & Medical", "Sharps box", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R492_sharps_container/06_tabletop_mini_sharps_box", True, False),
 ]
 
 # Triangles an item's visuals may keep before they are simplified (tools/convert_simready; the
@@ -278,7 +321,11 @@ MAX_TRIS = {i[0]: 200_000 for i in ITEMS if i[3].startswith("palatial:")}
 
 # Furniture whose knobs, dials and buttons turn and press through their range (on other
 # furniture they are fixed, world.part_kind): a cooker's hob knobs, a washer's programme dial
-FURNITURE_CONTROLS_MOVE = {"range_oven", "washer", "kitchenette"}
+# The worktop of a counter whose backsplash stands higher than it (the asset's height is the
+# backsplash's): the top of its worktop collider.
+WORKTOP = {"countertop": 0.738, "countertop_2": 0.754}
+
+FURNITURE_CONTROLS_MOVE = {"range_oven", "washer", "kitchenette", "dishwasher", "range_hood"}
 
 # One-part items that collide as each of the colliders their asset lays out (a shelf's boards, a
 # mug's handle and walls), not one hull around them all (tools/convert_simready.convert)

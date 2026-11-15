@@ -341,6 +341,7 @@ body.watch .smore{display:none}body.watch .schipw .schip{padding-right:10px}
 .stmenu button:disabled{color:#9CA3AF;cursor:not-allowed}.stmenu button:disabled svg{color:#C4C9D1}
 .stmenu .danger{color:#B91C1C}.stmenu .danger svg{color:#B91C1C}
 .stmenu hr{border:0;height:1px;background:var(--line);margin:4px 2px}
+.stmenu [hidden]{display:none!important}
 .stmenu .why{font-size:11.5px;color:#6B7280;padding:4px 10px 3px;line-height:1.35}
 body.watch #objPanel .acts{display:none!important}
 .glass{background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 0 0 1px rgba(17,24,39,.08),0 4px 14px rgba(17,24,39,.08)}
@@ -616,7 +617,7 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
 #physBtn:disabled{cursor:not-allowed}#physBtn:disabled .tg{opacity:.5}
 body.watch #physBtn{display:none}
 #playpill:empty,#playpill.none{display:none}
-/* a session's "⋯" menu (Share) */
+/* a session's "⋮" menu (Share, Delete) */
 .sroww{position:relative}.sroww .srow{padding-right:34px}
 .ssmore{position:absolute;right:6px;top:12px;width:24px;height:26px;border-radius:7px;border:0;background:transparent;color:#374151;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .ssmore:hover,.ssmore[aria-expanded=true]{background:rgba(17,24,39,.08)}
@@ -1532,8 +1533,21 @@ function openAdd() {
     <button class="primary" data-r="franka">Add to lab</button></div></div>
     <div class="tcard"><img src="/pg/static/station_wetlab.jpg" alt="A robot arm at a wet lab bench"><div class="rx"><div><b>Wet lab bench</b><div class="small">A stainless lab bench with lab bottles, vials, a glass jar, syringes, forceps, a sterilising tray and more, all NVIDIA SimReady models with real physics.</div></div>
     <div class="tags"><span class="tag">1 robot · Franka Emika Panda</span></div>
-    <button class="primary" data-r="franka" data-kind="wetlab">Add to lab</button></div></div>`;
+    <button class="primary" data-r="franka" data-kind="wetlab">Add to lab</button></div></div>
+    <div class="tcard"><img src="/pg/static/station_island.jpg" alt="A robot arm on a kitchen island"><div class="rx"><div><b>Kitchen island</b><div class="small">A robot arm on a kitchen island's worktop. Add kitchen objects and appliances around it. A humanoid stands on the floor beside it.</div></div>
+    <div class="tags"><span class="tag">1 robot · Franka Emika Panda</span></div>
+    <button class="primary" data-r="franka" data-kind="island">Add to lab</button></div></div>
+    <div class="tcard"><img src="/pg/static/station_counter.jpg" alt="A robot arm on a kitchen counter"><div class="rx"><div><b>Kitchen counter</b><div class="small">A robot arm on a 2.3 m kitchen counter, over cabinets whose doors and drawers really open.</div></div>
+    <div class="tags"><span class="tag">1 robot · Franka Emika Panda</span></div>
+    <button class="primary" data-r="franka" data-kind="counter">Add to lab</button></div></div>
+    <div class="tcard"><img src="/pg/static/scene_kitchen.jpg" alt="Four robots in a kitchen"><div class="rx"><div><b>Kitchen scene</b><div class="small">A whole kitchen: counters, an island, fridge, dishwasher and oven. Four robots, each with a task ready: espresso, toast, microwave and a fruit bowl.</div></div>
+    <div class="tags"><span class="tag">4 robots · Franka, FR3 Duo, ALOHA, G1</span></div>
+    <button class="primary" data-preset="kitchen">Add to lab</button></div></div>
+    <div class="tcard"><img src="/pg/static/scene_wetlab.jpg" alt="Four robots in a wet lab"><div class="rx"><div><b>Wet lab scene</b><div class="small">A whole wet lab: four benches, biosafety cabinet, fume hood, CO2 incubator and lab fridge. Four robots, each with a task ready: centrifuge, plate reader, jar lid and tube rack.</div></div>
+    <div class="tags"><span class="tag">4 robots · UR5e, Franka, FR3 Duo, G1</span></div>
+    <button class="primary" data-preset="wetlab">Add to lab</button></div></div>`;
   $('rcards').querySelectorAll('button[data-r]').forEach(b => b.onclick = () => startPlacing(b.dataset.r, b.dataset.kind || 'table'));
+  $('rcards').querySelectorAll('button[data-preset]').forEach(b => b.onclick = () => { closeAdd(); window.sceneGen && window.sceneGen.preset(b.dataset.preset); });
   $('addModal').style.display = 'flex';
 }
 
@@ -1566,7 +1580,9 @@ function openPicker(mode, uid) {
     <button class="x" aria-label="Close">✕</button></div>
     ${mode === 'add' ? `<span class="sh" id="rpkKinds">Station</span><div class="kinds" role="radiogroup" aria-labelledby="rpkKinds">
       <button class="kd" role="radio" data-k="table" aria-checked="true"><b>Table</b><span>An empty packing table</span></button>
-      <button class="kd" role="radio" data-k="wetlab" aria-checked="false"><b>Wet lab bench</b><span>Stainless bench with ${STATION_KINDS.wetlab.items} lab items</span></button></div>
+      <button class="kd" role="radio" data-k="wetlab" aria-checked="false"><b>Wet lab bench</b><span>Stainless bench with ${STATION_KINDS.wetlab.items} lab items</span></button>
+      <button class="kd" role="radio" data-k="island" aria-checked="false"><b>Kitchen island</b><span>The arm on an island's worktop</span></button>
+      <button class="kd" role="radio" data-k="counter" aria-checked="false"><b>Kitchen counter</b><span>Worktop over cabinets with drawers that open</span></button></div>
       <span class="sh" id="rpkArms">Arm</span>` : ''}
     <div class="grid" role="radiogroup" aria-label="Robots"${mode === 'add' ? ' aria-labelledby="rpkArms"' : ''}>${robots.map(r => `<button class="ri" role="radio" data-r="${esc(r.id)}" aria-checked="false" ${r.id === cur ? 'disabled' : ''}>
       ${r.id === cur ? '<span class="tag">Current</span>' : ''}<span class="ck">✓</span><span class="th"><img src="${ROBOT_IMG(r.id)}" alt=""></span>
@@ -1581,7 +1597,7 @@ function openPicker(mode, uid) {
     pk.querySelector('.go').disabled = !r;
     pk.querySelectorAll('.kd').forEach(b => b.setAttribute('aria-checked', String(b.dataset.k === S.pick.kind)));
     pk.querySelector('.go').textContent = !r ? (mode === 'add' ? 'Add' : 'Swap') : mode === 'add'
-      ? (S.pick.kind === 'wetlab' ? `Add wet lab bench · ${r.label}` : `Add ${r.label}`) : `Swap to ${r.label}`;
+      ? (S.pick.kind !== 'table' ? `Add ${STATION_KINDS[S.pick.kind].label.toLowerCase()} · ${r.label}` : `Add ${r.label}`) : `Swap to ${r.label}`;
   };
   pk.querySelectorAll('.kd').forEach(b => b.onclick = () => {
     S.pick.kind = b.dataset.k;
@@ -1657,12 +1673,13 @@ function closeAdd() { $('addModal').style.display = 'none'; }
 $('addStationBtn').onclick = openAdd; $('amClose').onclick = closeAdd;
 $('addModal').onclick = (e) => { if (e.target === $('addModal')) closeAdd(); };
 // What each kind of station starts as (the server's world.KINDS).
-const STATION_KINDS = {table: {label: 'Table', items: 0}, wetlab: {label: 'Wet lab bench', items: 18}};
+const STATION_KINDS = {table: {label: 'Table', items: 0}, wetlab: {label: 'Wet lab bench', items: 18},
+  island: {label: 'Kitchen island', items: 0}, counter: {label: 'Kitchen counter', items: 0}};
 function startPlacing(robot, kind = 'table') {
   closeAdd(); S.placing = robot; S.placeKind = kind; S.placeYaw = 0; S.armed = null; renderItems();
   api('/pg/camera', {preset: 'lab'});
   const lab = ((S.cat.robots || []).find(x => x.id === robot) || {}).label || 'the robot';
-  $('hintTag').textContent = kind === 'wetlab' ? `Click the floor to place the wet lab bench with the ${lab}. R turns it, Esc cancels.`
+  $('hintTag').textContent = kind !== 'table' ? `Click the floor to place the ${STATION_KINDS[kind].label.toLowerCase()} with the ${lab}. R turns it, Esc cancels.`
     : `Click the floor to place the ${lab}. R turns it, Esc cancels.`;
 }
 function cancelPlacing() { S.placing = null; hideTag(); api('/pg/ghost/clear', {}); resumePhysics(); render(); }
@@ -1675,7 +1692,7 @@ async function probeStation(p) {
     const r = await api('/pg/station/probe', {u: p.u, v: p.v, yaw: S.placeYaw, kind: S.placeKind});
     if (!S.placing) { hideTag(); api('/pg/ghost/clear', {}); return; }
     const label = (S.cat.robots.find(x => x.id === S.placing) || {}).label || '';
-    const what = S.placeKind === 'wetlab' ? `Wet lab bench · ${label}` : `${label} station`;
+    const what = S.placeKind !== 'table' ? `${STATION_KINDS[S.placeKind].label} · ${label}` : `${label} station`;
     showTag(p, r.valid ? `${what} · click to place` : (r.reason || "can't go there"), !r.valid);
   } finally { stProbeBusy = false; if (stProbeNext) { const n = stProbeNext; stProbeNext = null; probeStation(n); } }
 }
@@ -2232,27 +2249,47 @@ document.addEventListener('pointerdown', (e) => {
   if (!$('sharePop').contains(e.target) && !e.target.closest('#sessMenu')) $('sharePop').hidden = true;
   if (!e.target.closest('#sessMenu, .ssmore')) closeSessMenu();
 });
-// A session's "⋯" menu (its own row, when the session can be shared): Share opens the share card
-// beside the row.
+// A session's "⋮" menu (each of your own rows): Share (the open session, when it can be shared)
+// opens the share card beside the row; Delete closes the session for good (after asking).
 function closeSessMenu() { const m = $('sessMenu'); if (m) m.classList.remove('open'); document.querySelectorAll('.ssmore').forEach(b => b.setAttribute('aria-expanded', 'false')); }
 function openSessMenu(btn) {
   let m = $('sessMenu');
   if (!m) {
     m = document.createElement('div'); m.id = 'sessMenu'; m.className = 'stmenu'; m.setAttribute('role', 'menu'); m.setAttribute('aria-label', 'Session actions');
-    m.innerHTML = '<button role="menuitem" data-act="share"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Share</button>';
+    m.innerHTML = '<button role="menuitem" data-act="share"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Share</button>'
+      + '<hr data-act="sep"><button role="menuitem" data-act="delete" class="danger"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5"/></svg>Delete session</button>';
     document.body.appendChild(m);
     m.querySelector('[data-act=share]').onclick = () => {
-      const r = ($('mineList').querySelector('.ssmore') || m).getBoundingClientRect(), p = $('sharePop');   // the row may have been redrawn
+      const row = $('mineList').querySelector(`.ssmore[data-msid="${CSS.escape(SID)}"]`) || m;   // the row may have been redrawn
+      const r = row.getBoundingClientRect(), p = $('sharePop');
       closeSessMenu(); p.hidden = false;
       p.style.left = Math.min(r.right + 8, innerWidth - p.offsetWidth - 8) + 'px';
       p.style.top = Math.max(8, Math.min(r.top - 8, innerHeight - p.offsetHeight - 8)) + 'px';
       $('shareOn').focus();
     };
+    m.querySelector('[data-act=delete]').onclick = () => { const id = m.dataset.sid; closeSessMenu(); deleteSession(id); };
   }
   if (m.classList.contains('open') && S.menuBtn === btn) return closeSessMenu();
+  const sid = btn.dataset.msid, share = sid === SID && S.canShare;
+  m.dataset.sid = sid;
+  m.querySelector('[data-act=share]').hidden = m.querySelector('[data-act=sep]').hidden = !share;
   S.menuBtn = btn; m.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
   const r = btn.getBoundingClientRect();
   m.style.left = Math.min(r.left, innerWidth - m.offsetWidth - 8) + 'px'; m.style.top = (r.bottom + 4) + 'px';
+}
+async function deleteSession(id) {
+  const x = S.sess.mine.find(y => y.id === id); if (!x) return;
+  if (!await askConfirm(`Delete "${x.name}"?`, 'Its robots, objects and chats go away for good. Past runs stay in Your runs.', 'Delete')) return;
+  const r = await api('/pg/sessions/delete', {id});
+  if (!r.ok) { toast(r.error || "Couldn't delete this session"); return; }
+  delete S.draftsBy[id];
+  await loadSessions();
+  if (id !== SID) { toast('Session deleted'); return; }
+  const next = S.sess.mine[0];            // the one you were in: go to your most recent other one
+  if (next) { switchSession(next.id); toast('Session deleted'); return; }
+  const n = await api('/pg/sessions/new', {});    // none left: a fresh one
+  if (n.ok) { await loadSessions(); switchSession(n.session.id); }
+  toast('Session deleted');
 }
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeSessMenu(); $('sharePop').hidden = true; } });
 $('shareOn').onclick = async () => {
@@ -2304,8 +2341,8 @@ function renderSessions() {
   if (key === S.sessKey) return; S.sessKey = key;
   const dot = {working: ['run', 'Working'], finished: ['ok', 'Finished'], empty: ['', 'Nothing run yet']};
   $('mineList').innerHTML = mine.map(x => { const [d, t] = dot[x.status] || dot.empty;
-    const more = x.id === SID && S.canShare && !S.watch;
-    return `<div class="sroww"><button class="srow" data-sid="${esc(x.id)}" aria-current="${x.id === SID}"><span class="sico">${CUBE}</span><span class="t"><b>${esc(x.name)}${x.shared ? '<span class="sharedmini">Shared</span>' : ''}</b><span class="sub">${x.mode === 'free' ? nStations(x.stations) : x.mode === 'libero' ? 'LIBERO test' : 'Wet Lab'} · ${ago(x.used)}</span></span><span class="sdot ${d}" title="${t}"></span></button>${more ? `<button class="ssmore" aria-label="More actions for ${esc(x.name)}" aria-haspopup="menu" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="13" cy="8" r="1.5"/></svg></button>` : ''}</div>`; }).join('')
+    const more = !S.watch && S.sess.owner;
+    return `<div class="sroww"><button class="srow" data-sid="${esc(x.id)}" aria-current="${x.id === SID}"><span class="sico">${CUBE}</span><span class="t"><b>${esc(x.name)}${x.shared ? '<span class="sharedmini">Shared</span>' : ''}</b><span class="sub">${x.mode === 'free' ? nStations(x.stations) : x.mode === 'libero' ? 'LIBERO test' : 'Wet Lab'} · ${ago(x.used)}</span></span><span class="sdot ${d}" title="${t}"></span></button>${more ? `<button class="ssmore" data-msid="${esc(x.id)}" aria-label="More actions for ${esc(x.name)}" aria-haspopup="menu" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg></button>` : ''}</div>`; }).join('')
     || '<span class="snone">None yet. Press New session.</span>';
   $('mineList').querySelectorAll('.ssmore').forEach(b => b.onclick = (e) => { e.stopPropagation(); openSessMenu(b); });
   $('liveList').innerHTML = live.map((x, i) => `<button class="srow" data-live="${i}" aria-current="${!x.url && x.id === SID}" title="${esc(x.task || '')}"><span class="sico">${EYE}</span><span class="t"><b>${esc(x.name)}</b><span class="sub">${esc(x.task || nStations(x.stations))}</span></span><span class="sdot run" title="Running now"></span></button>`).join('')

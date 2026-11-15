@@ -1402,6 +1402,18 @@ class PGHandler(Handler):
             return self._json({"ok": not err, "error": err or ""})
         if s.scene_mode != "free":
             return self._json({"ok": False, "error": "scenes are built in free play"})
+        if what == "preset":           # a ready-made scene from Add station: no prompt, no model
+            name = str(b.get("name") or "")
+            if name not in SG.PRESETS:
+                return self._json({"ok": False, "error": "no such scene"})
+            if self._busy():
+                return self._json({"ok": False, "error": "A robot is working on a task. Stop it first to add a scene."})
+            if cur is not None and cur.status()["active"]:
+                return self._json({"ok": False, "error": "a scene is already being built"})
+            build = SG.Build(s, self.sess, "", SG.preset_pick(name), "", PUBLIC, preset=name)
+            self.sess.scenegen = build
+            build.start()
+            return self._json({"ok": True, "build": build.status()})
         model = str(b.get("model") or "")
         if model not in {m["id"] for m in SG.models(PUBLIC)}:
             return self._json({"ok": False, "error": "Connect an Anthropic or OpenAI API key in Settings to build a scene."})
@@ -1730,6 +1742,8 @@ class PGHandler(Handler):
             return self._json({"ok": True, "idle_left": LABS.idle_left()})
         if urllib.parse.urlparse(self.path).path.rstrip("/") == "/pg/sessions/new":
             return self._new_session()
+        if urllib.parse.urlparse(self.path).path.rstrip("/") == "/pg/sessions/delete":
+            return self._delete_session()
         if urllib.parse.urlparse(self.path).path.rstrip("/") == "/pg/account":
             return self._account_change()
         if not self._bind_session():
@@ -2183,6 +2197,28 @@ class PGHandler(Handler):
         except (KeyError, ValueError, TypeError, IndexError) as e:
             return self._json({"ok": False, "error": f"couldn't copy that lab: {e}"})
         return self._json({"ok": True, "session": sess.summary()})
+
+    def _delete_session(self):
+        """Delete one of this browser's sessions: its world closes here and, in a signed-in
+        account's lab, its saved copy is hidden on the website (deleted_at, as the website's own
+        delete does). Not while one of its robots is working."""
+        b = self._body()
+        me = self._browser()
+        sess = get_session(str(b.get("id", "")))
+        if sess is None or not me or sess.owner != me:
+            return self._json({"ok": False, "error": "no such session"})
+        if sess.active():
+            return self._json({"ok": False, "error": "A robot in this session is working on a task. Stop it first."})
+        with SESSIONS_LOCK:
+            SESSIONS.pop(sess.id, None)
+        if SAVE.enabled() and sess.db_id:
+            try:
+                SAVE.delete_session(sess.db_id)
+            except Exception as e:  # noqa: BLE001
+                print("could not delete a saved session:", e)
+        sess.stop()
+        sess.sim.stop_threads()
+        return self._json({"ok": True})
 
     def _camera_preset(self, name):
         s = self.sim
