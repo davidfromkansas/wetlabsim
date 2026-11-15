@@ -1005,6 +1005,18 @@ def _queue_position(sid, uid):
     return None
 
 
+def _keep_replay(sess: Session, uid: str, r: Runner):
+    """A run that is about to be stopped for passing keeps its replay, so it still gets a video:
+    the runner saves the replay when a run ends on its own, and stopping the AI stops it too."""
+    run_id, arm = (r.board.run or {}).get("run_id"), sess.sim.arms.get(uid)
+    if not run_id or arm is None or not (r.runs / run_id).is_dir():
+        return
+    try:
+        sess.sim.save_recording(r.runs / run_id / "replay.npz", since=arm.recording_from)
+    except Exception as e:  # noqa: BLE001
+        print("could not keep the passed run's replay:", e)
+
+
 def _watch_bench(sess: Session, uid: str, r: Runner, key: str, goal):
     """A benchmark station's run (r.info[key]): it passes the moment its goal holds, and the AI
     is then stopped."""
@@ -1018,6 +1030,7 @@ def _watch_bench(sess: Session, uid: str, r: Runner, key: str, goal):
             info[key]["checks"] = each
             info[key]["passed_at"] = round(time.time() - info["started"], 1)
             time.sleep(1.0)               # its last messages arrive first
+            _keep_replay(sess, uid, r)
             r.stop()
             return
         time.sleep(0.1)
@@ -1036,6 +1049,7 @@ def _watch_libero(sess: Session, uid: str, r: Runner):
             info["libero"]["checks"] = each
             info["libero"]["passed_at"] = round(time.time() - info["started"], 1)
             time.sleep(1.0)               # its last messages arrive first
+            _keep_replay(sess, uid, r)
             r.stop()
             return
         time.sleep(0.1)
