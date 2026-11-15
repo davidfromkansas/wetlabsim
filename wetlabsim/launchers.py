@@ -154,7 +154,8 @@ class ModalSandboxLauncher:
         if cls._image is None:
             cls._image = (
                 modal.Image.debian_slim(python_version="3.12")
-                .apt_install("curl", "ca-certificates", "git")
+                .apt_install("curl", "ca-certificates", "git",
+                             "poppler-utils")   # pdftotext: the robot's manuals are PDFs
                 .run_commands("curl -fsSL https://deb.nodesource.com/setup_22.x | bash -",
                               "apt-get install -y nodejs", "npm install -g @anthropic-ai/claude-code",
                               f"npm install -g @openai/codex@{CODEX_CLI}")

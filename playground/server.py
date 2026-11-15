@@ -814,6 +814,21 @@ SESSIONS: dict[str, Session] = {}
 SESSIONS_LOCK = threading.Lock()
 ACCOUNT_OWNER = "account-owner"     # a signed-in account's lab: its owner, on any browser
 SAVED_AT_START = 4                  # saved sessions a lab opens with; older ones open on request
+_OLDER = {"t": 0.0, "rows": []}     # the saved sessions list, read from the database at most every 20 s
+
+
+def _older_sessions(open_ids: set) -> list[dict]:
+    """The owner's saved sessions that aren't open in this lab (the sidebar's "Older sessions")."""
+    if not SAVE.enabled():
+        return []
+    if time.time() - _OLDER["t"] > 20:
+        try:
+            _OLDER["rows"] = SAVE.list_sessions(50)
+        except Exception as e:  # noqa: BLE001
+            print("could not list saved sessions:", e)
+        _OLDER["t"] = time.time()
+    return [{"db": r["session_id"], "name": r["session_name"], "saved": r.get("saved") or 0}
+            for r in _OLDER["rows"] if r["session_id"] not in open_ids]
 
 
 def _snapshot(sess: Session):
@@ -1383,7 +1398,9 @@ class PGHandler(Handler):
         if LABS.OWNER_USER:     # a signed-in account's lab is private: its own sessions, or the one shared
             w = None if owner else self._watching()
             mine = sorted((x.summary() for x in live if owner and x.owner == me), key=lambda d: -d["used"])
-            return {"mine": mine, "live": [{**w.summary(), "url": ""}] if w else [], "max": MAX_SESSIONS, "owner": owner}
+            older = _older_sessions({x.db_id for x in live if x.db_id}) if owner else []
+            return {"mine": mine, "older": older, "live": [{**w.summary(), "url": ""}] if w else [],
+                    "max": MAX_SESSIONS, "owner": owner}
         mine = sorted((x.summary() for x in live if me and x.owner == me), key=lambda d: -d["used"])
         others = [{**x.summary(), "url": ""} for x in live if x.owner != me and x.status() == "working"]
         if LABS.shared():
@@ -1880,6 +1897,8 @@ class PGHandler(Handler):
             return self._new_session()
         if urllib.parse.urlparse(self.path).path.rstrip("/") == "/pg/sessions/delete":
             return self._delete_session()
+        if urllib.parse.urlparse(self.path).path.rstrip("/") == "/pg/sessions/open":
+            return self._open_older()
         if urllib.parse.urlparse(self.path).path.rstrip("/") == "/pg/account":
             return self._account_change()
         if not self._bind_session():
@@ -2323,6 +2342,28 @@ class PGHandler(Handler):
         except (KeyError, ValueError, TypeError, IndexError) as e:
             return self._json({"ok": False, "error": f"couldn't copy that lab: {e}"})
         return self._json({"ok": True, "session": sess.summary()})
+
+    def _open_older(self):
+        """Open one of the account's older saved sessions (not opened at the lab's start)."""
+        b = self._body()
+        db = str(b.get("db", ""))
+        if not (SAVE.enabled() and re.match(r"^[0-9a-f-]{36}$", db)):
+            return self._json({"ok": False, "error": "no such session"})
+        try:
+            sess = open_saved(db)
+        except RobotError as e:
+            return self._json({"ok": False, "error": str(e)})
+        except Exception as e:  # noqa: BLE001
+            print("could not open a saved session:", e)
+            return self._json({"ok": False, "error": "couldn't open that session"})
+        if sess is None:
+            return self._json({"ok": False, "error": "no such session"})
+        try:
+            SAVE.opened(db)
+        except Exception:  # noqa: BLE001
+            pass
+        _OLDER["t"] = 0.0
+        return self._json({"ok": True, "id": sess.id})
 
     def _delete_session(self):
         """Delete one of this browser's sessions: its world closes here and, in a signed-in

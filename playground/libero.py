@@ -472,32 +472,49 @@ def done_when(t: Task) -> str:
 
 
 # ---------------------------------------------------------- the site sheet
-def _table(m: mujoco.MjModel, d: mujoco.MjData, prefix: str = "", to_room=None):
-    """The biggest fixed box the robot works on: its centre (in LIBERO's frame), half-size and
-    top height. prefix: the station's; to_room: world point -> LIBERO's frame."""
-    best = None
-    for g in range(m.ngeom):
-        if m.geom_type[g] != mujoco.mjtGeom.mjGEOM_BOX or m.body_jntnum[m.geom_bodyid[g]] or m.geom_bodyid[g] == 0:
-            continue
-        if not m.body(m.geom_bodyid[g]).name.startswith(prefix):
-            continue
-        if not (m.geom_contype[g] or m.geom_conaffinity[g]):
-            continue
-        sx, sy, sz = m.geom_size[g]
-        if best is None or sx * sy > best[0]:
-            c = d.geom_xpos[g].copy()
-            best = (sx * sy, np.asarray(to_room(c) if to_room else c, float), m.geom_size[g].copy())
-    if best is None:
+def _table(m: mujoco.MjModel, d: mujoco.MjData, base, to_room=None, from_room=None):
+    """The surface the robot works on: what a ray straight down meets in front of the robot (MuJoCo's
+    mj_ray), skipping anything that moves (objects on it, the arm). Its centre and half-size in
+    LIBERO's frame (from the hit geom's bounding box) and its top height. base: the robot base's
+    position in LIBERO's frame; to_room / from_room: world <-> LIBERO's frame.
+    The biggest fixed box is not it: in the study and living rooms the table is a mesh, and the
+    biggest box is part of a wall or shelf."""
+    to_room = to_room or (lambda p: p)
+    from_room = from_room or (lambda p: p)
+    gid = np.zeros(1, np.int32)
+    hits = []
+    for ahead in (0.5, 0.4, 0.6, 0.3, 0.7):
+        p = np.array(from_room((base[0] + ahead, base[1], base[2] + 0.6)), float)
+        for _ in range(20):
+            dist = mujoco.mj_ray(m, d, p, np.array([0.0, 0.0, -1.0]), None, 1, -1, gid)
+            if dist < 0 or dist > 2.0:
+                break
+            g = int(gid[0])
+            if m.body_weldid[m.geom_bodyid[g]] == 0 and m.geom_bodyid[g] != 0:
+                hits.append(g)
+                break
+            p = p + np.array([0.0, 0.0, -(dist + 1e-4)])     # something that moves: look on below it
+        if hits:
+            break
+    if not hits:
         return None
-    _, c, s = best
-    return c, s, c[2] + s[2]
+    g = hits[0]
+    # The geom's bounding box (MuJoCo's geom_aabb: centre and half-sizes in the geom's frame) in LIBERO's frame.
+    ac, ah = m.geom_aabb[g, :3], m.geom_aabb[g, 3:]
+    R = d.geom_xmat[g].reshape(3, 3)
+    corners = [to_room(d.geom_xpos[g] + R @ (ac + ah * np.array(sg)))
+               for sg in np.array(np.meshgrid([-1, 1], [-1, 1], [-1, 1])).T.reshape(-1, 3)]
+    corners = np.array(corners, float)
+    lo, hi = corners.min(0), corners.max(0)
+    top = float(to_room(p + np.array([0.0, 0.0, -dist]))[2])
+    return (lo + hi) / 2, (hi - lo) / 2, top
 
 
 def site_sheet(t: Task, m: mujoco.MjModel | None = None, d: mujoco.MjData | None = None,
-               prefix: str = "", to_room=None) -> str:
+               to_room=None, from_room=None) -> str:
     bx, by, bz = t.meta["robot_base"]["pos"]
     table = ""
-    if m is not None and d is not None and (tb := _table(m, d, prefix, to_room)) is not None:
+    if m is not None and d is not None and (tb := _table(m, d, (bx, by, bz), to_room, from_room)) is not None:
         c, s, top = tb
         table = f"""- The robot base frame has its origin at the centre of the base flange, {(bz - top) * 100:.1f} cm above
   the table top. x points forward along the table, y to the robot's left, z up. All
