@@ -1,0 +1,199 @@
+{
+ "source": "food_packaged_bread_loaf_a01",
+ "usd": "sm_food_packaged_bread_loaf_a01_01.usd",
+ "mass": 0.60184,
+ "friction": 0.55,
+ "com": null,
+ "size": [
+  0.4137,
+  0.1229,
+  0.1149
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "bread_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.6961,
+      0.5488,
+      0.4011,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.0019504143766058153,
+     "friction": 0.55,
+     "restitution": 0.1
+    }
+   ],
+   "mass": 0.49763,
+   "inertial": {
+    "mass": 0.49763,
+    "pos": [
+     -0.04112,
+     -0.001742,
+     0.045953
+    ],
+    "diaginertia": [
+     0.00117131,
+     0.00266963,
+     0.00268067
+    ],
+    "quat": [
+     -0.0,
+     0.0,
+     0.707107,
+     0.707107
+    ]
+   },
+   "parent": 2,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    -0.019633,
+    0.0007,
+    -0.000113
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.019633,
+    0.0007,
+    -0.000113,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "clamp_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.7765,
+      0.7725,
+      0.7452,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 2.3310375364329215e-06,
+     "friction": 0.4,
+     "restitution": 0.4
+    }
+   ],
+   "mass": 0.05,
+   "parent": 2,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    0.105221,
+    0.003653,
+    0.057854
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.105221,
+    0.003653,
+    0.057854,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "package_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.7954,
+      0.7949,
+      0.7939,
+      0.3
+     ],
+     "roughness": 0.05,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 0.003736024490031076,
+     "friction": 0.5,
+     "restitution": 0.12
+    }
+   ],
+   "mass": 0.05421,
+   "inertial": {
+    "mass": 0.05421,
+    "pos": [
+     0.02585,
+     -0.003774,
+     0.059211
+    ],
+    "diaginertia": [
+     0.000141928,
+     0.000764443,
+     0.000773845
+    ],
+    "quat": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "parent": null,
+   "root": true,
+   "pos": [
+    -0.019658,
+    0.000717,
+    6.4e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.019658,
+    0.000717,
+    6.4e-05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

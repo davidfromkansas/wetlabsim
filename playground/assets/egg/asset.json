@@ -1,0 +1,58 @@
+{
+ "source": "food_egg_chicken_a01",
+ "usd": "sm_food_egg_chicken_a01_01.usd",
+ "mass": 0.14526,
+ "friction": 0.45,
+ "com": [
+  -0.00058,
+  0.0009,
+  0.03173
+ ],
+ "size": [
+  0.0635,
+  0.08,
+  0.0635
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00016184768771593052,
+   "friction": 0.45,
+   "restitution": 0.4
+  }
+ ],
+ "inertial": {
+  "mass": 0.145258,
+  "pos": [
+   -0.000575,
+   0.000899,
+   0.031726
+  ],
+  "diaginertia": [
+   9.75638e-05,
+   0.000118833,
+   0.000118885
+  ],
+  "quat": [
+   0.5,
+   0.5,
+   0.5,
+   -0.5
+  ]
+ }
+}

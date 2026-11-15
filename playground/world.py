@@ -66,6 +66,14 @@ KINDS = {
                    ("disinfectant", -0.12, 0.7, 0.0),
                    ("glove_box", 0.0, 0.8, math.pi / 2),
                ]},
+    # A kitchen island: the arm stands on the worktop near one long edge (its long side runs
+    # beside the arm, like the lab bench), a humanoid on the floor beside it. Starts empty.
+    "island": {"label": "Kitchen island", "table": "kitchen_island", "turn": 0.0, "robot_xy": (-0.17, 0.0),
+               "layout": []},
+    # A kitchen counter run (Tripo's worktop over cabinets whose doors and drawers open), turned
+    # so its long side runs beside the arm. Starts empty.
+    "counter": {"label": "Kitchen counter", "table": "countertop_2", "turn": math.pi / 2, "robot_xy": (-0.15, 0.0),
+                "layout": []},
 }
 
 # Contact properties for library items, as a MuJoCo default class like the cell's
@@ -201,7 +209,7 @@ class Station:
 
     @property
     def top(self) -> float:
-        return table_top(catalog.meta(self.table_item))
+        return table_top(self.table_item)
 
     def to_world(self, x: float, y: float, z: float = 0.0):
         """A point given in the station's own frame (table centre, robot along -x) in the world."""
@@ -737,8 +745,10 @@ def _add_item(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_cac
     set_inertia(body, [(meta.get("inertial"), np.eye(4))])
 
 
-def table_top(meta: dict) -> float:
-    return float(meta["size"][2])
+def table_top(item: str) -> float:
+    """Where a station's robot and objects stand: the item's height, or its worktop when a
+    backsplash rises above it (catalog.WORKTOP)."""
+    return float(catalog.WORKTOP.get(item, catalog.meta(item)["size"][2]))
 
 
 def _quat_mul(a, b):
@@ -753,10 +763,30 @@ def _camera(world, name, pos, target, fovy, up=(0, 0, 1)):
     cam.alt.xyaxes = [float(v) for v in S._look_at_axes(pos, target, up=up).split()]
 
 
+OVERHEAD_FOVY = 55         # degrees (vertical); the picture is 640 x 480
+OVERHEAD_IN_FRONT = 0.75   # how far in front of the robot the overhead camera hangs, room allowing
+OVERHEAD_ABOVE = 1.0       # its least height above the table top
+OVERHEAD_EDGE = 0.05       # kept this far in from the table's edge and below the walls' top
+
+
+def overhead_pose(st: Station) -> tuple:
+    """Where a one-arm robot's overhead camera hangs, worked out from its table's size: (x over
+    the table, height above the top), in the station's frame. It looks down at the table's
+    centre line. It hangs in front of the robot but always over the table, so it stays inside
+    the station's work box (outside it, it would see the box's walls); and high enough that
+    the table's whole length fits across the picture, but below the walls' top."""
+    sx, sy = st.footprint()
+    rx, _ = st.robot_xy
+    x = min(rx + OVERHEAD_IN_FRONT, sx / 2 - OVERHEAD_EDGE)
+    half_w = math.tan(math.radians(OVERHEAD_FOVY) / 2) * 640 / 480   # half width per metre away
+    above = min(max(OVERHEAD_ABOVE, (sy / 2) / half_w), st.WALL_ABOVE - OVERHEAD_EDGE)
+    return x, above
+
+
 def add_station(world: mujoco.MjSpec, st: Station, cache: set):
     """A station's table, its robot on it, and the robot's overhead and side cameras."""
     tmeta = catalog.meta(st.table_item)
-    top = table_top(tmeta)
+    top = table_top(st.table_item)
     _add_item(world, Placed(table_uid(st), st.table_item, (st.pos[0], st.pos[1], 0.0), st.table_yaw),
               tmeta, True, cache)
     rx, ry = st.robot_xy
@@ -765,8 +795,9 @@ def add_station(world: mujoco.MjSpec, st: Station, cache: set):
                              quat=list(mount))
     c, s_ = math.cos(st.yaw), math.sin(st.yaw)
     if not S.ROBOTS[st.robot].get("sides"):   # a two-arm robot brings its own (ALOHA's four, the Duo's head)
-        _camera(world, st.prefix + "overhead", st.to_world(rx + 0.75, ry, top + 1.0),
-                st.to_world(rx + 0.42, ry, top), 55, up=(-c, -s_, 0))
+        cx, above = overhead_pose(st)
+        _camera(world, st.prefix + "overhead", st.to_world(cx, ry, top + above),
+                st.to_world(0.0, ry, top), OVERHEAD_FOVY, up=(-c, -s_, 0))
     _camera(world, st.prefix + "side", st.to_world(rx + 1.75, ry - 1.3, top + 0.8),
             st.to_world(rx + 0.4, ry, top + 0.1), 45)
     S.add_robot(world, st.robot, st.prefix + "robot_mount", st.prefix)

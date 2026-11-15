@@ -1,0 +1,58 @@
+{
+ "source": "food_produce_tomato_a01",
+ "usd": "sm_food_produce_tomato_a01_01.usd",
+ "mass": 0.12358,
+ "friction": 0.45,
+ "com": [
+  -0.00027,
+  8e-05,
+  0.0284
+ ],
+ "size": [
+  0.065,
+  0.0621,
+  0.0568
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00012672994433180724,
+   "friction": 0.45,
+   "restitution": 0.4
+  }
+ ],
+ "inertial": {
+  "mass": 0.123581,
+  "pos": [
+   -0.000271,
+   7.6e-05,
+   0.028402
+  ],
+  "diaginertia": [
+   7.71829e-05,
+   8.16315e-05,
+   8.73924e-05
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ }
+}
