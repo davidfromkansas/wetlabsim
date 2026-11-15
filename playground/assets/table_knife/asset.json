@@ -1,0 +1,51 @@
+{
+ "source": "kitchenware_knife_a01",
+ "usd": "sm_kitchenware_knife_a01_01.usd",
+ "mass": 0.58903,
+ "friction": 0.5,
+ "com": [
+  -0.00338,
+  -0.02271,
+  -0.00035
+ ],
+ "size": [
+  0.0416,
+  0.3302,
+  0.0239
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_1.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00011053047028499815,
+   "friction": 0.3,
+   "restitution": 0.1
+  }
+ ]
+}

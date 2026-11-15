@@ -57,33 +57,54 @@ def _tex_path(inp) -> pathlib.Path | None:
     return p if p.exists() else None
 
 
+def _interface(i) -> bool:
+    """Whether a shader input takes its value from its material's own inputs (the material's
+    interface, as MuJoCo's USD converter writes Tripo's assets) rather than from another shader."""
+    src = i.GetConnectedSource()[0] if i and i.HasConnectedSource() else None
+    return bool(src) and src.GetPrim().IsA(UsdShade.Material)
+
+
+def _value(i):
+    """A shader input's value: its own, or its material interface's (UsdShade's value-producing
+    attribute); None when a texture or other shader drives it, or nothing is set."""
+    if not i:
+        return None
+    if not i.HasConnectedSource():
+        return i.Get()
+    if not _interface(i):
+        return None
+    attrs = i.GetValueProducingAttributes()
+    return attrs[0].Get() if attrs and not UsdShade.Shader(attrs[0].GetPrim()) else None
+
+
 def material_info(mat) -> dict:
     """Base colour (and texture), roughness and metalness from an MDL or preview material."""
     info = {"rgba": [0.7, 0.7, 0.72, 1.0], "tex": None, "rough": 0.6, "metal": 0.0, "scale": (1, 1)}
     if not mat:
         return info
-    for sp in Usd.PrimRange(mat.GetPrim()):
+    # An instanceable material (Tripo's) keeps its shader inside the instance: walk its proxies.
+    for sp in Usd.PrimRange(mat.GetPrim(), Usd.TraverseInstanceProxies()):
         sh = UsdShade.Shader(sp)
         if not sh:
             continue
         sid = sh.GetIdAttr().Get() or ""
         if sid == "UsdPreviewSurface":
             i = sh.GetInput("diffuseColor")
-            if i and i.HasConnectedSource():
+            if i and i.HasConnectedSource() and not _interface(i):
                 src, _, _ = i.GetConnectedSource()
                 f = src.GetInput("file") if src else None
                 if f and info["tex"] is None:
                     info["tex"] = _tex_path(f)
                     info.update(_uv_placement(UsdShade.Shader(src.GetPrim())))
-            elif i and i.Get() is not None and info["tex"] is None:
-                info["rgba"][:3] = list(i.Get())
+            elif _value(i) is not None and info["tex"] is None:
+                info["rgba"][:3] = list(_value(i))
             for name, key in (("roughness", "rough"), ("metallic", "metal")):
-                i = sh.GetInput(name)
-                if i and i.Get() is not None and not i.HasConnectedSource():
-                    info[key] = float(i.Get())
-            i = sh.GetInput("opacity")
-            if i and i.Get() is not None and not i.HasConnectedSource() and float(i.Get()) < 1:
-                info["rgba"][3] = max(float(i.Get()), GLASS_ALPHA)
+                v = _value(sh.GetInput(name))
+                if v is not None:
+                    info[key] = float(v)
+            v = _value(sh.GetInput("opacity"))
+            if v is not None and float(v) < 1:
+                info["rgba"][3] = max(float(v), GLASS_ALPHA)
             continue
         src = sh.GetSourceAsset("mdl") if sh.GetImplementationSource() == "sourceAsset" else None
         if src and "glass" in src.path.lower():     # NVIDIA's OmniGlass: clear
@@ -563,7 +584,8 @@ def _screw_couplings(usd: pathlib.Path, joints: list[dict]) -> list[dict]:
                 if ts != th or np.ptp(qh) == 0 or np.ptp(qs) == 0:
                     continue
                 ratio = float(np.ptp(qs) / np.ptp(qh)) * (1 if np.corrcoef(qs, qh)[0, 1] > 0 else -1)
-                if np.allclose(qs - qs[0], ratio * (qh - qh[0]), atol=1e-7):
+                seen = any(o["slide"] == sl and o["hinge"] == hg for o in out)   # another clip shows it again
+                if not seen and np.allclose(qs - qs[0], ratio * (qh - qh[0]), atol=1e-7):
                     out.append({"slide": sl, "hinge": hg, "ratio": round(ratio, 9), "clip": clip})
     return out
 

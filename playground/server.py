@@ -1402,6 +1402,18 @@ class PGHandler(Handler):
             return self._json({"ok": not err, "error": err or ""})
         if s.scene_mode != "free":
             return self._json({"ok": False, "error": "scenes are built in free play"})
+        if what == "preset":           # a ready-made scene from Add station: no prompt, no model
+            name = str(b.get("name") or "")
+            if name not in SG.PRESETS:
+                return self._json({"ok": False, "error": "no such scene"})
+            if self._busy():
+                return self._json({"ok": False, "error": "A robot is working on a task. Stop it first to add a scene."})
+            if cur is not None and cur.status()["active"]:
+                return self._json({"ok": False, "error": "a scene is already being built"})
+            build = SG.Build(s, self.sess, "", SG.preset_pick(name), "", PUBLIC, preset=name)
+            self.sess.scenegen = build
+            build.start()
+            return self._json({"ok": True, "build": build.status()})
         model = str(b.get("model") or "")
         if model not in {m["id"] for m in SG.models(PUBLIC)}:
             return self._json({"ok": False, "error": "Connect an Anthropic or OpenAI API key in Settings to build a scene."})
