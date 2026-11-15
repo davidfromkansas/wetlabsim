@@ -1555,11 +1555,11 @@ function drawStarter() {
     <div class="tcard"><img src="/pg/static/scene_wetlab.jpg" alt="Four robots in a wet lab"><div class="rx"><div><b>Wet lab scene</b><div class="small">A whole wet lab: four benches, biosafety cabinet, fume hood, CO2 incubator and lab fridge. Four robots, each with a task ready: centrifuge, plate reader, jar lid and tube rack.</div></div>
     <div class="tags"><span class="tag">4 robots · UR5e, Franka, FR3 Duo, G1</span></div>
     <button class="primary" data-preset="wetlab">Add to lab</button></div></div>
-    <div class="tcard"><img src="/pg/static/scene_factory.jpg" alt="Seven robots on a factory assembly line"><div class="rx"><div><b>Factory scene</b><div class="small">An assembly line: a roller conveyor with totes and boxes, six assembly benches, pallet racks and a forklift. Seven robots, each with a task ready: pegs, a task board, a gearbox, breakers, cable plugs, a valve and stacking boxes.</div></div>
-    <div class="tags"><span class="tag">7 robots · Franka, UR5e, FR3 Duo, ALOHA, PiPER, G1, FANUC CRX-30iA</span></div>
+    <div class="tcard"><img src="/pg/static/scene_factory.jpg" alt="Eight robots on a factory assembly line"><div class="rx"><div><b>Factory scene</b><div class="small">An assembly line: a roller conveyor with totes and boxes, six assembly benches, pallet racks and a forklift. Eight robots, each with a task ready: pegs, a task board, a gearbox, breakers, cable plugs, a valve, stacking boxes, and a wheeled humanoid that drives around the line.</div></div>
+    <div class="tags"><span class="tag">8 robots · Franka, UR5e, FR3 Duo, ALOHA, PiPER, G1, FANUC CRX-30iA, RB-Y1</span></div>
     <button class="primary" data-preset="factory">Add to lab</button></div></div>
-    <div class="tcard"><img src="/pg/static/scene_car.jpg" alt="Seven robots building a car"><div class="rx"><div><b>Car assembly scene</b><div class="small">A car body with a 220 kg Comau arm that lifts the hood on by vacuum, a FANUC arm, and benches for brakes, engine parts, electrics and tools. Seven robots, each with a task ready.</div></div>
-    <div class="tags"><span class="tag">7 robots · Comau N-220, FANUC CRX-30iA, FR3 Duo, Franka, ALOHA, G1, UR5e</span></div>
+    <div class="tcard"><img src="/pg/static/scene_car.jpg" alt="Eight robots building a car"><div class="rx"><div><b>Car assembly scene</b><div class="small">A car body with a 220 kg Comau arm that lifts the hood on by vacuum, a FANUC arm, and benches for brakes, engine parts, electrics and tools, and a wheeled humanoid that drives to the car. Eight robots, each with a task ready.</div></div>
+    <div class="tags"><span class="tag">8 robots · Comau N-220, FANUC CRX-30iA, FR3 Duo, Franka, ALOHA, G1, UR5e, RB-Y1</span></div>
     <button class="primary" data-preset="car">Add to lab</button></div></div>`;
   $('rcards').querySelectorAll('button[data-r]').forEach(b => b.onclick = () => startPlacing(b.dataset.r, b.dataset.kind || 'table'));
   $('rcards').querySelectorAll('button[data-preset]').forEach(b => b.onclick = () => { closeAdd(); window.sceneGen && window.sceneGen.preset(b.dataset.preset); });

@@ -120,7 +120,7 @@ def test_ready_made_scene_builds_whole(name):
     lay = G.PRESETS[name]
     assert b.phase == "done", b.error
     assert b.skipped == []
-    assert len(sim.stations) == len(lay["stations"]) == 7
+    assert len(sim.stations) == len(lay["stations"]) == 8
     assert len(b.objects) == len(lay["furniture"]) + len(lay["objects"])
     assert sorted(v["task"] for v in sess.unsent.values()) == sorted(s["task"] for s in lay["stations"])
     m, d = sim.m, sim.d
@@ -136,4 +136,21 @@ def test_ready_made_scene_builds_whole(name):
     t = time.perf_counter()
     mujoco.mj_step(m, d, 500)
     assert (time.perf_counter() - t) < 5.0                      # 0.5 s of physics, well under 5 s
+    sim.stop_threads()
+
+
+def test_wheeled_humanoid_drives_out_of_its_cell():
+    """The RB-Y1's cell has no work-box walls: it backs over 1.5 m away from its table, far past where
+    a table arm's walls would stand."""
+    sim = PlaygroundSim(stations=[])
+    uid = sim.add_station("rby1", (0.0, 0.0), 0.0, "table", starter=False)
+    st, r = sim.station(uid), sim.arms[uid]
+    assert st.open
+    assert not any(sim.m.geom(g).name.startswith(f"{st.prefix}wall") for g in range(sim.m.ngeom))
+    _step(sim, 0.5)
+    x0 = float(sim.d.xpos[r.base_body][0])
+    for _ in range(4):
+        _go(sim, r.drive(-0.5, 0, 1.2))
+    assert sim.d.xpos[r.base_body][0] - x0 < -1.5
+    assert abs(sim.d.xpos[r.base_body][2]) < 0.2                 # still upright on its wheels
     sim.stop_threads()

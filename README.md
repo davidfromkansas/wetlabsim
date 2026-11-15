@@ -130,15 +130,16 @@ Three modes, picked in the header:
   `agent/piper`). The PiPER is smaller (626 mm reach, and pointing straight down it reaches no
   higher than 12 cm above its base), so each lab has its own layout for it, with the arm
   nearer the kit; the scoreboard lists each model with each robot.
-- **Factory and Car assembly scenes** (+ Station): two ready-made scenes of seven robots each,
+- **Factory and Car assembly scenes** (+ Station): two ready-made scenes of eight robots each,
   every robot with a task filled in (`PRESETS` in `playground/scenegen.py`). The factory is a
   roller conveyor with six assembly benches (ForgeCAD's peg, task board, gearbox, breaker and
   connector kits) and a pallet cell; the car bay is NVIDIA's car body with its hood, parts and
   garage equipment. Two floor-standing arms do the heavy lifting, each with a vacuum tool
   (MuJoCo's adhesion actuator): the Comau N-220 (220 kg) and the FANUC CRX-30iA (30 kg), both
   converted from their makers' SimReady packages (`playground/tools/convert_simready_arm.py`,
-  manuals in `agent/n220` and `agent/crx30ia`). Both scenes turn on MuJoCo's sleeping, so parts
-  nobody touches cost no physics time.
+  manuals in `agent/n220` and `agent/crx30ia`). Each scene also has a wheeled humanoid (the RB-Y1) whose
+  cell has no walls, so it can drive around the whole scene. Both scenes turn on MuJoCo's
+  sleeping, so parts nobody touches cost no physics time.
 - **Wet Lab**: the robot cell's own bench and its 8 tasks (`wetlabsim/tasks.py`), each scored
   at the end by the task's own check, as in the robot cell's evals. Results go to
   `runs/playground/wetlab_results.jsonl`. 15 minutes per run.

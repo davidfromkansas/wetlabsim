@@ -546,8 +546,8 @@ SLEEP = {"flag": {"sleep": True}, "option": {"sleep_tolerance": 0.01}}
 PRESETS["factory"] = {
     "title": "Factory", "label": "Factory",
     "plan": "An assembly line: a roller conveyor down the middle carrying totes and boxes, six assembly "
-            "benches along it, a FANUC arm stacking boxes on a pallet at the end, and pallet racks, a "
-            "forklift and drums around it.",
+            "benches along it, a FANUC arm stacking boxes on a pallet at the end, a wheeled humanoid that "
+            "drives around the line, and pallet racks, a forklift and drums around it.",
     "settings": SLEEP,
     "stations": [
         {"robot": "franka", "kind": "table", "x": -3.2, "y": 2.05, "yaw": -90,
@@ -564,6 +564,9 @@ PRESETS["factory"] = {
          "task": "Turn the ball valve's handle a quarter turn to close the valve."},
         {"robot": "crx30ia", "kind": "pallet", "x": 2.8, "y": -1.2, "yaw": -90,
          "task": "Pick the cardboard box up off the roller conveyor with the vacuum tool and set it down on the pallet."},
+        # a wheeled humanoid at the head of the line: its cell is open, so it can drive anywhere
+        {"robot": "rby1", "kind": "conveyor", "x": -5.07, "y": 0.0, "yaw": 90,
+         "task": "Pick up the air ratchet from the conveyor in front of you, drive around the end of the conveyor to the steel drums, and set it down on top of a drum."},
     ],
     "furniture": [
         {"item": "roller_conveyor", "x": -3.03, "y": 0.0, "yaw": 90, "gap": 0},
@@ -582,7 +585,7 @@ PRESETS["factory"] = {
         {"item": "safety_fence", "x": 2.2, "y": -3.0, "yaw": 0},
         {"item": "modular_workbench", "x": -5.4, "y": -2.2, "yaw": -90},
         {"item": "shop_cart", "x": 2.3, "y": 3.9, "yaw": 0},
-        {"item": "pallet_jack", "x": -5.3, "y": -0.3, "yaw": 90},
+        {"item": "pallet_jack", "x": 4.9, "y": 3.2, "yaw": 0},
     ],
     "objects": [
         # on the conveyor (furniture 0-2: its own long side is its y)
@@ -605,6 +608,8 @@ PRESETS["factory"] = {
         {"item": "connector_pack", "on": "station", "station": 4, "x": 0.1, "y": 0.0, "yaw": 0},
         {"item": "ball_valve", "on": "station", "station": 5, "x": -0.6, "y": 0.0, "yaw": 90},
         {"item": "toolbox", "on": "station", "station": 5, "x": -0.55, "y": -0.42, "yaw": 0},
+        {"item": "air_ratchet", "on": "station", "station": 7, "x": -0.25, "y": 0.0, "yaw": 90},
+        {"item": "load_carrier", "on": "station", "station": 7, "x": 0.0, "y": -0.6, "yaw": 0},
     ],
 }
 
@@ -612,7 +617,7 @@ PRESETS["car"] = {
     "title": "Car assembly", "label": "Car assembly",
     "plan": "A car assembly bay: a car body in the middle with a big Comau arm that lifts the hood and "
             "windscreen onto it, a FANUC arm moving boxed parts, benches for brakes, engine parts, "
-            "electrics and tools, and garage equipment around them.",
+            "electrics and tools, a wheeled humanoid that drives to the car, and garage equipment around them.",
     "settings": SLEEP,
     "stations": [
         {"robot": "n220", "kind": "car", "x": 0.0, "y": 0.0, "yaw": 0,
@@ -629,6 +634,9 @@ PRESETS["car"] = {
          "task": "Pick up the bottle of engine oil and stand it next to the car battery."},
         {"robot": "ur5e", "kind": "table", "x": 3.4, "y": -4.7, "yaw": 90,
          "task": "Put the four spark plugs in the blue crate."},
+        # a wheeled humanoid: its cell is open, so it can drive to the car
+        {"robot": "rby1", "kind": "table", "x": 4.9, "y": -0.6, "yaw": 180,
+         "task": "Pick up the bottle of engine oil from your table, drive to the front of the car, and put the bottle down on the floor next to the front bumper."},
     ],
     "furniture": [
         {"item": "pallet", "x": -2.6, "y": 3.0, "yaw": 0, "gap": 0},      # 0, 1: the hood's pallets
@@ -680,6 +688,8 @@ PRESETS["car"] = {
         {"item": "spark_plug", "on": "station", "station": 6, "x": 0.2, "y": 0.21, "yaw": 0},
         {"item": "spark_plug", "on": "station", "station": 6, "x": 0.2, "y": 0.29, "yaw": 0},
         {"item": "steering_wheel", "on": "station", "station": 6, "x": 0.6, "y": 0.2, "yaw": 0},
+        {"item": "engine_oil", "on": "station", "station": 7, "x": -0.6, "y": 0.0, "yaw": 0},
+        {"item": "air_ratchet", "on": "station", "station": 7, "x": -0.55, "y": 0.35, "yaw": 0},
     ],
 }
 

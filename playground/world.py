@@ -308,8 +308,10 @@ class Station:
 
     @property
     def open(self) -> bool:
-        """An open cell: no work-box walls, so its robot's cameras see what is around it."""
-        return bool(self.spec.get("open"))
+        """An open cell: no work-box walls, so its robot's cameras see what is around it. A
+        robot on wheels (the RB-Y1) always has one: it drives off to the rest of the lab."""
+        from wetlabsim import scene as WS
+        return bool(self.spec.get("open") or WS.ROBOTS[self.robot].get("mobile"))
 
     @property
     def stand_gap(self) -> float:
