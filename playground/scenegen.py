@@ -654,7 +654,7 @@ PRESETS["car"] = {
     "objects": [
         {"item": "car_hood", "on": "furniture", "furniture": 0, "dx": 0.0, "dy": 0.3, "yaw": 0, "overhang": True},
         {"item": "windscreen", "on": "floor", "x": -4.1, "y": 1.0, "yaw": 0},
-        {"item": "v8_engine", "on": "floor", "x": -4.4, "y": -0.8, "yaw": 0},
+        {"item": "electric_motor", "on": "floor", "x": -4.4, "y": -0.8, "yaw": 0},
         {"item": "cardboard_box_flat", "on": "station", "station": 1, "x": 0.1, "y": 0.0, "yaw": 0},
         {"item": "headlight", "on": "station", "station": 4, "x": 0.5, "y": -0.38, "yaw": 0},
         {"item": "front_bumper", "on": "floor", "x": 1.9, "y": 3.2, "yaw": 90},
