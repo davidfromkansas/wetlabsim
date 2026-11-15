@@ -1230,6 +1230,283 @@ class Humanoid(TwoArm):
         return d.xpos[self.base_body].copy(), d.xmat[self.base_body].reshape(3, 3).copy()
 
 
+class JointGroup:
+    """A group of position-controlled joints that move together on a timed trajectory (the
+    RB-Y1's torso, its head): a joint-space move with a quintic profile, slowed down to stay
+    within the joints' speed and acceleration limits, as an arm's move_j."""
+
+    def __init__(self, owner: "Mobile", name: str, joints, actuators, vmax, amax, ready):
+        self.owner, self.name = owner, name
+        self.joints, self.actuators = list(joints), list(actuators)
+        self.vmax, self.amax, self.ready = np.asarray(vmax, float), float(amax), np.asarray(ready, float)
+        self.motion: Motion | None = None
+
+    def index(self, m):
+        self.qadr = np.array([m.joint(j).qposadr[0] for j in self.joints])
+        self.dadr = np.array([m.joint(j).dofadr[0] for j in self.joints])
+        self.act = np.array([m.actuator(a).id for a in self.actuators])
+        jid = [m.joint(j).id for j in self.joints]
+        # The joint's range, narrowed to its motor's command range where that is narrower.
+        self.lo = np.maximum(m.jnt_range[jid, 0], m.actuator_ctrlrange[self.act, 0])
+        self.hi = np.minimum(m.jnt_range[jid, 1], m.actuator_ctrlrange[self.act, 1])
+
+    def move(self, joints, speed=None) -> Motion:
+        q1 = np.asarray(joints, float)
+        n = len(self.joints)
+        if q1.shape != (n,):
+            raise RobotError(f"the {self.name} has {n} joints: give {n} values (radians)")
+        if np.any(q1 < self.lo - 1e-9) or np.any(q1 > self.hi + 1e-9):
+            raise RobotError(f"{self.name} joint target outside its limits "
+                             f"({np.round(self.lo, 3).tolist()} .. {np.round(self.hi, 3).tolist()})")
+        o = self.owner
+        with o.lock:
+            o._check_running()
+            q0 = o.sim.d.ctrl[self.act].copy()
+            vmax = self.vmax if speed is None else np.minimum(self.vmax, float(speed))
+            T = max(1.875 * np.max(np.abs(q1 - q0) / np.maximum(vmax, 1e-3)),
+                    np.sqrt(5.77 * np.max(np.abs(q1 - q0)) / self.amax), 0.2)
+            times = np.arange(0.0, T + CTRL_DT, CTRL_DT)
+            times[-1] = T
+            qs = q0 + quintic(times / T)[:, None] * (q1 - q0)
+            if self.motion:
+                self.motion.result = "replaced by a new command"
+                self.motion.done.set()
+            mo = Motion(o.sim.d.time, times, qs)
+            self.motion = mo
+            o.log_event("command", kind=self.name, seconds=round(float(T), 3), target=q1.round(5).tolist())
+            return mo
+
+    def control(self, d):
+        mo = self.motion
+        if mo is None:
+            return
+        t = d.time - mo.t0
+        if t >= mo.times[-1]:
+            d.ctrl[self.act] = mo.qs[-1]
+            if np.max(np.abs(d.qvel[self.dadr])) < 0.02 or t > mo.times[-1] + 1.0:
+                mo.result = "done"
+                mo.done.set()
+                self.motion = None
+        else:
+            i = np.searchsorted(mo.times, t)
+            a = (t - mo.times[i - 1]) / (mo.times[i] - mo.times[i - 1])
+            d.ctrl[self.act] = mo.qs[i - 1] + a * (mo.qs[i] - mo.qs[i - 1])
+
+    def stop(self, d, why="stopped"):
+        if self.motion:
+            self.motion.result = why
+            self.motion.done.set()
+            self.motion = None
+        d.ctrl[self.act] = d.qpos[self.qadr]
+
+    def state(self, d) -> dict:
+        return {"joint_positions": d.qpos[self.qadr].round(5).tolist(),
+                "joint_velocities": d.qvel[self.dadr].round(4).tolist(),
+                "joint_torques": d.actuator_force[self.act].round(3).tolist(),
+                "moving": self.motion is not None}
+
+
+class Mobile(TwoArm):
+    """A wheeled humanoid (Rainbow Robotics' RB-Y1): two arms with grippers (Arm, "left" and
+    "right") on a 6-joint torso with a pan-tilt head, on a two-wheeled base. Nothing balances it:
+    every joint group takes its own commands, as in Rainbow's SDK: each arm, the torso and the
+    head a joint position (or, for an arm, Cartesian) command; the base an SE(2) velocity
+    command (forward speed and turn rate), turned into the two wheels' speeds."""
+
+    def __init__(self, sim: "Sim", robot: str, prefix: str = "", uid: str = "robot",
+                 world_cameras: str | None = None):
+        super().__init__(sim, robot, prefix, uid, world_cameras)
+        pre = prefix
+        self.torso = JointGroup(self, "torso", [pre + j for j in S.RBY1_TORSO],
+                                [pre + f"link{i + 1}_act" for i in range(6)], S.RBY1_TORSO_VMAX, S.RBY1_AMAX,
+                                S.RBY1_TORSO_READY)
+        self.head = JointGroup(self, "head", [pre + j for j in S.RBY1_HEAD],
+                               [pre + f"{j}_act" for j in S.RBY1_HEAD], S.RBY1_HEAD_VMAX, S.RBY1_AMAX,
+                               S.RBY1_HEAD_READY)
+        self.drive_motion: Motion | None = None
+        self.drive_cmd = np.zeros(2)       # [vx m/s, yaw rate rad/s]
+        self.wheel_cmd = np.zeros(2)       # the wheels' speed commands, ramped (rad/s)
+        self.odom = np.zeros(3)            # x, y, heading from the wheel encoders
+
+    @property
+    def motion(self):
+        for mo in (self.drive_motion, self.torso.motion, self.head.motion):
+            if mo is not None and not mo.done.is_set():
+                return mo
+        return TwoArm.motion.fget(self)
+
+    @motion.setter
+    def motion(self, v):
+        if v is None:
+            self.drive_motion = None
+            self.torso.motion = self.head.motion = None
+            for a in self.sides.values():
+                a.motion = None
+
+    def _index(self):
+        m = self.sim.m
+        super()._index()
+        pre = self.prefix
+        self.bodies = {b for b in range(m.nbody) if self._in_subtree(b, self.base_body)}
+        self.free_jnt = m.joint(pre + "world_j").id
+        self.free_qadr = m.jnt_qposadr[self.free_jnt]
+        self.free_dadr = m.jnt_dofadr[self.free_jnt]
+        self.own_joints = [m.joint(j).name for j in range(m.njnt)
+                           if m.jnt_bodyid[j] in self.bodies and j != self.free_jnt]
+        self.torso.index(m)
+        self.head.index(m)
+        self.wheel_dadr = np.array([m.joint(pre + j).dofadr[0] for j in S.RBY1_WHEELS])
+        self.wheel_act = np.array([m.actuator(pre + f"{j}_act").id for j in S.RBY1_WHEELS])
+
+    def reset_pose(self):
+        d, m = self.sim.d, self.sim.m
+        a = self.free_qadr
+        d.qpos[a:a + 7] = m.qpos0[a:a + 7]
+        d.qvel[self.free_dadr:self.free_dadr + 6] = 0
+        for g in (self.torso, self.head):
+            d.qpos[g.qadr] = g.ready
+            d.ctrl[g.act] = g.ready
+        d.ctrl[self.wheel_act] = 0
+        for s in self.sides.values():
+            s.reset_pose()
+
+    def reset_state(self):
+        super().reset_state()
+        self.torso.motion = self.head.motion = None
+        self.drive_motion = None
+        self.drive_cmd[:] = 0
+        self.wheel_cmd[:] = 0
+        self.odom[:] = 0
+
+    _start_frame = Humanoid._start_frame
+
+    def snapshot(self) -> dict:
+        # The base's pose relative to where the robot was put down, so it moves along when its
+        # station is moved (as a humanoid's).
+        d = self.sim.d
+        a = self.free_qadr
+        p0, q0 = self._start_frame()
+        qi = np.zeros(4)
+        mujoco.mju_negQuat(qi, q0)
+        rel_q = np.zeros(4)
+        mujoco.mju_mulQuat(rel_q, qi, d.qpos[a + 3:a + 7])
+        rel_p = mat_from_quat(q0).T @ (d.qpos[a:a + 3] - p0)
+        return {**super().snapshot(), "base": (rel_p, rel_q),
+                "body_q": {n: d.qpos[self.sim.m.joint(n).qposadr[0]] for n in self.own_joints},
+                "torso_ctrl": d.ctrl[self.torso.act].copy(), "head_ctrl": d.ctrl[self.head.act].copy()}
+
+    def restore(self, snap: dict):
+        super().restore(snap)
+        d, m = self.sim.d, self.sim.m
+        if "base" in snap:
+            a = self.free_qadr
+            p0, q0 = self._start_frame()
+            rel_p, rel_q = snap["base"]
+            d.qpos[a:a + 3] = p0 + mat_from_quat(q0) @ rel_p
+            q = np.zeros(4)
+            mujoco.mju_mulQuat(q, q0, rel_q)
+            d.qpos[a + 3:a + 7] = q
+        for n, v in snap.get("body_q", {}).items():
+            j = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, n)
+            if j >= 0:
+                d.qpos[m.jnt_qposadr[j]] = v
+        if "torso_ctrl" in snap:
+            d.ctrl[self.torso.act] = snap["torso_ctrl"]
+            d.ctrl[self.head.act] = snap["head_ctrl"]
+
+    # ------------------------------------------------------------- control
+    def _wheel_targets(self):
+        """The wheel speeds (rad/s) for the base's velocity command: a differential drive."""
+        vx, wz = self.drive_cmd
+        half = S.RBY1_WHEEL_TRACK / 2
+        return np.array([vx - wz * half, vx + wz * half]) / S.RBY1_WHEEL_RADIUS   # left, right
+
+    def _control(self):
+        for a in self.sides.values():
+            a._control()
+        d, dt = self.sim.d, self.sim.m.opt.timestep
+        self.torso.control(d)
+        self.head.control(d)
+        dm = self.drive_motion
+        if dm is not None and d.time - dm.t0 >= dm.times[-1]:
+            self.drive_cmd[:] = 0
+            if np.max(np.abs(d.qvel[self.wheel_dadr])) < 0.05:
+                dm.result = "done"
+                dm.done.set()
+                self.drive_motion = None
+        # The wheels' speeds ramp to their targets at the wheel joints' acceleration limit.
+        step = S.RBY1_WHEEL_AMAX * dt
+        self.wheel_cmd += np.clip(self._wheel_targets() - self.wheel_cmd, -step, step)
+        d.ctrl[self.wheel_act] = self.wheel_cmd
+        # Wheel odometry: the base's travel as its encoders measure it.
+        wl, wr = d.qvel[self.wheel_dadr] * S.RBY1_WHEEL_RADIUS
+        v, w = (wl + wr) / 2, (wr - wl) / S.RBY1_WHEEL_TRACK
+        th = self.odom[2]
+        self.odom += np.array([v * np.cos(th), v * np.sin(th), w]) * dt
+
+    # ------------------------------------------------------------ commands
+    def drive(self, vx=0.0, yaw_rate=0.0, seconds=1.0) -> Motion:
+        """Drive the base at vx forward (m/s) turning at yaw_rate (rad/s, counter-clockwise) for
+        some seconds, then stop: Rainbow's SE(2) velocity command for the two-wheeled base."""
+        vmax = S.RBY1_WHEEL_VMAX * S.RBY1_WHEEL_RADIUS
+        cmd = np.array([vx, yaw_rate], float)
+        wheels = (np.array([cmd[0] - cmd[1] * S.RBY1_WHEEL_TRACK / 2, cmd[0] + cmd[1] * S.RBY1_WHEEL_TRACK / 2])
+                  / S.RBY1_WHEEL_RADIUS)
+        if np.max(np.abs(wheels)) > S.RBY1_WHEEL_VMAX + 1e-6:
+            raise RobotError(f"too fast for the wheels: forward speed plus turning needs at most "
+                             f"{vmax:.2f} m/s on each wheel (vx ± yaw_rate × {S.RBY1_WHEEL_TRACK / 2:.3f})")
+        seconds = float(seconds)
+        if not 0 < seconds <= 60:
+            raise RobotError("seconds must be between 0 and 60")
+        with self.lock:
+            self._check_running()
+            if self.drive_motion:
+                self.drive_motion.result = "replaced by a new command"
+                self.drive_motion.done.set()
+            self.drive_cmd[:] = cmd
+            mo = Motion(self.sim.d.time, np.array([0.0, seconds]), np.zeros((2, 0)))
+            self.drive_motion = mo
+            self.log_event("command", kind="drive", seconds=round(seconds, 3), target=cmd.round(3).tolist())
+            return mo
+
+    def stop_base(self):
+        with self.lock:
+            self.drive_cmd[:] = 0
+            if self.drive_motion:
+                self.drive_motion.result = "stopped"
+                self.drive_motion.done.set()
+                self.drive_motion = None
+
+    def torso_move(self, joints, speed=None) -> Motion:
+        return self.torso.move(joints, speed)
+
+    def head_move(self, joints, speed=None) -> Motion:
+        return self.head.move(joints, speed)
+
+    def stop(self):
+        self.stop_base()
+        with self.lock:
+            self.torso.stop(self.sim.d)
+            self.head.stop(self.sim.d)
+        super().stop()
+
+    # ------------------------------------------------------------- sensors
+    def body_state(self) -> dict:
+        d = self.sim.d
+        return {"torso": self.torso.state(d), "head": self.head.state(d),
+                "wheels": {"joint_velocities": d.qvel[self.wheel_dadr].round(4).tolist(),
+                           "joint_torques": d.actuator_force[self.wheel_act].round(3).tolist()},
+                "drive_command": self.drive_cmd.round(3).tolist(),
+                "driving": self.drive_motion is not None,
+                "odometry": self.odom.round(4).tolist()}
+
+    def state(self) -> dict:
+        out = super().state()
+        with self.lock:
+            out["body"] = self.body_state()
+        return out
+
+
 class RobotView:
     """What the robot API sees of one robot in a world with several (the playground's lab):
     the robot's own commands, sensors and cameras, with the world's time and recording.

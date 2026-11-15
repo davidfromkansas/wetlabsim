@@ -38,6 +38,9 @@ ROBOT_XY = (-0.42, 0.0)
 # A humanoid stands on the floor instead, its pelvis this far back from the table's near edge (m):
 # close enough for its hands to work over the table, its feet clear of the table's frame.
 HUMANOID_GAP = 0.15
+# A wheeled humanoid (the RB-Y1) stands on the floor too: its base's centre this far back from the
+# table's near edge (m), the front of its base (30 cm ahead of the centre) 6 cm clear of the edge.
+MOBILE_GAP = 0.36
 STATION_TABLE = "table_packing"
 # A big floor-standing arm stands on the floor too, facing its table (or pallet, or car) from
 # further back. Per robot: its base's centre to the table's near edge (m), the room its base and
@@ -292,10 +295,11 @@ class Station:
 
     @property
     def standing(self) -> bool:
-        """A humanoid (the G1) or a big floor arm stands on the floor at the table, not on it."""
+        """A humanoid (the G1, the wheeled RB-Y1) or a big floor arm stands on the floor at the
+        table, not on it."""
         from wetlabsim import scene as WS
         P = WS.ROBOTS[self.robot]
-        return bool(P.get("humanoid") or P.get("floor"))
+        return bool(P.get("humanoid") or P.get("mobile") or P.get("floor"))
 
     @property
     def floor_arm(self) -> dict | None:
@@ -308,12 +312,19 @@ class Station:
         return bool(self.spec.get("open"))
 
     @property
+    def stand_gap(self) -> float:
+        """How far back from the table's near edge a robot on the floor stands (m)."""
+        from wetlabsim import scene as WS
+        if self.floor_arm:
+            return self.floor_arm["gap"]
+        return MOBILE_GAP if WS.ROBOTS[self.robot].get("mobile") else HUMANOID_GAP
+
+    @property
     def robot_xy(self) -> tuple:
         if self.robot == "aloha":     # two arms facing each other across the middle of the table
             return (0.0, 0.0)
         if self.standing:             # on the floor, facing the table's near edge, HUMANOID_GAP from it
-            gap = self.floor_arm["gap"] if self.floor_arm else HUMANOID_GAP
-            return (-self.footprint()[0] / 2 - gap, self.spec.get("stand_y", 0.0))
+            return (-self.footprint()[0] / 2 - self.stand_gap, self.spec.get("stand_y", 0.0))
         if self.libero and self.task:  # where LIBERO mounts its Panda
             ox, oy = self.room_origin()
             bx, by, _ = self.room()["base"]["pos"]
@@ -362,7 +373,7 @@ class Station:
         if self.libero:        # the room itself
             return sx / 2, sy / 2, 3.0
         # A humanoid stands outside the table's footprint: the box takes in where it stands too.
-        mx = HUMANOID_GAP + 0.35 if self.standing else self.WALL_MARGIN
+        mx = self.stand_gap + 0.35 if self.standing else self.WALL_MARGIN
         if self.floor_arm:     # a big arm: room for its base behind, its reach to the sides, its height
             fa = self.floor_arm
             return (sx / 2 + fa["gap"] + fa["base"], max(sy / 2 + self.WALL_MARGIN, fa["gap"] + fa["base"]),

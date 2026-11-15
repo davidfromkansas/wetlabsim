@@ -531,6 +531,20 @@ ROBOTS = {
         "joint_amax": np.full(6, 8.0),             # not published; ours
         "cart_vmax": 1.0, "rot_vmax": 2.0,         # data sheet: collaborative mode 1000 mm/s
     },
+    # Rainbow Robotics' RB-Y1 (model A): a wheeled humanoid. Two 7-joint arms with the standard
+    # two-finger gripper on a 6-joint torso, a 2-joint pan-tilt head, on a two-wheeled base.
+    # DeepMind's Menagerie model (assets/rainbow_robotics_rby1), unchanged file. Nothing balances
+    # it: the AI drives every joint group itself (wheels, torso, head, each arm), as Rainbow's SDK
+    # does. Each arm is a robot of its own (rby1_side below); this entry is the whole robot.
+    "rby1": {
+        "name": "Rainbow Robotics RB-Y1", "gripper": "RB-Y1 standard gripper (x2)",
+        "sides": ("left", "right"), "mobile": True,
+        "mount_quat": "1 0 0 0",       # the model's +x is forward, as the station's robot faces
+        # A camera on the head's pan-tilt mount and one on each wrist (the three cameras of
+        # Rainbow's own RB-Y1 datasets: cam_high, cam_left_wrist, cam_right_wrist).
+        "cameras": {"head": "head", "left_wrist": "wrist_cam_left", "right_wrist": "wrist_cam_right",
+                    "side": "side"},      # the station's audience camera (people only)
+    },
 }
 DEFAULT_ROBOT = "franka"
 # The robots the robot cell (and LIBERO, Wet Lab) can stand at its bench; the ALOHA is for the
@@ -796,8 +810,159 @@ def _g1_touch_site(spec, body, name, pos, size):
                     objtype=mujoco.mjtObj.mjOBJ_SITE, objname=f"touch_{name}")
 
 
+# ---------------------------------------------------------------- Rainbow Robotics RB-Y1
+# Joint groups, as Rainbow's SDK names them (and Menagerie's model): torso 0-5 (ankle roll,
+# ankle pitch, knee, hip pitch, hip roll, hip yaw), each arm 0-6 (shoulder pitch, roll, yaw,
+# elbow, wrist yaw 1, wrist pitch, wrist yaw 2), head 0-1 (pan, tilt), and the two wheels.
+RBY1_TORSO = [f"torso_{i}" for i in range(6)]
+RBY1_HEAD = ["head_0", "head_1"]
+RBY1_WHEELS = ["left_wheel", "right_wheel"]
+# Rainbow's "Joint Maximum Speed and Angle Range" table (agent/rby1/datasheets): torso 120 deg/s
+# (ankle, knee) and 180 deg/s (hip), arms 180 deg/s, wrists 360 deg/s (motor table), head 180 deg/s.
+RBY1_TORSO_VMAX = np.deg2rad([120, 120, 120, 180, 180, 180])
+RBY1_ARM_VMAX = np.deg2rad([180, 180, 180, 180, 360, 360, 360])
+RBY1_HEAD_VMAX = np.deg2rad([180, 180])
+# Rainbow publishes no joint acceleration limits; the SDK's examples move with minimum times of
+# a few seconds. 10 rad/s^2, as for the FR3.
+RBY1_AMAX = 10.0
+# The arms' ready pose: Rainbow's SDK examples' (examples/python/31_multi_controls.py,
+# [0, -/+5, 0, -120, 0, 70, 0] deg: elbows bent, grippers pointing forward and down) with the
+# shoulders raised 10 deg. Those examples also crouch the torso ([0, 45, -90, 45, 0, 0] deg),
+# which puts the fingers on a lab bench's top; ours starts upright (the torso's zero pose), the
+# grip points 12 cm above the packing table and 27 cm above a lab bench, 15 cm past the edge.
+RBY1_TORSO_READY = np.zeros(6)
+RBY1_READY = {"right": np.deg2rad([-10.0, -5.0, 0.0, -120.0, 0.0, 70.0, 0.0]),
+              "left": np.deg2rad([-10.0, 5.0, 0.0, -120.0, 0.0, 70.0, 0.0])}
+RBY1_HEAD_READY = np.zeros(2)
+# The base (Rainbow's URDF, models/rby1a): wheels 0.53 m apart, 0.1 m radius (the wheel axles
+# 0.1 m above the floor), at most 15.708 rad/s and 3.14 rad/s^2 (the wheel joints' <limit>):
+# 1.57 m/s, the datasheet's 1.5 m/s mobile base speed.
+RBY1_WHEEL_TRACK = 0.53
+RBY1_WHEEL_RADIUS = 0.10
+RBY1_WHEEL_VMAX = 15.707963268
+RBY1_WHEEL_AMAX = 3.141592
+# The wheel motors' velocity loop gain (Nm per rad/s). Menagerie's model leaves MuJoCo's default
+# (1), which can't turn the wheels of a 129 kg robot against their own joint damping (5); this one
+# holds the commanded speed within a few percent.
+RBY1_WHEEL_KV = 200.0
+# The passive casters are part of the base's shape in the model (Menagerie's and Rainbow's own):
+# they touch the floor with the low friction Rainbow's MuJoCo scene gives the floor
+# (rby1-sdk models/rby1a/mujoco/rby1.xml: friction 0.05 0.001 0.05), so they slide as casters roll.
+RBY1_CASTER_FRICTION = (0.05, 0.001, 0.05)
+# A RealSense D435 on the head's pan-tilt mount (Rainbow's head design used its field of view; the
+# docs leave the camera to the user), and a RealSense D405 on each gripper.
+RBY1_HEAD_CAM = [0.035, 0.0, 0.02]
+# The grippers: two fingers sliding on the wrist's end, 6 mm apart closed and 106 mm open
+# (Menagerie's finger joints, 0 to -0.05 m each; Dynamixel XM430-W210 driven, Rainbow's gripper page).
+RBY1_TCP_Z = -0.245        # between the fingertips, along the last link's -z (m)
+RBY1_FLANGE_Z = -0.1261    # where the gripper bolts on (the wrist force/torque sensor)
+RBY1_WRIST_CAM_Y, RBY1_WRIST_CAM_Z = 0.08, -0.13    # the wrist camera, on a bracket off the gripper housing
+
+
+def rby1_side(side: str) -> dict:
+    """One arm of an RB-Y1 with its gripper, as a robot of its own."""
+    s = side[0]
+    return {
+        "name": f"RB-Y1 {side} arm", "gripper": "RB-Y1 standard gripper", "side": side,
+        "arm_joints": [f"{side}_arm_{i}" for i in range(7)],
+        "arm_actuators": [f"{side}_arm_{i + 1}_act" for i in range(7)],
+        "home_q": np.zeros(7), "ready_q": RBY1_READY[side].copy(),
+        "tcp_site": f"{side}_tcp", "base_body": f"link_{side}_arm_0",
+        # Poses in the mobile base's frame, as Rainbow's SDK gives Cartesian commands ("base").
+        "frame_body": "base",
+        # The RB-Y1's wrist force/torque sensor (FT_sensor_R/L in Rainbow's URDF), between the
+        # wrist and the gripper: the load on it is the last link's subtree.
+        "ft_site": f"{side}_ft", "ft_body": f"link_{side}_arm_6",
+        "sensors": (f"{side}_ft_force", f"{side}_ft_torque"),
+        "grip_actuator": f"{side}_finger_act", "grip_joint": f"gripper_finger_{s}1",
+        "grip_open": -0.05, "grip_closed": 0.0, "grip_ctrl_range": (-0.05, 0.0),
+        "grip_ctrl_open": 0.0,
+        "max_opening_mm": 100,
+        "cameras": {"head": "head", "wrist": f"wrist_cam_{side}"},
+        "joint_vmax": RBY1_ARM_VMAX, "joint_amax": np.full(7, RBY1_AMAX),
+        "cart_vmax": 1.0, "rot_vmax": 2.0,
+        # Rainbow publishes no noise or accuracy figure for the sensor and no collision
+        # thresholds: none are invented (zero noise and bias, no Cartesian reflex).
+        "ft_noise": (0.0, 0.0), "ft_bias": (0.0, 0.0),
+        "reflex_force": (np.full(3, -1e9), np.full(3, 1e9)),
+        "reflex_torque": (np.full(3, -1e9), np.full(3, 1e9)),
+    }
+
+
+def _look_xyaxes(f, x):
+    """MuJoCo camera axes for a camera looking along f with its image x axis along x."""
+    f = np.asarray(f, float) / np.linalg.norm(f)
+    x = np.asarray(x, float) / np.linalg.norm(x)
+    y = np.cross(-f, x)          # MuJoCo cameras look along their -z axis
+    return [*x, *y]
+
+
+def _rby1(world, mount_site="robot_mount", prefix=""):
+    """MuJoCo Menagerie's RB-Y1-A (assets/rainbow_robotics_rby1, unchanged file), on the floor at
+    the mount. Set here with MuJoCo's own settings: gravity compensation on the upper body (the
+    RB-Y1's controller holds its own weight), the wheel motors' velocity gain and limits, the
+    casters' floor friction, the gripper's force limit at its joint, the head and wrist cameras,
+    the wrist force/torque sensors and the grip point."""
+    rb = mujoco.MjSpec.from_file(str(ASSETS / "rainbow_robotics_rby1" / "rby1a_1.2.xml"))
+    for k in list(rb.keys):
+        rb.delete(k)
+    for g in rb.geoms:
+        if not (g.contype or g.conaffinity):
+            continue
+        body = g.parent.name or ""
+        if body.startswith("ee_finger"):
+            _set_material(g, "rubber_pad")
+        elif body.startswith("wheel"):
+            _set_material(g, "rubber_pad")          # rubber tyres
+        else:
+            _set_material(g, "robot")
+            if body == "base":                      # the casters (see RBY1_CASTER_FRICTION)
+                g.friction = list(RBY1_CASTER_FRICTION)
+                g.priority = 2
+    for body in rb.bodies:
+        if body.name not in ("base", "wheel_l", "wheel_r", "world"):
+            body.gravcomp = 1.0
+    for a in rb.actuators:
+        if a.target in RBY1_WHEELS:
+            a.gainprm[0] = RBY1_WHEEL_KV
+            a.biasprm[2] = -RBY1_WHEEL_KV
+            a.ctrlrange = [-RBY1_WHEEL_VMAX, RBY1_WHEEL_VMAX]
+        elif a.target.startswith("gripper_finger"):
+            # The gripper's force limit at its joint, so a grip's force can be set (as the ALOHA's).
+            j = rb.joint(a.target)
+            j.actfrclimited = mujoco.mjtLimited.mjLIMITED_TRUE
+            j.actfrcrange = list(a.forcerange)
+            a.forcelimited = mujoco.mjtLimited.mjLIMITED_FALSE
+    head = rb.body("link_head_2")
+    cam = head.add_camera(name="head", pos=RBY1_HEAD_CAM, fovy=D405_FOVY)
+    cam.alt.type = mujoco.mjtOrientation.mjORIENTATION_XYAXES
+    cam.alt.xyaxes = [0, -1, 0, 0, 0, 1]            # looking forward (+x), level at head tilt 0
+    for side in ("left", "right"):
+        link = rb.body(f"link_{side}_arm_6")
+        link.add_site(name=f"{side}_tcp", pos=[0, 0, RBY1_TCP_Z], size=[0.006] * 3, group=5)
+        link.add_site(name=f"{side}_ft", pos=[0, 0, RBY1_FLANGE_Z], size=[0.006] * 3, group=5)
+        # A D405 on the gripper housing's outer face, looking along the fingers past the grip point.
+        cpos = np.array([0.0, RBY1_WRIST_CAM_Y if side == "left" else -RBY1_WRIST_CAM_Y, RBY1_WRIST_CAM_Z])
+        cam = link.add_camera(name=f"wrist_cam_{side}", pos=cpos.tolist(), fovy=D405_FOVY)
+        cam.alt.type = mujoco.mjtOrientation.mjORIENTATION_XYAXES
+        # Image x along the fingers' travel, turned so the housing is at the image's bottom.
+        cam.alt.xyaxes = _look_xyaxes(np.array([0, 0, RBY1_TCP_Z - 0.10]) - cpos,
+                                      [1.0 if side == "left" else -1.0, 0, 0])
+    _match_options(rb, world=world)
+    site = world.site(mount_site)
+    frame = world.worldbody.add_frame(pos=list(site.pos), quat=list(site.quat))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        world.attach(rb, frame=frame, prefix=prefix)
+    for side in ("left", "right"):
+        world.add_sensor(name=f"{prefix}{side}_ft_force", type=mujoco.mjtSensor.mjSENS_FORCE,
+                         objtype=mujoco.mjtObj.mjOBJ_SITE, objname=f"{prefix}{side}_ft")
+        world.add_sensor(name=f"{prefix}{side}_ft_torque", type=mujoco.mjtSensor.mjSENS_TORQUE,
+                         objtype=mujoco.mjtObj.mjOBJ_SITE, objname=f"{prefix}{side}_ft")
+
+
 SIDE_PROFILES = {"aloha": lambda side: aloha_side(side), "fr3_duo": lambda side: fr3_duo_side(side),
-                 "g1": lambda side: g1_side(side)}
+                 "g1": lambda side: g1_side(side), "rby1": lambda side: rby1_side(side)}
 
 
 def side_profile(robot: str) -> dict:
@@ -1124,6 +1289,8 @@ def add_robot(world, robot: str, mount: str = "robot_mount", prefix: str = ""):
         return _piper(world, mount, prefix)      # no wrist force/torque sensor on a PiPER
     if robot in VACUUM_TOOLS:
         return _big_arm(world, robot, mount, prefix)
+    if robot == "rby1":
+        return _rby1(world, mount, prefix)
     ft_site = _franka(world, mount, prefix) if robot == "franka" else _ur5e(world, mount, prefix)
     # Wrist force/torque sensor (UR5e: built in at the flange; Panda: estimated from joint torques).
     world.add_sensor(name=prefix + "ft_force", type=mujoco.mjtSensor.mjSENS_FORCE,
