@@ -118,6 +118,13 @@ Three modes, picked in the header:
   Results go to `runs/playground/libero_results.jsonl`, with a scoreboard per task, per suite
   and across models. We use our Franka controller, not LIBERO's, so scores don't compare
   with LIBERO's leaderboard. 3 minutes per run.
+- **WetRobo** (+ Station > Benchmarks): the same lab kit (a benchtop incubator, a capped reagent
+  bottle, a lidded Petri dish) in two labs that differ in table, layout and what else is around,
+  after [WetRobo](https://arxiv.org/abs/2609.18435). Three tasks (lift the dish's lid, remove the
+  bottle's cap, open the incubator door), each checked live from the kit's own state
+  (`playground/wetrobo.py`). Results go to `runs/playground/wetrobo_results.jsonl`, with a
+  scoreboard that puts Lab X beside Lab Y. The AI gets no demos and no lab notes: only the
+  robot's manuals, its cameras and its own state.
 - **Wet Lab**: the robot cell's own bench and its 8 tasks (`wetlabsim/tasks.py`), each scored
   at the end by the task's own check, as in the robot cell's evals. Results go to
   `runs/playground/wetlab_results.jsonl`. 15 minutes per run.

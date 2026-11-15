@@ -35,6 +35,7 @@ from . import accounts as ACCT
 from . import catalog, site, tasktitle
 from . import labs as LABS
 from . import libero as LB
+from . import wetrobo as WR
 from . import savestore as SAVE
 from . import scene3d as S3
 from . import scenegen as SG
@@ -544,6 +545,7 @@ class Session:
         self.history: dict[str, list] = {}       # free play: each station's finished runs, oldest first
         self.batches: dict[str, dict] = {}       # free play: each station's repeat runs (Run task N times)
         self.bench = LiberoScores(runs / "libero_results.jsonl")     # every LIBERO station's runs
+        self.wetrobo = LiberoScores(runs / "wetrobo_results.jsonl", suites=False)  # every WetRobo station's runs
         self.wetbench = WL.WetBench(sim, self.runner, self, runs / "wetlab_results.jsonl")
 
     def station_runner(self, uid: str) -> Runner:
@@ -601,6 +603,25 @@ class Session:
                                    "passed": passed, "how": entry["reason"], "seconds": lb.get("passed_at") or entry["seconds"],
                                    "cost_usd": entry["cost_usd"], "tokens": entry["tokens"], "run_id": entry["run_id"],
                                    "when": time.strftime("%Y-%m-%d %H:%M:%S")})
+        wr = runner.info.get("wetrobo")
+        if wr:
+            # WetRobo: passed if its goal held at any moment of the run
+            t = WR.task(wr["task"])
+            checks = wr.get("checks") or self.sim.wetrobo_goal(uid) or [False] * len(t.goal)
+            passed = bool(wr.get("passed")) or all(checks)
+            if passed:
+                status = "finished"
+            entry.update(status=status, ok=passed,
+                         wetrobo={"task": t.id, "title": t.title, "lab": wr["lab"], "lab_label": WR.LABS[wr["lab"]][1],
+                                  "passed": passed, "checks": [{"text": g, "ok": bool(c)} for g, c in zip(t.goal, checks)]})
+            entry["reason"] = ("Passed: the task's check held" if passed else
+                               "Not passed: " + entry["reason"][0].lower() + entry["reason"][1:])
+            if passed or status != "stopped":     # a run you stopped doesn't count
+                self.wetrobo.record({"task": t.id, "lab": wr["lab"], "model": entry["model"],
+                                     "model_label": entry["model_label"] or entry["model"], "passed": passed,
+                                     "how": entry["reason"], "seconds": wr.get("passed_at") or entry["seconds"],
+                                     "cost_usd": entry["cost_usd"], "tokens": entry["tokens"], "run_id": entry["run_id"],
+                                     "when": time.strftime("%Y-%m-%d %H:%M:%S")})
         if b and not b.get("finished"):
             b["results"].append("succeeded" if entry["ok"] else "failed")
             idx = b.setdefault("running", {}).pop(uid, None)
@@ -768,7 +789,7 @@ class Session:
                 s._sync_placed()
             return {"name": self.name,
                     "stations": [{"uid": st.uid, "robot": st.robot, "pos": list(st.pos), "yaw": st.yaw, "name": st.name,
-                                  "kind": st.kind, **({"task": st.task, "setup": st.setup} if st.libero else {})}
+                                  "kind": st.kind, **({"task": st.task, "setup": st.setup} if st.libero or st.wetrobo else {})}
                                  for st in s.stations],
                     "objects": [{"uid": o.uid, "item": o.item, "pos": list(o.pos), "yaw": o.yaw,
                                  "quat": list(o.quat) if o.quat is not None else None} for o in s.placed],
@@ -872,7 +893,11 @@ def _world_from_layout(layout: dict | None):
             except KeyError:
                 continue
             task, setup = t.id, int(st.get("setup", 0)) % t.n_setups
-        stations.append(W.Station(st["uid"], st["robot"] if kind != "libero" else "franka",
+        if WR.lab_of(kind):
+            if str(st.get("task", "")) not in WR.TASKS:
+                continue
+            task = str(st["task"])
+        stations.append(W.Station(st["uid"], st["robot"] if kind != "libero" and not WR.lab_of(kind) else "franka",
                                   (float(st["pos"][0]), float(st["pos"][1])),
                                   float(st.get("yaw", 0.0)), str(st.get("name") or "")[:40], kind, task, setup))
     known = {i["id"] for i in catalog.available()}
@@ -980,6 +1005,24 @@ def _queue_position(sid, uid):
     return None
 
 
+def _watch_bench(sess: Session, uid: str, r: Runner, key: str, goal):
+    """A benchmark station's run (r.info[key]): it passes the moment its goal holds, and the AI
+    is then stopped."""
+    info = r.info
+    while r.active() and r.info is info:
+        each = goal(uid)
+        if each is None:
+            return
+        if all(each):
+            info[key]["passed"] = True
+            info[key]["checks"] = each
+            info[key]["passed_at"] = round(time.time() - info["started"], 1)
+            time.sleep(1.0)               # its last messages arrive first
+            r.stop()
+            return
+        time.sleep(0.1)
+
+
 def _watch_libero(sess: Session, uid: str, r: Runner):
     """A LIBERO station's run: it passes the moment LIBERO's goal holds (LIBERO ends an episode on
     success), and the AI is then stopped."""
@@ -1028,6 +1071,10 @@ def _start_queued():
                     threading.Thread(target=_watch_libero, args=(sess, st.uid, r), daemon=True).start()
                 else:
                     r.start(job["task"], job["model"], site.site_sheet(sess.sim.placed, st, sess.sim.stations), job["limit"])
+                    if st.wetrobo and st.task:      # WetRobo: its goal check watched while the run goes
+                        r.info["wetrobo"] = {"task": st.task, "lab": st.wetrobo}
+                        threading.Thread(target=_watch_bench, args=(sess, st.uid, r, "wetrobo",
+                                                                    sess.sim.wetrobo_goal), daemon=True).start()
             except Exception as e:  # noqa: BLE001
                 LABS.free_slot(slot)
                 print("could not start a queued run:", e)
@@ -1292,7 +1339,7 @@ class PGHandler(Handler):
     def _runs_status(self) -> dict:
         out = {uid: {**self.runners[uid].status(), **_run_live(self.sess, uid)} for uid in list(self.runners)}
         for uid, r in list(self.runners.items()):      # a LIBERO run stopped because it passed
-            lb = r.info.get("libero") or {}
+            lb = r.info.get("libero") or r.info.get("wetrobo") or {}
             if lb.get("passed") and uid in out and out[uid].get("status") == "stopped":
                 out[uid]["status"] = "passed"
         for i, q in enumerate(list(QUEUE)):
@@ -1595,8 +1642,9 @@ class PGHandler(Handler):
                 return self._send(200, VIEWER_PATH.read_bytes(), "text/html; charset=utf-8")
             if p.startswith("/pg/static/"):
                 rel = p[len("/pg/static/"):]
-                # flat files, plus LIBERO's task pictures in static/libero/
-                f = HERE / "static" / ("libero/" + pathlib.Path(rel).name if rel.startswith("libero/") else pathlib.Path(rel).name)
+                # flat files, plus the benchmarks' pictures in static/libero/ and static/wetrobo/
+                sub = rel.split("/")[0] + "/" if rel.split("/")[0] in ("libero", "wetrobo") and "/" in rel else ""
+                f = HERE / "static" / (sub + pathlib.Path(rel).name)
                 if f.is_file():
                     import mimetypes
                     return self._send(200, f.read_bytes(), mimetypes.guess_type(f.name)[0] or "application/octet-stream",
@@ -1670,6 +1718,12 @@ class PGHandler(Handler):
                                               "needs_answer": t.needs_answer} for t in WT.TASKS.values()],
                                    "task": self.sim.wetlab_task, "time_limit": WL.TIME_LIMIT,
                                    "scores": self.wetbench.scoreboard()})
+            if p == "/pg/wetrobo":          # WetRobo's tasks and labs (for + Station > Benchmarks) and its scores
+                return self._json({"paper": WR.PAPER,
+                                   "tasks": [{"id": t.id, "title": t.title, "language": t.language,
+                                              "goal": list(t.goal), "done_when": WR.done_when(t)} for t in WR.TASKS.values()],
+                                   "labs": [{"id": k, "kind": v[0], "label": v[1], "blurb": v[2]} for k, v in WR.LABS.items()],
+                                   "scores": WR.board(self.sess.wetrobo.rows())})
             if p == "/pg/libero":           # LIBERO's tasks (for + Station > Benchmarks) and its scores
                 suites = [{"id": k, "name": n, "blurb": bl,
                            "tasks": [{"id": t.id, "index": t.index, "language": t.language,
@@ -2107,6 +2161,8 @@ class PGHandler(Handler):
                         return self._json({"ok": False, "error": f"{station.name} is already running a task"})
                     if station.libero:         # LIBERO's own words for its task, never edited
                         task = LB.task(station.task).language
+                    elif station.wetrobo and station.task:
+                        task = WR.task(station.task).language
                     model = b.get("model", "claude")
                     mdl = next((m for m in MODELS if m["id"] == model), None)
                     if PUBLIC and (mdl is None or mdl["agent"] not in _site_agents()):

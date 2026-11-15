@@ -726,12 +726,12 @@ body.watch #physBtn{display:none}
 <div id="boardModal" role="dialog" aria-modal="true" aria-labelledby="bmTitle" style="display:none">
   <div class="bm">
     <div style="display:flex;align-items:flex-end;gap:16px">
-      <div style="flex:1"><span class="cap" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">LIBERO test · all suites</span><h2 id="bmTitle" style="margin:2px 0 0;font-size:24px;color:var(--ink)">Scoreboard</h2></div>
-      <div class="seg" role="group" aria-label="Which runs"><button id="bmStudy" aria-pressed="true">Study set (5 setups)</button><button id="bmAll" aria-pressed="false">All 50 setups</button></div>
+      <div style="flex:1"><span class="cap" id="bmCap" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">LIBERO test · all suites</span><h2 id="bmTitle" style="margin:2px 0 0;font-size:24px;color:var(--ink)">Scoreboard</h2></div>
+      <div class="seg" id="bmSeg" role="group" aria-label="Which runs"><button id="bmStudy" aria-pressed="true">Study set (5 setups)</button><button id="bmAll" aria-pressed="false">All 50 setups</button></div>
       <button class="round" id="bmClose" aria-label="Close">✕</button>
     </div>
-    <table class="board big"><thead><tr><th>Model</th><th class="n">Goal</th><th class="n">Spatial</th><th class="n">Object</th><th class="n">Long</th><th class="n" style="color:var(--ink)">LIBERO-40</th><th class="n">Avg time</th><th class="n">Cost</th></tr></thead><tbody id="bmBody"></tbody></table>
-    <p class="small" style="margin:0">Each cell is passed runs out of runs tried (the latest result for each setup counts). Study set = setups 1 to 5 of every task, the same 200 runs as Anthropic's study. The study's 5.5% used direct control (one move per turn), so it's a reference point, not a like-for-like score.</p>
+    <table class="board big"><thead id="bmHead"><tr><th>Model</th><th class="n">Goal</th><th class="n">Spatial</th><th class="n">Object</th><th class="n">Long</th><th class="n" style="color:var(--ink)">LIBERO-40</th><th class="n">Avg time</th><th class="n">Cost</th></tr></thead><tbody id="bmBody"></tbody></table>
+    <p class="small" id="bmNote" style="margin:0">Each cell is passed runs out of runs tried (the latest result for each setup counts). Study set = setups 1 to 5 of every task, the same 200 runs as Anthropic's study. The study's 5.5% used direct control (one move per turn), so it's a reference point, not a like-for-like score.</p>
   </div>
 </div>
 <div id="addModal" role="dialog" aria-modal="true" aria-labelledby="amTitle" style="display:none">
@@ -1261,8 +1261,8 @@ function stationStatus(st) {
   const draft = (sc.mode === 'free' ? S.drafts[st.id] : '') || '';
   if (run && run.active) return {color: '#DC2626', text: 'Working on its task'};
   if (run && run.queued) return {color: '#F59E0B', text: `Waiting for a free slot · ${run.queued - 1} ahead`};
-  if (run && run.started) return {color: run.status === 'error' ? '#F59E0B' : '#2563EB', text: {passed: 'Passed LIBERO\'s goal check', finished: 'Finished', error: 'Stopped with an error', stopped: 'Stopped', time_limit: 'Time limit reached'}[run.status] || run.status};
-  if (draft.trim() || st.libero) return {color: '#16A34A', text: 'Task ready'};
+  if (run && run.started) return {color: run.status === 'error' ? '#F59E0B' : '#2563EB', text: {passed: 'Passed its goal check', finished: 'Finished', error: 'Stopped with an error', stopped: 'Stopped', time_limit: 'Time limit reached'}[run.status] || run.status};
+  if (draft.trim() || st.libero || st.wetrobo) return {color: '#16A34A', text: 'Task ready'};
   return {color: '#9CA3AF', text: 'No task yet'};
 }
 const STATION_IMG = {franka: '/pg/static/station_franka.png', ur5e: '/pg/static/station_ur5e.png', aloha: '/pg/static/station_aloha.png', fr3_duo: '/pg/static/station_fr3_duo.png', g1: '/pg/static/station_g1.png'};
@@ -1271,7 +1271,7 @@ function chipDot(st) {
   if (run && run.active) return ['run', 'Working on its task'];
   if (run && run.queued) return ['wait', 'Waiting for a free slot'];
   if (run && run.started) return ['ok', {passed: 'Passed', finished: 'Finished', error: 'Stopped with an error', stopped: 'Stopped', time_limit: 'Time limit reached'}[run.status] || 'Finished'];
-  return ['', (S.drafts[st.id] || '').trim() || st.libero ? 'Task ready' : 'No task yet'];
+  return ['', (S.drafts[st.id] || '').trim() || st.libero || st.wetrobo ? 'Task ready' : 'No task yet'];
 }
 // The stations bar floating over the lab: one chip per station, the selected one ringed.
 function renderDock() {
@@ -1380,7 +1380,7 @@ function renderRail() {
   const on = list.find(r => r.id === sc.active) || list[0];
   if (on) { const [d, t] = chipDot(on); $('rtName').textContent = on.name; $('rtSub').textContent = `${on.label} · ${t}`; $('rtDot').className = 'sdot ' + d; }
   else { $('rtName').textContent = 'No robot yet'; $('rtSub').textContent = 'Press + to add a robot'; $('rtDot').className = 'sdot'; }
-  $('rSwap').hidden = !on || !!S.watch || !!on.libero; $('rSwap').style.display = $('rSwap').hidden ? 'none' : '';
+  $('rSwap').hidden = !on || !!S.watch || !!on.libero || !!on.wetrobo; $('rSwap').style.display = $('rSwap').hidden ? 'none' : '';
   $('rSwap').disabled = !!runLock(sc);
   $('rSwap').title = runLock(sc) ? 'A robot is working on a task. Stop it to swap.' : 'Swap this robot for another arm';
   if (key === S.railKey) return; S.railKey = key;
@@ -1531,8 +1531,8 @@ function openAdd() {
 function amTab(tab) {
   S.amTab = tab;
   $('amStarter').setAttribute('aria-pressed', tab === 'starter'); $('amBench').setAttribute('aria-pressed', tab !== 'starter');
-  $('addModal').querySelector('.am').classList.toggle('wide', tab === 'libero');
-  if (tab === 'starter') drawStarter(); else if (tab === 'bench') drawBench(); else drawLiberoPick();
+  $('addModal').querySelector('.am').classList.toggle('wide', tab === 'libero' || tab === 'wetrobo');
+  if (tab === 'starter') drawStarter(); else if (tab === 'bench') drawBench(); else if (tab === 'wetrobo') drawWetroboPick(); else drawLiberoPick();
 }
 $('amStarter').onclick = () => amTab('starter'); $('amBench').onclick = () => amTab('bench');
 function drawStarter() {
@@ -1562,8 +1562,29 @@ function drawBench() {
   $('rcards').className = 'tcards';
   $('rcards').innerHTML = `<div class="tcard"><img src="/pg/static/libero/KITCHEN_SCENE3_turn_on_the_stove_and_put_the_moka_pot_on_it.jpg" alt="A robot arm in a LIBERO kitchen" onerror="this.style.visibility='hidden'"><div class="rx"><div><b>LIBERO</b><div class="small">The LIBERO benchmark: 40 tasks in 4 suites, each in its own room. Every run starts from one of LIBERO's 50 official layouts and is scored by LIBERO's own goal check.</div></div>
     <div class="tags"><span class="tag">40 tasks · 4 suites</span><span class="tag">1 robot · Franka Emika Panda</span></div>
-    <button class="primary" id="lbChoose">Choose a task</button></div></div>`;
+    <button class="primary" id="lbChoose">Choose a task</button></div></div>
+    <div class="tcard"><img src="/pg/static/wetrobo/lab_x.jpg" alt="A robot arm at a lab bench with an incubator" onerror="this.style.visibility='hidden'"><div class="rx"><div><b>WetRobo</b><div class="small">The same lab kit in two different labs: a benchtop incubator, a capped reagent bottle and a lidded Petri dish. Run a task in Lab X and in Lab Y and see whether the AI adapts. From WetRobo (2026).</div></div>
+    <div class="tags"><span class="tag">${(S.WR && S.WR.tasks.length) || 3} tasks · 2 labs</span><span class="tag">1 robot · Franka Emika Panda</span></div>
+    <button class="primary" id="wrChoose">Choose a task</button></div></div>`;
   $('lbChoose').onclick = () => amTab('libero');
+  $('wrChoose').onclick = () => amTab('wetrobo');
+}
+async function drawWetroboPick() {
+  if (!S.WR) S.WR = await api('/pg/wetrobo');
+  const W = S.WR; if (!W || !W.tasks) { toast("Couldn't load WetRobo's tasks"); amTab('bench'); return; }
+  const t = W.tasks.find(x => x.id === S.wrTask) || W.tasks[0]; S.wrTask = t.id;
+  const lab = W.labs.find(x => x.id === S.wrLab) || W.labs[0]; S.wrLab = lab.id;
+  $('rcards').className = 'lbpick';
+  $('rcards').innerHTML = `<div><button class="backbtn" id="lbBack">← Benchmarks</button></div>
+    <img class="hero" src="/pg/static/wetrobo/lab_${esc(lab.id)}.jpg" alt="${esc(lab.label)}">
+    <div class="suites" role="group" aria-label="Lab" style="grid-template-columns:repeat(2,minmax(0,1fr))">${W.labs.map(x => `<button data-l="${x.id}" aria-pressed="${x.id === lab.id}">${esc(x.label)}<span>${esc(x.blurb)}</span></button>`).join('')}</div>
+    <select id="wrTaskSel" aria-label="Task">${W.tasks.map((x, i) => `<option value="${x.id}"${x.id === t.id ? ' selected' : ''}>${i + 1}. ${esc(x.title)}</option>`).join('')}</select>
+    <div class="note"><b>Done when</b> ${esc(t.done_when)}</div>
+    <div class="lbfoot"><span class="small">${esc(lab.label)} · Franka Emika Panda · <a href="${esc(W.paper)}" target="_blank" rel="noopener">the paper</a></span><button class="primary" id="wrAdd">Add to lab</button></div>`;
+  $('lbBack').onclick = () => amTab('bench');
+  $('rcards').querySelectorAll('.suites button').forEach(b => b.onclick = () => { S.wrLab = b.dataset.l; drawWetroboPick(); });
+  $('wrTaskSel').onchange = () => { S.wrTask = $('wrTaskSel').value; drawWetroboPick(); };
+  $('wrAdd').onclick = async () => { await holdPhysics(); startPlacing('franka', 'wetrobo_' + S.wrLab, S.wrTask); };
 }
 async function drawLiberoPick() {
   if (!S.LB) S.LB = await api('/pg/libero');
@@ -1707,12 +1728,13 @@ $('addStationBtn').onclick = openAdd; $('amClose').onclick = closeAdd;
 $('addModal').onclick = (e) => { if (e.target === $('addModal')) closeAdd(); };
 // What each kind of station starts as (the server's world.KINDS).
 const STATION_KINDS = {table: {label: 'Table', items: 0}, wetlab: {label: 'Wet lab bench', items: 18},
-  island: {label: 'Kitchen island', items: 0}, counter: {label: 'Kitchen counter', items: 0}, libero: {label: 'LIBERO room', items: 0}};
+  island: {label: 'Kitchen island', items: 0}, counter: {label: 'Kitchen counter', items: 0}, libero: {label: 'LIBERO room', items: 0},
+  wetrobo_x: {label: 'WetRobo Lab X', items: 0}, wetrobo_y: {label: 'WetRobo Lab Y', items: 0}};
 function startPlacing(robot, kind = 'table', task = '') {
   closeAdd(); S.placing = robot; S.placeKind = kind; S.placeTask = task; S.placeYaw = 0; S.armed = null; renderItems();
   api('/pg/camera', {preset: 'lab'});
   const lab = ((S.cat.robots || []).find(x => x.id === robot) || {}).label || 'the robot';
-  $('hintTag').textContent = kind !== 'table' ? `Click the floor to place the ${kind === 'libero' ? 'LIBERO room' : STATION_KINDS[kind].label.toLowerCase()} with the ${lab}. R turns it, Esc cancels.`
+  $('hintTag').textContent = kind !== 'table' ? `Click the floor to place the ${kind === 'libero' ? 'LIBERO room' : kind.startsWith('wetrobo') ? STATION_KINDS[kind].label : STATION_KINDS[kind].label.toLowerCase()} with the ${lab}. R turns it, Esc cancels.`
     : `Click the floor to place the ${lab}. R turns it, Esc cancels.`;
 }
 function cancelPlacing() { S.placing = null; hideTag(); api('/pg/ghost/clear', {}); resumePhysics(); render(); }
@@ -2133,10 +2155,24 @@ function render() {
   $('libhint').textContent = sc.locked ? 'Pause physics to add or move objects.' : (S.armed ? $('libhint').textContent : LIBHINT);
   $('task').readOnly = active;
   // A LIBERO station: LIBERO's own task, locked, with its goal check live on the stage.
-  const lb = free && st.libero;
-  $('taskcard').classList.toggle('lbst', !!lb); document.body.classList.toggle('lbst', !!lb);
-  for (const id of ['lbChip', 'lbLock', 'lbDone', 'lbRunsCopy']) $(id).hidden = !lb;
+  const lb = free && st.libero, wr = free && st.wetrobo;
+  $('taskcard').classList.toggle('lbst', !!(lb || wr)); document.body.classList.toggle('lbst', !!(lb || wr));
+  for (const id of ['lbChip', 'lbLock', 'lbDone', 'lbRunsCopy']) $(id).hidden = !(lb || wr);
+  if (wr) {
+    $('lbChipText').textContent = `WetRobo · ${wr.lab_label} · ${wr.title}`;
+    $('lbLock').textContent = "WetRobo's task, so it can't be edited.";
+    $('task').readOnly = true;
+    if ($('task').value !== wr.language) $('task').value = wr.language;
+    $('lbDone').innerHTML = '<b>Done when</b> ' + esc(wr.goal.join(', and ')) + '. Checked every 0.1 s.';
+    $('lbRunsCopy').textContent = `Every run starts from ${wr.lab_label} as it is now.`;
+    $('startBtn').classList.remove('blank');
+    const now = wr.now || [];
+    $('goalState').textContent = now.length && now.every(Boolean) ? '✓ Goal reached' : 'Not yet';
+    $('goalState').style.color = now.length && now.every(Boolean) ? 'var(--green)' : 'var(--muted)';
+    $('goalText').innerHTML = wr.goal.map((g, i) => `<span class="gk${now[i] ? ' ok' : ''}"><i>${now[i] ? '✓' : '○'}</i>${esc(g)}</span>`).join('');
+  }
   if (lb) {
+    $('lbLock').textContent = "LIBERO's own wording, so it can't be edited.";
     $('lbChipText').textContent = `LIBERO · ${lb.suite_name} · task ${lb.index}`;
     $('task').readOnly = true;
     if ($('task').value !== lb.language) $('task').value = lb.language;
@@ -2157,7 +2193,7 @@ function render() {
   if (run.started) {
     const left = Math.max(0, run.time_limit - run.elapsed);
     const mmss = (x) => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
-    $('runStatus').textContent = active ? (run.time_limit ? `Working · ${mmss(left)} left` : `Working · ${mmss(run.elapsed)}`) : ({passed: 'Passed: LIBERO\'s goal check held', finished: 'Finished', error: 'The AI stopped with an error', stopped: 'Stopped', time_limit: 'Time limit reached'}[run.status] || run.status);
+    $('runStatus').textContent = active ? (run.time_limit ? `Working · ${mmss(left)} left` : `Working · ${mmss(run.elapsed)}`) : ({passed: 'Passed: its goal check held', finished: 'Finished', error: 'The AI stopped with an error', stopped: 'Stopped', time_limit: 'Time limit reached'}[run.status] || run.status);
     const m = run.model || {}; $('chatLogo').src = LOGOS[m.provider] || LOGOS.anthropic;
     if (!$('chatModel').dataset.set) $('chatModel').textContent = m.label || '';
   }
@@ -2542,7 +2578,24 @@ $('modeFree').onclick = () => setMode('free');
 $('modeWet').onclick = () => setMode('wetlab');
 function fmtSecs(x) { return x == null ? '–' : x >= 60 ? Math.floor(x / 60) + 'm ' + Math.round(x % 60) + 's' : x.toFixed(0) + 's'; }
 // LIBERO's scoreboard: every model, every suite (opened from a LIBERO run's results).
+let BM0 = null;      // the scoreboard's LIBERO head, cap and note (WetRobo's board borrows the same window)
+async function openWrBoard() {
+  BM0 = BM0 || {head: $('bmHead').innerHTML, cap: $('bmCap').textContent, note: $('bmNote').textContent};
+  const W = await api('/pg/wetrobo'), sc = W.scores;
+  const cell = c => c && c.tried ? `${c.passed} / ${c.tried}` : '–';
+  $('bmCap').textContent = 'WetRobo · the same tasks in two labs'; $('bmSeg').style.display = 'none';
+  $('bmHead').innerHTML = `<tr><th rowspan="2">Model</th>${sc.tasks.map(t => `<th class="n" colspan="${sc.labs.length}" style="text-align:center">${esc(t.title)}</th>`).join('')}<th class="n" colspan="${sc.labs.length}" style="text-align:center;color:var(--ink)">All tasks</th><th class="n" rowspan="2">Avg time</th><th class="n" rowspan="2">Cost</th></tr>`
+    + `<tr>${[...sc.tasks, 0].map(() => sc.labs.map(l => `<th class="n">${esc(l.label)}</th>`).join('')).join('')}</tr>`;
+  const rows = sc.board.map(b => `<tr><td style="font-weight:600">${esc(b.label)}</td>${sc.tasks.map(t => sc.labs.map(l => `<td class="n">${cell(b.cells[t.id + ':' + l.id])}</td>`).join('')).join('')}${sc.labs.map(l => `<td class="n" style="font-weight:700">${cell(b.labs[l.id])}</td>`).join('')}<td class="n">${fmtSecs(b.avg_seconds)}</td><td class="n">${b.cost ? '$' + b.cost.toFixed(2) : '–'}</td></tr>`);
+  if (!rows.length) rows.push(`<tr><td colspan="${3 + (sc.tasks.length + 1) * sc.labs.length}" class="small" style="color:var(--muted)">No runs yet.</td></tr>`);
+  $('bmBody').innerHTML = rows.join('');
+  $('bmNote').textContent = 'Each cell is passed runs out of runs tried; every run counts. The two labs have the same kit on different tables, in different places, with other things around. A model that scores the same in both adapts to a lab it has not seen.';
+  $('boardModal').style.display = 'flex';
+}
+window.openWrBoard = openWrBoard;
 async function openBoard(study) {
+  if (BM0) { $('bmHead').innerHTML = BM0.head; $('bmCap').textContent = BM0.cap; $('bmNote').textContent = BM0.note; }
+  $('bmSeg').style.display = '';
   S.bmStudy = study;
   const L = await api('/pg/libero?study=' + (study ? 1 : 0));
   const sb = L.suite_board;

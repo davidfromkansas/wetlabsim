@@ -22,6 +22,7 @@ from wetlabsim import scene as S
 
 from . import catalog
 from . import settings as ST
+from . import wetrobo as WR
 
 # The floor: 12-inch speckled vinyl tiles (playground/tools/make_lab_floor.py draws them), a 4 x 4
 # patch of tiles to the picture.
@@ -78,6 +79,33 @@ KINDS = {
     # LIBERO builds it, with its Franka where LIBERO mounts it. The station's place is the room's
     # centre; its task and starting layout are the station's own (Station.task, .setup).
     "libero": {"label": "LIBERO", "table": None, "turn": 0.0, "robot_xy": (-1.16, 0.0), "layout": []},
+    # WetRobo's two labs (playground/wetrobo.py): the same kit (a benchtop incubator with its
+    # door facing the arm, a screw-cap reagent bottle, a Petri dish) in two different places.
+    # Lab X: the stainless lab bench, the arm near one end looking along it: the incubator ahead
+    # (turned a little, its handle 0.6 m from the arm, its door swinging open toward the arm's left), the dish
+    # and bottle ahead on its right, clear of the door's swing.
+    "wetrobo_x": {"label": "WetRobo Lab X", "table": "lab_bench", "turn": 0.0, "robot_xy": (-0.6, -0.2),
+                  "layout": [
+                      ("lab_incubator", 0.26, 0.0, -math.pi / 2 - 0.15),
+                      ("screw_cap_bottle", -0.32, -0.29, 0.0),
+                      ("petri_dish_60", -0.12, -0.3, 0.0),
+                      ("petri_dish_60_lid", -0.12, -0.3, 0.0, WR.LID_SEAT + 0.001),
+                      ("lab_bottle", -0.8, 0.2, 0.0),
+                      ("glass_vial", -0.8, 0.02, 0.0),
+                  ]},
+    # Lab Y: the taller wooden packing table, the incubator ahead of the arm on its left, the
+    # bottle and dish on the right (all within the arm's easy reach), and other lab things around.
+    "wetrobo_y": {"label": "WetRobo Lab Y", "table": STATION_TABLE, "turn": 0.0, "robot_xy": ROBOT_XY,
+                  "layout": [
+                      ("lab_incubator", 0.45, 0.3, -math.pi / 2),
+                      ("screw_cap_bottle", 0.05, -0.33, 0.0),
+                      ("petri_dish_60", 0.08, -0.12, 0.0),
+                      ("petri_dish_60_lid", 0.08, -0.12, 0.0, WR.LID_SEAT + 0.001),
+                      ("sterilising_tray", 0.55, -0.42, 0.0),
+                      ("reagent_bottle", 0.3, -0.12, 0.0),
+                      ("glove_box", 0.68, -0.12, math.pi / 2),
+                      ("disinfectant", -0.15, -0.5, 0.0),
+                  ]},
 }
 LIBERO_ROOM = (5.0, 6.0)      # a LIBERO room's floor (m), before its task is known
 
@@ -170,12 +198,18 @@ class Station:
     yaw: float = 0.0      # rotation about the vertical (rad)
     name: str = ""        # what the user calls it ("Station 1")
     kind: str = "table"   # a key of KINDS
-    task: str = ""        # a LIBERO station: its task (a playground.libero task id)
+    task: str = ""        # a benchmark station: its task (a playground.libero or playground.wetrobo task id)
     setup: int = 0        # a LIBERO station: the official starting layout its next run starts from
 
     @property
     def libero(self) -> bool:
         return self.kind == "libero"
+
+    @property
+    def wetrobo(self) -> str:
+        """A WetRobo station: its lab ("x" or "y"), else ""."""
+        from . import wetrobo as WR
+        return WR.lab_of(self.kind)
 
     def room(self) -> dict | None:
         """A LIBERO station's room (playground.libero.room), or None."""
@@ -293,6 +327,11 @@ class Station:
             out["libero"] = {"task": t.id, "suite": t.suite, "suite_name": LB.SUITE_NAMES[t.suite],
                              "index": t.index + 1, "language": t.language, "goal": LB.goal_parts(t),
                              "setup": self.setup, "setups": t.n_setups}
+        if self.wetrobo and self.task:
+            from . import wetrobo as WR
+            t = WR.task(self.task)
+            out["wetrobo"] = {"task": t.id, "title": t.title, "language": t.language, "goal": list(t.goal),
+                              "lab": self.wetrobo, "lab_label": WR.LABS[self.wetrobo][1]}
         return out
 
 
@@ -393,12 +432,19 @@ BOUNCE_TIMECONST = 0.02
 
 def set_surface(g, c: dict, cls, friction=None):
     """A collision shape's surface, as its asset states: sliding friction (static, MuJoCo takes
-    one coefficient), and how bouncy it is (restitution, or the asset's own MuJoCo solref)."""
+    one coefficient), how bouncy it is (restitution, or the asset's own MuJoCo solref), and, for
+    a thin hard wall, how stiff its contacts are and that its own stiffness is the one used
+    (MuJoCo's solimp and priority: a soft fingertip pad's would let the pad sink through a wall
+    1 mm thick)."""
     if "contype" in c:       # the asset's own contact filter (MuJoCo's contype/conaffinity bits)
         g.contype, g.conaffinity = c["contype"], c["conaffinity"]
     mu = c.get("friction", friction)
     if mu:
         g.friction = [mu, g.friction[1], g.friction[2]]
+    if c.get("solimp"):
+        g.solimp[:len(c["solimp"])] = list(c["solimp"])
+    if c.get("priority") is not None:
+        g.priority = c["priority"]
     if c.get("solref"):
         g.solref = list(c["solref"])
     elif c.get("restitution") is not None:

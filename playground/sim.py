@@ -21,6 +21,7 @@ from wetlabsim.sim import Arm, Humanoid, RobotError, Sim, TwoArm
 
 from . import catalog, tron
 from . import libero as LB
+from . import wetrobo as WR
 from . import world as W
 
 VIEW_W, VIEW_H = 1280, 800      # default size of the main view
@@ -303,6 +304,16 @@ class PlaygroundSim(Sim):
                 self.paused = True
 
     # ------------------------------------------------------- LIBERO stations
+    def wetrobo_goal(self, uid: str) -> list[bool] | None:
+        """Each part of a WetRobo station's goal: whether it holds now (read from its own kit's
+        joints and bodies: the incubator, bottle, dish and lid on its table). None for any other station."""
+        st = self.station(uid)
+        if st is None or not st.wetrobo or not st.task:
+            return None
+        with self.lock:
+            kit = [(p.uid, p.item) for p in self._on_table(st) if p.item in WR.KIT]
+            return WR.check(WR.task(st.task), WR.kit_joints(self.m, kit, st.top), self.d)
+
     def libero_goal(self, uid: str) -> list[bool] | None:
         """Each part of a LIBERO station's goal: whether it holds now (and its stove burners
         glow while the stove is on). None for any other station."""
@@ -658,20 +669,28 @@ class PlaygroundSim(Sim):
             except KeyError:
                 raise RobotError("pick one of LIBERO's tasks") from None
             robot = "franka"
+        bench = WR.lab_of(kind)
+        if bench:                    # a WetRobo lab: its task, with the playground's Franka
+            try:
+                wt = WR.task(task)
+            except KeyError:
+                raise RobotError("pick one of WetRobo's tasks") from None
+            robot = "franka"
         with self.lock:
             self._sync_placed()
             uid = self._new_station_uid()
             n = int(uid[2:])
-            name = f"LIBERO {LB.SUITE_NAMES[t.suite]} {t.index + 1}" if kind == "libero" else f"Robot {n}"
+            name = f"LIBERO {LB.SUITE_NAMES[t.suite]} {t.index + 1}" if kind == "libero" else \
+                f"WetRobo {WR.LABS[bench][1]} · {wt.title}" if bench else f"Robot {n}"
             st = W.Station(uid, robot, (float(pos[0]), float(pos[1])), float(yaw), name, kind,
-                           task=task if kind == "libero" else "")
+                           task=task if kind == "libero" or bench else "")
             self.stations.append(st)
             top = st.top
-            for item, lx, ly, iyaw in (st.spec["layout"] if starter else []):     # what the station starts with
-                x, y, _ = st.to_world(lx, ly)
+            for item, lx, ly, iyaw, *up in (st.spec["layout"] if starter else []):     # what the station starts with
+                x, y, _ = st.to_world(lx, ly)                                         # (up: its height above the table top)
                 if st.near_base(x, y):        # where another robot's base stands (an ALOHA's two)
                     continue
-                self.placed.append(W.Placed(self.new_uid(item), item, (x, y, top), st.yaw + iyaw))
+                self.placed.append(W.Placed(self.new_uid(item), item, (x, y, top + (up[0] if up else 0.0)), st.yaw + iyaw))
             self.rebuild()
             self.active_station = uid
         return uid
@@ -852,6 +871,8 @@ class PlaygroundSim(Sim):
                 return
             if st.libero:
                 raise RobotError("a LIBERO station keeps LIBERO's own robot, the Franka Panda")
+            if st.wetrobo:
+                raise RobotError("a WetRobo station keeps its Franka Panda, so every run is the same test")
             self._sync_placed()
             new = W.Station(st.uid, robot, st.pos, st.yaw, st.name, st.kind)
             if any(new.holds(p.pos[0], p.pos[1]) and new.near_base(p.pos[0], p.pos[1]) for p in self.placed):
@@ -1007,6 +1028,8 @@ class PlaygroundSim(Sim):
             out["base"] = [round(float(v), 3) for v in self._base_mid(self.arms[st.uid])]
         if "libero" in out and st.uid in self.checkers:      # LIBERO's goal check, live
             out["libero"]["now"] = self.libero_goal(st.uid)
+        if "wetrobo" in out:                                 # WetRobo's check, live
+            out["wetrobo"]["now"] = self.wetrobo_goal(st.uid)
         return out
 
     @staticmethod
