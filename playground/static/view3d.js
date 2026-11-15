@@ -42,7 +42,7 @@ function applyDelta(c, d) {
 
 // ---------------------------------------------------------------- the light Tron floor (tron.py)
 const TRON = {CYAN: [0.0, 0.85, 1.0], STEP: 0.5, REACH: 4.0, SEG: 0.5, Z: 0.0015, WIDTH: 0.012,
-              RIPPLE_SPEED: 1.1, RIPPLE_EVERY: 4.0, STREAKS: 10, STREAK_SPEED: 1.6, TRAIL: 6, FLOOR: [0.975, 0.975, 0.965]};
+              RIPPLE_SPEED: 1.1, RIPPLE_EVERY: 4.0, STREAKS: 10, STREAK_SPEED: 1.6, TRAIL: 6, FLOOR: [0.852, 0.851, 0.828]};   // FLOOR: the vinyl tiles' average colour
 const hash = (i, k) => { const x = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return x - Math.floor(x); };
 function tronShapes(t) {
   const T = TRON, out = [], lines = [], pieces = [];
@@ -381,6 +381,68 @@ export function start({stage, base = '', onReady}) {
     for (const k of ['box', 'cylinder']) for (let i = used[k]; i < pool[k].length; i++) pool[k][i].visible = false;
   }
 
+  // ---------------------------------------------------------------- the Matrix room
+  // The playground's own walls (the 3D view only): a room around the whole floor, with green
+  // "digital rain" falling down dark walls. Nothing in the physics, and the robots' cameras
+  // never see it.
+  const RAIN = {PX: 528, CELL: 22, TILE: 2.2, FPS: 20};      // TILE: metres of wall one picture covers
+  const rainCanvas = document.createElement('canvas'); rainCanvas.width = rainCanvas.height = RAIN.PX;
+  const rainCtx = rainCanvas.getContext('2d');
+  const rainTex = new THREE.CanvasTexture(rainCanvas);
+  rainTex.wrapS = rainTex.wrapT = THREE.RepeatWrapping; rainTex.anisotropy = 8; rainTex.colorSpace = THREE.SRGBColorSpace;
+  const GLYPHS = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789:.=*+-<>¦|Z';
+  // Each column: a falling head with a fading tail, worked out from the clock (so it looks the
+  // same at any frame rate). The glyphs sit in a grid and a few change at each redraw.
+  const RCOLS = Math.floor(RAIN.PX / RAIN.CELL), RROWS = RCOLS, TAIL = 14;
+  const pick = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+  const rainGrid = Array.from({length: RCOLS * RROWS}, pick);
+  const rainCols = Array.from({length: RCOLS}, () => ({speed: 5 + Math.random() * 9, off: Math.random() * 60, gap: 8 + Math.random() * 30}));
+  let rainT = 0;
+  const rainMaps = [];
+  function drawRain(t) {
+    if (t - rainT < 1 / RAIN.FPS) return;
+    rainT = t;
+    const c = rainCtx, C = RAIN.CELL;
+    c.clearRect(0, 0, RAIN.PX, RAIN.PX);
+    c.font = `bold ${C - 3}px "MS Gothic", "Hiragino Kaku Gothic ProN", "Noto Sans JP", monospace`;
+    c.textAlign = 'center'; c.textBaseline = 'top';
+    for (let k = 0; k < 6; k++) rainGrid[Math.floor(Math.random() * rainGrid.length)] = pick();
+    rainCols.forEach((col, i) => {
+      const cycle = RROWS + TAIL + col.gap, head = Math.floor((t * col.speed + col.off) % cycle);
+      for (let k = 0; k < TAIL; k++) {
+        const r = head - k;
+        if (r < 0 || r >= RROWS) continue;
+        c.fillStyle = k === 0 ? '#E4FFE9' : `rgba(0,220,80,${(1 - k / TAIL) * 0.95})`;
+        c.fillText(rainGrid[r * RCOLS + i], i * C + C / 2, r * C + 2);
+      }
+    });
+    for (const m of rainMaps) m.needsUpdate = true;     // each wall's copy of the picture
+  }
+  function rainMaterial() {
+    const map = rainTex.clone();                        // its own repeat, the same picture
+    rainMaps.push(map);
+    return new THREE.MeshBasicMaterial({map, transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide});
+  }
+  const ROOM = {HALF: 10, HEIGHT: 6};            // the floor plane is 20 m square (world.py)
+  function makeRoom() {
+    const g = new THREE.Group();
+    for (let k = 0; k < 4; k++) {
+      const plane = new THREE.PlaneGeometry(2 * ROOM.HALF, ROOM.HEIGHT);
+      const wall = new THREE.Group();
+      wall.add(new THREE.Mesh(plane, new THREE.MeshBasicMaterial({color: 0x020a05})));
+      const mat = rainMaterial(); mat.opacity = 1; mat.side = THREE.FrontSide;   // seen from inside only: zoomed out, you see in
+      mat.map.repeat.set(2 * ROOM.HALF / RAIN.TILE, ROOM.HEIGHT / RAIN.TILE);
+      const code = new THREE.Mesh(plane, mat); code.position.z = 0.01; wall.add(code);
+      // stand it up (z up), facing into the room, on the floor's edge
+      wall.rotation.set(Math.PI / 2, 0, 0); wall.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), k * Math.PI / 2 + Math.PI);
+      const a = k * Math.PI / 2 - Math.PI / 2;
+      wall.position.set(Math.cos(a) * ROOM.HALF, Math.sin(a) * ROOM.HALF, ROOM.HEIGHT / 2);
+      g.add(wall);
+    }
+    return g;
+  }
+  scene.add(makeRoom());
+
   // Work boxes: around each robot at work, the space it works in. Nearly clear, with a thin
   // outline that glows in and out (the robots' own cameras see solid walls there instead).
   const zonesGroup = new THREE.Group(); scene.add(zonesGroup);
@@ -449,6 +511,7 @@ export function start({stage, base = '', onReady}) {
     if (V.onFrame) V.onFrame();
     if (floorFx) drawFloorFx(performance.now() / 1000);
     pulseZones(performance.now() / 1000);
+    drawRain(performance.now() / 1000);
     renderer.render(scene, camera);
     requestAnimationFrame(frame);
   }

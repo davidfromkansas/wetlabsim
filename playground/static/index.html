@@ -341,6 +341,7 @@ body.watch .smore{display:none}body.watch .schipw .schip{padding-right:10px}
 .stmenu button:disabled{color:#9CA3AF;cursor:not-allowed}.stmenu button:disabled svg{color:#C4C9D1}
 .stmenu .danger{color:#B91C1C}.stmenu .danger svg{color:#B91C1C}
 .stmenu hr{border:0;height:1px;background:var(--line);margin:4px 2px}
+.stmenu [hidden]{display:none!important}
 .stmenu .why{font-size:11.5px;color:#6B7280;padding:4px 10px 3px;line-height:1.35}
 body.watch #objPanel .acts{display:none!important}
 .glass{background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 0 0 1px rgba(17,24,39,.08),0 4px 14px rgba(17,24,39,.08)}
@@ -616,7 +617,7 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
 #physBtn:disabled{cursor:not-allowed}#physBtn:disabled .tg{opacity:.5}
 body.watch #physBtn{display:none}
 #playpill:empty,#playpill.none{display:none}
-/* a session's "⋯" menu (Share) */
+/* a session's "⋮" menu (Share, Delete) */
 .sroww{position:relative}.sroww .srow{padding-right:34px}
 .ssmore{position:absolute;right:6px;top:12px;width:24px;height:26px;border-radius:7px;border:0;background:transparent;color:#374151;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .ssmore:hover,.ssmore[aria-expanded=true]{background:rgba(17,24,39,.08)}
@@ -2248,27 +2249,47 @@ document.addEventListener('pointerdown', (e) => {
   if (!$('sharePop').contains(e.target) && !e.target.closest('#sessMenu')) $('sharePop').hidden = true;
   if (!e.target.closest('#sessMenu, .ssmore')) closeSessMenu();
 });
-// A session's "⋯" menu (its own row, when the session can be shared): Share opens the share card
-// beside the row.
+// A session's "⋮" menu (each of your own rows): Share (the open session, when it can be shared)
+// opens the share card beside the row; Delete closes the session for good (after asking).
 function closeSessMenu() { const m = $('sessMenu'); if (m) m.classList.remove('open'); document.querySelectorAll('.ssmore').forEach(b => b.setAttribute('aria-expanded', 'false')); }
 function openSessMenu(btn) {
   let m = $('sessMenu');
   if (!m) {
     m = document.createElement('div'); m.id = 'sessMenu'; m.className = 'stmenu'; m.setAttribute('role', 'menu'); m.setAttribute('aria-label', 'Session actions');
-    m.innerHTML = '<button role="menuitem" data-act="share"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Share</button>';
+    m.innerHTML = '<button role="menuitem" data-act="share"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Share</button>'
+      + '<hr data-act="sep"><button role="menuitem" data-act="delete" class="danger"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5"/></svg>Delete session</button>';
     document.body.appendChild(m);
     m.querySelector('[data-act=share]').onclick = () => {
-      const r = ($('mineList').querySelector('.ssmore') || m).getBoundingClientRect(), p = $('sharePop');   // the row may have been redrawn
+      const row = $('mineList').querySelector(`.ssmore[data-msid="${CSS.escape(SID)}"]`) || m;   // the row may have been redrawn
+      const r = row.getBoundingClientRect(), p = $('sharePop');
       closeSessMenu(); p.hidden = false;
       p.style.left = Math.min(r.right + 8, innerWidth - p.offsetWidth - 8) + 'px';
       p.style.top = Math.max(8, Math.min(r.top - 8, innerHeight - p.offsetHeight - 8)) + 'px';
       $('shareOn').focus();
     };
+    m.querySelector('[data-act=delete]').onclick = () => { const id = m.dataset.sid; closeSessMenu(); deleteSession(id); };
   }
   if (m.classList.contains('open') && S.menuBtn === btn) return closeSessMenu();
+  const sid = btn.dataset.msid, share = sid === SID && S.canShare;
+  m.dataset.sid = sid;
+  m.querySelector('[data-act=share]').hidden = m.querySelector('[data-act=sep]').hidden = !share;
   S.menuBtn = btn; m.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
   const r = btn.getBoundingClientRect();
   m.style.left = Math.min(r.left, innerWidth - m.offsetWidth - 8) + 'px'; m.style.top = (r.bottom + 4) + 'px';
+}
+async function deleteSession(id) {
+  const x = S.sess.mine.find(y => y.id === id); if (!x) return;
+  if (!await askConfirm(`Delete "${x.name}"?`, 'Its robots, objects and chats go away for good. Past runs stay in Your runs.', 'Delete')) return;
+  const r = await api('/pg/sessions/delete', {id});
+  if (!r.ok) { toast(r.error || "Couldn't delete this session"); return; }
+  delete S.draftsBy[id];
+  await loadSessions();
+  if (id !== SID) { toast('Session deleted'); return; }
+  const next = S.sess.mine[0];            // the one you were in: go to your most recent other one
+  if (next) { switchSession(next.id); toast('Session deleted'); return; }
+  const n = await api('/pg/sessions/new', {});    // none left: a fresh one
+  if (n.ok) { await loadSessions(); switchSession(n.session.id); }
+  toast('Session deleted');
 }
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeSessMenu(); $('sharePop').hidden = true; } });
 $('shareOn').onclick = async () => {
@@ -2320,8 +2341,8 @@ function renderSessions() {
   if (key === S.sessKey) return; S.sessKey = key;
   const dot = {working: ['run', 'Working'], finished: ['ok', 'Finished'], empty: ['', 'Nothing run yet']};
   $('mineList').innerHTML = mine.map(x => { const [d, t] = dot[x.status] || dot.empty;
-    const more = x.id === SID && S.canShare && !S.watch;
-    return `<div class="sroww"><button class="srow" data-sid="${esc(x.id)}" aria-current="${x.id === SID}"><span class="sico">${CUBE}</span><span class="t"><b>${esc(x.name)}${x.shared ? '<span class="sharedmini">Shared</span>' : ''}</b><span class="sub">${x.mode === 'free' ? nStations(x.stations) : x.mode === 'libero' ? 'LIBERO test' : 'Wet Lab'} · ${ago(x.used)}</span></span><span class="sdot ${d}" title="${t}"></span></button>${more ? `<button class="ssmore" aria-label="More actions for ${esc(x.name)}" aria-haspopup="menu" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="13" cy="8" r="1.5"/></svg></button>` : ''}</div>`; }).join('')
+    const more = !S.watch && S.sess.owner;
+    return `<div class="sroww"><button class="srow" data-sid="${esc(x.id)}" aria-current="${x.id === SID}"><span class="sico">${CUBE}</span><span class="t"><b>${esc(x.name)}${x.shared ? '<span class="sharedmini">Shared</span>' : ''}</b><span class="sub">${x.mode === 'free' ? nStations(x.stations) : x.mode === 'libero' ? 'LIBERO test' : 'Wet Lab'} · ${ago(x.used)}</span></span><span class="sdot ${d}" title="${t}"></span></button>${more ? `<button class="ssmore" data-msid="${esc(x.id)}" aria-label="More actions for ${esc(x.name)}" aria-haspopup="menu" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg></button>` : ''}</div>`; }).join('')
     || '<span class="snone">None yet. Press New session.</span>';
   $('mineList').querySelectorAll('.ssmore').forEach(b => b.onclick = (e) => { e.stopPropagation(); openSessMenu(b); });
   $('liveList').innerHTML = live.map((x, i) => `<button class="srow" data-live="${i}" aria-current="${!x.url && x.id === SID}" title="${esc(x.task || '')}"><span class="sico">${EYE}</span><span class="t"><b>${esc(x.name)}</b><span class="sub">${esc(x.task || nStations(x.stations))}</span></span><span class="sdot run" title="Running now"></span></button>`).join('')

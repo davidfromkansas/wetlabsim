@@ -1,6 +1,6 @@
-"""Builds the playground's lab: a graph-paper floor, the robot stations on it (each a robot
-arm on its own NVIDIA packing table, with its own overhead and side cameras), and whatever
-the user has dropped in.
+"""Builds the playground's lab: a speckled vinyl-tile floor like a university wet lab's, the
+robot stations on it (each a robot arm on its own NVIDIA packing table, with its own overhead
+and side cameras), and whatever the user has dropped in.
 
 Every library item comes from playground/assets/<id>/ (see tools/convert_simready.py):
 visual meshes with their textures, collision meshes, and the mass the asset states.
@@ -13,6 +13,7 @@ import math
 import re
 import warnings
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import mujoco
 import numpy as np
@@ -22,6 +23,10 @@ from wetlabsim import scene as S
 from . import catalog
 from . import settings as ST
 
+# The floor: 12-inch speckled vinyl tiles (playground/tools/make_lab_floor.py draws them), a 4 x 4
+# patch of tiles to the picture.
+FLOOR_TEXTURE = Path(__file__).resolve().parent / "textures" / "lab_floor.png"
+FLOOR_PATCH = 4 * 0.3048          # metres the picture covers
 TABLE_UID = "table"     # (older saved scenes) the one table a robot stood on
 # Kept clear around a robot's base when a station starts with items, or when an arm is swapped in.
 BASE_CLEARANCE = 0.25
@@ -286,16 +291,15 @@ def _world_xml() -> str:
     <map znear="0.01" zfar="50"/>
   </visual>
   <asset>
-    <texture name="grid" type="2d" builtin="checker" mark="edge" rgb1="0.975 0.975 0.965"
-             rgb2="0.975 0.975 0.965" markrgb="0.80 0.83 0.87" width="100" height="100"/>
+    <texture name="floor" type="2d" file="{FLOOR_TEXTURE}"/>
     <texture name="sky" type="skybox" builtin="gradient" rgb1="0.99 0.99 0.985" rgb2="0.93 0.94 0.95"
              width="256" height="1536"/>
-    <material name="grid" texture="grid" texrepeat="10 10" texuniform="true" reflectance="0"/>
+    <material name="floor" texture="floor" texrepeat="{1 / FLOOR_PATCH:.4f} {1 / FLOOR_PATCH:.4f}" texuniform="true" reflectance="0"/>
   </asset>
   <worldbody>
     <light pos="0.5 -1.0 4" dir="-0.1 0.25 -1" diffuse="0.5 0.5 0.5" specular="0.1 0.1 0.1" castshadow="true"/>
     <light type="directional" pos="-2 2 3" dir="0.5 -0.5 -1" diffuse="0.2 0.2 0.2" castshadow="false"/>
-    <geom name="floor" type="plane" size="10 10 0.1" material="grid" class="bench"/>
+    <geom name="floor" type="plane" size="10 10 0.1" material="floor" class="bench"/>
   </worldbody>
 </mujoco>
 """

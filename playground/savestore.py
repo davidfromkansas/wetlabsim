@@ -80,6 +80,12 @@ def set_session_share(session_id: str, token: str | None):
         [token, session_id, OWNER_USER])
 
 
+def delete_session(session_id: str):
+    """Hide a session (deleted_at, as the website's delete does; it can be brought back)."""
+    sql("update sessions set deleted_at = now() where session_id = $1::uuid and owner_user_id = $2",
+        [session_id, OWNER_USER])
+
+
 def opened(session_id: str):
     sql("update sessions set last_opened_at = now() where session_id = $1::uuid and owner_user_id = $2",
         [session_id, OWNER_USER])
