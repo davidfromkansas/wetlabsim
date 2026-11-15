@@ -308,3 +308,136 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Reagent reservoir | Lab & Medical | ForgeCAD SimReady | [`reagent_reservoir`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/reagent_reservoir) |
 | Screw-cap bottle | Glassware | ForgeCAD SimReady | [`screw_cap_bottle`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/screw_cap_bottle) |
 | Sharps box | Lab & Medical | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R492_sharps_container/06_tabletop_mini_sharps_box`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R492_sharps_container/06_tabletop_mini_sharps_box) |
+| Assembly task board | Factory | ForgeCAD SimReady | [`assembly_task_board`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/assembly_task_board) |
+| Gear meshing kit | Factory | ForgeCAD SimReady | [`gear_meshing_kit`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/gear_meshing_kit) |
+| Nut and bolt kit | Factory | ForgeCAD SimReady | [`nut_bolt_kit`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/nut_bolt_kit) |
+| Peg-in-hole kit | Factory | ForgeCAD SimReady | [`peg_in_hole_kit`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/peg_in_hole_kit) |
+| Planetary gearbox | Factory | ForgeCAD SimReady | [`planetary_gearbox`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/planetary_gearbox) |
+| Bearing, pulley and shaft kit | Factory | ForgeCAD SimReady | [`bearing_pulley_shaft_kit`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/bearing_pulley_shaft_kit) |
+| Toggle clamp fixture plate | Factory | ForgeCAD SimReady | [`toggle_clamp_fixture_plate`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/toggle_clamp_fixture_plate) |
+| Data connector pack | Factory | ForgeCAD SimReady | [`data_connector_pack`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/data_connector_pack) |
+| DIN-rail breaker board | Factory | ForgeCAD SimReady | [`din_rail_breaker_board`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/din_rail_breaker_board) |
+| Ball valve | Factory | ForgeCAD SimReady | [`ball_valve`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/ball_valve) |
+| Gate valve | Factory | ForgeCAD SimReady | [`gate_valve`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/gate_valve) |
+| Bench vise | Factory | ForgeCAD SimReady | [`bench_vise`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/bench_vise) |
+| Bench grinder | Factory | ForgeCAD SimReady | [`bench_grinder`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/bench_grinder) |
+| Tool pegboard | Factory | ForgeCAD SimReady | [`pegboard`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/pegboard) |
+| Parts drawer cabinet | Factory | ForgeCAD SimReady | [`parts_cabinet`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/parts_cabinet) |
+| Small load carrier | Factory | ForgeCAD SimReady | [`small_load_carrier`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/small_load_carrier) |
+| Bin of parts | Factory | ForgeCAD SimReady | [`bin_picking_bin`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/bin_picking_bin) |
+| Attached-lid tote | Factory | ForgeCAD SimReady | [`attached_lid_tote`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/attached_lid_tote) |
+| Ratchet and socket set | Factory | ForgeCAD SimReady | [`ratchet_socket_set`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/ratchet_socket_set) |
+| Combination wrench set | Factory | ForgeCAD SimReady | [`combination_wrench_set`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/combination_wrench_set) |
+| Cantilever toolbox | Factory | ForgeCAD SimReady | [`toolbox`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/toolbox) |
+| Controls test bench | Factory | ForgeCAD SimReady | [`articulation_test_bench`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/articulation_test_bench) |
+| Pallet jack | Factory | ForgeCAD SimReady | [`manual_pallet_jack`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/manual_pallet_jack) |
+| Pallet rack bay | Factory | ForgeCAD SimReady | [`pallet_rack_bay`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/pallet_rack_bay) |
+| Roller conveyor | Factory | NVIDIA SimReady | [`conveyor_belt_a05`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/conveyor_belt_a05) |
+| Factory workstation | Factory | NVIDIA SimReady | [`workstation_factory_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/workstation_factory_a01) |
+| Workbench with cabinet | Factory | NVIDIA SimReady | [`furniture_workbench_modular_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/furniture_workbench_modular_a01) |
+| Machine guard | Factory | NVIDIA SimReady | [`machineGuard_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/machineGuard_a01) |
+| Welding power station | Factory | NVIDIA SimReady | [`powerTool_welding_station_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/powerTool_welding_station_a01) |
+| Impact wrench | Factory | NVIDIA SimReady | [`powerTool_impact_wrench_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/powerTool_impact_wrench_a01) |
+| Air ratchet | Factory | NVIDIA SimReady | [`handTool_air_ratchet_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/handTool_air_ratchet_a01) |
+| Shop cart | Factory | NVIDIA SimReady | [`cart_mobile_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cart_mobile_a01) |
+| M16 nut | Factory | NVIDIA SimReady | [`factory_nut_m16_loose`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/factory_nut_m16_loose) |
+| M8 nut | Factory | NVIDIA SimReady | [`factory_nut_m8_loose`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/factory_nut_m8_loose) |
+| M8 bolt | Factory | NVIDIA SimReady | [`factory_bolt_m8_loose`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/factory_bolt_m8_loose) |
+| Pallet | Factory | NVIDIA SimReady | [`pallet_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_a01) |
+| Cardboard box | Factory | NVIDIA SimReady | [`box_cardboard_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/box_cardboard_a01) |
+| Cardboard box, flat | Factory | NVIDIA SimReady | [`box_cardboard_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/box_cardboard_b01) |
+| Safety fence | Factory | NVIDIA SimReady | [`barrier_fence_metal_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/barrier_fence_metal_a02) |
+| Forklift | Factory | NVIDIA SimReady | [`vehicle_forklift_orange_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/vehicle_forklift_orange_a01) |
+| Steel drum | Factory | NVIDIA SimReady | [`drum_steel_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/drum_steel_a01) |
+| Fire extinguisher | Factory | NVIDIA SimReady | [`fireExtinguisher_abc_a03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fireExtinguisher_abc_a03) |
+| Car body | Car parts | NVIDIA SimReady | [`carFrame_car_frame_assembled_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/carFrame_car_frame_assembled_a01) |
+| Hood | Car parts | NVIDIA SimReady | [`bodyPart_hood_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/bodyPart_hood_a01) |
+| Door, complete | Car parts | NVIDIA SimReady | [`bodyPart_door_assembled_c01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/bodyPart_door_assembled_c01) |
+| Front door panel | Car parts | NVIDIA SimReady | [`bodyPart_door_front_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/bodyPart_door_front_a01) |
+| Windscreen | Car parts | NVIDIA SimReady | [`bodyPart_windscreen_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/bodyPart_windscreen_a01) |
+| Front bumper | Car parts | NVIDIA SimReady | [`bodyPart_bumper_front_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/bodyPart_bumper_front_a01) |
+| Headlight | Car parts | NVIDIA SimReady | [`bodyPart_headLight_left_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/bodyPart_headLight_left_a01) |
+| Side mirror | Car parts | NVIDIA SimReady | [`bodyPart_car_side_mirror_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/bodyPart_car_side_mirror_a01) |
+| Wiper blades | Car parts | NVIDIA SimReady | [`bodyPart_wiper_blades_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/bodyPart_wiper_blades_a01) |
+| Tire | Car parts | NVIDIA SimReady | [`wheelAssembly_tire_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/wheelAssembly_tire_a01) |
+| Wheel rim | Car parts | NVIDIA SimReady | [`wheelAssembly_wheel_rim_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/wheelAssembly_wheel_rim_a01) |
+| Brake rotor | Car parts | NVIDIA SimReady | [`brakeSystem_rotor_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/brakeSystem_rotor_b01) |
+| Brake assembly | Car parts | NVIDIA SimReady | [`brakeSystem_brakes_assembly_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/brakeSystem_brakes_assembly_a01) |
+| Brake caliper | Car parts | NVIDIA SimReady | [`brakeSystem_caliper_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/brakeSystem_caliper_b01) |
+| Brake pad | Car parts | NVIDIA SimReady | [`brakeSystem_brake_pad_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/brakeSystem_brake_pad_a01) |
+| Wheel hub | Car parts | NVIDIA SimReady | [`suspension_wheelHubABS_assembly_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/suspension_wheelHubABS_assembly_a01) |
+| Steering wheel | Car parts | NVIDIA SimReady | [`steeringSystem_steering_wheel_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/steeringSystem_steering_wheel_b01) |
+| Bucket seat | Car parts | NVIDIA SimReady | [`interiorPart_bucket_seat_c01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/interiorPart_bucket_seat_c01) |
+| Gauge cluster | Car parts | NVIDIA SimReady | [`interiorPart_dashboard_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/interiorPart_dashboard_a01) |
+| Car battery | Car parts | NVIDIA SimReady | [`electricalSystem_battery_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/electricalSystem_battery_a01) |
+| Alternator | Car parts | NVIDIA SimReady | [`electricalSystem_alternator_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/electricalSystem_alternator_a01) |
+| Spark plug | Car parts | NVIDIA SimReady | [`engineComponent_spark_plug_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/engineComponent_spark_plug_b01) |
+| Oil filter | Car parts | NVIDIA SimReady | [`engineComponent_oil_filter_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/engineComponent_oil_filter_a01) |
+| Air filter box | Car parts | NVIDIA SimReady | [`airSystem_air_filter_box_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/airSystem_air_filter_box_a01) |
+| Air filter | Car parts | NVIDIA SimReady | [`airSystem_air_filter_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/airSystem_air_filter_a01) |
+| H7 headlight bulb | Car parts | NVIDIA SimReady | [`consumable_lightBulb_h7_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/consumable_lightBulb_h7_a01) |
+| Mini fuse | Car parts | NVIDIA SimReady | [`consumable_fuse_mini_yellow_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/consumable_fuse_mini_yellow_a01) |
+| Radiator | Car parts | NVIDIA SimReady | [`coolingSystem_radiator_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/coolingSystem_radiator_a01) |
+| Electric drive motor | Car parts | NVIDIA SimReady | [`engineAssembly_electric_engine_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/engineAssembly_electric_engine_a01) |
+| V8 engine | Car parts | NVIDIA SimReady | [`engineAssembly_v8_engine_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/engineAssembly_v8_engine_a01) |
+| EV charging connector | Garage | ForgeCAD SimReady | [`ev_charging_connector`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/ev_charging_connector) |
+| Scissor lift | Garage | NVIDIA SimReady | [`vehicleSupport_scissor_lift_c01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/vehicleSupport_scissor_lift_c01) |
+| Floor jack | Garage | NVIDIA SimReady | [`vehicleSupport_floor_jack_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/vehicleSupport_floor_jack_a01) |
+| Jack stand | Garage | NVIDIA SimReady | [`vehicleSupport_jack_stand_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/vehicleSupport_jack_stand_b01) |
+| Rolling car dolly | Garage | NVIDIA SimReady | [`vehicleSupport_rolling_dolly_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/vehicleSupport_rolling_dolly_a01) |
+| Engine stand | Garage | NVIDIA SimReady | [`serviceTool_engine_stand_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/serviceTool_engine_stand_a01) |
+| Engine crane | Garage | NVIDIA SimReady | [`serviceTool_engine_crane_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/serviceTool_engine_crane_a01) |
+| Wheel balancer | Garage | NVIDIA SimReady | [`testingTool_wheel_balancing_machine_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/testingTool_wheel_balancing_machine_a01) |
+| Mechanic's tool cart | Garage | NVIDIA SimReady | [`equipment_mechanic_tool_cart_g01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/equipment_mechanic_tool_cart_g01) |
+| Rolling tool cabinet | Garage | NVIDIA SimReady | [`equipment_rolling_tool_cabinet_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/equipment_rolling_tool_cabinet_a01) |
+| Tire rack | Garage | NVIDIA SimReady | [`storage_tire_rack_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/storage_tire_rack_a01) |
+| Air compressor | Garage | NVIDIA SimReady | [`equipment_airCompressor_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/equipment_airCompressor_a01) |
+| Wheel chock | Garage | NVIDIA SimReady | [`vehicleSupport_wheel_chock_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/vehicleSupport_wheel_chock_a01) |
+| Engine oil | Garage | NVIDIA SimReady | [`consumable_engine_oil_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/consumable_engine_oil_a01) |
+| Alphabet soup | LIBERO | LIBERO (MIT) | [`stable_hope_objects/alphabet_soup/alphabet_soup.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_hope_objects/alphabet_soup/alphabet_soup.xml) |
+| BBQ sauce | LIBERO | LIBERO (MIT) | [`stable_hope_objects/bbq_sauce/bbq_sauce.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_hope_objects/bbq_sauce/bbq_sauce.xml) |
+| Butter | LIBERO | LIBERO (MIT) | [`stable_hope_objects/butter/butter.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_hope_objects/butter/butter.xml) |
+| Chocolate pudding | LIBERO | LIBERO (MIT) | [`stable_hope_objects/chocolate_pudding/chocolate_pudding.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_hope_objects/chocolate_pudding/chocolate_pudding.xml) |
+| Cookies | LIBERO | LIBERO (MIT) | [`stable_hope_objects/cookies/cookies.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_hope_objects/cookies/cookies.xml) |
+| Cream cheese | LIBERO | LIBERO (MIT) | [`stable_hope_objects/cream_cheese/cream_cheese.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_hope_objects/cream_cheese/cream_cheese.xml) |
+| Ketchup | LIBERO | LIBERO (MIT) | [`stable_hope_objects/ketchup/ketchup.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_hope_objects/ketchup/ketchup.xml) |
+| Macaroni and cheese | LIBERO | LIBERO (MIT) | [`stable_hope_objects/macaroni_and_cheese/macaroni_and_cheese.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_hope_objects/macaroni_and_cheese/macaroni_and_cheese.xml) |
+| Milk | LIBERO | LIBERO (MIT) | [`stable_hope_objects/milk/milk.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_hope_objects/milk/milk.xml) |
+| Orange juice | LIBERO | LIBERO (MIT) | [`stable_hope_objects/orange_juice/orange_juice.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_hope_objects/orange_juice/orange_juice.xml) |
+| Popcorn | LIBERO | LIBERO (MIT) | [`stable_hope_objects/popcorn/popcorn.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_hope_objects/popcorn/popcorn.xml) |
+| Salad dressing | LIBERO | LIBERO (MIT) | [`stable_hope_objects/salad_dressing/salad_dressing.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_hope_objects/salad_dressing/salad_dressing.xml) |
+| Salad dressing, new | LIBERO | LIBERO (MIT) | [`stable_hope_objects/new_salad_dressing/new_salad_dressing.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_hope_objects/new_salad_dressing/new_salad_dressing.xml) |
+| Tomato sauce | LIBERO | LIBERO (MIT) | [`stable_hope_objects/tomato_sauce/tomato_sauce.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_hope_objects/tomato_sauce/tomato_sauce.xml) |
+| Black bowl | LIBERO | LIBERO (MIT) | [`stable_scanned_objects/akita_black_bowl/akita_black_bowl.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_scanned_objects/akita_black_bowl/akita_black_bowl.xml) |
+| White bowl | LIBERO | LIBERO (MIT) | [`stable_scanned_objects/white_bowl/white_bowl.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_scanned_objects/white_bowl/white_bowl.xml) |
+| Red bowl | LIBERO | LIBERO (MIT) | [`stable_scanned_objects/red_bowl/red_bowl.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_scanned_objects/red_bowl/red_bowl.xml) |
+| Plate | LIBERO | LIBERO (MIT) | [`stable_scanned_objects/plate/plate.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_scanned_objects/plate/plate.xml) |
+| Porcelain ramekin | LIBERO | LIBERO (MIT) | [`stable_scanned_objects/glazed_rim_porcelain_ramekin/glazed_rim_porcelain_ramekin.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_scanned_objects/glazed_rim_porcelain_ramekin/glazed_rim_porcelain_ramekin.xml) |
+| Frying pan | LIBERO | LIBERO (MIT) | [`stable_scanned_objects/chefmate_8_frypan/chefmate_8_frypan.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_scanned_objects/chefmate_8_frypan/chefmate_8_frypan.xml) |
+| Basket | LIBERO | LIBERO (MIT) | [`stable_scanned_objects/basket/basket.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_scanned_objects/basket/basket.xml) |
+| Plate rack | LIBERO | LIBERO (MIT) | [`stable_scanned_objects/simple_rack/simple_rack.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/stable_scanned_objects/simple_rack/simple_rack.xml) |
+| Red coffee mug | LIBERO | LIBERO (MIT) | [`turbosquid_objects/red_coffee_mug/red_coffee_mug.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/turbosquid_objects/red_coffee_mug/red_coffee_mug.xml) |
+| Porcelain mug | LIBERO | LIBERO (MIT) | [`turbosquid_objects/porcelain_mug/porcelain_mug.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/turbosquid_objects/porcelain_mug/porcelain_mug.xml) |
+| White and yellow mug | LIBERO | LIBERO (MIT) | [`turbosquid_objects/white_yellow_mug/white_yellow_mug.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/turbosquid_objects/white_yellow_mug/white_yellow_mug.xml) |
+| Moka pot | LIBERO | LIBERO (MIT) | [`turbosquid_objects/moka_pot/moka_pot.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/turbosquid_objects/moka_pot/moka_pot.xml) |
+| Wine bottle | LIBERO | LIBERO (MIT) | [`turbosquid_objects/wine_bottle/wine_bottle.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/turbosquid_objects/wine_bottle/wine_bottle.xml) |
+| Wine rack | LIBERO | LIBERO (MIT) | [`turbosquid_objects/wine_rack/wine_rack.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/turbosquid_objects/wine_rack/wine_rack.xml) |
+| Black book | LIBERO | LIBERO (MIT) | [`turbosquid_objects/black_book/black_book.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/turbosquid_objects/black_book/black_book.xml) |
+| Yellow book | LIBERO | LIBERO (MIT) | [`turbosquid_objects/yellow_book/yellow_book.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/turbosquid_objects/yellow_book/yellow_book.xml) |
+| Desk caddy | LIBERO | LIBERO (MIT) | [`turbosquid_objects/desk_caddy/desk_caddy.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/turbosquid_objects/desk_caddy/desk_caddy.xml) |
+| Wooden tray | LIBERO | LIBERO (MIT) | [`turbosquid_objects/wooden_tray/wooden_tray.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/turbosquid_objects/wooden_tray/wooden_tray.xml) |
+| White storage box | LIBERO | LIBERO (MIT) | [`turbosquid_objects/white_storage_box/white_storage_box.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/turbosquid_objects/white_storage_box/white_storage_box.xml) |
+| Bowl drainer | LIBERO | LIBERO (MIT) | [`turbosquid_objects/bowl_drainer/bowl_drainer.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/turbosquid_objects/bowl_drainer/bowl_drainer.xml) |
+| Dining set | LIBERO | LIBERO (MIT) | [`turbosquid_objects/dining_set_group/dining_set_group.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/turbosquid_objects/dining_set_group/dining_set_group.xml) |
+| Wooden shelf | LIBERO | LIBERO (MIT) | [`turbosquid_objects/wooden_shelf/wooden_shelf.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/turbosquid_objects/wooden_shelf/wooden_shelf.xml) |
+| Two-layer wooden shelf | LIBERO | LIBERO (MIT) | [`turbosquid_objects/wooden_two_layer_shelf/wooden_two_layer_shelf.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/turbosquid_objects/wooden_two_layer_shelf/wooden_two_layer_shelf.xml) |
+| Microwave | LIBERO | LIBERO (MIT) | [`articulated_objects/microwave.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/articulated_objects/microwave.xml) |
+| Flat stove | LIBERO | LIBERO (MIT) | [`articulated_objects/flat_stove.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/articulated_objects/flat_stove.xml) |
+| White cabinet | LIBERO | LIBERO (MIT) | [`articulated_objects/white_cabinet.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/articulated_objects/white_cabinet.xml) |
+| Wooden cabinet | LIBERO | LIBERO (MIT) | [`articulated_objects/wooden_cabinet.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/articulated_objects/wooden_cabinet.xml) |
+| Short cabinet | LIBERO | LIBERO (MIT) | [`articulated_objects/short_cabinet.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/articulated_objects/short_cabinet.xml) |
+| Sliding cabinet | LIBERO | LIBERO (MIT) | [`articulated_objects/slide_cabinet.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/articulated_objects/slide_cabinet.xml) |
+| Short fridge | LIBERO | LIBERO (MIT) | [`articulated_objects/short_fridge.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/articulated_objects/short_fridge.xml) |
+| Faucet | LIBERO | LIBERO (MIT) | [`articulated_objects/faucet.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/articulated_objects/faucet.xml) |
+| Basin faucet | LIBERO | LIBERO (MIT) | [`articulated_objects/basin_faucet.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/articulated_objects/basin_faucet.xml) |
+| Window | LIBERO | LIBERO (MIT) | [`articulated_objects/window.xml`](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/master/libero/libero/assets/articulated_objects/window.xml) |

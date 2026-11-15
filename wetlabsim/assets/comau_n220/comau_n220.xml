@@ -1,0 +1,127 @@
+<mujoco model="comau_n220">
+  <compiler angle="radian" meshdir="assets" autolimits="true" />
+  <option integrator="implicitfast" />
+  <default>
+    <mesh inertia="shell" />
+    <default class="comau_n220">
+      <general dyntype="none" biastype="affine" />
+      <default class="visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2" />
+      </default>
+      <default class="collision">
+        <geom type="mesh" group="3" />
+      </default>
+    </default>
+  </default>
+  <asset>
+    <material name="c0" rgba="0.721 0.106 0.055 1" specular="0.5" shininess="0.72" reflectance="0" />
+    <mesh name="base_0" file="base_0.obj" />
+    <material name="c1" rgba="0.251 0.251 0.251 1" specular="0.8" shininess="0.68" reflectance="0.1" />
+    <mesh name="base_1" file="base_1.obj" />
+    <mesh name="link1_0" file="link1_0.obj" />
+    <material name="c2" rgba="0.25 0.25 0.25 1" specular="0.5" shininess="0.6" reflectance="0" />
+    <mesh name="link1_1" file="link1_1.obj" />
+    <material name="c3" rgba="0.25 0.25 0.25 1" specular="0.5" shininess="0.72" reflectance="0" />
+    <mesh name="link1_2" file="link1_2.obj" />
+    <mesh name="link2_0" file="link2_0.obj" />
+    <mesh name="link3_0" file="link3_0.obj" />
+    <mesh name="link3_1" file="link3_1.obj" />
+    <mesh name="link4_0" file="link4_0.obj" />
+    <mesh name="link4_1" file="link4_1.obj" />
+    <material name="c4" rgba="0.005 0.005 0.005 1" specular="0.5" shininess="0.58" reflectance="0" />
+    <mesh name="link4_2" file="link4_2.obj" />
+    <mesh name="link5_0" file="link5_0.obj" />
+    <mesh name="link5_1" file="link5_1.obj" />
+    <material name="c5" rgba="0.251 0.251 0.251 1" specular="0.8" shininess="0.8" reflectance="0.1" />
+    <mesh name="link6_0" file="link6_0.obj" />
+    <mesh name="base_collision_0" file="base_collision_0.obj" />
+    <mesh name="link1_collision_0" file="link1_collision_0.obj" />
+    <mesh name="link2_collision_0" file="link2_collision_0.obj" />
+    <mesh name="link3_collision_0" file="link3_collision_0.obj" />
+    <mesh name="link4_collision_0" file="link4_collision_0.obj" />
+    <mesh name="link5_collision_0" file="link5_collision_0.obj" />
+    <mesh name="link6_collision_0" file="link6_collision_0.obj" />
+  </asset>
+  <worldbody>
+    <body name="base" childclass="comau_n220">
+      <inertial pos="-0.05952 0.00056 0.17172" quat="0.999774 -0.004913 0.0026 -0.020524" mass="170.234" diaginertia="9.05233 12.5216 17.2353" />
+      <geom class="visual" mesh="base_0" material="c0" />
+      <geom class="visual" mesh="base_1" material="c1" />
+      <geom class="collision" mesh="base_collision_0" name="base_collision_0" />
+      <body name="link1" pos="0 0 0.289" quat="0.707105 -0.707108 0 0">
+        <inertial pos="0.1442 -0.31393 -0.06472" quat="0.587202 -0.773803 0.200492 -0.127378" mass="482.102" diaginertia="17.7651 40.6391 47.055" />
+        <joint name="joint1" pos="0 0 0" axis="0 1 0" range="-3.1415 3.1415" />
+        <geom class="visual" mesh="link1_0" material="c0" />
+        <geom class="visual" mesh="link1_1" material="c2" />
+        <geom class="visual" mesh="link1_2" material="c3" />
+        <geom class="collision" mesh="link1_collision_0" name="link1_collision_0" />
+        <body name="link2" pos="0.4 -0.486 -0.225" quat="0.707105 0 0 -0.707108">
+          <inertial pos="0.41913 0.0697 -0.05037" quat="0.99189 -0.109001 0.004765 -0.065193" mass="141.404" diaginertia="2.59706 21.6218 22.8164" />
+          <joint name="joint2" pos="0 0 0" axis="0 0 1" range="-1.3439 1.3264" />
+          <geom class="visual" mesh="link2_0" material="c0" />
+          <geom class="collision" mesh="link2_collision_0" name="link2_collision_0" />
+          <body name="link3" pos="1.05 0 0" quat="0.499998 -0.5 0.500002 -0.5">
+            <inertial pos="0.12946 -0.22699 0.08872" quat="-0.278131 0.904058 0.060437 0.318857" mass="233.697" diaginertia="6.43491 12.7379 13.1206" />
+            <joint name="joint3" pos="0 0 0" axis="0 1 0" range="-2.9147 1.2915" />
+            <geom class="visual" mesh="link3_0" material="c0" />
+            <geom class="visual" mesh="link3_1" material="c3" />
+            <geom class="collision" mesh="link3_collision_0" name="link3_collision_0" />
+            <body name="link4" pos="0.28 -0.225 0" quat="0.707105 0.707108 0 0">
+              <inertial pos="-0.00028 0.86462 -0.08839" quat="0.702832 -0.07076 -0.095266 -0.701388" mass="111.516" diaginertia="1.13468 10.5989 10.6872" />
+              <joint name="joint4" pos="0 0 0" axis="0 -1 0" range="-3.4906 3.4906" />
+              <geom class="visual" mesh="link4_0" material="c0" />
+              <geom class="visual" mesh="link4_1" material="c2" />
+              <geom class="visual" mesh="link4_2" material="c4" />
+              <geom class="collision" mesh="link4_collision_0" name="link4_collision_0" />
+              <body name="link5" pos="0 1.22 0" quat="0.707105 -0.707108 0 0">
+                <inertial pos="0.01254 -0.00062 0.05835" quat="-0.118374 0.63939 0.202026 0.732362" mass="42.657" diaginertia="0.258585 0.67909 0.745394" />
+                <joint name="joint5" pos="0 0 0" axis="0 -1 0" range="-2.1816 2.1816" />
+                <geom class="visual" mesh="link5_0" material="c0" />
+                <geom class="visual" mesh="link5_1" material="c2" />
+                <geom class="collision" mesh="link5_collision_0" name="link5_collision_0" />
+                <body name="link6" pos="0 0 0.2295" quat="-4e-06 0 0 1">
+                  <inertial pos="0 0 0.2195" quat="1 0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0002" />
+                  <joint name="joint6" pos="0 0 0" axis="0 0 -1" range="-3.4906 3.4906" />
+                  <geom class="visual" mesh="link6_0" material="c5" />
+                  <geom class="collision" mesh="link6_collision_0" name="link6_collision_0" />
+                  <site name="flange" pos="0 0 5.31418e-07" quat="1 0 0 0" size="0.01" group="5" />
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <contact>
+    <exclude body1="base" body2="link1" />
+    <exclude body1="base" body2="link2" />
+    <exclude body1="base" body2="link3" />
+    <exclude body1="base" body2="link4" />
+    <exclude body1="base" body2="link5" />
+    <exclude body1="base" body2="link6" />
+    <exclude body1="link1" body2="link2" />
+    <exclude body1="link1" body2="link3" />
+    <exclude body1="link1" body2="link4" />
+    <exclude body1="link1" body2="link5" />
+    <exclude body1="link1" body2="link6" />
+    <exclude body1="link2" body2="link3" />
+    <exclude body1="link2" body2="link4" />
+    <exclude body1="link2" body2="link5" />
+    <exclude body1="link2" body2="link6" />
+    <exclude body1="link3" body2="link4" />
+    <exclude body1="link3" body2="link5" />
+    <exclude body1="link3" body2="link6" />
+    <exclude body1="link4" body2="link5" />
+    <exclude body1="link4" body2="link6" />
+    <exclude body1="link5" body2="link6" />
+  </contact>
+  <actuator>
+    <general class="comau_n220" name="joint1" joint="joint1" gainprm="572958" biasprm="0 -572958 -57295.8" ctrlrange="-3.14142 3.14142" />
+    <general class="comau_n220" name="joint2" joint="joint2" gainprm="572958" biasprm="0 -572958 -57295.8" ctrlrange="-1.3439 1.32645" />
+    <general class="comau_n220" name="joint3" joint="joint3" gainprm="572958" biasprm="0 -572958 -57295.8" ctrlrange="-2.9147 1.29154" />
+    <general class="comau_n220" name="joint4" joint="joint4" gainprm="572958" biasprm="0 -572958 -57295.8" ctrlrange="-3.49066 3.49066" />
+    <general class="comau_n220" name="joint5" joint="joint5" gainprm="3.4696e+06" biasprm="0 -3.4696e+06 -1387.84" ctrlrange="-2.18166 2.18166" />
+    <general class="comau_n220" name="joint6" joint="joint6" gainprm="1026" biasprm="0 -1026 -0.41" ctrlrange="-3.49066 3.49066" />
+  </actuator>
+</mujoco>

@@ -1,0 +1,300 @@
+{
+ "source": "handTool_air_ratchet_a01",
+ "usd": "sm_handTool_air_ratchet_a01_01.usd",
+ "mass": 1.50338,
+ "friction": 0.8,
+ "com": null,
+ "size": [
+  0.2564,
+  0.0404,
+  0.0445
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "bit_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      0.0188,
+      0.0188,
+      0.0188,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 8.812063836198153e-06,
+     "friction": 0.3,
+     "restitution": 0.1
+    }
+   ],
+   "mass": 0.078713,
+   "inertial": {
+    "mass": 0.078713,
+    "pos": [
+     1.1e-05,
+     0.0,
+     0.011814
+    ],
+    "diaginertia": [
+     3.45176e-06,
+     2.86507e-05,
+     2.87008e-05
+    ],
+    "quat": [
+     0.707107,
+     0.0,
+     0.707107,
+     -0.0
+    ]
+   },
+   "parent": 1,
+   "collide": false,
+   "joint": {
+    "name": "joint_bit_01_joint_00",
+    "type": "hinge",
+    "drive": {
+     "damping": 0.00057296
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.107459,
+    -2e-06,
+    0.000733
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.108324,
+    -2e-06,
+    0.020493,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "body_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.1331,
+      0.1331,
+      0.1331,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b1_vis_1.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_1.png"
+    },
+    {
+     "mesh": "b1_vis_2.obj",
+     "rgba": [
+      0.2104,
+      0.4569,
+      0.2595,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b1_vis_3.obj",
+     "rgba": [
+      0.0188,
+      0.0188,
+      0.0188,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 0.0002664834761073338,
+     "friction": 0.8,
+     "restitution": 0.8
+    }
+   ],
+   "mass": 1.362105,
+   "inertial": {
+    "mass": 1.362105,
+    "pos": [
+     -0.051219,
+     -0.00018,
+     -0.00254
+    ],
+    "diaginertia": [
+     0.00026959,
+     0.0164755,
+     0.0164794
+    ],
+    "quat": [
+     -0.0,
+     0.0,
+     0.707107,
+     0.707107
+    ]
+   },
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.000865,
+    0.0,
+    0.01976
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.000865,
+    0.0,
+    0.01976,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "body_02_obj_00",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.7356,
+      0.7351,
+      0.7352,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 3.9922150327202295e-06,
+     "friction": 0.3,
+     "restitution": 0.1
+    }
+   ],
+   "mass": 0.062558,
+   "inertial": {
+    "mass": 0.062558,
+    "pos": [
+     0.00911,
+     -1e-05,
+     0.003114
+    ],
+    "diaginertia": [
+     2.66121e-06,
+     1.20683e-05,
+     1.26369e-05
+    ],
+    "quat": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "parent": 1,
+   "collide": false,
+   "joint": {
+    "name": "joint_body_02_joint_00",
+    "type": "hinge",
+    "range": [
+     -0.314159,
+     0.0
+    ],
+    "drive": {
+     "damping": 0.00572958
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     1.0,
+     0.0
+    ]
+   },
+   "pos": [
+    -0.110542,
+    -0.0,
+    0.010188
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.109677,
+    0.0,
+    0.029948,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

@@ -6,6 +6,8 @@ agent drives the Franka here exactly as it does in the wet lab evals.
 """
 from __future__ import annotations
 
+import ctypes
+import gc
 import io
 import math
 import threading
@@ -17,7 +19,7 @@ from PIL import Image
 
 from wetlabsim import scene as WS
 from wetlabsim import tasks as WT
-from wetlabsim.sim import Arm, Humanoid, RobotError, Sim, TwoArm
+from wetlabsim.sim import Arm, Humanoid, Mobile, RobotError, Sim, TwoArm
 
 from . import catalog, tron
 from . import libero as LB
@@ -65,6 +67,17 @@ def _ray_flex(m, d, f: int, p0, dn):
     r = np.linalg.norm(P - t[..., None] * dn, axis=2)
     near = (t > 0) & (r < m.flex_radius[f] + 0.005)
     return float(t[near].min()) if near.any() else None
+
+
+def _release_memory():
+    """Hand the last model's memory back to the system. A big scene's model is hundreds of MB
+    and every edit compiles a new one; the C library otherwise keeps each freed one's pages
+    (glibc's malloc_trim returns them), and a scene built piece by piece grew past 12 GB."""
+    gc.collect()
+    try:
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except (OSError, AttributeError):       # not glibc (macOS): nothing to do
+        pass
 
 
 class PlaygroundSim(Sim):
@@ -115,7 +128,7 @@ class PlaygroundSim(Sim):
     @staticmethod
     def _arm_class(robot: str):
         P = WS.ROBOTS[robot]
-        return Humanoid if P.get("humanoid") else TwoArm if P.get("sides") else Arm
+        return Humanoid if P.get("humanoid") else Mobile if P.get("mobile") else TwoArm if P.get("sides") else Arm
 
     def station(self, uid: str | None = None) -> W.Station | None:
         uid = uid or self.active_station
@@ -178,6 +191,16 @@ class PlaygroundSim(Sim):
             self._model_ver += 1
             self.reset()
             self.paused = True
+
+    def merge_settings(self, more: dict):
+        """A ready-made scene's own scene settings (scenegen.PRESETS), added to the session's:
+        the person's own changes stay. They take effect at the next rebuild (the scene's first
+        station), and show in Scene settings like any other change."""
+        with self.lock:
+            out = {k: (dict(v) if isinstance(v, dict) else v) for k, v in self.settings.items()}
+            for group, vals in more.items():
+                out[group] = {**vals, **out.get(group, {})}
+            self.settings = out
 
     def apply_settings(self, settings: dict):
         """New scene settings: the lab is compiled with them (first, so a combination MuJoCo
@@ -520,6 +543,8 @@ class PlaygroundSim(Sim):
             mujoco.mj_forward(m, d)
             self._wall0, self._sim0 = time.perf_counter(), d.time
             self._model_ver += 1
+            del old_d, snaps
+            _release_memory()
 
     def add(self, item: str, pos, yaw: float = 0.0) -> str:
         if catalog.item(item)["soft"] and W.soft_count(self.placed) >= SOFT_MAX:
@@ -873,7 +898,7 @@ class PlaygroundSim(Sim):
         line up one for one). Call with the lock held."""
         a, b = self.arm_of(src_uid), self.arm_of(dst_uid)
         m, d = self.m, self.d
-        if isinstance(a, Humanoid):      # it stands by itself: its pose relative to where it was put down
+        if isinstance(a, (Humanoid, Mobile)):      # it stands by itself: its pose relative to where it was put down
             b.restore(a.snapshot())
             return
         for ja, jb in zip(a.own_joints, b.own_joints):
@@ -1345,7 +1370,7 @@ class PlaygroundSim(Sim):
                     bp = self.d.xpos[a.base_body].copy()
                     if a.robot == "fr3_duo":   # its origin stands 20 cm above the table, on its riser
                         bp[2] -= WS.FR3_DUO_ORIGIN_HEIGHT
-                    elif isinstance(a, Humanoid):   # it stands on the floor: the ring at its feet
+                    elif isinstance(a, (Humanoid, Mobile)):   # it stands on the floor: the ring at its feet
                         bp[2] = 0.0
                     out.append({"type": "cylinder", "size": [0.17, 0.002, 0], "pos": [bp[0], bp[1], bp[2] + 0.002],
                                 "yaw": 0.0, "rgba": [0.15, 0.45, 0.95, 0.55]})

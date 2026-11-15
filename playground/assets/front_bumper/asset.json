@@ -1,0 +1,79 @@
+{
+ "source": "bodyPart_bumper_front_a01",
+ "usd": "sm_bodyPart_bumper_front_a01_01.usd",
+ "mass": 15.7232,
+ "friction": 0.5,
+ "com": [
+  0.15581,
+  -0.0,
+  0.30454
+ ],
+ "size": [
+  0.6297,
+  1.749,
+  0.5731
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.1144,
+    0.1195,
+    0.1248,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    0.0048,
+    0.0048,
+    0.0048,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_2.obj",
+   "rgba": [
+    0.0048,
+    0.0048,
+    0.0048,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.36488874292202284,
+   "friction": 0.5,
+   "restitution": 0.15
+  }
+ ],
+ "inertial": {
+  "mass": 15.7232,
+  "pos": [
+   0.155814,
+   -0.0,
+   0.30454
+  ],
+  "diaginertia": [
+   4.4315,
+   32.4241,
+   33.9536
+  ],
+  "quat": [
+   0.707107,
+   0.0,
+   0.0,
+   -0.707107
+  ]
+ }
+}

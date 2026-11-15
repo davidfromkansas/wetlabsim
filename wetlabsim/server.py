@@ -425,6 +425,16 @@ class Handler(BaseHTTPRequestHandler):
                     return self._json({"ok": True, "body": s.body_pose(b.get("height"), b.get("pitch"))})
                 mo = s.walk(b.get("vx", 0.0), b.get("vy", 0.0), b.get("yaw_rate", 0.0), b.get("seconds", 1.0))
                 return self._json(self._wait(mo, wait, max(timeout, float(b.get("seconds", 1.0)) + 5)))
+            if p in ("/drive", "/torso", "/head"):   # a wheeled humanoid's base, torso and head
+                if not hasattr(s, "drive"):
+                    if getattr(getattr(s, "arm", s), "parent", None) is not None:
+                        raise RobotError(f"{p[1:]} moves the whole robot: send it to Robot(), not to one arm")
+                    raise RobotError(f"this robot has no {'wheels' if p == '/drive' else p[1:]} to move")
+                if p == "/drive":
+                    mo = s.drive(b.get("vx", 0.0), b.get("yaw_rate", 0.0), b.get("seconds", 1.0))
+                    return self._json(self._wait(mo, wait, max(timeout, float(b.get("seconds", 1.0)) + 5)))
+                mo = (s.torso_move if p == "/torso" else s.head_move)(b["joints"], b.get("speed"))
+                return self._json(self._wait(mo, wait, timeout))
             if p == "/hand":                         # a Dex3-1 hand's seven joints
                 if not hasattr(s, "hand_move"):
                     raise RobotError("this robot has no hand joints to set: use /gripper")

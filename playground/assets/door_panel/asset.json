@@ -1,0 +1,57 @@
+{
+ "source": "bodyPart_door_front_a01",
+ "usd": "sm_bodyPart_door_front_a01_01.usd",
+ "mass": 4.731,
+ "friction": 0.61,
+ "com": [
+  -0.01587,
+  0.03678,
+  0.45201
+ ],
+ "size": [
+  0.1802,
+  1.0421,
+  1.1857
+ ],
+ "collision": "convex hull (as the asset specifies)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.952,
+    0.952,
+    0.9559,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.11514926388048219,
+   "friction": 0.61,
+   "restitution": 0.1
+  }
+ ],
+ "inertial": {
+  "mass": 4.731,
+  "pos": [
+   -0.015868,
+   0.036779,
+   0.452015
+  ],
+  "diaginertia": [
+   0.439968,
+   0.473252,
+   0.88556
+  ],
+  "quat": [
+   0.5,
+   0.5,
+   0.5,
+   0.5
+  ]
+ }
+}

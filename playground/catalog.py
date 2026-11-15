@@ -17,7 +17,7 @@ import pathlib
 
 ASSETS = pathlib.Path(__file__).parent / "assets"
 
-TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Glassware", "Instruments", "PPE", "Tools", "Kitchen", "Bins & Trays", "Cleaning", "Electronics", "Toys & Basics", "Soft", "LIBERO"]
+TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Glassware", "Instruments", "PPE", "Tools", "Kitchen", "Bins & Trays", "Cleaning", "Electronics", "Toys & Basics", "Factory", "Car parts", "Garage", "Soft", "LIBERO"]
 
 # id, tab, label, Hugging Face folder, hollow, fixed
 ITEMS = [
@@ -315,6 +315,94 @@ ITEMS = [
     ("reagent_reservoir", "Lab & Medical", "Reagent reservoir", "forgecad:reagent_reservoir", True, False),
     ("screw_cap_bottle", "Glassware", "Screw-cap bottle", "forgecad:screw_cap_bottle", False, False),
     ("sharps_box", "Lab & Medical", "Sharps box", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R492_sharps_container/06_tabletop_mini_sharps_box", True, False),
+    # Nov 15 the Factory and Car assembly scenes: ForgeCAD's industrial task kits and NVIDIA's
+    # factory, car-part and garage assets
+    ("task_board", "Factory", "Assembly task board", "forgecad:assembly_task_board", False, False),
+    ("gear_kit", "Factory", "Gear meshing kit", "forgecad:gear_meshing_kit", False, False),
+    ("nut_bolt_kit", "Factory", "Nut and bolt kit", "forgecad:nut_bolt_kit", False, False),
+    ("peg_kit", "Factory", "Peg-in-hole kit", "forgecad:peg_in_hole_kit", False, False),
+    ("planetary_gearbox", "Factory", "Planetary gearbox", "forgecad:planetary_gearbox", False, False),
+    ("pulley_shaft_kit", "Factory", "Bearing, pulley and shaft kit", "forgecad:bearing_pulley_shaft_kit", False, False),
+    ("toggle_clamp_plate", "Factory", "Toggle clamp fixture plate", "forgecad:toggle_clamp_fixture_plate", False, False),
+    ("connector_pack", "Factory", "Data connector pack", "forgecad:data_connector_pack", False, False),
+    ("breaker_board", "Factory", "DIN-rail breaker board", "forgecad:din_rail_breaker_board", False, False),
+    ("ball_valve", "Factory", "Ball valve", "forgecad:ball_valve", False, False),
+    ("gate_valve", "Factory", "Gate valve", "forgecad:gate_valve", False, False),
+    ("bench_vise", "Factory", "Bench vise", "forgecad:bench_vise", False, False),
+    ("bench_grinder", "Factory", "Bench grinder", "forgecad:bench_grinder", False, False),
+    ("pegboard", "Factory", "Tool pegboard", "forgecad:pegboard", False, False),
+    ("parts_cabinet", "Factory", "Parts drawer cabinet", "forgecad:parts_cabinet", False, False),
+    ("load_carrier", "Factory", "Small load carrier", "forgecad:small_load_carrier", True, False),
+    ("picking_bin", "Factory", "Bin of parts", "forgecad:bin_picking_bin", True, False),
+    ("lid_tote", "Factory", "Attached-lid tote", "forgecad:attached_lid_tote", True, False),
+    ("socket_set", "Factory", "Ratchet and socket set", "forgecad:ratchet_socket_set", False, False),
+    ("wrench_set", "Factory", "Combination wrench set", "forgecad:combination_wrench_set", False, False),
+    ("cantilever_toolbox", "Factory", "Cantilever toolbox", "forgecad:toolbox", False, False),
+    ("test_bench", "Factory", "Controls test bench", "forgecad:articulation_test_bench", False, False),
+    ("pallet_jack", "Factory", "Pallet jack", "forgecad:manual_pallet_jack", False, True),
+    ("pallet_rack", "Factory", "Pallet rack bay", "forgecad:pallet_rack_bay", False, True),
+    ("roller_conveyor", "Factory", "Roller conveyor", "conveyor_belt_a05", True, True),
+    ("factory_workstation", "Factory", "Factory workstation", "workstation_factory_a01", False, True),
+    ("modular_workbench", "Factory", "Workbench with cabinet", "furniture_workbench_modular_a01", False, True),
+    ("machine_guard", "Factory", "Machine guard", "machineGuard_a01", False, False),
+    ("welding_station", "Factory", "Welding power station", "powerTool_welding_station_a01", False, False),
+    ("impact_wrench", "Factory", "Impact wrench", "powerTool_impact_wrench_a01", False, False),
+    ("air_ratchet", "Factory", "Air ratchet", "handTool_air_ratchet_a01", False, False),
+    ("shop_cart", "Factory", "Shop cart", "cart_mobile_a01", False, True),
+    ("nut_m16", "Factory", "M16 nut", "factory_nut_m16_loose", False, False),
+    ("nut_m8", "Factory", "M8 nut", "factory_nut_m8_loose", False, False),
+    ("bolt_m8", "Factory", "M8 bolt", "factory_bolt_m8_loose", False, False),
+    ("pallet", "Factory", "Pallet", "pallet_a01", False, True),
+    ("cardboard_box", "Factory", "Cardboard box", "box_cardboard_a01", False, False),
+    ("cardboard_box_flat", "Factory", "Cardboard box, flat", "box_cardboard_b01", False, False),
+    ("safety_fence", "Factory", "Safety fence", "barrier_fence_metal_a02", False, True),
+    ("forklift", "Factory", "Forklift", "vehicle_forklift_orange_a01", False, True),
+    ("steel_drum", "Factory", "Steel drum", "drum_steel_a01", False, True),
+    ("fire_extinguisher", "Factory", "Fire extinguisher", "fireExtinguisher_abc_a03", False, False),
+    ("car_body", "Car parts", "Car body", "carFrame_car_frame_assembled_a01", False, True),
+    ("car_hood", "Car parts", "Hood", "bodyPart_hood_a01", False, False),
+    ("car_door", "Car parts", "Door, complete", "bodyPart_door_assembled_c01", False, False),
+    ("door_panel", "Car parts", "Front door panel", "bodyPart_door_front_a01", False, False),
+    ("windscreen", "Car parts", "Windscreen", "bodyPart_windscreen_a01", False, False),
+    ("front_bumper", "Car parts", "Front bumper", "bodyPart_bumper_front_a01", False, False),
+    ("headlight", "Car parts", "Headlight", "bodyPart_headLight_left_a01", False, False),
+    ("side_mirror", "Car parts", "Side mirror", "bodyPart_car_side_mirror_a01", False, False),
+    ("wiper_blades", "Car parts", "Wiper blades", "bodyPart_wiper_blades_a01", False, False),
+    ("car_tire", "Car parts", "Tire", "wheelAssembly_tire_a01", False, False),
+    ("wheel_rim", "Car parts", "Wheel rim", "wheelAssembly_wheel_rim_a01", False, False),
+    ("brake_rotor", "Car parts", "Brake rotor", "brakeSystem_rotor_b01", False, False),
+    ("brake_assembly", "Car parts", "Brake assembly", "brakeSystem_brakes_assembly_a01", False, False),
+    ("brake_caliper", "Car parts", "Brake caliper", "brakeSystem_caliper_b01", False, False),
+    ("brake_pad", "Car parts", "Brake pad", "brakeSystem_brake_pad_a01", False, False),
+    ("wheel_hub", "Car parts", "Wheel hub", "suspension_wheelHubABS_assembly_a01", False, False),
+    ("steering_wheel", "Car parts", "Steering wheel", "steeringSystem_steering_wheel_b01", False, False),
+    ("car_seat", "Car parts", "Bucket seat", "interiorPart_bucket_seat_c01", False, False),
+    ("gauge_cluster", "Car parts", "Gauge cluster", "interiorPart_dashboard_a01", False, False),
+    ("car_battery", "Car parts", "Car battery", "electricalSystem_battery_a01", False, False),
+    ("alternator", "Car parts", "Alternator", "electricalSystem_alternator_a01", False, False),
+    ("spark_plug", "Car parts", "Spark plug", "engineComponent_spark_plug_b01", False, False),
+    ("oil_filter", "Car parts", "Oil filter", "engineComponent_oil_filter_a01", False, False),
+    ("air_filter_box", "Car parts", "Air filter box", "airSystem_air_filter_box_a01", True, False),
+    ("air_filter", "Car parts", "Air filter", "airSystem_air_filter_a01", False, False),
+    ("bulb_h7", "Car parts", "H7 headlight bulb", "consumable_lightBulb_h7_a01", False, False),
+    ("fuse_mini", "Car parts", "Mini fuse", "consumable_fuse_mini_yellow_a01", False, False),
+    ("radiator", "Car parts", "Radiator", "coolingSystem_radiator_a01", False, False),
+    ("electric_motor", "Car parts", "Electric drive motor", "engineAssembly_electric_engine_a01", False, False),
+    ("v8_engine", "Car parts", "V8 engine", "engineAssembly_v8_engine_a01", False, False),
+    ("ev_charger", "Garage", "EV charging connector", "forgecad:ev_charging_connector", False, True),
+    ("scissor_lift", "Garage", "Scissor lift", "vehicleSupport_scissor_lift_c01", False, True),
+    ("floor_jack", "Garage", "Floor jack", "vehicleSupport_floor_jack_a01", False, False),
+    ("jack_stand", "Garage", "Jack stand", "vehicleSupport_jack_stand_b01", False, False),
+    ("car_dolly", "Garage", "Rolling car dolly", "vehicleSupport_rolling_dolly_a01", False, True),
+    ("engine_stand", "Garage", "Engine stand", "serviceTool_engine_stand_a01", False, True),
+    ("engine_crane", "Garage", "Engine crane", "serviceTool_engine_crane_a01", False, True),
+    ("wheel_balancer", "Garage", "Wheel balancer", "testingTool_wheel_balancing_machine_a01", False, True),
+    ("mechanic_cart", "Garage", "Mechanic's tool cart", "equipment_mechanic_tool_cart_g01", False, True),
+    ("tool_cabinet", "Garage", "Rolling tool cabinet", "equipment_rolling_tool_cabinet_a01", False, True),
+    ("tire_rack", "Garage", "Tire rack", "storage_tire_rack_a01", False, True),
+    ("air_compressor", "Garage", "Air compressor", "equipment_airCompressor_a01", False, True),
+    ("wheel_chock", "Garage", "Wheel chock", "vehicleSupport_wheel_chock_a01", False, False),
+    ("engine_oil", "Garage", "Engine oil", "consumable_engine_oil_a01", False, False),
     # Nov 15 LIBERO's own objects and fixtures (Lifelong-Robot-Learning/LIBERO,
     # libero/libero/assets), its MuJoCo models attached as they are (tools/build_libero_objects.py)
     ("libero_alphabet_soup", "LIBERO", "Alphabet soup", "libero:stable_hope_objects/alphabet_soup/alphabet_soup.xml", False, False),
@@ -376,6 +464,8 @@ MAX_TRIS = {i[0]: 200_000 for i in ITEMS if i[3].startswith("palatial:")}
 # The worktop of a counter whose backsplash stands higher than it (the asset's height is the
 # backsplash's): the top of its worktop collider.
 WORKTOP = {"countertop": 0.738, "countertop_2": 0.754}
+# The roller conveyor carries things on its rollers, below its side rails: the top of a roller.
+WORKTOP["roller_conveyor"] = 0.768
 
 FURNITURE_CONTROLS_MOVE = {"range_oven", "washer", "kitchenette", "dishwasher", "range_hood"}
 
@@ -425,12 +515,18 @@ ROBOTS = [
      "reach_mm": 850, "payload_kg": 5, "joints": 6, "thumb": "/pg/static/station_ur5e.png"},
     {"id": "piper", "label": "AgileX PiPER", "maker": "AgileX Robotics", "gripper": "AgileX gripper",
      "reach_mm": 626, "payload_kg": 1.5, "joints": 6, "thumb": "/pg/static/station_piper.png"},
+    {"id": "crx30ia", "label": "FANUC CRX-30iA", "maker": "FANUC", "gripper": "Vacuum gripper",
+     "reach_mm": 1756, "payload_kg": 30, "joints": 6, "thumb": "/pg/static/station_crx30ia.png"},
+    {"id": "n220", "label": "Comau N-220", "maker": "Comau", "gripper": "Vacuum lifting frame",
+     "reach_mm": 2670, "payload_kg": 220, "joints": 6, "thumb": "/pg/static/station_n220.png"},
     {"id": "aloha", "label": "ALOHA (two arms)", "maker": "Trossen Robotics", "gripper": "2 grippers",
      "reach_mm": 750, "payload_kg": 0.75, "joints": "2 × 6", "arms": 2, "thumb": "/pg/static/station_aloha.png"},
     {"id": "fr3_duo", "label": "FR3 Duo (two arms)", "maker": "Franka Robotics", "gripper": "2 × 2F-85",
      "reach_mm": 855, "payload_kg": 3, "joints": "2 × 7", "arms": 2, "thumb": "/pg/static/station_fr3_duo.png"},
     {"id": "g1", "label": "Unitree G1 (humanoid)", "maker": "Unitree Robotics", "gripper": "2 × Dex3-1 hands",
      "reach_mm": 500, "payload_kg": 3, "joints": "29 + 2 × 7", "arms": 2, "thumb": "/pg/static/station_g1.png"},
+    {"id": "rby1", "label": "RB-Y1 (wheeled humanoid)", "maker": "Rainbow Robotics", "gripper": "2 × two-finger",
+     "reach_mm": 600, "payload_kg": 3, "joints": "2 wheels + 6 + 2 × 7 + 2", "arms": 2, "thumb": "/pg/static/station_rby1.png"},
 ]
 
 

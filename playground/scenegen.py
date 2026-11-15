@@ -537,6 +537,162 @@ PRESETS = {
     },
 }
 
+# The factory and the car assembly line hold many parts that rest untouched while one robot
+# works: MuJoCo's sleeping ("Sleeping" in its Simulation chapter) leaves resting things out of
+# the physics until something touches them. Its tolerance is the speed below which a thing counts
+# as resting: 1 cm/s, since tightly fitted parts (a gear on its shaft) tremble at a few mm/s.
+SLEEP = {"flag": {"sleep": True}, "option": {"sleep_tolerance": 0.01}}
+
+PRESETS["factory"] = {
+    "title": "Factory", "label": "Factory",
+    "plan": "An assembly line: a roller conveyor down the middle carrying totes and boxes, six assembly "
+            "benches along it, a FANUC arm stacking boxes on a pallet at the end, a wheeled humanoid that "
+            "drives around the line, and pallet racks, a forklift and drums around it.",
+    "settings": SLEEP,
+    "stations": [
+        {"robot": "franka", "kind": "table", "x": -3.2, "y": 2.05, "yaw": -90,
+         "task": "Take the round pegs out of the peg block and put them in the blue crate."},
+        {"robot": "ur5e", "kind": "table", "x": -1.5, "y": 2.05, "yaw": -90,
+         "task": "On the assembly task board, pull out the USB plug and plug it back in."},
+        {"robot": "fr3_duo", "kind": "table", "x": 0.2, "y": 2.05, "yaw": -90,
+         "task": "Hold the gearbox still with one arm and turn its top knob one full turn with the other."},
+        {"robot": "aloha", "kind": "table", "x": -3.2, "y": -2.05, "yaw": 90,
+         "task": "Open the breaker board's clear door and switch all six breakers the other way."},
+        {"robot": "piper", "kind": "table", "x": -1.5, "y": -2.05, "yaw": 90,
+         "task": "Pull the USB-C cable out of the port panel and plug the HDMI cable in."},
+        {"robot": "g1", "kind": "table", "x": 0.2, "y": -2.05, "yaw": 90,
+         "task": "Turn the ball valve's handle a quarter turn to close the valve."},
+        {"robot": "crx30ia", "kind": "pallet", "x": 2.8, "y": -1.2, "yaw": -90,
+         "task": "Pick the cardboard box up off the roller conveyor with the vacuum tool and set it down on the pallet."},
+        # a wheeled humanoid at the head of the line: its cell is open, so it can drive anywhere
+        {"robot": "rby1", "kind": "conveyor", "x": -5.07, "y": 0.0, "yaw": 90,
+         "task": "Pick up the air ratchet from the conveyor in front of you, drive around the end of the conveyor to the steel drums, and set it down on top of a drum."},
+    ],
+    "furniture": [
+        {"item": "roller_conveyor", "x": -3.03, "y": 0.0, "yaw": 90, "gap": 0},
+        {"item": "roller_conveyor", "x": -1.01, "y": 0.0, "yaw": 90, "gap": 0},
+        {"item": "roller_conveyor", "x": 1.01, "y": 0.0, "yaw": 90, "gap": 0},
+        {"item": "pallet_rack", "x": -3.4, "y": 5.3, "yaw": 0},
+        {"item": "pallet_rack", "x": -0.2, "y": 5.3, "yaw": 0},
+        {"item": "pallet", "x": 3.0, "y": 2.2, "yaw": 0},
+        {"item": "forklift", "x": 3.4, "y": 4.6, "yaw": 0},
+        {"item": "steel_drum", "x": -5.4, "y": 1.3, "yaw": 0},
+        {"item": "steel_drum", "x": -5.4, "y": 2.15, "yaw": 0},
+        {"item": "steel_drum", "x": -5.4, "y": 3.0, "yaw": 0},
+        {"item": "safety_fence", "x": 4.5, "y": -0.3, "yaw": 90},
+        {"item": "safety_fence", "x": 4.5, "y": -1.7, "yaw": 90},
+        {"item": "safety_fence", "x": 3.6, "y": -3.0, "yaw": 0},
+        {"item": "safety_fence", "x": 2.2, "y": -3.0, "yaw": 0},
+        {"item": "modular_workbench", "x": -5.4, "y": -2.2, "yaw": -90},
+        {"item": "shop_cart", "x": 2.3, "y": 3.9, "yaw": 0},
+        {"item": "pallet_jack", "x": 4.9, "y": 3.2, "yaw": 0},
+    ],
+    "objects": [
+        # on the conveyor (furniture 0-2: its own long side is its y)
+        {"item": "lid_tote", "on": "furniture", "furniture": 0, "dx": 0.0, "dy": 0.45, "yaw": 0},
+        {"item": "load_carrier", "on": "furniture", "furniture": 0, "dx": 0.0, "dy": -0.4, "yaw": 0},
+        {"item": "lid_tote", "on": "furniture", "furniture": 1, "dx": 0.0, "dy": 0.0, "yaw": 0},
+        {"item": "cardboard_box_flat", "on": "furniture", "furniture": 2, "dx": 0.0, "dy": 0.45, "yaw": 0},
+        {"item": "cardboard_box", "on": "furniture", "furniture": 2, "dx": 0.0, "dy": -0.5, "yaw": 0},
+        # boxes waiting on the spare pallet (furniture 5)
+        {"item": "cardboard_box", "on": "furniture", "furniture": 5, "dx": -0.22, "dy": 0.0, "yaw": 90},
+        # the benches
+        {"item": "peg_kit", "on": "station", "station": 0, "x": 0.15, "y": 0.0, "yaw": 90},
+        {"item": "load_carrier", "on": "station", "station": 0, "x": 0.2, "y": -0.42, "yaw": 0},
+        {"item": "parts_cabinet", "on": "station", "station": 0, "x": 0.45, "y": 0.42, "yaw": -90},
+        {"item": "task_board", "on": "station", "station": 1, "x": 0.2, "y": 0.0, "yaw": 0},
+        {"item": "cantilever_toolbox", "on": "station", "station": 1, "x": 0.4, "y": -0.42, "yaw": 0},
+        {"item": "planetary_gearbox", "on": "station", "station": 2, "x": 0.2, "y": 0.0, "yaw": 0},
+        {"item": "bench_vise", "on": "station", "station": 2, "x": 0.45, "y": 0.4, "yaw": 0},
+        {"item": "breaker_board", "on": "station", "station": 3, "x": 0.25, "y": 0.0, "yaw": 0},
+        {"item": "connector_pack", "on": "station", "station": 4, "x": 0.1, "y": 0.0, "yaw": 0},
+        {"item": "ball_valve", "on": "station", "station": 5, "x": -0.6, "y": 0.0, "yaw": 90},
+        {"item": "toolbox", "on": "station", "station": 5, "x": -0.55, "y": -0.42, "yaw": 0},
+        {"item": "air_ratchet", "on": "station", "station": 7, "x": -0.25, "y": 0.0, "yaw": 90},
+        {"item": "load_carrier", "on": "station", "station": 7, "x": 0.0, "y": -0.6, "yaw": 0},
+    ],
+}
+
+PRESETS["car"] = {
+    "title": "Car assembly", "label": "Car assembly",
+    "plan": "A car assembly bay: a car body in the middle with a big Comau arm that lifts the hood and "
+            "windscreen onto it, a FANUC arm moving boxed parts, benches for brakes, engine parts, "
+            "electrics and tools, a wheeled humanoid that drives to the car, and garage equipment around them.",
+    "settings": SLEEP,
+    "stations": [
+        {"robot": "n220", "kind": "car", "x": 0.0, "y": 0.0, "yaw": 0,
+         "task": "Pick the hood up off the pallets with the vacuum tool and lower it onto the front of the car body, over the engine bay."},
+        {"robot": "crx30ia", "kind": "pallet", "x": 3.3, "y": 1.6, "yaw": 90,
+         "task": "Pick the cardboard box up off the pallet with the vacuum tool and set it down on the cart."},
+        {"robot": "fr3_duo", "kind": "table", "x": -3.4, "y": -4.7, "yaw": 90,
+         "task": "Put the two brake pads on top of the brake rotor."},
+        {"robot": "franka", "kind": "table", "x": -1.7, "y": -4.7, "yaw": 90,
+         "task": "Put the oil filter and the air filter in the blue crate."},
+        {"robot": "aloha", "kind": "table", "x": 0.0, "y": -4.7, "yaw": 90,
+         "task": "Put the headlight bulb and the fuse in the toolbox tray."},
+        {"robot": "g1", "kind": "table", "x": 1.7, "y": -4.7, "yaw": 90,
+         "task": "Pick up the bottle of engine oil and stand it next to the car battery."},
+        {"robot": "ur5e", "kind": "table", "x": 3.4, "y": -4.7, "yaw": 90,
+         "task": "Put the four spark plugs in the blue crate."},
+        # a wheeled humanoid: its cell is open, so it can drive to the car
+        {"robot": "rby1", "kind": "table", "x": 4.9, "y": -0.6, "yaw": 180,
+         "task": "Pick up the bottle of engine oil from your table, drive to the front of the car, and put the bottle down on the floor next to the front bumper."},
+    ],
+    "furniture": [
+        {"item": "pallet", "x": -2.6, "y": 3.0, "yaw": 0, "gap": 0},      # 0, 1: the hood's pallets
+        {"item": "pallet", "x": -2.6, "y": 3.82, "yaw": 0, "gap": 0},
+        {"item": "shop_cart", "x": 4.6, "y": 1.0, "yaw": 0},
+        {"item": "engine_crane", "x": -6.1, "y": -1.2, "yaw": 0},
+        {"item": "engine_stand", "x": -4.3, "y": -2.7, "yaw": 0},
+        {"item": "tire_rack", "x": 2.6, "y": -2.4, "yaw": 0},
+        {"item": "wheel_balancer", "x": 4.4, "y": -2.3, "yaw": 0},
+        {"item": "air_compressor", "x": 0.4, "y": 4.3, "yaw": 0},
+        {"item": "ev_charger", "x": 2.3, "y": 4.3, "yaw": 0},
+        {"item": "mechanic_cart", "x": 1.7, "y": -1.6, "yaw": 0},
+        {"item": "car_dolly", "x": -2.0, "y": -2.6, "yaw": 0},
+    ],
+    "objects": [
+        {"item": "car_hood", "on": "furniture", "furniture": 0, "dx": 0.0, "dy": 0.3, "yaw": 0, "overhang": True},
+        {"item": "windscreen", "on": "floor", "x": -4.1, "y": 1.0, "yaw": 0},
+        {"item": "electric_motor", "on": "floor", "x": -4.4, "y": -0.8, "yaw": 0},
+        {"item": "cardboard_box_flat", "on": "station", "station": 1, "x": 0.1, "y": 0.0, "yaw": 0},
+        {"item": "headlight", "on": "station", "station": 4, "x": 0.5, "y": -0.38, "yaw": 0},
+        {"item": "front_bumper", "on": "floor", "x": 1.9, "y": 3.2, "yaw": 90},
+        {"item": "car_tire", "on": "floor", "x": 1.5, "y": 0.9, "yaw": 0},
+        {"item": "car_tire", "on": "floor", "x": 1.5, "y": -0.2, "yaw": 0},
+        {"item": "wheel_rim", "on": "floor", "x": 3.5, "y": -1.6, "yaw": 0},
+        {"item": "car_seat", "on": "floor", "x": -1.9, "y": -1.3, "yaw": 90},
+        {"item": "floor_jack", "on": "floor", "x": 1.5, "y": -2.6, "yaw": 0},
+        {"item": "jack_stand", "on": "floor", "x": -1.3, "y": 2.9, "yaw": 0},
+        {"item": "jack_stand", "on": "floor", "x": -1.3, "y": 3.4, "yaw": 0},
+        # the benches
+        {"item": "brake_rotor", "on": "station", "station": 2, "x": 0.25, "y": 0.0, "yaw": 0},
+        {"item": "brake_pad", "on": "station", "station": 2, "x": 0.2, "y": -0.38, "yaw": 0},
+        {"item": "brake_pad", "on": "station", "station": 2, "x": 0.35, "y": -0.38, "yaw": 0},
+        {"item": "brake_caliper", "on": "station", "station": 2, "x": 0.3, "y": 0.42, "yaw": 0},
+        {"item": "wheel_hub", "on": "station", "station": 2, "x": 0.6, "y": 0.3, "yaw": 0},
+        {"item": "load_carrier", "on": "station", "station": 3, "x": 0.25, "y": -0.35, "yaw": 0},
+        {"item": "oil_filter", "on": "station", "station": 3, "x": 0.2, "y": 0.1, "yaw": 0},
+        {"item": "air_filter", "on": "station", "station": 3, "x": 0.2, "y": 0.35, "yaw": 0},
+        {"item": "alternator", "on": "station", "station": 3, "x": 0.6, "y": 0.35, "yaw": 0},
+        {"item": "toolbox", "on": "station", "station": 4, "x": 0.15, "y": 0.0, "yaw": 0},
+        {"item": "bulb_h7", "on": "station", "station": 4, "x": -0.1, "y": 0.12, "yaw": 0},
+        {"item": "fuse_mini", "on": "station", "station": 4, "x": -0.1, "y": -0.12, "yaw": 0},
+        {"item": "wiper_blades", "on": "station", "station": 4, "x": 0.4, "y": 0.0, "yaw": 0},
+        {"item": "car_battery", "on": "station", "station": 5, "x": -0.6, "y": 0.2, "yaw": 0},
+        {"item": "engine_oil", "on": "station", "station": 5, "x": -0.6, "y": -0.2, "yaw": 0},
+        {"item": "impact_wrench", "on": "station", "station": 5, "x": -0.4, "y": -0.45, "yaw": 0},
+        {"item": "load_carrier", "on": "station", "station": 6, "x": 0.25, "y": -0.35, "yaw": 0},
+        {"item": "spark_plug", "on": "station", "station": 6, "x": 0.2, "y": 0.05, "yaw": 0},
+        {"item": "spark_plug", "on": "station", "station": 6, "x": 0.2, "y": 0.13, "yaw": 0},
+        {"item": "spark_plug", "on": "station", "station": 6, "x": 0.2, "y": 0.21, "yaw": 0},
+        {"item": "spark_plug", "on": "station", "station": 6, "x": 0.2, "y": 0.29, "yaw": 0},
+        {"item": "steering_wheel", "on": "station", "station": 6, "x": 0.6, "y": 0.2, "yaw": 0},
+        {"item": "engine_oil", "on": "station", "station": 7, "x": -0.6, "y": 0.0, "yaw": 0},
+        {"item": "air_ratchet", "on": "station", "station": 7, "x": -0.55, "y": 0.35, "yaw": 0},
+    ],
+}
+
 
 def preset_pick(name: str) -> dict:
     """A ready-made scene's robots and objects, in the shape of a model's pick."""
@@ -647,6 +803,8 @@ class Build:
                 return self._end("stopped")
             stations, furniture, objects = self._clean_layout(lay)
             s.pause()
+            if self.preset and lay.get("settings"):
+                s.merge_settings(lay["settings"])
             off = self._free_spot(stations, furniture, objects)
             if off is None:
                 raise ModelError("there's no free floor space big enough for this scene: "
@@ -715,7 +873,9 @@ class Build:
             if it in want_f:
                 want_f.remove(it)
                 furniture.append({"item": it, "x": _f(f.get("x")), "y": _f(f.get("y")),
-                                  "yaw": math.radians(_f(f.get("yaw")))})
+                                  "yaw": math.radians(_f(f.get("yaw"))),
+                                  # a ready-made scene may butt pieces together (conveyor sections)
+                                  "gap": max(0.0, _f(f.get("gap", 0.15))) if self.preset else 0.15})
         for it in want_f:
             furniture.append({"item": it, "x": 2.5, "y": -1.5 + 1.5 * len(furniture), "yaw": math.pi})
         objects = []
@@ -729,7 +889,9 @@ class Build:
                                 "furniture": _int(o.get("furniture"), 0),
                                 "x": _f(o.get("x")), "y": _f(o.get("y")),
                                 "dx": _f(o.get("dx")), "dy": _f(o.get("dy")),
-                                "yaw": math.radians(_f(o.get("yaw")))})
+                                "yaw": math.radians(_f(o.get("yaw"))),
+                                # a ready-made scene's big part may hang over its pallet's edges
+                                "overhang": bool(self.preset and o.get("overhang"))})
         for k, it in enumerate(want_o):
             objects.append({"item": it, "on": "station", "station": k % max(1, len(stations)),
                             "x": 0.3, "y": 0.0, "dx": 0.0, "dy": 0.0, "yaw": 0.0})
@@ -828,7 +990,7 @@ class Build:
         mine = self._mine_rects()
         for dx, dy in _spiral(0.2, 8):
             r = _item_rect(f["item"], x + dx, y + dy, yaw)
-            if any(_hit(r, b, 0.15) for b in mine):
+            if any(_hit(r, b, f.get("gap", 0.15)) for b in mine):
                 continue
             spot = s.support(f["item"], x + dx, y + dy, yaw)
             if spot["valid"] and spot["surface"] == "the floor":
@@ -878,7 +1040,7 @@ class Build:
             for dx, dy in _spiral(0.04, 8):
                 ddx, ddy = _rot(o["dx"] + dx, o["dy"] + dy, p.yaw)
                 spot = s.support(it, bx + ddx, by + ddy, yaw)
-                if spot["valid"] and spot["level"] and spot["surface"] == want:
+                if spot["valid"] and (spot["level"] or o.get("overhang")) and spot["surface"] == want:
                     return self._add(it, spot, yaw)
             return self._skip(it)
         # the floor (or a furniture piece that wasn't placed: next to the scene's first table)

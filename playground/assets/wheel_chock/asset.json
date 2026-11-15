@@ -1,0 +1,170 @@
+{
+ "source": "vehicleSupport_wheel_chock_a01",
+ "usd": "sm_vehicleSupport_wheel_chock_a01_01.usd",
+ "mass": 11.26642,
+ "friction": 0.3,
+ "com": null,
+ "size": [
+  0.392,
+  0.6176,
+  0.1065
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "armHanfle_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.0075101862685349975,
+     "friction": 0.3,
+     "restitution": 0.1
+    }
+   ],
+   "mass": 5.132957,
+   "inertial": {
+    "mass": 5.132957,
+    "pos": [
+     0.024505,
+     -0.107874,
+     0.029052
+    ],
+    "diaginertia": [
+     0.0410403,
+     0.11361,
+     0.140883
+    ],
+    "quat": [
+     0.707107,
+     0.0,
+     0.0,
+     -0.707107
+    ]
+   },
+   "parent": null,
+   "root": true,
+   "pos": [
+    -0.067207,
+    0.080983,
+    0.040283
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.067207,
+    0.080983,
+    0.040283,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "arm_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 0.004068690707963548,
+     "friction": 0.3,
+     "restitution": 0.1
+    }
+   ],
+   "mass": 6.133468,
+   "inertial": {
+    "mass": 6.133468,
+    "pos": [
+     0.139671,
+     -0.107854,
+     0.01284
+    ],
+    "diaginertia": [
+     0.0276992,
+     0.0865896,
+     0.105979
+    ],
+    "quat": [
+     0.707107,
+     0.0,
+     0.0,
+     -0.707107
+    ]
+   },
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_arm_01_joint_00",
+    "type": "slide",
+    "range": [
+     -0.056656,
+     0.015344
+    ],
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.024656,
+    -0.030982,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.042551,
+    0.050001,
+    0.040283,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

@@ -71,8 +71,69 @@ TOOL = {
   along the base y axis; `[x, y, z, 0, 1.5708, 0]` points it straight ahead along the base
   x axis.
 - No force/torque sensing.""",
+    "n220": """- End effector: a vacuum lifting frame on the axis 6 flange: a steel frame with six rubber
+  suction cups (150 mm across) in two rows of three, 360 mm apart along the tool's x and
+  560 mm apart along its y. It weighs 32 kg.
+- TCP: the middle of the plane of the cup faces, 300 mm from the flange.
+- Tool orientation convention: the TCP's z axis points out of the cups. A TCP pose of
+  `[x, y, z, 0, 3.14159, 0]` points the cups straight down with the frame's long side (three
+  cups) along the base x axis; `[x, y, z, 0, 1.5708, 0]` points them straight ahead along the
+  base x axis.
+- A cup starts to pull about 10 mm from a surface.
+- No force/torque sensing.""",
+    "crx30ia": """- End effector: a vacuum gripper on the J6 flange: a light frame with four rubber suction
+  cups (80 mm across) at the corners of a 400 x 260 mm rectangle (400 mm along the tool's x).
+  It weighs 2.8 kg.
+- TCP: the middle of the plane of the cup faces, 160 mm from the flange.
+- Tool orientation convention: the TCP's z axis points out of the cups. A TCP pose of
+  `[x, y, z, 0, 3.14159, 0]` points the cups straight down with the frame's long side along
+  the base x axis; `[x, y, z, 0, 1.5708, 0]` points them straight ahead along the base x axis.
+- A cup starts to pull about 10 mm from a surface.
+- The arm's contact-stop and hand-guiding functions are not available here: no force/torque
+  readings.""",
 }
-HAND = {"franka": "hand", "ur5e": "tool", "piper": "gripper"}
+HAND = {"franka": "hand", "ur5e": "tool", "piper": "gripper", "n220": "vacuum tool", "crx30ia": "vacuum tool"}
+
+# A big floor-standing arm (the Comau N-220, the FANUC CRX-30iA): on the floor, facing its
+# table, pallet, conveyor or car body.
+FLOOR_ARM_TEMPLATE = """# Site sheet: this installation
+
+What the datasheets can't tell you: how this particular robot is set up.
+
+## Mounting
+
+- {robot_name}, bolted upright to the floor.
+- The robot base frame has its origin at the centre of the base, on the floor. x points
+  forward, y to the robot's left, z up. All positions and poses in the command interface are
+  in this frame, in metres.
+- The floor is the plane z = 0.
+- In front of the robot stands {table} ({w_cm:.0f} x {d_cm:.0f} cm, top {top_cm:.1f} cm above
+  the floor). It extends from x = {x0:.2f} m to x = {x1:.2f} m and from y = {y0:.2f} m to
+  y = {y1:.2f} m.
+
+## Tool settings
+
+{tool}
+
+## Cameras
+
+Two RGB-D cameras, 640 x 480, colour and depth (metres along the camera's z axis). The
+calibration is in `cameras.json`:
+
+- `overhead`: fixed high above the robot's work area, looking straight down. Its pose is given
+  in the robot base frame.
+- `wrist`: on the tool, under its frame between the cups, looking the way the cups face. Its
+  pose is given in the TCP frame (hand-eye calibration).
+
+Poses use OpenCV camera axes (x right, y down, z forward); `rotation` maps camera
+coordinates into the named frame. The lenses have no distortion.
+
+## Start state
+
+At the start of a run the arm is at joint angles
+`{ready}` (rad), {hand} pointing down, vacuum off, not in a
+protective stop.
+"""
 
 # An ALOHA: two arms facing each other across the middle of the table. Each arm's base, in
 # the station's frame (table centre, x away from the operator's side): Menagerie's mounts.
@@ -232,7 +293,64 @@ At the start of a run the robot stands still, the left arm is at joint angles `{
 and the right arm at `{ready_r}` (rad): forearms raised in front of the chest, hands open,
 above the table top and behind its edge. Nothing is in a protective stop.
 """
+RBY1_TEMPLATE = """# Site sheet: this installation
+
+What the datasheets can't tell you: how this particular robot is set up.
+
+## Mounting
+
+- Rainbow Robotics RB-Y1 (model A): two 7-joint arms (`left` and `right`), each with the
+  standard two-finger gripper, on a 6-joint torso with a 2-joint pan-tilt head, on a
+  two-wheeled mobile base. It is not mounted: it stands on its wheels on the floor, facing the
+  middle of one edge of {table} ({w_cm:.0f} x {d_cm:.0f} cm, top {top_cm:.1f} cm above the floor).
+  Nothing balances it for you and nothing moves on its own: the wheels, torso, head and each
+  arm do what you command and hold still otherwise.
+- Both arms report in one frame, the base frame (Rainbow's `base` link): origin on the floor
+  under the middle of the mobile base, x forward, y to the robot's left, z up. All positions
+  and poses in the command interface, for both arms, are in this frame, in metres. The frame
+  moves with the robot when it drives or turns: after that, the table is somewhere else in it.
+  Moving the torso doesn't move the frame, but it moves the arms' shoulders (and so the grippers).
+- At the start the table's near edge is at about x = {x0:.2f} m, its top at z = {top:.3f} m, and it
+  extends to about x = {x1:.2f} m and from about y = {y0:.2f} m to y = {y1:.2f} m. The front of the
+  base is about 6 cm from the table's edge: don't drive forward into the table.
+- With the torso upright the grippers reach best from about x = 0.40 m to 0.65 m, pointing
+  forward or tilted down; straight-down (top) grasps over the table need the torso bent forward.
+
+## Tool and payload settings
+
+- End effector: Rainbow's standard gripper on each wrist: two fingers that slide apart, 6 mm
+  apart when closed and 106 mm when open.
+- TCP: a point between the fingertips, 245 mm from the last arm joint.
+- Tool orientation convention: a TCP pose of `[x, y, z, 0, 0, 0]` points the fingers straight
+  down (along -z), with the fingers opening along x. Tilting the fingers forward is a
+  rotation about -y (for example `[x, y, z, 0, -0.5, 0]`).
+- Payload: none beyond the gripper. Each wrist has a force/torque sensor between the arm and
+  the gripper; its readings have the gripper's weight removed.
+
+## Cameras
+
+Three cameras, 640 x 480, colour and depth (metres along the camera's z axis). The
+calibration is in `cameras.json`, once for each arm (`left`, `right`):
+
+- `head`: an Intel RealSense D435 on the head's pan-tilt mount, looking where the head points.
+  Its pose is given in the base frame with the head and torso as at the start; it moves with
+  the head and the torso.
+- `wrist`: a RealSense D405 on each gripper, looking along the fingers. Its pose is given in
+  that arm's TCP frame. The robot's command interface names them `left_wrist` and `right_wrist`.
+
+Poses use OpenCV camera axes (x right, y down, z forward); `rotation` maps camera
+coordinates into the named frame. The lenses have no distortion.
+
+## Start state
+
+At the start of a run the robot stands still with the torso upright (all six torso joints at
+0), the head level and facing forward (pan 0, tilt 0), the left arm at joint angles
+`{ready_l}` and the right arm at `{ready_r}` (rad): elbows bent, grippers open and pointing
+forward and down, above the table and past its edge. Nothing is in a protective stop.
+"""
 TABLES = {"table": "a heavy-duty packing table", "wetlab": "a stainless steel lab bench",
+          "pallet": "a wooden pallet on the floor", "car": "a car body on stands, side on to the robot",
+          "conveyor": "a roller conveyor section", "workbench": "a steel workbench",
           "island": "a kitchen island's worktop",
           "counter": "a kitchen counter's worktop",
           "wetrobo_x": "a stainless steel lab bench", "wetrobo_y": "a heavy-duty packing table"}
@@ -267,6 +385,13 @@ def site_sheet(placed: list[W.Placed], station: W.Station | None = None,
                                   d_cm=min(tw, td) * 100, pelvis_cm=h * 100, table_z=top - h,
                                   x0=e, x1=e + sx, y0=-sy / 2 - ry, y1=sy / 2 - ry,
                                   ready_l=fmt(WS.G1_READY["left"]), ready_r=fmt(WS.G1_READY["right"]))
+    if station.robot == "rby1":
+        fmt = lambda q: "[" + ", ".join(f"{v:.4g}" for v in q) + "]"
+        e = W.MOBILE_GAP
+        return RBY1_TEMPLATE.format(top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100,
+                                    d_cm=min(tw, td) * 100, top=top, x0=e, x1=e + sx,
+                                    y0=-sy / 2 - ry, y1=sy / 2 - ry,
+                                    ready_l=fmt(WS.RBY1_READY["left"]), ready_r=fmt(WS.RBY1_READY["right"]))
     if station.robot == "fr3_duo":
         h = WS.FR3_DUO_ORIGIN_HEIGHT
         fmt = lambda q: "[" + ", ".join(f"{v:g}" for v in q) + "]"
@@ -274,6 +399,12 @@ def site_sheet(placed: list[W.Placed], station: W.Station | None = None,
                                        d_cm=min(tw, td) * 100, origin_cm=h * 1000, table_z=-h,
                                        x0=-sx / 2 - rx, x1=sx / 2 - rx, y0=-sy / 2 - ry, y1=sy / 2 - ry,
                                        ready_l=fmt(WS.FR3_DUO_READY["left"]), ready_r=fmt(WS.FR3_DUO_READY["right"]))
+    if station.floor_arm:
+        return FLOOR_ARM_TEMPLATE.format(
+            top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100, d_cm=min(tw, td) * 100,
+            x0=-sx / 2 - rx, x1=sx / 2 - rx, y0=-sy / 2 - ry, y1=sy / 2 - ry, robot_name=P["name"],
+            tool=TOOL[station.robot], hand=HAND[station.robot],
+            ready="[" + ", ".join(f"{v:g}" for v in P["ready_q"]) + "]")
     return TEMPLATE.format(top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100,
                            d_cm=min(tw, td) * 100, x0=-sx / 2 - rx, x1=sx / 2 - rx, y0=-sy / 2 - ry,
                            y1=sy / 2 - ry, robot_name=P["name"],

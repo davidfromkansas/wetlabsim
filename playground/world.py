@@ -38,7 +38,19 @@ ROBOT_XY = (-0.42, 0.0)
 # A humanoid stands on the floor instead, its pelvis this far back from the table's near edge (m):
 # close enough for its hands to work over the table, its feet clear of the table's frame.
 HUMANOID_GAP = 0.15
+# A wheeled humanoid (the RB-Y1) stands on the floor too: its base's centre this far back from the
+# table's near edge (m), the front of its base (30 cm ahead of the centre) 6 cm clear of the edge.
+MOBILE_GAP = 0.36
 STATION_TABLE = "table_packing"
+# A big floor-standing arm stands on the floor too, facing its table (or pallet, or car) from
+# further back. Per robot: its base's centre to the table's near edge (m), the room its base and
+# first joint sweep takes behind that (m), and how high above the table top its overhead camera
+# hangs (m): its work area is several times a table arm's.
+FLOOR_ARMS = {"n220": {"gap": 1.15, "base": 0.75, "above": 3.4, "ahead": 1.6},
+              "crx30ia": {"gap": 0.55, "base": 0.35, "above": 2.3, "ahead": 0.9}}
+
+CAR_TURN = math.pi / 2       # the car body's long side faces its robot
+CAR_STAND_Y = 1.0
 
 # The kinds of station: which table the robot stands on, how that table is turned in the
 # station's frame (the robot always faces +x), where the robot stands, and what starts on it.
@@ -80,6 +92,20 @@ KINDS = {
     # A LIBERO benchmark room (playground/libero.py): the whole room of one of LIBERO's tasks, as
     # LIBERO builds it, with its Franka where LIBERO mounts it. The station's place is the room's
     # centre; its task and starting layout are the station's own (Station.task, .setup).
+    # A pallet on the floor: what a big floor-standing arm lifts from and stacks on. An open
+    # cell (no work-box walls): its robot's cameras see the line around it.
+    "pallet": {"label": "Pallet", "table": "pallet", "turn": 0.0, "robot_xy": (-0.3, 0.0), "open": True,
+               "layout": []},
+    # A car body on stands, side on to its robot: the robot stands level with the engine bay
+    # ("stand_y": how far along the car, toward its nose). An open cell.
+    "car": {"label": "Car body", "table": "car_body", "turn": CAR_TURN, "robot_xy": (-0.3, 0.0), "open": True,
+            "stand_y": CAR_STAND_Y, "layout": []},
+    # A roller conveyor section: parts and totes ride on its rollers. An open cell.
+    "conveyor": {"label": "Roller conveyor", "table": "roller_conveyor", "turn": 0.0, "robot_xy": (-0.3, 0.0),
+                 "open": True, "layout": []},
+    # A steel workbench with a cupboard under it.
+    "workbench": {"label": "Workbench", "table": "workbench", "turn": math.pi / 2, "robot_xy": (-0.2, 0.0),
+                  "layout": []},
     "libero": {"label": "LIBERO", "table": None, "turn": 0.0, "robot_xy": (-1.16, 0.0), "layout": []},
     # WetRobo's two labs (playground/wetrobo.py): the same kit (a benchtop incubator with its
     # door facing the arm, a screw-cap reagent bottle, a Petri dish) in two different places.
@@ -271,16 +297,38 @@ class Station:
 
     @property
     def standing(self) -> bool:
-        """A humanoid (the G1) stands on the floor at the table, not on it."""
+        """A humanoid (the G1, the wheeled RB-Y1) or a big floor arm stands on the floor at the
+        table, not on it."""
         from wetlabsim import scene as WS
-        return bool(WS.ROBOTS[self.robot].get("humanoid"))
+        P = WS.ROBOTS[self.robot]
+        return bool(P.get("humanoid") or P.get("mobile") or P.get("floor"))
+
+    @property
+    def floor_arm(self) -> dict | None:
+        """A big floor-standing arm's stance (FLOOR_ARMS), else None."""
+        return FLOOR_ARMS.get(self.robot)
+
+    @property
+    def open(self) -> bool:
+        """An open cell: no work-box walls, so its robot's cameras see what is around it. A
+        robot on wheels (the RB-Y1) always has one: it drives off to the rest of the lab."""
+        from wetlabsim import scene as WS
+        return bool(self.spec.get("open") or WS.ROBOTS[self.robot].get("mobile"))
+
+    @property
+    def stand_gap(self) -> float:
+        """How far back from the table's near edge a robot on the floor stands (m)."""
+        from wetlabsim import scene as WS
+        if self.floor_arm:
+            return self.floor_arm["gap"]
+        return MOBILE_GAP if WS.ROBOTS[self.robot].get("mobile") else HUMANOID_GAP
 
     @property
     def robot_xy(self) -> tuple:
         if self.robot == "aloha":     # two arms facing each other across the middle of the table
             return (0.0, 0.0)
         if self.standing:             # on the floor, facing the table's near edge, HUMANOID_GAP from it
-            return (-self.footprint()[0] / 2 - HUMANOID_GAP, 0.0)
+            return (-self.footprint()[0] / 2 - self.stand_gap, self.spec.get("stand_y", 0.0))
         if self.libero and self.task:  # where LIBERO mounts its Panda
             ox, oy = self.room_origin()
             bx, by, _ = self.room()["base"]["pos"]
@@ -329,7 +377,11 @@ class Station:
         if self.libero:        # the room itself
             return sx / 2, sy / 2, 3.0
         # A humanoid stands outside the table's footprint: the box takes in where it stands too.
-        mx = HUMANOID_GAP + 0.35 if self.standing else self.WALL_MARGIN
+        mx = self.stand_gap + 0.35 if self.standing else self.WALL_MARGIN
+        if self.floor_arm:     # a big arm: room for its base behind, its reach to the sides, its height
+            fa = self.floor_arm
+            return (sx / 2 + fa["gap"] + fa["base"], max(sy / 2 + self.WALL_MARGIN, fa["gap"] + fa["base"]),
+                    self.top + fa["above"] + 0.2)
         return sx / 2 + mx, sy / 2 + self.WALL_MARGIN, self.top + self.WALL_ABOVE
 
     def footprint(self):
@@ -693,7 +745,10 @@ def _add_jointed(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_
         # its coefficient: written the other way (lift from turn), the light lid's thread is so
         # soft that the lid sags off it
         if sc["slide"] in joint_of and sc["hinge"] in joint_of:
-            world.add_equality(type=mujoco.mjtEq.mjEQ_JOINT, name=f"obj_{p.uid}__{sc['hinge']}_thread",
+            # a hinge several slides drive (a pallet jack's lever linkage): one coupling each
+            many = sum(1 for o in meta["screws"] if o["hinge"] == sc["hinge"]) > 1
+            nm = f"{sc['slide']}_{sc['hinge']}" if many else sc["hinge"]
+            world.add_equality(type=mujoco.mjtEq.mjEQ_JOINT, name=f"obj_{p.uid}__{nm}_thread",
                                objtype=mujoco.mjtObj.mjOBJ_JOINT, name1=joint_of[sc["hinge"]], name2=joint_of[sc["slide"]],
                                data=[0, 1 / sc["ratio"], 0, 0, 0] + [0] * 7)
     fitted = catalog.FITTED_PARTS.get(p.item, {})
@@ -912,6 +967,8 @@ def overhead_pose(st: Station) -> tuple:
     the table's whole length fits across the picture, but below the walls' top."""
     sx, sy = st.footprint()
     rx, _ = st.robot_xy
+    if st.floor_arm:           # a big arm's: high over the middle of what it reaches
+        return rx + st.floor_arm["ahead"], st.floor_arm["above"]
     x = min(rx + OVERHEAD_IN_FRONT, sx / 2 - OVERHEAD_EDGE)
     half_w = math.tan(math.radians(OVERHEAD_FOVY) / 2) * 640 / 480   # half width per metre away
     above = min(max(OVERHEAD_ABOVE, (sy / 2) / half_w), st.WALL_ABOVE - OVERHEAD_EDGE)
@@ -959,11 +1016,17 @@ def add_station(world: mujoco.MjSpec, st: Station, cache: set):
     if not S.ROBOTS[st.robot].get("sides"):   # a two-arm robot brings its own (ALOHA's four, the Duo's head)
         cx, above = overhead_pose(st)
         _camera(world, st.prefix + "overhead", st.to_world(cx, ry, top + above),
-                st.to_world(0.0, ry, top), OVERHEAD_FOVY, up=(-c, -s_, 0))
-    _camera(world, st.prefix + "side", st.to_world(rx + 1.75, ry - 1.3, top + 0.8),
-            st.to_world(rx + 0.4, ry, top + 0.1), 45)
+                st.to_world(cx if st.floor_arm else 0.0, ry, top), OVERHEAD_FOVY, up=(-c, -s_, 0))
+    if st.floor_arm:           # the audience's side view stands back to take the whole arm in
+        k = st.floor_arm["gap"] / 0.55
+        _camera(world, st.prefix + "side", st.to_world(rx + 1.2 * k, ry - 3.0 * k, 1.1 * k + 0.6),
+                st.to_world(rx + 0.6 * k, ry, 0.5 * k + 0.4), 45)
+    else:
+        _camera(world, st.prefix + "side", st.to_world(rx + 1.75, ry - 1.3, top + 0.8),
+                st.to_world(rx + 0.4, ry, top + 0.1), 45)
     S.add_robot(world, st.robot, st.prefix + "robot_mount", st.prefix)
-    _add_walls(world, st)
+    if not st.open:
+        _add_walls(world, st)
 
 
 WALL_GROUP = 5          # MuJoCo geom group of the work box's walls: hidden in MuJoCo's default

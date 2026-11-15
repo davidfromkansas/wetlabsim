@@ -1,0 +1,240 @@
+{
+ "source": "brakeSystem_brakes_assembly_a01",
+ "usd": "sm_brakeSystem_brakes_assembly_a01_01.usd",
+ "mass": 8.8097,
+ "friction": 0.8,
+ "com": null,
+ "size": [
+  0.1315,
+  0.3174,
+  0.3375
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "caliper_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      0.2146,
+      0.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      0.5554,
+      0.5554,
+      0.5554,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_2.obj",
+     "rgba": [
+      0.7228,
+      0.7379,
+      0.7287,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_3.obj",
+     "rgba": [
+      0.1331,
+      0.1331,
+      0.1331,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_4.obj",
+     "rgba": [
+      0.0487,
+      0.0487,
+      0.0487,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.0015684894596510416
+    }
+   ],
+   "mass": 1.0,
+   "inertial": {
+    "mass": 1.0,
+    "pos": [
+     0.0,
+     0.0,
+     0.293182
+    ],
+    "diaginertia": [
+     0.004,
+     0.004,
+     0.004
+    ],
+    "quat": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "parent": null,
+   "root": true,
+   "pos": [
+    -0.000182,
+    -0.000105,
+    -0.000109
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.000182,
+    -0.000105,
+    -0.000109,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "disc_01_obj_00",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.7284,
+      0.7289,
+      0.7264,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b1_vis_1.obj",
+     "rgba": [
+      0.7228,
+      0.7379,
+      0.7287,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b1_vis_2.obj",
+     "rgba": [
+      0.5554,
+      0.5554,
+      0.5554,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b1_vis_3.obj",
+     "rgba": [
+      0.8773,
+      0.8854,
+      0.8937,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 0.0028797233598882323,
+     "friction": 0.3,
+     "restitution": 0.1
+    }
+   ],
+   "mass": 7.809704,
+   "inertial": {
+    "mass": 7.809704,
+    "pos": [
+     0.0063,
+     -0.0,
+     0.0
+    ],
+    "diaginertia": [
+     0.144338,
+     0.144371,
+     0.277034
+    ],
+    "quat": [
+     0.707107,
+     0.0,
+     0.707107,
+     -0.0
+    ]
+   },
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "joint_caliper_01_joint_00",
+    "type": "hinge",
+    "physx_joint_friction": 0.10000000149011612,
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.0,
+    0.158753
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.000182,
+    -0.000105,
+    0.158644,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

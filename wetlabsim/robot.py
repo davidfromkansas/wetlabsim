@@ -214,6 +214,21 @@ class Robot:
         raw, _ = self._req("GET", "/lidar.npz", raw=True)
         return np.load(io.BytesIO(raw))["points"]
 
+    # ------------------------------------- a wheeled humanoid's base, torso and head
+    def drive(self, vx: float = 0.0, yaw_rate: float = 0.0, seconds: float = 1.0, wait: bool = True) -> dict:
+        """A wheeled robot (the RB-Y1): drive forward at vx (m/s, negative backs up) turning at
+        yaw_rate (rad/s, counter-clockwise) for `seconds`, then stop. Send it to the whole robot."""
+        return self._cmd("/drive", {"vx": vx, "yaw_rate": yaw_rate, "seconds": seconds, "wait": wait})
+
+    def move_torso(self, joints, speed: float | None = None, wait: bool = True) -> dict:
+        """The RB-Y1's torso: move its 6 joints to these angles (rad). speed: rad/s, at most the
+        joints' own limits. Send it to the whole robot."""
+        return self._cmd("/torso", {"joints": list(map(float, joints)), "speed": speed, "wait": wait})
+
+    def move_head(self, joints, speed: float | None = None, wait: bool = True) -> dict:
+        """The RB-Y1's head: pan and tilt (rad). Send it to the whole robot."""
+        return self._cmd("/head", {"joints": list(map(float, joints)), "speed": speed, "wait": wait})
+
     # --------------------------------------------------------------- cameras
     def cameras(self) -> list[str]:
         return [c for c in self._req("GET", "/info")["cameras"] if c != "side"]
