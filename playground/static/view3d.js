@@ -381,40 +381,92 @@ export function start({stage, base = '', onReady}) {
     for (const k of ['box', 'cylinder']) for (let i = used[k]; i < pool[k].length; i++) pool[k][i].visible = false;
   }
 
-  // Work boxes: around each robot at work, the space it works in. Nearly clear, with a thin
-  // outline that glows in and out (the robots' own cameras see solid walls there instead).
+  // Work boxes: around each robot at work, the space it works in. Its walls show green "digital
+  // rain" falling down them (Matrix style), with a thin outline that glows in and out (the
+  // robots' own cameras see plain solid walls there instead).
   const zonesGroup = new THREE.Group(); scene.add(zonesGroup);
   const zonePool = [];
   const ZONE_COL = new THREE.Color(0x38BDF8);
+  const RAIN = {PX: 528, CELL: 22, TILE: 0.9, FPS: 20};      // TILE: metres of wall one picture covers
+  const rainCanvas = document.createElement('canvas'); rainCanvas.width = rainCanvas.height = RAIN.PX;
+  const rainCtx = rainCanvas.getContext('2d');
+  const rainTex = new THREE.CanvasTexture(rainCanvas);
+  rainTex.wrapS = rainTex.wrapT = THREE.RepeatWrapping; rainTex.anisotropy = 8; rainTex.colorSpace = THREE.SRGBColorSpace;
+  const GLYPHS = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789:.=*+-<>¦|Z';
+  // Each column: a falling head with a fading tail, worked out from the clock (so it looks the
+  // same at any frame rate). The glyphs sit in a grid and a few change at each redraw.
+  const RCOLS = Math.floor(RAIN.PX / RAIN.CELL), RROWS = RCOLS, TAIL = 14;
+  const pick = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+  const rainGrid = Array.from({length: RCOLS * RROWS}, pick);
+  const rainCols = Array.from({length: RCOLS}, () => ({speed: 5 + Math.random() * 9, off: Math.random() * 60, gap: 8 + Math.random() * 30}));
+  let rainT = 0;
+  const rainMaps = [];
+  function drawRain(t) {
+    if (t - rainT < 1 / RAIN.FPS) return;
+    rainT = t;
+    const c = rainCtx, C = RAIN.CELL;
+    c.clearRect(0, 0, RAIN.PX, RAIN.PX);
+    c.font = `bold ${C - 3}px "MS Gothic", "Hiragino Kaku Gothic ProN", "Noto Sans JP", monospace`;
+    c.textAlign = 'center'; c.textBaseline = 'top';
+    for (let k = 0; k < 6; k++) rainGrid[Math.floor(Math.random() * rainGrid.length)] = pick();
+    rainCols.forEach((col, i) => {
+      const cycle = RROWS + TAIL + col.gap, head = Math.floor((t * col.speed + col.off) % cycle);
+      for (let k = 0; k < TAIL; k++) {
+        const r = head - k;
+        if (r < 0 || r >= RROWS) continue;
+        c.fillStyle = k === 0 ? '#E4FFE9' : `rgba(0,220,80,${(1 - k / TAIL) * 0.95})`;
+        c.fillText(rainGrid[r * RCOLS + i], i * C + C / 2, r * C + 2);
+      }
+    });
+    for (const m of rainMaps) m.needsUpdate = true;     // each wall's copy of the picture
+  }
+  function rainMaterial() {
+    const map = rainTex.clone();                        // its own repeat, the same picture
+    rainMaps.push(map);
+    return new THREE.MeshBasicMaterial({map, transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide});
+  }
+  const NO_FACE = new THREE.MeshBasicMaterial({visible: false});
+  const GLASS = new THREE.MeshBasicMaterial({color: 0x00140a, transparent: true, opacity: 0.32, depthWrite: false, side: THREE.DoubleSide});
   function setZones(zones) {
     zones = zones || [];
     for (let i = 0; i < zones.length; i++) {
       let z = zonePool[i];
       if (!z) {
-        const box = new THREE.BoxGeometry(2, 2, 2);
-        const fill = new THREE.Mesh(box, new THREE.MeshBasicMaterial({color: ZONE_COL, transparent: true, opacity: 0.035, depthWrite: false, side: THREE.DoubleSide}));
+        // turned so each wall's picture stands upright (z up): faces 0-1 face x, 2-3 the top and
+        // floor, 4-5 face y
+        const box = new THREE.BoxGeometry(2, 2, 2).rotateX(Math.PI / 2);
+        const wx = rainMaterial(), wy = rainMaterial();  // the walls facing x, and those facing y
+        const fill = new THREE.Mesh(box, [wx, wx, NO_FACE, NO_FACE, wy, wy]);  // no rain on the top or floor
+        const glass = new THREE.Mesh(box, [GLASS, GLASS, NO_FACE, NO_FACE, GLASS, GLASS]);   // dark glass behind the code
+        glass.renderOrder = 4;
         const edges = new THREE.LineSegments(new THREE.EdgesGeometry(box), new THREE.LineBasicMaterial({color: ZONE_COL, transparent: true, opacity: 0.6, depthWrite: false}));
         fill.renderOrder = edges.renderOrder = 5;
-        const g = new THREE.Group(); g.add(fill, edges); zonesGroup.add(g);
-        z = zonePool[i] = {g, fill, edges};
+        const g = new THREE.Group(); g.add(glass, fill, edges); zonesGroup.add(g);
+        z = zonePool[i] = {g, fill, edges, wx, wy};
       }
       const d = zones[i];
       z.g.visible = true;
       z.g.scale.set(d.half[0], d.half[1], d.height / 2);
       z.g.position.set(d.pos[0], d.pos[1], d.height / 2);
       z.g.rotation.set(0, 0, d.yaw || 0);
+      // glyphs the same size on every wall, whatever the box's size
+      z.wx.map.repeat.set(2 * d.half[1] / RAIN.TILE, d.height / RAIN.TILE);
+      z.wy.map.repeat.set(2 * d.half[0] / RAIN.TILE, d.height / RAIN.TILE);
       z.waiting = !!d.waiting;
     }
     for (let i = zones.length; i < zonePool.length; i++) zonePool[i].g.visible = false;
   }
   function pulseZones(t) {
     const k = 0.5 + 0.5 * Math.sin(t * 2.6);           // a slow breath, about 2.4 s
+    let any = false;
     for (const z of zonePool) {
       if (!z.g.visible) continue;
+      any = true;
       const lo = z.waiting ? 0.18 : 0.35, hi = z.waiting ? 0.35 : 0.95;
       z.edges.material.opacity = lo + (hi - lo) * k;
-      z.fill.material.opacity = (z.waiting ? 0.015 : 0.03) + 0.03 * k;
+      z.wx.opacity = z.wy.opacity = (z.waiting ? 0.35 : 0.7) + 0.2 * k;
     }
+    if (any) drawRain(t);
   }
   V.setZones = setZones;
 
