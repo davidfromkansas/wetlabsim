@@ -663,7 +663,7 @@ class Session:
         st_ = self.sim.station(uid)
         if b.get("started", len(b["results"])) >= b["total"] or b.get("stop_after") or b.get("cancelled"):
             pass
-        elif st_ is not None and st_.libero:      # its next layout is laid out as its run starts
+        elif st_ is not None and st_.libero and not st_.free:      # its next layout is laid out as its run starts
             self._queue_batch_run(uid, b)
         elif snap is None or st_ is None or not self.sim.restore_station(snap):
             b["note"] = "the lab changed, so the remaining runs were not started"
@@ -789,7 +789,7 @@ class Session:
                 s._sync_placed()
             return {"name": self.name,
                     "stations": [{"uid": st.uid, "robot": st.robot, "pos": list(st.pos), "yaw": st.yaw, "name": st.name,
-                                  "kind": st.kind, **({"task": st.task, "setup": st.setup} if st.libero or st.wetrobo else {})}
+                                  "kind": st.kind, **({"task": st.task, "setup": st.setup, "free": st.free} if st.libero or st.wetrobo else {})}
                                  for st in s.stations],
                     "objects": [{"uid": o.uid, "item": o.item, "pos": list(o.pos), "yaw": o.yaw,
                                  "quat": list(o.quat) if o.quat is not None else None} for o in s.placed],
@@ -886,6 +886,7 @@ def _world_from_layout(layout: dict | None):
             continue
         kind = st.get("kind") if st.get("kind") in W.KINDS else "table"
         task, setup = "", 0
+        free = bool(st.get("free")) and (kind == "libero" or bool(WR.lab_of(kind)))
         if kind == "libero":
             from . import libero as LB
             try:
@@ -893,13 +894,13 @@ def _world_from_layout(layout: dict | None):
             except KeyError:
                 continue
             task, setup = t.id, int(st.get("setup", 0)) % t.n_setups
-        if WR.lab_of(kind):
+        if WR.lab_of(kind) and not free:
             if str(st.get("task", "")) not in WR.TASKS:
                 continue
             task = str(st["task"])
         stations.append(W.Station(st["uid"], "franka" if kind == "libero" or WR.lab_of(kind) and st["robot"] not in WR.ROBOTS else st["robot"],
                                   (float(st["pos"][0]), float(st["pos"][1])),
-                                  float(st.get("yaw", 0.0)), str(st.get("name") or "")[:40], kind, task, setup))
+                                  float(st.get("yaw", 0.0)), str(st.get("name") or "")[:40], kind, task, setup, free))
     known = {i["id"] for i in catalog.available()}
     for o in (layout.get("objects") or [])[:200]:
         if o.get("item") not in known or not re.match(r"^[\w.-]{1,80}$", str(o.get("uid", ""))):
@@ -1076,7 +1077,7 @@ def _start_queued():
             try:
                 r = sess.station_runner(job["station"])
                 r.slot = slot
-                if st.libero:
+                if st.libero and not st.free:
                     # LIBERO: the run's official starting layout, LIBERO's site sheet, and its goal
                     # check watched while the run goes
                     sess.sim.libero_layout(st.uid, job.get("setup", st.setup))
@@ -1084,7 +1085,9 @@ def _start_queued():
                     r.info["libero"] = {"task": st.task, "setup": job.get("setup", st.setup)}
                     threading.Thread(target=_watch_libero, args=(sess, st.uid, r), daemon=True).start()
                 else:
-                    r.start(job["task"], job["model"], site.site_sheet(sess.sim.placed, st, sess.sim.stations), job["limit"])
+                    # (a free LIBERO room: the room's own site sheet, your task, no goal check)
+                    r.start(job["task"], job["model"], sess.sim.libero_sheet(st.uid) if st.libero else
+                            site.site_sheet(sess.sim.placed, st, sess.sim.stations), job["limit"])
                     if st.wetrobo and st.task:      # WetRobo: its goal check watched while the run goes
                         r.info["wetrobo"] = {"task": st.task, "lab": st.wetrobo, "robot": st.robot}
                         threading.Thread(target=_watch_bench, args=(sess, st.uid, r, "wetrobo",
@@ -1747,7 +1750,7 @@ class PGHandler(Handler):
                                       "setups": t.n_setups, "room": LB.room_kind(t)} for t in LB.tasks(k)]}
                           for k, n, bl in LB.SUITES]
                 study = qs.get("study", ["0"])[0] == "1"
-                out = {"suites": suites, "suite_board": self.bench.suite_board(study)}
+                out = {"suites": suites, "suite_board": self.bench.suite_board(study), "rooms": LB.rooms()}
                 if qs.get("task"):
                     out["scores"] = self.bench.scoreboard(qs["task"][0])
                 return self._json(out)
@@ -1977,7 +1980,7 @@ class PGHandler(Handler):
                 if not spot.get("valid"):
                     return self._json({"ok": False, "error": spot.get("reason") or "can't go there"})
                 uid = s.add_station(b.get("robot", "franka"), spot["pos"], float(b.get("yaw", 0.0)), kind,
-                                    task=str(b.get("task") or ""))
+                                    task=str(b.get("task") or ""), free=bool(b.get("free")))
                 s.frame_station(uid)
                 return self._json({"ok": True, "uid": uid})
             if p == "/pg/station/move":
@@ -2175,7 +2178,9 @@ class PGHandler(Handler):
                     runner = self.station_runner(uid)
                     if runner.active() or _queue_position(self.sess.id, uid):
                         return self._json({"ok": False, "error": f"{station.name} is already running a task"})
-                    if station.libero:         # LIBERO's own words for its task, never edited
+                    if station.free:           # a benchmark's scene as a free station: your own task
+                        pass
+                    elif station.libero:       # LIBERO's own words for its task, never edited
                         task = LB.task(station.task).language
                     elif station.wetrobo and station.task:
                         task = WR.task(station.task).language
@@ -2193,7 +2198,7 @@ class PGHandler(Handler):
                     except (TypeError, ValueError):
                         repeat = 1
                     s.selected = None
-                    if station.wetrobo and station.task:
+                    if station.wetrobo and station.task and not station.free:
                         err = s.wetrobo_run_start(uid)
                         if err:
                             return self._json({"ok": False, "error": err})
@@ -2222,7 +2227,7 @@ class PGHandler(Handler):
                           "snaps": {u: s.station_snapshot(u) for u in stations}, "started": 0, "running": {},
                           "note": note}
                     bt["snap"] = bt["snaps"][uid]
-                    if station.libero:
+                    if station.libero and not station.free:
                         # each run starts from the next of LIBERO's official layouts: 1, 2, 3...
                         n = LB.task(station.task).n_setups
                         bt["setup0"] = station.setup

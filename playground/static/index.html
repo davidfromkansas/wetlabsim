@@ -1380,7 +1380,7 @@ function renderRail() {
   const on = list.find(r => r.id === sc.active) || list[0];
   if (on) { const [d, t] = chipDot(on); $('rtName').textContent = on.name; $('rtSub').textContent = `${on.label} · ${t}`; $('rtDot').className = 'sdot ' + d; }
   else { $('rtName').textContent = 'No robot yet'; $('rtSub').textContent = 'Press + to add a robot'; $('rtDot').className = 'sdot'; }
-  $('rSwap').hidden = !on || !!S.watch || !!on.libero || !!on.wetrobo; $('rSwap').style.display = $('rSwap').hidden ? 'none' : '';
+  $('rSwap').hidden = !on || !!S.watch || !!on.libero || !!on.wetrobo || !!on.free; $('rSwap').style.display = $('rSwap').hidden ? 'none' : '';
   $('rSwap').disabled = !!runLock(sc);
   $('rSwap').title = runLock(sc) ? 'A robot is working on a task. Stop it to swap.' : 'Swap this robot for another arm';
   if (key === S.railKey) return; S.railKey = key;
@@ -1530,9 +1530,11 @@ function openAdd() {
 }
 function amTab(tab) {
   S.amTab = tab;
-  $('amStarter').setAttribute('aria-pressed', tab === 'starter'); $('amBench').setAttribute('aria-pressed', tab !== 'starter');
-  $('addModal').querySelector('.am').classList.toggle('wide', tab === 'libero' || tab === 'wetrobo');
-  if (tab === 'starter') drawStarter(); else if (tab === 'bench') drawBench(); else if (tab === 'wetrobo') drawWetroboPick(); else drawLiberoPick();
+  const starter = tab === 'starter' || tab === 'wetrobo_free' || tab === 'libero_free';   // a benchmark's scene as a free station
+  $('amStarter').setAttribute('aria-pressed', starter); $('amBench').setAttribute('aria-pressed', !starter);
+  $('addModal').querySelector('.am').classList.toggle('wide', tab !== 'starter' && tab !== 'bench');
+  if (tab === 'starter') drawStarter(); else if (tab === 'bench') drawBench(); else if (tab === 'wetrobo') drawWetroboPick();
+  else if (tab === 'wetrobo_free') drawWetroboPick(true); else if (tab === 'libero_free') drawLiberoRooms(); else drawLiberoPick();
 }
 $('amStarter').onclick = () => amTab('starter'); $('amBench').onclick = () => amTab('bench');
 function drawStarter() {
@@ -1549,6 +1551,12 @@ function drawStarter() {
     <div class="tcard"><img src="/pg/static/station_counter.jpg" alt="A robot arm on a kitchen counter"><div class="rx"><div><b>Kitchen counter</b><div class="small">A robot arm on a 2.3 m kitchen counter, over cabinets whose doors and drawers really open.</div></div>
     <div class="tags"><span class="tag">1 robot · Franka Emika Panda</span></div>
     <button class="primary" data-r="franka" data-kind="counter">Add to lab</button></div></div>
+    <div class="tcard"><img src="/pg/static/wetrobo/lab_x.jpg" alt="A robot arm at a lab bench with an incubator" onerror="this.style.visibility='hidden'"><div class="rx"><div><b>Incubator lab</b><div class="small">WetRobo's two labs as free stations: a benchtop incubator whose door opens, a screw-cap bottle and a lidded Petri dish. Give the robot any task you like. No pass check.</div></div>
+    <div class="tags"><span class="tag">2 labs</span><span class="tag">Franka Panda or AgileX PiPER</span></div>
+    <button class="primary" id="wrFree">Choose a lab</button></div></div>
+    <div class="tcard"><img src="/pg/static/libero/KITCHEN_SCENE6_put_the_yellow_and_white_mug_in_the_microwave_and_close_it.jpg" alt="A robot arm in a LIBERO kitchen" onerror="this.style.visibility='hidden'"><div class="rx"><div><b>LIBERO rooms</b><div class="small">LIBERO's kitchens, living rooms and study as free stations, with their own objects: drawers, a stove, a microwave, mugs, groceries. Give the robot any task you like. No pass check.</div></div>
+    <div class="tags"><span class="tag">12 rooms</span><span class="tag">1 robot · Franka Emika Panda</span></div>
+    <button class="primary" id="lbFree">Choose a room</button></div></div>
     <div class="tcard"><img src="/pg/static/scene_kitchen.jpg" alt="Four robots in a kitchen"><div class="rx"><div><b>Kitchen scene</b><div class="small">A whole kitchen: counters, an island, fridge, dishwasher and oven. Four robots, each with a task ready: espresso, toast, microwave and a fruit bowl.</div></div>
     <div class="tags"><span class="tag">4 robots · Franka, FR3 Duo, ALOHA, G1</span></div>
     <button class="primary" data-preset="kitchen">Add to lab</button></div></div>
@@ -1563,6 +1571,23 @@ function drawStarter() {
     <button class="primary" data-preset="car">Add to lab</button></div></div>`;
   $('rcards').querySelectorAll('button[data-r]').forEach(b => b.onclick = () => startPlacing(b.dataset.r, b.dataset.kind || 'table'));
   $('rcards').querySelectorAll('button[data-preset]').forEach(b => b.onclick = () => { closeAdd(); window.sceneGen && window.sceneGen.preset(b.dataset.preset); });
+  $('wrFree').onclick = () => amTab('wetrobo_free');
+  $('lbFree').onclick = () => amTab('libero_free');
+}
+// LIBERO's rooms, each once, as free stations: the room and its objects, your own task, no goal check.
+async function drawLiberoRooms() {
+  if (!S.LB) S.LB = await api('/pg/libero');
+  const L = S.LB; if (!L || !L.rooms || !L.rooms.length) { toast("Couldn't load LIBERO's rooms"); amTab('starter'); return; }
+  const r = L.rooms.find(x => x.id === S.lbRoom) || L.rooms[0]; S.lbRoom = r.id;
+  $('rcards').className = 'lbpick';
+  $('rcards').innerHTML = `<div><button class="backbtn" id="lbBack">← Starter stations</button></div>
+    <img class="hero" src="/pg/static/libero/${esc(r.id)}.jpg" alt="LIBERO's ${esc(r.name)}">
+    <select id="lbRoomSel" aria-label="Room">${L.rooms.map((x, i) => `<option value="${x.id}"${x.id === r.id ? ' selected' : ''}>${i + 1}. ${esc(x.name)}</option>`).join('')}</select>
+    <div class="note"><b>In this room</b> ${esc(r.things.join(', '))}.</div>
+    <div class="lbfoot"><span class="small">Free station · any task · no pass check · Franka Emika Panda</span><button class="primary" id="lbAdd">Add to lab</button></div>`;
+  $('lbBack').onclick = () => amTab('starter');
+  $('lbRoomSel').onchange = () => { S.lbRoom = $('lbRoomSel').value; drawLiberoRooms(); };
+  $('lbAdd').onclick = async () => { await holdPhysics(); startPlacing('franka', 'libero', S.lbRoom, true); };
 }
 function drawBench() {
   $('rcards').className = 'tcards';
@@ -1575,26 +1600,27 @@ function drawBench() {
   $('lbChoose').onclick = () => amTab('libero');
   $('wrChoose').onclick = () => amTab('wetrobo');
 }
-async function drawWetroboPick() {
+async function drawWetroboPick(free = false) {     // free: the lab and its kit as a free station (no task, no check)
   if (!S.WR) S.WR = await api('/pg/wetrobo');
-  const W = S.WR; if (!W || !W.tasks) { toast("Couldn't load WetRobo's tasks"); amTab('bench'); return; }
+  const W = S.WR; if (!W || !W.tasks) { toast("Couldn't load WetRobo's tasks"); amTab(free ? 'starter' : 'bench'); return; }
   const t = W.tasks.find(x => x.id === S.wrTask) || W.tasks[0]; S.wrTask = t.id;
   const lab = W.labs.find(x => x.id === S.wrLab) || W.labs[0]; S.wrLab = lab.id;
   const arms = W.robots || [{id: 'franka', label: 'Franka Emika Panda', blurb: ''}];
   const arm = arms.find(x => x.id === S.wrRobot) || arms[0]; S.wrRobot = arm.id;
   $('rcards').className = 'lbpick';
-  $('rcards').innerHTML = `<div><button class="backbtn" id="lbBack">← Benchmarks</button></div>
+  $('rcards').innerHTML = `<div><button class="backbtn" id="lbBack">← ${free ? 'Starter stations' : 'Benchmarks'}</button></div>
     <img class="hero" src="/pg/static/wetrobo/lab_${esc(lab.id)}${arm.id === 'franka' ? '' : '_' + esc(arm.id)}.jpg" alt="${esc(lab.label)} with the ${esc(arm.label)}">
     <div class="suites" role="group" aria-label="Lab" style="grid-template-columns:repeat(2,minmax(0,1fr))">${W.labs.map(x => `<button data-l="${x.id}" aria-pressed="${x.id === lab.id}">${esc(x.label)}<span>${esc(x.blurb)}</span></button>`).join('')}</div>
     ${arms.length > 1 ? `<div class="suites wrarms" role="group" aria-label="Robot" style="grid-template-columns:repeat(${arms.length},minmax(0,1fr))">${arms.map(x => `<button data-r="${x.id}" aria-pressed="${x.id === arm.id}">${esc(x.label)}<span>${esc(x.blurb)}</span></button>`).join('')}</div>` : ''}
-    <select id="wrTaskSel" aria-label="Task">${W.tasks.map((x, i) => `<option value="${x.id}"${x.id === t.id ? ' selected' : ''}>${i + 1}. ${esc(x.title)}</option>`).join('')}</select>
-    <div class="note"><b>Done when</b> ${esc(t.done_when)}</div>
-    <div class="lbfoot"><span class="small">${esc(lab.label)} · ${esc(arm.label)} · <a href="${esc(W.paper)}" target="_blank" rel="noopener">the paper</a></span><button class="primary" id="wrAdd">Add to lab</button></div>`;
-  $('lbBack').onclick = () => amTab('bench');
-  $('rcards').querySelectorAll('.suites button[data-l]').forEach(b => b.onclick = () => { S.wrLab = b.dataset.l; drawWetroboPick(); });
-  $('rcards').querySelectorAll('.suites button[data-r]').forEach(b => b.onclick = () => { S.wrRobot = b.dataset.r; drawWetroboPick(); });
-  $('wrTaskSel').onchange = () => { S.wrTask = $('wrTaskSel').value; drawWetroboPick(); };
-  $('wrAdd').onclick = async () => { await holdPhysics(); startPlacing(S.wrRobot || 'franka', 'wetrobo_' + S.wrLab, S.wrTask); };
+    ${free ? `<div class="note"><b>On the table</b> a benchtop incubator whose door opens, a screw-cap reagent bottle, a 60 mm Petri dish with its lid, and other lab things.</div>`
+      : `<select id="wrTaskSel" aria-label="Task">${W.tasks.map((x, i) => `<option value="${x.id}"${x.id === t.id ? ' selected' : ''}>${i + 1}. ${esc(x.title)}</option>`).join('')}</select>
+    <div class="note"><b>Done when</b> ${esc(t.done_when)}</div>`}
+    <div class="lbfoot"><span class="small">${free ? 'Free station · any task · no pass check' : `${esc(lab.label)} · ${esc(arm.label)} · <a href="${esc(W.paper)}" target="_blank" rel="noopener">the paper</a>`}</span><button class="primary" id="wrAdd">Add to lab</button></div>`;
+  $('lbBack').onclick = () => amTab(free ? 'starter' : 'bench');
+  $('rcards').querySelectorAll('.suites button[data-l]').forEach(b => b.onclick = () => { S.wrLab = b.dataset.l; drawWetroboPick(free); });
+  $('rcards').querySelectorAll('.suites button[data-r]').forEach(b => b.onclick = () => { S.wrRobot = b.dataset.r; drawWetroboPick(free); });
+  if (!free) $('wrTaskSel').onchange = () => { S.wrTask = $('wrTaskSel').value; drawWetroboPick(); };
+  $('wrAdd').onclick = async () => { await holdPhysics(); startPlacing(S.wrRobot || 'franka', 'wetrobo_' + S.wrLab, free ? '' : S.wrTask, free); };
 }
 async function drawLiberoPick() {
   if (!S.LB) S.LB = await api('/pg/libero');
@@ -1740,8 +1766,8 @@ $('addModal').onclick = (e) => { if (e.target === $('addModal')) closeAdd(); };
 const STATION_KINDS = {table: {label: 'Table', items: 0}, wetlab: {label: 'Wet lab bench', items: 18},
   island: {label: 'Kitchen island', items: 0}, counter: {label: 'Kitchen counter', items: 0}, libero: {label: 'LIBERO room', items: 0},
   wetrobo_x: {label: 'WetRobo Lab X', items: 0}, wetrobo_y: {label: 'WetRobo Lab Y', items: 0}};
-function startPlacing(robot, kind = 'table', task = '') {
-  closeAdd(); S.placing = robot; S.placeKind = kind; S.placeTask = task; S.placeYaw = 0; S.armed = null; renderItems();
+function startPlacing(robot, kind = 'table', task = '', free = false) {
+  closeAdd(); S.placing = robot; S.placeKind = kind; S.placeTask = task; S.placeFree = !!free; S.placeYaw = 0; S.armed = null; renderItems();
   api('/pg/camera', {preset: 'lab'});
   const lab = ((S.cat.robots || []).find(x => x.id === robot) || {}).label || 'the robot';
   $('hintTag').textContent = kind !== 'table' ? `Click the floor to place the ${kind === 'libero' ? 'LIBERO room' : kind.startsWith('wetrobo') ? STATION_KINDS[kind].label : STATION_KINDS[kind].label.toLowerCase()} with the ${lab}. R turns it, Esc cancels.`
@@ -1762,7 +1788,7 @@ async function probeStation(p) {
   } finally { stProbeBusy = false; if (stProbeNext) { const n = stProbeNext; stProbeNext = null; probeStation(n); } }
 }
 async function placeStation(p) {
-  const r = await api('/pg/station/add', {robot: S.placing, kind: S.placeKind, task: S.placeTask || '', u: p.u, v: p.v, yaw: S.placeYaw});
+  const r = await api('/pg/station/add', {robot: S.placing, kind: S.placeKind, task: S.placeTask || '', free: !!S.placeFree, u: p.u, v: p.v, yaw: S.placeYaw});
   if (!r.ok) { toast(r.error || "Can't go there"); return; }
   S.placing = null; hideTag(); S.sel = 'robot';
   await resumePhysics();

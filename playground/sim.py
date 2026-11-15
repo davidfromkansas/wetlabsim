@@ -354,16 +354,18 @@ class PlaygroundSim(Sim):
 
     def libero_goal(self, uid: str) -> list[bool] | None:
         """Each part of a LIBERO station's goal: whether it holds now (and its stove burners
-        glow while the stove is on). None for any other station."""
+        glow while the stove is on). None for any other station, and for a free LIBERO room
+        (no goal; its burners still glow)."""
         ck = self.checkers.get(uid)
         if ck is None:
             return None
+        st = self.station(uid)
         with self.lock:
             each = ck.each(self.d)
             lit = ck.lit_burners(self.d)
             for n, sid in self._burners.get(uid, {}).items():
                 self.m.site_rgba[sid, 3] = 1.0 if lit.get(n) else 0.0
-        return each
+        return None if st is not None and st.free else each
 
     def _room_joints(self, st: W.Station) -> list[int]:
         """The joints of a LIBERO station's room (not its robot's)."""
@@ -695,10 +697,11 @@ class PlaygroundSim(Sim):
                 and st.holds(p.pos[0], p.pos[1]) and p.pos[2] > top - 0.05]
 
     def add_station(self, robot: str, pos, yaw: float = 0.0, kind: str = "table", starter: bool = True,
-                    task: str = "") -> str:
+                    task: str = "", free: bool = False) -> str:
         """A new station; starter=False leaves off what its kind starts with on the table (a
         described scene puts down its own objects). A LIBERO station takes its task (a
-        playground.libero task id) and LIBERO's Franka."""
+        playground.libero task id) and LIBERO's Franka. free: a benchmark's scene as a free
+        station (a LIBERO task's room, or a WetRobo lab with its kit): any task, no goal check."""
         if robot not in WS.ROBOTS:
             raise RobotError(f"unknown robot {robot!r}")
         if kind not in W.KINDS:
@@ -710,21 +713,27 @@ class PlaygroundSim(Sim):
                 raise RobotError("pick one of LIBERO's tasks") from None
             robot = "franka"
         bench = WR.lab_of(kind)
+        free = bool(free) and (kind == "libero" or bool(bench))
         if bench:                    # a WetRobo lab: its task, with the Franka or the paper's PiPER
-            try:
-                wt = WR.task(task)
-            except KeyError:
-                raise RobotError("pick one of WetRobo's tasks") from None
+            if free:
+                task = ""
+            else:
+                try:
+                    wt = WR.task(task)
+                except KeyError:
+                    raise RobotError("pick one of WetRobo's tasks") from None
             if robot not in WR.ROBOTS:
                 robot = "franka"
         with self.lock:
             self._sync_placed()
             uid = self._new_station_uid()
             n = int(uid[2:])
-            name = f"LIBERO {LB.SUITE_NAMES[t.suite]} {t.index + 1}" if kind == "libero" else \
-                f"WetRobo {WR.LABS[bench][1]} · {wt.title}" if bench else f"Robot {n}"
+            name = (f"LIBERO {LB.room_name(t)}" if free else f"LIBERO {LB.SUITE_NAMES[t.suite]} {t.index + 1}") \
+                if kind == "libero" else \
+                (f"WetRobo {WR.LABS[bench][1]}" if free else f"WetRobo {WR.LABS[bench][1]} · {wt.title}") \
+                if bench else f"Robot {n}"
             st = W.Station(uid, robot, (float(pos[0]), float(pos[1])), float(yaw), name, kind,
-                           task=task if kind == "libero" or bench else "")
+                           task=task if kind == "libero" or bench else "", free=free)
             self.stations.append(st)
             top = st.top
             for item, lx, ly, iyaw, *up in (st.spec.get("layout_by", {}).get(st.robot, st.spec["layout"]) if starter else []):     # what the station starts with
@@ -823,7 +832,7 @@ class PlaygroundSim(Sim):
             new = self._new_station_uid()
             base = (st.name or f"Robot {uid[2:]}").strip()
             self.stations.append(W.Station(new, st.robot, (st.pos[0] + dx, st.pos[1] + dy), st.yaw,
-                                           f"{base} copy"[:40], st.kind, st.task, st.setup))
+                                           f"{base} copy"[:40], st.kind, st.task, st.setup, st.free))
             for p in riders:
                 self.placed.append(W.Placed(self.new_uid(p.item), p.item,
                                             (p.pos[0] + dx, p.pos[1] + dy, p.pos[2]), p.yaw, p.quat))
@@ -869,7 +878,7 @@ class PlaygroundSim(Sim):
                     continue          # something lies on the floor there
                 new = self._new_station_uid()
                 self.stations.append(W.Station(new, st.robot, (x, y), st.yaw,
-                                               f"{base} · copy {len(made) + 1}"[:40], st.kind, st.task, st.setup))
+                                               f"{base} · copy {len(made) + 1}"[:40], st.kind, st.task, st.setup, st.free))
                 for p in riders:
                     self.placed.append(W.Placed(self.new_uid(p.item), p.item,
                                                 (p.pos[0] + dx, p.pos[1] + dy, p.pos[2]), p.yaw, p.quat,
@@ -913,7 +922,8 @@ class PlaygroundSim(Sim):
             if st.libero:
                 raise RobotError("a LIBERO station keeps LIBERO's own robot, the Franka Panda")
             if st.wetrobo:
-                raise RobotError("a WetRobo station keeps its robot, so every run is the same test")
+                raise RobotError("a WetRobo lab is laid out for its own arm: add the lab again with the other arm"
+                                 if st.free else "a WetRobo station keeps its robot, so every run is the same test")
             self._sync_placed()
             new = W.Station(st.uid, robot, st.pos, st.yaw, st.name, st.kind)
             if any(new.holds(p.pos[0], p.pos[1]) and new.near_base(p.pos[0], p.pos[1]) for p in self.placed):

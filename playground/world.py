@@ -253,6 +253,8 @@ class Station:
     kind: str = "table"   # a key of KINDS
     task: str = ""        # a benchmark station: its task (a playground.libero or playground.wetrobo task id)
     setup: int = 0        # a LIBERO station: the official starting layout its next run starts from
+    free: bool = False    # a benchmark's scene as a free station: the same room or lab, any task you
+    #                       type, no goal check and no score (a LIBERO room keeps a task for its room)
 
     @property
     def libero(self) -> bool:
@@ -403,13 +405,15 @@ class Station:
         out = {"id": self.uid, "robot": self.robot, "name": self.name, "label": P["name"], "kind": self.kind,
                "gripper": P["gripper"], "pos": [round(float(v), 4) for v in self.pos],
                "yaw": round(float(self.yaw), 4)}
-        if self.libero and self.task:
+        if self.free:
+            out["free"] = True
+        elif self.libero and self.task:
             from . import libero as LB
             t = LB.task(self.task)
             out["libero"] = {"task": t.id, "suite": t.suite, "suite_name": LB.SUITE_NAMES[t.suite],
                              "index": t.index + 1, "language": t.language, "goal": LB.goal_parts(t),
                              "setup": self.setup, "setups": t.n_setups}
-        if self.wetrobo and self.task:
+        if self.wetrobo and self.task and not self.free:
             from . import wetrobo as WR
             t = WR.task(self.task)
             out["wetrobo"] = {"task": t.id, "title": t.title, "language": t.language, "goal": list(t.goal),
