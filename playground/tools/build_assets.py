@@ -64,7 +64,7 @@ def main(argv=None):
     ap.add_argument("--cache", default="build/simready")
     ap.add_argument("--by-repo", action="store_true", help="cache each source in its own folder")
     a = ap.parse_args(argv)
-    ids = a.ids or [i[0] for i in catalog.ITEMS if not i[3].startswith(("autobio:", "mujoco:", "inhouse:"))]
+    ids = a.ids or [i[0] for i in catalog.ITEMS if not i[3].startswith(("autobio:", "mujoco:", "inhouse:", "libero:"))]
     for id_ in ids:
         it = catalog.item(id_)
         try:

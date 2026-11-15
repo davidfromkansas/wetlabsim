@@ -1,12 +1,12 @@
-"""LIBERO test mode: LIBERO's own scenes, its 40 tasks (Goal, Spatial, Object and Long),
-its 50 official starting setups per task, and its own success checks.
+"""LIBERO stations: LIBERO's own rooms, its 40 tasks (Goal, Spatial, Object and Long), its 50
+official starting setups per task, and its own success checks, as stations in the playground.
 
 Each task's scene is the one LIBERO builds: we built every task once in LIBERO's own stack
 (robosuite 1.4, MuJoCo 2.3) and saved the compiled model (tools/libero_export.py),
 then made it loadable in MuJoCo 4 (tools/import_libero.py). Rooms, tables, objects, fixtures, region
 markers and placements are LIBERO's, under LIBERO's own names. The robot is our Franka (the
 same model, controller and command interface as everywhere else in this repo), mounted
-where LIBERO mounts its Panda. Physics settings are ours (wetlabsim.scene.OPTION).
+where LIBERO mounts its Panda. Physics settings are the playground's (playground.world.OPTION).
 
 The success checks follow LIBERO's predicate code (libero/libero/envs/predicates and
 object_states): On, In, Open, Close, TurnOn and TurnOff, with the same thresholds, which
@@ -17,14 +17,11 @@ from __future__ import annotations
 import functools
 import json
 import pathlib
-import warnings
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 
 import mujoco
 import numpy as np
-
-from wetlabsim import scene as S
 
 from .tools import fetch_libero as FA
 
@@ -85,33 +82,78 @@ def task(task_id: str) -> Task:
     return t
 
 
-# ----------------------------------------------------------------- the scene
-def _scene_xml(t: Task) -> str:
+# ----------------------------------------------------------------- the room
+def room_kind(t: Task) -> str:
+    """Which of LIBERO's rooms a task is in, in plain words."""
+    for pre, name in (("KITCHEN_", "Kitchen"), ("LIVING_ROOM_", "Living room"), ("STUDY_", "Study")):
+        if t.id.startswith(pre):
+            return name
+    return "Floor" if t.suite == "libero_object" else "Kitchen table"
+
+
+@functools.lru_cache(maxsize=64)
+def room(task_id: str) -> dict:
+    """A task's room, in LIBERO's own frame: the floor area its walls enclose (x0, x1, y0, y1),
+    its centre and size, and the robot's base pose."""
+    t = task(task_id)
+    root = ET.parse(t.dir / "scene.xml").getroot()
+    xs, ys = [], []
+    for g in root.find("worldbody").findall("geom"):
+        if not (g.get("name") or "").startswith("wall_") or g.get("size") is None:
+            continue
+        px, py, _ = (float(v) for v in g.get("pos").split())
+        hx = float(g.get("size").split()[0])
+        # a wall is a thin box turned upright: its long side is the box's x
+        R = np.zeros(9)
+        mujoco.mju_quat2Mat(R, np.array([float(v) for v in (g.get("quat") or "1 0 0 0").split()]))
+        ax = R.reshape(3, 3)[:, 0]
+        xs += [px - hx * ax[0], px + hx * ax[0]]
+        ys += [py - hx * ax[1], py + hx * ax[1]]
+    x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
+    return {"x0": x0, "x1": x1, "y0": y0, "y1": y1, "centre": ((x0 + x1) / 2, (y0 + y1) / 2),
+            "size": (x1 - x0, y1 - y0), "base": t.meta["robot_base"]}
+
+
+ROOM_WALL_GROUP = 5     # the room's walls: the robot's cameras see them (as in LIBERO); the page's
+                        # 3D view, which looks in from outside, leaves them out (world.WALL_GROUP)
+
+
+def room_spec(t: Task) -> mujoco.MjSpec:
+    """The task's room as LIBERO builds it (walls, floor, table or floor area, fixtures and
+    objects, under LIBERO's own names), ready to attach into the playground at a station.
+
+    Kept as LIBERO has it, except: its own cameras and sky go (the station has its own cameras,
+    the playground its sky); its floor is drawn only (the playground's floor, at the same height,
+    holds things up) and cut to the room's walls; its walls are seen by the robot's cameras only;
+    its collision shapes are hidden as LIBERO hides them; and the robot's pedestal and mount
+    point are added where LIBERO mounts its Panda."""
+    if FA.missing():          # LIBERO's meshes and textures: downloaded on first use
+        FA.ensure()
     root = ET.fromstring((t.dir / "scene.xml").read_text().replace("{FILES}", str(FILES)))
-    # Our physics settings, the robot's material classes, and a big enough render buffer.
-    opt = ET.Element("option", {k: str(v) for k, v in S.OPTION.items()})
-    ET.SubElement(opt, "flag", {k: str(v) for k, v in S.FLAGS.items()})
-    size = ET.Element("size", {"memory": "256M"})
-    default = ET.Element("default")
-    for n, p in S.MATERIALS.items():
-        dc = ET.SubElement(default, "default", {"class": n})
-        ET.SubElement(dc, "geom", {k: " ".join(map(str, v)) if isinstance(v, (tuple, list)) else str(v)
-                                   for k, v in p.items()})
-    for i, el in enumerate((opt, size, default)):
-        root.insert(1 + i, el)
-    vis = root.find("visual")
-    if vis is None:
-        vis = ET.SubElement(root, "visual")
-    for tag, attrs in (("global", {"offwidth": "1920", "offheight": "1200"}),
-                       ("headlight", {"ambient": "0.3 0.3 0.3", "diffuse": "0.3 0.3 0.3", "specular": "0.05 0.05 0.05"}),
-                       ("quality", {"shadowsize": "4096"})):
-        el = vis.find(tag)
-        if el is None:
-            el = ET.SubElement(vis, tag)
-        el.attrib.update(attrs)
+    for tag in ("visual",):
+        for el in root.findall(tag):
+            root.remove(el)
     asset = root.find("asset")
+    for tx in asset.findall("texture"):
+        if tx.get("type") == "skybox":
+            asset.remove(tx)
     ET.SubElement(asset, "material", {"name": "pg_mount", "rgba": "0.2 0.2 0.22 1", "specular": "0.3"})
     wb = root.find("worldbody")
+    for el in list(wb):
+        if el.tag == "camera":
+            wb.remove(el)
+    r = room(t.id)
+    for g in wb.iter("geom"):
+        n = g.get("name") or ""
+        if n == "floor" and g.get("type") == "plane":
+            # drawn only, 1 mm above the playground's floor, over the room's floor area
+            g.set("type", "box")
+            g.set("size", f"{(r['x1'] - r['x0']) / 2:.4f} {(r['y1'] - r['y0']) / 2:.4f} 0.0005")
+            g.set("pos", f"{r['centre'][0]:.4f} {r['centre'][1]:.4f} 0.0005")
+            g.set("contype", "0")
+            g.set("conaffinity", "0")
+        elif n.startswith("wall_"):
+            g.set("group", str(ROOM_WALL_GROUP))
     bp = t.meta["robot_base"]["pos"]
     bq = t.meta["robot_base"]["quat"]
     # The Panda's pedestal (LIBERO's Rethink mount), drawn simply; on the floor scenes the
@@ -121,17 +163,21 @@ def _scene_xml(t: Task) -> str:
                                    "pos": f"{bp[0]} {bp[1]} {bp[2] / 2:.4f}", "contype": "0", "conaffinity": "0",
                                    "group": "1", "material": "pg_mount"})
     ET.SubElement(wb, "site", {"name": "robot_mount", "pos": " ".join(map(str, bp)), "quat": " ".join(map(str, bq))})
-    # A soft shadow-casting light, as in the Goal scene.
-    ET.SubElement(wb, "light", {"diffuse": ".3 .3 .3", "dir": "0.2 0 -1", "pos": "0 0 3", "castshadow": "true"})
-    # LIBERO's cameras: agentview is what its policies see; here it is the robot's overhead camera.
-    cams = {c.get("name"): c for c in wb.findall("camera")}
+    spec = mujoco.MjSpec.from_string(ET.tostring(root, encoding="unicode"))
+    _hide_collision_shapes(spec)
+    return spec
+
+
+def cameras(t: Task) -> dict:
+    """The station's two fixed cameras, in LIBERO's frame: "overhead" is LIBERO's agentview (what
+    its policies see), "side" its frontview."""
     av = t.meta["agentview"]
-    ET.SubElement(wb, "camera", {"name": "overhead", "pos": " ".join(map(str, av["pos"])),
-                                 "quat": " ".join(map(str, av["quat"])), "fovy": str(av["fovy"])})
-    fv = cams.get("frontview")
-    ET.SubElement(wb, "camera", {"name": "side", "pos": fv.get("pos") if fv is not None else "1.0 0.0 1.48",
-                                 "quat": fv.get("quat") if fv is not None else "0.56 0.43 0.43 0.56", "fovy": "45"})
-    return ET.tostring(root, encoding="unicode")
+    root = ET.parse(t.dir / "scene.xml").getroot()
+    fv = next((c for c in root.find("worldbody").findall("camera") if c.get("name") == "frontview"), None)
+    return {"overhead": {"pos": list(av["pos"]), "quat": list(av["quat"]), "fovy": float(av["fovy"])},
+            "side": {"pos": [float(v) for v in (fv.get("pos") if fv is not None else "1.0 0.0 1.48").split()],
+                     "quat": [float(v) for v in (fv.get("quat") if fv is not None else "0.56 0.43 0.43 0.56").split()],
+                     "fovy": 45.0}}
 
 
 def _hide_collision_shapes(spec: mujoco.MjSpec):
@@ -141,49 +187,56 @@ def _hide_collision_shapes(spec: mujoco.MjSpec):
             g.group = 3
 
 
-def build(t: Task, robot: str = "franka") -> mujoco.MjModel:
-    if FA.missing():          # LIBERO's meshes and textures: downloaded on first use
-        FA.ensure()
-    world = mujoco.MjSpec.from_string(_scene_xml(t))
-    _hide_collision_shapes(world)
-    S.add_robot(world, "franka")
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        return world.compile()
-
-
 # ---------------------------------------------------------- starting setups
-def apply_setup(m: mujoco.MjModel, d: mujoco.MjData, t: Task, setup: int, arm_qadr,
-                grip_names=("finger_joint1", "finger_joint2")):
-    """Put the scene in one of LIBERO's official starting states.
+def apply_setup(m: mujoco.MjModel, d: mujoco.MjData, t: Task, setup: int, arm_qadr, prefix: str = "",
+                origin=(0.0, 0.0, 0.0), yaw: float = 0.0, grip_names=("finger_joint1", "finger_joint2")):
+    """Put a station's room in one of LIBERO's official starting states.
 
     A state is [time, qpos, qvel] of LIBERO's own model. The arm starts at the setup's joint
     angles (robot0_joint1..7); the hand starts open (our gripper's rest). Every other joint
-    has the same name in our model and is copied across by name.
+    has the same name in our model (after the station's prefix) and is copied across by name;
+    a loose object's place goes from LIBERO's frame to the world's (the room stands at
+    `origin`, turned by `yaw`). Returns the arm's joint angles.
     """
     q = t.states[setup][1:1 + t.meta["nq"]]
     arm = np.array([q[j["qposadr"]] for j in t.meta["joints"] if j["name"].startswith("robot0_joint")])
     d.qpos[arm_qadr] = arm
     for n in grip_names:
-        d.qpos[m.joint(n).qposadr[0]] = 0.04
+        d.qpos[m.joint(prefix + n).qposadr[0]] = 0.04
+    c, s = np.cos(yaw), np.sin(yaw)
+    R = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
+    qyaw = np.array([np.cos(yaw / 2), 0, 0, np.sin(yaw / 2)])
     width = {0: 7, 1: 4, 2: 1, 3: 1}       # free, ball, slide, hinge
+    room_free = []
     for j in t.meta["joints"]:
         if j["name"].startswith(("robot0_", "gripper0_", "mount0_")):
             continue
         a, w = j["qposadr"], width[j["type"]]
-        d.qpos[m.joint(j["name"]).qposadr[0]:][:w] = q[a:a + w]
-    d.qvel[:] = 0
-    _lift_out_of_overlaps(m, d)
+        jid = m.joint(prefix + j["name"]).id
+        jq, jv = m.jnt_qposadr[jid], m.jnt_dofadr[jid]
+        v = np.array(q[a:a + w], float)
+        if w == 7:
+            v[:3] = R @ v[:3] + np.asarray(origin, float)
+            qq = np.zeros(4)
+            mujoco.mju_mulQuat(qq, qyaw, v[3:])
+            v[3:] = qq
+            room_free.append(m.jnt_bodyid[jid])
+        d.qpos[jq:jq + w] = v
+        d.qvel[jv:jv + {7: 6, 4: 3}.get(w, 1)] = 0
+    for k in range(len(arm_qadr)):
+        d.qvel[m.jnt_dofadr[np.where(m.jnt_qposadr == arm_qadr[k])[0][0]]] = 0
+    _lift_out_of_overlaps(m, d, {int(b) for b in room_free})
     return arm
 
 
-def _lift_out_of_overlaps(m: mujoco.MjModel, d: mujoco.MjData, tol: float = 0.0005):
+def _lift_out_of_overlaps(m: mujoco.MjModel, d: mujoco.MjData, bodies: set, tol: float = 0.0005):
     """LIBERO's saved setups leave some objects up to 3 cm inside the table (its MuJoCo 2.3
     box-box test reports half the true overlap, so LIBERO pushes them out gently; MuJoCo 4
-    sees the true overlap and they would shoot out). Raise each loose object just out of
-    whatever it overlaps, keeping its x, y and orientation; it then settles onto its support.
-    Only the start pose changes, by at most a few centimetres up."""
-    free = {m.jnt_bodyid[j]: m.jnt_qposadr[j] for j in range(m.njnt) if m.jnt_type[j] == mujoco.mjtJoint.mjJNT_FREE}
+    sees the true overlap and they would shoot out). Raise each of the room's loose objects just
+    out of whatever it overlaps, keeping its x, y and orientation; it then settles onto its
+    support. Only the start pose changes, by at most a few centimetres up."""
+    free = {m.jnt_bodyid[j]: m.jnt_qposadr[j] for j in range(m.njnt)
+            if m.jnt_type[j] == mujoco.mjtJoint.mjJNT_FREE and m.jnt_bodyid[j] in bodies}
     for _ in range(30):
         mujoco.mj_forward(m, d)
         lift: dict[int, float] = {}
@@ -212,13 +265,19 @@ def _within(intervals, q) -> bool:
 class Checker:
     """LIBERO's success predicates on our model, for one task."""
 
-    def __init__(self, m: mujoco.MjModel, t: Task):
-        self.m, self.t = m, t
+    def __init__(self, m: mujoco.MjModel, t: Task, prefix: str = "", origin=(0.0, 0.0, 0.0), yaw: float = 0.0):
+        # LIBERO's checks read positions and site frames in LIBERO's own world frame, so a
+        # station's room (standing at `origin`, turned by `yaw`) is checked in its own frame.
+        self.m, self.t, self.prefix = m, t, prefix
+        c, s_ = np.cos(yaw), np.sin(yaw)
+        self._Rt = np.array([[c, -s_, 0], [s_, c, 0], [0, 0, 1]]).T     # world -> room
+        self._o = np.asarray(origin, float)
         self.objs = t.meta["objects"]
         self.sites = t.meta["sites"]
-        self.body = {n: m.body(o["root_body"]).id for n, o in self.objs.items()}
-        gid = {m.geom(i).name: i for i in range(m.ngeom) if m.geom(i).name}
-        self.geoms = {n: {gid[g] for g in o["contact_geoms"] if g in gid} for n, o in self.objs.items()}
+        self.body = {n: m.body(prefix + o["root_body"]).id for n, o in self.objs.items()}
+        gid = {m.geom(i).name: i for i in range(m.ngeom) if m.geom(i).name.startswith(prefix)}
+        self.geoms = {n: {gid[prefix + g] for g in o["contact_geoms"] if prefix + g in gid}
+                      for n, o in self.objs.items()}
 
     def contact(self, d, a: str, b: str) -> bool:
         A, B = self.geoms[a], self.geoms[b]
@@ -229,14 +288,15 @@ class Checker:
         return False
 
     def pos(self, d, name):
-        return d.xpos[self.body[name]]
+        return self._Rt @ (d.xpos[self.body[name]] - self._o)
 
     def _site(self, d, name):
-        sid = self.m.site(name).id
-        return d.site_xpos[sid], d.site_xmat[sid].reshape(3, 3), np.asarray(self.sites[name]["size"], float)
+        sid = self.m.site(self.prefix + name).id
+        return (self._Rt @ (d.site_xpos[sid] - self._o), self._Rt @ d.site_xmat[sid].reshape(3, 3),
+                np.asarray(self.sites[name]["size"], float))
 
     def _joint_q(self, d, joint):
-        return float(d.qpos[self.m.joint(joint).qposadr[0]])
+        return float(d.qpos[self.m.joint(self.prefix + joint).qposadr[0]])
 
     # ObjectState / SiteObjectState
     def ontop(self, d, a: str, b: str) -> bool:        # On(a, b) = b.check_ontop(a)
@@ -297,6 +357,10 @@ class Checker:
     def check(self, d, goal=None) -> bool:
         return all(self.check_one(d, g) for g in (goal or self.t.goal))
 
+    def each(self, d) -> list[bool]:
+        """Each of the goal's parts: whether it holds now."""
+        return [self.check_one(d, g) for g in self.t.goal]
+
     def lit_burners(self, d) -> dict[str, bool]:
         """Stoves that are on, so their burner can glow as in LIBERO."""
         return {n: self._any(d, n, "turn_on") for n, o in self.objs.items() if "turn_on" in o["articulation"]}
@@ -342,52 +406,64 @@ def _site_words(t: Task, s: str) -> str:
     return "the marked spot on the table"
 
 
-def done_when(t: Task) -> str:
-    """LIBERO's goal check in plain words."""
+def goal_parts(t: Task) -> list[str]:
+    """Each part of LIBERO's goal check, in plain words."""
     parts = []
     for p, *a in t.goal:
         p = p.lower()
         nm = lambda x: _site_words(t, x) if x in t.meta["sites"] else "the " + label(t, x)
         if p == "open":
-            parts.append(f"{nm(a[0])} is pulled open")
+            s = f"{nm(a[0])} is pulled open"
         elif p == "close":
-            parts.append(f"{nm(a[0])} is shut")
+            s = f"{nm(a[0])} is shut"
         elif p == "turnon":
-            parts.append(f"{nm(a[0])} is turned on")
+            s = f"{nm(a[0])} is turned on"
         elif p == "turnoff":
-            parts.append(f"{nm(a[0])} is turned off")
+            s = f"{nm(a[0])} is turned off"
         elif p == "in":
-            parts.append(f"{nm(a[0])} is inside {nm(a[1])}")
+            s = f"{nm(a[0])} is inside {nm(a[1])}"
         elif a[1] in t.meta["sites"]:
-            parts.append(f"{nm(a[0])} is sitting on {nm(a[1])}")
+            s = f"{nm(a[0])} is sitting on {nm(a[1])}"
         else:
-            parts.append(f"{nm(a[0])} is resting on {nm(a[1])}, touching it")
-    s = "; and ".join(parts)
+            s = f"{nm(a[0])} is resting on {nm(a[1])}, touching it"
+        parts.append(s[0].upper() + s[1:])
+    return parts
+
+
+def done_when(t: Task) -> str:
+    """LIBERO's goal check in plain words."""
+    parts = goal_parts(t)
+    s = "; and ".join(p[0].lower() + p[1:] for p in parts)
     return s[0].upper() + s[1:] + "."
 
 
 # ---------------------------------------------------------- the site sheet
-def _table(m: mujoco.MjModel, d: mujoco.MjData):
-    """The biggest fixed box the robot works on: its centre, half-size and top height."""
+def _table(m: mujoco.MjModel, d: mujoco.MjData, prefix: str = "", to_room=None):
+    """The biggest fixed box the robot works on: its centre (in LIBERO's frame), half-size and
+    top height. prefix: the station's; to_room: world point -> LIBERO's frame."""
     best = None
     for g in range(m.ngeom):
         if m.geom_type[g] != mujoco.mjtGeom.mjGEOM_BOX or m.body_jntnum[m.geom_bodyid[g]] or m.geom_bodyid[g] == 0:
+            continue
+        if not m.body(m.geom_bodyid[g]).name.startswith(prefix):
             continue
         if not (m.geom_contype[g] or m.geom_conaffinity[g]):
             continue
         sx, sy, sz = m.geom_size[g]
         if best is None or sx * sy > best[0]:
-            best = (sx * sy, d.geom_xpos[g].copy(), m.geom_size[g].copy())
+            c = d.geom_xpos[g].copy()
+            best = (sx * sy, np.asarray(to_room(c) if to_room else c, float), m.geom_size[g].copy())
     if best is None:
         return None
     _, c, s = best
     return c, s, c[2] + s[2]
 
 
-def site_sheet(t: Task, m: mujoco.MjModel | None = None, d: mujoco.MjData | None = None) -> str:
+def site_sheet(t: Task, m: mujoco.MjModel | None = None, d: mujoco.MjData | None = None,
+               prefix: str = "", to_room=None) -> str:
     bx, by, bz = t.meta["robot_base"]["pos"]
     table = ""
-    if m is not None and d is not None and (tb := _table(m, d)) is not None:
+    if m is not None and d is not None and (tb := _table(m, d, prefix, to_room)) is not None:
         c, s, top = tb
         table = f"""- The robot base frame has its origin at the centre of the base flange, {(bz - top) * 100:.1f} cm above
   the table top. x points forward along the table, y to the robot's left, z up. All

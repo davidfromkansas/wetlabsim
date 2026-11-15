@@ -74,7 +74,12 @@ KINDS = {
     # so its long side runs beside the arm. Starts empty.
     "counter": {"label": "Kitchen counter", "table": "countertop_2", "turn": math.pi / 2, "robot_xy": (-0.15, 0.0),
                 "layout": []},
+    # A LIBERO benchmark room (playground/libero.py): the whole room of one of LIBERO's tasks, as
+    # LIBERO builds it, with its Franka where LIBERO mounts it. The station's place is the room's
+    # centre; its task and starting layout are the station's own (Station.task, .setup).
+    "libero": {"label": "LIBERO", "table": None, "turn": 0.0, "robot_xy": (-1.16, 0.0), "layout": []},
 }
+LIBERO_ROOM = (5.0, 6.0)      # a LIBERO room's floor (m), before its task is known
 
 # Contact properties for library items, as a MuJoCo default class like the cell's
 # materials. Sliding friction comes from each asset's own physics material.
@@ -165,6 +170,25 @@ class Station:
     yaw: float = 0.0      # rotation about the vertical (rad)
     name: str = ""        # what the user calls it ("Station 1")
     kind: str = "table"   # a key of KINDS
+    task: str = ""        # a LIBERO station: its task (a playground.libero task id)
+    setup: int = 0        # a LIBERO station: the official starting layout its next run starts from
+
+    @property
+    def libero(self) -> bool:
+        return self.kind == "libero"
+
+    def room(self) -> dict | None:
+        """A LIBERO station's room (playground.libero.room), or None."""
+        if not (self.libero and self.task):
+            return None
+        from . import libero as LB
+        return LB.room(self.task)
+
+    def room_origin(self):
+        """Where LIBERO's own frame sits in the station's frame (its room's centre is the station's)."""
+        r = self.room()
+        cx, cy = r["centre"] if r else (0.5, 0.0)
+        return -cx, -cy
 
     @property
     def prefix(self) -> str:
@@ -175,7 +199,7 @@ class Station:
         return KINDS.get(self.kind, KINDS["table"])
 
     @property
-    def table_item(self) -> str:
+    def table_item(self) -> str | None:
         return self.spec["table"]
 
     @property
@@ -194,6 +218,10 @@ class Station:
             return (0.0, 0.0)
         if self.standing:             # on the floor, facing the table's near edge, HUMANOID_GAP from it
             return (-self.footprint()[0] / 2 - HUMANOID_GAP, 0.0)
+        if self.libero and self.task:  # where LIBERO mounts its Panda
+            ox, oy = self.room_origin()
+            bx, by, _ = self.room()["base"]["pos"]
+            return (ox + bx, oy + by)
         return self.spec["robot_xy"]
 
     def bases(self) -> list:
@@ -209,6 +237,9 @@ class Station:
 
     @property
     def top(self) -> float:
+        if self.libero:        # the robot's base height: LIBERO's table top, or the floor
+            r = self.room()
+            return float(r["base"]["pos"][2]) if r else 0.9
         return table_top(self.table_item)
 
     def to_world(self, x: float, y: float, z: float = 0.0):
@@ -229,12 +260,17 @@ class Station:
         the floor to well above its cameras. (half x, half y, height), in the station's frame,
         centred on the table."""
         sx, sy = self.footprint()
+        if self.libero:        # the room itself
+            return sx / 2, sy / 2, 3.0
         # A humanoid stands outside the table's footprint: the box takes in where it stands too.
         mx = HUMANOID_GAP + 0.35 if self.standing else self.WALL_MARGIN
         return sx / 2 + mx, sy / 2 + self.WALL_MARGIN, self.top + self.WALL_ABOVE
 
     def footprint(self):
-        """The table's size along the station's own x and y."""
+        """The table's size along the station's own x and y (a LIBERO station: its room's)."""
+        if self.libero:
+            r = self.room()
+            return tuple(r["size"]) if r else LIBERO_ROOM
         sx, sy, _ = catalog.meta(self.table_item)["size"]
         c, s = abs(math.cos(self.spec["turn"])), abs(math.sin(self.spec["turn"]))
         return c * sx + s * sy, s * sx + c * sy
@@ -248,9 +284,16 @@ class Station:
     def as_dict(self):
         from wetlabsim import scene as WS
         P = WS.ROBOTS[self.robot]
-        return {"id": self.uid, "robot": self.robot, "name": self.name, "label": P["name"], "kind": self.kind,
-                "gripper": P["gripper"], "pos": [round(float(v), 4) for v in self.pos],
-                "yaw": round(float(self.yaw), 4)}
+        out = {"id": self.uid, "robot": self.robot, "name": self.name, "label": P["name"], "kind": self.kind,
+               "gripper": P["gripper"], "pos": [round(float(v), 4) for v in self.pos],
+               "yaw": round(float(self.yaw), 4)}
+        if self.libero and self.task:
+            from . import libero as LB
+            t = LB.task(self.task)
+            out["libero"] = {"task": t.id, "suite": t.suite, "suite_name": LB.SUITE_NAMES[t.suite],
+                             "index": t.index + 1, "language": t.language, "goal": LB.goal_parts(t),
+                             "setup": self.setup, "setups": t.n_setups}
+        return out
 
 
 def table_uid(st: Station) -> str:
@@ -700,21 +743,33 @@ def restore_joints(m: mujoco.MjModel, d: mujoco.MjData, p: Placed):
                 d.qpos[a] = q
 
 
-def _add_mjcf(world: mujoco.MjSpec, p: Placed, meta: dict):
+def _add_mjcf(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool = False):
     """An item that is a MuJoCo model of its own (asset.json "mjcf": the puzzle cube from MuJoCo's
-    model gallery), attached as it is: a free body "obj_<uid>" at the item's place, the model's
-    bodies inside it, named "obj_<uid>__<its body name>", with their own joints, shapes and
-    materials. The model's origin is its centre; the item's place is its bottom centre."""
+    model gallery, LIBERO's objects), attached as it is: a body "obj_<uid>" at the item's place
+    (free unless the item is fixed), the model's bodies inside it, named "obj_<uid>__<its body
+    name>", with their own joints, shapes and materials. The item's place is its bottom centre;
+    the model sits where asset.json "frame" puts it (LIBERO's turned upright), else centred on it.
+    "free_damping" is the free joint's damping the model's source gives it (LIBERO's 0.0005), and
+    "hide_collision" draws the model's collision shapes (group 0) only when debugging, as its
+    source does."""
     child = mujoco.MjSpec.from_file(str(catalog.ASSETS / p.item / meta["mjcf"]))
+    if meta.get("hide_collision"):
+        for g in child.geoms:
+            if g.group == 0 and (g.contype or g.conaffinity):
+                g.group = 3
     body = world.worldbody.add_body(name=f"obj_{p.uid}", pos=list(p.pos), quat=list(p.quat or yaw_quat(p.yaw)))
-    body.add_freejoint(name=f"obj_{p.uid}_joint")
-    frame = body.add_frame(pos=[0, 0, meta["size"][2] / 2])
+    if not fixed:
+        j = body.add_freejoint(name=f"obj_{p.uid}_joint")
+        if meta.get("free_damping"):
+            j.damping = [meta["free_damping"], 0, 0]      # as XML damping="..." sets it
+    fr = meta.get("frame") or {"pos": [0, 0, meta["size"][2] / 2]}
+    frame = body.add_frame(pos=fr["pos"], quat=fr.get("quat", [1, 0, 0, 0]))
     world.attach(child, frame=frame, prefix=f"obj_{p.uid}__")
 
 
 def _add_item(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_cache: set):
     if meta.get("mjcf"):
-        return _add_mjcf(world, p, meta)
+        return _add_mjcf(world, p, meta, fixed)
     if meta.get("bodies"):
         return _add_jointed(world, p, meta, fixed, mesh_cache)
     d = catalog.ASSETS / p.item
@@ -783,8 +838,35 @@ def overhead_pose(st: Station) -> tuple:
     return x, above
 
 
+def _add_libero(world: mujoco.MjSpec, st: Station):
+    """A LIBERO station: its task's whole room (playground.libero.room_spec) at the station's
+    place and turn, LIBERO's Franka where LIBERO mounts it, and LIBERO's cameras as the robot's
+    overhead and side cameras. Everything in the room is named "<station>/<LIBERO's name>"."""
+    from . import libero as LB
+    t = LB.task(st.task)
+    ox, oy = st.room_origin()
+    origin = st.to_world(ox, oy, 0.0)
+    q0 = yaw_quat(st.yaw)
+    frame = world.worldbody.add_frame(pos=list(origin), quat=list(q0))
+    world.attach(LB.room_spec(t), frame=frame, prefix=st.prefix)
+    c, s_ = math.cos(st.yaw), math.sin(st.yaw)
+    for name, cam in LB.cameras(t).items():
+        x, y, z = cam["pos"]
+        world.worldbody.add_camera(name=st.prefix + name, pos=[origin[0] + c * x - s_ * y, origin[1] + s_ * x + c * y, z],
+                                   quat=list(_quat_mul(q0, cam["quat"])), fovy=cam["fovy"])
+    S.add_robot(world, st.robot, st.prefix + "robot_mount", st.prefix)
+
+
+def libero_origin(st: Station):
+    """Where a LIBERO station's room frame is in the world: (origin, yaw)."""
+    ox, oy = st.room_origin()
+    return st.to_world(ox, oy, 0.0), st.yaw
+
+
 def add_station(world: mujoco.MjSpec, st: Station, cache: set):
     """A station's table, its robot on it, and the robot's overhead and side cameras."""
+    if st.libero:
+        return _add_libero(world, st)
     tmeta = catalog.meta(st.table_item)
     top = table_top(st.table_item)
     _add_item(world, Placed(table_uid(st), st.table_item, (st.pos[0], st.pos[1], 0.0), st.table_yaw),

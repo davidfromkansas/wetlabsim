@@ -17,7 +17,7 @@ import pathlib
 
 ASSETS = pathlib.Path(__file__).parent / "assets"
 
-TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Glassware", "Instruments", "PPE", "Tools", "Kitchen", "Bins & Trays", "Cleaning", "Electronics", "Toys & Basics", "Soft"]
+TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Glassware", "Instruments", "PPE", "Tools", "Kitchen", "Bins & Trays", "Cleaning", "Electronics", "Toys & Basics", "Soft", "LIBERO"]
 
 # id, tab, label, Hugging Face folder, hollow, fixed
 ITEMS = [
@@ -312,6 +312,55 @@ ITEMS = [
     ("reagent_reservoir", "Lab & Medical", "Reagent reservoir", "forgecad:reagent_reservoir", True, False),
     ("screw_cap_bottle", "Glassware", "Screw-cap bottle", "forgecad:screw_cap_bottle", False, False),
     ("sharps_box", "Lab & Medical", "Sharps box", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R492_sharps_container/06_tabletop_mini_sharps_box", True, False),
+    # Nov 15 LIBERO's own objects and fixtures (Lifelong-Robot-Learning/LIBERO,
+    # libero/libero/assets), its MuJoCo models attached as they are (tools/build_libero_objects.py)
+    ("libero_alphabet_soup", "LIBERO", "Alphabet soup", "libero:stable_hope_objects/alphabet_soup/alphabet_soup.xml", False, False),
+    ("libero_bbq_sauce", "LIBERO", "BBQ sauce", "libero:stable_hope_objects/bbq_sauce/bbq_sauce.xml", False, False),
+    ("libero_butter", "LIBERO", "Butter", "libero:stable_hope_objects/butter/butter.xml", False, False),
+    ("libero_chocolate_pudding", "LIBERO", "Chocolate pudding", "libero:stable_hope_objects/chocolate_pudding/chocolate_pudding.xml", False, False),
+    ("libero_cookies", "LIBERO", "Cookies", "libero:stable_hope_objects/cookies/cookies.xml", False, False),
+    ("libero_cream_cheese", "LIBERO", "Cream cheese", "libero:stable_hope_objects/cream_cheese/cream_cheese.xml", False, False),
+    ("libero_ketchup", "LIBERO", "Ketchup", "libero:stable_hope_objects/ketchup/ketchup.xml", False, False),
+    ("libero_macaroni_and_cheese", "LIBERO", "Macaroni and cheese", "libero:stable_hope_objects/macaroni_and_cheese/macaroni_and_cheese.xml", False, False),
+    ("libero_milk", "LIBERO", "Milk", "libero:stable_hope_objects/milk/milk.xml", False, False),
+    ("libero_orange_juice", "LIBERO", "Orange juice", "libero:stable_hope_objects/orange_juice/orange_juice.xml", False, False),
+    ("libero_popcorn", "LIBERO", "Popcorn", "libero:stable_hope_objects/popcorn/popcorn.xml", False, False),
+    ("libero_salad_dressing", "LIBERO", "Salad dressing", "libero:stable_hope_objects/salad_dressing/salad_dressing.xml", False, False),
+    ("libero_new_salad_dressing", "LIBERO", "Salad dressing, new", "libero:stable_hope_objects/new_salad_dressing/new_salad_dressing.xml", False, False),
+    ("libero_tomato_sauce", "LIBERO", "Tomato sauce", "libero:stable_hope_objects/tomato_sauce/tomato_sauce.xml", False, False),
+    ("libero_akita_black_bowl", "LIBERO", "Black bowl", "libero:stable_scanned_objects/akita_black_bowl/akita_black_bowl.xml", False, False),
+    ("libero_white_bowl", "LIBERO", "White bowl", "libero:stable_scanned_objects/white_bowl/white_bowl.xml", False, False),
+    ("libero_red_bowl", "LIBERO", "Red bowl", "libero:stable_scanned_objects/red_bowl/red_bowl.xml", False, False),
+    ("libero_plate", "LIBERO", "Plate", "libero:stable_scanned_objects/plate/plate.xml", False, False),
+    ("libero_glazed_rim_porcelain_ramekin", "LIBERO", "Porcelain ramekin", "libero:stable_scanned_objects/glazed_rim_porcelain_ramekin/glazed_rim_porcelain_ramekin.xml", False, False),
+    ("libero_chefmate_8_frypan", "LIBERO", "Frying pan", "libero:stable_scanned_objects/chefmate_8_frypan/chefmate_8_frypan.xml", False, False),
+    ("libero_basket", "LIBERO", "Basket", "libero:stable_scanned_objects/basket/basket.xml", False, False),
+    ("libero_simple_rack", "LIBERO", "Plate rack", "libero:stable_scanned_objects/simple_rack/simple_rack.xml", False, False),
+    ("libero_red_coffee_mug", "LIBERO", "Red coffee mug", "libero:turbosquid_objects/red_coffee_mug/red_coffee_mug.xml", False, False),
+    ("libero_porcelain_mug", "LIBERO", "Porcelain mug", "libero:turbosquid_objects/porcelain_mug/porcelain_mug.xml", False, False),
+    ("libero_white_yellow_mug", "LIBERO", "White and yellow mug", "libero:turbosquid_objects/white_yellow_mug/white_yellow_mug.xml", False, False),
+    ("libero_moka_pot", "LIBERO", "Moka pot", "libero:turbosquid_objects/moka_pot/moka_pot.xml", False, False),
+    ("libero_wine_bottle", "LIBERO", "Wine bottle", "libero:turbosquid_objects/wine_bottle/wine_bottle.xml", False, False),
+    ("libero_wine_rack", "LIBERO", "Wine rack", "libero:turbosquid_objects/wine_rack/wine_rack.xml", False, False),
+    ("libero_black_book", "LIBERO", "Black book", "libero:turbosquid_objects/black_book/black_book.xml", False, False),
+    ("libero_yellow_book", "LIBERO", "Yellow book", "libero:turbosquid_objects/yellow_book/yellow_book.xml", False, False),
+    ("libero_desk_caddy", "LIBERO", "Desk caddy", "libero:turbosquid_objects/desk_caddy/desk_caddy.xml", False, False),
+    ("libero_wooden_tray", "LIBERO", "Wooden tray", "libero:turbosquid_objects/wooden_tray/wooden_tray.xml", False, False),
+    ("libero_white_storage_box", "LIBERO", "White storage box", "libero:turbosquid_objects/white_storage_box/white_storage_box.xml", False, False),
+    ("libero_bowl_drainer", "LIBERO", "Bowl drainer", "libero:turbosquid_objects/bowl_drainer/bowl_drainer.xml", False, False),
+    ("libero_dining_set_group", "LIBERO", "Dining set", "libero:turbosquid_objects/dining_set_group/dining_set_group.xml", False, False),
+    ("libero_wooden_shelf", "LIBERO", "Wooden shelf", "libero:turbosquid_objects/wooden_shelf/wooden_shelf.xml", False, False),
+    ("libero_wooden_two_layer_shelf", "LIBERO", "Two-layer wooden shelf", "libero:turbosquid_objects/wooden_two_layer_shelf/wooden_two_layer_shelf.xml", False, False),
+    ("libero_microwave", "LIBERO", "Microwave", "libero:articulated_objects/microwave.xml", False, True),
+    ("libero_flat_stove", "LIBERO", "Flat stove", "libero:articulated_objects/flat_stove.xml", False, True),
+    ("libero_white_cabinet", "LIBERO", "White cabinet", "libero:articulated_objects/white_cabinet.xml", False, True),
+    ("libero_wooden_cabinet", "LIBERO", "Wooden cabinet", "libero:articulated_objects/wooden_cabinet.xml", False, True),
+    ("libero_short_cabinet", "LIBERO", "Short cabinet", "libero:articulated_objects/short_cabinet.xml", False, True),
+    ("libero_slide_cabinet", "LIBERO", "Sliding cabinet", "libero:articulated_objects/slide_cabinet.xml", False, True),
+    ("libero_short_fridge", "LIBERO", "Short fridge", "libero:articulated_objects/short_fridge.xml", False, True),
+    ("libero_faucet", "LIBERO", "Faucet", "libero:articulated_objects/faucet.xml", False, True),
+    ("libero_basin_faucet", "LIBERO", "Basin faucet", "libero:articulated_objects/basin_faucet.xml", False, True),
+    ("libero_window", "LIBERO", "Window", "libero:articulated_objects/window.xml", False, True),
 ]
 
 # Triangles an item's visuals may keep before they are simplified (tools/convert_simready; the
@@ -404,7 +453,7 @@ FITTED_PARTS = {"kitchenette": {"refrigeratorBody_01_obj_00": "body_01_obj_00"}}
 # Where each item comes from, as the library's source chip names it (by its folder's prefix).
 SOURCE_NAMES = {"": "NVIDIA", "tripo": "Tripo", "quiktech": "QUIKTECH", "usdcraft": "USDCraft",
                 "autobio": "AutoBio", "mujoco": "MuJoCo", "inhouse": "Built in-house",
-                "forgecad": "ForgeCAD", "palatial": "Palatial"}
+                "forgecad": "ForgeCAD", "palatial": "Palatial", "libero": "LIBERO"}
 
 
 def source(hf: str) -> str:

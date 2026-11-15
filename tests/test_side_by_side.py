@@ -3,6 +3,7 @@ each in free floor space, never overlapping another station, furniture or a loos
 import mujoco
 import numpy as np
 
+from playground import libero as LB
 from playground import world as W
 from playground.sim import PlaygroundSim, SOFT_MAX
 
@@ -126,7 +127,9 @@ def _check_overhead(kinds):
     import math
     for kind in kinds:
         for yaw in (0.0, 1.0, math.pi):
-            st = W.Station("st1", "franka", (1.0, -2.0), yaw, kind=kind)
+            # a LIBERO station needs its task (its room and LIBERO's own cameras come with it)
+            task = LB.tasks()[0].id if kind == "libero" else ""
+            st = W.Station("st1", "franka", (1.0, -2.0), yaw, kind=kind, task=task)
             m = W.build([], [st])
             hx, hy, h = st.work_box()
             x, y, z = m.cam_pos[m.camera("st1/overhead").id]

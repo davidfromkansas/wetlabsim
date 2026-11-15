@@ -19,9 +19,8 @@ from wetlabsim import scene as WS
 from wetlabsim import tasks as WT
 from wetlabsim.sim import Arm, Humanoid, RobotError, Sim, TwoArm
 
-from . import catalog
+from . import catalog, tron
 from . import libero as LB
-from . import tron
 from . import world as W
 
 VIEW_W, VIEW_H = 1280, 800      # default size of the main view
@@ -74,11 +73,11 @@ class PlaygroundSim(Sim):
         self.placed = placed if placed is not None else W.default_scene()
         self.stations = stations if stations is not None else W.default_stations()
         self._uid = 0
-        self.scene_mode = "free"                      # or "libero" or "wetlab"
+        self.scene_mode = "free"                      # or "wetlab"
         self.wetlab_task: str | None = None     # Wet Lab: the bench task (wetlabsim.tasks) laid out
-        self.libero_task: LB.Task | None = None
-        self.setup = 0                          # which of the task's 50 starting setups
-        self.checker: LB.Checker | None = None
+        self.checkers: dict[str, LB.Checker] = {}     # each LIBERO station's goal check
+        self._burners: dict[str, dict] = {}           # each LIBERO station's stove burners (site ids)
+        self._rooms: dict[str, tuple] = {}            # each LIBERO station's room frame as last built
         self.active_station = self.stations[0].uid if self.stations else None   # the station the page is looking at
         super().__init__(robot=robot, **kw)
         self.paused = False                     # the world plays unless someone pauses it
@@ -99,8 +98,6 @@ class PlaygroundSim(Sim):
 
     # ------------------------------------------------------------- scene
     def _make_model(self) -> mujoco.MjModel:
-        if self.scene_mode == "libero":
-            return LB.build(self.libero_task, self.robot)
         if self.scene_mode == "wetlab":
             m = WS.build_model(self.robot)          # the robot cell's own bench
             # Room for the main view's largest size (offscreen buffer only; physics unchanged).
@@ -124,7 +121,7 @@ class PlaygroundSim(Sim):
         return next((s for s in self.stations if s.uid == uid), None)
 
     def arm_of(self, uid: str | None) -> Arm:
-        """A station's robot (free play), or the scene's one robot (LIBERO, Wet Lab)."""
+        """A station's robot (free play), or the scene's one robot (Wet Lab)."""
         if self.scene_mode != "free":
             return self.arm
         a = self.arms.get(uid or self.active_station)
@@ -141,20 +138,24 @@ class PlaygroundSim(Sim):
             for b in a.bodies:
                 self.body_station[b] = uid
         self.body_uid = {}
-        self.checker = None
+        self.checkers, self._burners = {}, {}
         if self.scene_mode == "wetlab":
             return
-        if self.scene_mode == "libero":
-            self.checker = LB.Checker(m, self.libero_task)
-            # A stove's burner glows only while the stove is on (LIBERO's visual cue).
-            self._burners = {}
-            for n in self.checker.lit_burners(self.d):
-                sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, n + "_burner")
-                if sid >= 0:
-                    self._burners[n] = sid
-                    m.site_rgba[sid, 3] = 0.0
-            return
         for st in self.stations:
+            if st.libero:
+                # the whole room is the station's (picking any of it picks the station)
+                for b in range(1, m.nbody):
+                    if m.body(b).name.startswith(st.prefix) and b not in self.robot_bodies:
+                        self.body_station[b] = st.uid
+                ck = self.checkers[st.uid] = LB.Checker(m, LB.task(st.task), st.prefix, *W.libero_origin(st))
+                # A stove's burner glows only while the stove is on (LIBERO's visual cue).
+                burners = self._burners[st.uid] = {}
+                for n in ck.lit_burners(self.d):
+                    sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, st.prefix + n + "_burner")
+                    if sid >= 0:
+                        burners[n] = sid
+                        m.site_rgba[sid, 3] = 0.0
+                continue
             self.body_station[m.body(f"obj_{W.table_uid(st)}").id] = st.uid
         self.flex_uid = {}
         for p in self.placed:
@@ -203,6 +204,8 @@ class PlaygroundSim(Sim):
             m, d = self.m, self.d
             st, arm = self.station(uid), self.arm_of(uid)
             roots = {int(m.body_rootid[b]) for b in arm.bodies}
+            if st.libero:              # the room's loose objects and fixtures
+                roots |= {int(m.body_rootid[b]) for b in range(1, m.nbody) if m.body(b).name.startswith(st.prefix)}
             for p in self.placed:
                 b = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, f"obj_{p.uid}")
                 if b >= 0 and st.holds(float(d.xpos[b][0]), float(d.xpos[b][1]), 0.05):
@@ -281,23 +284,10 @@ class PlaygroundSim(Sim):
             mujoco.mj_forward(m, d)
         return None
 
-    def set_libero(self, task_id: str, setup: int = 0):
-        t = LB.task(task_id)
-        if not 0 <= setup < len(t.states):
-            raise RobotError(f"setup must be 1..{len(t.states)}")
-        with self.lock:
-            switching = self.scene_mode != "libero" or self.libero_task is None or self.libero_task.id != t.id
-            self.scene_mode, self.libero_task, self.setup = "libero", t, setup
-            if switching:
-                self._swap_model()
-            else:
-                self.reset()
-                self.paused = True
-
     def set_free(self):
         with self.lock:
             if self.scene_mode != "free":
-                self.scene_mode, self.libero_task, self.wetlab_task = "free", None, None
+                self.scene_mode, self.wetlab_task = "free", None
                 self._swap_model()
 
     def set_wetlab(self, task_id: str):
@@ -305,34 +295,138 @@ class PlaygroundSim(Sim):
             raise RobotError(f"unknown wet lab task {task_id!r}")
         with self.lock:
             switching = self.scene_mode != "wetlab"
-            self.scene_mode, self.libero_task, self.wetlab_task = "wetlab", None, task_id
+            self.scene_mode, self.wetlab_task = "wetlab", task_id
             if switching:
                 self._swap_model()
             else:
                 self.reset()
                 self.paused = True
 
-    def goal_met(self) -> bool:
-        if self.scene_mode != "libero" or self.checker is None:
-            return False
+    # ------------------------------------------------------- LIBERO stations
+    def libero_goal(self, uid: str) -> list[bool] | None:
+        """Each part of a LIBERO station's goal: whether it holds now (and its stove burners
+        glow while the stove is on). None for any other station."""
+        ck = self.checkers.get(uid)
+        if ck is None:
+            return None
         with self.lock:
-            ok = self.checker.check(self.d)
-            lit = self.checker.lit_burners(self.d)
-            for n, sid in self._burners.items():
+            each = ck.each(self.d)
+            lit = ck.lit_burners(self.d)
+            for n, sid in self._burners.get(uid, {}).items():
                 self.m.site_rgba[sid, 3] = 1.0 if lit.get(n) else 0.0
-        return ok
+        return each
+
+    def _room_joints(self, st: W.Station) -> list[int]:
+        """The joints of a LIBERO station's room (not its robot's)."""
+        m = self.m
+        arm = self.arms.get(st.uid)
+        own = arm.bodies if arm is not None else set()
+        return [j for j in range(m.njnt) if m.joint(j).name.startswith(st.prefix) and m.jnt_bodyid[j] not in own]
+
+    def _save_rooms(self) -> dict:
+        """Every LIBERO station's room as it is now, by joint name, with loose objects' places in
+        the room's own frame (so a move or rebuild keeps them where they were in the room)."""
+        m, d = self.m, self.d
+        out = {}
+        for st in self.stations:
+            if not st.libero or st.uid not in self._rooms:
+                continue
+            org, yaw = self._rooms[st.uid]
+            c, s_ = np.cos(-yaw), np.sin(-yaw)
+            qinv = np.array([np.cos(-yaw / 2), 0, 0, np.sin(-yaw / 2)])
+            room = {}
+            for j in self._room_joints(st):
+                a = m.jnt_qposadr[j]
+                if m.jnt_type[j] == mujoco.mjtJoint.mjJNT_FREE:
+                    v = d.qpos[a:a + 7].copy()
+                    x, y = v[0] - org[0], v[1] - org[1]
+                    v[0], v[1] = c * x - s_ * y, s_ * x + c * y
+                    q = np.zeros(4)
+                    mujoco.mju_mulQuat(q, qinv, v[3:])
+                    v[3:] = q
+                else:
+                    n = 4 if m.jnt_type[j] == mujoco.mjtJoint.mjJNT_BALL else 1
+                    v = d.qpos[a:a + n].copy()
+                room[m.joint(j).name] = v
+            out[st.uid] = room
+        return out
+
+    def _restore_rooms(self, saved: dict):
+        """Put LIBERO rooms back as _save_rooms saw them, at each station's place now. A station
+        not in it (new) starts from its task's starting layout."""
+        m, d = self.m, self.d
+        for st in self.stations:
+            if not st.libero:
+                continue
+            org, yaw = W.libero_origin(st)
+            room = saved.get(st.uid)
+            if room is None:
+                self._apply_layout(st, st.setup)
+                continue
+            c, s_ = np.cos(yaw), np.sin(yaw)
+            qy = np.array([np.cos(yaw / 2), 0, 0, np.sin(yaw / 2)])
+            for name, v in room.items():
+                j = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, name)
+                if j < 0:
+                    continue
+                a = m.jnt_qposadr[j]
+                v = np.array(v, float)
+                if len(v) == 7:
+                    x, y = v[0], v[1]
+                    v[0], v[1] = org[0] + c * x - s_ * y, org[1] + s_ * x + c * y
+                    q = np.zeros(4)
+                    mujoco.mju_mulQuat(q, qy, v[3:])
+                    v[3:] = q
+                d.qpos[a:a + len(v)] = v
+        self._rooms = {st.uid: W.libero_origin(st) for st in self.stations if st.libero}
+
+    def _apply_layout(self, st: W.Station, k: int):
+        """A LIBERO station's room and robot to one of its task's official starting layouts
+        (call with the lock held)."""
+        t = LB.task(st.task)
+        k = int(k) % t.n_setups
+        arm = self.arms[st.uid]
+        org, yaw = W.libero_origin(st)
+        q = LB.apply_setup(self.m, self.d, t, k, arm.arm_qadr, st.prefix, org, yaw)
+        arm.reset_state()
+        arm.motion = None
+        self.d.ctrl[arm.arm_act] = q
+        self.d.ctrl[arm.grip_act] = arm._grip_ctrl(0.0)
+        self._rooms[st.uid] = (org, yaw)
+        mujoco.mj_forward(self.m, self.d)
+
+    def libero_layout(self, uid: str, k: int):
+        """Start a LIBERO station over from its task's starting layout k (0-based)."""
+        st = self.station(uid)
+        if st is None or not st.libero:
+            raise RobotError("not a LIBERO station")
+        with self.lock:
+            st.setup = int(k) % LB.task(st.task).n_setups
+            self._apply_layout(st, st.setup)
+
+    def libero_sheet(self, uid: str) -> str:
+        """The site sheet for a LIBERO station's robot."""
+        st = self.station(uid)
+        org, yaw = W.libero_origin(st)
+        c, s_ = np.cos(-yaw), np.sin(-yaw)
+
+        def to_room(p):
+            x, y = p[0] - org[0], p[1] - org[1]
+            return (c * x - s_ * y, s_ * x + c * y, p[2])
+        with self.lock:
+            return LB.site_sheet(LB.task(st.task), self.m, self.d, st.prefix, to_room)
 
     def _lay_out(self, task):
-        """Free play: nothing to do, every object starts where the user put it (the model's own
-        pose). LIBERO: the task's official starting setup."""
+        """Free play: every object starts where the user put it (the model's own pose), and each
+        LIBERO station from its task's starting layout. Wet Lab: the bench laid out for its task."""
         if self.scene_mode == "wetlab":
             # The bench laid out for its task, as in the robot cell's evals. An eval reset names
             # the task itself; a plain reset keeps the chosen one.
             super()._lay_out(task or self.wetlab_task)
             return
-        if self.scene_mode == "libero" and self.libero_task is not None:
-            arm = LB.apply_setup(self.m, self.d, self.libero_task, self.setup, self.arm.arm_qadr)
-            self.d.ctrl[self.arm.arm_act] = arm
+        for st in self.stations:
+            if st.libero and st.uid in self.arms:
+                self._apply_layout(st, st.setup)
 
     def new_uid(self, item: str) -> str:
         self._uid += 1
@@ -379,6 +473,7 @@ class PlaygroundSim(Sim):
                 self._sync_placed()
             old_d = self.d
             snaps = {uid: a.snapshot() for uid, a in self.arms.items()}
+            rooms = self._save_rooms()
             m = W.build(self.placed, self.stations, self.settings)
             d = mujoco.MjData(m)
             self.m, self.d = m, d
@@ -392,6 +487,7 @@ class PlaygroundSim(Sim):
                     a.reset_pose()
                     a.reset_state()
                 a.motion = None
+            self._restore_rooms(rooms)      # LIBERO rooms as they were (a new one: its layout)
             d.time = old_d.time
             mujoco.mj_forward(m, d)
             self._wall0, self._sim0 = time.perf_counter(), d.time
@@ -547,18 +643,28 @@ class PlaygroundSim(Sim):
         return [p for p in self.placed if not catalog.item(p.item)["fixed"]
                 and st.holds(p.pos[0], p.pos[1]) and p.pos[2] > top - 0.05]
 
-    def add_station(self, robot: str, pos, yaw: float = 0.0, kind: str = "table", starter: bool = True) -> str:
+    def add_station(self, robot: str, pos, yaw: float = 0.0, kind: str = "table", starter: bool = True,
+                    task: str = "") -> str:
         """A new station; starter=False leaves off what its kind starts with on the table (a
-        described scene puts down its own objects)."""
+        described scene puts down its own objects). A LIBERO station takes its task (a
+        playground.libero task id) and LIBERO's Franka."""
         if robot not in WS.ROBOTS:
             raise RobotError(f"unknown robot {robot!r}")
         if kind not in W.KINDS:
             raise RobotError(f"unknown kind of station {kind!r}")
+        if kind == "libero":
+            try:
+                t = LB.task(task)
+            except KeyError:
+                raise RobotError("pick one of LIBERO's tasks") from None
+            robot = "franka"
         with self.lock:
             self._sync_placed()
             uid = self._new_station_uid()
             n = int(uid[2:])
-            st = W.Station(uid, robot, (float(pos[0]), float(pos[1])), float(yaw), f"Robot {n}", kind)
+            name = f"LIBERO {LB.SUITE_NAMES[t.suite]} {t.index + 1}" if kind == "libero" else f"Robot {n}"
+            st = W.Station(uid, robot, (float(pos[0]), float(pos[1])), float(yaw), name, kind,
+                           task=task if kind == "libero" else "")
             self.stations.append(st)
             top = st.top
             for item, lx, ly, iyaw in (st.spec["layout"] if starter else []):     # what the station starts with
@@ -599,7 +705,7 @@ class PlaygroundSim(Sim):
                 raise RobotError("no such station")
             self._sync_placed()
             st = self.station(uid)
-            if keep_table:
+            if keep_table and not st.libero:
                 self.placed.append(W.Placed(self.new_uid(st.table_item), st.table_item,
                                             (st.pos[0], st.pos[1], 0.0), st.table_yaw))
             else:
@@ -657,7 +763,7 @@ class PlaygroundSim(Sim):
             new = self._new_station_uid()
             base = (st.name or f"Robot {uid[2:]}").strip()
             self.stations.append(W.Station(new, st.robot, (st.pos[0] + dx, st.pos[1] + dy), st.yaw,
-                                           f"{base} copy"[:40], st.kind))
+                                           f"{base} copy"[:40], st.kind, st.task, st.setup))
             for p in riders:
                 self.placed.append(W.Placed(self.new_uid(p.item), p.item,
                                             (p.pos[0] + dx, p.pos[1] + dy, p.pos[2]), p.yaw, p.quat))
@@ -698,12 +804,12 @@ class PlaygroundSim(Sim):
                 x, y = st.pos[0] + dx, st.pos[1] + dy
                 if not self.station_spot(x, y, st.yaw, kind=st.kind)["valid"]:
                     continue
-                probe = W.Station("probe", st.robot, (x, y), st.yaw, kind=st.kind)
+                probe = W.Station("probe", st.robot, (x, y), st.yaw, kind=st.kind, task=st.task)
                 if any(probe.holds(p.pos[0], p.pos[1], 0.15) for p in loose):
                     continue          # something lies on the floor there
                 new = self._new_station_uid()
                 self.stations.append(W.Station(new, st.robot, (x, y), st.yaw,
-                                               f"{base} · copy {len(made) + 1}"[:40], st.kind))
+                                               f"{base} · copy {len(made) + 1}"[:40], st.kind, st.task, st.setup))
                 for p in riders:
                     self.placed.append(W.Placed(self.new_uid(p.item), p.item,
                                                 (p.pos[0] + dx, p.pos[1] + dy, p.pos[2]), p.yaw, p.quat,
@@ -744,6 +850,8 @@ class PlaygroundSim(Sim):
                 raise RobotError("no such station")
             if st.robot == robot:
                 return
+            if st.libero:
+                raise RobotError("a LIBERO station keeps LIBERO's own robot, the Franka Panda")
             self._sync_placed()
             new = W.Station(st.uid, robot, st.pos, st.yaw, st.name, st.kind)
             if any(new.holds(p.pos[0], p.pos[1]) and new.near_base(p.pos[0], p.pos[1]) for p in self.placed):
@@ -816,6 +924,13 @@ class PlaygroundSim(Sim):
         if st is None:
             return
         top = st.top
+        if st.libero:        # the room's table (or floor area), in front of the robot
+            rx, ry = st.robot_xy
+            cx, cy, _ = st.to_world(rx + 0.6, ry)
+            target = {"lookat": [cx, cy, max(top - 0.15, 0.2)], "distance": 3.2,
+                      "azimuth": (145.0 + np.degrees(st.yaw)) % 360, "elevation": -32.0}
+            self._set_view(target, glide)
+            return
         cx, cy, _ = st.to_world(0.0, 0.0)
         target = {"lookat": [cx, cy, top - 0.15], "distance": 2.8,
                   "azimuth": (145.0 + np.degrees(st.yaw)) % 360, "elevation": -28.0}
@@ -868,14 +983,6 @@ class PlaygroundSim(Sim):
                     "task": t.id, "title": t.title, "language": t.prompt, "active": "robot",
                     "robots": [{"id": "robot", "robot": self.robot, "name": "Robot", "label": self.P["name"],
                                 "gripper": self.P["gripper"]}]}
-        if self.scene_mode == "libero":
-            t = self.libero_task
-            return {"mode": "libero", "objects": [], "paused": self.paused, "selected": self.selected,
-                    "time": round(self.d.time, 3), "realtime_factor": round(self.rt_factor, 3),
-                    "task": t.id, "suite": t.suite, "language": t.language, "setup": self.setup, "setups": len(t.states),
-                    "goal_met": self.goal_met(), "active": "robot",
-                    "robots": [{"id": "robot", "robot": self.robot, "name": "Robot", "label": self.P["name"],
-                                "gripper": self.P["gripper"]}]}
         with self.lock:
             self._sync_placed()
             items = []
@@ -892,9 +999,15 @@ class PlaygroundSim(Sim):
             return {"mode": "free", "objects": items, "paused": self.paused, "selected": self.selected,
                     "time": round(self.d.time, 3), "realtime_factor": round(self.rt_factor, 3),
                     "active": self.active_station,
-                    "robots": [{**st.as_dict(),
-                                **({"base": [round(float(v), 3) for v in self._base_mid(self.arms[st.uid])]}
-                                   if st.uid in self.arms else {})} for st in self.stations]}
+                    "robots": [self._robot_info(st) for st in self.stations]}
+
+    def _robot_info(self, st: W.Station) -> dict:
+        out = st.as_dict()
+        if st.uid in self.arms:
+            out["base"] = [round(float(v), 3) for v in self._base_mid(self.arms[st.uid])]
+        if "libero" in out and st.uid in self.checkers:      # LIBERO's goal check, live
+            out["libero"]["now"] = self.libero_goal(st.uid)
+        return out
 
     @staticmethod
     def _base_mid(arm):
@@ -1096,7 +1209,9 @@ class PlaygroundSim(Sim):
         z = max(zs)
         reason = ""
         feet = [(ox + px, oy + py) for px, py in pts[:, :2]]
-        if any(st.near_base(fx, fy, BASE_RADIUS) for st in self.stations for fx, fy in feet):
+        if any(st.libero and st.holds(fx, fy, 0.05) for st in self.stations for fx, fy in feet):
+            reason = "a LIBERO room keeps LIBERO's own objects, so nothing can be added to it"
+        elif any(st.near_base(fx, fy, BASE_RADIUS) for st in self.stations for fx, fy in feet):
             reason = "a robot's base is there"
         elif robot_low is not None and robot_low < z + lift + height + 0.005:
             reason = ("a robot is in the way" if robot_low < z + 0.03 else
