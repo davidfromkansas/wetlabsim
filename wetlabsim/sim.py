@@ -22,7 +22,7 @@ import numpy as np
 
 from . import scene as S
 from . import tasks as T
-from . import locomotion as L
+from . import sonic as SO
 
 CTRL_DT = 0.008                # trajectory sample period (s)
 TRACKING_LIMIT = 0.25          # rad of joint tracking error before a protective stop
@@ -122,6 +122,12 @@ class Arm:
         # One arm of a two-arm robot ("aloha:left") reports to the pair (TwoArm), which logs for it.
         self.side = robot.split(":")[1] if ":" in robot else ""
         self.parent: "TwoArm | None" = None
+        # Why the arm takes no motion commands of its own right now (a G1's arm while its
+        # whole-body controller moves it as part of a movement such as crawling), or "".
+        self.busy = ""
+        # True while another controller sets the arm's joint targets (a G1's whole-body
+        # controller after a movement that used the arms, until the next arm command).
+        self.driven = False
         self.robot = robot if self.side else S.robot_name(robot)
         self.P = S.profile_for(self.robot, prefix, world_cameras)
         self.rng = np.random.default_rng()
@@ -282,7 +288,7 @@ class Arm:
         self.grip_cmd += np.clip(self.grip_target - self.grip_cmd, -step, step)
         d.ctrl[self.grip_act] = self._grip_ctrl(self.grip_cmd)
         # Safety checks (every 10 steps).
-        if self.mode == "running" and int(d.time / self.sim.m.opt.timestep) % 10 == 0:
+        if self.mode == "running" and not self.driven and int(d.time / self.sim.m.opt.timestep) % 10 == 0:
             err = np.max(np.abs(d.ctrl[self.arm_act] - d.qpos[self.arm_qadr]))
             reflex = self._reflex(self._ft_external()) if self.has_ft else ""
             if reflex:
@@ -354,6 +360,10 @@ class Arm:
     def _check_running(self):
         if self.mode != "running":
             raise RobotError(f"robot is in protective stop ({self.stop_reason}); call unlock_protective_stop()")
+        if self.busy:
+            raise RobotError(self.busy)
+        if self.parent is not None and hasattr(self.parent, "claim_arms"):
+            self.parent.claim_arms()
 
     def move_l(self, pose, speed=0.25, accel=None) -> Motion:
         """Straight-line tool move to pose [x,y,z,rx,ry,rz] (base frame, rotation vector)."""
@@ -809,6 +819,8 @@ class HandArm(Arm):
     together on the 0..255 gripper scale (open flat to a fist), or are set one by one (hand_move).
     The arm's motors also get a feed-forward torque that holds the arm up against gravity."""
 
+    gravity_comp = True
+
     def _index(self):
         super()._index()
         P, m = self.P, self.sim.m
@@ -858,7 +870,7 @@ class HandArm(Arm):
         d.ctrl[self.hand_act] = self.hand_cmd
         # Gravity compensation through each arm motor's torque input (LeRobot's G1 gravity
         # compensation): the torque that holds the arm and hand where they are.
-        d.ctrl[self.tau_act] = d.qfrc_bias[self.arm_dadr]
+        d.ctrl[self.tau_act] = d.qfrc_bias[self.arm_dadr] if self.gravity_comp else 0.0
 
     def gripper_move(self, position, speed=255, force=150):
         position = float(np.clip(position, 0, 255))
@@ -937,12 +949,26 @@ class HandArm(Arm):
         return out
 
 
+# The movements SONIC's planner makes (NVIDIA's deploy, localmotion_kplanner.hpp: the motion sets
+# its keyboard and gamepad offer; "lying face down" is left out there too). Moving ones go
+# somewhere at a speed; still ones are poses. In some the arms are the AI's own (it moves them
+# with arm commands and SONIC balances for them); in the others SONIC moves the arms as part
+# of the movement (hands on the floor when crawling, swinging when running).
+G1_MOVES = ("slow_walk", "walk", "run", "stealth_walk", "injured_walk", "forward_jump", "crawl",
+            "walk_boxing", "left_punch", "right_punch", "random_punch", "left_hook", "right_hook",
+            "ledge_walk", "carry_walk", "stealth_walk_2", "happy_walk", "zombie_walk", "gun_walk", "scared_walk")
+G1_POSES = ("stand", "squat", "kneel", "kneel_two_legs", "boxing")
+G1_ARMS_FREE = {"idle", "slow_walk", "walk", "squat", "kneel", "kneel_two_legs"}
+G1_ON_FLOOR = {"crawl"}                           # on hands and knees
+G1_FROM_FLOOR = {"crawl", "kneel", "kneel_two_legs", "squat"}
+
+
 class Humanoid(TwoArm):
     """A Unitree G1: two arms with Dex3-1 hands (HandArm, "left" and "right", each driven by its
-    own commands) on a body that stands and walks by itself. NVIDIA's GR00T policies
-    (locomotion.py) keep it balanced and walk it at the commanded speed, as LeRobot runs them; the
-    robot API gives the commands LeRobot's G1 teleoperation gives them: walking speed and turn
-    rate, pelvis height and torso lean."""
+    own commands) on a body that NVIDIA's GEAR-SONIC whole-body controller (sonic.py) keeps
+    balanced and moves: walking, running, crawling, kneeling and the other movements its planner
+    makes, in a direction, at a speed, turning to face a way. In the movements that leave the
+    arms free, the arms take their own commands and SONIC balances for where they are going."""
 
     def __init__(self, sim: "Sim", robot: str, prefix: str = "", uid: str = "robot",
                  world_cameras: str | None = None):
@@ -951,9 +977,15 @@ class Humanoid(TwoArm):
             a = HandArm(sim, f"{self.robot}:{side}", prefix, uid)
             a.parent = self
             self.sides[side] = a
-        self.loco = L.GrootLocomotion()
+        self.loco = SO.Sonic()
         self.walk_motion: Motion | None = None
+        self.pose_motion: Motion | None = None
         self.fallen = ""
+        self.style = "idle"
+        self.face = 0.0          # where it is to face (rad), in SONIC's planner frame
+        self.height = None       # the body height asked for (m), squatting, kneeling and crawling
+        self._arm_prev = None
+        self._arms_sonic = False
 
     @property
     def mode(self):
@@ -967,14 +999,15 @@ class Humanoid(TwoArm):
 
     @property
     def motion(self):
-        if self.walk_motion is not None and not self.walk_motion.done.is_set():
-            return self.walk_motion
+        for mo in (self.walk_motion, self.pose_motion):
+            if mo is not None and not mo.done.is_set():
+                return mo
         return TwoArm.motion.fget(self)
 
     @motion.setter
     def motion(self, v):
         if v is None:
-            self.walk_motion = None
+            self.walk_motion = self.pose_motion = None
             for a in self.sides.values():
                 a.motion = None
 
@@ -996,6 +1029,10 @@ class Humanoid(TwoArm):
         self.body_act = np.array([m.actuator(n).id for n in body])
         self.leg_act = self.body_act[:15]
         self.n_arm = sum(a.n_arm for a in arms)
+        arm_act = np.concatenate([a.arm_act for a in arms])
+        self._arm_gains = (m.actuator_gainprm[arm_act, 0].copy(), -m.actuator_biasprm[arm_act, 2].copy())
+        if getattr(self, "_arms_sonic", False):          # rebuilt while SONIC moves the arms
+            self._set_arm_gains(True)
         self.arm_qadr = np.concatenate([a.arm_qadr for a in arms])
         self.arm_dadr = np.concatenate([a.arm_dadr for a in arms])
         self.arm_act = np.concatenate([a.arm_act for a in arms])
@@ -1016,7 +1053,7 @@ class Humanoid(TwoArm):
         a = self.free_qadr
         d.qpos[a:a + 7] = m.qpos0[a:a + 7]
         d.qvel[self.free_dadr:self.free_dadr + 6] = 0
-        stance = L.DEFAULT_ANGLES[:15]
+        stance = SO.DEFAULT_ANGLES[:15]
         d.qpos[self.body_qadr[:15]] = stance
         d.ctrl[self.leg_act] = stance
         for s in self.sides.values():
@@ -1025,8 +1062,12 @@ class Humanoid(TwoArm):
     def reset_state(self):
         super().reset_state()
         self.loco.reset()
-        self.walk_motion = None
+        self.walk_motion = self.pose_motion = None
         self.fallen = ""
+        self.style, self.face, self.height = "idle", 0.0, None
+        self._set_arm_gains(False)
+        for a in self.sides.values():
+            a.busy = ""
         self._next_policy = None
 
     def _start_frame(self):
@@ -1065,15 +1106,63 @@ class Humanoid(TwoArm):
 
     # ------------------------------------------------------------- control
     def _upright(self) -> str:
-        """Why the robot has fallen, or "" while it stands."""
+        """Why the robot has fallen, or "" while it holds the movement SONIC is making: its body
+        tipped more than 60 degrees away from the movement's, or its pelvis 0.3 m below it."""
         d = self.sim.d
-        g = L.gravity_orientation(d.sensor(self.imu["quat"]).data)
-        if g[2] > -0.5:
+        q = d.sensor(self.imu["quat"]).data
+        ref_z, ref_q = self.loco.reference_root()
+        up, ref_up = SO.qrot(q, (0, 0, 1.0)), SO.qrot(ref_q, (0, 0, 1.0))
+        if float(np.dot(up, ref_up)) < 0.5:
             return "the robot fell over (its body tipped past 60 degrees)"
-        foot = min(d.xpos[b][2] for b in self.feet)
-        if d.xpos[self.base_body][2] - foot < 0.3:
+        floor = self._start_frame()[0][2] - S.G1_PELVIS_HEIGHT
+        if d.xpos[self.base_body][2] - floor < ref_z - 0.3:
             return "the robot fell over (its pelvis dropped to the floor)"
         return ""
+
+    def _set_arm_gains(self, sonic: bool):
+        """The G1's motors take their gains with every command: SONIC's own (and no gravity
+        torque) while SONIC moves the arms, LeRobot's arm gains with gravity compensation while
+        they follow arm commands."""
+        m = self.sim.m
+        kp, kd = (SO.KP[15:], SO.KD[15:]) if sonic else self._arm_gains
+        m.actuator_gainprm[self.arm_act, 0] = kp
+        m.actuator_biasprm[self.arm_act, 1] = -kp
+        m.actuator_biasprm[self.arm_act, 2] = -kd
+        for a in self.sides.values():
+            a.gravity_comp = not sonic
+            a.driven = sonic
+        self._arms_sonic = sonic
+        self._arm_prev = None
+
+    def _arms_to_body(self, style: str):
+        """A movement that uses the arms: SONIC moves them, and arm commands wait until the robot
+        stands, walks, squats or kneels again. After it, SONIC keeps moving them (they hang as
+        its movements put them) until the next arm command takes them back."""
+        if style in G1_ARMS_FREE:
+            for a in self.sides.values():
+                a.busy = ""
+            return
+        for a in self.sides.values():
+            if a.motion:
+                a.motion.result = f"stopped: the arms are part of the {style} movement"
+                a.motion.done.set()
+                a.motion = None
+            a.busy = (f"the arms are part of the robot's {style.replace('_', ' ')} movement; "
+                      "they take arm commands again once it stands, walks, squats or kneels")
+        if not self._arms_sonic:
+            self._set_arm_gains(True)
+
+    def claim_arms(self):
+        """An arm command: the arms follow arm commands again, from where they are now."""
+        if self._arms_sonic:
+            d = self.sim.d
+            d.ctrl[self.arm_act] = d.qpos[self.arm_qadr]
+            self._set_arm_gains(False)
+
+    def _finish(self, mo, result):
+        if mo is not None and not mo.done.is_set():
+            mo.result = result
+            mo.done.set()
 
     def _control(self):
         for a in self.sides.values():
@@ -1082,84 +1171,138 @@ class Humanoid(TwoArm):
         if self.fallen:
             return
         if self._next_policy is None or d.time + 1e-9 >= self._next_policy:
-            self._next_policy = (self._next_policy or d.time) + L.CONTROL_DT
-            reason = self._upright()
+            self._next_policy = (self._next_policy or d.time) + SO.CONTROL_DT
+            reason = self._upright() if len(self.loco.clip) else ""
             if reason:
-                # The G1 drops into its damping mode when it falls: the legs go limp.
+                # The G1 drops into its damping mode when it falls: the joints go limp.
                 self.fallen = reason
                 d.ctrl[self.leg_act] = d.qpos[self.body_qadr[:15]]
                 for a in self.sides.values():
+                    a.busy = ""
                     a._protective_stop(reason)
-                if self.walk_motion:
-                    self.walk_motion.result = "protective_stop: " + reason
-                    self.walk_motion.done.set()
-                    self.walk_motion = None
+                for mo in (self.walk_motion, self.pose_motion):
+                    self._finish(mo, "protective_stop: " + reason)
+                self.walk_motion = self.pose_motion = None
                 self.log_event("protective_stop", reason=reason)
                 return
             wm = self.walk_motion
             if wm is not None and d.time - wm.t0 >= wm.times[-1]:
-                self.loco.cmd[:] = 0
-                wm.result = "done"
-                wm.done.set()
+                self._halt()
+                self._finish(wm, "done")
                 self.walk_motion = None
-            d.ctrl[self.leg_act] = self.loco.step(d.sensor(self.imu["quat"]).data, d.sensor(self.imu["gyro"]).data,
-                                                  d.qpos[self.body_qadr], d.qvel[self.body_dadr])
+            free = not self._arms_sonic
+            if free:
+                q = d.ctrl[self.arm_act].copy()
+                dq = None if self._arm_prev is None else (q - self._arm_prev) / SO.CONTROL_DT
+                self._arm_prev = q
+                self.loco.set_arms(q, dq)
+            else:
+                self.loco.set_arms(None)
+            target = self.loco.step(d.sensor(self.imu["quat"]).data, d.sensor(self.imu["gyro"]).data,
+                                    d.qpos[self.body_qadr], d.qvel[self.body_dadr])
+            d.ctrl[self.leg_act] = target[:15]
+            if not free:
+                d.ctrl[self.arm_act] = target[15:]
+            pm = self.pose_motion
+            if pm is not None and self.loco.plan_finished():
+                self._finish(pm, "done")
+                self.pose_motion = None
 
     # ------------------------------------------------------------ commands
     def _check_standing(self):
         if self.fallen:
             raise RobotError(f"{self.fallen}; it needs to be picked up (reset the robot)")
 
-    def walk(self, vx=0.0, vy=0.0, yaw_rate=0.0, seconds=1.0) -> Motion:
-        """Walk at a velocity for some seconds, then stand: vx forward, vy to the left (m/s),
-        yaw_rate counter-clockwise (rad/s), as the G1 controller's joystick commands them."""
-        cmd = np.array([vx, vy, yaw_rate], float)
-        lo = np.array([L.VX_RANGE[0], L.VY_RANGE[0], L.YAW_RANGE[0]])
-        hi = np.array([L.VX_RANGE[1], L.VY_RANGE[1], L.YAW_RANGE[1]])
-        if np.any(cmd < lo) or np.any(cmd > hi):
-            raise RobotError(f"walking command outside the controller's range: vx {L.VX_RANGE}, "
-                             f"vy {L.VY_RANGE} m/s, yaw_rate {L.YAW_RANGE} rad/s")
+    def _command(self, style: str, direction=0.0, speed=None, height=None):
+        """Ask SONIC for a movement: direction relative to where it is to face (rad, + left)."""
+        k = SO.MODES[style]
+        f = np.array([np.cos(self.face), np.sin(self.face), 0.0])
+        mv = np.array([np.cos(self.face + direction), np.sin(self.face + direction), 0.0])
+        self.loco.cmd = SO.Command.make(style, move=mv, face=f, speed=speed, height=height)
+        self._arms_to_body(style)
+        self.style = style
+        return k
+
+    def _halt(self):
+        """The end of a timed movement: stop where it is (still on the floor when crawling)."""
+        if self.style in G1_ON_FLOOR:
+            c = self.loco.cmd
+            self.loco.cmd = SO.Command(c.mode, (0, 0, 0), c.face, 0.0, c.height)
+        else:
+            self._command("idle")
+
+    def _check_transition(self, style: str):
+        if self.style in G1_ON_FLOOR and style not in G1_FROM_FLOOR:
+            raise RobotError(f"the robot is down on the floor ({self.style.replace('_', ' ')}): "
+                             "kneel or squat first, then stand")
+
+    def move(self, style="walk", direction=0.0, speed=None, turn=0.0, seconds=1.0) -> Motion:
+        """Move for some seconds, then stop: style (G1_MOVES), direction to go relative to the way
+        it faces (rad, + to the left), speed (m/s, for the styles that take one), turn (rad, +
+        to the left: turn to face that much further round first)."""
+        if style not in G1_MOVES:
+            raise RobotError(f"unknown movement {style!r}: one of {', '.join(G1_MOVES)}")
         seconds = float(seconds)
         if not 0 < seconds <= 60:
             raise RobotError("seconds must be between 0 and 60")
+        k = SO.MODES[style]
+        if speed is not None:
+            if k not in SO.SPEED_RANGE:
+                raise RobotError(f"{style} moves at its own speed: leave speed out")
+            lo, hi = SO.SPEED_RANGE[k]
+            if not lo <= float(speed) <= hi:
+                raise RobotError(f"{style} speed must be within {lo} to {hi} m/s")
         with self.lock:
             self._check_standing()
-            if self.walk_motion:
-                self.walk_motion.result = "replaced by a new command"
-                self.walk_motion.done.set()
-            self.loco.cmd[:] = cmd
+            self._check_transition(style)
+            self._finish(self.walk_motion, "replaced by a new command")
+            self._finish(self.pose_motion, "replaced by a new command")
+            self.pose_motion = None
+            self.face += float(turn)
+            height = self.height if style in G1_ON_FLOOR else None
+            self._command(style, float(direction), speed, height)
             mo = Motion(self.sim.d.time, np.array([0.0, seconds]), np.zeros((2, 0)))
             self.walk_motion = mo
-            self.log_event("command", kind="walk", seconds=round(seconds, 3), target=cmd.round(3).tolist())
+            self.log_event("command", kind="move", style=style, direction=round(float(direction), 4),
+                           speed=speed, turn=round(float(turn), 4), seconds=round(seconds, 3))
+            return mo
+
+    def pose(self, pose="stand", height=None, turn=0.0) -> Motion:
+        """Take a pose and hold it (G1_POSES), turning to face turn (rad, + left) further round:
+        height (m, 0.2 to 0.8) for squatting and kneeling. Done once SONIC's motion into it has
+        played out."""
+        if pose not in G1_POSES:
+            raise RobotError(f"unknown pose {pose!r}: one of {', '.join(G1_POSES)}")
+        style = "idle" if pose == "stand" else pose
+        if height is not None:
+            if style in SO.STANDING:
+                raise RobotError(f"{pose} has its own height: leave height out")
+            if not SO.HEIGHT_RANGE[0] <= float(height) <= SO.HEIGHT_RANGE[1]:
+                raise RobotError(f"height must be within {SO.HEIGHT_RANGE[0]} to {SO.HEIGHT_RANGE[1]} m")
+        with self.lock:
+            self._check_standing()
+            self._check_transition(style)
+            self._finish(self.walk_motion, "replaced by a new command")
+            self._finish(self.pose_motion, "replaced by a new command")
+            self.walk_motion = None
+            self.face += float(turn)
+            self.height = None if height is None else float(height)
+            self._command(style, height=self.height)
+            mo = Motion(self.sim.d.time, np.array([0.0, 60.0]), np.zeros((2, 0)))
+            self.pose_motion = mo
+            self.log_event("command", kind="pose", pose=pose, height=self.height, turn=round(float(turn), 4))
             return mo
 
     def stand(self):
-        """Stop walking and stand where it is."""
+        """Stop moving: stand where it is (or, down on the floor, stop crawling)."""
         with self.lock:
-            self.loco.cmd[:] = 0
-            if self.walk_motion:
-                self.walk_motion.result = "stopped"
-                self.walk_motion.done.set()
-                self.walk_motion = None
+            if self.style in G1_ON_FLOOR:
+                self._halt()
+            elif self.style in SO.STANDING:
+                self._command("idle")
+            self._finish(self.walk_motion, "stopped")
+            self.walk_motion = None
             self.log_event("command", kind="stand")
-
-    def body_pose(self, height=None, pitch=None) -> dict:
-        """The balance controller's pelvis height (m) and torso lean forward (rad)."""
-        with self.lock:
-            self._check_standing()
-            if height is not None:
-                h = float(height)
-                if not L.HEIGHT_RANGE[0] <= h <= L.HEIGHT_RANGE[1]:
-                    raise RobotError(f"height must be within {L.HEIGHT_RANGE} m")
-                self.loco.height = h
-            if pitch is not None:
-                p = float(pitch)
-                if not L.LEAN_RANGE[0] <= p <= L.LEAN_RANGE[1]:
-                    raise RobotError(f"pitch must be within {L.LEAN_RANGE} rad")
-                self.loco.lean[1] = p
-            self.log_event("command", kind="body", height=round(self.loco.height, 3),
-                           pitch=round(float(self.loco.lean[1]), 3))
-            return {"height": round(self.loco.height, 3), "pitch": round(float(self.loco.lean[1]), 3)}
 
     def stop(self):
         self.stand()
@@ -1171,8 +1314,9 @@ class Humanoid(TwoArm):
 
     # ------------------------------------------------------------- sensors
     def body_state(self) -> dict:
-        d, m = self.sim.d, self.sim.m
+        d = self.sim.d
         q = d.qpos[self.body_qadr[:15]]
+        c = self.loco.cmd
         return {
             "joint_names": self.leg_names,
             "joint_positions": q.round(4).tolist(),
@@ -1181,10 +1325,11 @@ class Humanoid(TwoArm):
             "imu": {"quaternion": d.sensor(self.imu["quat"]).data.round(5).tolist(),
                     "gyroscope": d.sensor(self.imu["gyro"]).data.round(4).tolist(),
                     "accelerometer": d.sensor(self.imu["acc"]).data.round(3).tolist()},
-            "walk_command": self.loco.cmd.round(3).tolist(),
-            "height_command": round(self.loco.height, 3),
-            "pitch_command": round(float(self.loco.lean[1]), 3),
-            "walking": self.walk_motion is not None,
+            "movement": "stand" if self.style == "idle" else self.style,
+            "moving": self.walk_motion is not None,
+            "speed_command": None if c.speed < 0 else round(c.speed, 3),
+            "height_command": None if c.height < 0 else round(c.height, 3),
+            "arms_free": not any(a.busy for a in self.sides.values()),
             "fallen": bool(self.fallen),
         }
 

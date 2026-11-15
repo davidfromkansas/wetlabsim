@@ -17,3 +17,6 @@ build/
 # The website's pages and routes named runs/ (the line above is for run records)
 !/web/app/runs/
 !/web/app/api/runs/
+
+# NVIDIA GEAR-SONIC model files: downloaded from Hugging Face (wetlabsim/sonic.py), too big for git
+wetlabsim/assets/unitree_g1/sonic/*.onnx

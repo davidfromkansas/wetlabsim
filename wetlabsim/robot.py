@@ -193,20 +193,24 @@ class Robot:
         out = self._cmd("/hand", {"joints": list(map(float, joints)), "speed": speed, "force": force, "wait": wait})
         return {"gripper": out["gripper"], "hand": out["hand"]}
 
-    def walk(self, vx: float = 0.0, vy: float = 0.0, yaw_rate: float = 0.0, seconds: float = 1.0,
+    def move(self, style: str = "walk", direction: float = 0.0, speed: float | None = None,
+             turn: float = 0.0, seconds: float = 1.0, wait: bool = True) -> dict:
+        """A humanoid: move in a style ("walk", "run", "crawl", ...) for `seconds`, then stop:
+        `direction` to go relative to the way it faces (rad, + to the left), `speed` (m/s, for
+        the styles that take one), `turn` (rad, + to the left) to face further round first.
+        Send it to the whole robot (Robot())."""
+        return self._cmd("/move", {"style": style, "direction": direction, "speed": speed, "turn": turn,
+                                   "seconds": seconds, "wait": wait})
+
+    def pose(self, pose: str = "stand", height: float | None = None, turn: float = 0.0,
              wait: bool = True) -> dict:
-        """A humanoid: walk at vx forward and vy to the left (m/s), turning at yaw_rate (rad/s,
-        counter-clockwise), for `seconds`, then stand. Send it to the whole robot (Robot())."""
-        return self._cmd("/walk", {"vx": vx, "vy": vy, "yaw_rate": yaw_rate, "seconds": seconds, "wait": wait})
+        """A humanoid: take a pose ("stand", "squat", "kneel", ...) and hold it; `height` (m) for
+        squatting and kneeling, `turn` (rad, + to the left) to face further round."""
+        return self._cmd("/pose", {"pose": pose, "height": height, "turn": turn, "wait": wait})
 
     def stand(self):
-        """A humanoid: stop walking and stand where it is."""
+        """A humanoid: stop moving and stand where it is (or, crawling, stop where it is)."""
         self._cmd("/stand", {})
-
-    def set_body(self, height: float | None = None, pitch: float | None = None) -> dict:
-        """A humanoid: the balance controller's pelvis height (m) and forward lean of the torso
-        (rad). Leave one out to keep it."""
-        return self._cmd("/body", {"height": height, "pitch": pitch})["body"]
 
     def get_lidar_points(self) -> np.ndarray:
         """A humanoid's head lidar: one scan, as an N x 3 array of the points it hit (m, in the

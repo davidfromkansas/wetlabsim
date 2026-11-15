@@ -123,7 +123,7 @@ STANDARD_KITS = {"franka": "franka_emika_panda", "aloha": "aloha", "fr3_duo": "f
 KIT_LEAVE_OUT = ("*.md", "conversion.json", "scene.xml", "*.patch", "*.png", "tablelegs.obj", "tabletop.obj",
                  "small_meta_table_diffuse.png", "extrusion_*.stl", "overhead_mount.stl", "wormseye_mount.stl",
                  "corner_bracket.stl", "angled_extrusion.stl",
-                 "locomotion")   # the G1's balance/walking policy runs in its controller, not the agent's
+                 "locomotion", "sonic")   # the G1's whole-body controller runs in the robot, not the agent's
 
 # Written per run from the task and the station's site, not part of the robot's starter kit.
 PER_RUN_FILES = {"GOAL.md", "SITE.md", "cameras.json"}

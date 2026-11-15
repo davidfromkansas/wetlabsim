@@ -1,0 +1,1049 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Motion Tracking and Kinematic Planner with Keyboard Controls &#8212; GR00T-WholeBodyControl Documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/twemoji.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=fd8e2287" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=f9c1cefe"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js"></script>
+    <script src="../_static/twemoji.js"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/keyboard';</script>
+    <link rel="icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Motion Tracking and Kinematic Planner with Gamepad Controls" href="gamepad.html" />
+    <link rel="prev" title="VR Teleop Setup (PICO)" href="../getting_started/vr_teleop_setup.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="Nov 03, 2026"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/NVIDIA-logo-white.png" class="logo__image only-light" alt=""/>
+    <script>document.write(`<img src="../_static/NVIDIA-logo-black.png" class="logo__image only-dark" alt=""/>`);</script>
+  
+  
+    <p class="title logo__title">GR00T-WholeBodyControl Documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><ul class="navbar-icon-links"
+    aria-label="Quick Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/NVlabs/GR00T-WholeBodyControl" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://nvlabs.github.io/GEAR-SONIC/" title="GEAR-SONIC Website" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-solid fa-globe fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GEAR-SONIC Website</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://arxiv.org/abs/2511.07820" title="Paper" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-solid fa-file-pdf fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Paper</span></a>
+        </li>
+</ul></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../model_card.html">Model Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation_deploy.html">Installation (Deployment)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/download_models.html">Downloading Model Checkpoints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/vr_teleop_setup.html">VR Teleop Setup (PICO)</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Motion Tracking and Kinematic Planner with Keyboard Controls</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gamepad.html">Motion Tracking and Kinematic Planner with Gamepad Controls</a></li>
+<li class="toctree-l1"><a class="reference internal" href="zmq.html">Streaming Motion Tracking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="manager.html">Interface Manager (All-In-One)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="isaac_teleop_publisher_setup.html">Isaac Capture Setup (CloudXR / DeviceIO, in-process)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vr_wholebody_teleop.html">PICO VR Whole-body Teleop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="live_camera_teleop.html">Live Camera Teleoperation with GEM-X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_collection.html">Data Collection for VLA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vla_workflow.html">VLA Workflow: Collect, Fine-tune, Deploy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vla_inference.html">VLA Inference</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Training</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation_training.html">Installation (Training)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/training.html">Training Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/training_data.html">Training Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/new_embodiments.html">Training on New Embodiments</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Best Practices</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/teleoperation.html">Whole-body Teleoperation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/troubleshooting.html">Troubleshooting</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference Documentation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../references/index.html">Reference Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/configuration.html">Configuration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../references/conventions.html">Coordinate Frame and Rotation Conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../references/training_code.html">Training Code Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../references/deployment_code.html">C++ Deployment Program Flow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../references/observation_config.html">Observation Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../references/motion_reference.html">Motion Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../references/planner_onnx.html">Kinematic Planner ONNX Model Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../references/jetpack6.html">G1 JetPack 6 Flashing Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../references/decoupled_wbc.html">Decoupled WBC</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Additional Resources</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../resources/citations.html">Citations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../resources/license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../resources/support.html">Support</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/NVlabs/GR00T-WholeBodyControl" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/NVlabs/GR00T-WholeBodyControl/edit/main/docs/tutorials/keyboard.md" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/NVlabs/GR00T-WholeBodyControl/issues/new?title=Issue%20on%20page%20%2Ftutorials/keyboard.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/tutorials/keyboard.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Motion Tracking and Kinematic Planner with Keyboard Controls</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#launch">Launch</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-by-step-normal-mode-reference-motion-tracking">Step-by-Step: Normal Mode (Reference Motion Tracking)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-by-step-planner-mode-real-time-motion-generation">Step-by-Step: Planner Mode (Real-time Motion Generation)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#control-reference">Control Reference</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#system-controls-both-modes">System Controls (Both Modes)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normal-mode-keys">Normal Mode Keys</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#planner-mode-keys">Planner Mode Keys</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#motion-sets">Motion Sets</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#set-0-locomotion-standing">Set 0 — Locomotion (Standing)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#set-1-squat-ground">Set 1 — Squat / Ground</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#set-2-boxing">Set 2 — Boxing</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#set-3-additional-styled-walking">Set 3 — Additional Styled Walking</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#movement-momentum-system">Movement Momentum System</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="motion-tracking-and-kinematic-planner-with-keyboard-controls">
+<h1>Motion Tracking and Kinematic Planner with Keyboard Controls<a class="headerlink" href="#motion-tracking-and-kinematic-planner-with-keyboard-controls" title="Link to this heading">#</a></h1>
+<figure style="margin: 1em 0;">
+<video width="100%" autoplay loop muted playsinline style="border-radius: 8px;">
+  <source src="../_static/kinematic_planner/Navigation.mp4" type="video/mp4">
+</video>
+<figcaption style="text-align: center; font-style: italic; margin-top: 0.5em;">In-the-wild navigation demo using the kinematic planner with keyboard controls.</figcaption>
+</figure>
+<div  class="sphinx-contrib-video-container align-left"><video controls="True" preload="auto" width="100%"><source src="../_images/Keyboard_Guidance.mp4" type="video/mp4"></video></div><p><em>Video: Keyboard control walkthrough — starting the control system, playing reference motions, and using planner mode for real-time locomotion.</em></p>
+<p>Control the robot using keyboard commands for reference motion playback and planner-based locomotion (using <code class="docutils literal notranslate"><span class="pre">--input-type</span> <span class="pre">keyboard</span></code>).</p>
+<div class="note admonition">
+<p class="admonition-title">Prerequisites</p>
+<p>Complete the <a class="reference internal" href="../getting_started/quickstart.html"><span class="std std-doc">Quick Start</span></a> to have the sim2sim loop running.</p>
+</div>
+<div class="danger admonition">
+<p class="admonition-title">Emergency Stop</p>
+<p>Press <strong><code class="docutils literal notranslate"><span class="pre">O</span></code></strong> at any time to immediately stop control and exit. Always keep a hand near the keyboard ready to press <strong><code class="docutils literal notranslate"><span class="pre">O</span></code></strong>.</p>
+</div>
+<section id="launch">
+<h2>Launch<a class="headerlink" href="#launch" title="Link to this heading">#</a></h2>
+<p><strong>Sim2Sim (MuJoCo):</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Terminal 1 — MuJoCo simulator (from repo root)</span>
+<span class="nb">source</span><span class="w"> </span>.venv_sim/bin/activate
+python<span class="w"> </span>gear_sonic/scripts/run_sim_loop.py
+
+<span class="c1"># Terminal 2 — C++ deployment (from gear_sonic_deploy/)</span>
+bash<span class="w"> </span>deploy.sh<span class="w"> </span>--input-type<span class="w"> </span>keyboard<span class="w"> </span>sim
+</pre></div>
+</div>
+<p><strong>Real Robot:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># From gear_sonic_deploy/</span>
+bash<span class="w"> </span>deploy.sh<span class="w"> </span>--input-type<span class="w"> </span>keyboard<span class="w"> </span>real
+</pre></div>
+</div>
+</section>
+<section id="step-by-step-normal-mode-reference-motion-tracking">
+<h2>Step-by-Step: Normal Mode (Reference Motion Tracking)<a class="headerlink" href="#step-by-step-normal-mode-reference-motion-tracking" title="Link to this heading">#</a></h2>
+<p>Normal Mode plays back pre-loaded reference motions. This is the default mode when the program starts.</p>
+<ol class="arabic simple">
+<li><p>In Terminal 2, press <strong><code class="docutils literal notranslate"><span class="pre">]</span></code></strong> to start the control system.</p></li>
+<li><p>In the MuJoCo window, press <strong><code class="docutils literal notranslate"><span class="pre">9</span></code></strong> to drop the robot to the ground.</p></li>
+<li><p>Go back to Terminal 2, press <strong><code class="docutils literal notranslate"><span class="pre">T</span></code></strong> to play the current reference motion — the robot executes it to completion.</p></li>
+<li><p>Press <strong><code class="docutils literal notranslate"><span class="pre">N</span></code></strong> to switch to the next motion sequence, or <strong><code class="docutils literal notranslate"><span class="pre">P</span></code></strong> for the previous one.</p></li>
+<li><p>Press <strong><code class="docutils literal notranslate"><span class="pre">T</span></code></strong> again to play the new motion.</p></li>
+<li><p>To replay the same motion, press <strong><code class="docutils literal notranslate"><span class="pre">T</span></code></strong> again after it finishes. To stop mid-motion and return to the first frame, press <strong><code class="docutils literal notranslate"><span class="pre">R</span></code></strong> — the robot pauses at the first frame without terminating the policy.</p></li>
+<li><p>Use <strong><code class="docutils literal notranslate"><span class="pre">Q</span></code></strong> / <strong><code class="docutils literal notranslate"><span class="pre">E</span></code></strong> to nudge the heading left or right (±π/12 rad per press).</p></li>
+<li><p>Press <strong><code class="docutils literal notranslate"><span class="pre">I</span></code></strong> to reinitialize the base quaternion and reset the heading to zero, i.e. robot will think the current facing is the facing at the first frame of the reference.</p></li>
+<li><p>When done, press <strong><code class="docutils literal notranslate"><span class="pre">O</span></code></strong> to stop control and exit.</p></li>
+</ol>
+</section>
+<section id="step-by-step-planner-mode-real-time-motion-generation">
+<h2>Step-by-Step: Planner Mode (Real-time Motion Generation)<a class="headerlink" href="#step-by-step-planner-mode-real-time-motion-generation" title="Link to this heading">#</a></h2>
+<p>Planner Mode lets you control the robot in real time — choose a locomotion style, steer with WASD, and adjust speed and height on the fly.</p>
+<ol class="arabic simple">
+<li><p>From Normal Mode, press <strong><code class="docutils literal notranslate"><span class="pre">ENTER</span></code></strong> to switch to Planner Mode. The terminal will print <code class="docutils literal notranslate"><span class="pre">Planner</span> <span class="pre">enabled</span></code>.</p></li>
+<li><p>The robot starts in the <strong>Locomotion</strong> motion set. Press <strong><code class="docutils literal notranslate"><span class="pre">1</span></code></strong> for slow walk, <strong><code class="docutils literal notranslate"><span class="pre">2</span></code></strong> for walk, or <strong><code class="docutils literal notranslate"><span class="pre">3</span></code></strong> for run.</p></li>
+<li><p>Press <strong><code class="docutils literal notranslate"><span class="pre">W</span></code></strong> to walk forward. The robot uses a momentum system — holding a direction key sets momentum to full; releasing it lets the robot gradually decelerate and return to idle.</p></li>
+<li><p>Steer with <strong><code class="docutils literal notranslate"><span class="pre">A</span></code></strong> / <strong><code class="docutils literal notranslate"><span class="pre">D</span></code></strong> (adjust heading and moving direction together) or turn in place with <strong><code class="docutils literal notranslate"><span class="pre">Q</span></code></strong> / <strong><code class="docutils literal notranslate"><span class="pre">E</span></code></strong> (±π/6 rad per press, only facing direction).</p></li>
+<li><p>Press <strong><code class="docutils literal notranslate"><span class="pre">,</span></code></strong> / <strong><code class="docutils literal notranslate"><span class="pre">.</span></code></strong> to strafe left / right.</p></li>
+<li><p>Press <strong><code class="docutils literal notranslate"><span class="pre">S</span></code></strong> to move backward.</p></li>
+<li><p>Adjust speed with <strong><code class="docutils literal notranslate"><span class="pre">9</span></code></strong> (decrease) / <strong><code class="docutils literal notranslate"><span class="pre">0</span></code></strong> (increase). Speed ranges depend on the current mode (see tables below).</p></li>
+<li><p>Press <strong><code class="docutils literal notranslate"><span class="pre">N</span></code></strong> to cycle to the next motion set (Locomotion → Squat → Boxing → Styled Walking → …). Use <strong><code class="docutils literal notranslate"><span class="pre">P</span></code></strong> to go back.</p></li>
+<li><p>Within a motion set, press <strong><code class="docutils literal notranslate"><span class="pre">1</span></code></strong>–<strong><code class="docutils literal notranslate"><span class="pre">8</span></code></strong> to pick a specific mode (see the Motion Sets section below).</p></li>
+<li><p>For squat-type modes, adjust body height with <strong><code class="docutils literal notranslate"><span class="pre">-</span></code></strong> (lower) / <strong><code class="docutils literal notranslate"><span class="pre">=</span></code></strong> (higher), clamped to 0.2–0.8 m.</p></li>
+<li><p>If you need an immediate halt, press <strong><code class="docutils literal notranslate"><span class="pre">R</span></code></strong>, <strong><code class="docutils literal notranslate"><span class="pre">`</span></code></strong>, or <strong><code class="docutils literal notranslate"><span class="pre">~</span></code></strong> — this resets movement momentum to zero instantly.</p></li>
+<li><p>Press <strong><code class="docutils literal notranslate"><span class="pre">ENTER</span></code></strong> again to return to Normal Mode, or <strong><code class="docutils literal notranslate"><span class="pre">O</span></code></strong> to stop and exit.</p></li>
+</ol>
+</section>
+<section id="control-reference">
+<h2>Control Reference<a class="headerlink" href="#control-reference" title="Link to this heading">#</a></h2>
+<section id="system-controls-both-modes">
+<h3>System Controls (Both Modes)<a class="headerlink" href="#system-controls-both-modes" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Action</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>]</strong></p></td>
+<td><p>Start control system</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>O</strong></p></td>
+<td><p>Stop control and exit (emergency stop)</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>ENTER</strong></p></td>
+<td><p>Toggle between Normal / Planner modes</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>I</strong></p></td>
+<td><p>Reinitialize base quaternion and reset heading</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Z</strong></p></td>
+<td><p>Toggle encoder mode (between mode 0 and mode 1, if encoder loaded)</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>F</strong></p></td>
+<td><p>Report motor temperatures (TTS voice alert)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="normal-mode-keys">
+<h3>Normal Mode Keys<a class="headerlink" href="#normal-mode-keys" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Action</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>T</strong></p></td>
+<td><p>Play current motion to completion</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>R</strong></p></td>
+<td><p>Restart current motion from beginning (pause at frame 0)</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>P</strong> / <strong>N</strong></p></td>
+<td><p>Previous / Next motion sequence</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Q</strong> / <strong>E</strong></p></td>
+<td><p>Adjust delta heading (at policy level) left / right (±π/12 rad)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="planner-mode-keys">
+<h3>Planner Mode Keys<a class="headerlink" href="#planner-mode-keys" title="Link to this heading">#</a></h3>
+<p><strong>Movement:</strong></p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Action</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>W</strong> / <strong>S</strong></p></td>
+<td><p>Move forward / backward</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>A</strong> / <strong>D</strong></p></td>
+<td><p>Adjust heading slightly and move forward (left / right)</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>,</strong> / <strong>.</strong></p></td>
+<td><p>Strafe left / right</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Heading:</strong></p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Action</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Q</strong> / <strong>E</strong></p></td>
+<td><p>Adjust facing direction (at planner level) left / right (±π/6 rad)</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>J</strong> / <strong>L</strong></p></td>
+<td><p>Adjust delta heading (at policy level) left / right (±π/12 rad)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Mode &amp; Speed:</strong></p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Action</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>N</strong> / <strong>P</strong></p></td>
+<td><p>Next / Previous motion set</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>1</strong>–<strong>8</strong></p></td>
+<td><p>Select mode within the current set</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>9</strong> / <strong>0</strong></p></td>
+<td><p>Decrease / Increase movement speed</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>-</strong> / <strong>=</strong></p></td>
+<td><p>Decrease / Increase height (non-standing sets, 0.2–0.8 m)</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>T</strong></p></td>
+<td><p>Play motion</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Emergency:</strong></p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Action</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>R</strong> / <strong>`</strong> / <strong>~</strong></p></td>
+<td><p>Emergency stop (immediate momentum reset)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="motion-sets">
+<h2>Motion Sets<a class="headerlink" href="#motion-sets" title="Link to this heading">#</a></h2>
+<p>A <strong>motion set</strong> is a group of related movement styles (e.g., locomotion, gestures, or crouching). Selecting a mode within a set makes the robot behave in that style. Each set contains up to eight selectable modes.</p>
+<p>Cycle through motion sets with <strong><code class="docutils literal notranslate"><span class="pre">N</span></code></strong> (next) / <strong><code class="docutils literal notranslate"><span class="pre">P</span></code></strong> (previous). Within each set, press <strong><code class="docutils literal notranslate"><span class="pre">1</span></code></strong>–<strong><code class="docutils literal notranslate"><span class="pre">8</span></code></strong> to select a mode. For more details on the underlying planner model, mode indices, and input/output specifications, see the <a class="reference internal" href="../references/planner_onnx.html"><span class="std std-doc">Kinematic Planner ONNX Model Reference</span></a>.</p>
+<section id="set-0-locomotion-standing">
+<h3>Set 0 — Locomotion (Standing)<a class="headerlink" href="#set-0-locomotion-standing" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Mode</p></th>
+<th class="head"><p>Speed Range</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>1</strong></p></td>
+<td><p>Slow Walk</p></td>
+<td><p>0.2–0.8 m/s</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>2</strong></p></td>
+<td><p>Walk</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>3</strong></p></td>
+<td><p>Run</p></td>
+<td><p>1.5–3.0 m/s</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>4</strong></p></td>
+<td><p>Happy</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>5</strong></p></td>
+<td><p>Stealth</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>6</strong></p></td>
+<td><p>Injured</p></td>
+<td><p>—</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>For lateral (side-stepping) movement using <strong><code class="docutils literal notranslate"><span class="pre">,</span></code></strong> / <strong><code class="docutils literal notranslate"><span class="pre">.</span></code></strong>, we recommend keeping the target velocity at around <strong>0.4 m/s</strong>. Higher velocities during strafing can cause the robot’s feet to collide due to the cross-legged foot placement required for lateral steps.</p>
+</div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1em; margin: 1em 0;">
+<figure style="margin: 0;">
+<video width="100%" autoplay loop muted playsinline style="border-radius: 8px;">
+  <source src="../_static/kinematic_planner/planner_happy.mp4" type="video/mp4">
+</video>
+<figcaption style="text-align: center; font-style: italic; margin-top: 0.5em;">Happy styled walking.</figcaption>
+</figure>
+<figure style="margin: 0;">
+<video width="100%" autoplay loop muted playsinline style="border-radius: 8px;">
+  <source src="../_static/kinematic_planner/planner_stealth.mp4" type="video/mp4">
+</video>
+<figcaption style="text-align: center; font-style: italic; margin-top: 0.5em;">Stealth styled walking.</figcaption>
+</figure>
+<figure style="margin: 0;">
+<video width="100%" autoplay loop muted playsinline style="border-radius: 8px;">
+  <source src="../_static/kinematic_planner/planner_injured.mp4" type="video/mp4">
+</video>
+<figcaption style="text-align: center; font-style: italic; margin-top: 0.5em;">Injured styled walking.</figcaption>
+</figure>
+<figure style="margin: 0;">
+<video width="100%" autoplay loop muted playsinline style="border-radius: 8px;">
+  <source src="../_static/kinematic_planner/planner_run.mp4" type="video/mp4">
+</video>
+<figcaption style="text-align: center; font-style: italic; margin-top: 0.5em;">Running locomotion mode.</figcaption>
+</figure>
+</div>
+</section>
+<section id="set-1-squat-ground">
+<h3>Set 1 — Squat / Ground<a class="headerlink" href="#set-1-squat-ground" title="Link to this heading">#</a></h3>
+<p>Height adjustable with <strong><code class="docutils literal notranslate"><span class="pre">-</span></code></strong> / <strong><code class="docutils literal notranslate"><span class="pre">=</span></code></strong> (0.2–0.8 m). Initial height defaults to 0.8 m when entering this set.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Mode</p></th>
+<th class="head"><p>Speed Range</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>1</strong></p></td>
+<td><p>Squat</p></td>
+<td><p>static</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>2</strong></p></td>
+<td><p>Kneel (Two Legs)</p></td>
+<td><p>static</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>3</strong></p></td>
+<td><p>Kneel (One Leg)</p></td>
+<td><p>static</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>4</strong></p></td>
+<td><p>Hand Crawling</p></td>
+<td><p>0.4–1.0 m/s</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>5</strong></p></td>
+<td><p>Elbow Crawling</p></td>
+<td><p>0.7–1.0 m/s</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1em; margin: 1em 0;">
+<figure style="margin: 0;">
+<video width="100%" autoplay loop muted playsinline style="border-radius: 8px;">
+  <source src="../_static/kinematic_planner/planner_kneeling.mp4" type="video/mp4">
+</video>
+<figcaption style="text-align: center; font-style: italic; margin-top: 0.5em;">Kneeling mode with variable height control.</figcaption>
+</figure>
+<figure style="margin: 0;">
+<video width="100%" autoplay loop muted playsinline style="border-radius: 8px;">
+  <source src="../_static/kinematic_planner/hand_crawling.mp4" type="video/mp4">
+</video>
+<figcaption style="text-align: center; font-style: italic; margin-top: 0.5em;">Hand crawling locomotion.</figcaption>
+</figure>
+<figure style="margin: 0;">
+<video width="100%" autoplay loop muted playsinline style="border-radius: 8px;">
+  <source src="../_static/kinematic_planner/planner_elbow_crawling.mp4" type="video/mp4">
+</video>
+<figcaption style="text-align: center; font-style: italic; margin-top: 0.5em;">Elbow crawling locomotion.</figcaption>
+</figure>
+</div>
+</section>
+<section id="set-2-boxing">
+<h3>Set 2 — Boxing<a class="headerlink" href="#set-2-boxing" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Mode</p></th>
+<th class="head"><p>Speed Range</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>1</strong></p></td>
+<td><p>Idle Boxing</p></td>
+<td><p>static</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>2</strong></p></td>
+<td><p>Walk Boxing</p></td>
+<td><p>0.7–1.5 m/s</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>3</strong></p></td>
+<td><p>Left Jab</p></td>
+<td><p>0.7–1.5 m/s</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>4</strong></p></td>
+<td><p>Right Jab</p></td>
+<td><p>0.7–1.5 m/s</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>5</strong></p></td>
+<td><p>Random Punches</p></td>
+<td><p>0.7–1.5 m/s</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>6</strong></p></td>
+<td><p>Left Hook</p></td>
+<td><p>0.7–1.5 m/s</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>7</strong></p></td>
+<td><p>Right Hook</p></td>
+<td><p>0.7–1.5 m/s</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<figure style="margin: 1em 0;">
+<video width="100%" autoplay loop muted playsinline style="border-radius: 8px;">
+  <source src="../_static/kinematic_planner/planner_boxing.mp4" type="video/mp4">
+</video>
+<figcaption style="text-align: center; font-style: italic; margin-top: 0.5em;">Boxing mode demo.</figcaption>
+</figure>
+</section>
+<section id="set-3-additional-styled-walking">
+<h3>Set 3 — Additional Styled Walking<a class="headerlink" href="#set-3-additional-styled-walking" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Mode</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>1</strong></p></td>
+<td><p>Careful</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>2</strong></p></td>
+<td><p>Object Carrying</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>3</strong></p></td>
+<td><p>Crouch</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>4</strong></p></td>
+<td><p>Happy Dance</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>5</strong></p></td>
+<td><p>Zombie</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>6</strong></p></td>
+<td><p>Point</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>7</strong></p></td>
+<td><p>Scared</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="movement-momentum-system">
+<h2>Movement Momentum System<a class="headerlink" href="#movement-momentum-system" title="Link to this heading">#</a></h2>
+<p>The planner usage in keyboard mode uses a momentum-based movement system:</p>
+<ul class="simple">
+<li><p>Pressing a direction key (<strong>W/S/A/D/,/.</strong>) sets momentum to <strong>1.0</strong> (full speed).</p></li>
+<li><p>Each frame without a direction key press, momentum decays multiplicatively (×0.999).</p></li>
+<li><p>When momentum drops below <strong>0.1</strong>, the robot transitions to idle (for the Locomotion set) or holds the current static pose (for Squat and Boxing sets).</p></li>
+<li><p>Emergency stop (<strong>R/`/~</strong>) instantly resets momentum to zero.</p></li>
+</ul>
+<p>This means you don’t need to hold a key down — a single press starts movement, and the robot coasts to a stop naturally.</p>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../getting_started/vr_teleop_setup.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">VR Teleop Setup (PICO)</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="gamepad.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Motion Tracking and Kinematic Planner with Gamepad Controls</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#launch">Launch</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-by-step-normal-mode-reference-motion-tracking">Step-by-Step: Normal Mode (Reference Motion Tracking)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-by-step-planner-mode-real-time-motion-generation">Step-by-Step: Planner Mode (Real-time Motion Generation)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#control-reference">Control Reference</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#system-controls-both-modes">System Controls (Both Modes)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normal-mode-keys">Normal Mode Keys</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#planner-mode-keys">Planner Mode Keys</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#motion-sets">Motion Sets</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#set-0-locomotion-standing">Set 0 — Locomotion (Standing)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#set-1-squat-ground">Set 1 — Squat / Ground</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#set-2-boxing">Set 2 — Boxing</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#set-3-additional-styled-walking">Set 3 — Additional Styled Walking</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#movement-momentum-system">Movement Momentum System</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By NVIDIA GEAR Team
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, NVIDIA.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on Nov 03, 2026.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

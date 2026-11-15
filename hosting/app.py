@@ -30,7 +30,8 @@ import modal
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 IGNORE = [".git", ".venv", "runs", "build", "**/__pycache__", ".pytest_cache", "*.mp4", ".DS_Store",
-          "playground/libero_assets/files", "hosting"]
+          "playground/libero_assets/files", "hosting",
+          "wetlabsim/assets/unitree_g1/sonic/*.onnx"]   # downloaded into the image instead (below)
 # The app: "wetlab-playground" is the public site. Another name (WETLAB_APP=wetlab-playground-staging
 # when deploying) is a separate copy with its own address, run records and lab registry, for testing.
 APP = os.environ.get("WETLAB_APP") or os.environ.get("WETLAB_MODAL_APP") or "wetlab-playground"
@@ -49,7 +50,14 @@ image = (
                  "poppler-utils",   # pdftotext: Jev reads the robot's datasheets as text
                  "ffmpeg", "fonts-dejavu-core")    # each finished run's video (playground/runvideo.py)
     .pip_install("mujoco>=4.0,<5", "numpy", "pillow", "mcp", "modal", "onnxruntime")
+    # The G1's whole-body controller, NVIDIA's GEAR-SONIC (wetlabsim/sonic.py): its model files
+    # (865 MB, too big for git) from Hugging Face, at the revision sonic.py pins.
+    .run_commands("mkdir -p /opt/sonic && cd /opt/sonic && for f in model_encoder.onnx model_decoder.onnx "
+                  "planner_sonic.onnx; do python -c \"import urllib.request,sys; urllib.request.urlretrieve("
+                  "'https://huggingface.co/nvidia/GEAR-SONIC/resolve/6733128a3d8a523b1418b06bca3cdf61c8b0987f/'"
+                  "+sys.argv[1], sys.argv[1])\" $f; done && ls -la /opt/sonic")
     .env({"MUJOCO_GL": "egl", "EGL_PLATFORM": "surfaceless", "PYTHONPATH": "/app", "PYTHONUNBUFFERED": "1",
+          "WETLAB_SONIC_DIR": "/opt/sonic",
           "WETLAB_MAX_LABS": str(MAX_LABS), "WETLAB_FRONT_URL": FRONT_URL, "WETLAB_MODAL_APP": APP,
           "WETLAB_BUILD": BUILD, "WETLAB_DICT_PREFIX": f"{APP}-" if STAGING else "",
           # The website: finished runs' files go to its private Blob store through it.
