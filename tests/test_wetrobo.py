@@ -200,3 +200,21 @@ def test_every_run_starts_from_the_first_start():
     for _ in range(500):
         mujoco.mj_step(s.m, s.d)
     assert "already done" in s.wetrobo_run_start(uid)
+
+
+def test_a_passed_run_keeps_its_replay(tmp_path):
+    """A run stopped for passing still has its replay (so its video can be made): only what it
+    recorded since the run began."""
+    import types
+    from playground import server as SV
+    s, uid = _station("x", "lid")
+    arm = s.arms[uid]
+    s.recording[:] = [(0.5, s.d.qpos.copy()), (1.5, s.d.qpos.copy()), (2.5, s.d.qpos.copy())]
+    arm.recording_from = 1.0
+    (tmp_path / "run1").mkdir()
+    r = types.SimpleNamespace(board=types.SimpleNamespace(run={"run_id": "run1"}), runs=tmp_path)
+    SV._keep_replay(types.SimpleNamespace(sim=s), uid, r)
+    with np.load(tmp_path / "run1" / "replay.npz") as rec:
+        assert list(rec["time"]) == [1.5, 2.5] and rec["qpos"].shape == (2, s.m.nq)
+    r.board.run = {}                                          # no run yet: nothing to keep, no error
+    SV._keep_replay(types.SimpleNamespace(sim=s), uid, r)
