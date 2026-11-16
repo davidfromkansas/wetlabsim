@@ -26,6 +26,7 @@ import urllib.request
 from . import accounts as ACCT
 from . import catalog
 from . import world as W
+from wetlabsim import scene as WS
 
 MAX_ROBOTS = 4
 MAX_EACH = 6          # copies of one object a scene may ask for
@@ -976,7 +977,9 @@ class Build:
             self.skipped.append(next((r["label"] for r in catalog.robots() if r["id"] == st["robot"]), st["robot"]))
             self.counts["robots"][1] -= 1
             return
-        uid = s.add_station(st["robot"], spot["pos"], yaw, st["kind"], starter=False)
+        # A humanoid among a scene's other robots: an open cell (its own 7 x 7 m room wouldn't fit).
+        uid = s.add_station(st["robot"], spot["pos"], yaw, st["kind"], starter=False,
+                            open_cell=bool(WS.ROBOTS[st["robot"]].get("humanoid")))
         if self.preset and st.get("task"):
             self.station_tasks[uid] = st["task"]
         title = self.pick["title"]

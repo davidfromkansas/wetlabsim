@@ -701,7 +701,7 @@ class PlaygroundSim(Sim):
                 and st.holds(p.pos[0], p.pos[1]) and p.pos[2] > top - 0.05]
 
     def add_station(self, robot: str, pos, yaw: float = 0.0, kind: str = "table", starter: bool = True,
-                    task: str = "", free: bool = False) -> str:
+                    task: str = "", free: bool = False, open_cell: bool = False) -> str:
         """A new station; starter=False leaves off what its kind starts with on the table (a
         described scene puts down its own objects). A LIBERO station takes its task (a
         playground.libero task id) and LIBERO's Franka. free: a benchmark's scene as a free
@@ -737,7 +737,7 @@ class PlaygroundSim(Sim):
                 (f"WetRobo {WR.LABS[bench][1]}" if free else f"WetRobo {WR.LABS[bench][1]} · {wt.title}") \
                 if bench else f"Robot {n}"
             st = W.Station(uid, robot, (float(pos[0]), float(pos[1])), float(yaw), name, kind,
-                           task=task if kind == "libero" or bench else "", free=free)
+                           task=task if kind == "libero" or bench else "", free=free, open_cell=open_cell)
             self.stations.append(st)
             top = st.top
             for item, lx, ly, iyaw, *up in (st.spec.get("layout_by", {}).get(st.robot, st.spec["layout"]) if starter else []):     # what the station starts with
@@ -812,7 +812,8 @@ class PlaygroundSim(Sim):
             if st is None:
                 raise RobotError("no such station")
             self._sync_placed()
-            sx, sy = st.footprint()
+            ax, ay = st.area()
+            sx, sy = 2 * ax, 2 * ay
             c, s = float(np.cos(st.yaw)), float(np.sin(st.yaw))
             spot = None
             for k in (1, 2, 3, 4):
@@ -820,7 +821,8 @@ class PlaygroundSim(Sim):
                 for lx, ly in ((k * (sx + 0.4), 0), (-k * (sx + 0.4), 0),
                                (0, -k * (sy + 0.5)), (0, k * (sy + 0.5))):
                     dx, dy = c * lx - s * ly, s * lx + c * ly
-                    out = self.station_spot(st.pos[0] + dx, st.pos[1] + dy, st.yaw, kind=st.kind)
+                    out = self.station_spot(st.pos[0] + dx, st.pos[1] + dy, st.yaw, kind=st.kind,
+                                            robot=None if st.open_cell else st.robot)
                     if out["valid"]:
                         spot = (dx, dy)
                         break
@@ -836,7 +838,7 @@ class PlaygroundSim(Sim):
             new = self._new_station_uid()
             base = (st.name or f"Robot {uid[2:]}").strip()
             self.stations.append(W.Station(new, st.robot, (st.pos[0] + dx, st.pos[1] + dy), st.yaw,
-                                           f"{base} copy"[:40], st.kind, st.task, st.setup, st.free))
+                                           f"{base} copy"[:40], st.kind, st.task, st.setup, st.free, st.open_cell))
             for p in riders:
                 self.placed.append(W.Placed(self.new_uid(p.item), p.item,
                                             (p.pos[0] + dx, p.pos[1] + dy, p.pos[2]), p.yaw, p.quat))
@@ -861,7 +863,8 @@ class PlaygroundSim(Sim):
             if soft and (SOFT_MAX - W.soft_count(self.placed)) // soft < n:
                 n = max(0, (SOFT_MAX - W.soft_count(self.placed)) // soft)
                 why = f"a scene holds at most {SOFT_MAX} soft objects"
-            sx, sy = st.footprint()
+            ax, ay = st.area()
+            sx, sy = 2 * ax, 2 * ay
             c, s = float(np.cos(st.yaw)), float(np.sin(st.yaw))
             ride = {p.uid for p in riders}
             loose = [p for p in self.placed if p.uid not in ride and not catalog.item(p.item)["fixed"]]
@@ -875,14 +878,14 @@ class PlaygroundSim(Sim):
                     break
                 dx, dy = c * lx - s * ly, s * lx + c * ly
                 x, y = st.pos[0] + dx, st.pos[1] + dy
-                if not self.station_spot(x, y, st.yaw, kind=st.kind)["valid"]:
+                if not self.station_spot(x, y, st.yaw, kind=st.kind, robot=None if st.open_cell else st.robot)["valid"]:
                     continue
-                probe = W.Station("probe", st.robot, (x, y), st.yaw, kind=st.kind, task=st.task)
+                probe = W.Station("probe", st.robot, (x, y), st.yaw, kind=st.kind, task=st.task, open_cell=st.open_cell)
                 if any(probe.holds(p.pos[0], p.pos[1], 0.15) for p in loose):
                     continue          # something lies on the floor there
                 new = self._new_station_uid()
                 self.stations.append(W.Station(new, st.robot, (x, y), st.yaw,
-                                               f"{base} · copy {len(made) + 1}"[:40], st.kind, st.task, st.setup, st.free))
+                                               f"{base} · copy {len(made) + 1}"[:40], st.kind, st.task, st.setup, st.free, st.open_cell))
                 for p in riders:
                     self.placed.append(W.Placed(self.new_uid(p.item), p.item,
                                                 (p.pos[0] + dx, p.pos[1] + dy, p.pos[2]), p.yaw, p.quat,
@@ -929,7 +932,12 @@ class PlaygroundSim(Sim):
                 raise RobotError("a WetRobo lab is laid out for its own arm: add the lab again with the other arm"
                                  if st.free else "a WetRobo station keeps its robot, so every run is the same test")
             self._sync_placed()
-            new = W.Station(st.uid, robot, st.pos, st.yaw, st.name, st.kind)
+            new = W.Station(st.uid, robot, st.pos, st.yaw, st.name, st.kind, open_cell=st.open_cell)
+            if new.roomy:
+                spot = self.station_spot(st.pos[0], st.pos[1], st.yaw, exclude=uid, kind=st.kind, robot=robot)
+                if not spot["valid"]:
+                    raise RobotError(f"the {WS.ROBOTS[robot]['name']} works in a 7 × 7 m room round its table, "
+                                     f"and here it doesn't fit: {spot['reason']}. Move this station into open floor first")
             if any(new.holds(p.pos[0], p.pos[1]) and new.near_base(p.pos[0], p.pos[1]) for p in self.placed):
                 raise RobotError(f"there are things where the {WS.ROBOTS[robot]['name']} would stand: "
                                  "move them away from where its base goes first")
@@ -944,27 +952,32 @@ class PlaygroundSim(Sim):
         st.name = name.strip()[:40] or st.name
 
     def station_spot(self, x: float, y: float, yaw: float = 0.0, exclude: str | None = None,
-                     kind: str | None = None) -> dict:
-        """Whether a station's table fits with its centre at (x, y): on the floor, clear of
-        the other stations and of furniture. The kind is the moved station's own (else a table)."""
+                     kind: str | None = None, robot: str | None = None) -> dict:
+        """Whether a station fits with its centre at (x, y): on the floor, clear of the other
+        stations and of furniture. Its floor area is its table's, or a walking humanoid's room
+        (Station.area). The kind and robot are the moved station's own (else a table arm's)."""
+        own = self.station(exclude) if exclude else None
         if kind is None:
-            kind = self.station(exclude).kind if exclude and self.station(exclude) else "table"
-        probe = W.Station("probe", "franka", (x, y), yaw, kind=kind)
-        sx, sy = probe.footprint()
-        pts = [probe.to_world(fx * sx / 2, fy * sy / 2) for fx in (-1, -0.5, 0, 0.5, 1) for fy in (-1, 0, 1)]
+            kind = own.kind if own else "table"
+        if robot is None:
+            robot = own.robot if own else "franka"
+        probe = W.Station("probe", robot, (x, y), yaw, kind=kind, open_cell=bool(own and own.open_cell))
+        pts = probe.area_points()
         for st in self.stations:
             if st.uid == exclude:
                 continue
-            if any(st.holds(px, py, 0.15) for px, py, _ in pts) or probe.holds(st.pos[0], st.pos[1], 0.15):
+            if (any(st.claims(px, py, 0.15) for px, py in pts)
+                    or any(probe.claims(px, py, 0.15) for px, py in st.area_points())):
                 return {"pos": [round(x, 4), round(y, 4)], "yaw": yaw, "valid": False,
-                        "reason": f"too close to {st.name or st.uid}"}
+                        "reason": f"too close to {st.name or st.uid}"
+                                  + (" (the humanoid's room needs 7 × 7 m)" if probe.roomy or st.roomy else "")}
         for p in self.placed:
             if catalog.item(p.item)["fixed"]:
                 fx, fy, _ = catalog.meta(p.item)["size"]
-                if probe.holds(p.pos[0], p.pos[1], max(fx, fy) / 2):
+                if probe.claims(p.pos[0], p.pos[1], max(fx, fy) / 2):
                     return {"pos": [round(x, 4), round(y, 4)], "yaw": yaw, "valid": False,
                             "reason": "furniture is in the way"}
-        if max(abs(x), abs(y)) > 8.5:
+        if max(abs(x), abs(y)) > 8.5 or (probe.roomy and max(max(abs(px), abs(py)) for px, py in pts) > 8.9):
             return {"pos": [round(x, 4), round(y, 4)], "yaw": yaw, "valid": False, "reason": "off the floor"}
         return {"pos": [round(x, 4), round(y, 4)], "yaw": yaw, "valid": True, "reason": ""}
 
