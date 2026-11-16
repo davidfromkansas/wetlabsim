@@ -1308,11 +1308,9 @@ function renderDock() {
     : `<button class="schip add big" id="dockAdd"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 12 12" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg>Add your first station</button>`;
   $('dock').innerHTML = chips.join('') + (S.watch ? '' : add);
   $('dock').parentElement.style.display = list.length || !S.watch ? '' : 'none';
-  $('dock').querySelectorAll('.schip[data-st]').forEach(b => b.onclick = async () => {
+  $('dock').querySelectorAll('.schip[data-st]').forEach(b => b.onclick = () => {
     S.sel = 'robot'; S.robotEdit = null; if (S.sideTab === 'objects') S.sideTab = 'chat';
-    if (!S.watch) await api('/pg/station/select', {uid: b.dataset.st, frame: true});
-    else S.scene.active = b.dataset.st;      // a watcher just looks: the owner's view stays
-    S.taskFor = null; refresh();
+    selectStation(b.dataset.st);
   });
   $('dock').querySelectorAll('.smore').forEach(b => b.onclick = (e) => {
     e.stopPropagation();
@@ -1330,12 +1328,24 @@ function renderDock() {
 // The lab's robots, listed under the open session in the sidebar, and the robot panel's header.
 const ROBOT_PIC = {franka: '/pg/static/robot_franka.png', ur5e: '/pg/static/robot_ur5e.png', aloha: '/pg/static/robot_aloha.png', fr3_duo: '/pg/static/robot_fr3_duo.png', g1: '/pg/static/robot_g1.png', piper: '/pg/static/robot_piper.png', n220: '/pg/static/robot_n220.png', crx30ia: '/pg/static/robot_crx30ia.png', rby1: '/pg/static/robot_rby1.png'};
 const ROBOT_IMG = (r) => ROBOT_PIC[r] || ROBOT_PIC.franka;
-async function pickRobot(id) {
+// Make a robot the active one. The highlight and the camera glide start on the click itself;
+// the server is told afterwards (it skips its own glide when the page is already gliding).
+function selectStation(id) {
+  const st = (S.scene.robots || []).find(r => r.id === id);
+  S.scene.active = id;
+  if (S.scene.mode === 'free') S.scene.run = (S.scene.runs || {})[id] || {active: false};   // its chat, as the server would send it
+  S.taskFor = null; render();             // the new robot shows as chosen right away
+  if (S.watch) return refresh();          // a watcher just looks: the owner's view stays
+  S.pendingActive = id;
+  const glide = !!(window.V3 && st && st.view);
+  if (glide) window.V3.glideTo(st.view);
+  return api('/pg/station/select', {uid: id, frame: true, glide: !glide})
+    .finally(() => { if (S.pendingActive === id) S.pendingActive = null; }).then(refresh);
+}
+function pickRobot(id) {
   $('rmenu').hidden = true; $('rpick').setAttribute('aria-expanded', 'false');
   S.sel = 'robot'; S.robotEdit = null;
-  if (!S.watch) await api('/pg/station/select', {uid: id, frame: true});
-  else S.scene.active = id;
-  S.taskFor = null; refresh();
+  selectStation(id);
 }
 function renderRobots() {
   const sc = S.scene; if (!sc) return;
@@ -1475,11 +1485,10 @@ function renderStations() {
   $('stCap').textContent = sc.mode === 'free' ? 'Stations in the lab' : 'Robot';
   $('stationList').innerHTML = list.map(st => { const x = stationStatus(st);
     return `<button class="strow" role="listitem" data-st="${st.id}" aria-pressed="${st.id === sc.active && S.sel === 'robot'}"><span class="dot" style="background:${x.color}"></span><span class="nm"><b>${esc(sc.mode === 'free' ? st.name : st.label)}</b><span class="small">${sc.mode === 'free' ? esc(st.label) + ' · ' : ''}${x.text}</span></span></button>`; }).join('');
-  $('stationList').querySelectorAll('.strow').forEach(b => b.onclick = async () => {
+  $('stationList').querySelectorAll('.strow').forEach(b => b.onclick = () => {
     S.sel = 'robot'; S.robotEdit = null; if (S.scene.mode === 'free') S.sideTab = 'chat';
-    if (S.scene.mode === 'free') await api('/pg/station/select', {uid: b.dataset.st, frame: true});
-    else api('/pg/select', {uid: 'robot'});
-    refresh();
+    if (S.scene.mode === 'free') selectStation(b.dataset.st);
+    else { api('/pg/select', {uid: 'robot'}); refresh(); }
   });
 }
 function curStation() { const sc = S.scene; return (sc.robots || []).find(r => r.id === sc.active) || (sc.robots || [])[0] || {}; }
@@ -2372,6 +2381,7 @@ async function refresh() {
     if (next && next !== SID) { switchSession(next); return; }
     throw new Error(sc.error || 'no session');
   }
+  if (S.pendingActive && (sc.robots || []).some(r => r.id === S.pendingActive)) sc.active = S.pendingActive;   // a click not yet reached the server
   S.scene = sc;
   const watch = !(sc.session && sc.session.mine);
   if (watch !== S.watch) { S.watch = watch; document.body.classList.toggle('watch', watch); S.dockKey = ''; if (watch && S.sideTab === 'objects') S.sideTab = 'chat'; }

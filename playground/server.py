@@ -1997,8 +1997,8 @@ class PGHandler(Handler):
                     return self._json({"ok": False, "error": "no such station"})
                 s.active_station = b["uid"]
                 s.selected = None
-                if b.get("frame", True):
-                    s.frame_station()
+                if b.get("frame", True):     # glide: False when the page already glides there itself
+                    s.frame_station(glide=bool(b.get("glide", True)))
                 return self._json({"ok": True})
             if p == "/pg/station/probe":
                 lock = self._locked()
