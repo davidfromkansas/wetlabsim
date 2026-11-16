@@ -977,7 +977,7 @@ class Build:
             self.skipped.append(next((r["label"] for r in catalog.robots() if r["id"] == st["robot"]), st["robot"]))
             self.counts["robots"][1] -= 1
             return
-        # A humanoid among a scene's other robots: an open cell (its own 7 x 7 m room wouldn't fit).
+        # A humanoid among a scene's other robots: an open cell (its own 5 x 5 m room wouldn't fit).
         uid = s.add_station(st["robot"], spot["pos"], yaw, st["kind"], starter=False,
                             open_cell=bool(WS.ROBOTS[st["robot"]].get("humanoid")))
         if self.preset and st.get("task"):

@@ -369,7 +369,7 @@ class Station:
 
     WALL_MARGIN = 0.1        # the work box: this far out from the table's edge
     WALL_ABOVE = 1.3         # and this high above the table top (over the overhead camera)
-    ROOM = 7.0               # a humanoid's work box: a solid room this wide (m) round its table,
+    ROOM = 5.0               # a humanoid's work box: a solid room this wide (m) round its table,
                              # to walk about in
 
     @property

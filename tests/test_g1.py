@@ -109,8 +109,8 @@ def test_runs_and_comes_back_to_stand():
     sim, g = _lab(kind="table")
     _step(sim, 1.0)
     p0 = sim.d.xpos[g.base_body].copy()
-    _go(sim, g.move("run", direction=np.pi, speed=2.0, seconds=2.0))
-    assert np.linalg.norm(sim.d.xpos[g.base_body][:2] - p0[:2]) > 1.5
+    _go(sim, g.move("run", direction=np.pi, speed=2.0, seconds=1.0))     # its room's back wall is ~1.4 m away
+    assert np.linalg.norm(sim.d.xpos[g.base_body][:2] - p0[:2]) > 0.7
     _step(sim, 2.0)
     assert g.mode == "running" and not g.fallen and g.state()["body"]["movement"] == "stand"
 
@@ -206,23 +206,23 @@ def test_site_sheet_and_robot_api():
 
 
 def test_g1_works_in_a_solid_7m_room():
-    """The G1 walks about: its work box is a 7 x 7 m room of solid walls round its table (not
+    """The G1 walks about: its work box is a 5 x 5 m room of solid walls round its table (not
     the table arm's walls just behind it, which its lidar saw as a wall 40 cm back), other
     stations stay out of the room, and the site sheet says so."""
     sim = PlaygroundSim(stations=[])
     uid = sim.add_station("g1", (0.0, 0.0), 0.0, "table", starter=False)
     st, g = sim.station(uid), sim.arms[uid]
     assert st.roomy and not st.open
-    assert st.work_box()[:2] == (3.5, 3.5)
+    assert st.work_box()[:2] == (2.5, 2.5)
     walls = [i for i in range(sim.m.ngeom) if sim.m.geom(i).name.startswith(f"{st.prefix}wall")]
     assert len(walls) == 4 and all(sim.m.geom_contype[i] and sim.m.geom_conaffinity[i] for i in walls)
     pts = g.lidar()["points"]
-    behind = pts[(pts[:, 0] < -0.15) & (pts[:, 0] > -1.5) & (abs(pts[:, 1]) < 0.6) & (pts[:, 2] > -0.3)]
+    behind = pts[(pts[:, 0] < -0.15) & (pts[:, 0] > -1.2) & (abs(pts[:, 1]) < 0.6) & (pts[:, 2] > -0.3)]
     assert len(behind) == 0
     assert not sim.station_spot(2.0, 0.0, 0.0)["valid"]           # a table arm inside the room
     assert sim.station_spot(5.0, 0.0, 0.0)["valid"]               # and just outside it
-    other = sim.add_station("franka", (-5.5, 0.0), 0.0, "table", starter=False)
-    with pytest.raises(RobotError, match="7 × 7 m room"):
+    other = sim.add_station("franka", (-3.2, 0.0), 0.0, "table", starter=False)
+    with pytest.raises(RobotError, match="5 × 5 m room"):
         sim.swap_robot(other, "g1")                                 # its room would overlap
-    assert "7 x 7 m" in site.site_sheet([], st)
+    assert "5 x 5 m" in site.site_sheet([], st)
     sim.stop_threads()
