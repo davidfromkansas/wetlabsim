@@ -7,7 +7,7 @@ web (the front, Modal's stable web address): gives each visitor (a browser cooki
   their own lab, at most WETLAB_MAX_LABS open at once; lists live runs to watch (/live) and
   every finished run (/pg/runs, each opening the replay viewer: chat, files, rewind).
 lab (one container per visitor): a playground server in public mode (free play only, at most
-  4 runs at once across all labs, more wait in a queue). Every run uses the owner's own API key
+  15 runs at once across all labs, more wait in a queue). Every run uses the owner's own API key
   for its company (Settings > General > Connections: OpenAI, Anthropic, Devin, Jev), kept
   encrypted in the website's database and fetched by the lab for that run only; a company with
   no key can't be used. Each run stops at the owner's time limit (1 to 30 minutes, default 5). Its page is reached through a tunnel of its own; only the owner's link
@@ -122,7 +122,7 @@ def lab(lab_id: str, owner_key: str, owner_user: str = ""):
         _commit_loop()
         proc = subprocess.Popen(
             ["python", "-m", "playground.server", "--host", "0.0.0.0", "--port", "8780", "--no-browser",
-             "--public", "--max-active", "4", "--idle-minutes", "5",
+             "--public", "--max-active", "15", "--idle-minutes", "5",
              "--launcher", "modal", "--robot-port", "8781", "--agent-robot-url", robot.url,
              "--model-proxy-port", "8782", "--runs", "/data/runs"],
             cwd="/app", env=env)
