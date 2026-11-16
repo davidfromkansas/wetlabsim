@@ -789,7 +789,8 @@ class Session:
                 s._sync_placed()
             return {"name": self.name,
                     "stations": [{"uid": st.uid, "robot": st.robot, "pos": list(st.pos), "yaw": st.yaw, "name": st.name,
-                                  "kind": st.kind, **({"task": st.task, "setup": st.setup, "free": st.free} if st.libero or st.wetrobo else {})}
+                                  "kind": st.kind, **({"task": st.task, "setup": st.setup, "free": st.free} if st.libero or st.wetrobo else {}),
+                                  **({"open": True} if st.open_cell else {})}
                                  for st in s.stations],
                     "objects": [{"uid": o.uid, "item": o.item, "pos": list(o.pos), "yaw": o.yaw,
                                  "quat": list(o.quat) if o.quat is not None else None} for o in s.placed],
@@ -923,7 +924,8 @@ def _world_from_layout(layout: dict | None):
             task = str(st["task"])
         stations.append(W.Station(st["uid"], "franka" if kind == "libero" or WR.lab_of(kind) and st["robot"] not in WR.ROBOTS else st["robot"],
                                   (float(st["pos"][0]), float(st["pos"][1])),
-                                  float(st.get("yaw", 0.0)), str(st.get("name") or "")[:40], kind, task, setup, free))
+                                  float(st.get("yaw", 0.0)), str(st.get("name") or "")[:40], kind, task, setup, free,
+                                  bool(st.get("open"))))
     known = {i["id"] for i in catalog.available()}
     for o in (layout.get("objects") or [])[:200]:
         if o.get("item") not in known or not re.match(r"^[\w.-]{1,80}$", str(o.get("uid", ""))):
