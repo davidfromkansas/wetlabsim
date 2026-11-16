@@ -216,16 +216,34 @@ def live_labs() -> dict:
     return {k: v for k, v in _dict("wetlab-labs").items() if now - v.get("seen", 0) < LAB_STALE}
 
 
-def start_reporting(get_runs, idle_minutes: float, busy):
+STALE_GRACE = 60       # s: an older build's lab with nothing running closes this long after a newer one is out
+
+
+def start_reporting(get_runs, idle_minutes: float, busy, before_exit=None):
     """Report to the registry every few seconds; exit when nobody has looked for idle_minutes
     and nothing is running (the container then ends), or, once a newer build is out, as soon as
-    nothing is running and the page has gone (it is told to, see stale())."""
+    nothing is running and the page has gone (it is told to, see stale()). An older build's lab
+    also closes STALE_GRACE seconds after the newer build is out even if a tab still polls it (a
+    tab left open would otherwise keep it, and its sessions' autosave, alive next to the new one).
+    before_exit() runs first (the last autosave)."""
     global _idle_limit
+    stale_since = None
+
+    def leave(why: str):
+        print(f"lab {LAB_ID}: {why}: shutting down")
+        if before_exit:
+            try:
+                before_exit()
+            except Exception as e:  # noqa: BLE001
+                print("before exit failed:", e)
+        forget()
+        os._exit(0)
     _idle_limit = idle_minutes * 60
     active()
 
     def loop():
         global _stale
+        nonlocal stale_since
         while True:
             time.sleep(5)
             try:
@@ -234,16 +252,14 @@ def start_reporting(get_runs, idle_minutes: float, busy):
                 print("lab report failed:", e)
             cur = current_build()
             _stale = older(BUILD, cur)
-            if _stale and not busy() and idle_for() > 15:
-                print(f"lab {LAB_ID} is build {BUILD}, the site is on {cur}: shutting down")
-                forget()
-                os._exit(0)
+            if _stale and stale_since is None:
+                stale_since = time.time()
+            if _stale and not busy() and (idle_for() > 15 or time.time() - stale_since > STALE_GRACE):
+                leave(f"build {BUILD}, the site is on {cur}")
             if busy():
                 active()          # a run (or one waiting in line) counts as use
             elif idle_left() <= 0:
-                print(f"lab {LAB_ID}: no activity for {idle_minutes} min: shutting down")
-                forget()
-                os._exit(0)
+                leave(f"no activity for {idle_minutes} min")
     threading.Thread(target=loop, daemon=True, name="lab-report").start()
 
 

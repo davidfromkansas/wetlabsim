@@ -101,6 +101,7 @@ class PlaygroundSim(Sim):
         cam.distance, cam.azimuth, cam.elevation = 2.8, 145.0, -28.0
         self.view = cam
         self._glide: dict | None = None         # where the camera is gliding to
+        self.view_gen = 0                       # counts the server's own camera moves (presets, framing a station)
         self.view_size = (VIEW_W, VIEW_H)
         self.overlay: list[dict] = []           # ghost and highlight shapes for the main view
         self.zone: list[dict] = []              # where a described scene is being built (scenegen)
@@ -464,8 +465,11 @@ class PlaygroundSim(Sim):
         def to_room(p):
             x, y = p[0] - org[0], p[1] - org[1]
             return (c * x - s_ * y, s_ * x + c * y, p[2])
+
+        def from_room(p):
+            return (c * p[0] + s_ * p[1] + org[0], -s_ * p[0] + c * p[1] + org[1], p[2])
         with self.lock:
-            return LB.site_sheet(LB.task(st.task), self.m, self.d, st.prefix, to_room)
+            return LB.site_sheet(LB.task(st.task), self.m, self.d, to_room, from_room)
 
     def _lay_out(self, task):
         """Free play: every object starts where the user put it (the model's own pose), and each
@@ -1018,6 +1022,7 @@ class PlaygroundSim(Sim):
         self._set_view(target, glide)
 
     def _set_view(self, target: dict, glide: bool):
+        self.view_gen += 1          # pages drawing their own view follow only these moves, not their own echoes
         if not glide:
             c = self.view
             c.lookat[:] = target["lookat"]

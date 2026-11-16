@@ -128,6 +128,7 @@ def mesh_hash(m, i: int) -> str:
     h.update(m.mesh_face[fa:fa + fn].tobytes())
     if _cube_mapped(m, i):
         h.update(b"cube-uv")
+    h.update(b"v-from-bottom")      # mesh_bin's texture coordinates as three.js reads them (a new key for pages' old copies)
     return h.hexdigest()[:16]
 
 
@@ -154,8 +155,10 @@ def mesh_bin(m, i: int) -> bytes:
     out.write(struct.pack("<III", len(uniq), nf, 1 if has_uv or cube else 0))
     out.write(np.asarray(vert[uniq[:, 0]], "<f4").tobytes())
     out.write(np.asarray(norm[uniq[:, 1]], "<f4").tobytes())
-    if has_uv:
-        out.write(np.asarray(tc[uniq[:, 2]], "<f4").tobytes())
+    if has_uv:          # MuJoCo counts v from the image's top row, three.js from its bottom
+        uv = np.array(tc[uniq[:, 2]], np.float32)
+        uv[:, 1] = 1.0 - uv[:, 1]
+        out.write(uv.astype("<f4").tobytes())
     elif cube:          # three.js reads v from the image's bottom: face 0 is at the top
         uv = _cube_uv(vert[uniq[:, 0]], norm[uniq[:, 1]])
         uv[:, 1] = 1.0 - uv[:, 1]
@@ -188,8 +191,10 @@ def skin_bin(m, i: int) -> bytes:
     out = io.BytesIO()
     out.write(struct.pack("<IIII", nv, nf, 1 if ta >= 0 else 0, k))
     out.write(np.asarray(m.skin_vert[va:va + nv], "<f4").tobytes())
-    if ta >= 0:
-        out.write(np.asarray(m.skin_texcoord[ta:ta + nv], "<f4").tobytes())
+    if ta >= 0:         # v from the bottom, as in mesh_bin
+        uv = np.array(m.skin_texcoord[ta:ta + nv], np.float32)
+        uv[:, 1] = 1.0 - uv[:, 1]
+        out.write(uv.astype("<f4").tobytes())
     out.write(np.asarray(m.skin_face[fa:fa + nf], "<u4").tobytes())
     out.write(body.astype("<i4").tobytes())
     out.write(wt.astype("<f4").tobytes())

@@ -814,6 +814,29 @@ SESSIONS: dict[str, Session] = {}
 SESSIONS_LOCK = threading.Lock()
 ACCOUNT_OWNER = "account-owner"     # a signed-in account's lab: its owner, on any browser
 SAVED_AT_START = 4                  # saved sessions a lab opens with; older ones open on request
+_OLDER = {"t": 0.0, "rows": []}     # the saved sessions list, read from the database at most every 20 s
+# A saved session that isn't open here but was saved this recently is still open somewhere else
+# (a tab left on the lab of an older build, say): opening it here too would make two live copies
+# that save over each other, so it waits until that one has closed.
+OPEN_ELSEWHERE_S = 120
+
+
+def _saved_recently(row: dict) -> bool:
+    return time.time() - (row.get("saved") or 0) < OPEN_ELSEWHERE_S
+
+
+def _older_sessions(open_ids: set) -> list[dict]:
+    """The owner's saved sessions that aren't open in this lab (the sidebar's "Older sessions")."""
+    if not SAVE.enabled():
+        return []
+    if time.time() - _OLDER["t"] > 20:
+        try:
+            _OLDER["rows"] = SAVE.list_sessions(50)
+        except Exception as e:  # noqa: BLE001
+            print("could not list saved sessions:", e)
+        _OLDER["t"] = time.time()
+    return [{"db": r["session_id"], "name": r["session_name"], "saved": r.get("saved") or 0}
+            for r in _OLDER["rows"] if r["session_id"] not in open_ids and not _saved_recently(r)]
 
 
 def _snapshot(sess: Session):
@@ -1383,7 +1406,9 @@ class PGHandler(Handler):
         if LABS.OWNER_USER:     # a signed-in account's lab is private: its own sessions, or the one shared
             w = None if owner else self._watching()
             mine = sorted((x.summary() for x in live if owner and x.owner == me), key=lambda d: -d["used"])
-            return {"mine": mine, "live": [{**w.summary(), "url": ""}] if w else [], "max": MAX_SESSIONS, "owner": owner}
+            older = _older_sessions({x.db_id for x in live if x.db_id}) if owner else []
+            return {"mine": mine, "older": older, "live": [{**w.summary(), "url": ""}] if w else [],
+                    "max": MAX_SESSIONS, "owner": owner}
         mine = sorted((x.summary() for x in live if me and x.owner == me), key=lambda d: -d["used"])
         others = [{**x.summary(), "url": ""} for x in live if x.owner != me and x.status() == "working"]
         if LABS.shared():
@@ -1833,6 +1858,7 @@ class PGHandler(Handler):
                            "azimuth": round(float(c.azimuth), 3), "elevation": round(float(c.elevation), 3)}
                 shapes = list(s.overlay) + list(s.zone) + s._selection_overlay()
                 frame = S3.poses(xpos, xquat, {"v": str(ver), "t": round(float(s.d.time), 3), "cam": cam,
+                                               "camgen": s.view_gen, "gliding": s._glide is not None,
                                                "shapes": shapes, "paused": s.paused})
                 self.wfile.write(b"data: " + frame.encode() + b"\n\n")
                 self.wfile.flush()
@@ -1879,6 +1905,8 @@ class PGHandler(Handler):
             return self._new_session()
         if urllib.parse.urlparse(self.path).path.rstrip("/") == "/pg/sessions/delete":
             return self._delete_session()
+        if urllib.parse.urlparse(self.path).path.rstrip("/") == "/pg/sessions/open":
+            return self._open_older()
         if urllib.parse.urlparse(self.path).path.rstrip("/") == "/pg/account":
             return self._account_change()
         if not self._bind_session():
@@ -2323,6 +2351,36 @@ class PGHandler(Handler):
             return self._json({"ok": False, "error": f"couldn't copy that lab: {e}"})
         return self._json({"ok": True, "session": sess.summary()})
 
+    def _open_older(self):
+        """Open one of the account's older saved sessions (not opened at the lab's start)."""
+        b = self._body()
+        db = str(b.get("db", ""))
+        if not (SAVE.enabled() and re.match(r"^[0-9a-f-]{36}$", db)):
+            return self._json({"ok": False, "error": "no such session"})
+        if not any(x is not None and x.db_id == db for x in SESSIONS.values()):
+            try:
+                row = next((r for r in SAVE.list_sessions(50) if r["session_id"] == db), None)
+            except Exception:  # noqa: BLE001
+                row = None
+            if row and _saved_recently(row):
+                return self._json({"ok": False, "error": "that session is still open in another tab; "
+                                                         "close it there first, or try again in a minute or two"})
+        try:
+            sess = open_saved(db)
+        except RobotError as e:
+            return self._json({"ok": False, "error": str(e)})
+        except Exception as e:  # noqa: BLE001
+            print("could not open a saved session:", e)
+            return self._json({"ok": False, "error": "couldn't open that session"})
+        if sess is None:
+            return self._json({"ok": False, "error": "no such session"})
+        try:
+            SAVE.opened(db)
+        except Exception:  # noqa: BLE001
+            pass
+        _OLDER["t"] = 0.0
+        return self._json({"ok": True, "id": sess.id})
+
     def _delete_session(self):
         """Delete one of this browser's sessions: its world closes here and, in a signed-in
         account's lab, its saved copy is hidden on the website (deleted_at, as the website's own
@@ -2448,7 +2506,8 @@ def main(argv=None):
                                     "share": f"{SAVE.WEBSITE_URL}/s/{sess.share_token}" if sess.share_token and SAVE.WEBSITE_URL else ""})
             return out
         LABS.start_reporting(live_runs, args.idle_minutes,
-                             lambda: bool(QUEUE) or VIDEOS.busy() or any(r.active() for r in _all_runners()))
+                             lambda: bool(QUEUE) or VIDEOS.busy() or any(r.active() for r in _all_runners()),
+                             before_exit=lambda: AUTOSAVE and AUTOSAVE.tick())
     if args.robot_port:
         global ROBOT_API_URL
         rsrv = ThreadingHTTPServer((args.host, args.robot_port), RobotAPIHandler)
