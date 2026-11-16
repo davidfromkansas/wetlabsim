@@ -397,6 +397,9 @@ body.fixed .tl{top:12px}
 #objPanel{position:absolute;right:14px;top:84px;width:300px;border-radius:12px;padding:12px 14px;z-index:3;max-height:calc(100% - 100px);overflow:auto}
 #objPanel dl{gap:4px 10px;font-size:12.5px}
 /* rotating the selected object: one row per world axis, the same letters and colours as its rings */
+#objName[contenteditable=true]{cursor:text;border-radius:5px;padding:1px 4px;margin-left:-4px!important;outline:none;transition:background 120ms ease-out,box-shadow 120ms ease-out}
+#objName[contenteditable=true]:hover{background:rgba(17,24,39,.05)}
+#objName[contenteditable=true]:focus{background:#fff;box-shadow:0 0 0 2px var(--blue)}
 .ohd{display:flex;gap:10px;align-items:center}.ohd img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex:none;background:#2B2B2E}
 .osec{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:flex;align-items:baseline;gap:8px}
 .osec span{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:500;font-size:12px}
@@ -839,7 +842,7 @@ body.watch #physBtn{display:none}
     <div class="watchbanner glass" id="watchBanner"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#111827" stroke-width="1.5"><path d="M1 8 C3 4 5.5 3 8 3 C10.5 3 13 4 15 8 C13 12 10.5 13 8 13 C5.5 13 3 12 1 8 Z"/><circle cx="8" cy="8" r="2.2"/></svg><span>Watching someone else's lab · view only</span><button class="vb copyLab">Copy to my sessions</button></div>
     <div class="emptyfloor"><b>No robots yet</b><span id="emptyMsg">Press “+ Station”, then click the floor to place it.</span></div>
     <div id="objPanel" class="glass" style="display:none;flex-direction:column;gap:10px">
-      <div class="ohd"><img id="objImg" alt=""><div><span id="objKind" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Selected object</span><h3 id="objName" style="margin:2px 0 0;font-size:15px;color:var(--ink)"></h3></div><button class="iconbtn" id="objX" aria-label="Deselect and close" title="Deselect (Esc)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" stroke="#374151" stroke-width="1.7" stroke-linecap="round"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
+      <div class="ohd"><img id="objImg" alt=""><div><span id="objKind" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Selected object</span><h3 id="objName" style="margin:2px 0 0;font-size:15px;color:var(--ink)" spellcheck="false"></h3></div><button class="iconbtn" id="objX" aria-label="Deselect and close" title="Deselect (Esc)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" stroke="#374151" stroke-width="1.7" stroke-linecap="round"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
       <dl id="objInfo"><dt>Size</dt><dd id="objSize"></dd><dt>Mass</dt><dd id="objMass"></dd><dt>Friction</dt><dd id="objFric"></dd><dt>Collision</dt><dd id="objCol" style="font-family:Inter;font-size:12px"></dd></dl>
       <dl id="robInfo" style="display:none"><dt>Robot</dt><dd id="robModel" style="font-family:Inter;font-size:12px"></dd><dt>Stands on</dt><dd id="robOn" style="font-family:Inter;font-size:12px"></dd><dt>Base height</dt><dd id="robH"></dd><dt>Facing</dt><dd id="robFace"></dd></dl>
       <div class="small" id="robWhy" style="display:none"></div>
@@ -1251,7 +1254,7 @@ window.addEventListener('blur', camStop);
 const CAM_KEYS = {ArrowUp: [0, 1, 0], ArrowDown: [0, -1, 0], ArrowLeft: [-1, 0, 0], ArrowRight: [1, 0, 0],
                   PageUp: [0, 0, 1], PageDown: [0, 0, -1], '+': [0, 0, 1], '=': [0, 0, 1], '-': [0, 0, -1]};
 window.addEventListener('keydown', (e) => {
-  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
   if (e.key === 'Escape') { const busy = S.placing || S.armed; if (S.placing) cancelPlacing(); S.armed = null; renderItems(); hideTag(); api('/pg/ghost/clear', {}); if (!busy && !S.bigCam) deselect(); }
   if (S.placing && (e.key === 'r' || e.key === 'R')) { S.placeYaw += Math.PI / 2; if (S.lastUV) probeStation(S.lastUV); return; }
   if ((e.key === 'Delete' || e.key === 'Backspace') && S.sel && S.sel !== 'robot') removeSel();
@@ -1879,6 +1882,26 @@ document.querySelectorAll('#moveBox .rrow').forEach(row => {
 });
 $('putDown').onclick = () => translate({lift: 0});
 $('robHome').onclick = () => placeRobot({home: true});
+// The selected robot's name: click it to edit; Enter or clicking away saves, Esc puts it back.
+(() => {
+  const el = $('objName');
+  let uid = null, before = '';
+  el.addEventListener('focus', () => { const o = selRobot(); uid = o ? o.uid : null; before = el.textContent; });
+  el.addEventListener('keydown', (e) => {
+    if (el.contentEditable !== 'true') return;
+    if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); el.textContent = before; el.blur(); }
+  });
+  el.addEventListener('blur', async () => {
+    if (!uid) return;
+    const name = el.textContent.replace(/\s+/g, ' ').trim().slice(0, 40), id = uid; uid = null;
+    if (!name) { el.textContent = before; return; }
+    el.textContent = name;
+    if (name === before) return;
+    const r = await api('/pg/station/rename', {uid: id, name}); if (r.ok === false) { toast(r.error); el.textContent = before; }
+    refresh();
+  });
+})();
 function deselect() {
   if (S.sel === 'robot' && S.robotEdit) { S.robotEdit = null; if (window.V3) window.V3.setPreview(null); refresh(); return; }
   if (!S.sel || S.sel === 'robot') return;
@@ -2212,7 +2235,9 @@ function render() {
   $('setDown').style.display = 'none';
   if (rob) {
     const p = obj.place, st = obj.st;
-    $('objName').textContent = obj.label;
+    $('objName').contentEditable = String(!S.watch);
+    $('objName').title = S.watch ? '' : 'Click to rename';
+    if (document.activeElement !== $('objName')) $('objName').textContent = obj.label;
     if ($('objImg').getAttribute('src') !== ROBOT_IMG(st.robot)) $('objImg').src = ROBOT_IMG(st.robot);
     $('robModel').textContent = st.label;
     $('robOn').textContent = !p.lift ? 'The floor' : p.side !== 'on' ? `Steel stand, ${(p.stand * 100).toFixed(0)} cm`
@@ -2226,6 +2251,7 @@ function render() {
     if (p.fixed_why) document.querySelectorAll('#rotBox button,#rotBox input,#resetRot').forEach(c => { c.disabled = true; });
     drawEditPanel(obj);
   } else if (obj) {
+    $('objName').contentEditable = 'false'; $('objName').title = '';
     const it = S.cat.items.find(i => i.id === obj.item) || {};
     $('objName').textContent = obj.label; $('objSize').textContent = it.size ? fmtSize(it.size) : '';
     $('objMass').textContent = fmtMass(it.mass); $('objFric').textContent = it.friction != null ? it.friction : '';
