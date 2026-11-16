@@ -720,7 +720,8 @@ export function start({stage, base = '', onReady}) {
   };
 
   // Objects taken in by a box drawn over the scene: a blue outline box around each, drawn over
-  // everything so it shows through what stands in front. marks: a list of body-index lists.
+  // everything so it shows through what stands in front. marks: a list of body-index lists, or of
+  // {bodies, corners} (corners: world points the box must take in too, e.g. a table's).
   let MK = [];
   const markBoxes = [], markColor = new THREE.Color(0x2563EB);
   V.setMarked = (marks) => { MK = marks || []; };
@@ -734,7 +735,9 @@ export function start({stage, base = '', onReady}) {
       h.visible = i < MK.length;
       if (!h.visible) return;
       h.box.makeEmpty();
-      for (const b of MK[i]) if (V.bodies[b]) h.box.expandByObject(V.bodies[b]);
+      const m = Array.isArray(MK[i]) ? {bodies: MK[i]} : MK[i];
+      for (const b of m.bodies || []) if (V.bodies[b]) h.box.expandByObject(V.bodies[b]);
+      for (const c of m.corners || []) h.box.expandByPoint(new THREE.Vector3(c[0], c[1], c[2]));
       if (h.box.isEmpty()) h.visible = false;
       else h.box.expandByScalar(0.008);
     });

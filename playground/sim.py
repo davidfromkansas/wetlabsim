@@ -759,6 +759,29 @@ class PlaygroundSim(Sim):
             self.rebuild(sync=False)       # synced above; the copies go where placed says
         return out
 
+    def edit_selection(self, action: str, uids: list[str], stations: list[str]) -> dict:
+        """Duplicate or delete what a box drawn over the scene took in: whole stations (robot,
+        table and what is on it) and loose objects. An object on a chosen station's table goes
+        with its station, not twice."""
+        sts = [u for u in dict.fromkeys(stations) if self.station(u) is not None]
+        with self.lock:
+            self._sync_placed()
+            riders = {p.uid for u in sts for p in self._on_table(self.station(u))}
+        objs = [u for u in dict.fromkeys(uids) if u not in riders and self.find(u) is not None]
+        if not sts and not objs:
+            raise RobotError("nothing selected is here any more")
+        if action == "delete":
+            if sts:
+                self.remove_stations(sts)
+            if objs:
+                self.remove_many(objs)
+            return {"stations": sts, "objects": objs}
+        if action != "duplicate":
+            raise RobotError("unknown action")
+        new_objs = self.duplicate_many(objs) if objs else []
+        new_sts = [self.duplicate_station(u) for u in sts]
+        return {"stations": new_sts, "objects": new_objs}
+
     def clear(self):
         """Take every object away (the stations stay)."""
         with self.lock:
@@ -1278,6 +1301,8 @@ class PlaygroundSim(Sim):
             out["base"] = [round(float(v), 3) for v in self._base_mid(self.arms[st.uid])]
             out["bodies"] = sorted(int(b) for b in self.arms[st.uid].bodies | self.stand_bodies.get(st.uid, set()))
         out["place"] = self.robot_place(st.uid)
+        sx, sy = st.footprint()
+        out["table"] = {"half": [round(sx / 2, 4), round(sy / 2, 4)], "top": round(float(st.top), 4)}
         out["view"] = {k: ([round(float(x), 4) for x in v] if k == "lookat" else round(float(v), 3))
                        for k, v in self.station_view(st).items()}
         if "libero" in out and st.uid in self.checkers:      # LIBERO's goal check, live

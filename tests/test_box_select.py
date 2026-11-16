@@ -49,3 +49,22 @@ def test_remove_many_in_one_go(lab):
     with pytest.raises(RobotError):
         sim.remove_many(["nope"])
     sim.remove_many([uids[2]])
+
+
+def test_stations_go_with_their_tables_and_what_is_on_them():
+    sim = PlaygroundSim(stations=[])
+    a = sim.add_station("franka", (0, 0), 0.0, "table")
+    sim.placed = []
+    sim.rebuild()
+    st = sim.station(a)
+    on = sim.add("rubiks_cube", (st.pos[0] + 0.5, st.pos[1], st.top))
+    loose = sim.add("rubiks_cube", (st.pos[0], st.pos[1] + 2.0, 0.0))
+    info = next(r for r in sim.scene_info()["robots"] if r["id"] == a)
+    assert info["table"]["top"] == pytest.approx(st.top) and len(info["table"]["half"]) == 2
+    # the cube on the table is copied once, with its station; the loose one beside itself
+    r = sim.edit_selection("duplicate", [on, loose], [a])
+    assert len(r["stations"]) == 1 and r["objects"] != [] and len(r["objects"]) == 1
+    assert len(sim.stations) == 2 and len(sim.placed) == 4
+    r = sim.edit_selection("delete", [on, loose] + r["objects"], [a])
+    assert r["stations"] == [a] and len(r["objects"]) == 2
+    assert [s.uid for s in sim.stations] != [a] and len(sim.stations) == 1 and len(sim.placed) == 1
