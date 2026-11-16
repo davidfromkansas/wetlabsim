@@ -1,6 +1,6 @@
 """Drop test for every built USDCraft library item: it is placed 2 cm above the floor and left
 for 3 s of physics. It passes when nothing is NaN, no part falls through the floor, it doesn't
-wander off (more than 30 cm), it has come to rest, and it doesn't make the physics too slow.
+wander off (more than 30 cm), its main body has come to rest, and it doesn't make the physics too slow.
 
     python -m playground.tools.check_usdcraft [--jobs 4] [ids ...]
 
@@ -43,7 +43,7 @@ def check(item: str) -> dict:
     moved = float(np.linalg.norm(d.xpos[root][:2] - m.body_pos[root][:2]))
     if moved > 0.3:
         return {**res, "ok": False, "why": f"wandered off {moved:.2f} m"}
-    speed = float(max(np.linalg.norm(d.cvel[b][3:]) for b in bodies))
+    speed = float(np.linalg.norm(d.cvel[root][3:]))     # its moving parts may still swing or spin
     if speed > 0.2:
         return {**res, "ok": False, "why": f"still moving at {speed:.2f} m/s"}
     if ms > SLOW_MS:

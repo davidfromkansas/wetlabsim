@@ -38,6 +38,13 @@ TAB = {"kitchen": "Kitchen", "dining": "Kitchen", "restaurant_cafe": "Kitchen",
        "street_urban": "Outdoor"}
 
 
+# Kinds left out after the build: they don't convert, or fail the drop test (tools/check_usdcraft.py)
+SKIP = {"Muffin Tin": "its shape data has too few points to make a collision shape",
+        "Fireplace Screen": "converting its collision shape didn't finish in 3 hours",
+        "Chicken Coop": "converting its collision shape didn't finish in 1.5 hours",
+        "Crib": "a part falls through the floor", "Rain Shower Head": "a part falls through the floor"}
+
+
 def _get(url: str) -> bytes:
     with urllib.request.urlopen(url, timeout=60) as r:
         return r.read()
@@ -85,6 +92,8 @@ def main(argv=None):
     out = []
     for _, versions in sorted(by_kind.items()):
         r, m = sorted(versions, key=lambda v: (-_score(v[1], v[0]["has_textures"] == "true"), v[1]["object_id"]))[0]
+        if m["category"] in SKIP:
+            continue
         kind = _norm(m["category"])
         if any(f" {kind} " in f" {n} " or (f" {n} " in f" {kind} " and (len(n.split()) >= 2 or n == kind)
                                            and kind.endswith(n)) for n in ours):
