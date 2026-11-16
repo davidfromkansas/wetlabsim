@@ -1272,7 +1272,7 @@ class PlaygroundSim(Sim):
         c = self.view
         c.azimuth = (c.azimuth + d_az) % 360
         c.elevation = float(np.clip(c.elevation + d_el, -89, -3))
-        c.distance = float(np.clip(c.distance * zoom, 0.4, 8.0))
+        c.distance = float(np.clip(c.distance * zoom, 0.4, 16.0))
         if pan != (0.0, 0.0):
             _, fwd, right, _ = self._cam_frame()
             flat = np.array([fwd[0], fwd[1], 0.0])
