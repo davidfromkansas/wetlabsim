@@ -255,6 +255,7 @@ class Station:
     setup: int = 0        # a LIBERO station: the official starting layout its next run starts from
     free: bool = False    # a benchmark's scene as a free station: the same room or lab, any task you
     #                       type, no goal check and no score (a LIBERO room keeps a task for its room)
+    open_cell: bool = False   # no work-box walls (a ready-made scene's humanoid, among other robots)
 
     @property
     def libero(self) -> bool:
@@ -313,7 +314,7 @@ class Station:
         """An open cell: no work-box walls, so its robot's cameras see what is around it. A
         robot on wheels (the RB-Y1) always has one: it drives off to the rest of the lab."""
         from wetlabsim import scene as WS
-        return bool(self.spec.get("open") or WS.ROBOTS[self.robot].get("mobile"))
+        return bool(self.open_cell or self.spec.get("open") or WS.ROBOTS[self.robot].get("mobile"))
 
     @property
     def stand_gap(self) -> float:
@@ -368,6 +369,34 @@ class Station:
 
     WALL_MARGIN = 0.1        # the work box: this far out from the table's edge
     WALL_ABOVE = 1.3         # and this high above the table top (over the overhead camera)
+    ROOM = 7.0               # a humanoid's work box: a solid room this wide (m) round its table,
+                             # to walk about in
+
+    @property
+    def roomy(self) -> bool:
+        """A humanoid that walks (the G1): its work box is a room of solid walls, ROOM wide."""
+        from wetlabsim import scene as WS
+        return bool(WS.ROBOTS[self.robot].get("humanoid")) and not self.libero and not self.open
+
+    def area(self):
+        """What this station takes of the floor, (half x, half y) about its centre in its own
+        frame: a walking humanoid's room, else its table."""
+        if self.roomy:
+            return self.ROOM / 2, self.ROOM / 2
+        sx, sy = self.footprint()
+        return sx / 2, sy / 2
+
+    def claims(self, x: float, y: float, margin: float = 0.0) -> bool:
+        """Whether a point is on this station's floor area (area())."""
+        hx, hy = self.area()
+        lx, ly = self.to_local(x, y)
+        return abs(lx) <= hx + margin and abs(ly) <= hy + margin
+
+    def area_points(self, n: int = 9):
+        """Points on the edges and across this station's area (world x, y), for overlap checks."""
+        hx, hy = self.area()
+        f = np.linspace(-1.0, 1.0, n)
+        return [self.to_world(a * hx, b * hy)[:2] for a in f for b in f]
 
     def work_box(self):
         """The space this station's robot works in: its table's footprint plus a margin, from
@@ -376,6 +405,8 @@ class Station:
         sx, sy = self.footprint()
         if self.libero:        # the room itself
             return sx / 2, sy / 2, 3.0
+        if self.roomy:         # a walking humanoid: its room
+            return self.ROOM / 2, self.ROOM / 2, self.top + self.WALL_ABOVE
         # A humanoid stands outside the table's footprint: the box takes in where it stands too.
         mx = self.stand_gap + 0.35 if self.standing else self.WALL_MARGIN
         if self.floor_arm:     # a big arm: room for its base behind, its reach to the sides, its height
@@ -1035,16 +1066,19 @@ WALL_RGBA = [0.86, 0.87, 0.89, 1.0]
 
 
 def _add_walls(world: mujoco.MjSpec, st: Station):
-    """The four walls of a station's work box: seen only by its robots' cameras (geom group
-    WALL_GROUP), so a robot sees its own table and not the stations around it. Nothing touches
-    them (contype and conaffinity 0): they are not part of the physics."""
+    """The four walls of a station's work box: seen only by its robots' cameras and lidar (geom
+    group WALL_GROUP), so a robot sees its own table and not the stations around it. A table
+    arm's walls are not part of the physics (contype and conaffinity 0); a walking humanoid's
+    room has solid walls, so what it sees is what stops it."""
     hx, hy, h = st.work_box()
-    t = 0.005
+    solid = st.roomy
+    t = 0.05 if solid else 0.005
     for k, (lx, ly, ax, ay) in enumerate(((hx, 0, t, hy), (-hx, 0, t, hy), (0, hy, hx, t), (0, -hy, hx, t))):
         x, y, _ = st.to_world(lx, ly)
         world.worldbody.add_geom(name=f"{st.prefix}wall{k}", type=mujoco.mjtGeom.mjGEOM_BOX,
                                  size=[ax, ay, h / 2], pos=[x, y, h / 2], quat=list(yaw_quat(st.yaw)),
-                                 group=WALL_GROUP, contype=0, conaffinity=0, rgba=WALL_RGBA)
+                                 group=WALL_GROUP, contype=int(solid), conaffinity=int(solid),
+                                 rgba=WALL_RGBA)
 
 
 def read_obj(path):
