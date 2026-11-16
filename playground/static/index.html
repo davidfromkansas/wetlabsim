@@ -2047,7 +2047,7 @@ function jevCard(text, start, camBase) {
 }
 function renderFeed() {
   const run = (S.scene && S.scene.run) || {}, info = S.runInfo, trace = S.trace, active = !!run.active;
-  const key = (S.scene && S.scene.active) + '|' + (run.started || '') + '|' + trace.length + '|' + active + '|' + (run.status || '') + '|' + S.mode;
+  const key = (S.scene && S.scene.active) + '|' + (run.started || '') + '|' + trace.length + '|' + active + '|' + (run.status || '') + '|' + S.mode + '|' + (run.started ? '' : (curStation() || {}).name);
   if (key === S.feedKey) return;
   S.feedKey = key;
   const m = run.model || {}, logo = LOGOS[m.provider] || '', who = esc(info.model_label || m.label || 'The AI');
