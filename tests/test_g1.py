@@ -1,12 +1,12 @@
 """The Unitree G1 humanoid in the playground: Menagerie's model with Dex3-1 hands, standing on
-the floor at its table under NVIDIA's GR00T balance and walking policies (as LeRobot runs it)."""
+the floor at its table under NVIDIA's GEAR-SONIC whole-body controller."""
 import mujoco
 import numpy as np
 import pytest
 
 from playground import site, world as W
 from playground.sim import PlaygroundSim
-from wetlabsim import robot_api as RA, scene as WS
+from wetlabsim import robot_api as RA, scene as WS, sonic as SO
 from wetlabsim.sim import HandArm, Humanoid, RobotError
 
 from test_playground_grip import _go, _step
@@ -18,8 +18,8 @@ def _lab(item=None, side="left", kind="wetlab"):
     sim = PlaygroundSim(stations=[])
     uid = sim.add_station("g1", (0, 0), 0.0, kind, starter=False)
     st = sim.station(uid)
-    if item:   # 12 cm past the table's near edge, in front of one hand
-        x, y, _ = st.to_world(-st.footprint()[0] / 2 + 0.12, 0.12 if side == "left" else -0.12)
+    if item:   # 22 cm past the table's near edge, in front of one hand
+        x, y, _ = st.to_world(-st.footprint()[0] / 2 + 0.22, 0.12 if side == "left" else -0.12)
         sim.placed = [W.Placed("t1", item, (x, y, st.top + 0.002), 0.0)]
         sim.rebuild()
     return sim, sim.arms[uid]
@@ -39,9 +39,10 @@ def test_one_robot_two_hands_three_cameras_and_sensors():
     assert all(isinstance(a, HandArm) and a.n_arm == 7 and not a.has_ft for a in g.sides.values())
     assert set(g.P["cameras"]) == {"head", "left_wrist", "right_wrist", "side"}
     m = sim.m
-    assert m.actuator_gainprm[m.actuator("st1/left_knee_joint").id, 0] == pytest.approx(300)   # LeRobot's kp
+    assert m.actuator_gainprm[m.actuator("st1/left_knee_joint").id, 0] == pytest.approx(SO.KP[3])   # SONIC's
+    assert m.actuator_gainprm[m.actuator("st1/left_elbow_joint").id, 0] == pytest.approx(80)       # LeRobot's
     st = g.state()
-    assert set(st["body"]) >= {"imu", "joint_positions", "walking", "fallen"}
+    assert set(st["body"]) >= {"imu", "joint_positions", "movement", "moving", "arms_free", "fallen"}
     assert set(st["left"]["hand"]["pressure"]) == {"palm", "thumb_pad", "thumb_tip", "index_pad", "index_tip",
                                                    "middle_pad", "middle_tip"}
     cal = g.calibration()
@@ -55,7 +56,7 @@ def test_stands_still_on_the_floor_at_its_table(kind):
     _step(sim, 4.0)
     p = sim.d.xpos[g.base_body]
     assert g.mode == "running" and not g.fallen
-    assert np.linalg.norm(p[:2] - p0[:2]) < 0.12          # settles a few cm as it starts balancing
+    assert np.linalg.norm(p[:2] - p0[:2]) < 0.08          # settles a few cm as it starts balancing
     assert p[2] == pytest.approx(WS.G1_STANDING_HEIGHT, abs=0.02)
     for a in g.sides.values():                             # arms hold the ready pose
         assert np.max(np.abs(sim.d.qpos[a.arm_qadr] - a.ready_q)) < 0.02
@@ -67,21 +68,61 @@ def test_stands_still_on_the_floor_at_its_table(kind):
                 assert "ankle_roll" in sim.m.body(b).name, sim.m.body(b).name
 
 
-def test_walks_turns_and_crouches():
+def test_walks_turns_kneels_and_crawls():
     sim, g = _lab()
     _step(sim, 1.0)
     p0 = sim.d.xpos[g.base_body].copy()
-    _go(sim, g.walk(-0.3, 0, 0, 2.0))
-    assert sim.d.xpos[g.base_body][0] - p0[0] < -0.3
-    _go(sim, g.walk(0, 0, 0.5, 2.0))
+    _go(sim, g.move("walk", direction=np.pi, seconds=2.0))     # backwards, away from the table
+    assert sim.d.xpos[g.base_body][0] - p0[0] < -0.4
+    assert g.state()["body"]["movement"] == "stand"            # it stops when the time is up
+    _go(sim, g.move("walk", turn=np.pi / 2, seconds=2.0))      # turn left a quarter, walk that way
     w, x, y, z = g.state()["body"]["imu"]["quaternion"]
-    assert 2 * np.arctan2(z, w) > 0.4
-    g.body_pose(height=0.65, pitch=0.3)
-    _step(sim, 2.0)
-    assert sim.d.xpos[g.base_body][2] < 0.7
+    assert 2 * np.arctan2(z, w) > 0.9
+    _go(sim, g.pose("kneel", height=0.5))
+    assert sim.d.xpos[g.base_body][2] < 0.55 and g.state()["body"]["arms_free"]
+    _go(sim, g.move("crawl", seconds=2.0))
+    body = g.state()["body"]
+    assert body["movement"] == "crawl" and not body["arms_free"] and not body["moving"]
+    with pytest.raises(RobotError, match="crawl movement"):     # the hands are on the floor
+        g.sides["left"].move_j(g.sides["left"].ready_q)
+    with pytest.raises(RobotError, match="kneel or squat first"):
+        g.pose("stand")
+    _go(sim, g.pose("kneel"))
+    _go(sim, g.pose("stand"))
+    _step(sim, 1.0)
+    assert sim.d.xpos[g.base_body][2] == pytest.approx(WS.G1_STANDING_HEIGHT, abs=0.03)
     assert g.mode == "running" and not g.fallen
-    with pytest.raises(RobotError):
-        g.walk(3.0, 0, 0, 1.0)
+    assert g.state()["body"]["arms_free"]
+    for a in g.sides.values():                     # an arm command takes the arms back from SONIC
+        _go(sim, a.move_j(a.ready_q))
+    _step(sim, 1.0)
+    for a in g.sides.values():
+        assert np.max(np.abs(sim.d.qpos[a.arm_qadr] - a.ready_q)) < 0.03
+    assert g.mode == "running" and not g.fallen
+    with pytest.raises(RobotError, match="within 1.5 to 3.0"):
+        g.move("run", speed=5.0)
+    with pytest.raises(RobotError, match="unknown movement"):
+        g.move("moonwalk")
+
+
+def test_runs_and_comes_back_to_stand():
+    sim, g = _lab(kind="table")
+    _step(sim, 1.0)
+    p0 = sim.d.xpos[g.base_body].copy()
+    _go(sim, g.move("run", direction=np.pi, speed=2.0, seconds=2.0))
+    assert np.linalg.norm(sim.d.xpos[g.base_body][:2] - p0[:2]) > 1.5
+    _step(sim, 2.0)
+    assert g.mode == "running" and not g.fallen and g.state()["body"]["movement"] == "stand"
+
+
+def test_sonic_commands_follow_nvidias_keyboard_rules():
+    c = SO.Command.make("kneel")
+    assert c.mode == 6 and c.height == 0.8 and c.speed == -1 and not c.move.any()
+    c = SO.Command.make("run", move=(1, 0, 0), speed=9.0)
+    assert c.speed == 3.0 and c.height == -1
+    c = SO.Command.make("walk", move=(0, 1, 0))
+    assert c.speed == -1 and c.move[1] == 1
+    assert len(SO.MODES) == 27
 
 
 def test_hands_close_open_and_set_joints():
@@ -150,7 +191,7 @@ def test_a_fall_stops_the_robot():
     _step(sim, 3.0)
     assert g.fallen and g.mode == "protective_stop"
     with pytest.raises(RobotError):
-        g.walk(0.2, 0, 0, 1.0)
+        g.move("walk", seconds=1.0)
     with pytest.raises(RobotError):
         g.unlock()
 
@@ -159,6 +200,6 @@ def test_site_sheet_and_robot_api():
     sim, g = _lab()
     text = site.site_sheet([], sim.station("st1"))
     assert "Unitree G1" in text and "pelvis frame" in text and "`head`" in text and "floor" in text
-    for path in ("/walk", "/stand", "/body", "/left/hand", "/right/hand"):
+    for path in ("/move", "/pose", "/stand", "/left/hand", "/right/hand"):
         assert RA.allowed("POST", path)
     assert RA.allowed("GET", "/lidar.npz") and RA.allowed("GET", "/camera/head.png")

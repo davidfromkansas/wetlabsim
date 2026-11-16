@@ -454,8 +454,8 @@ ROBOTS = {
     },
     # Unitree's G1 humanoid (29 joints: legs, waist, two 7-joint arms) with two Dex3-1 three-finger
     # hands, DeepMind's Menagerie model (assets/unitree_g1), unchanged. It stands on its own feet:
-    # NVIDIA's GR00T balance and walking policies (wetlabsim/locomotion.py) drive the legs and
-    # waist, as LeRobot's G1 support runs them. Each arm with its hand is a robot of its own
+    # NVIDIA's GEAR-SONIC whole-body controller (wetlabsim/sonic.py) drives the legs and waist,
+    # and the arms too in the movements that use them. Each arm with its hand is a robot of its own
     # (g1_side below); this entry is the whole robot.
     "g1": {
         "name": "Unitree G1 humanoid", "gripper": "Dex3-1 three-finger hand (x2)",
@@ -639,26 +639,23 @@ G1_BODY = ([f"left_{j}_joint" for j in G1_LEG] + [f"right_{j}_joint" for j in G1
            + [f"left_{j}_joint" for j in G1_ARM] + [f"right_{j}_joint" for j in G1_ARM])
 # Dex3-1 hand joints, in Unitree's order: thumb 0-2, middle 0-1, index 0-1.
 G1_HAND = ["thumb_0", "thumb_1", "thumb_2", "middle_0", "middle_1", "index_0", "index_1"]
-# LeRobot's default position gains for the G1 (lerobot/robots/unitree_g1/g1_embodiments.py,
-# kp in Nm/rad, kd in Nm s/rad), the gains its locomotion controllers are run with.
-G1_GAINS = {"hip_pitch": (150, 2), "hip_roll": (150, 2), "hip_yaw": (150, 2), "knee": (300, 4),
-            "ankle_pitch": (40, 2), "ankle_roll": (40, 2),
-            "waist_yaw": (250, 5), "waist_roll": (250, 5), "waist_pitch": (250, 5),
-            "shoulder_pitch": (50, 3), "shoulder_roll": (50, 3), "shoulder_yaw": (80, 3), "elbow": (80, 3),
+# Position gains (kp in Nm/rad, kd in Nm s/rad). Legs and waist: SONIC's own motor gains
+# (NVIDIA's deploy, policy_parameters.hpp: each motor's armature at 10 Hz, damping ratio 2; see
+# wetlabsim/sonic.py). Arms: LeRobot's G1 arm gains (lerobot/robots/unitree_g1/g1_embodiments.py),
+# with gravity compensation through each arm motor's torque input, as LeRobot runs the arms.
+G1_GAINS = {"shoulder_pitch": (50, 3), "shoulder_roll": (50, 3), "shoulder_yaw": (80, 3), "elbow": (80, 3),
             "wrist_roll": (40, 1.5), "wrist_pitch": (40, 1.5), "wrist_yaw": (40, 1.5)}
 # Joint speed limits from Unitree's G1 URDF (g1_29dof_with_hand: <limit velocity>, rad/s).
 G1_ARM_VMAX = np.array([37, 37, 37, 37, 37, 22, 22], float)
 G1_HAND_VMAX = np.array([6.857, 12, 12, 12, 12, 12, 12], float)
-# The stance the GR00T policies balance around (LeRobot's GROOT_DEFAULT_ANGLES): knees slightly
-# bent. Arms: our ready pose, upper arms a little back and forearms raised in front of the
-# chest, the hands above either station table's top and behind its near edge (so they can move
-# straight out over the table without first passing under it), palms facing in.
-G1_STANCE = {"left_hip_pitch_joint": -0.1, "right_hip_pitch_joint": -0.1, "left_knee_joint": 0.3,
-             "right_knee_joint": 0.3, "left_ankle_pitch_joint": -0.2, "right_ankle_pitch_joint": -0.2}
+# The arms' ready pose: upper arms a little back and forearms raised in front of the chest, the
+# hands above either station table's top, palms facing in. (The legs start in SONIC's own
+# standing pose, sonic.DEFAULT_ANGLES.)
 G1_READY = {"left": np.array([0.2, 0.3, 0.0, -1.0, 0.0, 0.0, 0.0]),
             "right": np.array([0.2, -0.3, 0.0, -1.0, 0.0, 0.0, 0.0])}
-G1_STANDING_HEIGHT = 0.755   # the pelvis height once it stands balancing (measured, m)
+G1_STANDING_HEIGHT = 0.787   # the pelvis height once it stands balancing (measured, m)
 G1_PELVIS_HEIGHT = 0.79      # where the pelvis starts, standing (m): the feet just above the floor
+G1_SETTLE = 0.037            # how far forward it steps as SONIC starts balancing it (measured, m)
 # Unitree's G1 URDF: the head's RealSense D435i (d435_link) and Livox MID-360 lidar (mid360_link),
 # on the torso. Camera vertical field of view: the D435i's depth stream, 58 degrees (Intel's
 # datasheet: 87 x 58), as for the D405s.
@@ -729,12 +726,18 @@ def _g1(world, mount_site="robot_mount", prefix=""):
     g1 = mujoco.MjSpec.from_file(str(ASSETS / "unitree_g1" / "g1_with_hands.xml"))
     for k in list(g1.keys):          # Menagerie's keyframe: our controller sets the start pose
         g1.delete(k)
+    from . import sonic as SO
     for a in g1.actuators:
         key = a.target.removeprefix("left_").removeprefix("right_").removesuffix("_joint")
-        if key in G1_GAINS:
+        if a.target in G1_BODY[:15]:
+            i = G1_BODY.index(a.target)
+            kp, kd = SO.KP[i], SO.KD[i]
+        elif key in G1_GAINS:
             kp, kd = G1_GAINS[key]
-            a.gainprm[0] = kp
-            a.biasprm[0], a.biasprm[1], a.biasprm[2] = 0.0, -kp, -kd
+        else:
+            continue
+        a.gainprm[0] = kp
+        a.biasprm[0], a.biasprm[1], a.biasprm[2] = 0.0, -kp, -kd
     for side in ("left", "right"):
         for j in G1_ARM:
             jn = f"{side}_{j}_joint"

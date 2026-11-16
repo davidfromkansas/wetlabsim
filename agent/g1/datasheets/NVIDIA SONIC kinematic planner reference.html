@@ -1,0 +1,1590 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Kinematic Planner ONNX Model Reference &#8212; GR00T-WholeBodyControl Documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/twemoji.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=fd8e2287" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=f9c1cefe"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js"></script>
+    <script src="../_static/twemoji.js"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'references/planner_onnx';</script>
+    <link rel="icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="G1 JetPack 6 Flashing Guide" href="jetpack6.html" />
+    <link rel="prev" title="Motion Reference Data" href="motion_reference.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="Nov 03, 2026"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/NVIDIA-logo-white.png" class="logo__image only-light" alt=""/>
+    <script>document.write(`<img src="../_static/NVIDIA-logo-black.png" class="logo__image only-dark" alt=""/>`);</script>
+  
+  
+    <p class="title logo__title">GR00T-WholeBodyControl Documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><ul class="navbar-icon-links"
+    aria-label="Quick Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/NVlabs/GR00T-WholeBodyControl" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://nvlabs.github.io/GEAR-SONIC/" title="GEAR-SONIC Website" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-solid fa-globe fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GEAR-SONIC Website</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://arxiv.org/abs/2511.07820" title="Paper" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-solid fa-file-pdf fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Paper</span></a>
+        </li>
+</ul></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../model_card.html">Model Card</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation_deploy.html">Installation (Deployment)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/download_models.html">Downloading Model Checkpoints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/vr_teleop_setup.html">VR Teleop Setup (PICO)</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/keyboard.html">Motion Tracking and Kinematic Planner with Keyboard Controls</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/gamepad.html">Motion Tracking and Kinematic Planner with Gamepad Controls</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/zmq.html">Streaming Motion Tracking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/manager.html">Interface Manager (All-In-One)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/isaac_teleop_publisher_setup.html">Isaac Capture Setup (CloudXR / DeviceIO, in-process)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/vr_wholebody_teleop.html">PICO VR Whole-body Teleop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/live_camera_teleop.html">Live Camera Teleoperation with GEM-X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/data_collection.html">Data Collection for VLA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/vla_workflow.html">VLA Workflow: Collect, Fine-tune, Deploy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/vla_inference.html">VLA Inference</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Training</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation_training.html">Installation (Training)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/training.html">Training Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/training_data.html">Training Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/new_embodiments.html">Training on New Embodiments</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Best Practices</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/teleoperation.html">Whole-body Teleoperation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/troubleshooting.html">Troubleshooting</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference Documentation</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="index.html">Reference Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/configuration.html">Configuration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="conventions.html">Coordinate Frame and Rotation Conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="training_code.html">Training Code Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deployment_code.html">C++ Deployment Program Flow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="observation_config.html">Observation Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="motion_reference.html">Motion Reference Data</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Kinematic Planner ONNX Model Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jetpack6.html">G1 JetPack 6 Flashing Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="decoupled_wbc.html">Decoupled WBC</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Additional Resources</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../resources/citations.html">Citations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../resources/license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../resources/support.html">Support</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/NVlabs/GR00T-WholeBodyControl" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/NVlabs/GR00T-WholeBodyControl/edit/main/docs/references/planner_onnx.md" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/NVlabs/GR00T-WholeBodyControl/issues/new?title=Issue%20on%20page%20%2Freferences/planner_onnx.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/references/planner_onnx.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Kinematic Planner ONNX Model Reference</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#coordinate-system">Coordinate System</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-tensors">Input Tensors</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#context-mujoco-qpos"><code class="docutils literal notranslate"><span class="pre">context_mujoco_qpos</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#target-vel"><code class="docutils literal notranslate"><span class="pre">target_vel</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mode"><code class="docutils literal notranslate"><span class="pre">mode</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#movement-direction"><code class="docutils literal notranslate"><span class="pre">movement_direction</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#facing-direction"><code class="docutils literal notranslate"><span class="pre">facing_direction</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#height"><code class="docutils literal notranslate"><span class="pre">height</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced-inputs">Advanced Inputs</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#random-seed"><code class="docutils literal notranslate"><span class="pre">random_seed</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#has-specific-target"><code class="docutils literal notranslate"><span class="pre">has_specific_target</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#specific-target-positions"><code class="docutils literal notranslate"><span class="pre">specific_target_positions</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#specific-target-headings"><code class="docutils literal notranslate"><span class="pre">specific_target_headings</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#allowed-pred-num-tokens"><code class="docutils literal notranslate"><span class="pre">allowed_pred_num_tokens</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-tensors">Output Tensors</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mujoco-qpos"><code class="docutils literal notranslate"><span class="pre">mujoco_qpos</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#num-pred-frames"><code class="docutils literal notranslate"><span class="pre">num_pred_frames</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#internal-pipeline">Internal Pipeline</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deployment-integration">Deployment Integration</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#threading-model">Threading Model</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#initialization">Initialization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#context-construction">Context Construction</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#replan-logic">Replan Logic</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#output-resampling-30-hz-50-hz">Output Resampling (30 Hz → 50 Hz)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#animation-blending">Animation Blending</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tensorrt-acceleration">TensorRT Acceleration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#planner-model-versions">Planner Model Versions</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model-properties">Model Properties</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage-example">Usage Example</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="kinematic-planner-onnx-model-reference">
+<h1>Kinematic Planner ONNX Model Reference<a class="headerlink" href="#kinematic-planner-onnx-model-reference" title="Link to this heading">#</a></h1>
+<p>This page provides a detailed specification of the <strong>Kinematic Planner</strong> ONNX model inputs and outputs. The kinematic planner is the core motion generation component of the GEAR-SONIC system: given the robot’s current state and high-level navigation commands, it produces a sequence of future whole-body poses (MuJoCo <code class="docutils literal notranslate"><span class="pre">qpos</span></code> frames) that the low-level whole-body controller then tracks.</p>
+<p>The ONNX model is part of the <strong>C++ inference stack</strong> and is called by the deployment runtime during operation. The C++ stack manages input construction, timing, and state management — certain combinations of inputs are invalid and are handled by the C++ layer to ensure safe operation. This page is intended for developers who want to understand the model interface at a deeper level or build custom integrations beyond the standard deployment pipeline.</p>
+<div class="note admonition">
+<p class="admonition-title">Training Code &amp; Technical Report</p>
+<p>The kinematic planner training code and technical report will be released soon. This page documents the ONNX model interface for deployment integration.</p>
+</div>
+<hr class="docutils" />
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>The planner takes <strong>11 input tensors</strong> and produces <strong>2 output tensors</strong>. The 6 primary inputs are listed below; the remaining 5 are <a href="#advanced-inputs">advanced inputs</a> managed by the C++ stack and should not need to be modified in most cases.</p>
+<p><strong>Primary inputs:</strong></p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Tensor Name</p></th>
+<th class="head"><p>Shape</p></th>
+<th class="head"><p>Dtype</p></th>
+<th class="head"><p>Default</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">context_mujoco_qpos</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">4,</span> <span class="pre">36]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float32</span></code></p></td>
+<td><p>Required</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">target_vel</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float32</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">-1.0</span></code> (use mode default velocity)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">mode</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">int64</span></code></p></td>
+<td><p>Required</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">movement_direction</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">3]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float32</span></code></p></td>
+<td><p>Required</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">facing_direction</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">3]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float32</span></code></p></td>
+<td><p>Required</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">height</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float32</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">-1.0</span></code> (disable height control)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Outputs:</strong></p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Tensor Name</p></th>
+<th class="head"><p>Shape</p></th>
+<th class="head"><p>Dtype</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">mujoco_qpos</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">N,</span> <span class="pre">36]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float32</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">num_pred_frames</span></code></p></td>
+<td><p>scalar</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">int64</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Where:</p>
+<ul class="simple">
+<li><p><strong>K</strong> = <code class="docutils literal notranslate"><span class="pre">max_tokens</span> <span class="pre">-</span> <span class="pre">min_tokens</span> <span class="pre">+</span> <span class="pre">1</span></code> (model-dependent; the range of allowed prediction horizons)</p></li>
+<li><p><strong>N</strong> = maximum number of output frames (padded); only the first <code class="docutils literal notranslate"><span class="pre">num_pred_frames</span></code> frames are valid</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="coordinate-system">
+<h2>Coordinate System<a class="headerlink" href="#coordinate-system" title="Link to this heading">#</a></h2>
+<p>The model operates in <strong>MuJoCo’s Z-up coordinate convention</strong>:</p>
+<ul class="simple">
+<li><p><strong>X</strong> — forward</p></li>
+<li><p><strong>Y</strong> — left</p></li>
+<li><p><strong>Z</strong> — up</p></li>
+</ul>
+<p>All position and direction vectors in the inputs and outputs follow this convention.</p>
+</section>
+<hr class="docutils" />
+<section id="input-tensors">
+<h2>Input Tensors<a class="headerlink" href="#input-tensors" title="Link to this heading">#</a></h2>
+<section id="context-mujoco-qpos">
+<span id="id1"></span><h3><code class="docutils literal notranslate"><span class="pre">context_mujoco_qpos</span></code><a class="headerlink" href="#context-mujoco-qpos" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Property</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Shape</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">4,</span> <span class="pre">36]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Dtype</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float32</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Description</strong></p></td>
+<td><p>The planner’s context input consisting of 4 consecutive MuJoCo <code class="docutils literal notranslate"><span class="pre">qpos</span></code> frames representing the recent states of the robot</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>This is the primary context input. It provides 4 frames of the robot’s recent joint configuration at the simulation framerate.
+The 36 dimensions of each frame are the standard MuJoCo <code class="docutils literal notranslate"><span class="pre">qpos</span></code> vector for the Unitree G1 (29-DOF) model:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Index</p></th>
+<th class="head"><p>Field</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0–2</p></td>
+<td><p>Root position</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(x,</span> <span class="pre">y,</span> <span class="pre">z)</span></code> in meters, Z-up world frame</p></td>
+</tr>
+<tr class="row-odd"><td><p>3–6</p></td>
+<td><p>Root quaternion</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(w,</span> <span class="pre">x,</span> <span class="pre">y,</span> <span class="pre">z)</span></code> orientation — MuJoCo convention</p></td>
+</tr>
+<tr class="row-even"><td><p>7–35</p></td>
+<td><p>DOF positions</p></td>
+<td><p>29 joint angles in radians, following MuJoCo body tree order</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="note admonition">
+<p class="admonition-title">Coordinate Frame</p>
+<p>All inputs — including <code class="docutils literal notranslate"><span class="pre">context_mujoco_qpos</span></code>, <code class="docutils literal notranslate"><span class="pre">movement_direction</span></code>, <code class="docutils literal notranslate"><span class="pre">facing_direction</span></code>, <code class="docutils literal notranslate"><span class="pre">specific_target_positions</span></code>, and <code class="docutils literal notranslate"><span class="pre">specific_target_headings</span></code> — should be provided in the <strong>world coordinate frame</strong>. The root quaternion uses MuJoCo’s <code class="docutils literal notranslate"><span class="pre">(w,</span> <span class="pre">x,</span> <span class="pre">y,</span> <span class="pre">z)</span></code> ordering at indices 3 to 6. The model handles canonicalization internally.</p>
+</div>
+</section>
+<section id="target-vel">
+<h3><code class="docutils literal notranslate"><span class="pre">target_vel</span></code><a class="headerlink" href="#target-vel" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Property</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Shape</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Dtype</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float32</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Description</strong></p></td>
+<td><p>Desired locomotion speed override</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Controls the target movement speed. When set to <strong>zero or below</strong> (e.g., <code class="docutils literal notranslate"><span class="pre">-1.0</span></code>), the model uses the default velocity for the selected mode. When set to a <strong>positive value</strong>, it overrides the mode’s default speed (in meters per second). Note that the actual achieved speed may differ from the target due to the critically damped spring model and motion dynamics.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Value</p></th>
+<th class="head"><p>Behavior</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&lt;=</span> <span class="pre">0.0</span></code></p></td>
+<td><p>Use the default velocity for the selected <code class="docutils literal notranslate"><span class="pre">mode</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">0.0</span></code></p></td>
+<td><p>Override with this target velocity (m/s)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="mode">
+<h3><code class="docutils literal notranslate"><span class="pre">mode</span></code><a class="headerlink" href="#mode" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Property</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Shape</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Dtype</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">int64</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Description</strong></p></td>
+<td><p>Index selecting the motion style/behavior</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Selects the motion style from the pre-loaded clip library. The mode index is clamped to the number of available clips at runtime. The default planner ships with the following modes:</p>
+<p><strong>Locomotion set:</strong></p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Index</p></th>
+<th class="head"><p>Mode</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">idle</span></code></p></td>
+<td><p>Standing still</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">slowWalk</span></code></p></td>
+<td><p>Slow forward locomotion</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">walk</span></code></p></td>
+<td><p>Normal walking speed</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">run</span></code></p></td>
+<td><p>Running</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Squat / ground set:</strong></p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Index</p></th>
+<th class="head"><p>Mode</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>4</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">squat</span></code></p></td>
+<td><p>Squatting — requires <code class="docutils literal notranslate"><span class="pre">height</span></code> input (range ~0.4–0.8m)</p></td>
+</tr>
+<tr class="row-odd"><td><p>5</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">kneelTwoLeg</span></code></p></td>
+<td><p>Kneeling on both knees — requires <code class="docutils literal notranslate"><span class="pre">height</span></code> input (0.2m-0.4m)</p></td>
+</tr>
+<tr class="row-even"><td><p>6</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">kneelOneLeg</span></code></p></td>
+<td><p>Kneeling on one knee — requires <code class="docutils literal notranslate"><span class="pre">height</span></code> input (0.2m-0.4m)</p></td>
+</tr>
+<tr class="row-odd"><td><p>7</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">lyingFacedown</span></code></p></td>
+<td><p>Lying face down — requires <code class="docutils literal notranslate"><span class="pre">height</span></code> input</p></td>
+</tr>
+<tr class="row-even"><td><p>8</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">handCrawling</span></code></p></td>
+<td><p>Crawling on hands and knees</p></td>
+</tr>
+<tr class="row-odd"><td><p>14</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">elbowCrawling</span></code></p></td>
+<td><p>Crawling on elbows (more likely to overheat)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Boxing set:</strong></p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Index</p></th>
+<th class="head"><p>Mode</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>9</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">idleBoxing</span></code></p></td>
+<td><p>Boxing stance (idle)</p></td>
+</tr>
+<tr class="row-odd"><td><p>10</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">walkBoxing</span></code></p></td>
+<td><p>Walking with boxing guard</p></td>
+</tr>
+<tr class="row-even"><td><p>11</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">leftJab</span></code></p></td>
+<td><p>Left jab</p></td>
+</tr>
+<tr class="row-odd"><td><p>12</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">rightJab</span></code></p></td>
+<td><p>Right jab</p></td>
+</tr>
+<tr class="row-even"><td><p>13</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">randomPunches</span></code></p></td>
+<td><p>Random punch sequence</p></td>
+</tr>
+<tr class="row-odd"><td><p>15</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">leftHook</span></code></p></td>
+<td><p>Left hook</p></td>
+</tr>
+<tr class="row-even"><td><p>16</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">rightHook</span></code></p></td>
+<td><p>Right hook</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Style walks:</strong></p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Index</p></th>
+<th class="head"><p>Mode</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>17</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">happy</span></code></p></td>
+<td><p>Happy walking</p></td>
+</tr>
+<tr class="row-odd"><td><p>18</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">stealth</span></code></p></td>
+<td><p>Stealthy walking</p></td>
+</tr>
+<tr class="row-even"><td><p>19</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">injured</span></code></p></td>
+<td><p>Limping walk</p></td>
+</tr>
+<tr class="row-odd"><td><p>20</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">careful</span></code></p></td>
+<td><p>Cautious walking</p></td>
+</tr>
+<tr class="row-even"><td><p>21</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">objectCarrying</span></code></p></td>
+<td><p>Walking with hands reaching out</p></td>
+</tr>
+<tr class="row-odd"><td><p>22</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">crouch</span></code></p></td>
+<td><p>Crouched walking</p></td>
+</tr>
+<tr class="row-even"><td><p>23</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">happyDance</span></code></p></td>
+<td><p>Dancing walk (only walk forward)</p></td>
+</tr>
+<tr class="row-odd"><td><p>24</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">zombie</span></code></p></td>
+<td><p>Zombie walk</p></td>
+</tr>
+<tr class="row-even"><td><p>25</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">point</span></code></p></td>
+<td><p>Walking with hands pointing</p></td>
+</tr>
+<tr class="row-odd"><td><p>26</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">scared</span></code></p></td>
+<td><p>Scared walk</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="movement-direction">
+<h3><code class="docutils literal notranslate"><span class="pre">movement_direction</span></code><a class="headerlink" href="#movement-direction" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Property</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Shape</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">3]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Dtype</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float32</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Description</strong></p></td>
+<td><p>Desired direction of movement in the MuJoCo world frame</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>A 3D direction vector <code class="docutils literal notranslate"><span class="pre">(x,</span> <span class="pre">y,</span> <span class="pre">z)</span></code> in the Z-up world coordinate system indicating where the robot should move. It is recommended to pass a normalized vector for good practice, though the model normalizes internally. Speed is controlled by <code class="docutils literal notranslate"><span class="pre">target_vel</span></code> and <code class="docutils literal notranslate"><span class="pre">mode</span></code>, not by the magnitude of this vector.</p>
+<ul class="simple">
+<li><p>The planner uses the <code class="docutils literal notranslate"><span class="pre">(x,</span> <span class="pre">y)</span></code> components (horizontal plane) for computing the target root trajectory via a critically-damped spring model.</p></li>
+<li><p>When the magnitude is near zero (<code class="docutils literal notranslate"><span class="pre">&lt;</span> <span class="pre">1e-5</span></code>), the model falls back to using the <code class="docutils literal notranslate"><span class="pre">facing_direction</span></code> with a small scaling factor for in-place turning.</p></li>
+</ul>
+</section>
+<section id="facing-direction">
+<h3><code class="docutils literal notranslate"><span class="pre">facing_direction</span></code><a class="headerlink" href="#facing-direction" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Property</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Shape</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">3]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Dtype</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float32</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Description</strong></p></td>
+<td><p>Desired facing (heading) direction in the MuJoCo world frame</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>A 3D direction vector <code class="docutils literal notranslate"><span class="pre">(x,</span> <span class="pre">y,</span> <span class="pre">z)</span></code> indicating which direction the robot’s torso should face. The target heading angle is computed as <code class="docutils literal notranslate"><span class="pre">atan2(y,</span> <span class="pre">x)</span></code> from this vector. Like <code class="docutils literal notranslate"><span class="pre">movement_direction</span></code>, this does not need to be normalized.</p>
+<p>This is independent of <code class="docutils literal notranslate"><span class="pre">movement_direction</span></code> — the robot can walk in one direction while facing another (e.g., strafing).</p>
+</section>
+<section id="height">
+<h3><code class="docutils literal notranslate"><span class="pre">height</span></code><a class="headerlink" href="#height" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Property</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Shape</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Dtype</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float32</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Description</strong></p></td>
+<td><p>Desired root height for height-aware behaviors</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Controls the target pelvis height for modes that support variable height (e.g., <code class="docutils literal notranslate"><span class="pre">squat</span></code>, <code class="docutils literal notranslate"><span class="pre">kneelTwoLeg</span></code>, <code class="docutils literal notranslate"><span class="pre">kneelOneLeg</span></code>, <code class="docutils literal notranslate"><span class="pre">lyingFacedown</span></code>). When a positive value is provided, the model searches the reference clip’s keyframes and selects the one whose root height is closest to the requested value, using it as the target pose for motion generation.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Value</p></th>
+<th class="head"><p>Behavior</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&lt;</span> <span class="pre">0.0</span></code></p></td>
+<td><p>Height control disabled; use the randomly-selected keyframe from the reference clip</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">0.0</span></code></p></td>
+<td><p>Find the closest height keyframe in the reference clip and use it as the target pose (meters)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="advanced-inputs"></div>
+</section>
+</section>
+<section id="advanced-inputs">
+<h2>Advanced Inputs<a class="headerlink" href="#advanced-inputs" title="Link to this heading">#</a></h2>
+<p>These inputs are managed internally by the C++ deployment stack and <strong>should not be modified</strong> under normal operation. They are documented here for completeness and for advanced users who need to build custom integrations.</p>
+<section id="random-seed">
+<h3><code class="docutils literal notranslate"><span class="pre">random_seed</span></code><a class="headerlink" href="#random-seed" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Property</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Shape</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Dtype</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">int64</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Description</strong></p></td>
+<td><p>Seed for controlling network randomness</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="has-specific-target">
+<h3><code class="docutils literal notranslate"><span class="pre">has_specific_target</span></code><a class="headerlink" href="#has-specific-target" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Property</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Shape</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">1]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Dtype</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">int64</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Description</strong></p></td>
+<td><p>Flag indicating whether specific waypoint targets are provided</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Value</p></th>
+<th class="head"><p>Behavior</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">0</span></code></p></td>
+<td><p>Ignore <code class="docutils literal notranslate"><span class="pre">specific_target_positions</span></code> and <code class="docutils literal notranslate"><span class="pre">specific_target_headings</span></code>; use <code class="docutils literal notranslate"><span class="pre">movement_direction</span></code> / <code class="docutils literal notranslate"><span class="pre">facing_direction</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">1</span></code></p></td>
+<td><p>Use the provided specific target positions and headings as waypoint constraints</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>When enabled, the spring model’s target root position and heading are overridden by the values in <code class="docutils literal notranslate"><span class="pre">specific_target_positions</span></code> and <code class="docutils literal notranslate"><span class="pre">specific_target_headings</span></code>.</p>
+</section>
+<section id="specific-target-positions">
+<h3><code class="docutils literal notranslate"><span class="pre">specific_target_positions</span></code><a class="headerlink" href="#specific-target-positions" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Property</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Shape</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">4,</span> <span class="pre">3]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Dtype</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float32</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Description</strong></p></td>
+<td><p>4 waypoint positions in MuJoCo world coordinates</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Each waypoint is a 3D position <code class="docutils literal notranslate"><span class="pre">(x,</span> <span class="pre">y,</span> <span class="pre">z)</span></code> in the Z-up world frame. The 4 waypoints correspond to 4 frames (one token’s worth) of target root positions. Only used when <code class="docutils literal notranslate"><span class="pre">has_specific_target</span> <span class="pre">=</span> <span class="pre">1</span></code>.</p>
+</section>
+<section id="specific-target-headings">
+<h3><code class="docutils literal notranslate"><span class="pre">specific_target_headings</span></code><a class="headerlink" href="#specific-target-headings" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Property</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Shape</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">4]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Dtype</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float32</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Description</strong></p></td>
+<td><p>4 waypoint heading angles in radians</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Target heading (yaw) angles for each of the 4 waypoint frames. These are absolute angles in the Z-up world frame, measured as rotation around the Z-axis. Only used when <code class="docutils literal notranslate"><span class="pre">has_specific_target</span> <span class="pre">=</span> <span class="pre">1</span></code>. The last waypoint’s heading (<code class="docutils literal notranslate"><span class="pre">[:,</span> <span class="pre">-1]</span></code>) is used as the primary target heading for the spring model.</p>
+</section>
+<section id="allowed-pred-num-tokens">
+<h3><code class="docutils literal notranslate"><span class="pre">allowed_pred_num_tokens</span></code><a class="headerlink" href="#allowed-pred-num-tokens" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Property</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Shape</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">K]</span></code> where <code class="docutils literal notranslate"><span class="pre">K</span> <span class="pre">=</span> <span class="pre">max_tokens</span> <span class="pre">-</span> <span class="pre">min_tokens</span> <span class="pre">+</span> <span class="pre">1</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Dtype</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">int64</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Description</strong></p></td>
+<td><p>Binary mask controlling the allowed prediction horizon</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>A binary mask where each element corresponds to a possible number of predicted tokens. Index <code class="docutils literal notranslate"><span class="pre">i</span></code> maps to <code class="docutils literal notranslate"><span class="pre">min_tokens</span> <span class="pre">+</span> <span class="pre">i</span></code> tokens. A value of <code class="docutils literal notranslate"><span class="pre">1</span></code> means that prediction length is allowed; <code class="docutils literal notranslate"><span class="pre">0</span></code> means it is disallowed.</p>
+<p>Since each token represents 4 frames, the prediction horizon in frames is <code class="docutils literal notranslate"><span class="pre">num_tokens</span> <span class="pre">*</span> <span class="pre">4</span></code>. In our default planner we have <code class="docutils literal notranslate"><span class="pre">min_tokens</span> <span class="pre">=</span> <span class="pre">6</span></code> and <code class="docutils literal notranslate"><span class="pre">max_tokens</span> <span class="pre">=</span> <span class="pre">16</span></code>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Index</p></th>
+<th class="head"><p>Tokens</p></th>
+<th class="head"><p>Frames</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>6</p></td>
+<td><p>24</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>7</p></td>
+<td><p>28</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>8</p></td>
+<td><p>32</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>9</p></td>
+<td><p>36</p></td>
+</tr>
+<tr class="row-even"><td><p>4</p></td>
+<td><p>10</p></td>
+<td><p>40</p></td>
+</tr>
+<tr class="row-odd"><td><p>5</p></td>
+<td><p>11</p></td>
+<td><p>44</p></td>
+</tr>
+<tr class="row-even"><td><p>6</p></td>
+<td><p>12</p></td>
+<td><p>48</p></td>
+</tr>
+<tr class="row-odd"><td><p>7</p></td>
+<td><p>13</p></td>
+<td><p>52</p></td>
+</tr>
+<tr class="row-even"><td><p>8</p></td>
+<td><p>14</p></td>
+<td><p>56</p></td>
+</tr>
+<tr class="row-odd"><td><p>9</p></td>
+<td><p>15</p></td>
+<td><p>60</p></td>
+</tr>
+<tr class="row-even"><td><p>10</p></td>
+<td><p>16</p></td>
+<td><p>64</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="output-tensors">
+<h2>Output Tensors<a class="headerlink" href="#output-tensors" title="Link to this heading">#</a></h2>
+<section id="mujoco-qpos">
+<h3><code class="docutils literal notranslate"><span class="pre">mujoco_qpos</span></code><a class="headerlink" href="#mujoco-qpos" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Property</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Shape</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">N,</span> <span class="pre">36]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Dtype</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float32</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Description</strong></p></td>
+<td><p>Predicted motion sequence as MuJoCo <code class="docutils literal notranslate"><span class="pre">qpos</span></code> frames</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The primary output: a sequence of whole-body pose frames in the same 36-dimensional MuJoCo <code class="docutils literal notranslate"><span class="pre">qpos</span></code> format as the input (see <a class="reference internal" href="#context-mujoco-qpos"><span class="std std-ref">context_mujoco_qpos</span></a> for the dimension layout).</p>
+<div class="warning admonition">
+<p class="admonition-title">Important: Use num_pred_frames to Truncate</p>
+<p>The output tensor <code class="docutils literal notranslate"><span class="pre">mujoco_qpos</span></code> is <strong>not truncated</strong> — it contains the full padded buffer. Only the first <code class="docutils literal notranslate"><span class="pre">num_pred_frames</span></code> frames are valid predictions. When consuming this output, always slice:</p>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">valid_qpos</span> <span class="o">=</span> <span class="n">mujoco_qpos</span><span class="p">[:,</span> <span class="p">:</span><span class="n">num_pred_frames</span><span class="p">,</span> <span class="p">:]</span>
+</pre></div>
+</div>
+<p>The poses are in the <strong>global MuJoCo world frame</strong> (not canonicalized). The model internally handles canonicalization, inference, and coordinate conversion, then transforms the output back to the original world frame. The first 4 predicted frames are blended with the input context for smooth transitions.</p>
+<p>The root quaternion in the output uses <code class="docutils literal notranslate"><span class="pre">(w,</span> <span class="pre">x,</span> <span class="pre">y,</span> <span class="pre">z)</span></code> ordering (MuJoCo convention).</p>
+</section>
+<section id="num-pred-frames">
+<h3><code class="docutils literal notranslate"><span class="pre">num_pred_frames</span></code><a class="headerlink" href="#num-pred-frames" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Property</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Shape</strong></p></td>
+<td><p>scalar</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Dtype</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">int64</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Description</strong></p></td>
+<td><p>Number of valid predicted frames in the <code class="docutils literal notranslate"><span class="pre">mujoco_qpos</span></code> output</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>This value equals <code class="docutils literal notranslate"><span class="pre">num_pred_tokens</span> <span class="pre">*</span> <span class="pre">4</span></code>, where <code class="docutils literal notranslate"><span class="pre">num_pred_tokens</span></code> is the number of motion tokens the model decided to generate (constrained by <code class="docutils literal notranslate"><span class="pre">allowed_pred_num_tokens</span></code>). Use this value to slice the <code class="docutils literal notranslate"><span class="pre">mujoco_qpos</span></code> output.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="internal-pipeline">
+<h2>Internal Pipeline<a class="headerlink" href="#internal-pipeline" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p><strong>Canonicalization</strong> — The input qpos is transformed to a body-relative frame by removing the first frame’s heading rotation and horizontal position. This helps the model generalize across different starting orientations and positions.</p></li>
+<li><p><strong>Spring Model</strong> — A critically-damped spring model generates smooth target root trajectories and heading angles from the high-level commands, using mode-dependent average velocities from the training clips.</p></li>
+<li><p><strong>Target Pose Selection</strong> — Based on the <code class="docutils literal notranslate"><span class="pre">mode</span></code> and <code class="docutils literal notranslate"><span class="pre">random_seed</span></code>, a target pose is fetched from the pre-loaded clip library and aligned (rotated/translated) to match the spring model’s predicted target position and heading.</p></li>
+<li><p><strong>Motion Inference</strong> — The core motion model fills in the motion between the context (current state) and target (desired future state), producing a natural transition.</p></li>
+<li><p><strong>Post-processing</strong> — The output is converted back to MuJoCo qpos in the original world frame, and the first 4 frames are blended with the input context for smooth transitions.</p></li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="deployment-integration">
+<h2>Deployment Integration<a class="headerlink" href="#deployment-integration" title="Link to this heading">#</a></h2>
+<p>This section describes how the C++ deployment stack uses the planner at runtime. Understanding this is useful for building custom integrations or modifying the replan behavior.</p>
+<section id="threading-model">
+<h3>Threading Model<a class="headerlink" href="#threading-model" title="Link to this heading">#</a></h3>
+<p>The planner runs on a <strong>dedicated thread at 10 Hz</strong> (<code class="docutils literal notranslate"><span class="pre">planner_dt</span> <span class="pre">=</span> <span class="pre">0.1s</span></code>), separate from the control loop (50 Hz) and input thread (100 Hz). The planner thread:</p>
+<ol class="arabic simple">
+<li><p>Reads the latest <code class="docutils literal notranslate"><span class="pre">MovementState</span></code> from a thread-safe buffer (written by the input interface).</p></li>
+<li><p>Decides whether a replan is needed.</p></li>
+<li><p>If so, calls <code class="docutils literal notranslate"><span class="pre">UpdatePlanning()</span></code> which runs TensorRT inference.</p></li>
+<li><p>Stores the result in a shared buffer that the control thread picks up on its next tick.</p></li>
+</ol>
+</section>
+<section id="initialization">
+<h3>Initialization<a class="headerlink" href="#initialization" title="Link to this heading">#</a></h3>
+<p>When the planner is first enabled (e.g., pressing <strong>ENTER</strong> on the keyboard interface), the planner thread:</p>
+<ol class="arabic simple">
+<li><p>Reads the robot’s current base quaternion and joint positions from the latest <code class="docutils literal notranslate"><span class="pre">LowState</span></code>.</p></li>
+<li><p>Calls <code class="docutils literal notranslate"><span class="pre">Initialize()</span></code>, which:</p>
+<ul class="simple">
+<li><p>Sets up a 4-frame context at the default standing height with zero-yaw orientation.</p></li>
+<li><p>Runs an initial inference with <code class="docutils literal notranslate"><span class="pre">IDLE</span></code> mode and no movement.</p></li>
+<li><p>Resamples the 30 Hz output to 50 Hz.</p></li>
+</ul>
+</li>
+<li><p>The control thread detects the new planner motion and switches <code class="docutils literal notranslate"><span class="pre">current_motion_</span></code> to the planner output.</p></li>
+</ol>
+</section>
+<section id="context-construction">
+<h3>Context Construction<a class="headerlink" href="#context-construction" title="Link to this heading">#</a></h3>
+<p>The planner requires a 4-frame context (<code class="docutils literal notranslate"><span class="pre">context_mujoco_qpos</span></code> of shape <code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">4,</span> <span class="pre">36]</span></code>). During operation, this context is sampled from the <strong>current planner motion</strong> (not the robot state):</p>
+<ul class="simple">
+<li><p>The context starts at <code class="docutils literal notranslate"><span class="pre">gen_frame</span> <span class="pre">=</span> <span class="pre">current_frame</span> <span class="pre">+</span> <span class="pre">motion_look_ahead_steps</span></code> (default look-ahead = 2 frames at 50 Hz).</p></li>
+<li><p>4 frames are sampled at 30 Hz intervals from this starting point.</p></li>
+<li><p>Joint positions, body positions, and quaternions are linearly interpolated (quaternions via slerp) between 50 Hz motion frames to produce the 30 Hz context samples.</p></li>
+</ul>
+</section>
+<section id="replan-logic">
+<h3>Replan Logic<a class="headerlink" href="#replan-logic" title="Link to this heading">#</a></h3>
+<p>Not every planner tick triggers a replan. The decision follows this priority:</p>
+<p><strong>1. Always replan when</strong> (regardless of static/non-static mode):</p>
+<ul class="simple">
+<li><p>Locomotion mode changed</p></li>
+<li><p>Facing direction changed</p></li>
+<li><p>Height changed</p></li>
+</ul>
+<p><strong>2. For non-static modes only</strong>, also replan when any of the following is true:</p>
+<ul class="simple">
+<li><p>Movement speed changed</p></li>
+<li><p>Movement direction changed</p></li>
+<li><p>Periodic replan timer expired <strong>and</strong> movement speed is non-zero</p></li>
+</ul>
+<p>Static modes (Idle, Squat, Kneel, Lying, Idle Boxing) <strong>never</strong> trigger replans from the second category — they only replan on mode/facing/height changes from the first category.</p>
+<p><strong>Replan intervals</strong> (periodic timer) vary by locomotion type to balance responsiveness and computational cost:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Locomotion Type</p></th>
+<th class="head"><p>Replan Interval</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Running</p></td>
+<td><p>0.1 s (every planner tick)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Crawling</p></td>
+<td><p>0.2 s</p></td>
+</tr>
+<tr class="row-even"><td><p>Boxing (punches, hooks)</p></td>
+<td><p>1.0 s</p></td>
+</tr>
+<tr class="row-odd"><td><p>All others (walk, squat, styled, etc.)</p></td>
+<td><p>1.0 s</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The periodic timer only triggers a replan if the current movement speed is non-zero — a stationary robot in a non-static mode (e.g., Walk mode with speed 0) will not replan on the timer.</p>
+</section>
+<section id="output-resampling-30-hz-50-hz">
+<h3>Output Resampling (30 Hz → 50 Hz)<a class="headerlink" href="#output-resampling-30-hz-50-hz" title="Link to this heading">#</a></h3>
+<p>The planner model outputs frames at <strong>30 Hz</strong>. The deployment stack resamples them to <strong>50 Hz</strong> (the control loop rate) using linear interpolation:</p>
+<ul class="simple">
+<li><p>For each 50 Hz frame, compute the corresponding fractional 30 Hz frame index.</p></li>
+<li><p>Linearly interpolate joint positions and body positions between the two nearest 30 Hz frames.</p></li>
+<li><p>Slerp-interpolate body quaternions.</p></li>
+<li><p>Compute joint velocities by finite differencing the resampled positions (<code class="docutils literal notranslate"><span class="pre">(pos[t+1]</span> <span class="pre">-</span> <span class="pre">pos[t])</span> <span class="pre">*</span> <span class="pre">50</span></code>).</p></li>
+</ul>
+<p>The resampled motion is stored in <code class="docutils literal notranslate"><span class="pre">planner_motion_50hz_</span></code> and has <code class="docutils literal notranslate"><span class="pre">num_pred_frames</span> <span class="pre">*</span> <span class="pre">50/30</span></code> frames (rounded down).</p>
+</section>
+<section id="animation-blending">
+<h3>Animation Blending<a class="headerlink" href="#animation-blending" title="Link to this heading">#</a></h3>
+<p>When a new planner output arrives while the previous one is still playing, the control thread <strong>blends</strong> the old and new animations over an 8-frame cross-fade:</p>
+<ol class="arabic simple">
+<li><p>The old animation is rebased so <code class="docutils literal notranslate"><span class="pre">current_frame</span></code> maps to frame 0.</p></li>
+<li><p>The new animation is aligned to start at <code class="docutils literal notranslate"><span class="pre">gen_frame</span> <span class="pre">-</span> <span class="pre">current_frame</span></code> in the rebased timeline.</p></li>
+<li><p>Over 8 frames starting from the blend point, a linearly increasing weight <code class="docutils literal notranslate"><span class="pre">w_new</span></code> (0 → 1) is applied:</p>
+<ul class="simple">
+<li><p>Joint positions/velocities: <code class="docutils literal notranslate"><span class="pre">w_old</span> <span class="pre">*</span> <span class="pre">old</span> <span class="pre">+</span> <span class="pre">w_new</span> <span class="pre">*</span> <span class="pre">new</span></code></p></li>
+<li><p>Body positions: <code class="docutils literal notranslate"><span class="pre">w_old</span> <span class="pre">*</span> <span class="pre">old</span> <span class="pre">+</span> <span class="pre">w_new</span> <span class="pre">*</span> <span class="pre">new</span></code></p></li>
+<li><p>Body quaternions: <code class="docutils literal notranslate"><span class="pre">slerp(old,</span> <span class="pre">new,</span> <span class="pre">w_new)</span></code></p></li>
+</ul>
+</li>
+<li><p>After the blend region, the new animation takes over completely.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">current_frame</span></code> is reset to 0 on the blended result.</p></li>
+</ol>
+<p>This ensures smooth transitions between successive planner outputs without visible discontinuities.</p>
+</section>
+<section id="tensorrt-acceleration">
+<h3>TensorRT Acceleration<a class="headerlink" href="#tensorrt-acceleration" title="Link to this heading">#</a></h3>
+<p>The planner runs via <strong>TensorRT</strong> with CUDA graph capture for low-latency inference:</p>
+<ol class="arabic simple">
+<li><p>At startup, the ONNX model is converted to a TensorRT engine (cached on disk).</p></li>
+<li><p>A <strong>CUDA graph</strong> is captured during initialization — this records the entire inference pass (input copy → kernel launches → output copy) as a single replayable graph.</p></li>
+<li><p>On each replan, inputs are copied to GPU via pinned memory (<code class="docutils literal notranslate"><span class="pre">TPinnedVector</span></code>), the CUDA graph is launched, and outputs are copied back.</p></li>
+<li><p>FP16 precision is supported via <code class="docutils literal notranslate"><span class="pre">--planner-precision</span> <span class="pre">16</span></code> (default is FP32).</p></li>
+</ol>
+</section>
+<section id="planner-model-versions">
+<h3>Planner Model Versions<a class="headerlink" href="#planner-model-versions" title="Link to this heading">#</a></h3>
+<p>The deployment stack supports multiple planner model versions, auto-detected from the model filename:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Version</p></th>
+<th class="head"><p>Inputs</p></th>
+<th class="head"><p>Modes</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>V0</p></td>
+<td><p>6</p></td>
+<td><p>4 (Idle, Slow Walk, Walk, Run)</p></td>
+<td><p>Basic locomotion only</p></td>
+</tr>
+<tr class="row-odd"><td><p>V1</p></td>
+<td><p>11</p></td>
+<td><p>20</p></td>
+<td><p>Adds squat/kneel/boxing/styled walks + height control + waypoint targets</p></td>
+</tr>
+<tr class="row-even"><td><p>V2</p></td>
+<td><p>11</p></td>
+<td><p>27</p></td>
+<td><p>All V1 modes + additional styled walking modes</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The version is determined by the presence of <code class="docutils literal notranslate"><span class="pre">V0</span></code>, <code class="docutils literal notranslate"><span class="pre">V1</span></code>, or <code class="docutils literal notranslate"><span class="pre">V2</span></code> in the planner model filename. Version determines:</p>
+<ul class="simple">
+<li><p>The number of input tensors (6 vs 11)</p></li>
+<li><p>The valid range of <code class="docutils literal notranslate"><span class="pre">mode</span></code> values</p></li>
+<li><p>Whether <code class="docutils literal notranslate"><span class="pre">height</span></code>, <code class="docutils literal notranslate"><span class="pre">has_specific_target</span></code>, <code class="docutils literal notranslate"><span class="pre">specific_target_positions</span></code>, <code class="docutils literal notranslate"><span class="pre">specific_target_headings</span></code>, and <code class="docutils literal notranslate"><span class="pre">allowed_pred_num_tokens</span></code> inputs are used</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="model-properties">
+<h2>Model Properties<a class="headerlink" href="#model-properties" title="Link to this heading">#</a></h2>
+<p>The exported ONNX model has the following properties:</p>
+<ul class="simple">
+<li><p><strong>ONNX opset version</strong>: 17</p></li>
+<li><p><strong>Batch size</strong>: 1 (fixed)</p></li>
+</ul>
+<p>The model is distributed as a single <code class="docutils literal notranslate"><span class="pre">.onnx</span></code> file, along with a <code class="docutils literal notranslate"><span class="pre">.pt</span></code> file containing reference input/output tensors that can be used for validation.</p>
+<div class="note admonition">
+<p class="admonition-title">Coming Soon</p>
+<p>The training code, export tooling, and a full technical report will be released soon. Stay tuned for updates.</p>
+</div>
+</section>
+<hr class="docutils" />
+<section id="usage-example">
+<h2>Usage Example<a class="headerlink" href="#usage-example" title="Link to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">onnxruntime</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ort</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Load the ONNX model</span>
+<span class="n">session</span> <span class="o">=</span> <span class="n">ort</span><span class="o">.</span><span class="n">InferenceSession</span><span class="p">(</span><span class="s2">"kinematic_planner.onnx"</span><span class="p">)</span>
+
+<span class="c1"># Primary inputs</span>
+<span class="n">inputs</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"context_mujoco_qpos"</span><span class="p">:</span> <span class="n">current_qpos_buffer</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>           <span class="c1"># [1, 4, 36]</span>
+    <span class="s2">"target_vel"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>                         <span class="c1"># -1.0 = use mode default</span>
+    <span class="s2">"mode"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">2</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>                                    <span class="c1"># 2 = walk</span>
+    <span class="s2">"movement_direction"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>      <span class="c1"># forward</span>
+    <span class="s2">"facing_direction"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>        <span class="c1"># face forward</span>
+    <span class="s2">"height"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>                             <span class="c1"># -1.0 = disabled</span>
+
+    <span class="c1"># Advanced inputs (typically managed by the C++ stack)</span>
+    <span class="s2">"random_seed"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1234</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>
+    <span class="s2">"has_specific_target"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>
+    <span class="s2">"specific_target_positions"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="s2">"specific_target_headings"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="s2">"allowed_pred_num_tokens"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>              <span class="c1"># K = 11 for default model</span>
+<span class="p">}</span>
+
+<span class="c1"># Run inference</span>
+<span class="n">mujoco_qpos</span><span class="p">,</span> <span class="n">num_pred_frames</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+
+<span class="c1"># Extract valid frames only</span>
+<span class="n">num_frames</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_pred_frames</span><span class="p">)</span>
+<span class="n">predicted_motion</span> <span class="o">=</span> <span class="n">mujoco_qpos</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:</span><span class="n">num_frames</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># [num_frames, 36]</span>
+
+<span class="c1"># Each row: [x, y, z, qw, qx, qy, qz, 29 joint angles in radians]</span>
+<span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">predicted_motion</span><span class="p">:</span>
+    <span class="n">root_pos</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
+    <span class="n">root_quat</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">7</span><span class="p">]</span>       <span class="c1"># (w, x, y, z)</span>
+    <span class="n">joint_angles</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="mi">7</span><span class="p">:</span><span class="mi">36</span><span class="p">]</span>   <span class="c1"># 29 DOF positions</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="motion_reference.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Motion Reference Data</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="jetpack6.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">G1 JetPack 6 Flashing Guide</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#coordinate-system">Coordinate System</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-tensors">Input Tensors</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#context-mujoco-qpos"><code class="docutils literal notranslate"><span class="pre">context_mujoco_qpos</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#target-vel"><code class="docutils literal notranslate"><span class="pre">target_vel</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mode"><code class="docutils literal notranslate"><span class="pre">mode</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#movement-direction"><code class="docutils literal notranslate"><span class="pre">movement_direction</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#facing-direction"><code class="docutils literal notranslate"><span class="pre">facing_direction</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#height"><code class="docutils literal notranslate"><span class="pre">height</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced-inputs">Advanced Inputs</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#random-seed"><code class="docutils literal notranslate"><span class="pre">random_seed</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#has-specific-target"><code class="docutils literal notranslate"><span class="pre">has_specific_target</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#specific-target-positions"><code class="docutils literal notranslate"><span class="pre">specific_target_positions</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#specific-target-headings"><code class="docutils literal notranslate"><span class="pre">specific_target_headings</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#allowed-pred-num-tokens"><code class="docutils literal notranslate"><span class="pre">allowed_pred_num_tokens</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-tensors">Output Tensors</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mujoco-qpos"><code class="docutils literal notranslate"><span class="pre">mujoco_qpos</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#num-pred-frames"><code class="docutils literal notranslate"><span class="pre">num_pred_frames</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#internal-pipeline">Internal Pipeline</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deployment-integration">Deployment Integration</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#threading-model">Threading Model</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#initialization">Initialization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#context-construction">Context Construction</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#replan-logic">Replan Logic</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#output-resampling-30-hz-50-hz">Output Resampling (30 Hz → 50 Hz)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#animation-blending">Animation Blending</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tensorrt-acceleration">TensorRT Acceleration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#planner-model-versions">Planner Model Versions</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model-properties">Model Properties</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage-example">Usage Example</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By NVIDIA GEAR Team
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, NVIDIA.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on Nov 03, 2026.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

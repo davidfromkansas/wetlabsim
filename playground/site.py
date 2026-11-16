@@ -245,16 +245,16 @@ What the datasheets can't tell you: how this particular robot is set up.
 - Unitree G1 humanoid (29 body joints) with a Dex3-1 three-finger hand on each arm (`left`
   and `right`). It is not mounted: it stands on its own feet on the floor, facing the middle of one
   edge of {table} ({w_cm:.0f} x {d_cm:.0f} cm, top {top_cm:.1f} cm above the floor), balancing
-  under its locomotion controller.
+  under its whole-body controller (NVIDIA's GEAR-SONIC, see `COMMANDS.md`).
 - Both arms report in one frame, the pelvis frame: origin at the pelvis (about {pelvis_cm:.0f} cm
   above the floor when standing), x forward, y to the robot's left, z up. All positions and
   poses in the command interface, for both arms, are in this frame, in metres. The frame
-  moves with the robot: after it walks, turns, crouches or leans, the table is somewhere
+  moves with the robot: after it walks, turns, kneels or crawls, the table is somewhere
   else in it.
 - At the start the table's near edge is about x = {x0:.2f} m, its top is about z = {table_z:.2f} m,
   and it extends to about x = {x1:.2f} m and from about y = {y0:.2f} m to y = {y1:.2f} m.
   Check with the cameras: the robot settles a few centimetres as it starts balancing.
-- The hands work best from about x = 0.30 m to 0.45 m (10 to 25 cm past the table's edge),
+- The hands work best from about x = 0.30 m to 0.45 m (about 20 to 35 cm past the table's edge),
   pointing forward or tilted down. Closer to the chest the arms run out of room, and
   straight-down (top) grasps are mostly out of reach. To work further away, walk closer.
 
@@ -380,7 +380,7 @@ def site_sheet(placed: list[W.Placed], station: W.Station | None = None,
     if station.robot == "g1":
         fmt = lambda q: "[" + ", ".join(f"{v:g}" for v in q) + "]"
         h = WS.G1_STANDING_HEIGHT
-        e = W.HUMANOID_GAP + 0.07           # the edge, after the robot settles back a little
+        e = W.HUMANOID_GAP - WS.G1_SETTLE   # the edge, after the robot settles forward a little
         return G1_TEMPLATE.format(top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100,
                                   d_cm=min(tw, td) * 100, pelvis_cm=h * 100, table_z=top - h,
                                   x0=e, x1=e + sx, y0=-sy / 2 - ry, y1=sy / 2 - ry,

@@ -57,7 +57,7 @@ def robot_state() -> str:
 
 @server.tool()
 def emergency_stop() -> str:
-    """Stop the arm (both arms on a two-arm robot; a humanoid's arms and walking; the RB-Y1's arms, torso, head and wheels) immediately."""
+    """Stop the arm (both arms on a two-arm robot; a humanoid's arms and body movement; the RB-Y1's arms, torso, head and wheels) immediately."""
     try:
         robot.stop()
         return "stopped"

@@ -413,17 +413,19 @@ class Handler(BaseHTTPRequestHandler):
             if p == "/move_j_pose":
                 mo = s.move_j_ik(b["pose"], b.get("speed", 1.0))
                 return self._json(self._wait(mo, wait, timeout))
-            if p in ("/walk", "/stand", "/body"):     # a humanoid's legs
-                if not hasattr(s, "walk"):
+            if p in ("/move", "/pose", "/stand"):     # a humanoid's whole body
+                if not hasattr(s, "pose"):
                     if isinstance(getattr(s, "arm", s), HandArm):
-                        raise RobotError("walking moves the whole robot: send it to Robot(), not to one arm")
+                        raise RobotError("body movements move the whole robot: send them to Robot(), not to one arm")
                     raise RobotError("this robot doesn't walk")
                 if p == "/stand":
                     s.stand()
                     return self._json({"ok": True})
-                if p == "/body":
-                    return self._json({"ok": True, "body": s.body_pose(b.get("height"), b.get("pitch"))})
-                mo = s.walk(b.get("vx", 0.0), b.get("vy", 0.0), b.get("yaw_rate", 0.0), b.get("seconds", 1.0))
+                if p == "/pose":
+                    mo = s.pose(b.get("pose", "stand"), b.get("height"), b.get("turn", 0.0))
+                    return self._json(self._wait(mo, wait, max(timeout, 10.0)))
+                mo = s.move(b.get("style", "walk"), b.get("direction", 0.0), b.get("speed"), b.get("turn", 0.0),
+                            b.get("seconds", 1.0))
                 return self._json(self._wait(mo, wait, max(timeout, float(b.get("seconds", 1.0)) + 5)))
             if p in ("/drive", "/torso", "/head"):   # a wheeled humanoid's base, torso and head
                 if not hasattr(s, "drive"):

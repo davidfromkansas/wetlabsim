@@ -3,7 +3,8 @@
 The robot is controlled from Python through `wetlabsim.robot`, a client for the robot's
 controller. It is the only Python package you can import for the robot.
 
-The G1 has two arms, each with a Dex3-1 hand, on a body that balances and walks by itself.
+The G1 has two arms, each with a Dex3-1 hand, on a body that balances and moves by itself:
+its whole-body controller is NVIDIA's GEAR-SONIC (see `datasheets/`).
 Each arm has its own client; the whole robot has one more. All of them report in the same
 frame, the pelvis frame (see `SITE.md`):
 
@@ -11,18 +12,18 @@ frame, the pelvis frame (see `SITE.md`):
 from wetlabsim.robot import Robot, RobotError
 left = Robot(arm="left")
 right = Robot(arm="right")
-body = Robot()          # the whole robot: walking, body pose, lidar, all three cameras,
+body = Robot()          # the whole robot: moving, poses, lidar, all three cameras,
                         # reads both arms, stops everything; no arm motion commands
 ```
 
 The controller runs in real time and never pauses. Each arm and hand holds its last
-commanded position until it gets a new command; the legs keep the robot balanced on their
-own. Commands that fail raise `RobotError`. The two arms move at the same time when you
+commanded position until it gets a new command; the body controller keeps the robot
+balanced on its own. Commands that fail raise `RobotError`. The two arms move at the same time when you
 start a move on one with `wait=False` and then command the other.
 
 Units: metres, radians, seconds. Poses are `[x, y, z, rx, ry, rz]` in the pelvis frame:
 the TCP position plus its orientation as a rotation vector (axis × angle, radians). The
-pelvis frame moves with the robot when it walks, turns, crouches or leans.
+pelvis frame moves with the robot when it walks, turns, kneels or crawls.
 
 ## Arm motion (per arm)
 
@@ -68,17 +69,43 @@ the right hand's toward positive ones. Joint limits (rad):
 | middle 0, index 0 | -1.571 to 0 | 0 to 1.571 |
 | middle 1, index 1 | -1.745 to 0 | 0 to 1.745 |
 
-## Walking and body (whole robot, `body = Robot()`)
+## Moving the body (whole robot, `body = Robot()`)
+
+The body controller (SONIC) moves the whole robot in one of its movement styles: it plans
+the next couple of seconds of whole-body motion and keeps the robot balanced through it.
 
 | Call | Description |
 | --- | --- |
-| `body.walk(vx=0, vy=0, yaw_rate=0, seconds=1.0, wait=True)` | Walk forward at `vx` and to the left at `vy` (m/s, -1 to 1), turning counter-clockwise at `yaw_rate` (rad/s, -1 to 1), for `seconds`, then stand. |
-| `body.stand()` | Stop walking and stand where it is. |
-| `body.set_body(height=None, pitch=None)` | The balance controller's pelvis height (m, 0.50 to 1.00; legs are straight above about 0.79) and forward lean of the torso (rad, -0.52 to 0.52). Leave one out to keep it. Returns both. |
+| `body.move(style="walk", direction=0, speed=None, turn=0, seconds=1.0, wait=True)` | Move in `style` for `seconds` (up to 60), then stop. `direction`: which way to go, relative to the way the robot faces (rad: 0 ahead, π/2 to its left, -π/2 to its right, π backwards). `turn`: first turn to face that much further round (rad, + to the left); it turns while it moves. `speed` (m/s): only for the styles that take one (below); leave it out for the style's own speed. |
+| `body.pose(pose="stand", height=None, turn=0, wait=True)` | Take a pose and hold it: `"stand"`, `"squat"`, `"kneel"` (one knee down), `"kneel_two_legs"`, `"boxing"` (a boxing stance). `height` (m, 0.2 to 0.8; 0.8 if left out, which is barely crouched): how high the pelvis is when squatting or kneeling. `turn` as above: turns on the spot. With `wait=True` it returns once the robot is in the pose. |
+| `body.stand()` | Stop moving and stand where it is (when crawling: stop and stay down). |
 | `body.get_lidar_points()` | One scan of the head lidar: an N × 3 array of the points it hit (m, pelvis frame). |
 
-Arm moves are solved for where the body is when the move starts: walk or change the body
-pose first, then move the arms.
+Movement styles for `move`:
+
+| Style | Speed (m/s) | Arms |
+| --- | --- | --- |
+| `slow_walk` | 0.2 to 0.8 (0.2 if left out) | yours |
+| `walk` | its own (about 0.8) | yours |
+| `run` | 1.5 to 3.0 (1.5) | the controller's |
+| `crawl` (on hands and knees) | 0.4 to 1.0 (0.4) | the controller's |
+| `stealth_walk`, `stealth_walk_2`, `injured_walk`, `forward_jump`, `ledge_walk`, `carry_walk`, `happy_walk`, `zombie_walk`, `gun_walk`, `scared_walk` | their own | the controller's |
+| `walk_boxing`, `left_punch`, `right_punch`, `random_punch`, `left_hook`, `right_hook` | 0.7 to 1.5 (0.7) | the controller's |
+
+- The speed is what the controller plans; the robot covers somewhat less ground than that
+  (often 60 to 80 %). Check where it got to with the cameras and the lidar.
+- The arms are yours while the robot stands, walks (`slow_walk`, `walk`), squats or kneels:
+  arm commands work as usual, and the controller balances for where the arms are going.
+  In the other styles the controller moves the arms as part of the movement (hands on the
+  floor when crawling, swinging when running): arm commands raise `RobotError` until it
+  stands, walks, squats or kneels again, and an arm motion still running is stopped. After
+  such a movement the arms hang where it left them, moved by the controller, until your next
+  arm command takes them back (from where they are). `body.get_state()["body"]["arms_free"]`
+  says whether arm commands are accepted.
+- From crawling the robot can't stand up directly: `pose("kneel")` (or squat) first, then
+  `pose("stand")`.
+- Arm moves are solved for where the body is when the move starts: move or change the pose
+  first, then move the arms.
 
 If the robot falls it stops (`fallen` in the body readings) and stays down.
 
@@ -99,7 +126,7 @@ The robot stops and refuses motion commands when an arm cannot follow its comman
 | Call | Returns |
 | --- | --- |
 | `a.get_state()` | One arm: `time` (controller clock, s), `mode` (`"running"` or `"protective_stop"`), `moving`, `joint_positions`, `joint_velocities`, `joint_torques` (Nm), `tcp_pose`, `gripper` (status as above) and `hand`: `joint_positions`, `joint_velocities`, `joint_torques` of its seven joints and `pressure`. |
-| `body.get_state()` | `time`, `mode`, `moving`, `"left"` and `"right"` (each arm's readings as above), and `"body"`: the leg and waist joints (`joint_names`, `joint_positions`, `joint_velocities`, `joint_torques`), `imu` (pelvis `quaternion` [w, x, y, z], `gyroscope` rad/s, `accelerometer` m/s²), the current `walk_command`, `height_command` and `pitch_command`, `walking`, `fallen`. |
+| `body.get_state()` | `time`, `mode`, `moving`, `"left"` and `"right"` (each arm's readings as above), and `"body"`: the leg and waist joints (`joint_names`, `joint_positions`, `joint_velocities`, `joint_torques`), `imu` (pelvis `quaternion` [w, x, y, z], `gyroscope` rad/s, `accelerometer` m/s²), the current `movement` (`"stand"`, a pose or a style), `moving` (a timed `move` is running), `speed_command` and `height_command` (or null), `arms_free`, `fallen`. |
 | `a.get_joint_positions()` | 7 arm joint angles (rad). |
 | `a.get_tcp_pose()` | Current TCP pose `[x, y, z, rx, ry, rz]`. |
 | `a.get_time()` | Controller clock (s). |
@@ -139,7 +166,7 @@ Besides Python, these tools are available directly:
 | --- | --- |
 | `look(camera)` | Shows you a camera image (`head`, `left_wrist`, `right_wrist`), with its calibration in the pelvis frame. |
 | `robot_state()` | The same as `body.get_state()`. |
-| `emergency_stop()` | Stops both arms and walking at once. |
+| `emergency_stop()` | Stops both arms and the body's movement at once. |
 
 ## Rules
 
