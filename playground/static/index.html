@@ -365,6 +365,8 @@ body.watch .smore{display:none}body.watch .schipw .schip{padding-right:10px}
 .stmenu .danger{color:#B91C1C}.stmenu .danger svg{color:#B91C1C}
 .stmenu hr{border:0;height:1px;background:var(--line);margin:4px 2px}
 .stmenu [hidden]{display:none!important}
+#selBox{position:absolute;display:none;z-index:6;pointer-events:none;border:1.5px solid #2563EB;background:rgba(37,99,235,.10);border-radius:3px}
+.stmenu .mhead{font:600 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#6B7280;padding:6px 10px 4px}
 .stmenu .why{font-size:11.5px;color:#6B7280;padding:4px 10px 3px;line-height:1.35}
 body.watch #objPanel .acts{display:none!important}
 .glass{background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 0 0 1px rgba(17,24,39,.08),0 4px 14px rgba(17,24,39,.08)}
@@ -911,6 +913,12 @@ body.watch #physBtn{display:none}
       <span>It shut down after 5 minutes with no activity. Its sessions weren't saved.</span>
       <button id="closedOpen">Open a new lab</button>
     </div>
+    <div id="selBox" aria-hidden="true"></div>
+    <div class="stmenu" id="selMenu" role="menu" aria-label="Selected objects">
+      <div class="mhead" id="selCount"></div>
+      <button role="menuitem" data-act="duplicate"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5" y="5" width="9" height="9" rx="2"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/></svg>Duplicate</button>
+      <button role="menuitem" data-act="delete" class="danger"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5"/></svg>Delete</button>
+    </div>
     <div class="stmenu" id="stMenu" role="menu" aria-label="Robot actions">
       <button role="menuitem" data-act="swap"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 5h10l-2.5-2.5M14 11H4l2.5 2.5"/></svg><span id="swapLabel">Swap robot</span></button>
       <button role="menuitem" data-act="duplicate"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5" y="5" width="9" height="9" rx="2"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/></svg>Duplicate</button>
@@ -1106,6 +1114,14 @@ view.addEventListener('mousedown', async (e) => {
     window.V3.setGizmo({active: ring});
     return;
   }
+  // Cmd (Mac) or Ctrl (Windows) + drag: draw a box; every object inside it is selected
+  if (e.button === 0 && (e.metaKey || e.ctrlKey) && window.V3 && S.scene && S.scene.mode === 'free' && !S.watch && !S.placing && !S.armed) {
+    closeSelMenu();
+    if (S.scene.locked) { toast(typeof S.scene.locked === 'string' ? S.scene.locked : 'Pause physics to select objects.'); return; }
+    const sp = stage.getBoundingClientRect();
+    drag = {x: e.clientX, y: e.clientY, btn: 0, moved: false, p0: p, obj: null, box: {x0: e.clientX - sp.left, y0: e.clientY - sp.top, uids: []}};
+    return;
+  }
   drag = {x: e.clientX, y: e.clientY, btn: e.button, shift: e.shiftKey, moved: false, p0: p, obj: null};
   if (e.button === 0 && !S.armed && S.scene && !S.scene.locked) {
     const hit = await api('/pg/pick', {u: p.u, v: p.v});
@@ -1146,6 +1162,7 @@ window.addEventListener('mousemove', (e) => {
     t.innerHTML = `<b style="color:${{x: '#F87171', y: '#4ADE80', z: '#60A5FA'}[r.k]}">${r.k.toUpperCase()}</b> ${deg > 0 ? '+' : ''}${deg}°`;
     return;
   }
+  if (drag && drag.box) { boxSelect(e); return; }
   if (!drag) return;
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
   if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
@@ -1159,6 +1176,12 @@ window.addEventListener('mousemove', (e) => {
 window.addEventListener('mouseup', async (e) => {
   if (!drag) return;
   const d = drag; drag = null; view.classList.remove('dragging');
+  if (d.box) {
+    $('selBox').style.display = 'none';
+    if (d.box.uids.length) openSelMenu(d.box.uids, e.clientX, e.clientY);
+    else window.V3.setMarked(null);
+    return;
+  }
   if (d.mv) {
     $('rotTag').style.display = 'none';
     window.V3.setGizmo({active: null});
@@ -1202,6 +1225,59 @@ window.addEventListener('mouseup', async (e) => {
   if (hit.kind === 'robot' && S.scene && S.scene.mode === 'free') S.sideTab = 'chat';
   refresh();
 });
+// ---------------------------------------------------------------- box select
+// The objects whose middle falls inside the box, outlined in the 3D view as the box grows.
+function boxSelect(e) {
+  const b = drag.box, sp = stage.getBoundingClientRect();
+  const x1 = e.clientX - sp.left, y1 = e.clientY - sp.top;
+  const l = Math.min(b.x0, x1), t = Math.min(b.y0, y1), r = Math.max(b.x0, x1), btm = Math.max(b.y0, y1);
+  if (r - l + btm - t > 4) drag.moved = true;
+  const el = $('selBox');
+  Object.assign(el.style, {display: 'block', left: l + 'px', top: t + 'px', width: (r - l) + 'px', height: (btm - t) + 'px'});
+  const inside = (S.scene.objects || []).filter(o => {
+    const q = window.V3.project(o.mid);
+    return q.visible && q.x >= l && q.x <= r && q.y >= t && q.y <= btm;
+  });
+  b.uids = inside.map(o => o.uid);
+  window.V3.setMarked(inside.map(o => o.bodies));
+}
+function openSelMenu(uids, x, y) {
+  const m = $('selMenu');
+  S.boxSel = uids;
+  $('selCount').textContent = uids.length === 1 ? '1 object' : `${uids.length} objects`;
+  m.classList.add('open');
+  const w = m.offsetWidth, h = m.offsetHeight;
+  m.style.left = Math.max(8, Math.min(x + 6, innerWidth - w - 8)) + 'px';
+  m.style.top = Math.max(8, Math.min(y + 6, innerHeight - h - 8)) + 'px';
+  m.querySelector('button').focus({preventScroll: true});
+}
+function closeSelMenu() {
+  if (!S.boxSel) return;
+  S.boxSel = null; $('selMenu').classList.remove('open');
+  if (window.V3) window.V3.setMarked(null);
+}
+$('selMenu').addEventListener('click', async (e) => {
+  const b = e.target.closest('button'); if (!b || !S.boxSel) return;
+  const uids = S.boxSel; closeSelMenu();
+  const dup = b.dataset.act === 'duplicate';
+  const r = await api(dup ? '/pg/duplicate_many' : '/pg/remove_many', {uids});
+  if (!r.ok) toast(r.error || 'That didn\'t work');
+  else {
+    if (!dup && uids.includes(S.sel)) S.sel = 'robot';
+    toast(dup ? `Copied ${r.uids.length} object${r.uids.length === 1 ? '' : 's'}` : `Deleted ${r.removed} object${r.removed === 1 ? '' : 's'}`);
+  }
+  refresh();
+});
+document.addEventListener('mousedown', (e) => { if (S.boxSel && !e.target.closest('#selMenu')) closeSelMenu(); }, true);
+document.addEventListener('keydown', (e) => {
+  if (!S.boxSel) return;
+  if (e.key === 'Escape') { e.stopPropagation(); closeSelMenu(); }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault(); e.stopPropagation();
+    const bs = [...$('selMenu').querySelectorAll('button')], i = bs.indexOf(document.activeElement);
+    bs[(i + (e.key === 'ArrowDown' ? 1 : bs.length - 1)) % bs.length].focus();
+  }
+}, true);
 let camQ = null, camBusy = false;
 async function camera(delta) {
   if (window.V3) {        // move the in-page view now; the server follows (for picking and glides)

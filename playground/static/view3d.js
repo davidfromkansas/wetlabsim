@@ -563,7 +563,7 @@ export function start({stage, base = '', onReady}) {
     if (V.glide) glideStep();
     const {pos, look} = camFrame(V.cam);
     camera.position.copy(pos); camera.lookAt(look);
-    drawPreview(); drawGizmo();
+    drawPreview(); drawGizmo(); drawMarks();
     if (V.onFrame) V.onFrame();
     roomClock.value = performance.now() / 1000;
     if (glassRoom.visible && automaton.advance(roomClock.value)) gridFlow.needsUpdate = true;
@@ -718,6 +718,27 @@ export function start({stage, base = '', onReady}) {
     }
     return out;
   };
+
+  // Objects taken in by a box drawn over the scene: a blue outline box around each, drawn over
+  // everything so it shows through what stands in front. marks: a list of body-index lists.
+  let MK = [];
+  const markBoxes = [], markColor = new THREE.Color(0x2563EB);
+  V.setMarked = (marks) => { MK = marks || []; };
+  function drawMarks() {
+    while (markBoxes.length < MK.length) {
+      const h = new THREE.Box3Helper(new THREE.Box3(), markColor);
+      h.material.depthTest = false; h.material.transparent = true; h.renderOrder = 997;
+      scene.add(h); markBoxes.push(h);
+    }
+    markBoxes.forEach((h, i) => {
+      h.visible = i < MK.length;
+      if (!h.visible) return;
+      h.box.makeEmpty();
+      for (const b of MK[i]) if (V.bodies[b]) h.box.expandByObject(V.bodies[b]);
+      if (h.box.isEmpty()) h.visible = false;
+      else h.box.expandByScalar(0.008);
+    });
+  }
 
   V._scene = scene;   // for debugging from the console
   V.applyDelta = (d) => { V.glide = null; V.cam = applyDelta(V.cam, d); V.lastLocal = performance.now(); };

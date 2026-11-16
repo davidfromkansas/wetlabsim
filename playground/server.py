@@ -2010,7 +2010,7 @@ class PGHandler(Handler):
             if p.startswith("/pg/scenegen/"):
                 return self._scenegen(p[len("/pg/scenegen/"):], b)
             lock = self._locked()
-            if (p in ("/pg/place", "/pg/move", "/pg/remove", "/pg/rotate", "/pg/orient", "/pg/translate", "/pg/clear") or p.startswith("/pg/station/")) and lock:
+            if (p in ("/pg/place", "/pg/move", "/pg/remove", "/pg/remove_many", "/pg/duplicate_many", "/pg/rotate", "/pg/orient", "/pg/translate", "/pg/clear") or p.startswith("/pg/station/")) and lock:
                 # Rename any time; Reset while physics plays too, but not while an AI works.
                 if p != "/pg/station/rename" and not (p in ("/pg/station/reset", "/pg/station/remove_copies")
                                                       and self.sim.paused is False and not self._busy()):
@@ -2192,6 +2192,12 @@ class PGHandler(Handler):
             if p == "/pg/remove":
                 s.remove(b["uid"])
                 return self._json({"ok": True})
+            if p == "/pg/remove_many":     # the objects a box drawn over the scene took in
+                n = s.remove_many([str(u) for u in b.get("uids") or []])
+                return self._json({"ok": True, "removed": n})
+            if p == "/pg/duplicate_many":  # copies of them, beside them
+                uids = s.duplicate_many([str(u) for u in b.get("uids") or []])
+                return self._json({"ok": True, "uids": uids})
             if p == "/pg/clear":
                 s.clear()
                 return self._json({"ok": True})
