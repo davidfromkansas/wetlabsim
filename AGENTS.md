@@ -8,7 +8,7 @@ The owner is David. He is not a programmer by trade: talk to him in plain words,
 
 ## 1. What the product is
 
-**Playground** (https://wetlab-playground.vercel.app): a web app where a signed-in user builds a
+**Playground** (https://simplayground.vercel.app; the old address wetlab-playground.vercel.app still works): a web app where a signed-in user builds a
 MuJoCo scene (robots on stations, objects dragged in from a library), types a task for a robot,
 picks an AI model, and presses Play. The AI (Claude Code, Codex, Devin or Jev) controls the robot
 in real time and its chat, code and camera views stream live. Runs are recorded and can be replayed
@@ -30,7 +30,7 @@ Older parts still in the repo (code kept, mostly hidden in the UI):
 ## 2. Architecture
 
 ```
-Browser ──> Vercel website (web/, Next.js 16)          https://wetlab-playground.vercel.app
+Browser ──> Vercel website (web/, Next.js 16)          https://simplayground.vercel.app
               • Clerk: Google sign-in
               • Neon Postgres: users, sessions, runs, run_files, user_api_keys (web/db/schema.sql)
               • Vercel Blob (private store "wetlab-runs"): run files, replays, videos

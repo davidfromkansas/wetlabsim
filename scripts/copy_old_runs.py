@@ -2,7 +2,7 @@
 run_files) in the database and the run's files in private Blob, owned by one account.
 
     .venv/bin/modal volume get wetlab-playground-runs runs ./old-runs     # the public site's runs
-    DATABASE_URL=... LAB_LINK_SECRET=... WETLAB_WEBSITE_URL=https://wetlab-playground.vercel.app \\
+    DATABASE_URL=... LAB_LINK_SECRET=... WETLAB_WEBSITE_URL=https://simplayground.vercel.app \\
       .venv/bin/python scripts/copy_old_runs.py ./old-runs --owner <Clerk user id> [--dry-run]
 
 Old runs have no workspace_start.json, so the starter kit is told apart by name: robot_model/,
