@@ -1325,6 +1325,7 @@ const ROBOT_IMG = (r) => ROBOT_PIC[r] || ROBOT_PIC.franka;
 function selectStation(id) {
   const st = (S.scene.robots || []).find(r => r.id === id);
   S.scene.active = id;
+  if (S.scene.mode === 'free') S.scene.run = (S.scene.runs || {})[id] || {active: false};   // its chat, as the server would send it
   S.taskFor = null; render();             // the new robot shows as chosen right away
   if (S.watch) return refresh();          // a watcher just looks: the owner's view stays
   S.pendingActive = id;
