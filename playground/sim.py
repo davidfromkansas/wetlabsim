@@ -1114,20 +1114,22 @@ class PlaygroundSim(Sim):
     def frame_station(self, uid: str | None = None, glide: bool = True):
         """Point the main view at a station (its table, from the front corner)."""
         st = self.station(uid)
-        if st is None:
-            return
+        if st is not None:
+            self._set_view(self.station_view(st), glide)
+
+    @staticmethod
+    def station_view(st) -> dict:
+        """Where the main view goes to frame a station. The page gets it with each robot, so it
+        can start gliding there the moment a robot is clicked, without waiting for the server."""
         top = st.top
         if st.libero:        # the room's table (or floor area), in front of the robot
             rx, ry = st.robot_xy
             cx, cy, _ = st.to_world(rx + 0.6, ry)
-            target = {"lookat": [cx, cy, max(top - 0.15, 0.2)], "distance": 3.2,
-                      "azimuth": (145.0 + np.degrees(st.yaw)) % 360, "elevation": -32.0}
-            self._set_view(target, glide)
-            return
+            return {"lookat": [cx, cy, max(top - 0.15, 0.2)], "distance": 3.2,
+                    "azimuth": (145.0 + math.degrees(st.yaw)) % 360, "elevation": -32.0}
         cx, cy, _ = st.to_world(0.0, 0.0)
-        target = {"lookat": [cx, cy, top - 0.15], "distance": 2.8,
-                  "azimuth": (145.0 + np.degrees(st.yaw)) % 360, "elevation": -28.0}
-        self._set_view(target, glide)
+        return {"lookat": [cx, cy, top - 0.15], "distance": 2.8,
+                "azimuth": (145.0 + math.degrees(st.yaw)) % 360, "elevation": -28.0}
 
     def frame_lab(self, glide: bool = True):
         """Pull back to show every station."""
@@ -1201,6 +1203,8 @@ class PlaygroundSim(Sim):
             out["base"] = [round(float(v), 3) for v in self._base_mid(self.arms[st.uid])]
             out["bodies"] = sorted(int(b) for b in self.arms[st.uid].bodies | self.stand_bodies.get(st.uid, set()))
         out["place"] = self.robot_place(st.uid)
+        out["view"] = {k: ([round(float(x), 4) for x in v] if k == "lookat" else round(float(v), 3))
+                       for k, v in self.station_view(st).items()}
         if "libero" in out and st.uid in self.checkers:      # LIBERO's goal check, live
             out["libero"]["now"] = self.libero_goal(st.uid)
         if "wetrobo" in out:                                 # WetRobo's check, live

@@ -553,13 +553,14 @@ export function start({stage, base = '', onReady}) {
       // or not at all, and following them pulled the view back to where it was.
       const serverMove = f.camgen === undefined || f.camgen !== V.camGen || f.gliding;
       V.camGen = f.camgen;
-      if (V.follow && serverMove && performance.now() - V.lastLocal > 800) V.cam = f.cam;
+      if (V.follow && serverMove && !V.glide && performance.now() - V.lastLocal > 800) V.cam = f.cam;
     };
     const mine = es;
     es.onerror = () => { mine.close(); if (es === mine) setTimeout(connect, 1500); };
   }
 
   function frame() {
+    if (V.glide) glideStep();
     const {pos, look} = camFrame(V.cam);
     camera.position.copy(pos); camera.lookAt(look);
     drawPreview(); drawGizmo();
@@ -719,7 +720,30 @@ export function start({stage, base = '', onReady}) {
   };
 
   V._scene = scene;   // for debugging from the console
-  V.applyDelta = (d) => { V.cam = applyDelta(V.cam, d); V.lastLocal = performance.now(); };
+  V.applyDelta = (d) => { V.glide = null; V.cam = applyDelta(V.cam, d); V.lastLocal = performance.now(); };
+  // Glide the view to a camera (e.g. framing the robot just clicked), starting this frame: no
+  // waiting on the server. A strong ease-out, so it moves at once and settles gently. While it
+  // runs, and briefly after, the server's camera is not followed (it is told the end point).
+  const GLIDE_MS = 600;
+  V.glideTo = (to) => {
+    if (!to || !to.lookat) return;
+    const from = {...V.cam, lookat: [...V.cam.lookat]};
+    const daz = ((to.azimuth - from.azimuth + 540) % 360) - 180;   // the short way round
+    V.glide = {from, to, daz, t0: performance.now()};
+    V.follow = true;
+  };
+  function glideStep() {
+    const g = V.glide, t = Math.min(1, (performance.now() - g.t0) / GLIDE_MS);
+    const k = 1 - Math.pow(1 - t, 4);                               // ease-out (quart)
+    const mix = (a, b) => a + (b - a) * k;
+    V.cam = {
+      lookat: g.from.lookat.map((v, i) => mix(v, g.to.lookat[i])),
+      distance: Math.exp(mix(Math.log(g.from.distance), Math.log(g.to.distance))),
+      azimuth: (((g.from.azimuth + g.daz * k) % 360) + 360) % 360,
+      elevation: mix(g.from.elevation, g.to.elevation),
+    };
+    if (t >= 1) { V.glide = null; V.lastLocal = performance.now(); }
+  }
   V.camForServer = () => ({...V.cam, aspect: camera.aspect});
   // A point in the world on screen (CSS pixels within the stage), e.g. to hang a tag over a robot.
   V.project = (p) => {
