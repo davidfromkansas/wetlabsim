@@ -4,7 +4,8 @@ Modal container), plus a front server that hands labs out and lists what is live
 Shared state lives in two Modal Dicts (so every container sees it):
   wetlab-labs       lab id -> {url, owner, started, seen, runs: [live run summaries]}
   wetlab-run-slots  slot key -> start time, one per run in progress on any lab (at most
-                    MAX_ACTIVE at once; a slot older than SLOT_TTL is a run that died, ignored)
+                    MAX_ACTIVE at once; a slot older than SLOT_TTL is a run that died, ignored;
+                    no longer used: the run limit is per account, counted in its own container)
   wetlab-build      "current" -> the build the front runs (each deploy is a new build)
 
 A lab started by an older deploy keeps running the old code (a deploy doesn't stop running
@@ -32,7 +33,7 @@ LINK_SECRET = os.environ.get("LAB_LINK_SECRET", "")
 # A second copy of the site (staging) keeps its own registry: its Modal Dicts carry this prefix.
 DICT_PREFIX = os.environ.get("WETLAB_DICT_PREFIX", "")
 SLOT_TTL = 420          # s: a run is at most 5 minutes; a slot this old belongs to a dead run
-MAX_LABS = int(os.environ.get("WETLAB_MAX_LABS", "10"))
+MAX_LABS = int(os.environ.get("WETLAB_MAX_LABS", "30"))
 LAB_STALE = 90          # s: a lab that hasn't reported this long is gone
 
 _last_request = time.time()

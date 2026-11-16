@@ -7,7 +7,7 @@ web (the front, Modal's stable web address): gives each visitor (a browser cooki
   their own lab, at most WETLAB_MAX_LABS open at once; lists live runs to watch (/live) and
   every finished run (/pg/runs, each opening the replay viewer: chat, files, rewind).
 lab (one container per visitor): a playground server in public mode (free play only, at most
-  15 runs at once across all labs, more wait in a queue). Every run uses the owner's own API key
+  15 runs at once per account, more wait in a queue). Every run uses the owner's own API key
   for its company (Settings > General > Connections: OpenAI, Anthropic, Devin, Jev), kept
   encrypted in the website's database and fetched by the lab for that run only; a company with
   no key can't be used. Each run stops at the owner's time limit (1 to 30 minutes, default 5). Its page is reached through a tunnel of its own; only the owner's link
@@ -36,7 +36,7 @@ IGNORE = [".git", ".venv", "runs", "build", "**/__pycache__", ".pytest_cache", "
 # when deploying) is a separate copy with its own address, run records and lab registry, for testing.
 APP = os.environ.get("WETLAB_APP") or os.environ.get("WETLAB_MODAL_APP") or "wetlab-playground"
 STAGING = APP != "wetlab-playground"
-MAX_LABS = 2 if STAGING else 10
+MAX_LABS = 2 if STAGING else 30
 # This deploy's build: a new one each deploy (inside a container, the one it was deployed with).
 # Labs from an older build aren't handed out again and shut down once nothing runs in them.
 BUILD = os.environ.get("WETLAB_BUILD") or time.strftime("%Y%m%d-%H%M%S") + "-" + subprocess.run(
