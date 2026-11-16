@@ -64,8 +64,8 @@ TIME_LIMIT = 180.0     # seconds: a run's default time limit (Wet Lab sets its o
 # every run capped, the AI in a cloud sandbox, a few runs at once with a queue.
 PUBLIC = False
 FRONT = False               # the public site's front: hands out labs, lists live runs and past runs
-MAX_ACTIVE = 4              # runs at once on the public site; more wait in a queue
-LOCAL_PARALLEL = 4          # Run task N times on this computer: robots side by side at most
+MAX_ACTIVE = 15             # runs at once on the public site; more wait in a queue
+LOCAL_PARALLEL = 15         # Run task N times on this computer: robots side by side at most
 RUN_LAUNCHER = "local"      # where agents run (wetlabsim.launchers)
 AGENT_ROBOT_URL = ""        # the robot API as agents outside this machine reach it ("" = ROBOT_API_URL)
 FREE_TIME_LIMIT = 0.0  # free play: no limit, the run goes until the AI finishes or you stop it
@@ -2472,7 +2472,7 @@ def main(argv=None):
     ap.add_argument("--run-minutes", type=float, default=5.0)
     ap.add_argument("--idle-minutes", type=float, default=5.0,
                     help="a hosted lab shuts down after this long with no clicks, typing or scrolling from its owner and nothing running")
-    ap.add_argument("--max-active", type=int, default=4)
+    ap.add_argument("--max-active", type=int, default=15)
     ap.add_argument("--launcher", default="local", help="where agents run (wetlabsim.launchers)")
     ap.add_argument("--agent-robot-url", default="",
                     help="the robot API's address as agents elsewhere reach it (a public tunnel)")
