@@ -790,7 +790,8 @@ class Session:
             return {"name": self.name,
                     "stations": [{"uid": st.uid, "robot": st.robot, "pos": list(st.pos), "yaw": st.yaw, "name": st.name,
                                   "kind": st.kind, **({"task": st.task, "setup": st.setup, "free": st.free} if st.libero or st.wetrobo else {}),
-                                  **({"open": True} if st.open_cell else {})}
+                                  **({"open": True} if st.open_cell else {}),
+                                  **({"mount": st.as_dict()["mount"]} if st.moved else {})}
                                  for st in s.stations],
                     "objects": [{"uid": o.uid, "item": o.item, "pos": list(o.pos), "yaw": o.yaw,
                                  "quat": list(o.quat) if o.quat is not None else None} for o in s.placed],
@@ -926,6 +927,16 @@ def _world_from_layout(layout: dict | None):
                                   (float(st["pos"][0]), float(st["pos"][1])),
                                   float(st.get("yaw", 0.0)), str(st.get("name") or "")[:40], kind, task, setup, free,
                                   bool(st.get("open"))))
+        mt = st.get("mount")
+        if isinstance(mt, dict) and not stations[-1].fixed_why():   # its robot where the user put it
+            try:
+                at = mt.get("at")
+                stations[-1].robot_at = (float(at[0]), float(at[1])) if at else None
+                stations[-1].robot_turn = float(mt.get("turn") or 0.0)
+                stations[-1].robot_z = (min(max(float(mt["z"]), 0.0), W.ROBOT_Z_MAX)
+                                        if mt.get("z") is not None else None)
+            except (TypeError, ValueError, IndexError):
+                pass
     known = {i["id"] for i in catalog.available()}
     for o in (layout.get("objects") or [])[:200]:
         if o.get("item") not in known or not re.match(r"^[\w.-]{1,80}$", str(o.get("uid", ""))):
@@ -2038,6 +2049,22 @@ class PGHandler(Handler):
                     return self._json({"ok": False, "error": spot.get("reason") or "no room to turn it"})
                 s.move_station(st.uid, st.pos, yaw)
                 return self._json({"ok": True})
+            if p == "/pg/station/place_robot":   # the robot alone: base to world x, y (m), mount z (m), heading (deg)
+                if s.station(b.get("uid")) is None:
+                    return self._json({"ok": False, "error": "no such station"})
+                import math
+                kw = {k: float(b[k]) for k in ("x", "y", "z") if b.get(k) is not None}
+                if b.get("heading") is not None:
+                    kw["heading"] = math.radians(float(b["heading"]))
+                elif b.get("turn") is not None:          # by some degrees
+                    st = s.station(b["uid"])
+                    kw["heading"] = st.yaw + st.robot_turn + math.radians(float(b["turn"]))
+                if b.get("home"):                        # back where its station puts it
+                    st = s.station(b["uid"])
+                    x, y, _ = st.to_world(*st.home_xy)
+                    kw = {"x": x, "y": y, "z": st.home_z, "heading": st.yaw}
+                s.place_robot(b["uid"], **kw)
+                return self._json({"ok": True, "place": s.robot_place(b["uid"])})
             if p == "/pg/station/duplicate":
                 uid = s.duplicate_station(b["uid"])
                 s.frame_station(uid)

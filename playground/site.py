@@ -6,6 +6,8 @@ its cameras.
 """
 from __future__ import annotations
 
+import math
+
 from . import catalog
 from . import world as W
 
@@ -15,13 +17,11 @@ What the datasheets can't tell you: how this particular robot is set up.
 
 ## Mounting
 
-- {robot_name}, mounted upright on {table} ({w_cm:.0f} x {d_cm:.0f} cm, top
-  {top_cm:.1f} cm above the floor), on its base flange, near the middle of one long edge.
-- The robot base frame has its origin at the centre of the base flange, on the table top.
-  x points forward across the table, y to the robot's left, z up. All positions and poses
+- {robot_name}, {mounting}
+- The robot base frame has its origin at the centre of the base flange, {origin_at}.
+  x points forward{across}, y to the robot's left, z up. All positions and poses
   in the command interface are in this frame, in metres.
-- The table top is the plane z = 0. It extends from x = {x0:.2f} m to x = {x1:.2f} m and
-  from y = {y0:.2f} m to y = {y1:.2f} m. Beyond it is the floor, {top_cm:.1f} cm lower.
+- {table_line}
 
 ## Tool and payload settings
 
@@ -107,9 +107,7 @@ What the datasheets can't tell you: how this particular robot is set up.
   forward, y to the robot's left, z up. All positions and poses in the command interface are
   in this frame, in metres.
 - The floor is the plane z = 0.
-- In front of the robot stands {table} ({w_cm:.0f} x {d_cm:.0f} cm, top {top_cm:.1f} cm above
-  the floor). It extends from x = {x0:.2f} m to x = {x1:.2f} m and from y = {y0:.2f} m to
-  y = {y1:.2f} m.
+- {table_line}
 
 ## Tool settings
 
@@ -145,19 +143,15 @@ What the datasheets can't tell you: how this particular robot is set up.
 
 ## Mounting
 
-- ALOHA 2: two Trossen ViperX 300 S arms on {table} ({w_cm:.0f} x {d_cm:.0f} cm, top
-  {top_cm:.1f} cm above the floor). The arms stand {gap_cm:.1f} cm apart, one at each side
-  of the table's middle, facing each other. Seen from the operator's side of the table,
+- ALOHA 2: two Trossen ViperX 300 S arms {mounting} The arms stand {gap_cm:.1f} cm apart,{where}
+  facing each other. Seen from the operator's side of the table,
   `left` is on the left and `right` on the right.
-- Each arm has its own base frame, with its origin at the centre of its base, 2 cm above the
-  table top (the arm mounts). x points toward the other arm, y to the arm's own left, z up.
+- Each arm has its own base frame, with its origin at the centre of its base, 2 cm above
+  {origin_at}. x points toward the other arm, y to the arm's own left, z up.
   Each arm's poses in the command interface are in its own base frame, in metres.
 - In the left arm's frame the right arm's base is at ({gap:.3f}, 0, 0), turned half a turn;
   the same holds the other way round.
-- The table top is the plane z = -0.02 in both frames. It extends from x = {x0:.2f} m to
-  x = {x1:.2f} m in both frames, and from y = {y0:.2f} m to y = {y1:.2f} m in the left
-  arm's frame ({ry0:.2f} m to {ry1:.2f} m in the right arm's). Beyond it is the floor,
-  {top_cm:.1f} cm lower.
+- {table_line}
 
 ## Tool settings
 
@@ -196,16 +190,14 @@ What the datasheets can't tell you: how this particular robot is set up.
 ## Mounting
 
 - Franka FR3 Duo with the FR3 Duo Vision & Manipulation Kit: two Franka Research 3 arms
-  (`left` and `right`) on the FR3 Duo mount, standing on a riser block near the middle of one
-  long edge of {table} ({w_cm:.0f} x {d_cm:.0f} cm, top {top_cm:.1f} cm above the floor).
-  The FR3 Duo origin is {origin_cm:.0f} mm above the table top, as in Franka's reference
+  (`left` and `right`) on the FR3 Duo mount, standing on a riser block {mounting}
+  The FR3 Duo origin is {origin_cm:.0f} mm above {origin_at}, as in Franka's reference
   setup. Seen from behind the robot, `left` is on the left and `right` on the right.
 - Both arms report in one frame, the FR3 Duo origin frame: origin at the FR3 Duo origin,
-  x forward across the table, y to the robot's left, z up. All positions and poses in the
+  x forward{across}, y to the robot's left, z up. All positions and poses in the
   command interface, for both arms, are in this frame, in metres. (Each arm's own base is
   mounted tilted on the Duo mount, as in Franka's reference kinematics.)
-- The table top is the plane z = {table_z:.2f}. It extends from x = {x0:.2f} m to x = {x1:.2f} m
-  and from y = {y0:.2f} m to y = {y1:.2f} m. Beyond it is the floor, {top_cm:.1f} cm lower.
+- {table_line}
 
 ## Tool and payload settings
 
@@ -243,16 +235,14 @@ What the datasheets can't tell you: how this particular robot is set up.
 ## Mounting
 
 - Unitree G1 humanoid (29 body joints) with a Dex3-1 three-finger hand on each arm (`left`
-  and `right`). It is not mounted: it stands on its own feet on the floor, facing the middle of one
-  edge of {table} ({w_cm:.0f} x {d_cm:.0f} cm, top {top_cm:.1f} cm above the floor), balancing
+  and `right`). It is not mounted: it stands on its own feet on the floor, {facing} ({w_cm:.0f} x {d_cm:.0f} cm, top {top_cm:.1f} cm above the floor), balancing
   under its whole-body controller (NVIDIA's GEAR-SONIC, see `COMMANDS.md`).
 - Both arms report in one frame, the pelvis frame: origin at the pelvis (about {pelvis_cm:.0f} cm
   above the floor when standing), x forward, y to the robot's left, z up. All positions and
   poses in the command interface, for both arms, are in this frame, in metres. The frame
   moves with the robot: after it walks, turns, kneels or crawls, the table is somewhere
   else in it.
-- At the start the table's near edge is about x = {x0:.2f} m, its top is about z = {table_z:.2f} m,
-  and it extends to about x = {x1:.2f} m and from about y = {y0:.2f} m to y = {y1:.2f} m.
+- {table_line}
   Check with the cameras: the robot settles a few centimetres as it starts balancing.
 - The hands work best from about x = 0.30 m to 0.45 m (about 20 to 35 cm past the table's edge),
   pointing forward or tilted down. Closer to the chest the arms run out of room, and
@@ -303,8 +293,8 @@ What the datasheets can't tell you: how this particular robot is set up.
 
 - Rainbow Robotics RB-Y1 (model A): two 7-joint arms (`left` and `right`), each with the
   standard two-finger gripper, on a 6-joint torso with a 2-joint pan-tilt head, on a
-  two-wheeled mobile base. It is not mounted: it stands on its wheels on the floor, facing the
-  middle of one edge of {table} ({w_cm:.0f} x {d_cm:.0f} cm, top {top_cm:.1f} cm above the floor).
+  two-wheeled mobile base. It is not mounted: it stands on its wheels on the floor, {facing}
+  ({w_cm:.0f} x {d_cm:.0f} cm, top {top_cm:.1f} cm above the floor).
   Nothing balances it for you and nothing moves on its own: the wheels, torso, head and each
   arm do what you command and hold still otherwise.
 - Both arms report in one frame, the base frame (Rainbow's `base` link): origin on the floor
@@ -312,9 +302,7 @@ What the datasheets can't tell you: how this particular robot is set up.
   and poses in the command interface, for both arms, are in this frame, in metres. The frame
   moves with the robot when it drives or turns: after that, the table is somewhere else in it.
   Moving the torso doesn't move the frame, but it moves the arms' shoulders (and so the grippers).
-- At the start the table's near edge is at about x = {x0:.2f} m, its top at z = {top:.3f} m, and it
-  extends to about x = {x1:.2f} m and from about y = {y0:.2f} m to y = {y1:.2f} m. The front of the
-  base is about 6 cm from the table's edge: don't drive forward into the table.
+- {table_line}
 - With the torso upright the grippers reach best from about x = 0.40 m to 0.65 m, pointing
   forward or tilted down; straight-down (top) grasps over the table need the torso bent forward.
 
@@ -358,58 +346,141 @@ TABLES = {"table": "a heavy-duty packing table", "wetlab": "a stainless steel la
           "wetrobo_x": "a stainless steel lab bench", "wetrobo_y": "a heavy-duty packing table"}
 
 
+def _fmt(v: float) -> str:
+    return f"{v:.2f}"
+
+
+def table_extent(station: W.Station, origin, yaw: float, about: bool = False) -> str:
+    """Where the station's table top lies in a frame with its origin at origin (station frame
+    x, y) turned yaw from the station's: "it extends from x = .. m to x = .. m and from y = .. m
+    to y = .. m" while the frame is square to the table, else its four corners."""
+    sx, sy = station.footprint()
+    c, s_ = math.cos(yaw), math.sin(yaw)
+    pts = []
+    for a, b in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+        dx, dy = a * sx / 2 - origin[0], b * sy / 2 - origin[1]
+        pts.append((c * dx + s_ * dy, -s_ * dx + c * dy))
+    ab = "about " if about else ""
+    q = (yaw / (math.pi / 2)) % 1.0
+    if min(q, 1 - q) < 1e-3:              # square to the table
+        xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+        return (f"it extends from {ab}x = {_fmt(min(xs))} m to x = {_fmt(max(xs))} m and from {ab}y = "
+                f"{_fmt(min(ys))} m to y = {_fmt(max(ys))} m")
+    return ("it lies at an angle in this frame, with its corners at " + ab + "(x, y) = "
+            + ", ".join(f"({_fmt(x)}, {_fmt(y)})" for x, y in pts[:3]) + f" and ({_fmt(pts[3][0])}, {_fmt(pts[3][1])}) m")
+
+
+def _mount_words(station: W.Station, table_txt: str, plural: bool = False) -> str:
+    """What a moved table arm stands on: its table, a riser on it, or a stand on the floor."""
+    stands = station.stands()
+    h = 100 * (stands[0][4] - stands[0][3]) if stands else 0.0
+    a = "two steel stands" if plural else "a steel stand"
+    if station.robot_side() != "on":
+        return f"on {a} {h:.1f} cm tall on the floor, beside {table_txt}."
+    if stands:
+        r = "two steel risers" if plural else "a steel riser"
+        return f"on {r} {h:.1f} cm tall on {table_txt}."
+    return f"on {table_txt}."
+
+
 def site_sheet(placed: list[W.Placed], station: W.Station | None = None,
                stations: list[W.Station] | None = None) -> str:
     """The sheet for one station's robot. Nothing about the objects or the rest of the lab:
-    the agent sees those with its cameras. `placed` and `stations` are kept for callers."""
+    the agent sees those with its cameras. `placed` and `stations` are kept for callers.
+    A robot the user has moved, turned or raised apart from its table (Station.moved) gets
+    the same sheet with its table worked out from where it is now."""
+    text = _site_sheet(station or W.default_stations()[0])
+    return text
+
+
+def _site_sheet(station: W.Station) -> str:
     from wetlabsim import scene as WS
-    station = station or W.default_stations()[0]
     sx, sy = station.footprint()
     top = station.top
     rx, ry = station.robot_xy
+    turn = station.robot_turn
+    moved = station.moved
+    mz = station.mount_z
     P = WS.ROBOTS[station.robot]
     tw, td, _ = catalog.meta(station.table_item)["size"]
+    table = TABLES[station.kind]
+    table_txt = f"{table} ({max(tw, td) * 100:.0f} x {min(tw, td) * 100:.0f} cm, top {top * 100:.1f} cm above the floor)"
+    common = dict(top_cm=top * 100, table=table, w_cm=max(tw, td) * 100, d_cm=min(tw, td) * 100)
+    ext = lambda origin, yaw, about=False: table_extent(station, origin, yaw, about)
+    floor_line = (f"Beyond it is the floor, {top * 100:.1f} cm lower." if not moved
+                  else f"The floor is the plane z = {_fmt(-mz)}.")
     if station.robot == "aloha":
-        bx, by, bz, _ = ALOHA_BASES["left"]
-        # The left arm's frame: x toward the right arm (station -y), y = station +x.
-        x0, x1 = by - sy / 2, by + sy / 2
-        y0, y1 = -sx / 2 - bx, sx / 2 - bx
+        bz = ALOHA_BASES["left"][2]
+        bx, by = ALOHA_BASES["left"][:2]
+        el = ext(station.from_robot(bx, by), turn - math.pi / 2)
+        er = ext(station.from_robot(bx, -by), turn + math.pi / 2)
+        tz = top - (mz + bz)
         ready = WS.aloha_side("left")["ready_q"]
-        return ALOHA_TEMPLATE.format(top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100,
-                                     d_cm=min(tw, td) * 100, gap=2 * by, gap_cm=200 * by, x0=x0, x1=x1,
-                                     y0=y0, y1=y1, ry0=-y1, ry1=-y0,
-                                     ready="[" + ", ".join(f"{v:g}" for v in ready) + "]")
-    if station.robot == "g1":
-        fmt = lambda q: "[" + ", ".join(f"{v:g}" for v in q) + "]"
-        h = WS.G1_STANDING_HEIGHT
-        e = W.HUMANOID_GAP - WS.G1_SETTLE   # the edge, after the robot settles forward a little
-        return G1_TEMPLATE.format(top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100,
-                                  d_cm=min(tw, td) * 100, pelvis_cm=h * 100, table_z=top - h,
-                                  x0=e, x1=e + sx, y0=-sy / 2 - ry, y1=sy / 2 - ry,
-                                  ready_l=fmt(WS.G1_READY["left"]), ready_r=fmt(WS.G1_READY["right"]),
-                                  room_h=station.work_box()[2])
-    if station.robot == "rby1":
-        fmt = lambda q: "[" + ", ".join(f"{v:.4g}" for v in q) + "]"
-        e = W.MOBILE_GAP
-        return RBY1_TEMPLATE.format(top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100,
-                                    d_cm=min(tw, td) * 100, top=top, x0=e, x1=e + sx,
-                                    y0=-sy / 2 - ry, y1=sy / 2 - ry,
+        if not moved:
+            el = el.replace(" and from y", " in both frames, and from y", 1) + " in the left arm's frame"
+            ry0, ry1 = er.split("from y = ")[1].split(" m to y = ")
+            line = (f"The table top is the plane z = {_fmt(tz)} in both frames. {el[0].upper()}{el[1:]} "
+                    f"({ry0} m to {ry1.rstrip(' m')} m in the right arm's). {floor_line}")
+        else:
+            line = (f"The table top is the plane z = {_fmt(tz)} in both frames. In the left arm's frame {el}; "
+                    f"in the right arm's frame {er}. {floor_line}")
+        return ALOHA_TEMPLATE.format(**common, gap=2 * by, gap_cm=200 * by,
+                                     mounting=f"on {table_txt}." if not moved else _mount_words(station, table_txt, True),
+                                     where=" one at each side of the table's middle," if not moved else "",
+                                     origin_at="the table top (the arm mounts)" if not moved else "its mount",
+                                     table_line=line, ready="[" + ", ".join(f"{v:g}" for v in ready) + "]")
+    if station.robot in ("g1", "rby1"):
+        fmt = lambda q: "[" + ", ".join(f"{v:.4g}" if station.robot == "rby1" else f"{v:g}" for v in q) + "]"
+        if station.robot == "g1":
+            h = WS.G1_STANDING_HEIGHT
+            origin = station.from_robot(WS.G1_SETTLE, 0.0)   # after the robot settles forward a little
+            tz, zt = top - h, "about z = "
+        else:
+            h, origin, tz, zt = 0.0, station.robot_xy, top, "z = "
+        e = ext(origin, turn, about=True)
+        if not moved:
+            x0 = e.split("x = ")[1].split(" m")[0]
+            rest = e.split(" m to x = ", 1)[1]
+            if station.robot == "g1":
+                line = (f"At the start the table's near edge is about x = {x0} m, its top is about z = {_fmt(tz)} m,\n"
+                        f"  and it extends to about x = {rest}.")
+            else:
+                line = (f"At the start the table's near edge is at about x = {x0} m, its top at z = {tz:.3f} m, and it\n"
+                        f"  extends to about x = {rest}. The front of the\n"
+                        f"  base is about 6 cm from the table's edge: don't drive forward into the table.")
+        else:
+            line = f"At the start the table top is at {zt}{_fmt(tz) if station.robot == 'g1' else f'{tz:.3f}'} m and {e}."
+        facing = (f"facing the middle of one\n  edge of {table}" if station.robot == "g1" else f"facing the\n  middle of one edge of {table}") \
+            if not moved else f"near {table}"
+        if station.robot == "g1":
+            return G1_TEMPLATE.format(**common, pelvis_cm=h * 100, facing=facing, table_line=line,
+                                      ready_l=fmt(WS.G1_READY["left"]), ready_r=fmt(WS.G1_READY["right"]),
+                                      room_h=station.work_box()[2])
+        return RBY1_TEMPLATE.format(**common, facing=facing, table_line=line,
                                     ready_l=fmt(WS.RBY1_READY["left"]), ready_r=fmt(WS.RBY1_READY["right"]))
     if station.robot == "fr3_duo":
         h = WS.FR3_DUO_ORIGIN_HEIGHT
         fmt = lambda q: "[" + ", ".join(f"{v:g}" for v in q) + "]"
-        return FR3_DUO_TEMPLATE.format(top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100,
-                                       d_cm=min(tw, td) * 100, origin_cm=h * 1000, table_z=-h,
-                                       x0=-sx / 2 - rx, x1=sx / 2 - rx, y0=-sy / 2 - ry, y1=sy / 2 - ry,
+        e = ext(station.robot_xy, turn)
+        line = f"The table top is the plane z = {_fmt(top - mz - h)}. {e[0].upper()}{e[1:]}. {floor_line}"
+        return FR3_DUO_TEMPLATE.format(**common, origin_cm=h * 1000, table_line=line,
+                                       mounting=(f"near the middle of one\n  long edge of {table_txt}." if not moved
+                                                 else "that stands " + _mount_words(station, table_txt)),
+                                       origin_at="the table top" if not moved else f"its mount ({mz * 100:.1f} cm above the floor)",
+                                       across=" across the table" if not moved else "",
                                        ready_l=fmt(WS.FR3_DUO_READY["left"]), ready_r=fmt(WS.FR3_DUO_READY["right"]))
+    e = ext(station.robot_xy, turn)
     if station.floor_arm:
+        line = (f"In front of the robot stands {table_txt}. {e[0].upper()}{e[1:]}." if not moved
+                else f"Near the robot stands {table_txt}. {e[0].upper()}{e[1:]}.")
         return FLOOR_ARM_TEMPLATE.format(
-            top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100, d_cm=min(tw, td) * 100,
-            x0=-sx / 2 - rx, x1=sx / 2 - rx, y0=-sy / 2 - ry, y1=sy / 2 - ry, robot_name=P["name"],
-            tool=TOOL[station.robot], hand=HAND[station.robot],
+            **common, table_line=line, robot_name=P["name"], tool=TOOL[station.robot], hand=HAND[station.robot],
             ready="[" + ", ".join(f"{v:g}" for v in P["ready_q"]) + "]")
-    return TEMPLATE.format(top_cm=top * 100, table=TABLES[station.kind], w_cm=max(tw, td) * 100,
-                           d_cm=min(tw, td) * 100, x0=-sx / 2 - rx, x1=sx / 2 - rx, y0=-sy / 2 - ry,
-                           y1=sy / 2 - ry, robot_name=P["name"],
-                           tool=TOOL[station.robot], hand=HAND[station.robot],
+    line = (f"The table top is the plane z = {'0' if not moved else _fmt(top - mz)}. {e[0].upper()}{e[1:]}. {floor_line}")
+    return TEMPLATE.format(**common, robot_name=P["name"],
+                           mounting=(f"mounted upright on {table_txt}, on its base flange, near the middle of one long edge."
+                                     if not moved else "mounted upright on its base flange, " + _mount_words(station, table_txt)),
+                           origin_at="on the table top" if not moved else f"{mz * 100:.1f} cm above the floor",
+                           across=" across the table" if not moved else "",
+                           table_line=line, tool=TOOL[station.robot], hand=HAND[station.robot],
                            ready="[" + ", ".join(f"{v:g}" for v in P["ready_q"]) + "]")
