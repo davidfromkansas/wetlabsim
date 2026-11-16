@@ -1,0 +1,75 @@
+{
+ "source": "01_glass_salt_shaker",
+ "usd": "model.usdc",
+ "mass": 0.12129,
+ "friction": 0.5,
+ "com": null,
+ "size": [
+  0.0552,
+  0.0552,
+  0.1
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.7874,
+    0.8689,
+    0.8481,
+    0.3
+   ],
+   "roughness": 0.05000000074505806,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    0.5382,
+    0.5542,
+    0.587,
+    1.0
+   ],
+   "roughness": 0.23999999463558197,
+   "metallic": 0.949999988079071
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 1.8687432499452616e-05,
+   "friction": 0.5,
+   "restitution": 0.05
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 5.210016179123158e-07,
+   "friction": 0.5,
+   "restitution": 0.05
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 3.227167756515468e-05,
+   "friction": 0.5,
+   "restitution": 0.05
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 3.387548401606239e-05,
+   "friction": 0.5,
+   "restitution": 0.05
+  },
+  {
+   "mesh": "col_4.obj",
+   "volume": 3.230468821337708e-05,
+   "friction": 0.5,
+   "restitution": 0.05
+  },
+  {
+   "mesh": "col_5.obj",
+   "volume": 3.385812985481407e-05,
+   "friction": 0.5,
+   "restitution": 0.05
+  }
+ ]
+}

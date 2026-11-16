@@ -1,0 +1,307 @@
+{
+ "source": "09_turkish_brass_pepper_mill_5_x_5_x_22_cm_in_engra",
+ "usd": "model.usdc",
+ "mass": 0.499,
+ "friction": 0.55,
+ "com": null,
+ "size": [
+  0.0547,
+  0.048,
+  0.2195
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "arm",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.6038,
+      0.3547,
+      0.0732,
+      1.0
+     ],
+     "roughness": 0.1599999964237213,
+     "metallic": 1.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 4.7169773464123354e-07,
+     "friction": 0.25,
+     "restitution": 0.02
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 4.773960388690457e-07,
+     "friction": 0.25,
+     "restitution": 0.02
+    }
+   ],
+   "mass": 0.007258,
+   "parent": 2,
+   "collide": false,
+   "joint": {
+    "name": "arm_fold",
+    "type": "hinge",
+    "range": [
+     0.0,
+     1.570796
+    ],
+    "drive": {
+     "damping": 0.004,
+     "max_force": 1.5
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     -1.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.0095,
+    0.0,
+    0.014
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.00615,
+    0.0,
+    0.198,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "body",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.6038,
+      0.3547,
+      0.0732,
+      1.0
+     ],
+     "roughness": 0.1599999964237213,
+     "metallic": 1.0
+    },
+    {
+     "mesh": "b1_vis_1.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.8500000238418579,
+     "metallic": 0.0,
+     "texture": "b1_tex_1.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 2.0257184130319877e-05,
+     "friction": 0.25,
+     "restitution": 0.02
+    },
+    {
+     "mesh": "b1_col_1.obj",
+     "volume": 5.8233004459092366e-05,
+     "friction": 0.25,
+     "restitution": 0.02
+    },
+    {
+     "mesh": "b1_col_2.obj",
+     "volume": 0.00019192212494449138,
+     "friction": 0.25,
+     "restitution": 0.02
+    }
+   ],
+   "mass": 0.419577,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -0.00335,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.00335,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "crank",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.6038,
+      0.3547,
+      0.0732,
+      1.0
+     ],
+     "roughness": 0.1599999964237213,
+     "metallic": 1.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 8.4685077497284e-06,
+     "friction": 0.25,
+     "restitution": 0.02
+    },
+    {
+     "mesh": "b2_col_1.obj",
+     "volume": 2.7506599492802175e-07,
+     "friction": 0.25,
+     "restitution": 0.02
+    },
+    {
+     "mesh": "b2_col_2.obj",
+     "volume": 2.505782062343354e-08,
+     "friction": 0.25,
+     "restitution": 0.02
+    },
+    {
+     "mesh": "b2_col_3.obj",
+     "volume": 2.7506599492802175e-07,
+     "friction": 0.25,
+     "restitution": 0.02
+    },
+    {
+     "mesh": "b2_col_4.obj",
+     "volume": 2.505782062343354e-08,
+     "friction": 0.25,
+     "restitution": 0.02
+    }
+   ],
+   "mass": 0.071469,
+   "parent": 1,
+   "collide": false,
+   "joint": {
+    "name": "crank_spin",
+    "type": "hinge",
+    "drive": {
+     "damping": 0.02,
+     "max_force": 3.0
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.0,
+    0.184
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.00335,
+    0.0,
+    0.184,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "knob",
+   "visuals": [
+    {
+     "mesh": "b3_vis_0.obj",
+     "rgba": [
+      0.2633,
+      0.1065,
+      0.0272,
+      1.0
+     ],
+     "roughness": 0.44999998807907104,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b3_col_0.obj",
+     "volume": 1.3737144866610682e-06,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b3_col_1.obj",
+     "volume": 8.23070206320195e-08,
+     "friction": 0.55,
+     "restitution": 0.05
+    }
+   ],
+   "mass": 0.000699,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    0.02115,
+    0.0,
+    0.20075
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.02115,
+    0.0,
+    0.20075,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}
