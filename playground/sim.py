@@ -684,6 +684,104 @@ class PlaygroundSim(Sim):
                 self.selected = None
             self.rebuild()
 
+    def remove_many(self, uids: list[str]) -> int:
+        """Take several objects away at once (one rebuild). Returns how many went."""
+        gone = {u for u in uids if self.find(u) is not None}
+        if not gone:
+            raise RobotError("none of those objects are here")
+        with self.lock:
+            self.placed = [p for p in self.placed if p.uid not in gone]
+            if self.selected in gone:
+                self.selected = None
+            self.rebuild()
+        return len(gone)
+
+    def duplicate_many(self, uids: list[str]) -> list[str]:
+        """Copy several objects at once, laid out as the originals are, beside them: the whole
+        group shifts sideways (X or Y, by its own width plus a gap) to the first spot where every
+        copy lands on a surface at its original's height and nothing is in the way. Each copy is
+        turned as its original is, with its moving parts (lids, doors) as they are now."""
+        ps = [p for p in (self.find(u) for u in dict.fromkeys(uids)) if p is not None]
+        if not ps:
+            raise RobotError("none of those objects are here")
+        n_soft = sum(1 for p in ps if catalog.item(p.item)["soft"])
+        if n_soft and W.soft_count(self.placed) + n_soft > SOFT_MAX:
+            raise RobotError(f"a lab holds at most {SOFT_MAX} soft objects (each takes a lot of the "
+                             "physics' time)")
+        with self.lock:
+            self._sync_placed()
+            rots = {p.uid: self.obj_rot(p.uid) for p in ps}
+            mids = {p.uid: self._obj_mid(p, rots[p.uid]) for p in ps}
+        # the group's footprint on the floor plan
+        xy = np.vstack([(W.box_points(catalog.meta(p.item)["size"], 2) @ rots[p.uid].T)[:, :2] + np.asarray(p.pos[:2])
+                        for p in ps])
+        w, h = float(np.ptp(xy[:, 0])), float(np.ptp(xy[:, 1]))
+        gap = 0.04
+        tries = [(sx * k * (w + gap), sy * k * (h + gap)) for k in (1, 2, 3)
+                 for sx, sy in ((1, 0), (-1, 0), (0, 1), (0, -1))]
+        best = None
+        for dx, dy in tries:
+            spots, level = [], True
+            for p in ps:
+                m = mids[p.uid]
+                x, y = float(m[0]) + dx, float(m[1]) + dy
+                if abs(x) > 9.5 or abs(y) > 9.5:
+                    spots = None
+                    break
+                s = self.support(p.item, x, y, rot=rots[p.uid])
+                rest, own = s["pos"][2], float(p.pos[2])
+                if not s["valid"] or rest > own + 0.01:      # in the way, or inside something
+                    spots = None
+                    break
+                level = level and rest > own - 0.01          # not left floating either
+                spots.append((p, (float(p.pos[0]) + dx, float(p.pos[1]) + dy, own)))
+            if spots is None:
+                continue
+            if level:
+                best = spots
+                break
+            best = best or spots
+        if best is None:
+            raise RobotError("no free space beside them for the copies")
+
+        def renamed(d, old, new):
+            if not d:
+                return None
+            pre = f"obj_{old}__"
+            return {f"obj_{new}__" + k[len(pre):]: v for k, v in d.items() if k.startswith(pre)} or None
+        out = []
+        with self.lock:
+            for p, pos in best:
+                uid = self.new_uid(p.item)
+                self.placed.append(W.Placed(uid, p.item, pos, p.yaw, p.quat if p.quat is None else tuple(p.quat),
+                                            renamed(p.joints, p.uid, uid), renamed(p.parts, p.uid, uid)))
+                out.append(uid)
+            self.rebuild(sync=False)       # synced above; the copies go where placed says
+        return out
+
+    def edit_selection(self, action: str, uids: list[str], stations: list[str]) -> dict:
+        """Duplicate or delete what a box drawn over the scene took in: whole stations (robot,
+        table and what is on it) and loose objects. An object on a chosen station's table goes
+        with its station, not twice."""
+        sts = [u for u in dict.fromkeys(stations) if self.station(u) is not None]
+        with self.lock:
+            self._sync_placed()
+            riders = {p.uid for u in sts for p in self._on_table(self.station(u))}
+        objs = [u for u in dict.fromkeys(uids) if u not in riders and self.find(u) is not None]
+        if not sts and not objs:
+            raise RobotError("nothing selected is here any more")
+        if action == "delete":
+            if sts:
+                self.remove_stations(sts)
+            if objs:
+                self.remove_many(objs)
+            return {"stations": sts, "objects": objs}
+        if action != "duplicate":
+            raise RobotError("unknown action")
+        new_objs = self.duplicate_many(objs) if objs else []
+        new_sts = [self.duplicate_station(u) for u in sts]
+        return {"stations": new_sts, "objects": new_objs}
+
     def clear(self):
         """Take every object away (the stations stay)."""
         with self.lock:
@@ -1203,6 +1301,8 @@ class PlaygroundSim(Sim):
             out["base"] = [round(float(v), 3) for v in self._base_mid(self.arms[st.uid])]
             out["bodies"] = sorted(int(b) for b in self.arms[st.uid].bodies | self.stand_bodies.get(st.uid, set()))
         out["place"] = self.robot_place(st.uid)
+        sx, sy = st.footprint()
+        out["table"] = {"half": [round(sx / 2, 4), round(sy / 2, 4)], "top": round(float(st.top), 4)}
         out["view"] = {k: ([round(float(x), 4) for x in v] if k == "lookat" else round(float(v), 3))
                        for k, v in self.station_view(st).items()}
         if "libero" in out and st.uid in self.checkers:      # LIBERO's goal check, live
