@@ -1,0 +1,588 @@
+{
+ "source": "06_barn_style_sliding_shower_door_100_x_20_x_210_cm",
+ "usd": "model.usdc",
+ "mass": 75.62147,
+ "friction": 0.45,
+ "com": null,
+ "size": [
+  1.0,
+  0.2,
+  2.1
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "fixed_panel",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.8689,
+      0.9331,
+      0.9114,
+      0.3
+     ],
+     "roughness": 0.03999999910593033,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "shape": "box",
+     "size": [
+      0.2975,
+      0.005,
+      0.9575
+     ],
+     "pos": [
+      -0.1575,
+      0.0,
+      0.9875
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.011394250066230056,
+     "friction": 0.35,
+     "restitution": 0.05
+    }
+   ],
+   "mass": 28.485624,
+   "parent": 1,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    -0.0,
+    0.0,
+    -0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.0,
+    0.0,
+    -0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "frame",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.0035,
+      0.0037,
+      0.0041,
+      1.0
+     ],
+     "roughness": 0.41999998688697815,
+     "metallic": 0.8500000238418579
+    }
+   ],
+   "collision_parts": [
+    {
+     "shape": "box",
+     "size": [
+      0.0225,
+      0.0225,
+      0.9825
+     ],
+     "pos": [
+      -0.4775,
+      -0.02,
+      0.9975
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.00397912538382413,
+     "friction": 0.4,
+     "restitution": 0.05
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.0225,
+      0.0225,
+      0.9825
+     ],
+     "pos": [
+      0.4775,
+      -0.02,
+      0.9975
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.00397912538382413,
+     "friction": 0.4,
+     "restitution": 0.05
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.5,
+      0.007,
+      0.03
+     ],
+     "pos": [
+      0.0,
+      -0.02,
+      2.01
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.0008400000071525568,
+     "friction": 0.4,
+     "restitution": 0.05
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.05,
+      0.1,
+      0.0075
+     ],
+     "pos": [
+      -0.45,
+      0.0,
+      0.0075
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.000300000002235174,
+     "friction": 0.4,
+     "restitution": 0.05
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.05,
+      0.1,
+      0.0075
+     ],
+     "pos": [
+      0.45,
+      0.0,
+      0.0075
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.00030000000223517393,
+     "friction": 0.4,
+     "restitution": 0.05
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.2975,
+      0.013,
+      0.0175
+     ],
+     "pos": [
+      -0.1575,
+      -0.005,
+      1.9625
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.0005414500395119196,
+     "friction": 0.4,
+     "restitution": 0.05
+    }
+   ],
+   "mass": 28.439911,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -0.0,
+    0.0,
+    -0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.0,
+    0.0,
+    -0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "roller_left",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.0066,
+      0.0069,
+      0.0079,
+      1.0
+     ],
+     "roughness": 0.30000001192092896,
+     "metallic": 0.8999999761581421
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 5.616912090641444e-05,
+     "friction": 0.45,
+     "restitution": 0.03
+    }
+   ],
+   "mass": 0.308756,
+   "parent": 4,
+   "collide": false,
+   "joint": {
+    "name": "roller_left_spin",
+    "type": "hinge",
+    "drive": {
+     "damping": 0.002,
+     "max_force": 0.5
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     1.0,
+     0.0
+    ]
+   },
+   "pos": [
+    -0.14,
+    -0.02,
+    1.1
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.16,
+    -0.02,
+    2.07,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "roller_right",
+   "visuals": [
+    {
+     "mesh": "b3_vis_0.obj",
+     "rgba": [
+      0.0066,
+      0.0069,
+      0.0079,
+      1.0
+     ],
+     "roughness": 0.30000001192092896,
+     "metallic": 0.8999999761581421
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b3_col_0.obj",
+     "volume": 5.616912090641444e-05,
+     "friction": 0.45,
+     "restitution": 0.03
+    }
+   ],
+   "mass": 0.308756,
+   "parent": 4,
+   "collide": false,
+   "joint": {
+    "name": "roller_right_spin",
+    "type": "hinge",
+    "drive": {
+     "damping": 0.002,
+     "max_force": 0.5
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     1.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.14,
+    -0.02,
+    1.1
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.44,
+    -0.02,
+    2.07,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "sliding_door",
+   "visuals": [
+    {
+     "mesh": "b4_vis_0.obj",
+     "rgba": [
+      0.8689,
+      0.9331,
+      0.9114,
+      0.3
+     ],
+     "roughness": 0.03999999910593033,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b4_vis_1.obj",
+     "rgba": [
+      0.0035,
+      0.0037,
+      0.0041,
+      1.0
+     ],
+     "roughness": 0.41999998688697815,
+     "metallic": 0.8500000238418579
+    },
+    {
+     "mesh": "b4_vis_2.obj",
+     "rgba": [
+      0.0066,
+      0.0069,
+      0.0079,
+      1.0
+     ],
+     "roughness": 0.30000001192092896,
+     "metallic": 0.8999999761581421
+    }
+   ],
+   "collision_parts": [
+    {
+     "shape": "box",
+     "size": [
+      0.2,
+      0.004,
+      0.94
+     ],
+     "pos": [
+      0.0,
+      0.03,
+      0.0
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.0060160003601312665,
+     "friction": 0.35,
+     "restitution": 0.05
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.2,
+      0.02,
+      0.012
+     ],
+     "pos": [
+      0.0,
+      0.03,
+      0.928
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.00038400000047683706,
+     "friction": 0.35,
+     "restitution": 0.05
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.016,
+      0.004,
+      0.1
+     ],
+     "pos": [
+      -0.14,
+      0.016,
+      1.01
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 5.1200005626678754e-05,
+     "friction": 0.35,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b4_col_3.obj",
+     "volume": 5.392343593259488e-06,
+     "friction": 0.35,
+     "restitution": 0.05
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.016,
+      0.004,
+      0.1
+     ],
+     "pos": [
+      0.14,
+      0.016,
+      1.01
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 5.1200005626678754e-05,
+     "friction": 0.35,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b4_col_5.obj",
+     "volume": 5.392343593259487e-06,
+     "friction": 0.35,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b4_col_6.obj",
+     "volume": 9.361934493387377e-05,
+     "friction": 0.35,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b4_col_7.obj",
+     "volume": 4.58729687603619e-06,
+     "friction": 0.35,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b4_col_8.obj",
+     "volume": 4.587296876036186e-06,
+     "friction": 0.35,
+     "restitution": 0.05
+    }
+   ],
+   "mass": 18.078423,
+   "parent": 1,
+   "collide": false,
+   "joint": {
+    "name": "door_slide",
+    "type": "slide",
+    "range": [
+     0.0,
+     0.6
+    ],
+    "drive": {
+     "damping": 6.0,
+     "max_force": 80.0
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     -1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.3,
+    0.0,
+    0.97
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.3,
+    0.0,
+    0.97,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

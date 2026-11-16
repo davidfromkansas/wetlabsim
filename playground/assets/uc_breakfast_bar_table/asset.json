@@ -1,0 +1,301 @@
+{
+ "source": "01_breakfast_bar_table_120_x_40_x_105_cm_in_solid_o",
+ "usd": "model.usdc",
+ "mass": 40.16799,
+ "friction": 0.55,
+ "com": null,
+ "size": [
+  1.2,
+  0.4,
+  1.0505
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "frame",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.0044,
+      0.0047,
+      0.0051,
+      1.0
+     ],
+     "roughness": 0.3799999952316284,
+     "metallic": 0.8500000238418579
+    }
+   ],
+   "collision_parts": [
+    {
+     "shape": "box",
+     "size": [
+      0.0275,
+      0.2,
+      0.0125
+     ],
+     "pos": [
+      -0.5,
+      0.0,
+      0.0125
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.000550000013411045,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.0275,
+      0.13,
+      0.005
+     ],
+     "pos": [
+      -0.5,
+      0.0,
+      1.0
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.000142999990783632,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.02,
+      0.02,
+      0.492647
+     ],
+     "pos": [
+      -0.5,
+      0.135,
+      0.51
+     ],
+     "quat": [
+      0.999154,
+      0.041132,
+      0.0,
+      0.0
+     ],
+     "volume": 0.0015764693509130467,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.02,
+      0.02,
+      0.492647
+     ],
+     "pos": [
+      -0.5,
+      -0.135,
+      0.51
+     ],
+     "quat": [
+      0.999154,
+      -0.041132,
+      0.0,
+      0.0
+     ],
+     "volume": 0.0015764693509130445,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.0275,
+      0.2,
+      0.0125
+     ],
+     "pos": [
+      0.5,
+      0.0,
+      0.0125
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.000550000013411045,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.0275,
+      0.13,
+      0.005
+     ],
+     "pos": [
+      0.5,
+      0.0,
+      1.0
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.0001429999907836319,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.02,
+      0.02,
+      0.492647
+     ],
+     "pos": [
+      0.5,
+      0.135,
+      0.51
+     ],
+     "quat": [
+      0.999154,
+      0.041132,
+      0.0,
+      0.0
+     ],
+     "volume": 0.0015764693509130445,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.02,
+      0.02,
+      0.492647
+     ],
+     "pos": [
+      0.5,
+      -0.135,
+      0.51
+     ],
+     "quat": [
+      0.999154,
+      -0.041132,
+      0.0,
+      0.0
+     ],
+     "volume": 0.0015764693509130456,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_8.obj",
+     "volume": 0.0005459842632838893,
+     "friction": 0.4,
+     "restitution": 0.04
+    }
+   ],
+   "mass": 24.399988,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "top",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.2846,
+      0.1329,
+      0.0432,
+      1.0
+     ],
+     "roughness": 0.44999998807907104,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b1_vis_1.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.8500000238418579,
+     "metallic": 0.0,
+     "texture": "b1_tex_1.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 0.021584675761082677,
+     "friction": 0.55,
+     "restitution": 0.04
+    }
+   ],
+   "mass": 15.768,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    0.0,
+    0.0,
+    1.0275
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.0,
+    1.0275,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

@@ -1,0 +1,97 @@
+{
+ "source": "05_plastic_handled_bench_chisel_22_x_2_x_3_cm_with",
+ "usd": "model.usdc",
+ "mass": 0.12015,
+ "friction": 0.45,
+ "com": null,
+ "size": [
+  0.2202,
+  0.0304,
+  0.0306
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.587,
+    0.6209,
+    0.6559,
+    1.0
+   ],
+   "roughness": 0.1599999964237213,
+   "metallic": 0.949999988079071
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    0.2429,
+    0.253,
+    0.2738,
+    1.0
+   ],
+   "roughness": 0.3799999952316284,
+   "metallic": 0.8999999761581421
+  },
+  {
+   "mesh": "vis_2.obj",
+   "rgba": [
+    0.9331,
+    0.5382,
+    0.0031,
+    1.0
+   ],
+   "roughness": 0.4000000059604645,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_3.obj",
+   "rgba": [
+    0.006,
+    0.006,
+    0.0072,
+    1.0
+   ],
+   "roughness": 0.550000011920929,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_4.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.8500000238418579,
+   "metallic": 0.0,
+   "texture": "tex_4.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 9.062759669022794e-06,
+   "friction": 0.45,
+   "restitution": 0.05
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 2.2569033682609243e-05,
+   "friction": 0.45,
+   "restitution": 0.05
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 3.1046811660826475e-05,
+   "friction": 0.45,
+   "restitution": 0.05
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 1.423666873463987e-05,
+   "friction": 0.45,
+   "restitution": 0.05
+  }
+ ]
+}

@@ -1,0 +1,119 @@
+{
+ "source": "01_black_head_mallet",
+ "usd": "model.usdc",
+ "mass": 0.25926,
+ "friction": 0.9,
+ "com": null,
+ "size": [
+  0.3,
+  0.06,
+  0.052
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "handle",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.2738,
+      0.1294,
+      0.0432,
+      1.0
+     ],
+     "roughness": 0.5,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.0001259163328279179,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 4.738232227352395e-05,
+     "friction": 0.55,
+     "restitution": 0.05
+    }
+   ],
+   "mass": 0.112723,
+   "parent": 1,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    -0.149976,
+    0.0,
+    0.016433
+   ],
+   "quat": [
+    0.999848,
+    0.0,
+    -0.017452,
+    0.0
+   ],
+   "frame": [
+    -0.149976,
+    0.0,
+    0.016433,
+    0.999848,
+    0.0,
+    -0.017452,
+    0.0
+   ]
+  },
+  {
+   "name": "head",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.0044,
+      0.0044,
+      0.0051,
+      1.0
+     ],
+     "roughness": 0.6200000047683716,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 0.0001265727413804394,
+     "friction": 0.9,
+     "restitution": 0.1
+    }
+   ],
+   "mass": 0.146536,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.124024,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.124024,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

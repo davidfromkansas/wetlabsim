@@ -1,0 +1,142 @@
+{
+ "source": "04_square_plate_valve",
+ "usd": "model.usdc",
+ "mass": 0.94031,
+ "friction": 0.25,
+ "com": null,
+ "size": [
+  0.1308,
+  0.038,
+  0.1306
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "handle",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.5071,
+      0.5225,
+      0.5382,
+      1.0
+     ],
+     "roughness": 0.3199999928474426,
+     "metallic": 0.949999988079071
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 1.8023160424878368e-05,
+     "friction": 0.25,
+     "restitution": 0.02
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 1.2164106240070385e-05,
+     "friction": 0.25,
+     "restitution": 0.02
+    }
+   ],
+   "mass": 0.222671,
+   "parent": 1,
+   "collide": false,
+   "joint": {
+    "name": "handle_spindle",
+    "type": "hinge",
+    "drive": {
+     "damping": 0.05,
+     "max_force": 8.0
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     -1.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.019,
+    0.065229,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "plate",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.5071,
+      0.5225,
+      0.5382,
+      1.0
+     ],
+     "roughness": 0.3199999928474426,
+     "metallic": 0.949999988079071
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 0.00020168316906481678,
+     "friction": 0.25,
+     "restitution": 0.02
+    },
+    {
+     "mesh": "b1_col_1.obj",
+     "volume": 2.3202283587245283e-05,
+     "friction": 0.25,
+     "restitution": 0.02
+    }
+   ],
+   "mass": 0.717637,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.0,
+    0.019,
+    0.065229
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.019,
+    0.065229,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}
