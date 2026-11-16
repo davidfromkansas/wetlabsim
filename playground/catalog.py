@@ -3,7 +3,8 @@
 Every item comes from AutoBio (in wetlabsim/assets/autobio; "autobio:..." items, built by
 tools/build_autobio.py) or from NVIDIA's SimReady set (nvidia/simready-assets) or Tripo's SimReady
 assets (VAST-AI/Tripo-Simready-Assets, folder names "tripo:...") or ForgeCAD's (ForgeCAD/simready-assets,
-"forgecad:...") on Hugging Face, and ships with
+"forgecad:...") or NVIDIA's USDCraft-10K ("usdcraft:...", most of them listed in usdcraft_library.json)
+on Hugging Face, and ships with
 its own physics (mass, collision shapes, and moving parts on their joints). `hollow` items are containers:
 they collide as convex pieces so things fit inside (see tools/convert_simready.py).
 `fixed` items are furniture: they stand where they are dropped and don't move.
@@ -17,7 +18,7 @@ import pathlib
 
 ASSETS = pathlib.Path(__file__).parent / "assets"
 
-TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Glassware", "Instruments", "PPE", "Tools", "Kitchen", "Bins & Trays", "Cleaning", "Electronics", "Toys & Basics", "Factory", "Car parts", "Garage", "Soft", "LIBERO"]
+TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Glassware", "Instruments", "PPE", "Tools", "Kitchen", "Bins & Trays", "Cleaning", "Electronics", "Toys & Basics", "Factory", "Car parts", "Garage", "Home", "Office", "Shops & Hotels", "Sports & Leisure", "Outdoor", "Soft", "LIBERO"]
 
 # id, tab, label, Hugging Face folder, hollow, fixed
 ITEMS = [
@@ -453,6 +454,12 @@ ITEMS = [
     ("libero_basin_faucet", "LIBERO", "Basin faucet", "libero:articulated_objects/basin_faucet.xml", False, True),
     ("libero_window", "LIBERO", "Window", "libero:articulated_objects/window.xml", False, True),
 ]
+
+# NVIDIA's USDCraft-10K (Apache 2.0): one version of each of its kinds that the library didn't have
+# yet, listed in usdcraft_library.json (picked by playground/tools/pick_usdcraft.py). All collide
+# as convex pieces; furniture-size and larger ones stand where they are dropped.
+USDCRAFT = json.loads((pathlib.Path(__file__).parent / "usdcraft_library.json").read_text())
+ITEMS += [(u["id"], u["tab"], u["label"], "usdcraft:" + u["folder"], True, u["fixed"]) for u in USDCRAFT]
 
 # Triangles an item's visuals may keep before they are simplified (tools/convert_simready; the
 # default is 60,000). Simplifying drops a texture, so items whose whole look is one texture keep
