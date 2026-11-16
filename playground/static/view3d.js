@@ -40,38 +40,53 @@ function applyDelta(c, d) {
   return c;
 }
 
-// ---------------------------------------------------------------- the light Tron floor (tron.py)
-const TRON = {CYAN: [0.0, 0.85, 1.0], STEP: 0.5, REACH: 4.0, SEG: 0.5, Z: 0.0015, WIDTH: 0.012,
-              RIPPLE_SPEED: 1.1, RIPPLE_EVERY: 4.0, STREAKS: 10, STREAK_SPEED: 1.6, TRAIL: 6, FLOOR: [0.852, 0.851, 0.828]};   // FLOOR: the vinyl tiles' average colour
-const hash = (i, k) => { const x = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return x - Math.floor(x); };
-function tronShapes(t) {
-  const T = TRON, out = [], lines = [], pieces = [];
-  for (let c = -T.REACH; c <= T.REACH + 1e-9; c += T.STEP) lines.push(c);
-  for (let p = -T.REACH + T.SEG / 2; p < T.REACH; p += T.SEG) pieces.push(p);
-  const breathe = 0.25 + 0.1 * Math.sin(t * 1.6), front = (t * T.RIPPLE_SPEED) % T.RIPPLE_EVERY;
-  for (const c of lines) for (const p of pieces) {
-    for (const [x, y, hx, hy] of [[c, p, T.WIDTH / 2, T.SEG / 2], [p, c, T.SEG / 2, T.WIDTH / 2]]) {
-      const r = Math.hypot(x, y);
-      let d = ((r - front) % T.RIPPLE_EVERY + T.RIPPLE_EVERY) % T.RIPPLE_EVERY;
-      d = Math.min(d, T.RIPPLE_EVERY - d);
-      const ring = Math.exp(-((d / 0.35) ** 2)), fade = Math.max(0, 1 - r / T.REACH);
-      out.push([x, y, T.Z, hx, hy, (breathe + ring) * fade]);
-    }
+// Particle-conserving grid automaton: persistent light packets visit local routing
+// cells, which evolve when crossed. Packets usually continue straight, sometimes turn,
+// and always take another cardinal edge. Nothing is born or extinguished mid-floor.
+function createGridAutomaton(size = 33, seed = 0x74726f6e) {
+  const step = 0.32, edges = new Float32Array(size * size * 4);
+  const routing = new Uint8Array(size * size);
+  const directions = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+  let previousTime = null;
+  const random = () => {
+    seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5;
+    return (seed >>> 0) / 4294967296;
+  };
+  for (let i = 0; i < size * size; i++) {
+    edges[i * 4] = edges[i * 4 + 2] = -10000;
+    routing[i] = Math.floor(random() * 16);
   }
-  const span = 2 * T.REACH;
-  for (let i = 0; i < T.STREAKS; i++) {
-    const travelled = t * T.STREAK_SPEED * (0.7 + 0.6 * hash(i, 0)) + span * hash(i, 1);
-    const lap = Math.floor(travelled / span), head = (travelled % span) - T.REACH;
-    const line = lines[Math.floor(hash(i, lap + 7) * lines.length)];
-    const alongX = hash(i, lap + 3) < 0.5, sign = hash(i, lap + 5) < 0.5 ? 1 : -1;
-    for (let k = 0; k < T.TRAIL; k++) {
-      const s = sign * (head - k * 0.06);
-      if (Math.abs(s) > T.REACH) continue;
-      const fade = (1 - k / T.TRAIL) * Math.max(0, 1 - Math.abs(s) / T.REACH * 0.6);
-      out.push(alongX ? [s, line, T.Z + 0.0002, 0.035, T.WIDTH, fade] : [line, s, T.Z + 0.0002, T.WIDTH, 0.035, fade]);
-    }
+  const walkers = Array.from({length: 18}, () => ({
+    x: Math.floor(random() * size), y: Math.floor(random() * size),
+    dir: Math.floor(random() * 4), next: null, phase: random() * step,
+  }));
+  function move(w, time) {
+    const cell = w.y * size + w.x, rule = routing[cell];
+    // Fourteen of sixteen routing states carry on straight. The other two turn.
+    const preferred = (w.dir + (rule === 0 ? 1 : rule === 1 ? 3 : 0)) % 4;
+    routing[cell] = (rule + 5) % 16;
+    const choices = [preferred, w.dir, (w.dir + 1) % 4, (w.dir + 3) % 4, (w.dir + 2) % 4];
+    const dir = choices.find(d => {
+      const [dx, dy] = directions[d];
+      return w.x + dx >= 0 && w.x + dx < size && w.y + dy >= 0 && w.y + dy < size;
+    });
+    const [dx, dy] = directions[dir], nx = w.x + dx, ny = w.y + dy;
+    const edge = (Math.min(w.y, ny) * size + Math.min(w.x, nx)) * 4 + (dy ? 2 : 0);
+    edges[edge] = time; edges[edge + 1] = dx + dy;
+    w.x = nx; w.y = ny; w.dir = dir;
   }
-  return out;
+  return {edges, step, advance(time) {
+    const resumed = previousTime === null || time - previousTime > step * 4;
+    previousTime = time;
+    let changed = false;
+    for (const w of walkers) {
+      if (resumed) w.next = time - w.phase;
+      while (w.next <= time) {
+        move(w, w.next); w.next += step; changed = true;
+      }
+    }
+    return changed;
+  }};
 }
 
 // ---------------------------------------------------------------- the view
@@ -89,7 +104,7 @@ export function start({stage, base = '', onReady}) {
   stage.prepend(canvas);
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color().setRGB(0.98, 0.984, 0.988, THREE.SRGBColorSpace);
+  scene.background = new THREE.Color(0x071019);
   const camera = new THREE.PerspectiveCamera(FOVY, 1, 0.03, 160);
   camera.up.set(0, 0, 1);
   scene.add(camera);
@@ -97,7 +112,7 @@ export function start({stage, base = '', onReady}) {
   const V = {active: true, canvas, cam: {lookat: [0, 0, 0.85], distance: 2.8, azimuth: 145, elevation: -28},
              follow: true, lastLocal: 0, version: null, loading: false, bodies: [], ready: false};
   let root = new THREE.Group(); scene.add(root);
-  let floorFx = null, shapesGroup = new THREE.Group(); scene.add(shapesGroup);
+  let shapesGroup = new THREE.Group(); scene.add(shapesGroup);
   const meshCache = new Map(), texCache = new Map();
 
   function resize() {
@@ -175,7 +190,7 @@ export function start({stage, base = '', onReady}) {
     return texCache.get(key);
   }
 
-  async function geomObject(g, texhash, meshhash, src) {
+  async function geomObject(g, texhash, meshhash, src, themed) {
     let geo;
     const s = g.size;
     if (g.type === 'box') geo = new THREE.BoxGeometry(2 * s[0], 2 * s[1], 2 * s[2]);
@@ -190,7 +205,9 @@ export function start({stage, base = '', onReady}) {
       color: srgb(g.rgba), specular: new THREE.Color(g.specular * 0.3, g.specular * 0.3, g.specular * 0.3),
       shininess: 4 + 96 * g.shininess, transparent: g.rgba[3] < 1, opacity: g.rgba[3],
       emissive: srgb(g.rgba).multiplyScalar(g.emission)});
-    if (g.tex >= 0) {
+    if (themed && g.name === 'floor') {
+      mat.color.set(0x101e29); mat.specular.set(0x587482); mat.shininess = 95;
+    } else if (g.tex >= 0) {
       const uni = g.type === 'plane' && g.texuniform;
       mat.map = texture(g.tex, texhash[String(g.tex)], uni ? 2 * (s[0] || 40) * g.texrepeat[0] : g.texrepeat[0],
                         uni ? 2 * (s[1] || 40) * g.texrepeat[1] : g.texrepeat[1], src);
@@ -269,9 +286,7 @@ export function start({stage, base = '', onReady}) {
     [...camera.children].forEach(c => { camera.remove(c); c.dispose && c.dispose(); }); camera.add(head); camera.add(head.target);
     scene.remove(root); retired.push(root); root = next; scene.add(root);
     V.bodies = bodies; V.skins = skins; V.version = sc.version;
-    if (floorFx) { scene.remove(floorFx); floorFx = null; }
-    if (sc.floorfx) floorFx = makeFloorFx();
-    if (floorFx) scene.add(floorFx);
+    glassRoom.visible = !!sc.floorfx;
     if (!V.ready) { V.ready = true; onReady && onReady(); }
   }
   // Free the old worlds after the new one has been drawn: their shaders are then in use again
@@ -309,7 +324,7 @@ export function start({stage, base = '', onReady}) {
         // Each shape goes in as soon as it is ready; one that fails doesn't hold up the rest.
         let failed = 0;
         await Promise.all([
-          ...sc.geoms.map(g => geomObject(g, texhash, sc.meshhash, src).then(o => { if (o) bodies[g.body].add(o); }, () => { failed++; })),
+          ...sc.geoms.map(g => geomObject(g, texhash, sc.meshhash, src, sc.floorfx).then(o => { if (o) bodies[g.body].add(o); }, () => { failed++; })),
           ...(sc.skins || []).map(sk => skinObject(sk, sc.version, src, texhash).then(s => { next.add(s.obj); skins.push(s); }, () => { failed++; }))]);
         if (g0 !== gen) { if (!fresh) dispose(next); continue; }
         if (!fresh) install(next, sc, bodies, skins, head);
@@ -332,30 +347,6 @@ export function start({stage, base = '', onReady}) {
       if (o.material) { o.material.dispose(); }
       if (o.isLight && o.dispose) o.dispose();
     });
-  }
-
-  function makeFloorFx() {
-    const n = tronShapes(0).length + 50;
-    const m = new THREE.InstancedMesh(new THREE.BoxGeometry(2, 2, 0.001), new THREE.MeshBasicMaterial(), n);
-    m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(n * 3), 3);
-    m.frustumCulled = false;
-    return m;
-  }
-  const _m = new THREE.Matrix4(), _c = new THREE.Color(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _p = new THREE.Vector3();
-  function drawFloorFx(t) {
-    const shapes = tronShapes(t), T = TRON;
-    let i = 0;
-    for (const [x, y, z, hx, hy, a] of shapes) {
-      if (a < 0.02 || i >= floorFx.count) continue;
-      const k = Math.min(a, 1);
-      _m.compose(_p.set(x, y, z), _q.identity(), _s.set(hx, hy, 1));
-      floorFx.setMatrixAt(i, _m);
-      // what MuJoCo's alpha blend gives over the light floor
-      _c.setRGB(T.FLOOR[0] * (1 - k) + T.CYAN[0] * k, T.FLOOR[1] * (1 - k) + T.CYAN[1] * k, T.FLOOR[2] * (1 - k) + T.CYAN[2] * k, THREE.SRGBColorSpace);
-      floorFx.setColorAt(i, _c); i++;
-    }
-    floorFx.count = i;
-    floorFx.instanceMatrix.needsUpdate = true; floorFx.instanceColor.needsUpdate = true;
   }
 
   // Overlay shapes from the server (placing ghost, selection ring): boxes and flat cylinders.
@@ -381,88 +372,144 @@ export function start({stage, base = '', onReady}) {
     for (const k of ['box', 'cylinder']) for (let i = used[k]; i < pool[k].length; i++) pool[k][i].visible = false;
   }
 
-  // ---------------------------------------------------------------- the Matrix room
-  // The playground's own walls (the 3D view only): a room around the whole floor, with green
-  // "digital rain" falling down dark walls. Nothing in the physics, and the robots' cameras
-  // never see it.
-  const RAIN = {PX: 528, CELL: 22, TILE: 2.2, FPS: 20};      // TILE: metres of wall one picture covers
-  const rainCanvas = document.createElement('canvas'); rainCanvas.width = rainCanvas.height = RAIN.PX;
-  const rainCtx = rainCanvas.getContext('2d');
-  const rainTex = new THREE.CanvasTexture(rainCanvas);
-  rainTex.wrapS = rainTex.wrapT = THREE.RepeatWrapping; rainTex.anisotropy = 8; rainTex.colorSpace = THREE.SRGBColorSpace;
-  const GLYPHS = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789:.=*+-<>¦|Z';
-  // Each column: a falling head with a fading tail, worked out from the clock (so it looks the
-  // same at any frame rate). The glyphs sit in a grid and a few change at each redraw.
-  const RCOLS = Math.floor(RAIN.PX / RAIN.CELL), RROWS = RCOLS, TAIL = 14;
-  const pick = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
-  const rainGrid = Array.from({length: RCOLS * RROWS}, pick);
-  const rainCols = Array.from({length: RCOLS}, () => ({speed: 5 + Math.random() * 9, off: Math.random() * 60, gap: 8 + Math.random() * 30}));
-  let rainT = 0;
-  const rainMaps = [];
-  function drawRain(t) {
-    if (t - rainT < 1 / RAIN.FPS) return;
-    rainT = t;
-    const c = rainCtx, C = RAIN.CELL;
-    c.clearRect(0, 0, RAIN.PX, RAIN.PX);
-    c.font = `bold ${C - 3}px "MS Gothic", "Hiragino Kaku Gothic ProN", "Noto Sans JP", monospace`;
-    c.textAlign = 'center'; c.textBaseline = 'top';
-    for (let k = 0; k < 6; k++) rainGrid[Math.floor(Math.random() * rainGrid.length)] = pick();
-    rainCols.forEach((col, i) => {
-      const cycle = RROWS + TAIL + col.gap, head = Math.floor((t * col.speed + col.off) % cycle);
-      for (let k = 0; k < TAIL; k++) {
-        const r = head - k;
-        if (r < 0 || r >= RROWS) continue;
-        c.fillStyle = k === 0 ? '#E4FFE9' : `rgba(0,220,80,${(1 - k / TAIL) * 0.95})`;
-        c.fillText(rainGrid[r * RCOLS + i], i * C + C / 2, r * C + 2);
-      }
-    });
-    for (const m of rainMaps) m.needsUpdate = true;     // each wall's copy of the picture
-  }
-  function rainMaterial() {
-    const map = rainTex.clone();                        // its own repeat, the same picture
-    rainMaps.push(map);
-    return new THREE.MeshBasicMaterial({map, transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide});
-  }
-  const ROOM = {HALF: 10, HEIGHT: 6};            // the floor plane is 20 m square (world.py)
-  function makeRoom() {
-    const g = new THREE.Group();
-    for (let k = 0; k < 4; k++) {
-      const plane = new THREE.PlaneGeometry(2 * ROOM.HALF, ROOM.HEIGHT);
-      const wall = new THREE.Group();
-      wall.add(new THREE.Mesh(plane, new THREE.MeshBasicMaterial({color: 0x020a05})));
-      const mat = rainMaterial(); mat.opacity = 1; mat.side = THREE.FrontSide;   // seen from inside only: zoomed out, you see in
-      mat.map.repeat.set(2 * ROOM.HALF / RAIN.TILE, ROOM.HEIGHT / RAIN.TILE);
-      const code = new THREE.Mesh(plane, mat); code.position.z = 0.01; wall.add(code);
-      // stand it up (z up), facing into the room, on the floor's edge
-      wall.rotation.set(Math.PI / 2, 0, 0); wall.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), k * Math.PI / 2 + Math.PI);
-      const a = k * Math.PI / 2 - Math.PI / 2;
-      wall.position.set(Math.cos(a) * ROOM.HALF, Math.sin(a) * ROOM.HALF, ROOM.HEIGHT / 2);
-      g.add(wall);
+  // Audience-only animated floor. The
+  // underlying MuJoCo floor, robot cameras and collision geometry are never changed.
+  // Distance-field light strips provide a bright core and soft halo without a full-screen
+  // bloom pass. Phong glass above the tracks adds a separate specular highlight layer.
+  const roomClock = {value: 0};
+  const automaton = createGridAutomaton();
+  const gridFlow = new THREE.DataTexture(automaton.edges, 33, 33, THREE.RGBAFormat, THREE.FloatType);
+  gridFlow.minFilter = gridFlow.magFilter = THREE.NearestFilter;
+  gridFlow.needsUpdate = true;
+  const roomVertex = `varying vec2 uvRoom;
+    void main() { uvRoom = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
+  const roomFragment = `
+    uniform float time;
+    uniform sampler2D gridFlow;
+    uniform float gridStep;
+    varying vec2 uvRoom;
+    float strip(float d, float w) {
+      return 1.0 - smoothstep(w, w + max(fwidth(d), 0.0015), abs(d));
     }
-    return g;
+    // A bright moving head followed by a multi-cell tail. The same age/distance
+    // relationship on successive edges keeps the ribbon continuous at intersections.
+    float ribbon(float position, float age) {
+      float behind = age - position;
+      float glow = behind >= 0.0 ? exp(-behind / 1.1) : exp(-pow(behind / 0.12, 2.0));
+      return glow * step(0.0, age) * (1.0 - smoothstep(3.5, 4.5, age));
+    }
+    void main() {
+      vec2 metres = uvRoom * 20.0;
+      vec3 cyan = vec3(0.20, 0.68, 0.86);
+      vec3 white = vec3(0.68, 0.93, 1.0);
+      vec3 light = vec3(0.0);
+      // Independent packets follow actual horizontal or vertical edges. No diagonal
+      // geometry, diagonal phase field, or animated fill inside the glass tiles.
+      vec2 grid = metres / 0.625;
+      vec2 joint = abs(grid - floor(grid + 0.5)) * 0.625;
+      vec4 horizontal = texture2D(gridFlow, (vec2(floor(grid.x), floor(grid.y + 0.5)) + 0.5) / 33.0);
+      vec4 vertical = texture2D(gridFlow, (vec2(floor(grid.x + 0.5), floor(grid.y)) + 0.5) / 33.0);
+      float hx = (time - horizontal.r) / gridStep;
+      float vy = (time - vertical.b) / gridStep;
+      float hp = horizontal.g > 0.0 ? fract(grid.x) : 1.0 - fract(grid.x);
+      float vp = vertical.a > 0.0 ? fract(grid.y) : 1.0 - fract(grid.y);
+      float hPulse = ribbon(hp, hx);
+      float vPulse = ribbon(vp, vy);
+      float hLine = strip(joint.y, 0.0018), vLine = strip(joint.x, 0.0018);
+      vec2 halo = exp(-joint * 180.0) * (1.0 - smoothstep(vec2(0.018), vec2(0.035), joint));
+      light = white * max(hLine, vLine) * 0.10 + cyan * max(halo.x, halo.y) * 0.025;
+      light += white * (hLine * hPulse + vLine * vPulse) * 1.5;
+      light += cyan * (halo.y * hPulse + halo.x * vPulse) * 0.36;
+      // Additive light over the shadow-receiving floor material.
+      gl_FragColor = vec4(light, 1.0);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }`;
+  const glassRoom = new THREE.Group(); glassRoom.name = 'Tron glass room';
+  function lightSurface(geo) {
+    return new THREE.Mesh(geo, new THREE.ShaderMaterial({
+      uniforms: {time: roomClock,
+        gridFlow: {value: gridFlow}, gridStep: {value: automaton.step}},
+      vertexShader: roomVertex, fragmentShader: roomFragment,
+      transparent: true, depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }));
   }
-  scene.add(makeRoom());
+  const floorLight = lightSurface(new THREE.PlaneGeometry(20, 20));
+  floorLight.position.z = 0.002; glassRoom.add(floorLight);
+  function glass(geo) {
+    return new THREE.Mesh(geo, new THREE.MeshPhongMaterial({color: 0x17303d,
+      specular: 0x87b5c6, shininess: 110, transparent: true, opacity: 0.10,
+      depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1}));
+  }
+  const floorGlass = glass(floorLight.geometry);
+  floorGlass.position.z = 0.006; floorGlass.receiveShadow = true; glassRoom.add(floorGlass);
+  glassRoom.visible = false; scene.add(glassRoom);
 
-  // Work boxes: around each robot at work, the space it works in. Nearly clear, with a thin
-  // outline that glows in and out (the robots' own cameras see solid walls there instead).
-  const zonesGroup = new THREE.Group(); scene.add(zonesGroup);
+  // Running stations: see-through light curtains with a white-cyan rim, soft edge
+  // spill and continuous perimeter trails. All distances are metres, so a larger
+  // station keeps the same thin rim instead of stretching it into an opaque band.
+  const zonesGroup = new THREE.Group(); zonesGroup.name = 'Station light curtains'; scene.add(zonesGroup);
   const zonePool = [];
-  const ZONE_COL = new THREE.Color(0x38BDF8);
+  const zoneVertex = `
+    varying vec3 localPos, faceNormal;
+    void main() {
+      localPos = position; faceNormal = normal;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }`;
+  const zoneFragment = `
+    uniform vec3 halfSize;
+    uniform float time, strength, phase;
+    varying vec3 localPos, faceNormal;
+    void main() {
+      vec3 p = localPos * halfSize;
+      vec3 gap = max(halfSize - abs(p), 0.0);
+      bool lid = abs(faceNormal.z) > 0.5;
+      float sideGap = abs(faceNormal.x) > 0.5 ? gap.y : gap.x;
+      float edge = lid ? min(gap.x, gap.y) : min(sideGap, gap.z);
+      float aa = max(fwidth(edge), 0.001);
+      float width = (lid || gap.z < sideGap) ? 0.009 : 0.003;
+      float core = 1.0 - smoothstep(width, width + aa, edge);
+      float halo = exp(-edge * 24.0);
+      // The top/bottom ribbons spill gently down the clear sides, like a light-cycle trail.
+      float curtain = lid ? 0.0 : exp(-gap.z * 8.0);
+      float hx = halfSize.x, hy = halfSize.y;
+      float perimeter = 4.0 * (hx + hy);
+      float route;
+      bool xSide = lid ? gap.x < gap.y : abs(faceNormal.x) > 0.5;
+      if (xSide) route = p.x > 0.0 ? 2.0 * hx + p.y + hy : 4.0 * hx + 2.0 * hy + hy - p.y;
+      else route = p.y < 0.0 ? p.x + hx : 2.0 * hx + 2.0 * hy + hx - p.x;
+      float behind = mod(time * 0.85 + phase - route + perimeter * 100.0, perimeter);
+      float trail = exp(-behind / 0.65);
+      float rim = lid ? halo : exp(-gap.z * 38.0);
+      float alpha = (lid ? 0.004 : 0.012) + core * 0.76 + halo * 0.14 + curtain * 0.14;
+      alpha += trail * rim * 0.32;
+      vec3 cyan = vec3(0.10, 0.72, 0.82), white = vec3(0.78, 0.98, 1.0);
+      vec3 color = mix(cyan, white, clamp(core + trail * rim * 0.5, 0.0, 1.0));
+      gl_FragColor = vec4(color, min(alpha * strength, 0.92));
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }`;
   function setZones(zones) {
     zones = zones || [];
     for (let i = 0; i < zones.length; i++) {
       let z = zonePool[i];
       if (!z) {
-        const box = new THREE.BoxGeometry(2, 2, 2);
-        const fill = new THREE.Mesh(box, new THREE.MeshBasicMaterial({color: ZONE_COL, transparent: true, opacity: 0.035, depthWrite: false, side: THREE.DoubleSide}));
-        const edges = new THREE.LineSegments(new THREE.EdgesGeometry(box), new THREE.LineBasicMaterial({color: ZONE_COL, transparent: true, opacity: 0.6, depthWrite: false}));
-        fill.renderOrder = edges.renderOrder = 5;
-        const g = new THREE.Group(); g.add(fill, edges); zonesGroup.add(g);
-        z = zonePool[i] = {g, fill, edges};
+        const material = new THREE.ShaderMaterial({
+          uniforms: {halfSize: {value: new THREE.Vector3(1, 1, 1)}, time: {value: 0},
+            strength: {value: 1}, phase: {value: i * 1.7}},
+          vertexShader: zoneVertex, fragmentShader: zoneFragment,
+          transparent: true, depthWrite: false, side: THREE.DoubleSide, forceSinglePass: true,
+        });
+        const fill = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), material);
+        fill.renderOrder = 5;
+        const g = new THREE.Group(); g.add(fill); zonesGroup.add(g);
+        z = zonePool[i] = {g, fill};
       }
       const d = zones[i];
       z.g.visible = true;
       z.g.scale.set(d.half[0], d.half[1], d.height / 2);
+      z.fill.material.uniforms.halfSize.value.copy(z.g.scale);
       z.g.position.set(d.pos[0], d.pos[1], d.height / 2);
       z.g.rotation.set(0, 0, d.yaw || 0);
       z.waiting = !!d.waiting;
@@ -470,12 +517,11 @@ export function start({stage, base = '', onReady}) {
     for (let i = zones.length; i < zonePool.length; i++) zonePool[i].g.visible = false;
   }
   function pulseZones(t) {
-    const k = 0.5 + 0.5 * Math.sin(t * 2.6);           // a slow breath, about 2.4 s
     for (const z of zonePool) {
       if (!z.g.visible) continue;
-      const lo = z.waiting ? 0.18 : 0.35, hi = z.waiting ? 0.35 : 0.95;
-      z.edges.material.opacity = lo + (hi - lo) * k;
-      z.fill.material.opacity = (z.waiting ? 0.015 : 0.03) + 0.03 * k;
+      const u = z.fill.material.uniforms;
+      u.time.value = t;
+      u.strength.value = z.waiting ? 0.38 : 0.90 + 0.06 * Math.sin(t * 0.8);
     }
   }
   V.setZones = setZones;
@@ -515,9 +561,10 @@ export function start({stage, base = '', onReady}) {
     camera.position.copy(pos); camera.lookAt(look);
     drawPreview(); drawGizmo();
     if (V.onFrame) V.onFrame();
-    if (floorFx) drawFloorFx(performance.now() / 1000);
+    roomClock.value = performance.now() / 1000;
+    if (glassRoom.visible && automaton.advance(roomClock.value)) gridFlow.needsUpdate = true;
     pulseZones(performance.now() / 1000);
-    drawRain(performance.now() / 1000);
+
     renderer.render(scene, camera);
     requestAnimationFrame(frame);
   }

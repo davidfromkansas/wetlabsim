@@ -58,6 +58,7 @@ def scene(m: mujoco.MjModel, version) -> dict:
                 t == "mesh" and _cube_mapped(m, int(m.geom_dataid[g]))):
             tex = -1
         geoms.append({
+            "name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g),
             "body": int(m.geom_bodyid[g]), "type": t, "size": _r(m.geom_size[g]),
             "pos": _r(m.geom_pos[g]), "quat": _r(m.geom_quat[g]), "rgba": _r(rgba, 3),
             "mesh": int(m.geom_dataid[g]) if t == "mesh" else -1, "tex": tex,
