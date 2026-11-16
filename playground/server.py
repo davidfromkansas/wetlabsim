@@ -64,7 +64,7 @@ TIME_LIMIT = 180.0     # seconds: a run's default time limit (Wet Lab sets its o
 # every run capped, the AI in a cloud sandbox, a few runs at once with a queue.
 PUBLIC = False
 FRONT = False               # the public site's front: hands out labs, lists live runs and past runs
-MAX_ACTIVE = 15             # runs at once on the public site; more wait in a queue
+MAX_ACTIVE = 15             # runs at once per account on the public site; more wait in a queue
 LOCAL_PARALLEL = 15         # Run task N times on this computer: robots side by side at most
 RUN_LAUNCHER = "local"      # where agents run (wetlabsim.launchers)
 AGENT_ROBOT_URL = ""        # the robot API as agents outside this machine reach it ("" = ROBOT_API_URL)
@@ -1100,8 +1100,9 @@ def _start_queued():
     """Start waiting runs while there is room (MAX_ACTIVE on the public site; no limit locally)."""
     with QUEUE_LOCK:
         while QUEUE:
-            # Runs at once: across every lab on the shared site, else on this server.
-            active = LABS.slots_in_use() if LABS.shared() else sum(1 for r in _all_runners() if r.active())
+            # Runs at once on this server: on the public site that is one account's Modal container,
+            # so the limit is per account.
+            active = sum(1 for r in _all_runners() if r.active())
             if PUBLIC and active >= MAX_ACTIVE:
                 return
             job = QUEUE.pop(0)
@@ -1109,7 +1110,7 @@ def _start_queued():
             st = sess.sim.station(job["station"]) if sess else None
             if st is None:
                 continue
-            slot = LABS.take_slot() if LABS.shared() else None
+            slot = None
             try:
                 r = sess.station_runner(job["station"])
                 r.slot = slot

@@ -39,10 +39,10 @@ Browser ──> Vercel website (web/, Next.js 16)          https://wetlab-playgr
               ▼
            Modal app "wetlab-playground" (hosting/app.py)
               • web(): the "front" (playground.server --front): hands out containers, live list
-              • lab(): ONE Modal container per signed-in account (max 10 at once), running
+              • lab(): ONE Modal container per signed-in account (max 30 at once), running
                 playground.server --public: physics, 3D stream, robot API, model proxy.
                 Closes after 5 min with no real activity ("Still there?" at 4 min).
-              • Each AI run (max 15 at once, site-wide) runs its CLI in its own Modal Sandbox that can reach
+              • Each AI run (max 15 at once per account) runs its CLI in its own Modal Sandbox that can reach
                 only the robot API tunnel + the model proxy (or Devin's servers). The user's own
                 API key stays in the container; the proxy adds it. (wetlabsim/launchers.py,
                 playground/model_proxy.py)
