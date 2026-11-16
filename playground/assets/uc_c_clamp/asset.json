@@ -1,0 +1,253 @@
+{
+ "source": "01_cast_iron_c_clamp_10_cm",
+ "usd": "model.usdc",
+ "mass": 2.1742,
+ "friction": 0.4,
+ "com": null,
+ "size": [
+  0.177,
+  0.072,
+  0.04
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "frame",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.0044,
+      0.0047,
+      0.0051,
+      1.0
+     ],
+     "roughness": 0.4399999976158142,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 3.494990991766185e-05,
+     "friction": 0.4,
+     "restitution": 0.02
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 0.00013362742212140149,
+     "friction": 0.4,
+     "restitution": 0.02
+    },
+    {
+     "mesh": "b0_col_2.obj",
+     "volume": 1.3869254884159918e-05,
+     "friction": 0.4,
+     "restitution": 0.02
+    },
+    {
+     "mesh": "b0_col_3.obj",
+     "volume": 1.9272759530547375e-05,
+     "friction": 0.4,
+     "restitution": 0.02
+    },
+    {
+     "mesh": "b0_col_4.obj",
+     "volume": 4.1453206951998044e-05,
+     "friction": 0.4,
+     "restitution": 0.02
+    },
+    {
+     "mesh": "b0_col_5.obj",
+     "volume": 6.890170336000958e-06,
+     "friction": 0.4,
+     "restitution": 0.02
+    },
+    {
+     "mesh": "b0_col_6.obj",
+     "volume": 1.1550708008392178e-05,
+     "friction": 0.4,
+     "restitution": 0.02
+    },
+    {
+     "mesh": "b0_col_7.obj",
+     "volume": 2.4712490123817722e-06,
+     "friction": 0.4,
+     "restitution": 0.02
+    }
+   ],
+   "mass": 1.894234,
+   "parent": null,
+   "root": true,
+   "pos": [
+    -0.0535,
+    0.002,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.0535,
+    0.002,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "handle_bar",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.587,
+      0.6038,
+      0.6383,
+      1.0
+     ],
+     "roughness": 0.14000000059604645,
+     "metallic": 0.949999988079071
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 3.313354830496838e-06,
+     "friction": 0.25,
+     "restitution": 0.05
+    }
+   ],
+   "mass": 0.027966,
+   "parent": 2,
+   "collide": false,
+   "joint": {
+    "name": "handle_spin",
+    "type": "hinge",
+    "drive": {
+     "damping": 0.01,
+     "max_force": 2.0
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    -0.0295,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.083,
+    0.008,
+    0.024,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "screw",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.587,
+      0.6038,
+      0.6383,
+      1.0
+     ],
+     "roughness": 0.14000000059604645,
+     "metallic": 0.949999988079071
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 2.5013721394405952e-05,
+     "friction": 0.25,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b2_col_1.obj",
+     "volume": 5.363327558165518e-06,
+     "friction": 0.25,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b2_col_2.obj",
+     "volume": 1.5101954755566785e-06,
+     "friction": 0.25,
+     "restitution": 0.05
+    }
+   ],
+   "mass": 0.252,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "screw_drive",
+    "type": "slide",
+    "range": [
+     0.0,
+     0.1
+    ],
+    "drive": {
+     "damping": 8.0,
+     "max_force": 1500.0
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     -1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.006,
+    0.024
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.0535,
+    0.008,
+    0.024,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

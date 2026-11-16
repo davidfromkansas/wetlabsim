@@ -1,0 +1,425 @@
+{
+ "source": "01_wall_mounted_fold_down_shower_seat_45_x_38_x_10",
+ "usd": "model.usdc",
+ "mass": 11.37205,
+ "friction": 0.5,
+ "com": null,
+ "size": [
+  0.45,
+  0.106,
+  0.446
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "hinge_bracket",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.3547,
+      0.3801,
+      0.42,
+      1.0
+     ],
+     "roughness": 0.30000001192092896,
+     "metallic": 0.8500000238418579
+    }
+   ],
+   "collision_parts": [
+    {
+     "shape": "box",
+     "size": [
+      0.206,
+      0.0035,
+      0.029
+     ],
+     "pos": [
+      0.0,
+      -0.0065,
+      0.029
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.0001672720005435346,
+     "friction": 0.3,
+     "restitution": 0.04
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.004,
+      0.015,
+      0.029
+     ],
+     "pos": [
+      -0.202,
+      -0.023,
+      0.029
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 1.391999994948509e-05,
+     "friction": 0.3,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_2.obj",
+     "volume": 3.5385813097623764e-06,
+     "friction": 0.3,
+     "restitution": 0.04
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.004,
+      0.015,
+      0.029
+     ],
+     "pos": [
+      0.202,
+      -0.023,
+      0.029
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 1.391999994948509e-05,
+     "friction": 0.3,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_4.obj",
+     "volume": 3.5385813097623743e-06,
+     "friction": 0.3,
+     "restitution": 0.04
+    }
+   ],
+   "mass": 1.597673,
+   "parent": 4,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    0.0,
+    0.053,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.053,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "seat_frame",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.3547,
+      0.3801,
+      0.42,
+      1.0
+     ],
+     "roughness": 0.30000001192092896,
+     "metallic": 0.8500000238418579
+    },
+    {
+     "mesh": "b1_vis_1.obj",
+     "rgba": [
+      0.0085,
+      0.0085,
+      0.01,
+      1.0
+     ],
+     "roughness": 0.8500000238418579,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 0.0001779430684794551,
+     "friction": 0.3,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b1_col_1.obj",
+     "volume": 9.352502610448687e-05,
+     "friction": 0.3,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b1_col_2.obj",
+     "volume": 9.352502610448681e-05,
+     "friction": 0.3,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b1_col_3.obj",
+     "volume": 9.074522471613437e-05,
+     "friction": 0.3,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b1_col_4.obj",
+     "volume": 1.0984583422165407e-05,
+     "friction": 0.3,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b1_col_5.obj",
+     "volume": 2.265376657401492e-06,
+     "friction": 0.3,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b1_col_6.obj",
+     "volume": 9.074522471613441e-05,
+     "friction": 0.3,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b1_col_7.obj",
+     "volume": 1.0984583422165404e-05,
+     "friction": 0.3,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b1_col_8.obj",
+     "volume": 2.265376657401492e-06,
+     "friction": 0.3,
+     "restitution": 0.04
+    }
+   ],
+   "mass": 1.594797,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "seat_hinge",
+    "type": "hinge",
+    "range": [
+     0.0,
+     1.570796
+    ],
+    "drive": {
+     "damping": 0.15,
+     "max_force": 60.0
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.0,
+    -0.028,
+    0.05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.025,
+    0.05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "seat_panel",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.8689,
+      0.8689,
+      0.8276,
+      1.0
+     ],
+     "roughness": 0.3799999952316284,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 0.0027240806052390245,
+     "friction": 0.5,
+     "restitution": 0.05
+    }
+   ],
+   "mass": 3.715488,
+   "parent": 1,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    0.0,
+    0.025,
+    0.05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.025,
+    0.05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "stop_bar",
+   "visuals": [
+    {
+     "mesh": "b3_vis_0.obj",
+     "rgba": [
+      0.3547,
+      0.3801,
+      0.42,
+      1.0
+     ],
+     "roughness": 0.30000001192092896,
+     "metallic": 0.8500000238418579
+    }
+   ],
+   "collision_parts": [
+    {
+     "shape": "box",
+     "size": [
+      0.19,
+      0.013,
+      0.006
+     ],
+     "pos": [
+      0.0,
+      -0.023,
+      0.018
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.00011856000198900697,
+     "friction": 0.3,
+     "restitution": 0.04
+    }
+   ],
+   "mass": 0.861694,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    0.0,
+    0.053,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.053,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "wall_plate",
+   "visuals": [
+    {
+     "mesh": "b4_vis_0.obj",
+     "rgba": [
+      0.3547,
+      0.3801,
+      0.42,
+      1.0
+     ],
+     "roughness": 0.30000001192092896,
+     "metallic": 0.8500000238418579
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b4_col_0.obj",
+     "volume": 0.0004796228818245547,
+     "friction": 0.3,
+     "restitution": 0.04
+    }
+   ],
+   "mass": 3.6024,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.0,
+    0.053,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.053,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

@@ -1,0 +1,231 @@
+{
+ "source": "06_kids_chaise_lounge_100_x_45_x_50_cm_in_white_pai",
+ "usd": "model.usdc",
+ "mass": 9.05229,
+ "friction": 0.52,
+ "com": null,
+ "size": [
+  1.0,
+  0.45,
+  0.499
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "pine_frame",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.8689,
+      0.8689,
+      0.8073,
+      1.0
+     ],
+     "roughness": 0.41999998688697815,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.8500000238418579,
+     "metallic": 0.0,
+     "texture": "b0_tex_1.png"
+    },
+    {
+     "mesh": "b0_vis_2.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.8500000238418579,
+     "metallic": 0.0,
+     "texture": "b0_tex_2.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.00043179853363437584,
+     "friction": 0.45,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 0.0008390681552411156,
+     "friction": 0.45,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b0_col_2.obj",
+     "volume": 0.0009480497276776369,
+     "friction": 0.45,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b0_col_3.obj",
+     "volume": 0.0006723447538252002,
+     "friction": 0.45,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b0_col_4.obj",
+     "volume": 0.00043179853363437584,
+     "friction": 0.45,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b0_col_5.obj",
+     "volume": 0.0008390681552411156,
+     "friction": 0.45,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b0_col_6.obj",
+     "volume": 0.0009480497276776369,
+     "friction": 0.45,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b0_col_7.obj",
+     "volume": 0.0006723447538252002,
+     "friction": 0.45,
+     "restitution": 0.05
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.4825,
+      0.196,
+      0.0075
+     ],
+     "pos": [
+      0.0025,
+      0.0,
+      0.1475
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.005674199570564937,
+     "friction": 0.45,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b0_col_9.obj",
+     "volume": 0.00032777987948506056,
+     "friction": 0.45,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b0_col_10.obj",
+     "volume": 0.00032777987948506056,
+     "friction": 0.45,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b0_col_11.obj",
+     "volume": 0.0003277798794850603,
+     "friction": 0.45,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b0_col_12.obj",
+     "volume": 0.0003277798794850603,
+     "friction": 0.45,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b0_col_13.obj",
+     "volume": 0.0034549276172740283,
+     "friction": 0.45,
+     "restitution": 0.05
+    }
+   ],
+   "mass": 7.903601,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "seat_panel",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.8276,
+      0.2633,
+      0.42,
+      1.0
+     ],
+     "roughness": 0.36000001430511475,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 0.011970443305031336,
+     "friction": 0.52,
+     "restitution": 0.08
+    }
+   ],
+   "mass": 1.148688,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

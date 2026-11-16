@@ -1,0 +1,46 @@
+{
+ "source": "01_standard_crowbar",
+ "usd": "model.usdc",
+ "mass": 1.28982,
+ "friction": 0.25,
+ "com": null,
+ "size": [
+  0.5955,
+  0.032,
+  0.1124
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.0044,
+    0.0045,
+    0.0049,
+    1.0
+   ],
+   "roughness": 0.6800000071525574,
+   "metallic": 0.4000000059604645
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00017269256264627113,
+   "friction": 0.25,
+   "restitution": 0.05
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 1.8690589954865178e-05,
+   "friction": 0.25,
+   "restitution": 0.05
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 2.2678094909334168e-05,
+   "friction": 0.25,
+   "restitution": 0.05
+  }
+ ]
+}

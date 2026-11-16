@@ -1,0 +1,188 @@
+{
+ "source": "01_classic_wooden_clothespin_7_5_x_1_x_1_5_cm_made",
+ "usd": "model.usdc",
+ "mass": 0.00341,
+ "friction": 0.55,
+ "com": null,
+ "size": [
+  0.075,
+  0.011,
+  0.0159
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "lower_jaw",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.7106,
+      0.5382,
+      0.2957,
+      1.0
+     ],
+     "roughness": 0.6200000047683716,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 2.6497494814253732e-06,
+     "friction": 0.55,
+     "restitution": 0.08
+    }
+   ],
+   "mass": 0.001622,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "pivot_pin",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.3547,
+      0.3801,
+      0.42,
+      1.0
+     ],
+     "roughness": 0.30000001192092896,
+     "metallic": 1.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 3.0979957071948236e-08,
+     "friction": 0.25,
+     "restitution": 0.1
+    }
+   ],
+   "mass": 0.000245,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "upper_jaw",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.7106,
+      0.5382,
+      0.2957,
+      1.0
+     ],
+     "roughness": 0.6200000047683716,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 1.7697088978009941e-06,
+     "friction": 0.55,
+     "restitution": 0.08
+    },
+    {
+     "mesh": "b2_col_1.obj",
+     "volume": 6.071444180102948e-07,
+     "friction": 0.55,
+     "restitution": 0.08
+    }
+   ],
+   "mass": 0.001547,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "jaw_hinge",
+    "type": "hinge",
+    "range": [
+     0.0,
+     0.349066
+    ],
+    "drive": {
+     "damping": 0.0005,
+     "max_force": 0.5
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     -1.0,
+     0.0
+    ]
+   },
+   "pos": [
+    -0.01,
+    0.0,
+    0.004
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.01,
+    0.0,
+    0.004,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

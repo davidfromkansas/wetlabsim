@@ -1,0 +1,52 @@
+{
+ "source": "01_single_scoop_lever",
+ "usd": "model.usdc",
+ "mass": 0.01929,
+ "friction": 0.5,
+ "com": null,
+ "size": [
+  0.151,
+  0.0338,
+  0.0075
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.0153,
+    0.0174,
+    0.022,
+    1.0
+   ],
+   "roughness": 0.41999998688697815,
+   "metallic": 0.0
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 1.2456197795243818e-05,
+   "friction": 0.5,
+   "restitution": 0.05
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 5.242102745656385e-06,
+   "friction": 0.5,
+   "restitution": 0.05
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 9.898098372111446e-07,
+   "friction": 0.5,
+   "restitution": 0.05
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 4.893480312899245e-06,
+   "friction": 0.5,
+   "restitution": 0.05
+  }
+ ]
+}

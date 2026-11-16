@@ -1,0 +1,1303 @@
+{
+ "source": "01_front_load_vented_dryer",
+ "usd": "model.usdc",
+ "mass": 41.10546,
+ "friction": 0.5,
+ "com": null,
+ "size": [
+  0.6,
+  0.76,
+  0.85
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "cabinet",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.8481,
+      0.8481,
+      0.8276,
+      1.0
+     ],
+     "roughness": 0.23999999463558197,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      0.5705,
+      0.5705,
+      0.5542,
+      1.0
+     ],
+     "roughness": 0.3799999952316284,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_2.obj",
+     "rgba": [
+      0.2957,
+      0.307,
+      0.3185,
+      1.0
+     ],
+     "roughness": 0.41999998688697815,
+     "metallic": 0.8500000238418579
+    },
+    {
+     "mesh": "b0_vis_3.obj",
+     "rgba": [
+      0.0134,
+      0.0134,
+      0.0153,
+      1.0
+     ],
+     "roughness": 0.8500000238418579,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_4.obj",
+     "rgba": [
+      0.233,
+      0.2429,
+      0.2633,
+      1.0
+     ],
+     "roughness": 0.3400000035762787,
+     "metallic": 0.8500000238418579
+    },
+    {
+     "mesh": "b0_vis_5.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.8500000238418579,
+     "metallic": 0.0,
+     "texture": "b0_tex_5.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.0016024253782218802,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 0.0018193376976513957,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_2.obj",
+     "volume": 0.0021158440708917347,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_3.obj",
+     "volume": 0.006027038985586997,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_4.obj",
+     "volume": 0.005844540549274764,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_5.obj",
+     "volume": 0.004302401986690615,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_6.obj",
+     "volume": 0.0014406824368387238,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_7.obj",
+     "volume": 0.00034932060093904676,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_8.obj",
+     "volume": 0.0002023761275964806,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_9.obj",
+     "volume": 0.002810744873696711,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_10.obj",
+     "volume": 0.0004414894719323925,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_11.obj",
+     "volume": 0.0008296307115040691,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_12.obj",
+     "volume": 0.0004554006582078241,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_13.obj",
+     "volume": 0.0001328710749387388,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_14.obj",
+     "volume": 0.0010305762348551111,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_15.obj",
+     "volume": 0.0004696232743625051,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_16.obj",
+     "volume": 0.00025579595866434817,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_17.obj",
+     "volume": 0.0002614571981453012,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_18.obj",
+     "volume": 6.192343853756658e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_19.obj",
+     "volume": 0.0008062528692567234,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_20.obj",
+     "volume": 0.0006980673840868316,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_21.obj",
+     "volume": 0.0001273193313413947,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_22.obj",
+     "volume": 0.0008665310895095354,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_23.obj",
+     "volume": 0.00020953379581293034,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.29,
+      0.011,
+      0.063
+     ],
+     "pos": [
+      0.0,
+      -0.301,
+      0.781
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.0016077599708843226,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_25.obj",
+     "volume": 1.8902900781918314e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_26.obj",
+     "volume": 1.4905724625934032e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_27.obj",
+     "volume": 1.2060726778264901e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_28.obj",
+     "volume": 1.3027628268275079e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_29.obj",
+     "volume": 1.388947895052466e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_30.obj",
+     "volume": 8.46607102225661e-06,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_31.obj",
+     "volume": 8.554270220096407e-06,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_32.obj",
+     "volume": 1.3141193816129746e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_33.obj",
+     "volume": 1.0614656715275868e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_34.obj",
+     "volume": 1.5957052241243297e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_35.obj",
+     "volume": 1.3252957810459536e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_36.obj",
+     "volume": 1.2277231613514727e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_37.obj",
+     "volume": 1.0355409103303832e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_38.obj",
+     "volume": 1.262378172923876e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_39.obj",
+     "volume": 1.7681940252266924e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_40.obj",
+     "volume": 7.78707142204587e-06,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_41.obj",
+     "volume": 7.682836315497778e-06,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_42.obj",
+     "volume": 4.952445662215428e-06,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_43.obj",
+     "volume": 4.894522706958853e-06,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_44.obj",
+     "volume": 6.472247532868811e-06,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_45.obj",
+     "volume": 4.154880515042003e-06,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_46.obj",
+     "volume": 3.87959277046299e-06,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_47.obj",
+     "volume": 3.5946808279154597e-06,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_48.obj",
+     "volume": 3.5392024848524333e-06,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_49.obj",
+     "volume": 4.306536201522105e-06,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_50.obj",
+     "volume": 4.250632463072981e-06,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_51.obj",
+     "volume": 4.303915039976611e-06,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_52.obj",
+     "volume": 4.666166629833427e-06,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_53.obj",
+     "volume": 3.81756337706249e-06,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_54.obj",
+     "volume": 5.150524852881973e-06,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_55.obj",
+     "volume": 2.1145490453208196e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_56.obj",
+     "volume": 2.11454904532082e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_57.obj",
+     "volume": 2.1145490453208196e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_58.obj",
+     "volume": 2.11454904532082e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_59.obj",
+     "volume": 2.596376688327511e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    },
+    {
+     "mesh": "b0_col_60.obj",
+     "volume": 2.596376688327511e-05,
+     "friction": 0.4,
+     "restitution": 0.04
+    }
+   ],
+   "mass": 29.905563,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.0,
+    0.02,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.02,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "dial",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.0174,
+      0.0196,
+      0.022,
+      1.0
+     ],
+     "roughness": 0.41999998688697815,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b1_vis_1.obj",
+     "rgba": [
+      0.5705,
+      0.5705,
+      0.5542,
+      1.0
+     ],
+     "roughness": 0.3799999952316284,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 3.99401098609324e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b1_col_1.obj",
+     "volume": 9.378759199092726e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.003,
+      0.003,
+      0.013
+     ],
+     "pos": [
+      0.0,
+      -0.036,
+      0.016
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 9.360000355839732e-07,
+     "friction": 0.5,
+     "restitution": 0.06
+    }
+   ],
+   "mass": 0.128096,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "dial_spin",
+    "type": "hinge",
+    "drive": {
+     "damping": 0.002,
+     "max_force": 0.60000002
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     -1.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.2,
+    -0.312,
+    0.782
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.2,
+    -0.292,
+    0.782,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "door",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.1329,
+      0.1473,
+      0.1626,
+      1.0
+     ],
+     "roughness": 0.46000000834465027,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b2_vis_1.obj",
+     "rgba": [
+      0.0946,
+      0.1128,
+      0.1329,
+      0.3
+     ],
+     "roughness": 0.05999999865889549,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b2_vis_2.obj",
+     "rgba": [
+      0.022,
+      0.022,
+      0.0245,
+      1.0
+     ],
+     "roughness": 0.800000011920929,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 0.0002869237110530267,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_1.obj",
+     "volume": 0.0004930964773641073,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_2.obj",
+     "volume": 0.00016789985865585359,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_3.obj",
+     "volume": 0.00021550376514515129,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_4.obj",
+     "volume": 0.00023159446008305133,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_5.obj",
+     "volume": 0.0004906280056365883,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_6.obj",
+     "volume": 0.00015066828975675005,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_7.obj",
+     "volume": 0.0001839705503976173,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_8.obj",
+     "volume": 0.0001959805184123884,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_9.obj",
+     "volume": 0.00027349502872402095,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_10.obj",
+     "volume": 0.00039389780891687564,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_11.obj",
+     "volume": 0.00024674780631584955,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_12.obj",
+     "volume": 0.00019881509506814303,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_13.obj",
+     "volume": 0.000235962914002749,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_14.obj",
+     "volume": 0.0005073550590954908,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_15.obj",
+     "volume": 8.857447039664103e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_16.obj",
+     "volume": 8.859235871843784e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_17.obj",
+     "volume": 0.00010881425503314313,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_18.obj",
+     "volume": 6.60898886729021e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_19.obj",
+     "volume": 5.689647803466374e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_20.obj",
+     "volume": 6.13337042728692e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_21.obj",
+     "volume": 6.047544015946729e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_22.obj",
+     "volume": 8.967207841317644e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_23.obj",
+     "volume": 6.596632845307423e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_24.obj",
+     "volume": 5.2316856798099895e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_25.obj",
+     "volume": 0.00010883359002195942,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_26.obj",
+     "volume": 6.60993187775727e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_27.obj",
+     "volume": 4.492206986120583e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_28.obj",
+     "volume": 0.00010499095011217616,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_29.obj",
+     "volume": 0.0009112101301383013,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_30.obj",
+     "volume": 1.881161311789594e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_31.obj",
+     "volume": 1.2827657094807601e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_32.obj",
+     "volume": 1.043052167437052e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_33.obj",
+     "volume": 8.475799514992105e-06,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_34.obj",
+     "volume": 1.1746531875759117e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_35.obj",
+     "volume": 1.6453046535877744e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_36.obj",
+     "volume": 1.0749656260263398e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_37.obj",
+     "volume": 1.1640231331129046e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_38.obj",
+     "volume": 8.664532169360007e-06,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_39.obj",
+     "volume": 1.6355470179949735e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_40.obj",
+     "volume": 1.0779915364831366e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_41.obj",
+     "volume": 8.077516473658172e-06,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_42.obj",
+     "volume": 1.1526941777068012e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_43.obj",
+     "volume": 1.3610791436373787e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_44.obj",
+     "volume": 1.2780626669863425e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "mesh": "b2_col_45.obj",
+     "volume": 1.858689195387278e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.017,
+      0.014,
+      0.008
+     ],
+     "pos": [
+      0.425,
+      -0.064,
+      0.062
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 1.5232002021432e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.017,
+      0.014,
+      0.008
+     ],
+     "pos": [
+      0.425,
+      -0.064,
+      -0.062
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 1.5232002021432e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.015,
+      0.011,
+      0.066
+     ],
+     "pos": [
+      0.425,
+      -0.087,
+      0.0
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 8.71199971085788e-05,
+     "friction": 0.5,
+     "restitution": 0.06
+    }
+   ],
+   "mass": 2.571513,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "door_hinge",
+    "type": "hinge",
+    "range": [
+     0.0,
+     1.832596
+    ],
+    "drive": {
+     "damping": 0.05,
+     "max_force": 20.0
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     -1.0
+    ]
+   },
+   "pos": [
+    -0.256,
+    -0.302,
+    0.42
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.256,
+    -0.282,
+    0.42,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "drum",
+   "visuals": [
+    {
+     "mesh": "b3_vis_0.obj",
+     "rgba": [
+      0.4624,
+      0.4919,
+      0.5225,
+      1.0
+     ],
+     "roughness": 0.2800000011920929,
+     "metallic": 0.8999999761581421
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b3_col_0.obj",
+     "volume": 0.000869385761517381,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_1.obj",
+     "volume": 0.0007833912984830255,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_2.obj",
+     "volume": 0.0005967698034611985,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_3.obj",
+     "volume": 1.0945537879572816e-05,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_4.obj",
+     "volume": 0.0007134709864768434,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_5.obj",
+     "volume": 0.0006717876154509148,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_6.obj",
+     "volume": 1.1743762031826526e-05,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_7.obj",
+     "volume": 0.0007820285725794559,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_8.obj",
+     "volume": 0.0006620911924095181,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_9.obj",
+     "volume": 1.4503700851049335e-05,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_10.obj",
+     "volume": 9.05745264624115e-06,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_11.obj",
+     "volume": 0.0005544063430298098,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_12.obj",
+     "volume": 0.000663234159958101,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_13.obj",
+     "volume": 0.0006544837087581155,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_14.obj",
+     "volume": 1.023604932392594e-05,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_15.obj",
+     "volume": 0.0006517005953960859,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_16.obj",
+     "volume": 0.0007445065324101519,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_17.obj",
+     "volume": 1.0274632549612633e-05,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_18.obj",
+     "volume": 0.0006590550384395446,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_19.obj",
+     "volume": 0.0005346096758643407,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_20.obj",
+     "volume": 0.0006310669105073816,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_21.obj",
+     "volume": 8.984640814237966e-06,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_22.obj",
+     "volume": 0.0008080368006608867,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_23.obj",
+     "volume": 0.00047783695525347364,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b3_col_24.obj",
+     "volume": 0.00012980669743073607,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.004,
+      0.24,
+      0.031
+     ],
+     "pos": [
+      0.0,
+      0.0,
+      0.155
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.00023808000209569896,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.004,
+      0.24,
+      0.031
+     ],
+     "pos": [
+      -0.134234,
+      0.0,
+      -0.0775
+     ],
+     "quat": [
+      -0.5,
+      0.0,
+      0.866025,
+      0.0
+     ],
+     "volume": 0.0002380800020956998,
+     "friction": 0.25,
+     "restitution": 0.1
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.004,
+      0.24,
+      0.031
+     ],
+     "pos": [
+      0.134234,
+      0.0,
+      -0.0775
+     ],
+     "quat": [
+      0.5,
+      0.0,
+      0.866025,
+      0.0
+     ],
+     "volume": 0.00023808000209569994,
+     "friction": 0.25,
+     "restitution": 0.1
+    }
+   ],
+   "mass": 8.500287,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "drum_spin",
+    "type": "hinge",
+    "drive": {
+     "damping": 0.02,
+     "max_force": 8.0
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     1.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.0,
+    -0.007,
+    0.42
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.013,
+    0.42,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

@@ -1,0 +1,112 @@
+{
+ "source": "01_wooden_chopsticks",
+ "usd": "model.usdc",
+ "mass": 0.01535,
+ "friction": 0.55,
+ "com": null,
+ "size": [
+  0.24,
+  0.024,
+  0.008
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "chopstick_a",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.7293,
+      0.5382,
+      0.2846,
+      1.0
+     ],
+     "roughness": 0.3199999928474426,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 1.1118378471058173e-05,
+     "friction": 0.55,
+     "restitution": 0.05
+    }
+   ],
+   "mass": 0.007673,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "chopstick_b",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.7293,
+      0.5382,
+      0.2846,
+      1.0
+     ],
+     "roughness": 0.3199999928474426,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 1.1118378471058173e-05,
+     "friction": 0.55,
+     "restitution": 0.05
+    }
+   ],
+   "mass": 0.007673,
+   "parent": null,
+   "free": true,
+   "pos": [
+    0.0,
+    0.008,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.008,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

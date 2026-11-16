@@ -1,0 +1,245 @@
+{
+ "source": "02_wooden_business_card_holder_11_x_7_x_4_cm_in_wal",
+ "usd": "model.usdc",
+ "mass": 0.17302,
+ "friction": 0.9,
+ "com": null,
+ "size": [
+  0.11,
+  0.07,
+  0.04
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "felt_pad",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.1697,
+      0.1648,
+      0.1602,
+      1.0
+     ],
+     "roughness": 0.949999988079071,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 3.8021898999767845e-05,
+     "friction": 0.9,
+     "restitution": 0.0
+    }
+   ],
+   "mass": 0.009479,
+   "parent": 1,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "holder_block",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.055,
+      0.0196,
+      0.01,
+      1.0
+     ],
+     "roughness": 0.47999998927116394,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 7.405413462515836e-06,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_1.obj",
+     "volume": 1.2903853304554196e-05,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_2.obj",
+     "volume": 8.546324289834354e-07,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_3.obj",
+     "volume": 5.456945601632149e-06,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_4.obj",
+     "volume": 8.935028908861341e-06,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_5.obj",
+     "volume": 1.3089321509456217e-06,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_6.obj",
+     "volume": 8.696509961377406e-06,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_7.obj",
+     "volume": 1.1603974717378112e-05,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_8.obj",
+     "volume": 5.907876893399439e-07,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_9.obj",
+     "volume": 1.4862133662857653e-06,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_10.obj",
+     "volume": 3.412391810719422e-05,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_11.obj",
+     "volume": 8.708074065295357e-06,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_12.obj",
+     "volume": 3.262251060511258e-05,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_13.obj",
+     "volume": 2.384395620704024e-07,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_14.obj",
+     "volume": 3.8004424771294286e-06,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_15.obj",
+     "volume": 1.3578897901216832e-07,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_16.obj",
+     "volume": 1.677822038840283e-05,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_17.obj",
+     "volume": 5.630444585327205e-05,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_18.obj",
+     "volume": 5.337422562702706e-07,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_19.obj",
+     "volume": 9.686944549376966e-06,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_20.obj",
+     "volume": 3.2592273902759335e-05,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_21.obj",
+     "volume": 5.329888926753056e-07,
+     "friction": 0.55,
+     "restitution": 0.05
+    },
+    {
+     "mesh": "b1_col_22.obj",
+     "volume": 3.666758140248468e-07,
+     "friction": 0.55,
+     "restitution": 0.05
+    }
+   ],
+   "mass": 0.163542,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

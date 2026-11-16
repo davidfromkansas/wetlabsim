@@ -1,0 +1,393 @@
+{
+ "source": "09_commercial_push_bar_door_handle_90_x_8_x_8_cm_in",
+ "usd": "model.usdc",
+ "mass": 7.36091,
+ "friction": 0.25,
+ "com": null,
+ "size": [
+  0.9,
+  0.08,
+  0.08
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "back_housing",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.448,
+      0.4624,
+      0.4919,
+      1.0
+     ],
+     "roughness": 0.3799999952316284,
+     "metallic": 1.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "shape": "box",
+     "size": [
+      0.4425,
+      0.002,
+      0.04
+     ],
+     "pos": [
+      -0.0075,
+      0.002,
+      0.0
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.0002832000040695068,
+     "friction": 0.25,
+     "restitution": 0.05
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.4425,
+      0.028,
+      0.0015
+     ],
+     "pos": [
+      -0.0075,
+      0.032,
+      0.0385
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.00014868000427946447,
+     "friction": 0.25,
+     "restitution": 0.05
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.4425,
+      0.028,
+      0.0015
+     ],
+     "pos": [
+      -0.0075,
+      0.032,
+      -0.0385
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 0.00014868000427946447,
+     "friction": 0.25,
+     "restitution": 0.05
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.003,
+      0.028,
+      0.037
+     ],
+     "pos": [
+      -0.447,
+      0.032,
+      0.0
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 2.4864001304030398e-05,
+     "friction": 0.25,
+     "restitution": 0.05
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.017,
+      0.028,
+      0.0095
+     ],
+     "pos": [
+      0.418,
+      0.032,
+      0.0275
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 3.617600191938873e-05,
+     "friction": 0.25,
+     "restitution": 0.05
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.017,
+      0.028,
+      0.0095
+     ],
+     "pos": [
+      0.418,
+      0.032,
+      -0.0275
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 3.617600191938873e-05,
+     "friction": 0.25,
+     "restitution": 0.05
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.017,
+      0.0015,
+      0.018
+     ],
+     "pos": [
+      0.418,
+      0.0055,
+      0.0
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 3.672000073403109e-06,
+     "friction": 0.25,
+     "restitution": 0.05
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.017,
+      0.0085,
+      0.018
+     ],
+     "pos": [
+      0.418,
+      0.0515,
+      0.0
+     ],
+     "quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "volume": 2.0808001365899996e-05,
+     "friction": 0.25,
+     "restitution": 0.05
+    }
+   ],
+   "mass": 5.51271,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.0,
+    -0.04,
+    0.04
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    -0.04,
+    0.04,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "latch_bolt",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.587,
+      0.6038,
+      0.6383,
+      1.0
+     ],
+     "roughness": 0.1599999964237213,
+     "metallic": 1.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 2.6490250459674592e-05,
+     "friction": 0.15,
+     "restitution": 0.02
+    },
+    {
+     "mesh": "b1_col_1.obj",
+     "volume": 3.8878566836089896e-05,
+     "friction": 0.15,
+     "restitution": 0.02
+    }
+   ],
+   "mass": 0.4239,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "bolt_slide",
+    "type": "slide",
+    "range": [
+     0.0,
+     0.015
+    ],
+    "drive": {
+     "stiffness": 2500.0,
+     "damping": 1.0,
+     "max_force": 400.0
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     -1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "pos": [
+    0.39,
+    0.025,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.39,
+    -0.015,
+    0.04,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "push_pad",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      0.2738,
+      0.2957,
+      0.3303,
+      1.0
+     ],
+     "roughness": 0.4399999976158142,
+     "metallic": 1.0
+    },
+    {
+     "mesh": "b2_vis_1.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.8500000238418579,
+     "metallic": 0.0,
+     "texture": "b2_tex_1.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 0.0019427155079072443,
+     "friction": 0.15,
+     "restitution": 0.02
+    }
+   ],
+   "mass": 1.424304,
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "pad_slide",
+    "type": "slide",
+    "range": [
+     0.0,
+     0.02
+    ],
+    "drive": {
+     "stiffness": 900.0,
+     "damping": 3.0,
+     "max_force": 250.0
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": [
+     0.0,
+     -1.0,
+     0.0
+    ]
+   },
+   "pos": [
+    -0.045,
+    0.0645,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -0.045,
+    0.0245,
+    0.04,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

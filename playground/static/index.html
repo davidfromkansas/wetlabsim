@@ -1042,7 +1042,7 @@ function renderItems() {
   for (const it of list) {
     const c = document.createElement('button'); c.className = 'card' + (S.armed === it.id ? ' armed' : ''); c.draggable = true;
     c.title = 'Drag onto the scene, or click and then click in the scene';
-    c.innerHTML = `<div class="th"><img src="${it.thumb}" alt="">${it.source ? `<span class="src" title="Source: ${it.source}">${it.source}</span>` : ''}</div><div class="tx"><div class="n">${it.label}</div><div class="s">${fmtSize(it.size)}${it.mass ? ' · ' + fmtMass(it.mass) : ''}</div></div>`;
+    c.innerHTML = `<div class="th"><img src="${it.thumb}" alt="" loading="lazy">${it.source ? `<span class="src" title="Source: ${it.source}">${it.source}</span>` : ''}</div><div class="tx"><div class="n">${it.label}</div><div class="s">${fmtSize(it.size)}${it.mass ? ' · ' + fmtMass(it.mass) : ''}</div></div>`;
     c.ondragstart = (e) => { document.body.classList.add('dragging'); e.dataTransfer.setData('text/plain', it.id); e.dataTransfer.effectAllowed = 'copy'; S.dragItem = it; const img = new Image(); img.src = it.thumb; e.dataTransfer.setDragImage(c.querySelector('img'), 30, 30); };
     c.ondragend = () => { document.body.classList.remove('dragging'); S.dragItem = null; hideTag(); api('/pg/ghost/clear', {}); };
     c.onclick = () => { S.armed = S.armed === it.id ? null : it.id; renderItems(); $('libhint').textContent = S.armed ? `Now click in the scene to place the ${it.label.toLowerCase()}. Esc to cancel.` : LIBHINT; };
