@@ -76,12 +76,12 @@ const css = `
   .bigcam{width:100%!important;border-radius:0}
   .bigcam img{max-height:70dvh}
   /* the robot panel: a bottom sheet */
-  html body #right,html body.rclosed #right{position:fixed!important;left:0;right:0;bottom:0;width:auto!important;display:flex!important;flex-direction:column!important;z-index:50;background:#fff!important;border-radius:22px 22px 0 0;box-shadow:0 -8px 30px -10px rgba(17,24,39,.3),0 0 0 1px rgba(17,24,39,.06)!important;padding-bottom:env(safe-area-inset-bottom);transition:height 260ms cubic-bezier(.23,1,.32,1),transform 260ms cubic-bezier(.23,1,.32,1)!important;max-height:calc(100dvh - 52px)}
+  html body #right,html body.rclosed #right{position:fixed!important;left:0;right:0;bottom:0;width:auto!important;display:flex!important;flex-direction:column!important;z-index:50;background:#fff!important;border-radius:22px 22px 0 0;box-shadow:0 -8px 30px -10px rgba(17,24,39,.3),0 0 0 1px rgba(17,24,39,.06)!important;padding-bottom:env(safe-area-inset-bottom);transition:height 500ms cubic-bezier(.32,.72,0,1),transform 500ms cubic-bezier(.32,.72,0,1)!important;max-height:calc(100dvh - 52px)}
   body.m-half #right{height:56dvh}
   body.m-full #right{height:calc(100dvh - 52px)}
   html body.m-drag #right{transition:none!important}
   body.m-hide #right,body.m-fs #right{transform:translateY(110%)}
-  #mGrab{flex:none;height:22px;display:flex!important;align-items:center;justify-content:center;touch-action:none;cursor:grab;border:0;background:transparent;width:100%;padding:0}
+  #mGrab{flex:none;height:26px;display:flex!important;align-items:center;justify-content:center;touch-action:none;cursor:grab;border:0;background:transparent;width:100%;padding:0}
   #mGrab i{width:38px;height:5px;border-radius:3px;background:#D1D5DB}
   #rrail{width:auto!important;height:auto!important;flex:none;flex-direction:row!important;justify-content:flex-start;align-items:center;gap:10px!important;padding:2px 14px 8px!important;overflow-x:auto!important;overflow-y:hidden!important;background:transparent!important;border:0!important;scrollbar-width:none}
   #rrail::-webkit-scrollbar{display:none}
@@ -90,12 +90,12 @@ const css = `
   #rtip{display:none!important}
   html body #rmain,html body.rclosed #rmain{width:auto!important;flex:1;min-height:0;display:flex;flex-direction:column;padding:0!important;margin:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important}
   html body #rinner{width:auto!important;flex:1;min-height:0;height:auto!important;border-radius:0!important;box-shadow:none!important;background:transparent!important}
-  #rtitle{padding:2px 14px 8px!important}
+  #rtitle{padding:2px 14px 8px!important;touch-action:none}
   #mTabObj[hidden]{display:none!important}
   #mRMore{width:40px;height:40px;border:0;background:transparent;border-radius:10px;align-items:center;justify-content:center;padding:0;color:#374151;flex:none}
   .sidetabs{overflow-x:auto;scrollbar-width:none;margin:0 12px 6px!important}
   .sidetabs::-webkit-scrollbar{display:none}
-  .sidetabs button{height:34px!important;font-size:14px!important;flex:1 0 auto}
+  .sidetabs button{height:40px!important;font-size:14px!important;flex:1 0 auto}
   #feed{padding:10px 14px!important}
   .taskcard{margin:0 10px 10px!important;border-radius:16px!important}
   .taskcard textarea{min-height:48px!important}
@@ -106,7 +106,7 @@ const css = `
   body.m-peek #chatpane{display:flex!important;flex:none}
   html body.m-peek #rinner,html body.m-peek #rmain{flex:none}
   /* sessions: a drawer from the left */
-  #sessNav,#sessNav.closed{position:fixed!important;left:0;top:0;bottom:0;width:min(320px,86vw)!important;z-index:70;transform:translateX(-105%);transition:transform 260ms cubic-bezier(.23,1,.32,1);box-shadow:12px 0 30px -12px rgba(17,24,39,.35);border-right:0!important}
+  #sessNav,#sessNav.closed{position:fixed!important;left:0;top:0;bottom:0;width:min(320px,86vw)!important;z-index:70;transform:translateX(-105%);transition:transform 500ms cubic-bezier(.32,.72,0,1);touch-action:pan-y;box-shadow:12px 0 30px -12px rgba(17,24,39,.35);border-right:0!important}
   body.m-nav #sessNav{transform:none}
   #sessNav .in{width:100%!important;padding-top:calc(14px + env(safe-area-inset-top))!important;padding-bottom:calc(14px + env(safe-area-inset-bottom))!important}
   #navClose{width:44px;height:44px}
@@ -116,7 +116,7 @@ const css = `
   .mlinks{flex-direction:column;gap:2px}
   .mlinks button,.mlinks a{display:flex;align-items:center;gap:12px;height:46px;padding:0 10px;border-radius:10px;border:0;background:transparent;font:500 15px Inter,sans-serif;color:#111827;text-decoration:none;text-align:left;width:100%}
   /* the object library: a tall sheet */
-  #objDrawer{position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:calc(64px + env(safe-area-inset-top))!important;width:auto!important;border-radius:22px 22px 0 0!important;z-index:72!important;transform:translateY(105%)!important;opacity:1!important;transition:transform 260ms cubic-bezier(.23,1,.32,1)!important;padding-bottom:env(safe-area-inset-bottom)}
+  #objDrawer{position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:calc(64px + env(safe-area-inset-top))!important;width:auto!important;border-radius:22px 22px 0 0!important;z-index:72!important;transform:translateY(105%)!important;opacity:1!important;transition:transform 500ms cubic-bezier(.32,.72,0,1)!important;padding-bottom:env(safe-area-inset-bottom)}
   body.objopen #objDrawer{transform:none!important;pointer-events:auto}
   #objTab{display:none!important}
   #objDrawer .tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
@@ -161,8 +161,30 @@ const css = `
   body.m-fs.m-fsui #mTop,body.m-fs.m-fsui #rcol{display:flex!important}
   body.m-fs.m-fsui #mFsX{top:calc(64px + env(safe-area-inset-top));opacity:1}
   body.m-placing #mFloat,body.m-placing .pips{display:none!important}
+  /* the sheet follows the keyboard (browsers that don't resize the page for it) */
+  html body #right{bottom:var(--kb,0px)}
+  /* touch basics */
+  button,a,[role=button],[role=tab],.rbot,.radd,#objDrawer .card{touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+  #feed,#items,#filespane,#datapane,#resultspane,#sessNav .in,#rpk,#addModal .am,#runpop .card,#rpage,#gal,#objPanel,#ss,#ss *,#objDrawer,#sgCard{overscroll-behavior:contain}
+  #rrail{touch-action:pan-x}
+  #sessNav,#sessNav *{touch-action:pan-y!important}
+  /* fingers need 44 px */
+  #rSwap{height:40px!important;padding:0 12px!important}
+  .taskcard .step button{width:40px!important;height:40px!important}
+  #objX,#rpk .x,#gal .gx{width:44px!important;height:44px!important}
+  .infobtn{position:relative}.infobtn::before{content:"";position:absolute;inset:-11px}
+  /* drag handles on the sheets */
+  #objDrawer .dh,#objPanel .ohd,#rpk .ph,#mAdd{touch-action:none}
+  #objDrawer .dh::before,#rpk .ph::before{content:"";position:absolute;left:50%;top:7px;width:38px;height:5px;margin-left:-19px;border-radius:3px;background:#D1D5DB}
+  #objDrawer .dh,#rpk .ph{position:relative;padding-top:18px!important}
+  /* small things come in quickly */
+  #mAdd:not([hidden]){animation:mUp 220ms cubic-bezier(.23,1,.32,1)}
+  body.m-nav #mScrim,body.m-addopen #mScrim{animation:mFade 220ms ease-out}
+  @keyframes mUp{from{transform:translateY(24px);opacity:0}}
+  @keyframes mFade{from{opacity:0}}
 }
-@media (max-width:760px) and (prefers-reduced-motion:reduce){#right,#sessNav,#objDrawer{transition:none!important}}
+@media (max-width:760px) and (pointer:coarse){html{-webkit-text-size-adjust:100%;text-size-adjust:100%}}
+@media (max-width:760px) and (prefers-reduced-motion:reduce){#right,#sessNav,#objDrawer{transition:none!important}#mAdd,#mScrim{animation:none!important}}
 `;
 document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
 
@@ -190,28 +212,89 @@ $('newSession').insertAdjacentHTML('afterend', `<div class="mlinks m-only"><a id
   + `<button id="mSet">${svg(IC.set)}Settings</button></div>`);
 
 // ---- the bottom sheet: small, half, full
-let level = 'peek';
+// Follows the finger 1:1, then lands on the nearest height, counting where a flick would carry it.
+const project = (v) => (v / 1000) * 0.998 / (1 - 0.998);          // px a flick travels at v px/s
+const rubber = (o, d) => (o * d * 0.55) / (d + 0.55 * Math.abs(o)); // resistance past the ends
+let level = 'peek', peekH = 0;
 function setLevel(l) {
-  level = l; body.style.removeProperty('--mh'); right.style.height = '';
+  level = l; right.style.height = '';
   body.classList.toggle('m-peek', l === 'peek'); body.classList.toggle('m-half', l === 'half'); body.classList.toggle('m-full', l === 'full');
+  if (l === 'peek') setTimeout(() => { if (level === 'peek' && !body.classList.contains('m-drag') && right.offsetHeight > 80) peekH = right.offsetHeight; }, 560);
 }
 setLevel('peek');
 (() => {
-  const g = $('mGrab'); let d = null;
-  g.addEventListener('pointerdown', (e) => { if (!M()) return; d = {y: e.clientY, h: right.offsetHeight, moved: false}; g.setPointerCapture(e.pointerId); });
-  g.addEventListener('pointermove', (e) => {
-    if (!d) return; const dy = e.clientY - d.y; if (Math.abs(dy) > 6) d.moved = true; if (!d.moved) return;
-    body.classList.add('m-drag'); body.classList.remove('m-peek'); body.classList.add('m-half');
-    right.style.height = Math.max(140, Math.min(innerHeight - 52, d.h - dy)) + 'px';
+  let d = null;
+  const start = (e) => {
+    if (!M() || (e.pointerType === 'mouse' && e.button)) return;
+    const onGrab = !!e.target.closest('#mGrab');
+    if (!onGrab && e.target.closest('button, input, textarea, select, a, [contenteditable="true"], h2, h3')) return;
+    d = {y: e.clientY, h: right.offsetHeight, id: e.pointerId, moved: false, onGrab, pts: [{y: e.clientY, t: e.timeStamp}]};
+  };
+  const move = (e) => {
+    if (!d || e.pointerId !== d.id) return;
+    const dy = e.clientY - d.y;
+    if (!d.moved) { if (Math.abs(dy) < 6) return; d.moved = true; try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {} body.classList.add('m-drag'); body.classList.remove('m-peek'); body.classList.add('m-half'); }
+    const lo = peekH || 300, hi = innerHeight - 52;
+    let h = d.h - dy;
+    if (h > hi) h = hi + rubber(h - hi, innerHeight);
+    if (h < lo) h = lo - rubber(lo - h, innerHeight);
+    right.style.height = h + 'px';
+    d.pts.push({y: e.clientY, t: e.timeStamp}); if (d.pts.length > 5) d.pts.shift();
+  };
+  const end = (e) => {
+    if (!d || e.pointerId !== d.id) return; const was = d; d = null; body.classList.remove('m-drag');
+    if (!was.moved) { if (was.onGrab && e.type === 'pointerup') setLevel(level === 'peek' ? 'half' : level === 'half' ? 'full' : 'peek'); return; }
+    const a = was.pts[0], b = was.pts[was.pts.length - 1], dt = Math.max(1, b.t - a.t);
+    const v = (b.y - a.y) / dt * 1000;                       // + is down
+    const aim = right.offsetHeight - project(v);
+    const snaps = [['peek', peekH || 300], ['half', innerHeight * 0.56], ['full', innerHeight - 52]];
+    snaps.sort((x, y) => Math.abs(x[1] - aim) - Math.abs(y[1] - aim));
+    setLevel(snaps[0][0]);
+  };
+  for (const el of [$('mGrab'), $('rtitle')]) {
+    el.addEventListener('pointerdown', start); el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+  }
+})();
+
+// ---- swipe a drawer or sheet away (the way it came in): far enough, or a quick flick
+function swipeAway(el, handle, dir, close, scrim) {
+  let d = null;
+  const x = dir === 'left';
+  const size = () => (x ? el.offsetWidth : el.offsetHeight) || 1;
+  const put = (o) => { if (o == null) el.style.removeProperty('transform'); else el.style.setProperty('transform', x ? `translateX(${-o}px)` : `translateY(${o}px)`, 'important'); };
+  handle.addEventListener('pointerdown', (e) => {
+    if (!M() || (e.pointerType === 'mouse' && e.button)) return;
+    d = {p: x ? e.clientX : e.clientY, q: x ? e.clientY : e.clientX, id: e.pointerId, on: false, o: 0, pts: []};
+  });
+  handle.addEventListener('pointermove', (e) => {
+    if (!d || e.pointerId !== d.id) return;
+    const along = x ? d.p - e.clientX : e.clientY - d.p, across = Math.abs((x ? e.clientY : e.clientX) - d.q);
+    if (!d.on) {
+      if (across > 10 && across > Math.abs(along)) { d = null; return; }
+      if (Math.abs(along) < 8) return;
+      d.on = true; try { handle.setPointerCapture(e.pointerId); } catch (_) {}
+      el.style.setProperty('transition', 'none', 'important');
+    }
+    d.o = along >= 0 ? along : -rubber(-along, size());
+    put(d.o); if (scrim) scrim.style.opacity = String(1 - Math.max(0, d.o) / size());
+    d.pts.push({o: along, t: e.timeStamp}); if (d.pts.length > 5) d.pts.shift();
   });
   const end = (e) => {
-    if (!d) return; const was = d; d = null; body.classList.remove('m-drag');
-    if (!was.moved) { setLevel(level === 'peek' ? 'half' : level === 'half' ? 'full' : 'peek'); return; }
-    const h = right.offsetHeight, H = innerHeight;
-    setLevel(h < H * 0.38 ? 'peek' : h < H * 0.75 ? 'half' : 'full');
+    if (!d || e.pointerId !== d.id) return; const was = d; d = null;
+    if (!was.on) return;
+    const a = was.pts[0], b = was.pts[was.pts.length - 1];
+    const v = a && b && b.t > a.t ? (b.o - a.o) / (b.t - a.t) * 1000 : 0;
+    el.style.removeProperty('transition'); if (scrim) scrim.style.opacity = '';
+    if (was.o > size() * 0.4 || v > 500) close();
+    put(null);
+    // a drag that moved is not a tap on whatever is under the finger
+    const stop = (c) => { c.stopPropagation(); c.preventDefault(); };
+    handle.addEventListener('click', stop, {capture: true, once: true}); setTimeout(() => handle.removeEventListener('click', stop, true), 0);
   };
-  g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
-})();
+  handle.addEventListener('pointerup', end); handle.addEventListener('pointercancel', end);
+}
+
 // a tab tap on the small sheet opens it to half
 right.querySelector('.sidetabs').addEventListener('click', (e) => { if (M() && e.target.closest('button') && level === 'peek') setLevel('half'); }, true);
 $('mTabObj').onclick = () => { if (typeof setObjects === 'function') setObjects(true); };
@@ -242,7 +325,7 @@ $('mAddScene').onclick = () => { showAdd(false); const b = $('sgBar'); if (b) b.
   $('rrail').addEventListener('touchstart', (e) => {
     const b = e.target.closest('.rbot'); if (!b || !M()) return;
     const p = e.touches[0];
-    t = setTimeout(() => { t = null; b.dispatchEvent(new MouseEvent('contextmenu', {bubbles: true, cancelable: true, clientX: p.clientX, clientY: p.clientY})); }, 500);
+    t = setTimeout(() => { t = null; try { navigator.vibrate && navigator.vibrate(10); } catch (_) {} b.dispatchEvent(new MouseEvent('contextmenu', {bubbles: true, cancelable: true, clientX: p.clientX, clientY: p.clientY})); }, 500);
   }, {passive: true});
   const stop = () => { clearTimeout(t); t = null; };
   $('rrail').addEventListener('touchend', stop); $('rrail').addEventListener('touchmove', stop, {passive: true});
@@ -301,7 +384,7 @@ $('mPlGo').onclick = async () => {
       // placing an object: no mouse, just a preview where the finger lifts
       if (!S.armed) send('mousedown', t);
     } else if (e.touches.length === 2) {
-      if (one && !S.armed) send('mouseup', {clientX: one.x, clientY: one.y}, window);   // end the one-finger turn
+      if (one && !S.armed) send('mouseup', {clientX: one.x, clientY: one.y}, window);   // not on the scene: ends the turn without a tap   // end the one-finger turn
       one = null; two = mid(e.touches[0], e.touches[1]);
     }
   }, {passive: false});
@@ -321,7 +404,7 @@ $('mPlGo').onclick = async () => {
     const t = [...e.touches].find(x => x.identifier === one.id); if (!t) return;
     if (Math.abs(t.clientX - one.x) + Math.abs(t.clientY - one.y) > 6) one.moved = true;
     if (S.armed) { if (one.moved) { const dx = t.clientX - one.x, dy = t.clientY - one.y; one.x = t.clientX; one.y = t.clientY; camera({azimuth: -dx * 0.3, elevation: -dy * 0.3}); } return; }
-    send('mousemove', t, window);
+    send('mousemove', t);   // on the scene (it reaches the page's window listener too): the page checks the target
   }, {passive: false});
   const end = (e) => {
     if (!M()) return;
@@ -331,15 +414,70 @@ $('mPlGo').onclick = async () => {
     const was = one; one = null;
     if (S.armed) { if (!was.moved) plTap(uv(fake(t))); return; }
     if (body.classList.contains('m-fs') && !was.moved) fsPeek();
-    send('mouseup', t, window);
+    send('mouseup', t);
   };
   view.addEventListener('touchend', end); view.addEventListener('touchcancel', end);
 })();
+
+// ---- swipes to close
+swipeAway($('sessNav'), $('sessNav'), 'left', () => nav(false), $('mScrim'));
+swipeAway($('objDrawer'), $('objDrawer').querySelector('.dh'), 'down', () => setObjects(false));
+swipeAway($('objPanel'), $('objPanel').querySelector('.ohd'), 'down', () => $('objX').click());
+swipeAway($('mAdd'), $('mAdd'), 'down', () => showAdd(false), $('mScrim'));
+// the robot picker is rebuilt each time it opens: listen on the picker itself, start only on its header
+(() => {
+  const pk = $('rpk'); if (!pk) return;
+  let armed = false;
+  pk.addEventListener('pointerdown', (e) => { armed = !!e.target.closest('.ph') && !e.target.closest('button'); }, true);
+  swipeAway(pk, pk, 'down', () => closePicker());
+  pk.addEventListener('pointermove', (e) => { if (!armed) e.stopImmediatePropagation(); }, true);
+})();
+
+// ---- the keyboard: keep the sheet above it where the browser doesn't move the page
+if (window.visualViewport) {
+  const vv = window.visualViewport;
+  const kb = () => { const k = Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop)); document.documentElement.style.setProperty('--kb', (M() && k > 60 ? k : 0) + 'px'); };
+  vv.addEventListener('resize', kb); vv.addEventListener('scroll', kb);
+}
+
+// ---- touch screens: hover looks stay off (a tap would leave them stuck on)
+// Wraps every :hover rule in "(hover:hover) and (pointer:fine)", only on devices with no hover.
+if (matchMedia('(hover:none)').matches) {
+  const gate = (list, owner) => {
+    for (let i = list.length - 1; i >= 0; i--) {
+      const r = list[i];
+      if (r.cssRules && r.conditionText !== undefined) { if (!/hover\s*:\s*hover/.test(r.conditionText)) gate(r.cssRules, r); continue; }
+      if (r.selectorText && r.selectorText.includes(':hover')) {
+        const t = r.cssText; owner.deleteRule(i);
+        try { owner.insertRule(`@media (hover:hover) and (pointer:fine){${t}}`, i); } catch (_) {}
+      }
+    }
+  };
+  const all = () => { for (const sh of document.styleSheets) { try { gate(sh.cssRules, sh); } catch (_) {} } };
+  all(); addEventListener('load', all);
+  new MutationObserver((ms) => { if (ms.some(m => [...m.addedNodes].some(n => n.tagName === 'STYLE' || n.tagName === 'LINK'))) setTimeout(all, 0); })
+    .observe(document.head, {childList: true});
+}
+
+// ---- words: "tap" on phones, not "click"
+const TAPWORDS = [
+  [/Press “\+ Station”, then click the floor to place it\./, 'Tap + below to add a robot, then tap the floor to place it.'],
+  [/Drag an object onto the scene, or click it and then click where it should go\./, 'Tap an object, then tap the scene where it should go.'],
+  [/ R turns it, Esc cancels\./, ''], [/\bclick\b/g, 'tap'], [/\bClick\b/g, 'Tap'],
+];
+function tapWords() {
+  for (const el of document.querySelectorAll('#emptyMsg, #libhint, #rpk .ph p, #hintTag, #droptag, #addModal p')) {
+    if (el.children.length) continue;
+    let t = el.textContent, n = t; for (const [a, b] of TAPWORDS) n = n.replace(a, b);
+    if (n !== t) el.textContent = n;
+  }
+}
 
 // ---- keep the phone pieces in step with the page
 let lastArmed = null;
 function sync() {
   if (!M()) return;
+  tapWords();
   const n = ($('sessName').textContent || S.sessName || 'Playground').trim();
   if ($('mSessName').textContent !== n) $('mSessName').textContent = n;
   const free = !!(S.scene && S.scene.mode === 'free') && !S.watch;
