@@ -24,7 +24,7 @@ function applyDelta(c, d) {
   c = {...c, lookat: [...c.lookat]};
   c.azimuth = (((c.azimuth + (d.azimuth || 0)) % 360) + 360) % 360;
   c.elevation = clamp(c.elevation + (d.elevation || 0), -89, -3);
-  c.distance = clamp(c.distance * (d.zoom || 1), 0.4, 16.0);
+  c.distance = clamp(c.distance * (d.zoom || 1), 0.4, 48.0);
   const flatOf = (f) => { const v = new THREE.Vector3(f.x, f.y, 0); return v.lengthSq() > 1e-12 ? v.normalize() : v; };
   if (d.pan && (d.pan[0] || d.pan[1])) {
     const {fwd, right} = camFrame(c), flat = flatOf(fwd);
@@ -399,7 +399,7 @@ export function start({stage, base = '', onReady}) {
       return glow * step(0.0, age) * (1.0 - smoothstep(3.5, 4.5, age));
     }
     void main() {
-      vec2 metres = uvRoom * 40.0;
+      vec2 metres = uvRoom * 120.0;
       vec3 cyan = vec3(0.20, 0.68, 0.86);
       vec3 white = vec3(0.68, 0.93, 1.0);
       vec3 light = vec3(0.0);
@@ -408,7 +408,7 @@ export function start({stage, base = '', onReady}) {
       vec2 grid = metres / 0.625;
       vec2 joint = abs(grid - floor(grid + 0.5)) * 0.625;
       // The moving lights live on the middle 33 x 33 cells; the faint lines cover the whole floor.
-      vec2 cell = grid - 16.0;
+      vec2 cell = grid - 80.0;   // (60 m - 10 m) / 0.625
       float inside = step(0.0, min(cell.x, cell.y)) * step(max(cell.x, cell.y), 33.0);
       vec4 horizontal = texture2D(gridFlow, (vec2(floor(cell.x), floor(cell.y + 0.5)) + 0.5) / 33.0);
       vec4 vertical = texture2D(gridFlow, (vec2(floor(cell.x + 0.5), floor(cell.y)) + 0.5) / 33.0);
@@ -438,7 +438,7 @@ export function start({stage, base = '', onReady}) {
       blending: THREE.AdditiveBlending,
     }));
   }
-  const floorLight = lightSurface(new THREE.PlaneGeometry(40, 40));   // the whole floor (playground/world.py)
+  const floorLight = lightSurface(new THREE.PlaneGeometry(120, 120));   // the whole floor (playground/world.py)
   floorLight.position.z = 0.002; glassRoom.add(floorLight);
   function glass(geo) {
     return new THREE.Mesh(geo, new THREE.MeshPhongMaterial({color: 0x17303d,
