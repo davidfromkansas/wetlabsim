@@ -53,7 +53,7 @@ def _page() -> bytes:
     view3d.js (an hour, like every static file) loads the new one as soon as it changes."""
     import hashlib
     page = PAGE.read_bytes()
-    for name in ("view3d.js", "runpanel.js", "scenesettings.js", "results.js", "runpage.js", "gallery.js"):
+    for name in ("view3d.js", "runpanel.js", "scenesettings.js", "results.js", "runpage.js", "gallery.js", "scenegen.js", "mobile.js"):
         v = hashlib.sha1((HERE / "static" / name).read_bytes()).hexdigest()[:12]
         page = page.replace(f"/pg/static/{name}?v=HASH".encode(), f"/pg/static/{name}?v={v}".encode())
     return page
