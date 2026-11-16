@@ -153,6 +153,7 @@ class PlaygroundSim(Sim):
             for b in a.bodies:
                 self.body_station[b] = uid
         self.body_uid = {}
+        self.stand_bodies = {}
         self.checkers, self._burners = {}, {}
         if self.scene_mode == "wetlab":
             return
@@ -172,6 +173,10 @@ class PlaygroundSim(Sim):
                         m.site_rgba[sid, 3] = 0.0
                 continue
             self.body_station[m.body(f"obj_{W.table_uid(st)}").id] = st.uid
+            for k in range(len(st.stands())):     # its stand picks as its robot
+                b = m.body(f"{st.prefix}stand{k}").id
+                self.stand_bodies.setdefault(st.uid, set()).add(b)
+                self.body_station[b] = st.uid
         self.flex_uid = {}
         for p in self.placed:
             self.body_uid[m.body(f"obj_{p.uid}").id] = p.uid
@@ -838,7 +843,8 @@ class PlaygroundSim(Sim):
             new = self._new_station_uid()
             base = (st.name or f"Robot {uid[2:]}").strip()
             self.stations.append(W.Station(new, st.robot, (st.pos[0] + dx, st.pos[1] + dy), st.yaw,
-                                           f"{base} copy"[:40], st.kind, st.task, st.setup, st.free, st.open_cell))
+                                           f"{base} copy"[:40], st.kind, st.task, st.setup, st.free, st.open_cell,
+                                           st.robot_at, st.robot_turn, st.robot_z))
             for p in riders:
                 self.placed.append(W.Placed(self.new_uid(p.item), p.item,
                                             (p.pos[0] + dx, p.pos[1] + dy, p.pos[2]), p.yaw, p.quat))
@@ -880,12 +886,14 @@ class PlaygroundSim(Sim):
                 x, y = st.pos[0] + dx, st.pos[1] + dy
                 if not self.station_spot(x, y, st.yaw, kind=st.kind, robot=None if st.open_cell else st.robot)["valid"]:
                     continue
-                probe = W.Station("probe", st.robot, (x, y), st.yaw, kind=st.kind, task=st.task, open_cell=st.open_cell)
+                probe = W.Station("probe", st.robot, (x, y), st.yaw, kind=st.kind, task=st.task, open_cell=st.open_cell,
+                                  robot_at=st.robot_at, robot_turn=st.robot_turn, robot_z=st.robot_z)
                 if any(probe.holds(p.pos[0], p.pos[1], 0.15) for p in loose):
                     continue          # something lies on the floor there
                 new = self._new_station_uid()
                 self.stations.append(W.Station(new, st.robot, (x, y), st.yaw,
-                                               f"{base} · copy {len(made) + 1}"[:40], st.kind, st.task, st.setup, st.free, st.open_cell))
+                                               f"{base} · copy {len(made) + 1}"[:40], st.kind, st.task, st.setup, st.free, st.open_cell,
+                                               st.robot_at, st.robot_turn, st.robot_z))
                 for p in riders:
                     self.placed.append(W.Placed(self.new_uid(p.item), p.item,
                                                 (p.pos[0] + dx, p.pos[1] + dy, p.pos[2]), p.yaw, p.quat,
@@ -933,6 +941,9 @@ class PlaygroundSim(Sim):
                                  if st.free else "a WetRobo station keeps its robot, so every run is the same test")
             self._sync_placed()
             new = W.Station(st.uid, robot, st.pos, st.yaw, st.name, st.kind, open_cell=st.open_cell)
+            if st.moved and not new.standing and not st.standing:   # another table arm: where this one was
+                new.robot_turn, new.robot_z = st.robot_turn, st.robot_z
+                new.robot_at = new.snap_robot(*st.robot_xy)
             if new.roomy:
                 spot = self.station_spot(st.pos[0], st.pos[1], st.yaw, exclude=uid, kind=st.kind, robot=robot)
                 if not spot["valid"]:
@@ -942,8 +953,99 @@ class PlaygroundSim(Sim):
                 raise RobotError(f"there are things where the {WS.ROBOTS[robot]['name']} would stand: "
                                  "move them away from where its base goes first")
             st.robot = robot
+            st.robot_at, st.robot_turn, st.robot_z = new.robot_at, new.robot_turn, new.robot_z
             self.arms.pop(uid, None)
             self.rebuild()
+
+    def place_robot(self, uid: str, x: float | None = None, y: float | None = None, z: float | None = None,
+                    heading: float | None = None):
+        """Move a station's robot on its own, apart from its table: its base to world (x, y), its
+        mount z (m) above the floor, turned to heading (rad, world). It stands fully on its table
+        or fully off it (snapped to the nearer); a table arm off its table, or raised above it,
+        stands on a steel stand (Station.stands) that reaches down to the floor or the table."""
+        with self.lock:
+            st = self.station(uid)
+            if st is None:
+                raise RobotError("no such station")
+            why = st.fixed_why()
+            if why:
+                raise RobotError(why)
+            old = (st.robot_at, st.robot_turn, st.robot_z)
+            mz = st.mount_z
+            was_off = st.robot_side() != "on"
+            if heading is not None:
+                t = float(heading) - st.yaw
+                st.robot_turn = math.atan2(math.sin(t), math.cos(t))
+            lx, ly = st.robot_xy
+            if x is not None or y is not None:
+                wx, wy, _ = st.to_world(lx, ly)
+                lx, ly = st.to_local(wx if x is None else float(x), wy if y is None else float(y))
+            st.robot_at = st.snap_robot(lx, ly)
+            try:
+                if st.robot_far():
+                    raise RobotError(f"a robot stays within {W.ROBOT_REACH_OFF:.0f} m of its table")
+                if st.liftable:
+                    if z is not None:
+                        mz = float(z)
+                    lo = st.surface_z()
+                    if was_off and lo > 0 and z is None:
+                        mz = max(mz, lo)          # back onto the table: at least its top
+                    if mz > W.ROBOT_Z_MAX:
+                        raise RobotError(f"a robot's base goes at most {W.ROBOT_Z_MAX * 100:.0f} cm above the floor")
+                    st.robot_z = max(mz, lo)
+                self._robot_spot_ok(st)
+            except RobotError:
+                st.robot_at, st.robot_turn, st.robot_z = old
+                raise
+            # Back where its kind puts it: forget the move.
+            hx, hy = st.home_xy
+            if (math.hypot(st.robot_at[0] - hx, st.robot_at[1] - hy) < 5e-4 and abs(st.robot_turn) < 1e-4
+                    and (st.robot_z is None or abs(st.robot_z - st.home_z) < 5e-4)):
+                st.robot_at, st.robot_turn, st.robot_z = None, 0.0, None
+            if (st.robot_at, st.robot_turn, st.robot_z) == old:
+                return
+            self.rebuild()
+
+    def _robot_spot_ok(self, st: W.Station):
+        """Raise if a station's robot (as it is now set) stands where it can't: on another
+        station, on furniture, on objects, or off the floor."""
+        pts = []
+        for (fx, fy), hx, hy in st.foot():
+            for a in (-1, 0, 1):
+                for b in (-1, 0, 1):
+                    c, s_ = math.cos(st.robot_turn), math.sin(st.robot_turn)
+                    pts.append(st.to_world(fx + c * a * hx - s_ * b * hy, fy + s_ * a * hx + c * b * hy)[:2])
+        for o in self.stations:
+            if o.uid != st.uid and any(o.claims(px, py, 0.1) for px, py in pts):
+                raise RobotError(f"too close to {o.name or o.uid}")
+        if any(max(abs(px), abs(py)) > 8.9 for px, py in pts):
+            raise RobotError("off the floor")
+        on = st.robot_side() == "on"
+        for p in self.placed:
+            meta = catalog.meta(p.item)
+            r = max(meta["size"][0], meta["size"][1]) / 2 if catalog.item(p.item)["fixed"] else 0.03
+            if not catalog.item(p.item)["fixed"] and (st.holds(p.pos[0], p.pos[1]) and p.pos[2] > st.top - 0.05) != on:
+                continue          # it lies on the table and the robot stands on the floor, or the other way round
+            for (fx, fy), hx, hy in st.foot():
+                lx, ly = st.to_local(p.pos[0], p.pos[1])
+                dx, dy = lx - fx, ly - fy
+                c, s_ = math.cos(st.robot_turn), math.sin(st.robot_turn)
+                u, v = c * dx + s_ * dy, -s_ * dx + c * dy
+                if abs(u) < hx + r and abs(v) < hy + r:
+                    raise RobotError("furniture is in the way" if catalog.item(p.item)["fixed"]
+                                     else f"the {catalog.item(p.item)['label'].lower()} is where the robot would stand: move it first")
+
+    def robot_place(self, uid: str) -> dict:
+        """Where a station's robot is, for its Move / Rotate panel."""
+        st = self.station(uid)
+        x, y, _ = st.to_world(*st.robot_xy)
+        side = st.robot_side()
+        stands = st.stands()
+        return {"at": [round(x, 4), round(y, 4), round(st.mount_z, 4)],
+                "heading": round(math.degrees(st.yaw + st.robot_turn), 2),
+                "side": side, "stand": round(stands[0][4] - stands[0][3], 4) if stands else 0.0,
+                "lift": st.liftable, "fixed_why": st.fixed_why(), "moved": st.moved,
+                "surface": round(st.surface_z(), 4)}
 
     def rename_station(self, uid: str, name: str):
         st = self.station(uid)
@@ -962,6 +1064,8 @@ class PlaygroundSim(Sim):
         if robot is None:
             robot = own.robot if own else "franka"
         probe = W.Station("probe", robot, (x, y), yaw, kind=kind, open_cell=bool(own and own.open_cell))
+        if own is not None and own.robot == robot:    # its robot where it has been put
+            probe.robot_at, probe.robot_turn, probe.robot_z = own.robot_at, own.robot_turn, own.robot_z
         pts = probe.area_points()
         for st in self.stations:
             if st.uid == exclude:
@@ -1095,6 +1199,8 @@ class PlaygroundSim(Sim):
         out = st.as_dict()
         if st.uid in self.arms:
             out["base"] = [round(float(v), 3) for v in self._base_mid(self.arms[st.uid])]
+            out["bodies"] = sorted(int(b) for b in self.arms[st.uid].bodies | self.stand_bodies.get(st.uid, set()))
+        out["place"] = self.robot_place(st.uid)
         if "libero" in out and st.uid in self.checkers:      # LIBERO's goal check, live
             out["libero"]["now"] = self.libero_goal(st.uid)
         if "wetrobo" in out:                                 # WetRobo's check, live
@@ -1220,7 +1326,7 @@ class PlaygroundSim(Sim):
     def _owner(self, body: int):
         """What a body is: ("robot", station), ("table", station), ("object", uid) or
         ("floor", None). In LIBERO and Wet Lab the station is "robot"."""
-        if body in self.robot_bodies:
+        if body in self.robot_bodies or any(body in v for v in self.stand_bodies.values()):
             return "robot", self.body_station.get(body, "robot")
         if body in self.body_station:
             return "table", self.body_station[body]

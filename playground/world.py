@@ -49,6 +49,17 @@ STATION_TABLE = "table_packing"
 FLOOR_ARMS = {"n220": {"gap": 1.15, "base": 0.75, "above": 3.4, "ahead": 1.6},
               "crx30ia": {"gap": 0.55, "base": 0.35, "above": 2.3, "ahead": 0.9}}
 
+# A table arm's steel stand, when it isn't standing right on its table (Station.stands): one box
+# under each base, the size of what the base covers, as (x, y) of its middle from the robot's
+# mount and its half size along the robot's own x and y (m), measured on each model.
+STANDS = {"franka": [(-0.041, 0.0, 0.115, 0.095)], "ur5e": [(0.0, 0.0, 0.08, 0.08)],
+          "piper": [(-0.01, 0.0, 0.05, 0.045)], "fr3_duo": [(0.0, 0.0, 0.12, 0.145)],
+          "aloha": [(-0.019, 0.5, 0.1, 0.16), (-0.019, -0.5, 0.1, 0.16)]}
+STAND_RGBA = [0.55, 0.57, 0.6, 1.0]     # brushed steel
+STAND_MIN = 0.002        # a gap this small under a mount needs no stand
+ROBOT_REACH_OFF = 1.0    # a robot moved off its table stays this near the table (m)
+ROBOT_Z_MAX = 2.0        # and its mount at most this high above the floor (m)
+
 CAR_TURN = math.pi / 2       # the car body's long side faces its robot
 CAR_STAND_Y = 1.0
 
@@ -256,6 +267,14 @@ class Station:
     free: bool = False    # a benchmark's scene as a free station: the same room or lab, any task you
     #                       type, no goal check and no score (a LIBERO room keeps a task for its room)
     open_cell: bool = False   # no work-box walls (a ready-made scene's humanoid, among other robots)
+    # Where the user has put the robot itself (its own Move / Rotate controls), apart from its table.
+    # None / 0: where the station's kind puts it. robot_at: (x, y) of its base in the station's
+    # frame; robot_turn: its turn about the vertical from the station's (rad); robot_z: its mount's
+    # height above the floor (m). A table arm with nothing under its mount stands on a steel
+    # stand (stand_height): to the floor off the table, a riser on it.
+    robot_at: tuple | None = None
+    robot_turn: float = 0.0
+    robot_z: float | None = None
 
     @property
     def libero(self) -> bool:
@@ -326,6 +345,13 @@ class Station:
 
     @property
     def robot_xy(self) -> tuple:
+        if self.robot_at is not None:  # where the user put it
+            return tuple(self.robot_at)
+        return self.home_xy
+
+    @property
+    def home_xy(self) -> tuple:
+        """Where the station's kind puts its robot (station frame)."""
         if self.robot == "aloha":     # two arms facing each other across the middle of the table
             return (0.0, 0.0)
         if self.standing:             # on the floor, facing the table's near edge, HUMANOID_GAP from it
@@ -340,8 +366,120 @@ class Station:
     def bases(self) -> list:
         """Where the robot stands on the table, in the station's frame: one base, or an ALOHA's two."""
         if self.robot == "aloha":
-            return [(-0.019, 0.469), (-0.019, -0.469)]
+            return [self.from_robot(-0.019, 0.469), self.from_robot(-0.019, -0.469)]
         return [self.robot_xy]
+
+    def from_robot(self, x: float, y: float) -> tuple:
+        """A point given from the robot's mount (its own x forward, y left) in the station's frame."""
+        rx, ry = self.robot_xy
+        c, s = math.cos(self.robot_turn), math.sin(self.robot_turn)
+        return (rx + c * x - s * y, ry + s * x + c * y)
+
+    # ------------------------------------------------ the robot's own place (Move / Rotate)
+    @property
+    def moved(self) -> bool:
+        """Whether the user has moved, turned or raised the robot from where its kind puts it."""
+        return self.robot_at is not None or abs(self.robot_turn) > 1e-9 or self.robot_z is not None
+
+    def fixed_why(self) -> str:
+        """Why this station's robot can't be moved apart from its table ("" if it can)."""
+        if self.libero:
+            return "a LIBERO room keeps its Franka where LIBERO mounts it"
+        if self.wetrobo and not self.free:
+            return "a WetRobo station keeps its robot where it is, so every run is the same test"
+        return ""
+
+    @property
+    def liftable(self) -> bool:
+        """A table arm can go up and down (on a stand); a robot on the floor stays on the floor."""
+        return not self.standing and not self.libero
+
+    @property
+    def home_z(self) -> float:
+        return 0.0 if self.standing else self.top
+
+    @property
+    def mount_z(self) -> float:
+        """How high the robot's mount is above the floor (m)."""
+        if self.robot_z is not None and self.liftable:
+            return float(self.robot_z)
+        return self.home_z
+
+    def foot(self) -> list:
+        """What the robot's base (or bases) cover: [(x, y) of the middle in the station's frame,
+        half x, half y], turned with the robot. A robot with none listed: a 10 cm square."""
+        out = []
+        for cx, cy, hx, hy in STANDS.get(self.robot, [(0.0, 0.0, 0.05, 0.05)]):
+            out.append((self.from_robot(cx, cy), hx, hy))
+        return out
+
+    def _foot_side(self, at, hx, hy) -> str:
+        """Whether a base box (middle at, half sizes, turned with the robot) is all on the table
+        ("on"), all off it ("off"), or across its edge ("edge")."""
+        sx, sy = self.footprint()
+        c, s = math.cos(self.robot_turn), math.sin(self.robot_turn)
+        ex, ey = abs(c) * hx + abs(s) * hy, abs(s) * hx + abs(c) * hy   # its box along the table's axes
+        x, y = at
+        if abs(x) + ex <= sx / 2 and abs(y) + ey <= sy / 2:
+            return "on"
+        if abs(x) - ex >= sx / 2 or abs(y) - ey >= sy / 2:
+            return "off"
+        return "edge"
+
+    def robot_side(self) -> str:
+        """Where the robot stands: "on" its table, "off" it (on the floor), or "edge" (across it)."""
+        if self.libero:
+            return "on"
+        sides = {self._foot_side(*f) for f in self.foot()}
+        return sides.pop() if len(sides) == 1 else "edge"
+
+    def surface_z(self) -> float:
+        """What is under the robot's mount: its table top, or the floor."""
+        return self.top if self.robot_side() == "on" and not self.standing else 0.0
+
+    def stands(self) -> list:
+        """The steel stand under a table arm whose mount is above what is under it: one box per
+        base, [(x, y) world middle, half x, half y, bottom z, top z]. None when it stands right on
+        its table, and never for a robot on the floor."""
+        if not self.liftable:
+            return []
+        lo, hi = self.surface_z(), self.mount_z
+        if hi - lo < STAND_MIN:
+            return []
+        return [(self.to_world(*at)[:2], hx, hy, lo, hi) for at, hx, hy in self.foot()]
+
+    def snap_robot(self, x: float, y: float) -> tuple:
+        """The nearest place to (x, y) (station frame) where the robot stands either fully on its
+        table or fully off it, never across its edge. A robot on the floor: fully off it."""
+        sx, sy = self.footprint()
+        old = self.robot_at
+        try:
+            self.robot_at = (x, y)
+            want = ("off",) if self.standing else ("on", "off")
+            if self.robot_side() in want:
+                return (x, y)
+            c, s = math.cos(self.robot_turn), math.sin(self.robot_turn)
+            best = None
+            for (fx, fy), hx, hy in self.foot():
+                ex, ey = abs(c) * hx + abs(s) * hy, abs(s) * hx + abs(c) * hy
+                moves = [(sx / 2 + ex - fx + 1e-4, 0), (-sx / 2 - ex - fx - 1e-4, 0),
+                         (0, sy / 2 + ey - fy + 1e-4), (0, -sy / 2 - ey - fy - 1e-4)]
+                if "on" in want:
+                    moves.append((max(min(fx, sx / 2 - ex), -sx / 2 + ex) - fx,
+                                  max(min(fy, sy / 2 - ey), -sy / 2 + ey) - fy))
+                for dx, dy in moves:
+                    self.robot_at = (x + dx, y + dy)
+                    if self.robot_side() in want and (best is None or math.hypot(dx, dy) < best[0]):
+                        best = (math.hypot(dx, dy), (x + dx, y + dy))
+            return best[1] if best else (x, y)
+        finally:
+            self.robot_at = old
+
+    def robot_far(self) -> bool:
+        """Whether the robot is further from its table than a robot is let go (ROBOT_REACH_OFF)."""
+        sx, sy = self.footprint()
+        x, y = self.robot_xy
+        return max(abs(x) - sx / 2, abs(y) - sy / 2) > ROBOT_REACH_OFF + (self.stand_gap if self.standing else 0.0)
 
     def near_base(self, x: float, y: float, r: float | None = None) -> bool:
         """Whether a world point is within r of the robot's base (or bases)."""
@@ -384,7 +522,12 @@ class Station:
         if self.roomy:
             return self.ROOM / 2, self.ROOM / 2
         sx, sy = self.footprint()
-        return sx / 2, sy / 2
+        hx, hy = sx / 2, sy / 2
+        if self.moved:         # a robot moved off its table: its base too
+            for (x, y), fx, fy in self.foot():
+                r = math.hypot(fx, fy)
+                hx, hy = max(hx, abs(x) + r), max(hy, abs(y) + r)
+        return hx, hy
 
     def claims(self, x: float, y: float, margin: float = 0.0) -> bool:
         """Whether a point is on this station's floor area (area())."""
@@ -413,7 +556,15 @@ class Station:
             fa = self.floor_arm
             return (sx / 2 + fa["gap"] + fa["base"], max(sy / 2 + self.WALL_MARGIN, fa["gap"] + fa["base"]),
                     self.top + fa["above"] + 0.2)
-        return sx / 2 + mx, sy / 2 + self.WALL_MARGIN, self.top + self.WALL_ABOVE
+        hx, hy, h = sx / 2 + mx, sy / 2 + self.WALL_MARGIN, self.top + self.WALL_ABOVE
+        if self.moved and not self.standing:   # a moved arm: the box takes in its base, and its height
+            x, y = self.robot_xy
+            hx, hy = max(hx, abs(x) + 0.35), max(hy, abs(y) + 0.35)
+            h = max(h, self.mount_z + self.WALL_ABOVE)
+        elif self.moved:
+            x, y = self.robot_xy
+            hx, hy = max(hx, abs(x) + 0.5), max(hy, abs(y) + 0.5)
+        return hx, hy, h
 
     def footprint(self):
         """The table's size along the station's own x and y (a LIBERO station: its room's)."""
@@ -436,6 +587,10 @@ class Station:
         out = {"id": self.uid, "robot": self.robot, "name": self.name, "label": P["name"], "kind": self.kind,
                "gripper": P["gripper"], "pos": [round(float(v), 4) for v in self.pos],
                "yaw": round(float(self.yaw), 4)}
+        if self.moved:
+            out["mount"] = {"at": [round(float(v), 4) for v in self.robot_at or self.home_xy],
+                            "turn": round(float(self.robot_turn), 4),
+                            **({"z": round(float(self.robot_z), 4)} if self.robot_z is not None else {})}
         if self.free:
             out["free"] = True
         elif self.libero and self.task:
@@ -1040,9 +1195,10 @@ def add_station(world: mujoco.MjSpec, st: Station, cache: set):
     _add_item(world, Placed(table_uid(st), st.table_item, (st.pos[0], st.pos[1], 0.0), st.table_yaw),
               tmeta, True, cache)
     rx, ry = st.robot_xy
-    mount = _quat_mul(yaw_quat(st.yaw), [float(v) for v in S.ROBOTS[st.robot]["mount_quat"].split()])
-    world.worldbody.add_site(name=st.prefix + "robot_mount", pos=list(st.to_world(rx, ry, 0.0 if st.standing else top)),
+    mount = _quat_mul(yaw_quat(st.yaw + st.robot_turn), [float(v) for v in S.ROBOTS[st.robot]["mount_quat"].split()])
+    world.worldbody.add_site(name=st.prefix + "robot_mount", pos=list(st.to_world(rx, ry, st.mount_z)),
                              quat=list(mount))
+    _add_stands(world, st)
     c, s_ = math.cos(st.yaw), math.sin(st.yaw)
     if not S.ROBOTS[st.robot].get("sides"):   # a two-arm robot brings its own (ALOHA's four, the Duo's head)
         cx, above = overhead_pose(st)
@@ -1053,11 +1209,22 @@ def add_station(world: mujoco.MjSpec, st: Station, cache: set):
         _camera(world, st.prefix + "side", st.to_world(rx + 1.2 * k, ry - 3.0 * k, 1.1 * k + 0.6),
                 st.to_world(rx + 0.6 * k, ry, 0.5 * k + 0.4), 45)
     else:
-        _camera(world, st.prefix + "side", st.to_world(rx + 1.75, ry - 1.3, top + 0.8),
-                st.to_world(rx + 0.4, ry, top + 0.1), 45)
+        mz = st.mount_z        # the robot's own height (its table top, unless it was raised)
+        _camera(world, st.prefix + "side", st.to_world(rx + 1.75, ry - 1.3, mz + 0.8),
+                st.to_world(rx + 0.4, ry, mz + 0.1), 45)
     S.add_robot(world, st.robot, st.prefix + "robot_mount", st.prefix)
     if not st.open:
         _add_walls(world, st)
+
+
+def _add_stands(world: mujoco.MjSpec, st: Station):
+    """A table arm's steel stand (Station.stands): a solid box under each base, from the table top
+    or the floor up to the robot's mount, in a body of its own fixed to the world."""
+    for k, ((x, y), hx, hy, lo, hi) in enumerate(st.stands()):
+        body = world.worldbody.add_body(name=f"{st.prefix}stand{k}", pos=[x, y, (lo + hi) / 2],
+                                        quat=list(yaw_quat(st.yaw + st.robot_turn)))
+        body.add_geom(name=f"{st.prefix}stand{k}", type=mujoco.mjtGeom.mjGEOM_BOX,
+                      size=[hx, hy, (hi - lo) / 2], rgba=STAND_RGBA, group=1)
 
 
 WALL_GROUP = 5          # MuJoCo geom group of the work box's walls: hidden in MuJoCo's default
