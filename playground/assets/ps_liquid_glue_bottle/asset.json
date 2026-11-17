@@ -1,0 +1,206 @@
+{
+ "source": "liquid_glue_bottle",
+ "usd": "liquid_glue_bottle.usd",
+ "mass": 0.2797,
+ "friction": 0.35,
+ "com": null,
+ "size": [
+  0.068,
+  0.0342,
+  0.179
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "bottle",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.8481,
+      0.8689,
+      0.8481,
+      1.0
+     ],
+     "roughness": 0.6200000047683716,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_1.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 1.6721148930654561e-06,
+     "friction": 0.35,
+     "restitution": 0.3
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 0.00026036813770460236,
+     "friction": 0.35,
+     "restitution": 0.3
+    }
+   ],
+   "mass": 0.2743,
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.0,
+    0.000115,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    -0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.000115,
+    0.0,
+    1.0,
+    -0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "cap",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      0.0004,
+      0.0835,
+      0.6921,
+      1.0
+     ],
+     "roughness": 0.6200000047683716,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 8.415895053960393e-07,
+     "friction": 0.35,
+     "restitution": 0.3
+    },
+    {
+     "mesh": "b1_col_1.obj",
+     "volume": 5.599554226033277e-06,
+     "friction": 0.35,
+     "restitution": 0.3
+    },
+    {
+     "mesh": "b1_col_2.obj",
+     "volume": 5.518768435804674e-06,
+     "friction": 0.35,
+     "restitution": 0.3
+    },
+    {
+     "mesh": "b1_col_3.obj",
+     "volume": 1.7174346795307237e-06,
+     "friction": 0.35,
+     "restitution": 0.3
+    },
+    {
+     "mesh": "b1_col_4.obj",
+     "volume": 1.3331076369235102e-06,
+     "friction": 0.35,
+     "restitution": 0.3
+    },
+    {
+     "mesh": "b1_col_5.obj",
+     "volume": 2.439463077324415e-09,
+     "friction": 0.35,
+     "restitution": 0.3
+    },
+    {
+     "mesh": "b1_col_6.obj",
+     "volume": 1.1679263327035082e-06,
+     "friction": 0.35,
+     "restitution": 0.3
+    }
+   ],
+   "mass": 0.0054,
+   "inertial": {
+    "mass": 0.0054,
+    "pos": [
+     0.0,
+     0.0,
+     0.146184
+    ],
+    "diaginertia": [
+     4.40833e-07,
+     8.17617e-07,
+     8.17617e-07
+    ],
+    "quat": [
+     0.5,
+     0.5,
+     0.5,
+     -0.5
+    ]
+   },
+   "parent": 0,
+   "collide": false,
+   "joint": {
+    "name": "cap_twist",
+    "type": "hinge",
+    "range": [
+     0.0,
+     6.283185
+    ],
+    "drive": {
+     "damping": 1.881e-05
+    },
+    "pos": [
+     0.0,
+     0.0,
+     0.1325
+    ],
+    "axis": [
+     0.0,
+     -0.0,
+     1.0
+    ]
+   },
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.000115,
+    0.0,
+    1.0,
+    -0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}
