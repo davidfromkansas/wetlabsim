@@ -1,0 +1,47 @@
+{
+ "source": "unripe_banana",
+ "usd": "unripe_banana.usd",
+ "mass": 0.36,
+ "friction": 0.45,
+ "com": null,
+ "size": [
+  0.22,
+  0.0508,
+  0.1171
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00024003994176956332,
+   "friction": 0.45,
+   "restitution": 0.12
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 1.7675383729300016e-05,
+   "friction": 0.45,
+   "restitution": 0.12
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 0.0001926923005231511,
+   "friction": 0.45,
+   "restitution": 0.12
+  }
+ ]
+}

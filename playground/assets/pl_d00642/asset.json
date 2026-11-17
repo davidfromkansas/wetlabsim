@@ -1,0 +1,127 @@
+{
+ "source": "D00642",
+ "usd": "D00642.usd",
+ "mass": 0.325,
+ "friction": 0.4,
+ "com": null,
+ "size": [
+  0.326,
+  0.1138,
+  0.0584
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "part_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.0003688962405057435,
+     "friction": 0.4,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 6.084855656689589e-05,
+     "friction": 0.4,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b0_col_2.obj",
+     "volume": 7.778328371795516e-05,
+     "friction": 0.4,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b0_col_3.obj",
+     "volume": 9.009891440707551e-05,
+     "friction": 0.4,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b0_col_4.obj",
+     "volume": 0.00011009093574898462,
+     "friction": 0.4,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b0_col_5.obj",
+     "volume": 4.876074836078172e-05,
+     "friction": 0.4,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b0_col_6.obj",
+     "volume": 4.6476205029734124e-05,
+     "friction": 0.4,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b0_col_7.obj",
+     "volume": 3.0393267425581363e-05,
+     "friction": 0.4,
+     "restitution": 0.1
+    }
+   ],
+   "mass": 0.325,
+   "inertial": {
+    "mass": 0.325,
+    "pos": [
+     0.022212,
+     0.005798,
+     0.029675
+    ],
+    "diaginertia": [
+     0.000224319,
+     0.00266556,
+     0.00278124
+    ],
+    "quat": [
+     0.998942,
+     0.04161,
+     -0.012347,
+     -0.015171
+    ]
+   },
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.00041,
+    -0.000472,
+    -0.001484
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.00041,
+    -0.000472,
+    -0.001484,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}
