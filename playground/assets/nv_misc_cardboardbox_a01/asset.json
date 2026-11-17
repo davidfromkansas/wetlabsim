@@ -1,0 +1,58 @@
+{
+ "source": "misc_cardboardBox_a01",
+ "usd": "sm_misc_cardboardBox_a01_01.usda",
+ "mass": 0.37946,
+ "friction": 0.7,
+ "com": [
+  0.00208,
+  -0.0077,
+  0.06433
+ ],
+ "size": [
+  0.3382,
+  0.1971,
+  0.1212
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.008073059251510977,
+   "friction": 0.7,
+   "restitution": 0.4
+  }
+ ],
+ "inertial": {
+  "mass": 0.379461,
+  "pos": [
+   0.00208,
+   -0.007699,
+   0.064333
+  ],
+  "diaginertia": [
+   0.00252041,
+   0.00638028,
+   0.00759592
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ }
+}

@@ -1,0 +1,64 @@
+{
+ "source": "decor_book_b05",
+ "usd": "sm_decor_book_b05_01.usda",
+ "mass": 0.1736,
+ "friction": 0.7,
+ "com": [
+  0.00545,
+  -0.01312,
+  0.01426
+ ],
+ "size": [
+  0.2544,
+  0.1944,
+  0.0297
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.000533452074156639,
+   "friction": 0.7,
+   "restitution": 0.4
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 0.0009331660622638746,
+   "friction": 0.7,
+   "restitution": 0.4
+  }
+ ],
+ "inertial": {
+  "mass": 0.173603,
+  "pos": [
+   0.005451,
+   -0.013119,
+   0.014259
+  ],
+  "diaginertia": [
+   0.000493882,
+   0.000497378,
+   0.000935906
+  ],
+  "quat": [
+   0.707107,
+   0.0,
+   0.0,
+   -0.707107
+  ]
+ }
+}

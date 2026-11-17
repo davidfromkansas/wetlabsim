@@ -1,0 +1,89 @@
+{
+ "source": "oat_milk_carton",
+ "usd": "oat_milk_carton.usda",
+ "mass": 1.01,
+ "friction": 0.5,
+ "com": null,
+ "size": [
+  0.0809,
+  0.076,
+  0.2162
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_1.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.0006391279878676284,
+   "friction": 0.5,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 0.00011761107704005803,
+   "friction": 0.5,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 0.00019712644777736222,
+   "friction": 0.5,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 4.989540621420461e-05,
+   "friction": 0.5,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_4.obj",
+   "volume": 0.00018049736815359184,
+   "friction": 0.5,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_5.obj",
+   "volume": 2.6548692298695995e-05,
+   "friction": 0.5,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_6.obj",
+   "volume": 2.9098625427013176e-06,
+   "friction": 0.5,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_7.obj",
+   "volume": 8.939956391694715e-06,
+   "friction": 0.5,
+   "restitution": 0.1
+  }
+ ]
+}
