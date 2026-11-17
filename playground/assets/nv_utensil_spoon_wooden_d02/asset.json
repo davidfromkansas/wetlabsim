@@ -1,0 +1,82 @@
+{
+ "source": "utensil_spoon_wooden_d02",
+ "usd": "sm_utensil_spoon_wooden_d02_01.usda",
+ "mass": 0.10778,
+ "friction": 0.5,
+ "com": [
+  0.05064,
+  -0.00056,
+  0.00489
+ ],
+ "size": [
+  0.2437,
+  0.0371,
+  0.009
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 9.115434458728682e-06,
+   "friction": 0.5,
+   "restitution": 0.4
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 4.941413452274564e-06,
+   "friction": 0.5,
+   "restitution": 0.4
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 4.887746516176432e-06,
+   "friction": 0.5,
+   "restitution": 0.4
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 2.512711983606176e-06,
+   "friction": 0.5,
+   "restitution": 0.4
+  },
+  {
+   "mesh": "col_4.obj",
+   "volume": 8.477551399317528e-06,
+   "friction": 0.5,
+   "restitution": 0.4
+  }
+ ],
+ "inertial": {
+  "mass": 0.107776,
+  "pos": [
+   0.050644,
+   -0.000556,
+   0.004885
+  ],
+  "diaginertia": [
+   8.20139e-06,
+   0.000546732,
+   0.000552549
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ }
+}
