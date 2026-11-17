@@ -49,10 +49,9 @@ def main(argv=None):
     done = set()
     if LOG.exists():
         done = {json.loads(line)["id"] for line in LOG.read_text().splitlines() if line.strip()}
-    todo = [u["id"] for u in catalog.EXTRA if (not a.only or u["source"] == a.only)
+    i, n = map(int, a.shard.split("/"))     # by place in the whole list, the same on every machine
+    todo = [u["id"] for k, u in enumerate(catalog.EXTRA) if k % n == i and (not a.only or u["source"] == a.only)
             and u["id"] not in done and not (catalog.ASSETS / u["id"] / "asset.json").exists()]
-    i, n = map(int, a.shard.split("/"))
-    todo = todo[i::n]
     print(len(todo), "to build", flush=True)
     LOG.parent.mkdir(exist_ok=True)
     with ThreadPoolExecutor(a.workers) as ex, LOG.open("a") as log:
