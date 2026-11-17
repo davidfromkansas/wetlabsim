@@ -1,0 +1,93 @@
+{
+ "source": "Built in-house (Blender)",
+ "usd": null,
+ "mass": 1.2,
+ "friction": null,
+ "com": null,
+ "size": [
+  0.4,
+  0.12,
+  0.115
+ ],
+ "collision": "convex pieces",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "ramp",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      0.82,
+      0.66,
+      0.46,
+      1
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_1.obj",
+     "rgba": [
+      0.82,
+      0.66,
+      0.46,
+      1
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    },
+    {
+     "mesh": "b0_vis_2.obj",
+     "rgba": [
+      0.82,
+      0.66,
+      0.46,
+      1
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.0019200000000000005
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 0.00023999999999999998
+    },
+    {
+     "mesh": "b0_col_2.obj",
+     "volume": 0.00023999999999999998
+    }
+   ],
+   "mass": 1.2,
+   "frame": [
+    0.0,
+    0.0,
+    0.0,
+    1,
+    0,
+    0,
+    0
+   ],
+   "parent": null,
+   "root": true,
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    1,
+    0,
+    0,
+    0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

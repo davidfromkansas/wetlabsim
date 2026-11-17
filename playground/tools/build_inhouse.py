@@ -607,6 +607,111 @@ def shelf_three_level():
     return _write("shelf_three_level", [p], [mass])
 
 
+ALUMINIUM = 2700.0
+ABS = 1050.0
+CARDBOARD = 700.0      # corrugated board, as a solid
+
+
+def steel_blank():
+    """A machining blank: a 60 x 40 x 20 mm block of aluminium bar stock, saw-cut, edges broken."""
+    _reset()
+    size = (60 * MM, 40 * MM, 20 * MM)
+    m = _arrays(rounded_box(size, 0.6 * MM, segments=1))
+    look = dict(rgba=[0.78, 0.79, 0.80, 1], roughness=0.35, metallic=1.0)
+    p = Part("blank").visual(m, look).collide([box(size, (0, 0, size[2] / 2))])
+    return _write("metal_blank", [p], [size[0] * size[1] * size[2] * ALUMINIUM])
+
+
+def _open_tray(id_, W, D, H, wall, floor, cols, rows, look, density):
+    """An open tray W x D x H with walls and, when cols/rows > 1, divider walls making pockets."""
+    _reset()
+    p = Part("tray")
+    pieces = [((W, D, floor), (0, 0, 0))]
+    pieces += [((W, wall, H), (0, sy * (D - wall) / 2, 0)) for sy in (-1, 1)]
+    pieces += [((wall, D - 2 * wall, H), (sx * (W - wall) / 2, 0, 0)) for sx in (-1, 1)]
+    for c in range(1, cols):
+        x = -W / 2 + c * W / cols
+        pieces.append(((wall, D - 2 * wall, H * 0.8), (x, 0, 0)))
+    for r in range(1, rows):
+        y = -D / 2 + r * D / rows
+        pieces.append(((W - 2 * wall, wall, H * 0.8), (0, y, 0)))
+    vol = 0.0
+    for size, at in pieces:
+        p.visual(_arrays(rounded_box(size, min(size) * 0.2, segments=1, at=at)), look)
+        p.collide([box(size, (at[0], at[1], at[2] + size[2] / 2))])
+        vol += size[0] * size[1] * size[2]
+    return _write(id_, [p], [vol * density])
+
+
+def kit_tray():
+    """A kitting tray: 40 x 30 cm black ABS, 6 cm deep, six pockets (3 x 2) for one of each part."""
+    return _open_tray("kit_tray", 0.40, 0.30, 0.06, 0.004, 0.004, 3, 2,
+                      dict(rgba=[0.10, 0.10, 0.11, 1], roughness=0.6, metallic=0.0), ABS)
+
+
+def parts_tray():
+    """A shallow open parts tray, 30 x 20 x 4 cm, blue ABS."""
+    return _open_tray("parts_tray", 0.30, 0.20, 0.04, 0.003, 0.003, 1, 1,
+                      dict(rgba=[0.12, 0.33, 0.70, 1], roughness=0.55, metallic=0.0), ABS)
+
+
+def cryo_box():
+    """A cardboard freezer box for 81 cryovials, 13.3 x 13.3 x 5 cm, its lid on (one piece)."""
+    _reset()
+    size = (133 * MM, 133 * MM, 50 * MM)
+    m = _arrays(rounded_box(size, 1.0 * MM, segments=1))
+    look = dict(rgba=[0.45, 0.66, 0.86, 1], roughness=0.85, metallic=0.0)      # a blue-coated board box
+    p = Part("box").visual(m, look).collide([box(size, (0, 0, size[2] / 2))])
+    return _write("cryo_box", [p], [0.12])          # the board and the empty grid insert
+
+
+def wrapped_pallet_load():
+    """A loaded pallet: a 120 x 80 cm wooden pallet with a 1 m stack of boxes, stretch-wrapped
+    (the wrap drawn as a clear film over the stack). One solid piece; about 300 kg."""
+    _reset()
+    p = Part("load")
+    wood = dict(rgba=[0.62, 0.48, 0.32, 1], roughness=0.8, metallic=0.0)
+    card = dict(rgba=[0.72, 0.56, 0.38, 1], roughness=0.85, metallic=0.0)
+    film = dict(rgba=[0.92, 0.95, 0.97, 0.35], roughness=0.15, metallic=0.0, glass=True)
+    W, D, ph = 1.20, 0.80, 0.144
+    for k in range(3):                                   # top boards over three runners
+        y = -D / 2 + 0.05 + k * (D - 0.10) / 2
+        p.visual(_arrays(rounded_box((W, 0.10, 0.10), 0.004, 1, at=(0, y, 0))), wood)
+    for k in range(7):
+        x = -W / 2 + 0.07 + k * (W - 0.14) / 6
+        p.visual(_arrays(rounded_box((0.14, D, 0.022), 0.003, 1, at=(x, 0, 0.10))), wood)
+    p.collide([box((W, D, ph), (0, 0, ph / 2))])
+    bw, bd, bh = 0.40, 0.40, 0.25
+    for lz in range(4):
+        for ix in range(3):
+            for iy in range(2):
+                at = (-W / 2 + bw / 2 + ix * bw, -D / 2 + bd / 2 + iy * bd, ph + lz * bh)
+                p.visual(_arrays(rounded_box((bw - 0.006, bd - 0.006, bh - 0.004), 0.004, 1, at=at)), card)
+    stack = (W, D, 4 * bh)
+    p.visual(_arrays(rounded_box((W + 0.01, D + 0.01, 4 * bh - 0.04), 0.01, 2, at=(0, 0, ph + 0.02))), film)
+    p.collide([box(stack, (0, 0, ph + stack[2] / 2))])
+    return _write("wrapped_pallet_load", [p], [25.0 + 24 * 11.0])
+
+
+def toy_ramp():
+    """A pine ramp for rolling balls: 40 cm long, 12 cm wide, rising to 10 cm, with low side rails."""
+    _reset()
+    L, Wd, H, rail = 0.40, 0.12, 0.10, 0.012
+    prof = [(-L / 2, 0), (L / 2, 0), (L / 2, H)]
+    def wedge(w, at_y, extra=0.0):
+        V = [(x, at_y + sy * w / 2, z + (extra if z > 0 or x > -L / 2 else 0)) for x, z in prof for sy in (-1, 1)]
+        return trimesh.Trimesh(V).convex_hull
+    look = dict(rgba=[0.82, 0.66, 0.46, 1], roughness=0.6, metallic=0.0)
+    p = Part("ramp")
+    body = wedge(Wd - 2 * rail, 0)
+    p.visual((np.asarray(body.vertices), np.asarray(body.faces), None), look).collide([body])
+    for sy in (-1, 1):
+        r = wedge(rail, sy * (Wd - rail) / 2, 0.015)
+        p.visual((np.asarray(r.vertices), np.asarray(r.faces), None), look).collide([r])
+    vol = body.volume + 2 * wedge(rail, 0, 0.015).volume
+    return _write("toy_ramp", [p], [vol * PINE])
+
+
 BUILD = {
     "test_tube": lambda: test_tube("test_tube", 16, 150, 1.2, cap=True),
     "test_tube_small": lambda: test_tube("test_tube_small", 13, 100, 0.9, cap=False),
@@ -621,6 +726,12 @@ BUILD = {
     "hot_plate": hot_plate,
     **{f"block_{c}": (lambda c=c: toy_block(c)) for c in BLOCK_COLOURS},
     "shelf_three_level": shelf_three_level,
+    "metal_blank": steel_blank,
+    "kit_tray": kit_tray,
+    "parts_tray": parts_tray,
+    "cryo_box": cryo_box,
+    "wrapped_pallet_load": wrapped_pallet_load,
+    "toy_ramp": toy_ramp,
 }
 
 

@@ -201,6 +201,12 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Toy block, blue | Toys & Basics | Built in-house (Blender) | `block_blue` |
 | Toy block, yellow | Toys & Basics | Built in-house (Blender) | `block_yellow` |
 | Three-level shelf | Furniture | Built in-house (Blender) | `shelf_three_level` |
+| Metal blank | Factory | Built in-house (Blender) | `metal_blank` |
+| Kit tray | Bins & Trays | Built in-house (Blender) | `kit_tray` |
+| Parts tray | Bins & Trays | Built in-house (Blender) | `parts_tray` |
+| Cryo storage box | Lab & Medical | Built in-house (Blender) | `cryo_box` |
+| Wrapped pallet load | Factory | Built in-house (Blender) | `wrapped_pallet_load` |
+| Toy ramp | Toys & Basics | Built in-house (Blender) | `toy_ramp` |
 | Screw-top jar | Glassware | ForgeCAD SimReady | [`screw_top_jar`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/screw_top_jar) |
 | Two-tier tube rack | Lab & Medical | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/01_two_tier_plastic_rack`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/01_two_tier_plastic_rack) |
 | Single-row tube rack | Lab & Medical | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/05_compact_single_row_rack) |
