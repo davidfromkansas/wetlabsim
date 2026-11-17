@@ -1,0 +1,53 @@
+{
+ "source": "thermal_printer_HT88VDRDRZ",
+ "usd": "thermal_printer_HT88VDRDRZ.usd",
+ "mass": 0.161,
+ "friction": 0.302,
+ "com": null,
+ "size": [
+  0.0835,
+  0.0834,
+  0.0409
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 9.896032117060816e-05,
+   "friction": 0.3016,
+   "restitution": 0.35
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 7.527239197549872e-05,
+   "friction": 0.3016,
+   "restitution": 0.35
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 4.025840662824355e-05,
+   "friction": 0.3016,
+   "restitution": 0.35
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 4.7729608608822264e-05,
+   "friction": 0.3016,
+   "restitution": 0.35
+  }
+ ]
+}
