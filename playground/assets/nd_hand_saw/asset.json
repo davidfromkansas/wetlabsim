@@ -1,0 +1,87 @@
+{
+ "source": "hand_saw",
+ "usd": "hand_saw.usd",
+ "mass": 0.475,
+ "friction": 0.6,
+ "com": [
+  NaN,
+  NaN,
+  NaN
+ ],
+ "size": [
+  0.5387,
+  0.02,
+  0.1244
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.0,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.0,
+   "metallic": 0.0,
+   "texture": "tex_1.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00019153723857968726,
+   "friction": 0.6,
+   "restitution": 0.3
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 2.8138540813312923e-05,
+   "friction": 0.55,
+   "restitution": 0.4
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 6.948052800669119e-05,
+   "friction": 0.6,
+   "restitution": 0.3
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 4.347565529749604e-05,
+   "friction": 0.55,
+   "restitution": 0.4
+  },
+  {
+   "mesh": "col_4.obj",
+   "volume": 2.036356646640435e-05,
+   "friction": 0.55,
+   "restitution": 0.4
+  },
+  {
+   "mesh": "col_5.obj",
+   "volume": 3.7116239058796544e-05,
+   "friction": 0.55,
+   "restitution": 0.4
+  },
+  {
+   "mesh": "col_6.obj",
+   "volume": 4.7521959819905e-05,
+   "friction": 0.55,
+   "restitution": 0.4
+  }
+ ]
+}
