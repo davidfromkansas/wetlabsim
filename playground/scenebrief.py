@@ -312,7 +312,9 @@ the count asks for more than one of the same thing, like 4 dinner plates for a t
 - Variety: avoid near duplicates across the whole scene (not three different kettles) unless \
 the task needs them.
 - One look: prefer textured objects; a plain grey CAD object only when nothing textured fits.
-- Task slots: the object must fit the task; check its size suits a robot hand.
+- Task slots: the object must fit the task; check its size suits a robot hand. Something \
+that starts inside a closed drawer must be short enough for it (a small cabinet's drawer is \
+about 5.5 cm tall inside): choose a low thing for that, or say so in the task.
 - If no object on a slot's list fits at all, leave the slot empty and add it to "missing" \
 with "instead": "".
 

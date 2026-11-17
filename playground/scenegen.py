@@ -386,9 +386,15 @@ from -0.8 to 0.8; the island x from -0.05 to 0.25, y from -0.55 to 0.55; the cou
 to 0.25, y from -1.05 to 1.05), at least 0.25 m from the robot's base. Small things can go in a hollow object \
 (an apple in a bowl): give them the same spot. Objects can also go on top of a piece of furniture \
 (its index, and dx, dy from its centre) or on the floor (scene frame).
+- Inside another thing (a mug in a drawer, cans on a shelf's bottom level, a part in a closed \
+box): "on": "inside", "object": the index (from 0) in your "objects" list of the cabinet, shelf \
+or box (or "furniture": its index in "furniture"), "level": 1 for the lowest space inside it, 2 \
+for the next one up, -1 for the highest (a top drawer), and dx, dy from its centre to spread \
+several things out. The top surface of something is not "inside": use "furniture" for that, or \
+the same spot as the thing for a hollow object.
 - Leave space between objects (about their size plus 3 cm) so a gripper can get to each, \
-unless the request asks for clutter: then pack them close, at different turns, still each \
-reachable.
+unless the request asks for clutter: then heap them into one patch about 40 by 40 cm, 1 to \
+2 cm apart, at different turns, mixing sizes, still each reachable.
 - Small furniture (a little cabinet with drawers, a microwave, a short fridge) can stand on a \
 station's table like an object: list it under "objects" with "on": "station", its front facing \
 the robot. Only these can: {tabletop}.
@@ -407,7 +413,8 @@ Answer with JSON only, exactly this shape:
  "furniture": [{{"item": "refrigerator", "x": 2.0, "y": 1.2, "face": "station 0"}}],
  "objects": [{{"item": "mug", "on": "station", "station": 0, "x": 0.3, "y": 0.1, "yaw": 0}},
              {{"item": "kettle", "on": "furniture", "furniture": 0, "dx": 0, "dy": 0, "yaw": 0}},
-             {{"item": "waste_bin", "on": "floor", "x": 1.5, "y": -1.0, "yaw": 0}}],
+             {{"item": "waste_bin", "on": "floor", "x": 1.5, "y": -1.0, "yaw": 0}},
+             {{"item": "can", "on": "inside", "object": 0, "level": 1, "dx": 0.05, "dy": 0, "yaw": 0}}],
  "task": "the robot's task, one sentence"}}
 List every station and every object exactly once per copy (an item asked for twice appears \
 twice). Put furniture items in "furniture" only."""
@@ -937,11 +944,14 @@ class Build:
                 self.now = catalog.item(f["item"])["label"]
                 fixed_uids.append(self._place_furniture(f, off))
             self.phase = "objects"
-            for o in objects:
+            placed = [None] * len(objects)
+            # things that go inside other things go down last, once what holds them is there
+            for k in sorted(range(len(objects)), key=lambda k: objects[k]["on"] == "inside"):
+                o = objects[k]
                 if self.stop:
                     return self._end("stopped")
                 self.now = catalog.item(o["item"])["label"]
-                self._place_object(o, off, fixed_uids)
+                placed[k] = self._place_object(o, off, fixed_uids, placed)
             self.now = ""
             if self.look and not fake() and can_see(self.model_id, self.public):
                 self.phase = "check"
@@ -1017,12 +1027,13 @@ class Build:
                                   "gap": max(0.0, _f(f.get("gap", 0.15))) if self.preset else 0.15})
         for it in want_f:
             furniture.append({"item": it, "x": 2.5, "y": -1.5 + 1.5 * len(furniture), "yaw": math.pi})
-        objects = []
-        for o in lay.get("objects") or []:
+        objects, where = [], {}       # where: the model's own index of each object -> ours
+        for k_raw, o in enumerate(lay.get("objects") or []):
             it = str((o or {}).get("item", ""))
             if it in want_o:
+                where[k_raw] = len(objects)
                 want_o.remove(it)
-                on = o.get("on") if o.get("on") in ("station", "furniture", "floor") else "station"
+                on = o.get("on") if o.get("on") in ("station", "furniture", "floor", "inside") else "station"
                 k_st = max(0, min(len(stations) - 1, _int(o.get("station"), 0)))
                 yaw = math.radians(_f(o.get("yaw")))
                 if on == "station":       # in the station's frame: its robot sits at robot_xy
@@ -1039,8 +1050,15 @@ class Build:
                                 "x": _f(o.get("x")), "y": _f(o.get("y")),
                                 "dx": _f(o.get("dx")), "dy": _f(o.get("dy")),
                                 "yaw": yaw,
+                                # inside: which object (by its place in this list) or furniture
+                                "object": _int(o.get("object"), -1) if o.get("object") is not None else -1,
+                                "in_furniture": "object" not in o and o.get("furniture") is not None,
+                                "level": _int(o.get("level"), 1),
                                 # a ready-made scene's big part may hang over its pallet's edges
                                 "overhang": bool(self.preset and o.get("overhang"))})
+        for o in objects:
+            if o["on"] == "inside" and not o["in_furniture"]:
+                o["object"] = where.get(o["object"], -1)
         for k, it in enumerate(want_o):
             objects.append({"item": it, "on": "station", "station": k % max(1, len(stations)),
                             "x": 0.3, "y": 0.0, "dx": 0.0, "dy": 0.0, "yaw": 0.0})
@@ -1159,16 +1177,16 @@ class Build:
         """Tables and floor things already standing (this scene's and everyone else's)."""
         return self._taken()
 
-    def _place_object(self, o, off, fixed_uids):
+    def _place_object(self, o, off, fixed_uids, placed=()):
         sl = (self.pick.get("slot_of") or {}).get(o["item"])
-        uid = self._place_object1(o, off, fixed_uids)
+        uid = self._place_object1(o, off, fixed_uids, placed)
         if not uid and sl is not None and self.pick.get("lists"):
             # it didn't fit: the next object on its slot's short list, in the same spot
             used = {i["id"] for i in self.pick["items"]}
             for alt in self.pick["lists"][sl]:
                 if alt in used or catalog.item(alt)["fixed"] != catalog.item(o["item"])["fixed"]:
                     continue
-                uid = self._place_object1({**o, "item": alt}, off, fixed_uids)
+                uid = self._place_object1({**o, "item": alt}, off, fixed_uids, placed)
                 if uid:
                     gone = self.skipped.pop()
                     self.counts["objects"][1] += 1
@@ -1176,13 +1194,41 @@ class Build:
                     break
                 self.skipped.pop()
                 self.counts["objects"][1] += 1
+        if not uid and o["on"] == "inside":
+            # nothing on its list fits inside: the first choice, next to what should hold it
+            self.skipped.pop()
+            self.counts["objects"][1] += 1
+            uid = self._place_object1({**o, "last_try": True}, off, fixed_uids, placed)
         if uid and sl is not None:
             self.role[uid] = self.pick["brief"]["slots"][sl]["role"]
         return uid
 
-    def _place_object1(self, o, off, fixed_uids):
+    def _place_object1(self, o, off, fixed_uids, placed=()):
         s = self.sim
         it, yaw = o["item"], o["yaw"]
+        if o["on"] == "inside":
+            k = o.get("object", -1)
+            if o.get("in_furniture"):
+                k = o.get("furniture", -1)
+                host = fixed_uids[k] if 0 <= k < len(fixed_uids) else None
+            else:
+                host = placed[k] if 0 <= k < len(placed) else None
+            if host and s.find(host):
+                uid = self._place_inside(it, host, o)
+                if uid or not o.get("last_try"):
+                    return uid or self._skip(it)     # not inside: the next on its short list may fit
+                self.fixes.append(f"the {catalog.item(it)['label'].lower()} didn't fit inside the "
+                                  f"{catalog.item(s.find(host).item)['label'].lower()}, so it's next to it")
+                st = next((st for st in s.stations if st.holds(*s.find(host).pos[:2])), None)
+                hp = s.find(host).pos
+                mine = [s.station(u) for u in self.stations]
+                if st is not None and st in mine:
+                    lx, ly = st.to_local(hp[0], hp[1])[:2]
+                    o = {**o, "on": "station", "station": mine.index(st), "x": lx, "y": ly + 0.2}
+                else:
+                    o = {**o, "on": "floor", "x": hp[0] + 0.4, "y": hp[1]}
+            else:
+                o = {**o, "on": "station"}
         if o["on"] == "station" and o["station"] < len(self.stations):
             st = s.station(self.stations[o["station"]])
             if st is None:
@@ -1233,6 +1279,49 @@ class Build:
             if spot["valid"] and spot["surface"] == "the floor":
                 return self._add(it, spot, yaw)
         return self._skip(it)
+
+    def _levels(self, item, host, x, y, yaw):
+        """The spaces inside the object host where item would rest with its middle over (x, y),
+        lowest first: each a spot from the drop check, kept only when the item stands level on
+        the host itself and fits under whatever is above (a drawer's top, the next shelf)."""
+        s = self.sim
+        p = s.find(host)
+        hz = catalog.meta(p.item)["size"][2]
+        h = catalog.meta(item)["size"][2]
+        want = catalog.item(p.item)["label"]
+        groups = []       # [ceiling (the highest drop start that lands here), spot]
+        t = p.pos[2] + hz + 0.02
+        while t > p.pos[2] + 0.01:
+            spot = s.support(item, x, y, yaw, top=t)
+            z = spot["pos"][2]
+            if groups and abs(groups[-1][1]["pos"][2] - z) < 0.005:
+                pass
+            else:
+                groups.append([t, spot])
+            t -= 0.004
+        out = []
+        for n, (ceil, spot) in enumerate(groups):
+            open_top = n == 0
+            if not (spot["valid"] and spot["level"] and spot["surface"] == want):
+                continue
+            if open_top or ceil - spot["pos"][2] >= h + 0.003:
+                out.append((spot, open_top))
+        return sorted(out, key=lambda r: r[0]["pos"][2])
+
+    def _place_inside(self, item, host, o):
+        s = self.sim
+        p = s.find(host)
+        yaw = p.yaw + (o["yaw"] or 0.0)
+        for dx, dy in _spiral(0.03, 6):
+            ddx, ddy = _rot(o["dx"] + dx, o["dy"] + dy, p.yaw)
+            lv = [sp for sp, open_top in self._levels(item, host, p.pos[0] + ddx, p.pos[1] + ddy, yaw)
+                  if not open_top] or []
+            if not lv:
+                continue
+            n = o.get("level", 1)
+            spot = lv[min(max(n - 1, 0), len(lv) - 1)] if n > 0 else lv[max(len(lv) + n, 0)]
+            return self._add(item, spot, yaw)
+        return None
 
     def _add(self, item, spot, yaw):
         try:
