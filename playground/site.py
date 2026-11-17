@@ -247,7 +247,7 @@ What the datasheets can't tell you: how this particular robot is set up.
 - The hands work best from about x = 0.30 m to 0.45 m (about 20 to 35 cm past the table's edge),
   pointing forward or tilted down. Closer to the chest the arms run out of room, and
   straight-down (top) grasps are mostly out of reach. To work further away, walk closer.
-- The robot and its table are in a room of their own, 7 x 7 m, centred on the table, with
+- The robot and its table are in a room of their own, 5 x 5 m, centred on the table, with
   solid walls about {room_h:.1f} m high. It can walk anywhere in the room; the walls stop it.
 
 ## Tool and payload settings

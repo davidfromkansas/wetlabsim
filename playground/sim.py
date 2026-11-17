@@ -1045,7 +1045,7 @@ class PlaygroundSim(Sim):
             if new.roomy:
                 spot = self.station_spot(st.pos[0], st.pos[1], st.yaw, exclude=uid, kind=st.kind, robot=robot)
                 if not spot["valid"]:
-                    raise RobotError(f"the {WS.ROBOTS[robot]['name']} works in a 7 × 7 m room round its table, "
+                    raise RobotError(f"the {WS.ROBOTS[robot]['name']} works in a 5 × 5 m room round its table, "
                                      f"and here it doesn't fit: {spot['reason']}. Move this station into open floor first")
             if any(new.holds(p.pos[0], p.pos[1]) and new.near_base(p.pos[0], p.pos[1]) for p in self.placed):
                 raise RobotError(f"there are things where the {WS.ROBOTS[robot]['name']} would stand: "
@@ -1172,7 +1172,7 @@ class PlaygroundSim(Sim):
                     or any(probe.claims(px, py, 0.15) for px, py in st.area_points())):
                 return {"pos": [round(x, 4), round(y, 4)], "yaw": yaw, "valid": False,
                         "reason": f"too close to {st.name or st.uid}"
-                                  + (" (the humanoid's room needs 7 × 7 m)" if probe.roomy or st.roomy else "")}
+                                  + (" (the humanoid's room needs 5 × 5 m)" if probe.roomy or st.roomy else "")}
         for p in self.placed:
             if catalog.item(p.item)["fixed"]:
                 fx, fy, _ = catalog.meta(p.item)["size"]
