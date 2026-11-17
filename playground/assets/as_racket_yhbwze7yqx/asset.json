@@ -1,0 +1,47 @@
+{
+ "source": "racket_YHBWZE7YQX",
+ "usd": "racket_YHBWZE7YQX.usd",
+ "mass": 0.253,
+ "friction": 0.355,
+ "com": null,
+ "size": [
+  0.3796,
+  0.2399,
+  0.0257
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.0005360244513961314,
+   "friction": 0.3546,
+   "restitution": 0.28
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 5.4407825040713444e-05,
+   "friction": 0.3546,
+   "restitution": 0.28
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 7.851156965994734e-05,
+   "friction": 0.3546,
+   "restitution": 0.28
+  }
+ ]
+}

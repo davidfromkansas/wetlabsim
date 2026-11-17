@@ -1,0 +1,69 @@
+{
+ "source": "gas_cylinder",
+ "usd": "gas_cylinder.usd",
+ "mass": 49.93543,
+ "friction": 0.6,
+ "com": [
+  NaN,
+  NaN,
+  NaN
+ ],
+ "size": [
+  0.219,
+  0.219,
+  1.3975
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.0,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.0,
+   "metallic": 0.0,
+   "texture": "tex_1.png"
+  },
+  {
+   "mesh": "vis_2.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.0,
+   "metallic": 0.0,
+   "texture": "tex_2.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.0005508585533398355,
+   "friction": 0.5,
+   "restitution": 0.3
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 0.05098302752530176,
+   "friction": 0.6,
+   "restitution": 0.3
+  }
+ ]
+}

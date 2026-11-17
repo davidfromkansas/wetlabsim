@@ -1,0 +1,139 @@
+{
+ "source": "D00644",
+ "usd": "D00644.usd",
+ "mass": 2.9,
+ "friction": 0.5,
+ "com": null,
+ "size": [
+  0.2106,
+  0.4112,
+  0.0574
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "part_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.00012203127982346209,
+     "friction": 0.5,
+     "restitution": 0.5
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 0.0002887535993333435,
+     "friction": 0.5,
+     "restitution": 0.5
+    },
+    {
+     "mesh": "b0_col_2.obj",
+     "volume": 5.1487563114059034e-05,
+     "friction": 0.5,
+     "restitution": 0.5
+    },
+    {
+     "mesh": "b0_col_3.obj",
+     "volume": 5.551408484293719e-05,
+     "friction": 0.5,
+     "restitution": 0.5
+    },
+    {
+     "mesh": "b0_col_4.obj",
+     "volume": 5.449440375897754e-05,
+     "friction": 0.5,
+     "restitution": 0.5
+    },
+    {
+     "mesh": "b0_col_5.obj",
+     "volume": 5.508564202447915e-05,
+     "friction": 0.5,
+     "restitution": 0.5
+    },
+    {
+     "mesh": "b0_col_6.obj",
+     "volume": 5.241216272583128e-05,
+     "friction": 0.5,
+     "restitution": 0.5
+    },
+    {
+     "mesh": "b0_col_7.obj",
+     "volume": 4.4643052878817054e-05,
+     "friction": 0.5,
+     "restitution": 0.5
+    },
+    {
+     "mesh": "b0_col_8.obj",
+     "volume": 5.413727748738055e-05,
+     "friction": 0.5,
+     "restitution": 0.5
+    },
+    {
+     "mesh": "b0_col_9.obj",
+     "volume": 4.4648870665364434e-05,
+     "friction": 0.5,
+     "restitution": 0.5
+    }
+   ],
+   "mass": 2.9,
+   "inertial": {
+    "mass": 2.9,
+    "pos": [
+     -0.000139,
+     0.014462,
+     0.031124
+    ],
+    "diaginertia": [
+     0.00622129,
+     0.0219858,
+     0.0272365
+    ],
+    "quat": [
+     -0.019066,
+     0.706853,
+     -0.706842,
+     -0.019219
+    ]
+   },
+   "parent": null,
+   "root": true,
+   "pos": [
+    9.8e-05,
+    -0.066831,
+    -0.002232
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    9.8e-05,
+    -0.066831,
+    -0.002232,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

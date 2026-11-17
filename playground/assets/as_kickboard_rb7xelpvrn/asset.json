@@ -1,0 +1,53 @@
+{
+ "source": "kickboard_RB7XELPVRN",
+ "usd": "kickboard_RB7XELPVRN.usd",
+ "mass": 0.234,
+ "friction": 0.604,
+ "com": null,
+ "size": [
+  0.4251,
+  0.3197,
+  0.0405
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.0010619699877886313,
+   "friction": 0.6043,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 0.000845684072116304,
+   "friction": 0.6043,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 0.0008521183784215783,
+   "friction": 0.6043,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 0.00129916139306446,
+   "friction": 0.6043,
+   "restitution": 0.1
+  }
+ ]
+}

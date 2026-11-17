@@ -1,0 +1,58 @@
+{
+ "source": "primitives_block_green_a01",
+ "usd": "sm_primitives_block_green_a01_01.usda",
+ "mass": 0.02981,
+ "friction": 0.4,
+ "com": [
+  0.0,
+  -0.0,
+  0.0235
+ ],
+ "size": [
+  0.047,
+  0.047,
+  0.047
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.0077,
+    0.3064,
+    0.0041,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00010378197610211434,
+   "friction": 0.4,
+   "restitution": 0.4
+  }
+ ],
+ "inertial": {
+  "mass": 0.029815,
+  "pos": [
+   0.0,
+   -0.0,
+   0.023502
+  ],
+  "diaginertia": [
+   1.14837e-05,
+   1.14837e-05,
+   1.14837e-05
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ }
+}
