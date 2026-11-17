@@ -1,0 +1,59 @@
+{
+ "source": "green_plastic_canteen",
+ "usd": "green_plastic_canteen.usda",
+ "mass": 0.17,
+ "friction": 0.5,
+ "com": null,
+ "size": [
+  0.1652,
+  0.165,
+  0.1122
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 9.34616659019145e-06,
+   "friction": 0.5,
+   "restitution": 0.3
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 1.3094897615969938e-05,
+   "friction": 0.5,
+   "restitution": 0.3
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 9.046827204357942e-05,
+   "friction": 0.5,
+   "restitution": 0.3
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 0.0006123879010408137,
+   "friction": 0.5,
+   "restitution": 0.3
+  },
+  {
+   "mesh": "col_4.obj",
+   "volume": 0.0006215114161001716,
+   "friction": 0.5,
+   "restitution": 0.3
+  }
+ ]
+}

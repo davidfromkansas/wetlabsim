@@ -1,0 +1,69 @@
+{
+ "source": "pegboard",
+ "usd": "pegboard.usd",
+ "mass": 8.69571,
+ "friction": 0.6,
+ "com": [
+  NaN,
+  NaN,
+  NaN
+ ],
+ "size": [
+  1.2,
+  0.02,
+  0.6
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.0,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00033008948868389873,
+   "friction": 0.6,
+   "restitution": 0.3
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 0.002410087852563514,
+   "friction": 0.6,
+   "restitution": 0.3
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 0.00036179198259718133,
+   "friction": 0.6,
+   "restitution": 0.3
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 0.0022763777022944023,
+   "friction": 0.6,
+   "restitution": 0.3
+  },
+  {
+   "mesh": "col_4.obj",
+   "volume": 0.0022780200043003873,
+   "friction": 0.6,
+   "restitution": 0.3
+  },
+  {
+   "mesh": "col_5.obj",
+   "volume": 0.002276757755236288,
+   "friction": 0.6,
+   "restitution": 0.3
+  }
+ ]
+}

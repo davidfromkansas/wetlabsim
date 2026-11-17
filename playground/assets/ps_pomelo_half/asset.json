@@ -1,0 +1,77 @@
+{
+ "source": "pomelo_half",
+ "usd": "pomelo_half.usd",
+ "mass": 0.88,
+ "friction": 0.45,
+ "com": null,
+ "size": [
+  0.15,
+  0.1498,
+  0.0736
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00046997345256015124,
+   "friction": 0.45,
+   "restitution": 0.15
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 0.00011354495835249024,
+   "friction": 0.45,
+   "restitution": 0.15
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 0.00015809212078865217,
+   "friction": 0.45,
+   "restitution": 0.15
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 0.0001032345380987463,
+   "friction": 0.45,
+   "restitution": 0.15
+  },
+  {
+   "mesh": "col_4.obj",
+   "volume": 3.3671070286186746e-05,
+   "friction": 0.45,
+   "restitution": 0.15
+  },
+  {
+   "mesh": "col_5.obj",
+   "volume": 0.0001631240038630313,
+   "friction": 0.45,
+   "restitution": 0.15
+  },
+  {
+   "mesh": "col_6.obj",
+   "volume": 5.481619815855071e-06,
+   "friction": 0.45,
+   "restitution": 0.15
+  },
+  {
+   "mesh": "col_7.obj",
+   "volume": 3.115031784539549e-05,
+   "friction": 0.45,
+   "restitution": 0.15
+  }
+ ]
+}

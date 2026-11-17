@@ -1,0 +1,35 @@
+{
+ "source": "travel_mug",
+ "usd": "travel_mug.usda",
+ "mass": 0.34,
+ "friction": 0.9,
+ "com": null,
+ "size": [
+  0.0952,
+  0.0905,
+  0.17
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.0010790972194487964,
+   "friction": 0.45,
+   "restitution": 0.1
+  }
+ ]
+}
