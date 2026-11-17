@@ -595,8 +595,8 @@ over a station table, and at least 0.3 m from every table and from other furnitu
 way, backs on one line, with "gap": 0.02: a kitchen run (base cabinets, counter, sink, stove, \
 dishwasher, fridge), a row of server racks, a conveyor line, a lab bench run. A room should read \
 as one fitted place, not pieces dotted about.
-  - Furniture the task uses (a fridge to load, a rack to plug into, a machine to tend, a \
-shelf to stock) stands right beside the robot's table with "gap": 0.05, its front facing the \
+  - Furniture the task uses or feeds (a fridge to load, a rack to plug into, a machine to tend, a \
+shelf to stock, the sink and dishwasher of a dish line, the conveyor a robot loads, the pallet it stacks) stands right beside the robot's table with "gap": 0.05, its front facing the \
 robot, the part the robot works on within 0.8 m of the robot's base, at a\
 side end of the table (its -y or +y end), not past its far edge. Better still, use small \
 furniture on the table (below) when one fits the request.
@@ -1462,6 +1462,36 @@ class Build:
         bx0, bx1 = min(q[0] for q in pts), max(q[0] for q in pts)
         by0, by1 = min(q[1] for q in pts), max(q[1] for q in pts)
         cy = (by0 + by1) / 2
+        # a guarded cell: its fence panels (and door) round the back and both sides of the
+        # tables, the front left open; the wall furniture then stands outside the fence
+        fence = [f for f in furniture if f["item"] in FENCE]
+        if len(fence) >= 3:
+            m = 0.9
+            fence.sort(key=lambda f: -catalog.meta(f["item"])["size"][0])      # the door first: mid-back
+            back_len = by1 - by0 + 2 * m
+            back, sides, got = [], [[], []], 0.0
+            for f in fence:
+                w = catalog.meta(f["item"])["size"][0]
+                if got + w <= back_len + 0.3 or not back:
+                    back.insert(len(back) // 2, f)
+                    got += w
+                else:
+                    sides[len(sides[0]) > len(sides[1])].append(f)
+            at = cy - got / 2
+            for f in back:
+                w = catalog.meta(f["item"])["size"][0]
+                q = _rot(bx0 - m, at + w / 2, th)
+                f["x"], f["y"], f["yaw"], f["gap"] = q[0] + ox, q[1] + oy, th + math.pi / 2, 0.0
+                at += w + 0.01
+            half = max(back_len, got) / 2
+            for sign, row in ((-1, sides[0]), (1, sides[1])):
+                at = bx0 - m + 0.14                    # clear of the back run's corner
+                for f in row:
+                    w = catalog.meta(f["item"])["size"][0]
+                    q = _rot(at + w / 2, cy + sign * (half + 0.14), th)
+                    f["x"], f["y"], f["yaw"], f["gap"] = q[0] + ox, q[1] + oy, th, 0.0
+                    at += w + 0.01
+            bx0, by0, by1 = bx0 - m - 0.3, cy - half - 0.3, cy + half + 0.3
         zone_of = {}
         br = self.pick["brief"]
         for i, k in (self.pick.get("slot_of") or {}).items():
@@ -1996,6 +2026,9 @@ def front_sign(item: str) -> int:
         return 1
     return 1 if catalog.item(item)["hf"].startswith("tripo:") else -1
 
+
+# The panels of a robot cell's guard: three or more are stood round the cell (Build._arrange_room)
+FENCE = ("safety_fence", "uc_robot_cell_safety_fence_door")
 
 # Furniture that stands against a wall in a real room (by its branch of the object tree): a scene's
 # pieces of these kinds are stood in runs round the robots' tables (Build._arrange_room)

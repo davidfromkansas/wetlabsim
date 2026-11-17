@@ -73,7 +73,10 @@ Every thing the person names must be in the plan: find it by name in the tree's 
 a plate, a shelf, a drawer cabinet...). Only if nothing like it is there does it go in "missing".
 If the task works with furniture (a drawer, a cabinet door, a shelf, a microwave), it must be \
 one small enough to stand on the robot's table, in reach: these can: {tabletop}. Big furniture \
-stands on the floor, out of reach, and is only scenery.
+stands on the floor, out of reach, and is only scenery. When the person names an appliance \
+the robot must work with (an incubator, a fridge, an oven) and only a floor-size one exists, \
+plan that one as the task's (the layout stands it right at the robot's table); never keep it \
+as scenery and hand the robot a different small thing instead.
 Our objects have fixed colours. For tasks by colour, use the plain toy blocks (red, green, blue \
 and yellow, as many of each as needed). Otherwise, if a task sorts or tells things apart, choose \
 objects that really differ (different kinds, sizes or colours as they come) and word the task by \
@@ -85,6 +88,8 @@ count every task object once per robot (2 robots with a bowl and 4 blocks each =
 Things the task presses, turns, opens or solves must really move: pick objects with working \
 parts (a cabinet with a door, a box with a lid); our puzzle cube and phones don't move, so \
 word such a task as moving the thing instead.
+A robot cell with a fence or guard: 5 or 6 Safety fence panels and one Robot cell safety \
+fence door, so the fence can close round the cell (one or two panels guard nothing).
 Something the task puts things into must be open (a basket, tray, bowl, tote, bin, rack), \
 never a closed box.
 
