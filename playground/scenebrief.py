@@ -79,6 +79,12 @@ and yellow, as many of each as needed). Otherwise, if a task sorts or tells thin
 objects that really differ (different kinds, sizes or colours as they come) and word the task by \
 what they are ("put the apples in the bowl and the lemons in the basket"), never by a colour \
 they may not have.
+Several robots that must match ("two identical tables", "the same setup for each robot"): \
+count every task object once per robot (2 robots with a bowl and 4 blocks each = 2 bowls and \
+8 blocks).
+Things the task presses, turns, opens or solves must really move: pick objects with working \
+parts (a cabinet with a door, a box with a lid); our puzzle cube and phones don't move, so \
+word such a task as moving the thing instead.
 Something the task puts things into must be open (a basket, tray, bowl, tote, bin, rack), \
 never a closed box.
 
@@ -299,7 +305,9 @@ def shortlists(prompt: str, brief: dict) -> tuple[list[list[str]], str]:
         full = [i for i in ids if tags[i]["look"] == "full"]
         plain = [i for i in ids if tags[i]["look"] != "full"]
         top = ids[:SHORT]
-        keep_plain = [i for i in top if i in plain][:max(2, SHORT - len(full))]
+        best_full = max((sc for i, sc in r if i in full), default=None)
+        clear = [i for i, sc in r[:SHORT] if i in plain and (best_full is None or sc >= best_full)]
+        keep_plain = clear + [i for i in top if i in plain and i not in clear][:max(0, max(2, SHORT - len(full)) - len(clear))]
         lst = [i for i in top if i in full or i in keep_plain]
         lst += [i for i in full if i not in lst][:SHORT - len(lst)]
         out.append(lst[:SHORT])

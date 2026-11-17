@@ -1,0 +1,52 @@
+{
+ "source": "09_gold_fish_fork_18_cm_long_in_gold_tone_plated_st",
+ "usd": "model.usdc",
+ "mass": 0.05635,
+ "friction": 0.25,
+ "com": null,
+ "size": [
+  0.0334,
+  0.18,
+  0.0041
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.8481,
+    0.5071,
+    0.1005,
+    1.0
+   ],
+   "roughness": 0.1599999964237213,
+   "metallic": 1.0
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.8500000238418579,
+   "metallic": 0.0,
+   "texture": "tex_1.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 4.336439018124606e-06,
+   "friction": 0.25,
+   "restitution": 0.05
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 3.6338652052072075e-06,
+   "friction": 0.25,
+   "restitution": 0.05
+  }
+ ]
+}

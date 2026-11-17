@@ -580,6 +580,15 @@ the middle of its station with its two arm bases at y -0.47 and +0.47. The FR3 D
 one base at x -0.42.
 - A station's position is its table's centre on the floor, in the scene's own frame (x, y, \
 metres), and yaw is its turn about the vertical in degrees. Keep stations at least 0.5 m apart.
+- The room's shape: the robots' tables in the middle; floor furniture round them like the walls \
+of a room, behind the robots (their -x side) and along the two sides (their -y and +y sides), \
+fronts facing in, 1 to 2.5 m from the tables. Keep the side the robots face (+x, past the far \
+edge of their tables) clear of anything taller than the tables: people and the cameras look in \
+from there. A tall unit (fridge, cabinet, rack, hood) never stands between a robot and that side.
+- A fence or guard needs enough panels to close the cell; with only one or two panels, stand \
+them in one line behind the robot, not loose on the floor.
+- Small things never go on the bare floor (only bins, buckets, boxes, signs and things made to \
+stand there); put them on a table, counter or shelf.
 - Furniture (the items marked as furniture) stands on the floor, in the scene's frame: never \
 over a station table, and at least 0.3 m from every table and from other furniture, except:
   - Furniture that belongs together stands side by side in one straight run, fronts the same \
@@ -588,7 +597,8 @@ dishwasher, fridge), a row of server racks, a conveyor line, a lab bench run. A 
 as one fitted place, not pieces dotted about.
   - Furniture the task uses (a fridge to load, a rack to plug into, a machine to tend, a \
 shelf to stock) stands right beside the robot's table with "gap": 0.05, its front facing the \
-robot, the part the robot works on within 0.8 m of the robot's base. Better still, use small \
+robot, the part the robot works on within 0.8 m of the robot's base, at a\
+side end of the table (its -y or +y end), not past its far edge. Better still, use small \
 furniture on the table (below) when one fits the request.
 - Objects for the robots' task go on their station's table, within reach of the robot: station \
 frame x from -0.15 to 0.75 and y from -0.5 to 0.5 (for the wet lab bench x from -0.1 to 0.3 and y \
@@ -628,6 +638,8 @@ Answer with JSON only, exactly this shape:
              {{"item": "waste_bin", "on": "floor", "x": 1.5, "y": -1.0, "yaw": 0}},
              {{"item": "can", "on": "inside", "object": 0, "level": 1, "dx": 0.05, "dy": 0, "yaw": 0}}],
  "task": "the robot's task, one sentence"}}
+When the request wants the stations to match ("identical", "the same setup"), share the \
+objects out evenly and put each station's set at the same spots in its own frame.
 List every station and every object exactly once per copy (an item asked for twice appears \
 twice). Put furniture items in "furniture" only."""
 

@@ -75,7 +75,8 @@ def tags() -> dict[str, dict]:
             # small enough across for a hand to close round and light enough to lift; each robot's
             # own gripper opening and payload are checked when a scene is built
             "graspable": (not c["fixed"]) and min(sx, sy) <= 0.12 and c["mass"] <= 5.0,
-            "look": "full" if _textured(asset) else "plain",
+            # our own Blender models are made to look finished (painted blocks need no texture)
+            "look": "full" if _textured(asset) or c["source"] == "Built in-house" else "plain",
             "source": c["source"],
         }
     return out

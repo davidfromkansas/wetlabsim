@@ -471,6 +471,34 @@ ITEMS = [
 # as convex pieces; furniture-size and larger ones stand where they are dropped.
 USDCRAFT = json.loads((pathlib.Path(__file__).parent / "usdcraft_library.json").read_text())
 ITEMS += [(u["id"], u["tab"], u["label"], "usdcraft:" + u["folder"], True, u["fixed"]) for u in USDCRAFT]
+# More USDCraft versions of everyday kinds (textured ones), so scenes get more variety
+ITEMS += [
+    ("uc_apple_gala", "Kitchen", "Apple, gala", "usdcraft:rigid/kitchen_dining/R104_apple/03_gala_apple", True, False),
+    ("uc_apple_green", "Kitchen", "Apple, green", "usdcraft:rigid/kitchen_dining/R104_apple/02_green_apple", True, False),
+    ("uc_egg_speckled", "Kitchen", "Egg, speckled", "usdcraft:rigid/kitchen_dining/R106_egg/03_speckled_egg", True, False),
+    ("uc_tomato_green_zebra", "Kitchen", "Tomato, green zebra", "usdcraft:rigid/kitchen_dining/R109_tomato/10_green_zebra_tomato_about_6_cm_in_diameter_round", True, False),
+    ("uc_stoneware_mug", "Kitchen", "Stoneware mug", "usdcraft:rigid/kitchen_dining/R085_coffee_mug/07_handmade_stoneware_mug_11_cm_tall_and_8_5_cm_in", True, False),
+    ("uc_tea_glass", "Kitchen", "Tea glass", "usdcraft:rigid/kitchen_dining/R088_drinking_glass/07_moroccan_tea_glass_9_cm_tall_and_6_cm_in_diamete", True, False),
+    ("uc_coupe_plate", "Kitchen", "Coupe plate", "usdcraft:rigid/kitchen_dining/R080_dinner_plate/04_coupe_plate", True, False),
+    ("uc_gold_fork", "Kitchen", "Gold fork", "usdcraft:rigid/kitchen_dining/R082_fork/09_gold_fish_fork_18_cm_long_in_gold_tone_plated_st", True, False),
+    ("uc_bamboo_cutting_board", "Kitchen", "Bamboo cutting board", "usdcraft:rigid/kitchen_dining/R070_cutting_board/05_bamboo_board", True, False),
+    ("uc_round_pizza_board", "Kitchen", "Round pizza board", "usdcraft:rigid/kitchen_dining/R070_cutting_board/02_round_pizza_board", True, False),
+    ("uc_enamel_measuring_cup", "Kitchen", "Enamel measuring cup", "usdcraft:rigid/kitchen_dining/R079_measuring_cup/10_enamel_measuring_cup_250_ml_and_8_cm_tall_in_whi", True, False),
+    ("uc_tomato_paste_can", "Kitchen", "Tomato paste can", "usdcraft:rigid/kitchen_dining/R092_food_tin_can/08_mini_tomato_paste_can_6_5_cm_tall_and_5_5_cm_in", True, False),
+    ("uc_teal_drink_can", "Kitchen", "Teal drink can", "usdcraft:rigid/kitchen_dining/R043_beverage_can_with_pull_tab/08_stubby_squat_aluminium_can_7_x_7_x_9_cm_and_250", True, False),
+    ("uc_half_wine_bottle", "Kitchen", "Half wine bottle", "usdcraft:rigid/kitchen_dining/R091_wine_bottle/09_half_bottle_of_wine_24_cm_tall_and_6_cm_in_diame", True, False),
+    ("uc_olive_wood_platter", "Kitchen", "Olive wood platter", "usdcraft:rigid/kitchen_dining/R095_serving_platter/10_olive_wood_serving_platter_with_handles_45_x_25", True, False),
+    ("uc_beaker_1000_ml", "Glassware", "Beaker, 1000 ml", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R482_glass_beaker/03_1000_ml_beaker", True, False),
+    ("uc_erlenmeyer_flask_50_ml", "Glassware", "Erlenmeyer flask, 50 ml", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R483_erlenmeyer_flask/03_tiny_50_ml_flask", True, False),
+    ("uc_amber_erlenmeyer_flask", "Glassware", "Amber Erlenmeyer flask", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R483_erlenmeyer_flask/09_amber_erlenmeyer_flask_9_cm_base_diameter_and_15", True, False),
+    ("uc_fixed_volume_micropipette", "Lab & Medical", "Fixed-volume micropipette", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R478_micropipette/08_fixed_volume_micropipette_18_cm_long_in_white_ha", True, False),
+    ("uc_pipette_tip_box_1000_ul", "Lab & Medical", "Pipette tip box, 1000 µl", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R929_pipette_tip_box/02_large_volume_tip_box_13_x_9_x_11_cm_in_white_pol", True, False),
+    ("uc_microtube_rack", "Lab & Medical", "Microtube rack", "usdcraft:rigid/medical_outdoor_garden_transport_sports/R479_test_tube_rack/07_microtube_rack_20_x_8_x_5_cm_in_clear_blue_hard", True, False),
+    ("uc_antistatic_parts_bin", "Bins & Trays", "Antistatic parts bin", "usdcraft:rigid/industrial_warehouse_construction_energy/R392_small_parts_bin/10_antistatic_parts_bin_10_x_16_x_8_cm_in_black_con", True, False),
+    ("uc_box_with_handle", "Bins & Trays", "Box with handle", "usdcraft:rigid/industrial_warehouse_construction_energy/R422_corrugated_parcel_box/03_box_with_punched_handle", True, False),
+    ("uc_stepper_motor", "Factory", "Stepper motor", "usdcraft:rigid/industrial_warehouse_construction_energy/R389_electric_motor/08_stepper_motor_5_7_x_5_7_x_8_cm_in_black_and_silv", True, False),
+    ("uc_bevel_gear_unit", "Factory", "Bevel gear unit", "usdcraft:rigid/industrial_warehouse_construction_energy/R388_gearbox/04_small_bevel_gear_unit", True, False),
+]
 
 # Triangles an item's visuals may keep before they are simplified (tools/convert_simready; the
 # default is 60,000). Simplifying drops a texture, so items whose whole look is one texture keep

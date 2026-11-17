@@ -1,0 +1,52 @@
+{
+ "source": "02_round_pizza_board",
+ "usd": "model.usdc",
+ "mass": 1.49632,
+ "friction": 0.55,
+ "com": null,
+ "size": [
+  0.45,
+  0.35,
+  0.0205
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.214,
+    0.0835,
+    0.0245,
+    1.0
+   ],
+   "roughness": 0.4399999976158142,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.8500000238418579,
+   "metallic": 0.0,
+   "texture": "tex_1.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00012748446170600551,
+   "friction": 0.55,
+   "restitution": 0.02
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 0.001915314329311247,
+   "friction": 0.55,
+   "restitution": 0.02
+  }
+ ]
+}

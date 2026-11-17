@@ -1,0 +1,46 @@
+{
+ "source": "05_bamboo_board",
+ "usd": "model.usdc",
+ "mass": 1.06034,
+ "friction": 0.55,
+ "com": null,
+ "size": [
+  0.36,
+  0.24,
+  0.0185
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.6038,
+    0.3424,
+    0.0783,
+    1.0
+   ],
+   "roughness": 0.41999998688697815,
+   "metallic": 0.0
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.8500000238418579,
+   "metallic": 0.0,
+   "texture": "tex_1.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.0015439656158750998,
+   "friction": 0.55,
+   "restitution": 0.03
+  }
+ ]
+}
