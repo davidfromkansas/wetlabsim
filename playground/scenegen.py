@@ -1425,7 +1425,104 @@ class Build:
             for o in objects:
                 if o["on"] == "furniture":
                     o["on"] = "station"
+        if self.pick.get("brief") and not self.preset:
+            self._arrange_room(stations, furniture)
         return stations, furniture, objects
+
+    def _arrange_room(self, stations, furniture):
+        """Floor furniture that lines a wall in a real room (WALL_KINDS) stood in one run behind
+        the robots' tables, backs on a line, fronts facing in, pieces of one zone side by side;
+        a long run turns the corner down a side. The model's own spots decide the order; a
+        piece it stood right against a table (the task uses it) stays where it is, as does
+        everything else (a dining set, a pallet, a cart). The side the robots face stays open."""
+        th = stations[0]["yaw"]
+        ox, oy = stations[0]["x"], stations[0]["y"]
+
+        def local(x, y):
+            return _rot(x - ox, y - oy, -th)
+
+        pts = []
+        srects = [_station_rect(st["kind"], st["robot"], st["x"], st["y"], st["yaw"]) for st in stations]
+        for r in srects:
+            pts += [local(x, y) for x in (r[0], r[2]) for y in (r[1], r[3])]
+        from . import object_tree as T
+        tags = T.tags()
+
+        def stays(f):
+            """At a table (the task works with it), or not a kind that lines a wall (a dining
+            set, a pallet, a cart): where the model put it."""
+            r = _item_rect(f["item"], f["x"], f["y"], f["yaw"])
+            return any(_hit(r, b, 0.08) for b in srects) or \
+                not any(k in pth for pth in tags.get(f["item"], {}).get("paths", []) for k in WALL_KINDS)
+
+        for f in furniture:          # the walls go round the tables and whatever stands at them
+            r = _item_rect(f["item"], f["x"], f["y"], f["yaw"])
+            if any(_hit(r, b, 0.08) for b in srects):
+                pts += [local(x, y) for x in (r[0], r[2]) for y in (r[1], r[3])]
+        bx0, bx1 = min(q[0] for q in pts), max(q[0] for q in pts)
+        by0, by1 = min(q[1] for q in pts), max(q[1] for q in pts)
+        cy = (by0 + by1) / 2
+        zone_of = {}
+        br = self.pick["brief"]
+        for i, k in (self.pick.get("slot_of") or {}).items():
+            if 0 <= k < len(br["slots"]):
+                zone_of[i] = br["slots"][k]["zone"]
+        walls = {"back": [], "right": [], "left": []}
+        rows = [(f,) + local(f["x"], f["y"]) for f in furniture if not stays(f)]
+        zmean = {}
+        for f, lx, ly in rows:
+            zmean.setdefault(zone_of.get(f["item"], ""), []).append(ly)
+        rows.sort(key=lambda t: (sum(zmean[zone_of.get(t[0]["item"], "")]) / len(zmean[zone_of.get(t[0]["item"], "")]),
+                                 zone_of.get(t[0]["item"], ""), t[2]))
+        # one run behind the robots; what doesn't fit turns the corner and runs down a side
+        room, used = max(5.0, by1 - by0 + 2.0), 0.0
+        for k, (f, lx, ly) in enumerate(rows):
+            sx, sy, _ = catalog.meta(f["item"])["size"]
+            used += max(sx, sy) if sy > 1.25 * sx else sx
+            w = "back" if used <= room or not walls["back"] else "left" if used <= room + 3.5 else "right"
+            # in the order they stand: the back run by y, a side run by its place in the list
+            walls[w].append((f, float(k), ly if w == "back" else float(k)))
+        if sum(len(v) for v in walls.values()) < 2:
+            return
+        clear, gap, zgap = 0.7, 0.03, 0.15
+        norm = {"back": (1.0, 0.0), "right": (0.0, 1.0), "left": (0.0, -1.0)}
+
+        def run(wall):
+            """The wall's pieces in order, each with its turn and its box about its own centre
+            (room frame), and the run's length and deepest piece."""
+            along = 1 if wall == "back" else 0
+            rows = walls[wall]
+            out, length, deep, last = [], 0.0, 0.0, None
+            for f, _, _ in rows:
+                sx, sy, _ = catalog.meta(f["item"])["size"]
+                if sy > 1.25 * sx:      # long front to back as modelled (NVIDIA's counters and
+                    yaw = math.atan2(norm[wall][1], norm[wall][0])   # benches): its long side along the wall
+                else:
+                    yaw = _facing(f["item"], 0.0, 0.0, list(norm[wall]), [], 0.0)
+                r = _item_rect(f["item"], 0.0, 0.0, yaw)
+                z = zone_of.get(f["item"], "")
+                if out:
+                    length += gap if z == last else zgap
+                out.append((f, yaw, r, length))
+                length += r[2 + along] - r[along]
+                deep = max(deep, r[3 - along] - r[1 - along])
+                last = z
+            return out, length, deep
+
+        back, lb, db = run("back")
+        for f, yaw, r, at in back:                     # backs on one line, the run centred on the tables
+            x = bx0 - clear - db - r[0]
+            y = cy - lb / 2 + at - r[1]
+            f["x"], f["y"] = (lambda q: (q[0] + ox, q[1] + oy))(_rot(x, y, th))
+            f["yaw"], f["gap"] = yaw + th, 0.02
+        half = max((by1 - by0) / 2 + clear, lb / 2 + 0.3)
+        for wall, sign in (("right", -1), ("left", 1)):
+            rows, _, deep = run(wall)
+            for f, yaw, r, at in rows:                 # from the back corner towards the front
+                x = bx0 - clear + at - r[0]
+                y = cy + sign * (half + deep) - (r[3] if sign > 0 else r[1])
+                f["x"], f["y"] = (lambda q: (q[0] + ox, q[1] + oy))(_rot(x, y, th))
+                f["yaw"], f["gap"] = yaw + th, 0.02
 
     def _rects(self, stations, furniture, objects, ox=0.0, oy=0.0):
         rs = [_station_rect(st["kind"], st["robot"], st["x"] + ox, st["y"] + oy, st["yaw"]) for st in stations]
@@ -1898,6 +1995,14 @@ def front_sign(item: str) -> int:
     if item in OPEN_PLUS_Y:
         return 1
     return 1 if catalog.item(item)["hf"].startswith("tripo:") else -1
+
+
+# Furniture that stands against a wall in a real room (by its branch of the object tree): a scene's
+# pieces of these kinds are stood in runs round the robots' tables (Build._arrange_room)
+WALL_KINDS = ("Counters & cabinets", "Sinks & taps", "Large appliances", "Racks & shelving", "Electrical",
+              "Machines", "Plant equipment", "Shelves & storage", "Lab furniture", "Incubators & ovens",
+              "Medical equipment", "Office & school > Storage", "Library", "Tool storage", "Workbenches",
+              "Retail fixtures", "Laundry", "Boards & presenting")
 
 
 # LIBERO's shelves are open on +y (measured: rays from +y reach the back panel, from -y they hit it)
