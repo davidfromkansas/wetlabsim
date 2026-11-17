@@ -379,15 +379,25 @@ one base at x -0.42.
 - A station's position is its table's centre on the floor, in the scene's own frame (x, y, \
 metres), and yaw is its turn about the vertical in degrees. Keep stations at least 0.5 m apart.
 - Furniture (the items marked as furniture) stands on the floor, in the scene's frame: never \
-over a station table, and at least 0.3 m from every table and from other furniture.
+over a station table, and at least 0.3 m from every table and from other furniture, except:
+  - Furniture that belongs together stands side by side in one straight run, fronts the same \
+way, backs on one line, with "gap": 0.02: a kitchen run (base cabinets, counter, sink, stove, \
+dishwasher, fridge), a row of server racks, a conveyor line, a lab bench run. A room should read \
+as one fitted place, not pieces dotted about.
+  - Furniture the task uses (a fridge to load, a rack to plug into, a machine to tend, a \
+shelf to stock) stands right beside the robot's table with "gap": 0.05, its front facing the \
+robot, the part the robot works on within 0.8 m of the robot's base. Better still, use small \
+furniture on the table (below) when one fits the request.
 - Objects for the robots' task go on their station's table, within reach of the robot: station \
 frame x from -0.15 to 0.75 and y from -0.5 to 0.5 (for the wet lab bench x from -0.1 to 0.3 and y \
 from -0.8 to 0.8; the island x from -0.05 to 0.25, y from -0.55 to 0.55; the counter x from -0.05 \
 to 0.25, y from -1.05 to 1.05), at least 0.25 m from the robot's base. Small things can go in a hollow object \
 (an apple in a bowl): give them the same spot. Objects can also go on top of a piece of furniture \
-(its index, and dx, dy from its centre) or on the floor (scene frame).
-- Inside another thing (a mug in a drawer, cans on a shelf's bottom level, a part in a closed \
-box): "on": "inside", "object": the index (from 0) in your "objects" list of the cabinet, shelf \
+(its index, and dx, dy from its centre) or on the floor (scene frame). Things the request \
+says start in a container (parts in a tote, bottles in a crate, fruit in a basket, boxes on a \
+shelf) must go in it with "on": "inside" (below), never loose beside it.
+- Inside another thing (a mug in a drawer, cans on a shelf's bottom level, parts in a tote or \
+an open box): "on": "inside", "object": the index (from 0) in your "objects" list of the cabinet, shelf \
 or box (or "furniture": its index in "furniture"), "level": 1 for the lowest space inside it, 2 \
 for the next one up, -1 for the highest (a top drawer), and dx, dy from its centre to spread \
 several things out. The top surface of something is not "inside": use "furniture" for that, or \
@@ -410,7 +420,7 @@ Sizes (x by y by z, cm): {sizes}
 Answer with JSON only, exactly this shape:
 {{"plan": "2 to 4 plain sentences on the layout and the choices you made",
  "stations": [{{"robot": "franka", "kind": "table", "x": 0, "y": 0, "yaw": 0}}],
- "furniture": [{{"item": "refrigerator", "x": 2.0, "y": 1.2, "face": "station 0"}}],
+ "furniture": [{{"item": "refrigerator", "x": 2.0, "y": 1.2, "face": "station 0", "gap": 0.15}}],
  "objects": [{{"item": "mug", "on": "station", "station": 0, "x": 0.3, "y": 0.1, "yaw": 0}},
              {{"item": "kettle", "on": "furniture", "furniture": 0, "dx": 0, "dy": 0, "yaw": 0}},
              {{"item": "waste_bin", "on": "floor", "x": 1.5, "y": -1.0, "yaw": 0}},
@@ -1025,7 +1035,8 @@ class Build:
                                   "yaw": _facing(it, _f(f.get("x")), _f(f.get("y")), f.get("face"), stations,
                                                  math.radians(_f(f.get("yaw")))),
                                   # a ready-made scene may butt pieces together (conveyor sections)
-                                  "gap": max(0.0, _f(f.get("gap", 0.15))) if self.preset else 0.15})
+                                  "gap": max(0.0, _f(f.get("gap", 0.15))) if self.preset
+                                  else min(0.15, max(0.02, _f(f.get("gap", 0.15))))})
         for it in want_f:
             furniture.append({"item": it, "x": 2.5, "y": -1.5 + 1.5 * len(furniture), "yaw": math.pi})
         objects, where = [], {}       # where: the model's own index of each object -> ours
@@ -1361,8 +1372,12 @@ class Build:
         yaw = p.yaw + (o["yaw"] or 0.0)
         for dx, dy in _spiral(0.03, 6):
             ddx, ddy = _rot(o["dx"] + dx, o["dy"] + dy, p.yaw)
-            lv = [sp for sp, open_top in self._levels(item, host, p.pos[0] + ddx, p.pos[1] + ddy, yaw)
-                  if not open_top] or []
+            all_lv = self._levels(item, host, p.pos[0] + ddx, p.pos[1] + ddy, yaw)
+            lv = [sp for sp, open_top in all_lv if not open_top]
+            if not lv:
+                # an open container (tote, bin, basket): its floor, down inside its rim
+                top = p.pos[2] + catalog.meta(p.item)["size"][2]
+                lv = [sp for sp, open_top in all_lv if open_top and sp["pos"][2] < top - 0.02]
             if not lv:
                 continue
             n = o.get("level", 1)
