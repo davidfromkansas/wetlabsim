@@ -1,0 +1,65 @@
+{
+ "source": "juice_carton",
+ "usd": "juice_carton.usd",
+ "mass": 1.0739,
+ "friction": 0.45,
+ "com": null,
+ "size": [
+  0.076,
+  0.07,
+  0.2335
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 8.656632692418357e-06,
+   "friction": 0.45,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 0.0010150965371904315,
+   "friction": 0.45,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 1.7596770235541687e-05,
+   "friction": 0.45,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 2.6304186011232175e-05,
+   "friction": 0.45,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_4.obj",
+   "volume": 2.6310502288586836e-05,
+   "friction": 0.45,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_5.obj",
+   "volume": 1.7495171675530987e-05,
+   "friction": 0.45,
+   "restitution": 0.1
+  }
+ ]
+}
