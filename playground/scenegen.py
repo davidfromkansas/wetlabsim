@@ -1329,12 +1329,14 @@ class Build:
         sl = (self.pick.get("slot_of") or {}).get(p.item)
         if sl is None or not self.pick.get("lists"):
             return host, None
-        pos, yaw, old = tuple(p.pos), p.yaw, p.item
+        pos, yaw0, old = tuple(p.pos), p.yaw, p.item
         for alt in self.pick["lists"][sl]:
             if alt == old or catalog.item(alt)["fixed"] != catalog.item(old)["fixed"]:
                 continue
             s.remove(host)
             self.objects.remove(host)
+            # turned so its front faces where the first one's front did
+            yaw = yaw0 + (math.pi if front_sign(alt) != front_sign(old) else 0.0)
             spot = s.support(alt, pos[0], pos[1], yaw)
             nu = None
             if spot["valid"] and spot["level"]:
@@ -1348,8 +1350,8 @@ class Build:
                     return nu, uid
                 s.remove(nu)
                 self.objects.remove(nu)
-            spot = s.support(old, pos[0], pos[1], yaw)     # put the first one back
-            host = s.add(old, spot["pos"], yaw)
+            spot = s.support(old, pos[0], pos[1], yaw0)     # put the first one back
+            host = s.add(old, spot["pos"], yaw0)
             self.objects.append(host)
         return host, None
 
@@ -1529,7 +1531,13 @@ class Build:
 def front_sign(item: str) -> int:
     """Which way an object's front faces when it isn't turned: -1 for -y (NVIDIA SimReady,
     USDCraft and most sources), +1 for +y (Tripo's models)."""
+    if item in OPEN_PLUS_Y:
+        return 1
     return 1 if catalog.item(item)["hf"].startswith("tripo:") else -1
+
+
+# LIBERO's shelves are open on +y (measured: rays from +y reach the back panel, from -y they hit it)
+OPEN_PLUS_Y = {"libero_wooden_shelf", "libero_wooden_two_layer_shelf"}
 
 
 def _facing(item: str, x: float, y: float, face, stations: list, yaw: float) -> float:
