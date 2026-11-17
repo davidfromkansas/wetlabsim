@@ -1,0 +1,65 @@
+{
+ "source": "window_squeegee",
+ "usd": "window_squeegee.usda",
+ "mass": 0.2,
+ "friction": 0.45,
+ "com": null,
+ "size": [
+  0.2678,
+  0.1751,
+  0.0392
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 9.067185631689302e-05,
+   "friction": 0.45,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 2.1453060363934103e-05,
+   "friction": 0.45,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 6.243615126485838e-05,
+   "friction": 0.45,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 4.548138855794763e-06,
+   "friction": 0.45,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_4.obj",
+   "volume": 1.6644709684365814e-05,
+   "friction": 0.45,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_5.obj",
+   "volume": 4.541669425779165e-06,
+   "friction": 0.45,
+   "restitution": 0.1
+  }
+ ]
+}
