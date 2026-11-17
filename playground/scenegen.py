@@ -923,6 +923,7 @@ class Build:
             if self.stop:
                 return self._end("stopped")
             stations, furniture, objects = self._clean_layout(lay)
+            self.raw_layout, self.laid = lay, objects      # kept for checking test rounds
             s.pause()
             if self.preset and lay.get("settings"):
                 s.merge_settings(lay["settings"])
@@ -1215,6 +1216,18 @@ class Build:
                 host = placed[k] if 0 <= k < len(placed) else None
             if host and s.find(host):
                 uid = self._place_inside(it, host, o)
+                if not uid:
+                    # the model may have pointed at the wrong thing: anything placed it fits inside
+                    for other in [u for u in placed if u and u != host and s.find(u)]:
+                        uid = self._place_inside(it, other, {**o, "dx": 0.0, "dy": 0.0})
+                        if uid:
+                            break
+                if not uid and o.get("last_try"):
+                    old = host
+                    host, uid = self._swap_host(it, host, o)
+                    if host != old and isinstance(placed, list):
+                        placed[:] = [host if u == old else u for u in placed]
+                        self.role[host] = self.role.pop(old, "scene")
                 if uid or not o.get("last_try"):
                     return uid or self._skip(it)     # not inside: the next on its short list may fit
                 self.fixes.append(f"the {catalog.item(it)['label'].lower()} didn't fit inside the "
@@ -1307,6 +1320,38 @@ class Build:
             if open_top or ceil - spot["pos"][2] >= h + 0.003:
                 out.append((spot, open_top))
         return sorted(out, key=lambda r: r[0]["pos"][2])
+
+    def _swap_host(self, item, host, o):
+        """item fits inside nothing here: another cabinet (or shelf, box) from the host's own
+        short list that it does fit inside, put down where the host was. (host, uid or None)"""
+        s = self.sim
+        p = s.find(host)
+        sl = (self.pick.get("slot_of") or {}).get(p.item)
+        if sl is None or not self.pick.get("lists"):
+            return host, None
+        pos, yaw, old = tuple(p.pos), p.yaw, p.item
+        for alt in self.pick["lists"][sl]:
+            if alt == old or catalog.item(alt)["fixed"] != catalog.item(old)["fixed"]:
+                continue
+            s.remove(host)
+            self.objects.remove(host)
+            spot = s.support(alt, pos[0], pos[1], yaw)
+            nu = None
+            if spot["valid"] and spot["level"]:
+                nu = s.add(alt, spot["pos"], yaw)
+                self.objects.append(nu)
+                uid = self._place_inside(item, nu, o)
+                if uid:
+                    self.fixes.append(f"used the {catalog.item(alt)['label'].lower()} instead of the "
+                                      f"{catalog.item(old)['label'].lower()}, so the "
+                                      f"{catalog.item(item)['label'].lower()} fits inside")
+                    return nu, uid
+                s.remove(nu)
+                self.objects.remove(nu)
+            spot = s.support(old, pos[0], pos[1], yaw)     # put the first one back
+            host = s.add(old, spot["pos"], yaw)
+            self.objects.append(host)
+        return host, None
 
     def _place_inside(self, item, host, o):
         s = self.sim
