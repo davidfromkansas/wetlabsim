@@ -44,6 +44,12 @@ def open_stage(path: pathlib.Path) -> Usd.Stage:
         sel = "Enabled" if name == "MuJoCo" else "Disabled"
         if sel in vs.GetVariantSet(name).GetVariantNames():
             vs.GetVariantSet(name).SetVariantSelection(sel)
+    for name in vs.GetNames():      # level of detail (Allsides' scans): the reduced mesh, not the full scan
+        if name.lower() in ("lod", "levelofdetail", "level_of_detail"):
+            names = vs.GetVariantSet(name).GetVariantNames()
+            pick = next((n for n in names if n.lower().lstrip("lod_") in ("1", "01")), None)
+            if pick:
+                vs.GetVariantSet(name).SetVariantSelection(pick)
     return stage
 
 
@@ -408,6 +414,27 @@ def _merge_uv_mesh(V, UV):
     return V[first], UV[first], inv.reshape(-1, 3)
 
 
+def _decimate_textured(V, F, UV, target: int):
+    """Quadric decimation that keeps the texture coordinates (MeshLab's filter), so a scanned
+    object whose whole look is its texture stays textured. None when MeshLab isn't there."""
+    try:
+        import pymeshlab
+    except ImportError:
+        return None
+    ms = pymeshlab.MeshSet()
+    ms.add_mesh(pymeshlab.Mesh(vertex_matrix=np.asarray(V, float), face_matrix=np.asarray(F, np.int32),
+                               v_tex_coords_matrix=np.asarray(UV, float)))
+    ms.compute_texcoord_transfer_vertex_to_wedge()
+    ms.meshing_decimation_quadric_edge_collapse_with_texture(targetfacenum=int(target), preserveboundary=True)
+    m = ms.current_mesh()
+    Fo = m.face_matrix()
+    corners = m.vertex_matrix()[Fo.reshape(-1)]
+    uvc = m.wedge_tex_coord_matrix()
+    if len(uvc) != len(corners):
+        return None
+    return _merge_uv_mesh(corners, uvc)
+
+
 def usd_dir(src: pathlib.Path) -> pathlib.Path:
     """NVIDIA's packages keep their USD under simready_usd/, Tripo's under usd/, USDCraft's under physx/."""
     for d in ("simready_usd", "usd", "physx"):
@@ -625,7 +652,10 @@ def _visuals(groups: dict, origin, T_inv, out: pathlib.Path, prefix: str, budget
         else:
             tm = trimesh.Trimesh(V, np.arange(len(V)).reshape(-1, 3), process=True)
             Vw, UVw, F = tm.vertices, None, tm.faces
-        if total > budget and len(F) > 2000:
+        if total > budget and len(F) > 2000 and has_tex and \
+                (d := _decimate_textured(Vw, F, UVw, max(1000, int(len(F) * budget / total)))):
+            Vw, UVw, F = d
+        elif total > budget and len(F) > 2000:
             tm = trimesh.Trimesh(Vw, F, process=False)
             try:
                 tm = tm.simplify_quadric_decimation(face_count=max(1000, int(len(F) * budget / total)))
@@ -933,10 +963,12 @@ def convert(src: pathlib.Path, out: pathlib.Path, hollow=False, max_tris=60000, 
         else:
             tm = trimesh.Trimesh(V, np.arange(len(V)).reshape(-1, 3), process=True)
             Vw, UVw, F = tm.vertices, None, tm.faces
-        if total > max_tris and len(F) > 2000:
+        target = max(1000, int(len(F) * max_tris / total))
+        if total > max_tris and len(F) > 2000 and has_tex and (d := _decimate_textured(Vw, F, UVw, target)):
+            Vw, UVw, F = d      # too heavy to render live: fewer triangles, same texture
+        elif total > max_tris and len(F) > 2000:
             # Too heavy to render live: decimate (keeps the look, drops tiny detail).
             tm = trimesh.Trimesh(Vw, F, process=False)
-            target = max(1000, int(len(F) * max_tris / total))
             try:
                 tm = tm.simplify_quadric_decimation(face_count=target)
                 Vw, F, UVw, has_tex = tm.vertices, tm.faces, None, False

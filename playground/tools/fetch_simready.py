@@ -22,7 +22,14 @@ REPOS = {"nvidia": "nvidia/simready-assets", "tripo": "VAST-AI/Tripo-Simready-As
          # ForgeCAD's parametric models (CC BY 4.0, NVIDIA SimReady packaging, physics under simready_usd/forgecad/)
          "forgecad": "ForgeCAD/simready-assets",
          # Palatial's NVIDIA-packaged furniture and fixtures (CC BY 4.0, folders D00154, ...)
-         "palatial": "PalatialSim/palatial-nv-asset-library"}
+         "palatial": "PalatialSim/palatial-nv-asset-library",
+         # More CC BY 4.0 sets in the same NVIDIA SimReady packaging (Nov 17 scan)
+         "projectsim": "projectsim/simready-assets",          # Kaedim's household items, many with caps/lids
+         "allsides": "ALLSIDES/simready-scanned-objects",     # 3D scans of real objects, weighed masses
+         "ndotlight": "NdotLight/SimReady_Assets",            # factory, tools and safety equipment
+         "mxr": "M-XR/marso-simready",                        # Marso Studio objects (usd/ folder)
+         "yamato": "YAMATOPROTEC/simready-fire-protection",   # the maker's own fire extinguisher
+         "atech": "atechdev/simready-assets"}                 # small electronics modules
 REPO = "https://huggingface.co/datasets/" + REPOS["nvidia"]
 
 
@@ -32,9 +39,16 @@ def _list(folder: str, repo: str = "nvidia") -> list[dict]:
         return json.load(r)
 
 
-def wanted(path: str) -> bool:
+def wanted(path: str, repo: str = "nvidia") -> bool:
     if "/source_assets/" in path or "/.metadata/" in path:
         return False
+    if repo == "allsides":
+        # Allsides ship each scan twice (LOD 0 full scan, LOD 1 reduced, picked by its "LOD" variant)
+        # plus a PhysX-only layer; we read LOD 1 and the plain physics layer, and only the albedo
+        # texture (the converter uses the base colour only). This keeps a download near 30 MB, not 400.
+        name = path.rsplit("/", 1)[-1]
+        if "lod00" in name or name.endswith("_physx.usd") or ("/textures/" in path and "_albedo" not in name):
+            return False
     if "/.thumbs/" in path:
         return path.endswith(("_transparent.png", ".usd.png", ".usda.png")) and "/256x256/" in path \
             and ("simready_usd/.thumbs" in path or "/usd/.thumbs" in path)
@@ -45,7 +59,7 @@ def wanted(path: str) -> bool:
 def fetch(folder: str, out: pathlib.Path, repo: str = "nvidia") -> pathlib.Path:
     dest = out / folder
     for f in _list(folder, repo):
-        if f.get("type") != "file" or not wanted(f["path"]):
+        if f.get("type") != "file" or not wanted(f["path"], repo):
             continue
         target = out / f["path"]
         if target.exists() and target.stat().st_size == f.get("size"):

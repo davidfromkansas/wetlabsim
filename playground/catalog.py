@@ -461,6 +461,13 @@ ITEMS = [
 USDCRAFT = json.loads((pathlib.Path(__file__).parent / "usdcraft_library.json").read_text())
 ITEMS += [(u["id"], u["tab"], u["label"], "usdcraft:" + u["folder"], True, u["fixed"]) for u in USDCRAFT]
 
+# The Nov 17 batch: whole SimReady sets from projectsim, Allsides, NdotLight, M-XR (Marso), Palatial,
+# Yamato Protec and atech, plus NVIDIA items we hadn't added, listed in extra_library.json (picked by
+# playground/tools/pick_extra.py). Items that failed to build or the drop test are left out there.
+EXTRA = json.loads((pathlib.Path(__file__).parent / "extra_library.json").read_text())
+ITEMS += [(u["id"], u["tab"], u["label"], (u["source"] + ":" if u["source"] != "nvidia" else "") + u["folder"],
+           True, u["fixed"]) for u in EXTRA if not u.get("skip")]
+
 # Triangles an item's visuals may keep before they are simplified (tools/convert_simready; the
 # default is 60,000). Simplifying drops a texture, so items whose whole look is one texture keep
 # all their detail (Palatial's are about 100,000 to 160,000 triangles).
@@ -561,7 +568,9 @@ FITTED_PARTS = {"kitchenette": {"refrigeratorBody_01_obj_00": "body_01_obj_00"}}
 # Where each item comes from, as the library's source chip names it (by its folder's prefix).
 SOURCE_NAMES = {"": "NVIDIA", "tripo": "Tripo", "quiktech": "QUIKTECH", "usdcraft": "USDCraft",
                 "autobio": "AutoBio", "mujoco": "MuJoCo", "inhouse": "Built in-house",
-                "forgecad": "ForgeCAD", "palatial": "Palatial", "libero": "LIBERO"}
+                "forgecad": "ForgeCAD", "palatial": "Palatial", "libero": "LIBERO",
+                "projectsim": "projectsim", "allsides": "Allsides", "ndotlight": "NdotLight", "mxr": "Marso",
+                "yamato": "Yamato Protec", "atech": "atech"}
 
 
 def source(hf: str) -> str:
