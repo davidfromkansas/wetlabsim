@@ -44,12 +44,15 @@ def main(argv=None):
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--timeout", type=int, default=1800)
     ap.add_argument("--only", help="one source (projectsim, allsides, palatial, ...)")
+    ap.add_argument("--shard", default="0/1", help="i/n: build only every n-th item, starting at i (split over machines)")
     a = ap.parse_args(argv)
     done = set()
     if LOG.exists():
         done = {json.loads(line)["id"] for line in LOG.read_text().splitlines() if line.strip()}
     todo = [u["id"] for u in catalog.EXTRA if (not a.only or u["source"] == a.only)
             and u["id"] not in done and not (catalog.ASSETS / u["id"] / "asset.json").exists()]
+    i, n = map(int, a.shard.split("/"))
+    todo = todo[i::n]
     print(len(todo), "to build", flush=True)
     LOG.parent.mkdir(exist_ok=True)
     with ThreadPoolExecutor(a.workers) as ex, LOG.open("a") as log:
