@@ -1591,7 +1591,8 @@ class PGHandler(Handler):
         if what == "pick":
             try:
                 pk = SB.pick(prompt, model, PUBLIC)
-                self.sess.scene_brief = {"prompt": prompt, "brief": pk["brief"], "slot_of": pk["slot_of"]}
+                self.sess.scene_brief = {"prompt": prompt, "brief": pk["brief"], "slot_of": pk["slot_of"],
+                                         "lists": pk["lists"]}
                 return self._json({"ok": True, "pick": {k: pk[k] for k in ("title", "robots", "items", "missing", "task")}})
             except SG.ModelError as e:
                 return self._json({"ok": False, "error": str(e)[:1].upper() + str(e)[1:] + "."})
@@ -1603,7 +1604,7 @@ class PGHandler(Handler):
             pick = SG.clean_pick(b.get("pick") or {})
             br = getattr(self.sess, "scene_brief", None)
             if br and br["prompt"] == prompt:       # the plan behind this pick (zones, each object's slot)
-                pick.update(brief=br["brief"], slot_of=br["slot_of"])
+                pick.update(brief=br["brief"], slot_of=br["slot_of"], lists=br["lists"])
             if not pick["robots"]:
                 return self._json({"ok": False, "error": "a scene needs at least one robot"})
             build = SG.Build(s, self.sess, prompt, pick, model, PUBLIC)

@@ -59,8 +59,21 @@ you plan a believable place built only from our library, and the task the robot(
 Robots (id: what it is):
 {robots}
 
-Our object library as a category tree, with how many objects sit under each branch:
+Our object library as a category tree, with how many objects sit under each branch and, on \
+each leaf, the names of every object there:
 {tree}
+
+First, match how much the person asked for:
+- A test or benchmark setup, or a request that says plain, simple, minimal or bare ("a plain \
+table with 6 blocks and 3 bins"): only what they name and what the task needs. No room, no extra \
+furniture, no decoration. One zone, "robot".
+- A place ("a kitchen", "a wet lab", "our packing station"): the place, with the variety such a \
+place has (below).
+Every thing the person names must be in the plan: find it by name in the tree's lists (a basket, \
+a plate, a shelf, a drawer cabinet...). Only if nothing like it is there does it go in "missing".
+If the request is about one robot task on furniture (a drawer, a cabinet door, a shelf), that \
+furniture must stand where the robot can reach it: on the robot's table if it's small enough, \
+otherwise say so in the task and keep the task to what the robot can reach.
 
 Plan it like a set designer:
 - room: the kind of place, in a few words ("home kitchen", "cell culture lab", "garage workshop").
@@ -78,7 +91,7 @@ branches with objects under them), how many objects from it, which zone it goes 
 ("task": the task needs it, it goes on the robot's table, and must be small enough for a robot \
 hand; "scene": there so the place looks real), and "want": a few words on what you'd like from \
 that branch ("a white mug", "any toaster").
-  Variety makes a place look real: cover the different kinds of things such a place has (a \
+  For a place, variety makes it look real: cover the different kinds of things such a place has (a \
 kitchen has big appliances, countertop appliances, cookware, tableware, food, utensils...), \
 usually 6 to 12 different branches. About 8 to 20 objects in all; keep the robot's table to \
 what the task needs plus 2 to 5 other things, with room to work. Furniture (counters, fridges, \
@@ -99,7 +112,7 @@ def _robots_text() -> str:
 
 
 def brief_messages(prompt: str) -> tuple[str, str]:
-    sys_ = BRIEF_SYSTEM.format(robots=_robots_text(), tree=T.tree_text(), max_robots=SG.MAX_ROBOTS)
+    sys_ = BRIEF_SYSTEM.format(robots=_robots_text(), tree=T.tree_text(labels=True), max_robots=SG.MAX_ROBOTS)
     return sys_, f"The person's request:\n{prompt.strip()[:2000]}"
 
 

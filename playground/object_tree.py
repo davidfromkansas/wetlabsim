@@ -102,10 +102,17 @@ def under(node: str) -> list[str]:
             if any(p == node or p.startswith(node + " > ") for p in t["paths"])]
 
 
-def tree_text() -> str:
-    """The tree with counts, as a planner reads it: one node per line, indented."""
+def tree_text(labels: bool = False) -> str:
+    """The tree with counts, as a planner reads it: one node per line, indented; with labels,
+    each leaf also lists the names of what's under it, so the planner knows what we have."""
     lines = []
+    lv = leaves()
+    have = {t["label"] for t in tags().values()}
     for node, k in counts().items():
         depth = node.count(">")
-        lines.append(f"{'  ' * depth}- {node.split(' > ')[-1]} ({k})")
+        line = f"{'  ' * depth}- {node.split(' > ')[-1]} ({k})"
+        if labels and node in lv:
+            names = sorted({x for x in lv[node]["labels"] if x in have})
+            line += ": " + "; ".join(names)
+        lines.append(line)
     return "\n".join(lines)

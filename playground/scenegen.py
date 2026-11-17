@@ -173,24 +173,24 @@ WHERE = "local"     # where Codex runs for a ChatGPT sign-in: "local", or "modal
 CODEX_TIMEOUT = 300
 
 
-def _codex_cmd(model: str, effort: str, out: str, jail: bool) -> list:
-    return ["codex", "exec", "--skip-git-repo-check",
+def _codex_cmd(model: str, effort: str, out: str, jail: bool, images=()) -> list:
+    return ["codex", "exec", "--skip-git-repo-check", *(a for p in images for a in ("--image", p)),
             *(["--dangerously-bypass-approvals-and-sandbox"] if jail else ["--sandbox", "read-only"]),
             "--model", model, "-c", f'model_reasoning_effort="{effort}"',
             "-c", 'cli_auth_credentials_store="file"', "-c", 'forced_login_method="chatgpt"',
             "--output-last-message", out]
 
 
-def _codex(model: str, system: str, user: str, login: str, effort: str) -> str:
+def _codex(model: str, system: str, user: str, login: str, effort: str, images=()) -> str:
     """One answer from an OpenAI model through Codex, signed in with the person's ChatGPT login
     file (the OpenAI API takes API keys only). Codex may refresh the login's tokens: the new file
     is kept, as after a run."""
     prompt = (system + "\n\n" + user + "\n\nDon't run any commands or change any files: answer with "
               "the JSON only, as your final message.")
     if WHERE == "modal":
-        text, new = _codex_modal(model, prompt, login, effort)
+        text, new = _codex_modal(model, prompt, login, effort, images)
     else:
-        text, new = _codex_local(model, prompt, login, effort)
+        text, new = _codex_local(model, prompt, login, effort, images)
     if new and new.strip() != login.strip():
         try:
             ACCT.update_login("openai", new)
@@ -201,7 +201,7 @@ def _codex(model: str, system: str, user: str, login: str, effort: str) -> str:
     return text
 
 
-def _codex_local(model: str, prompt: str, login: str, effort: str) -> tuple[str, str]:
+def _codex_local(model: str, prompt: str, login: str, effort: str, images=()) -> tuple[str, str]:
     import shutil
     import subprocess
     import tempfile
@@ -212,10 +212,15 @@ def _codex_local(model: str, prompt: str, login: str, effort: str) -> tuple[str,
         with open(os.open(auth, os.O_WRONLY | os.O_CREAT, 0o600), "w") as f:
             f.write(login)
         out = os.path.join(home, "answer.txt")
+        pics = []
+        for k, b in enumerate(images):          # pictures go in with --image
+            pics.append(os.path.join(home, f"picture{k + 1}.jpg"))
+            with open(pics[-1], "wb") as f:
+                f.write(b)
         env = {k: v for k, v in os.environ.items() if k not in ("OPENAI_API_KEY", "CODEX_API_KEY", "OPENAI_BASE_URL")}
         env.update(CODEX_HOME=home, NO_COLOR="1")
         try:
-            p = subprocess.run(_codex_cmd(model, effort, out, jail=False) + [prompt], env=env, cwd=home,
+            p = subprocess.run(_codex_cmd(model, effort, out, jail=False, images=pics) + [prompt], env=env, cwd=home,
                                capture_output=True, text=True, timeout=CODEX_TIMEOUT, stdin=subprocess.DEVNULL)
         except FileNotFoundError:
             raise ModelError("Codex isn't installed on this machine (npm install -g @openai/codex)") from None
@@ -230,7 +235,7 @@ def _codex_local(model: str, prompt: str, login: str, effort: str) -> tuple[str,
         shutil.rmtree(home, ignore_errors=True)
 
 
-def _codex_modal(model: str, prompt: str, login: str, effort: str) -> tuple[str, str]:
+def _codex_modal(model: str, prompt: str, login: str, effort: str, images=()) -> tuple[str, str]:
     """The same, in a Modal Sandbox with the agents' image, reaching ChatGPT only."""
     import modal
 
@@ -243,7 +248,11 @@ def _codex_modal(model: str, prompt: str, login: str, effort: str) -> tuple[str,
         sb.exec("mkdir", "-p", "/tmp/codex", "/tmp/w").wait()
         sb.filesystem.write_bytes(login.encode(), "/tmp/codex/auth.json")
         sb.exec("chmod", "600", "/tmp/codex/auth.json").wait()
-        proc = sb.exec(*_codex_cmd(model, effort, "/tmp/w/answer.txt", jail=True), prompt, workdir="/tmp/w",
+        pics = []
+        for k, b in enumerate(images):
+            pics.append(f"/tmp/w/picture{k + 1}.jpg")
+            sb.filesystem.write_bytes(b, pics[-1])
+        proc = sb.exec(*_codex_cmd(model, effort, "/tmp/w/answer.txt", jail=True, images=pics), prompt, workdir="/tmp/w",
                        env={"CODEX_HOME": "/tmp/codex", "NO_COLOR": "1"}, timeout=CODEX_TIMEOUT)
         # Close Codex's input right away: `codex exec` reads more of the prompt from a piped stdin
         # until it ends, and a Sandbox process's stdin stays open, so Codex sat waiting until it
@@ -272,9 +281,8 @@ def _codex_modal(model: str, prompt: str, login: str, effort: str) -> tuple[str,
 
 
 def can_see(model_id: str, public: bool) -> bool:
-    """Whether this model can be sent pictures here (an API key; not a ChatGPT sign-in through Codex)."""
-    m = next((m for m in SCENE_MODELS if m["id"] == model_id), None)
-    return bool(m) and _cred(m["provider"], public)[0] != "chatgpt"
+    """Whether this model can be sent pictures here (by API key, or through Codex's --image)."""
+    return any(m["id"] == model_id for m in SCENE_MODELS)
 
 
 def ask_json(model_id: str, system: str, user: str, public: bool, effort: str = "medium", images=()) -> dict:
@@ -286,7 +294,8 @@ def ask_json(model_id: str, system: str, user: str, public: bool, effort: str = 
         label = ACCT.PROVIDERS[m["provider"]]["label"]
         raise ModelError(f"connect your {label} API key in Settings to use {m['label']}")
     if kind == "chatgpt":
-        text = _codex(m["id"], system, user, key, effort)
+        text = _codex(m["id"], system, user, key, effort, images)
+        USAGE.setdefault(m["id"] + " (ChatGPT plan)", [0, 0])[0] += 1     # calls: Codex reports no tokens
     else:
         call = _anthropic if m["provider"] == "anthropic" else _openai
         text = call(m["id"], system, user, key, effort, images)
@@ -1129,11 +1138,24 @@ class Build:
         return self._taken()
 
     def _place_object(self, o, off, fixed_uids):
+        sl = (self.pick.get("slot_of") or {}).get(o["item"])
         uid = self._place_object1(o, off, fixed_uids)
-        if uid:
-            sl = (self.pick.get("slot_of") or {}).get(o["item"])
-            if sl is not None:
-                self.role[uid] = self.pick["brief"]["slots"][sl]["role"]
+        if not uid and sl is not None and self.pick.get("lists"):
+            # it didn't fit: the next object on its slot's short list, in the same spot
+            used = {i["id"] for i in self.pick["items"]}
+            for alt in self.pick["lists"][sl]:
+                if alt in used or catalog.item(alt)["fixed"] != catalog.item(o["item"])["fixed"]:
+                    continue
+                uid = self._place_object1({**o, "item": alt}, off, fixed_uids)
+                if uid:
+                    gone = self.skipped.pop()
+                    self.counts["objects"][1] += 1
+                    self.fixes.append(f"used the {catalog.item(alt)['label'].lower()} for the {gone.lower()}, which didn't fit")
+                    break
+                self.skipped.pop()
+                self.counts["objects"][1] += 1
+        if uid and sl is not None:
+            self.role[uid] = self.pick["brief"]["slots"][sl]["role"]
         return uid
 
     def _place_object1(self, o, off, fixed_uids):
