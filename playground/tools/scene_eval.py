@@ -7,7 +7,7 @@ A judge model (a different one from the builder) scores from the pictures and th
   layout   1-5  is the layout relevant (zones, facing, grouping, task things on the robot's table)?
 plus automatic checks: nothing that didn't fit, every slot filled, the task names only things there.
 
-    python -m playground.tools.scene_eval --prompts /path/scene-prompts-110.md --out runs/scene-eval/r1
+    python -m playground.tools.scene_eval --prompts playground/tools/scene_prompts_110.md --out runs/scene-eval/r1
     python -m playground.tools.scene_eval ... --only 1,5,44 --jobs 4
 
 Needs the builder's and the judge's API keys (local Settings or ANTHROPIC_API_KEY / OPENAI_API_KEY)

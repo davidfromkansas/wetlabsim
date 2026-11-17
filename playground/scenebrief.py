@@ -41,7 +41,15 @@ def jev_key() -> str:
     """The Jev key scenes are picked with: David's, for every session (the Modal secret
     JEV_API_KEY, which hosting/app.py hands over as WETLAB_SCENE_JEV_KEY so task runs never
     use it), or on one's own computer JEV_API_KEY."""
-    return os.environ.get("WETLAB_SCENE_JEV_KEY") or os.environ.get("JEV_API_KEY") or ""
+    k = os.environ.get("WETLAB_SCENE_JEV_KEY") or os.environ.get("JEV_API_KEY") or os.environ.get("TYPESAFE_API_KEY")
+    if k or os.environ.get("WETLAB_OWNER_KEY"):      # the hosted site: only the server's own key
+        return k or ""
+    try:                                             # one's own computer: a Jev key saved in Settings
+        from . import accounts as ACCT
+        kind, key = ACCT.credential_for("jev")
+        return key if kind == "key" else ""
+    except Exception:  # noqa: BLE001
+        return ""
 
 
 # ------------------------------------------------------------------ 1. the brief
