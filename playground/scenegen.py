@@ -1222,7 +1222,7 @@ class Build:
                         uid = self._place_inside(it, other, {**o, "dx": 0.0, "dy": 0.0})
                         if uid:
                             break
-                if not uid and o.get("last_try"):
+                if not uid:          # swap the holder first: the thing itself is what was asked for
                     old = host
                     host, uid = self._swap_host(it, host, o)
                     if host != old and isinstance(placed, list):
