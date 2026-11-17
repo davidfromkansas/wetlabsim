@@ -10,7 +10,8 @@ plus automatic checks: nothing that didn't fit, every slot filled, the task name
     python -m playground.tools.scene_eval --prompts playground/tools/scene_prompts_110.md --out runs/scene-eval/r1
     python -m playground.tools.scene_eval ... --only 1,5,44 --jobs 4
 
-Needs the builder's and the judge's API keys (local Settings or ANTHROPIC_API_KEY / OPENAI_API_KEY)
+Needs the builder's and the judge's API keys (local Settings or ANTHROPIC_API_KEY / OPENAI_API_KEY),
+or --claude-plan to ask Claude through the Claude Code app's own sign-in instead (no API charges)
 and, for Jev's picks, JEV_API_KEY. Writes <out>/<n>/{top.jpg,front.jpg,result.json},
 <out>/results.jsonl and <out>/index.html (a gallery of every scene with its scores).
 """
@@ -152,7 +153,12 @@ def main(argv=None):
     ap.add_argument("--judge", default="gpt-6-astra")
     ap.add_argument("--only", default="", help="prompt numbers, e.g. 1,5,44 or 1-10")
     ap.add_argument("--jobs", type=int, default=3)
+    ap.add_argument("--claude-plan", action="store_true",
+                    help="ask Claude through the Claude Code app's sign-in (a Claude plan), not an API key")
     a = ap.parse_args(argv)
+    if a.claude_plan:
+        import os
+        os.environ["WETLAB_SCENE_CLAUDE_PLAN"] = "1"
     ps = read_prompts(a.prompts)
     if a.only:
         want = set()

@@ -235,6 +235,49 @@ def _codex_local(model: str, prompt: str, login: str, effort: str, images=()) ->
         shutil.rmtree(home, ignore_errors=True)
 
 
+def _claude_plan(model: str, system: str, user: str, images=()) -> str:
+    """One answer from Claude through the Claude Code CLI signed in with a Claude plan, on this
+    computer only (WETLAB_SCENE_CLAUDE_PLAN=1, for test rounds): no API key, no API charges."""
+    import shutil
+    import subprocess
+    import tempfile
+    home = tempfile.mkdtemp(prefix="wetlab-scene-claude-")
+    try:
+        pics = []
+        for k, b in enumerate(images):
+            pics.append(os.path.join(home, f"picture{k + 1}.jpg"))
+            with open(pics[-1], "wb") as f:
+                f.write(b)
+        prompt = user
+        if pics:
+            prompt = ("First look at these pictures of the scene with the Read tool: "
+                      + ", ".join(pics) + "\n\n" + user)
+        prompt += "\n\nDon't change any files: answer with the JSON only, as your final message."
+        env = {k: v for k, v in os.environ.items() if k not in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN",
+                                                                  "ANTHROPIC_BASE_URL", "CLAUDE_CODE_USE_BEDROCK")}
+        # the prompt goes in on stdin (the tool lists take every word after them)
+        cmd = ["claude", "-p", "--model", model, "--output-format", "json", "--system-prompt", system,
+               "--tools", "Read", "--allowedTools", "Read"]
+        try:
+            p = subprocess.run(cmd, env=env, cwd=home, capture_output=True, text=True,
+                               timeout=CODEX_TIMEOUT, input=prompt)
+        except FileNotFoundError:
+            raise ModelError("Claude Code isn't installed on this machine") from None
+        except subprocess.TimeoutExpired:
+            raise ModelError("Claude Code took too long to answer") from None
+        try:
+            out = json.loads(p.stdout)
+        except json.JSONDecodeError:
+            tail = " ".join((p.stderr or p.stdout or "").strip().splitlines()[-2:])[:300]
+            raise ModelError(f"Claude Code couldn't answer{': ' + tail if tail else ''}") from None
+        if out.get("is_error"):
+            raise ModelError(f"Claude Code couldn't answer: {str(out.get('result', ''))[:300]}")
+        _count(model + " (Claude plan)", out)
+        return str(out.get("result") or "")
+    finally:
+        shutil.rmtree(home, ignore_errors=True)
+
+
 def _codex_modal(model: str, prompt: str, login: str, effort: str, images=()) -> tuple[str, str]:
     """The same, in a Modal Sandbox with the agents' image, reaching ChatGPT only."""
     import modal
@@ -289,6 +332,9 @@ def ask_json(model_id: str, system: str, user: str, public: bool, effort: str = 
     m = next((m for m in SCENE_MODELS if m["id"] == model_id), None)
     if m is None:
         raise ModelError("that model can't build scenes")
+    if m["provider"] == "anthropic" and not public and os.environ.get("WETLAB_SCENE_CLAUDE_PLAN"):
+        # on one's own computer: through the Claude Code app's own sign-in (a Claude plan)
+        return parse_json(_claude_plan(m["id"], system, user, images))
     kind, key = _cred(m["provider"], public)
     if not key:
         label = ACCT.PROVIDERS[m["provider"]]["label"]
