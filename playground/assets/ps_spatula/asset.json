@@ -1,0 +1,59 @@
+{
+ "source": "spatula",
+ "usd": "spatula.usd",
+ "mass": 0.105,
+ "friction": 0.35,
+ "com": null,
+ "size": [
+  0.322,
+  0.0733,
+  0.0135
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 4.409183599601788e-05,
+   "friction": 0.35,
+   "restitution": 0.3
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 9.978117594486168e-06,
+   "friction": 0.35,
+   "restitution": 0.3
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 4.092421336491106e-05,
+   "friction": 0.35,
+   "restitution": 0.3
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 2.3729353511930255e-06,
+   "friction": 0.35,
+   "restitution": 0.3
+  },
+  {
+   "mesh": "col_4.obj",
+   "volume": 2.405221132790848e-06,
+   "friction": 0.35,
+   "restitution": 0.3
+  }
+ ]
+}

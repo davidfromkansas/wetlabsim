@@ -1,0 +1,82 @@
+{
+ "source": "decor_book_cooking_a05",
+ "usd": "sm_decor_book_cooking_a05_01.usda",
+ "mass": 0.02114,
+ "friction": 0.5,
+ "com": [
+  -0.00518,
+  -0.00641,
+  0.01133
+ ],
+ "size": [
+  0.185,
+  0.1369,
+  0.0217
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 8.937674029708732e-05,
+   "friction": 0.5,
+   "restitution": 0.12
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 8.942892948988892e-05,
+   "friction": 0.5,
+   "restitution": 0.12
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 0.00015396385134090068,
+   "friction": 0.5,
+   "restitution": 0.12
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 0.00013238378180324405,
+   "friction": 0.5,
+   "restitution": 0.12
+  },
+  {
+   "mesh": "col_4.obj",
+   "volume": 3.691801859383033e-05,
+   "friction": 0.5,
+   "restitution": 0.12
+  }
+ ],
+ "inertial": {
+  "mass": 0.021144,
+  "pos": [
+   -0.005181,
+   -0.006405,
+   0.011334
+  ],
+  "diaginertia": [
+   4.18767e-05,
+   7.16372e-05,
+   0.000109821
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ }
+}
