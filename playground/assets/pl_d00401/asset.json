@@ -1,0 +1,103 @@
+{
+ "source": "D00401",
+ "usd": "D00401.usd",
+ "mass": 0.2,
+ "friction": 0.5,
+ "com": null,
+ "size": [
+  0.0779,
+  0.287,
+  0.0767
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "part_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.00025751463629601753,
+     "friction": 0.5,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 0.00030225303329937795,
+     "friction": 0.5,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b0_col_2.obj",
+     "volume": 0.00029664611244112533,
+     "friction": 0.5,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b0_col_3.obj",
+     "volume": 0.00035915890990629863,
+     "friction": 0.5,
+     "restitution": 0.1
+    }
+   ],
+   "mass": 0.2,
+   "inertial": {
+    "mass": 0.2,
+    "pos": [
+     -0.002619,
+     -5e-05,
+     0.039579
+    ],
+    "diaginertia": [
+     0.000149483,
+     0.0013984,
+     0.00140404
+    ],
+    "quat": [
+     0.676367,
+     0.207977,
+     0.208405,
+     0.67516
+    ]
+   },
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.00227,
+    0.000476,
+    -0.001552
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.00227,
+    0.000476,
+    -0.001552,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}
