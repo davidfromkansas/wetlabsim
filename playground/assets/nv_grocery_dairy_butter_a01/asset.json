@@ -1,0 +1,64 @@
+{
+ "source": "grocery_dairy_butter_a01",
+ "usd": "sm_grocery_dairy_butter_a01_01.usda",
+ "mass": 0.47304,
+ "friction": 0.45,
+ "com": [
+  -0.00192,
+  -0.00122,
+  0.02383
+ ],
+ "size": [
+  0.1593,
+  0.0953,
+  0.0431
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00035236631099866693,
+   "friction": 0.45,
+   "restitution": 0.4
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 0.0002857371547846075,
+   "friction": 0.45,
+   "restitution": 0.4
+  }
+ ],
+ "inertial": {
+  "mass": 0.47304,
+  "pos": [
+   -0.001919,
+   -0.001222,
+   0.023832
+  ],
+  "diaginertia": [
+   0.00065906,
+   0.00138139,
+   0.00173726
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ }
+}

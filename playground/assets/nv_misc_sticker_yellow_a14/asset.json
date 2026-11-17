@@ -1,0 +1,51 @@
+{
+ "source": "misc_sticker_yellow_a14",
+ "usd": "sm_misc_sticker_yellow_a14_01.usda",
+ "mass": 0.00475,
+ "friction": 0.5,
+ "com": [
+  0.00559,
+  0.00935,
+  0.02632
+ ],
+ "size": [
+  0.0837,
+  0.0837,
+  0.0034
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 1.04253095096928e-06,
+   "friction": 0.5,
+   "restitution": 0.12
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 2.2691354523560228e-08,
+   "friction": 0.5,
+   "restitution": 0.12
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 1.1834138214887497e-07,
+   "friction": 0.5,
+   "restitution": 0.12
+  }
+ ]
+}

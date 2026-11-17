@@ -1,0 +1,34 @@
+{
+ "source": "25_atech_wheel_n20_50mm",
+ "usd": "atech_wheel_n20_50mm.usd",
+ "mass": 0.04223,
+ "friction": 0.9,
+ "com": null,
+ "size": [
+  0.05,
+  0.02,
+  0.05
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    0.2,
+    0.2,
+    0.22,
+    1.0
+   ],
+   "roughness": 0.800000011920929,
+   "metallic": 0.0
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 3.8812034001490155e-05,
+   "friction": 0.9,
+   "restitution": 0.05
+  }
+ ]
+}

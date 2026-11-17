@@ -1,0 +1,41 @@
+{
+ "source": "coconut",
+ "usd": "coconut.usd",
+ "mass": 0.967,
+ "friction": 0.45,
+ "com": null,
+ "size": [
+  0.1339,
+  0.1322,
+  0.18
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 2.1978583530645187e-06,
+   "friction": 0.45,
+   "restitution": 0.25
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 0.001311999306237482,
+   "friction": 0.45,
+   "restitution": 0.25
+  }
+ ]
+}

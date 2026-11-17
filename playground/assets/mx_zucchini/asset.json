@@ -1,0 +1,47 @@
+{
+ "source": "zucchini",
+ "usd": "zucchini.usda",
+ "mass": 0.29739,
+ "friction": 0.5,
+ "com": null,
+ "size": [
+  0.1972,
+  0.0536,
+  0.052
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.0003024541782865313,
+   "friction": 0.5,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 9.457590934861753e-06,
+   "friction": 0.5,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 9.4224840843093e-06,
+   "friction": 0.5,
+   "restitution": 0.1
+  }
+ ]
+}

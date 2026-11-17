@@ -1,0 +1,85 @@
+{
+ "source": "D00084",
+ "usd": "D00084.usd",
+ "mass": 0.06,
+ "friction": 0.5,
+ "com": null,
+ "size": [
+  0.0801,
+  0.1412,
+  0.0617
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "part_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.0004027385888368841,
+     "friction": 0.5,
+     "restitution": 0.1
+    }
+   ],
+   "mass": 0.06,
+   "inertial": {
+    "mass": 0.06,
+    "pos": [
+     0.000243,
+     0.000165,
+     -0.001886
+    ],
+    "diaginertia": [
+     3.1982e-05,
+     7.92263e-05,
+     8.60846e-05
+    ],
+    "quat": [
+     0.667887,
+     -0.014401,
+     0.024301,
+     -0.743727
+    ]
+   },
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.0,
+    0.0,
+    0.030851
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.0,
+    0.0,
+    0.030851,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

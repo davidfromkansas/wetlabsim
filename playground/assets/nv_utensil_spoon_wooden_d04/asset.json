@@ -1,0 +1,64 @@
+{
+ "source": "utensil_spoon_wooden_d04",
+ "usd": "sm_utensil_spoon_wooden_d04_01.usda",
+ "mass": 0.12354,
+ "friction": 0.5,
+ "com": [
+  0.07528,
+  -0.00037,
+  0.00498
+ ],
+ "size": [
+  0.3024,
+  0.0368,
+  0.0087
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 2.20559831904914e-05,
+   "friction": 0.5,
+   "restitution": 0.4
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 1.3392736597312159e-05,
+   "friction": 0.5,
+   "restitution": 0.4
+  }
+ ],
+ "inertial": {
+  "mass": 0.123544,
+  "pos": [
+   0.075276,
+   -0.000366,
+   0.004978
+  ],
+  "diaginertia": [
+   8.37203e-06,
+   0.00111794,
+   0.00112358
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ }
+}

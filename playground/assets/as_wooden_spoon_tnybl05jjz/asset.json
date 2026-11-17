@@ -1,0 +1,41 @@
+{
+ "source": "wooden_spoon_TNYBL05JJZ",
+ "usd": "wooden_spoon_TNYBL05JJZ.usd",
+ "mass": 0.096,
+ "friction": 0.343,
+ "com": null,
+ "size": [
+  0.3537,
+  0.0687,
+  0.0149
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00010004506111285956,
+   "friction": 0.3434,
+   "restitution": 0.28
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 6.700091888486887e-05,
+   "friction": 0.3434,
+   "restitution": 0.28
+  }
+ ]
+}

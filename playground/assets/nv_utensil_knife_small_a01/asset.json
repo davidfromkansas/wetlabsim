@@ -1,0 +1,88 @@
+{
+ "source": "utensil_knife_small_a01",
+ "usd": "sm_utensil_knife_small_a01_01.usda",
+ "mass": 0.12948,
+ "friction": 0.5,
+ "com": [
+  -0.00275,
+  0.00061,
+  0.00729
+ ],
+ "size": [
+  0.195,
+  0.0257,
+  0.0146
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_1.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 6.1579087837565725e-06,
+   "friction": 0.5,
+   "restitution": 0.4
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 4.408391118325786e-06,
+   "friction": 0.5,
+   "restitution": 0.4
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 2.212204529003999e-06,
+   "friction": 0.5,
+   "restitution": 0.4
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 1.5703724788244096e-05,
+   "friction": 0.5,
+   "restitution": 0.4
+  }
+ ],
+ "inertial": {
+  "mass": 0.129476,
+  "pos": [
+   -0.00275,
+   0.000609,
+   0.007291
+  ],
+  "diaginertia": [
+   1.84391e-05,
+   0.000905137,
+   0.000919386
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ }
+}

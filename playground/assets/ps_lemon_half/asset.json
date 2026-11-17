@@ -1,0 +1,35 @@
+{
+ "source": "lemon_half",
+ "usd": "lemon_half.usd",
+ "mass": 0.17,
+ "friction": 0.45,
+ "com": null,
+ "size": [
+  0.07,
+  0.07,
+  0.0583
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00016022623879817025,
+   "friction": 0.45,
+   "restitution": 0.15
+  }
+ ]
+}

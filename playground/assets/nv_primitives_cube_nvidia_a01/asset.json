@@ -1,0 +1,58 @@
+{
+ "source": "primitives_cube_nvidia_a01",
+ "usd": "sm_primitives_cube_nvidia_a01_01.usda",
+ "mass": 0.05642,
+ "friction": 0.4,
+ "com": [
+  0.0,
+  -0.0,
+  0.03233
+ ],
+ "size": [
+  0.0647,
+  0.0647,
+  0.0647
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00027018664902758575,
+   "friction": 0.4,
+   "restitution": 0.4
+  }
+ ],
+ "inertial": {
+  "mass": 0.056423,
+  "pos": [
+   0.0,
+   -0.0,
+   0.032331
+  ],
+  "diaginertia": [
+   4.1128e-05,
+   4.1128e-05,
+   4.1128e-05
+  ],
+  "quat": [
+   0.707107,
+   0.0,
+   0.707107,
+   -0.0
+  ]
+ }
+}

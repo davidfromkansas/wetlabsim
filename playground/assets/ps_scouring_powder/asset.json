@@ -1,0 +1,64 @@
+{
+ "source": "scouring_powder",
+ "usd": "scouring_powder.usd",
+ "mass": 0.098,
+ "friction": 0.45,
+ "com": null,
+ "size": [
+  0.0926,
+  0.0926,
+  0.1845
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  },
+  {
+   "mesh": "vis_1.obj",
+   "rgba": [
+    0.5542,
+    0.5705,
+    0.5705,
+    1.0
+   ],
+   "roughness": 0.2800000011920929,
+   "metallic": 1.0
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 4.565168237449102e-05,
+   "friction": 0.45,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 4.5802078224686724e-05,
+   "friction": 0.45,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 0.0010892811423178783,
+   "friction": 0.45,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 4.846744797051164e-05,
+   "friction": 0.45,
+   "restitution": 0.1
+  }
+ ]
+}

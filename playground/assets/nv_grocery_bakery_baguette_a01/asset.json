@@ -1,0 +1,70 @@
+{
+ "source": "grocery_bakery_baguette_a01",
+ "usd": "sm_grocery_bakery_baguette_a01_01.usda",
+ "mass": 0.3157,
+ "friction": 0.55,
+ "com": [
+  2e-05,
+  -0.00021,
+  0.0251
+ ],
+ "size": [
+  0.4459,
+  0.0712,
+  0.0504
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.0005265676434537059,
+   "friction": 0.55,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 0.000261632461503194,
+   "friction": 0.55,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 0.00030001948186615115,
+   "friction": 0.55,
+   "restitution": 0.1
+  }
+ ],
+ "inertial": {
+  "mass": 0.315704,
+  "pos": [
+   2.1e-05,
+   -0.000206,
+   0.025099
+  ],
+  "diaginertia": [
+   0.000211058,
+   0.00533599,
+   0.00540482
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ }
+}

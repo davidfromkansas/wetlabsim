@@ -1,0 +1,97 @@
+{
+ "source": "Organic_Spicy_Brown_Mustard_squeeze_bottle",
+ "usd": "Organic_Spicy_Brown_Mustard_squeeze_bottle.usd",
+ "mass": 0.28,
+ "friction": 0.4,
+ "com": null,
+ "size": [
+  0.1202,
+  0.0682,
+  0.2363
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "part_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.5,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.00011794359370410142,
+     "friction": 0.4,
+     "restitution": 0.2
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 0.0005441335788347744,
+     "friction": 0.4,
+     "restitution": 0.2
+    },
+    {
+     "mesh": "b0_col_2.obj",
+     "volume": 0.0005767842141626512,
+     "friction": 0.4,
+     "restitution": 0.2
+    }
+   ],
+   "mass": 0.28,
+   "inertial": {
+    "mass": 0.28,
+    "pos": [
+     -0.000281,
+     -0.000136,
+     0.108958
+    ],
+    "diaginertia": [
+     0.000295898,
+     0.00121689,
+     0.00134799
+    ],
+    "quat": [
+     0.500667,
+     0.499326,
+     -0.499157,
+     0.500848
+    ]
+   },
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.000311,
+    0.000175,
+    1.5e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.000311,
+    0.000175,
+    1.5e-05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

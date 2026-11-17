@@ -1,0 +1,64 @@
+{
+ "source": "bollard",
+ "usd": "bollard.usd",
+ "mass": 3.93381,
+ "friction": 0.3,
+ "com": [
+  -0.0,
+  -0.0,
+  0.40427
+ ],
+ "size": [
+  0.24,
+  0.24,
+  0.9
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.013392445492444319,
+   "friction": 0.3,
+   "restitution": 0.5
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 0.0009103274033296716,
+   "friction": 0.3,
+   "restitution": 0.5
+  }
+ ],
+ "inertial": {
+  "mass": 3.933809,
+  "pos": [
+   -0.0,
+   -0.0,
+   0.404273
+  ],
+  "diaginertia": [
+   0.0105112,
+   0.279589,
+   0.279595
+  ],
+  "quat": [
+   0.356011,
+   0.610947,
+   -0.356011,
+   0.610947
+  ]
+ }
+}

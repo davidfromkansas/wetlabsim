@@ -1,0 +1,35 @@
+{
+ "source": "finger_lime",
+ "usd": "finger_lime.usd",
+ "mass": 0.029,
+ "friction": 0.45,
+ "com": null,
+ "size": [
+  0.029,
+  0.0266,
+  0.08
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 2.6416839329479558e-05,
+   "friction": 0.45,
+   "restitution": 0.25
+  }
+ ]
+}

@@ -22,7 +22,13 @@ SOURCES = {
     "quiktech": ("QUIKTECH SimReady", "https://huggingface.co/datasets/quiktech/SimReady-Assets"),
     "usdcraft": ("NVIDIA USDCraft-10K (Apache 2.0)", "https://huggingface.co/datasets/nvidia/USDCraft-10K"),
     "forgecad": ("ForgeCAD SimReady", "https://huggingface.co/datasets/ForgeCAD/simready-assets"),
-    "palatial": ("Palatial SimReady", "https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library"),
+    "palatial": ("Palatial NV Asset Library (Palatial Platforms)", "https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library"),
+    "projectsim": ("projectsim SimReady Assets (Kaedim)", "https://huggingface.co/datasets/projectsim/simready-assets"),
+    "allsides": ("Allsides SimReady Assets", "https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects"),
+    "ndotlight": ("NdotLight SimReady Assets", "https://huggingface.co/datasets/NdotLight/SimReady_Assets"),
+    "mxr": ("Marso by M-XR SimReady assets", "https://huggingface.co/datasets/M-XR/marso-simready"),
+    "yamato": ("Yamato Protec SimReady fire protection", "https://huggingface.co/datasets/YAMATOPROTEC/simready-fire-protection"),
+    "atech": ("atech SimReady assets", "https://huggingface.co/datasets/atechdev/simready-assets"),
 }
 AUTOBIO = ("AutoBio", "../../wetlabsim/assets/autobio/NOTICE.md")
 
@@ -67,6 +73,7 @@ def main(argv=None):
     ap.add_argument("ids", nargs="*")
     ap.add_argument("--cache", default="build/simready")
     ap.add_argument("--by-repo", action="store_true", help="cache each source in its own folder")
+    ap.add_argument("--no-credits", action="store_true", help="don't rewrite CREDITS.md (tools/build_extra runs many at once)")
     a = ap.parse_args(argv)
     ids = a.ids or [i[0] for i in catalog.ITEMS if not i[3].startswith(("autobio:", "mujoco:", "inhouse:", "libero:"))]
     for id_ in ids:
@@ -93,7 +100,8 @@ def main(argv=None):
             print(f"{id_:20s} mass={m['mass']} size={m['size']} parts={len(m['collision_parts'])} bodies={len(m.get('bodies', []))}")
         except Exception as e:  # noqa: BLE001
             print(f"{id_:20s} FAILED: {e}", file=sys.stderr)
-    write_credits()
+    if not a.no_credits:
+        write_credits()
 
 
 if __name__ == "__main__":

@@ -1,0 +1,76 @@
+{
+ "source": "dishware_cutlery_fork_a01",
+ "usd": "sm_dishware_cutlery_fork_a01_01.usda",
+ "mass": 0.16221,
+ "friction": 0.3,
+ "com": [
+  0.00029,
+  -0.0,
+  0.00601
+ ],
+ "size": [
+  0.1657,
+  0.024,
+  0.0188
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 3.2302509636039657e-06,
+   "friction": 0.3,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 2.7217674695232224e-06,
+   "friction": 0.3,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 3.5913303630416817e-07,
+   "friction": 0.3,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 7.469916422095239e-07,
+   "friction": 0.3,
+   "restitution": 0.1
+  }
+ ],
+ "inertial": {
+  "mass": 0.162208,
+  "pos": [
+   0.000293,
+   -0.0,
+   0.00601
+  ],
+  "diaginertia": [
+   8.18354e-06,
+   0.000485049,
+   0.000487252
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ }
+}

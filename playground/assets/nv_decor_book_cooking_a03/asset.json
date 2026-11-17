@@ -1,0 +1,64 @@
+{
+ "source": "decor_book_cooking_a03",
+ "usd": "sm_decor_book_cooking_a03_01.usda",
+ "mass": 0.07045,
+ "friction": 0.5,
+ "com": [
+  0.00391,
+  -0.01254,
+  0.0064
+ ],
+ "size": [
+  0.1832,
+  0.18,
+  0.0134
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 0.00019080288443036999,
+   "friction": 0.5,
+   "restitution": 0.12
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 0.000251110465810758,
+   "friction": 0.5,
+   "restitution": 0.12
+  }
+ ],
+ "inertial": {
+  "mass": 0.070451,
+  "pos": [
+   0.003914,
+   -0.012541,
+   0.006398
+  ],
+  "diaginertia": [
+   9.64677e-05,
+   0.000143828,
+   0.000236253
+  ],
+  "quat": [
+   0.707107,
+   0.0,
+   0.0,
+   -0.707107
+  ]
+ }
+}

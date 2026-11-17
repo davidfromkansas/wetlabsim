@@ -461,10 +461,20 @@ ITEMS = [
 USDCRAFT = json.loads((pathlib.Path(__file__).parent / "usdcraft_library.json").read_text())
 ITEMS += [(u["id"], u["tab"], u["label"], "usdcraft:" + u["folder"], True, u["fixed"]) for u in USDCRAFT]
 
+# The Nov 17 batch: whole SimReady sets from projectsim, Allsides, NdotLight, M-XR (Marso), Palatial,
+# Yamato Protec and atech, plus NVIDIA items we hadn't added, listed in extra_library.json (picked by
+# playground/tools/pick_extra.py). Items that failed to build or the drop test are left out there.
+EXTRA = json.loads((pathlib.Path(__file__).parent / "extra_library.json").read_text())
+ITEMS += [(u["id"], u["tab"], u["label"], (u["source"] + ":" if u["source"] != "nvidia" else "") + u["folder"],
+           True, u["fixed"]) for u in EXTRA if not u.get("skip")]
+
 # Triangles an item's visuals may keep before they are simplified (tools/convert_simready; the
 # default is 60,000). Simplifying drops a texture, so items whose whole look is one texture keep
 # all their detail (Palatial's are about 100,000 to 160,000 triangles).
-MAX_TRIS = {i[0]: 200_000 for i in ITEMS if i[3].startswith("palatial:")}
+# The Nov 17 batch (EXTRA) keeps its texture when simplified (MeshLab's texture-keeping decimation),
+# so it stays at the default and the library stays small enough to ship.
+_EXTRA_IDS = {u["id"] for u in EXTRA}
+MAX_TRIS = {i[0]: 200_000 for i in ITEMS if i[3].startswith("palatial:") and i[0] not in _EXTRA_IDS}
 
 # Furniture whose knobs, dials and buttons turn and press through their range (on other
 # furniture they are fixed, world.part_kind): a cooker's hob knobs, a washer's programme dial
@@ -561,7 +571,9 @@ FITTED_PARTS = {"kitchenette": {"refrigeratorBody_01_obj_00": "body_01_obj_00"}}
 # Where each item comes from, as the library's source chip names it (by its folder's prefix).
 SOURCE_NAMES = {"": "NVIDIA", "tripo": "Tripo", "quiktech": "QUIKTECH", "usdcraft": "USDCraft",
                 "autobio": "AutoBio", "mujoco": "MuJoCo", "inhouse": "Built in-house",
-                "forgecad": "ForgeCAD", "palatial": "Palatial", "libero": "LIBERO"}
+                "forgecad": "ForgeCAD", "palatial": "Palatial", "libero": "LIBERO",
+                "projectsim": "projectsim", "allsides": "Allsides", "ndotlight": "NdotLight", "mxr": "Marso",
+                "yamato": "Yamato Protec", "atech": "atech"}
 
 
 def source(hf: str) -> str:

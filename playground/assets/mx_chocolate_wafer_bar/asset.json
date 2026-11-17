@@ -1,0 +1,53 @@
+{
+ "source": "chocolate_wafer_bar",
+ "usd": "chocolate_wafer_bar.usda",
+ "mass": 0.04,
+ "friction": 0.5,
+ "com": null,
+ "size": [
+  0.1168,
+  0.027,
+  0.0218
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 1.0529154410922124e-05,
+   "friction": 0.5,
+   "restitution": 0.05
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 1.1209505201177796e-05,
+   "friction": 0.5,
+   "restitution": 0.05
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 1.1224611415336042e-05,
+   "friction": 0.5,
+   "restitution": 0.05
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 1.0581741225767462e-05,
+   "friction": 0.5,
+   "restitution": 0.05
+  }
+ ]
+}

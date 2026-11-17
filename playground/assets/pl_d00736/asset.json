@@ -1,0 +1,207 @@
+{
+ "source": "D00736",
+ "usd": "D00736.usd",
+ "mass": 0.211,
+ "friction": 0.6,
+ "com": null,
+ "size": [
+  0.0696,
+  0.0702,
+  0.1373
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "part_0",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      0.3
+     ],
+     "roughness": 0.0,
+     "metallic": 0.0
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 0.0004209087759117667,
+     "friction": 0.5,
+     "restitution": 0.15
+    }
+   ],
+   "mass": 0.18,
+   "inertial": {
+    "mass": 0.18,
+    "pos": [
+     3.5e-05,
+     0.000942,
+     0.057987
+    ],
+    "diaginertia": [
+     0.000108121,
+     0.00025317,
+     0.000253472
+    ],
+    "quat": [
+     0.700072,
+     -0.098056,
+     -0.700483,
+     -0.09802
+    ]
+   },
+   "parent": null,
+   "root": true,
+   "pos": [
+    -6.3e-05,
+    -0.000772,
+    -3.1e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -6.3e-05,
+    -0.000772,
+    -3.1e-05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "part_1",
+   "visuals": [
+    {
+     "mesh": "b1_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b1_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b1_col_0.obj",
+     "volume": 9.187067625191882e-05,
+     "friction": 0.4,
+     "restitution": 0.2
+    }
+   ],
+   "mass": 0.03,
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    -6.3e-05,
+    -0.000772,
+    -3.1e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -6.3e-05,
+    -0.000772,
+    -3.1e-05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "part_2",
+   "visuals": [
+    {
+     "mesh": "b2_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b2_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b2_col_0.obj",
+     "volume": 6.865509232308604e-06,
+     "friction": 0.6,
+     "restitution": 0.0
+    },
+    {
+     "mesh": "b2_col_1.obj",
+     "volume": 5.804998760431459e-06,
+     "friction": 0.6,
+     "restitution": 0.0
+    }
+   ],
+   "mass": 0.001,
+   "inertial": {
+    "mass": 0.001,
+    "pos": [
+     -0.001347,
+     -0.027542,
+     0.057829
+    ],
+    "diaginertia": [
+     1.45808e-07,
+     5.65549e-07,
+     6.93813e-07
+    ],
+    "quat": [
+     0.511141,
+     0.488655,
+     -0.511097,
+     0.488601
+    ]
+   },
+   "parent": 0,
+   "weld": true,
+   "collide": false,
+   "pos": [
+    -6.3e-05,
+    -0.000772,
+    -3.1e-05
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    -6.3e-05,
+    -0.000772,
+    -3.1e-05,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}

@@ -1,0 +1,121 @@
+{
+ "source": "D00096",
+ "usd": "D00096.usd",
+ "mass": 0.145,
+ "friction": 0.5,
+ "com": null,
+ "size": [
+  0.0681,
+  0.068,
+  0.0943
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "part_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 1.4002879084533819e-05,
+     "friction": 0.5,
+     "restitution": 0.5
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 5.922493372176712e-05,
+     "friction": 0.5,
+     "restitution": 0.5
+    },
+    {
+     "mesh": "b0_col_2.obj",
+     "volume": 0.0001775686178198358,
+     "friction": 0.5,
+     "restitution": 0.5
+    },
+    {
+     "mesh": "b0_col_3.obj",
+     "volume": 5.028601494119483e-06,
+     "friction": 0.5,
+     "restitution": 0.5
+    },
+    {
+     "mesh": "b0_col_4.obj",
+     "volume": 1.2315840165574156e-05,
+     "friction": 0.5,
+     "restitution": 0.5
+    },
+    {
+     "mesh": "b0_col_5.obj",
+     "volume": 1.4128774859436898e-05,
+     "friction": 0.5,
+     "restitution": 0.5
+    },
+    {
+     "mesh": "b0_col_6.obj",
+     "volume": 2.4798879352568035e-05,
+     "friction": 0.5,
+     "restitution": 0.5
+    }
+   ],
+   "mass": 0.145,
+   "inertial": {
+    "mass": 0.145,
+    "pos": [
+     -0.000251,
+     -9e-06,
+     0.047213
+    ],
+    "diaginertia": [
+     8.10892e-05,
+     0.000145969,
+     0.000146143
+    ],
+    "quat": [
+     0.509333,
+     0.490435,
+     -0.509373,
+     0.490502
+    ]
+   },
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.000256,
+    1.2e-05,
+    -1e-06
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.000256,
+    1.2e-05,
+    -1e-06,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}
