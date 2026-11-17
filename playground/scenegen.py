@@ -14,6 +14,7 @@ agent that is slow and costly for one answer; Jev only answers moves for a robot
 WETLAB_SCENEGEN_FAKE=1 answers without any model (tests, screenshots)."""
 from __future__ import annotations
 
+import base64
 import json
 import math
 import os
@@ -31,6 +32,7 @@ from wetlabsim import scene as WS
 MAX_ROBOTS = 4
 MAX_EACH = 6          # copies of one object a scene may ask for
 MAX_ITEMS = 40        # objects in one scene, all told
+FIX_ROUNDS = 2        # look-and-fix rounds after a v2 scene is built
 
 # The models that can build a scene, by company, most capable first (the default).
 SCENE_MODELS = [
@@ -96,6 +98,18 @@ class ModelError(RuntimeError):
     pass
 
 
+USAGE: dict[str, list[int]] = {}      # model -> [input tokens, output tokens], this process (for the test runs)
+
+
+def _count(model: str, out: dict):
+    u = out.get("usage") or {}
+    i = u.get("input_tokens", 0) + u.get("cache_read_input_tokens", 0) + u.get("cache_creation_input_tokens", 0)
+    o = u.get("output_tokens", 0)
+    t = USAGE.setdefault(model, [0, 0])
+    t[0] += i
+    t[1] += o
+
+
 def _post(url: str, headers: dict, body: dict, timeout: float = 240.0) -> dict:
     req = urllib.request.Request(url, data=json.dumps(body).encode(), method="POST",
                                  headers={"content-type": "application/json", **headers})
@@ -112,9 +126,12 @@ def _post(url: str, headers: dict, body: dict, timeout: float = 240.0) -> dict:
         raise ModelError(f"couldn't reach the model ({e})") from None
 
 
-def _anthropic(model: str, system: str, user: str, key: str, effort: str) -> str:
+def _anthropic(model: str, system: str, user: str, key: str, effort: str, images=()) -> str:
+    content = [{"type": "image", "source": {"type": "base64", "media_type": "image/jpeg",
+                                            "data": base64.b64encode(b).decode()}} for b in images]
+    content.append({"type": "text", "text": user})
     body = {"model": model, "max_tokens": 32000, "system": system,
-            "messages": [{"role": "user", "content": user}], "output_config": {"effort": effort}}
+            "messages": [{"role": "user", "content": content}], "output_config": {"effort": effort}}
     headers = {"x-api-key": key, "anthropic-version": "2023-06-01"}
     try:
         out = _post("https://api.anthropic.com/v1/messages", headers, body)
@@ -123,13 +140,19 @@ def _anthropic(model: str, system: str, user: str, key: str, effort: str) -> str
             raise
         body.pop("output_config")          # a model without effort levels
         out = _post("https://api.anthropic.com/v1/messages", headers, body)
+    _count(model, out)
     if out.get("stop_reason") == "refusal":
         raise ModelError("the model declined this request")
     return "".join(b.get("text", "") for b in out.get("content", []) if b.get("type") == "text")
 
 
-def _openai(model: str, system: str, user: str, key: str, effort: str) -> str:
-    body = {"model": model, "instructions": system, "input": user, "max_output_tokens": 32000,
+def _openai(model: str, system: str, user: str, key: str, effort: str, images=()) -> str:
+    inp = user
+    if images:
+        inp = [{"role": "user", "content": [
+            *({"type": "input_image", "image_url": "data:image/jpeg;base64," + base64.b64encode(b).decode()}
+              for b in images), {"type": "input_text", "text": user}]}]
+    body = {"model": model, "instructions": system, "input": inp, "max_output_tokens": 32000,
             "reasoning": {"effort": effort}}
     headers = {"authorization": f"Bearer {key}"}
     try:
@@ -139,6 +162,7 @@ def _openai(model: str, system: str, user: str, key: str, effort: str) -> str:
             raise
         body.pop("reasoning")
         out = _post("https://api.openai.com/v1/responses", headers, body)
+    _count(model, out)
     if out.get("output_text"):
         return out["output_text"]
     return "".join(c.get("text", "") for o in out.get("output", []) if o.get("type") == "message"
@@ -247,7 +271,13 @@ def _codex_modal(model: str, prompt: str, login: str, effort: str) -> tuple[str,
             pass
 
 
-def ask_json(model_id: str, system: str, user: str, public: bool, effort: str = "medium") -> dict:
+def can_see(model_id: str, public: bool) -> bool:
+    """Whether this model can be sent pictures here (an API key; not a ChatGPT sign-in through Codex)."""
+    m = next((m for m in SCENE_MODELS if m["id"] == model_id), None)
+    return bool(m) and _cred(m["provider"], public)[0] != "chatgpt"
+
+
+def ask_json(model_id: str, system: str, user: str, public: bool, effort: str = "medium", images=()) -> dict:
     m = next((m for m in SCENE_MODELS if m["id"] == model_id), None)
     if m is None:
         raise ModelError("that model can't build scenes")
@@ -259,7 +289,7 @@ def ask_json(model_id: str, system: str, user: str, public: bool, effort: str = 
         text = _codex(m["id"], system, user, key, effort)
     else:
         call = _anthropic if m["provider"] == "anthropic" else _openai
-        text = call(m["id"], system, user, key, effort)
+        text = call(m["id"], system, user, key, effort, images)
     return parse_json(text)
 
 
@@ -348,6 +378,10 @@ to 0.25, y from -1.05 to 1.05), at least 0.25 m from the robot's base. Small thi
 (an apple in a bowl): give them the same spot. Objects can also go on top of a piece of furniture \
 (its index, and dx, dy from its centre) or on the floor (scene frame).
 - Leave space between objects (about their size plus 3 cm) so a gripper can get to each.
+- Which way things face: instead of a yaw you may give "face": what the thing's front (its door, \
+controls, opening) should turn towards: "station 0" (that station's robot), or [x, y] (a point in \
+the scene's frame; for an object on a station, in that station's frame). Use it for furniture \
+and appliances so their fronts face the robots and the room, not a wall.
 
 The scene's robots (each entry is one station): {robots}
 The scene's objects: {items}
@@ -356,7 +390,7 @@ Sizes (x by y by z, cm): {sizes}
 Answer with JSON only, exactly this shape:
 {{"plan": "2 to 4 plain sentences on the layout and the choices you made",
  "stations": [{{"robot": "franka", "kind": "table", "x": 0, "y": 0, "yaw": 0}}],
- "furniture": [{{"item": "refrigerator", "x": 2.0, "y": 1.2, "yaw": 180}}],
+ "furniture": [{{"item": "refrigerator", "x": 2.0, "y": 1.2, "face": "station 0"}}],
  "objects": [{{"item": "mug", "on": "station", "station": 0, "x": 0.3, "y": 0.1, "yaw": 0}},
              {{"item": "kettle", "on": "furniture", "furniture": 0, "dx": 0, "dy": 0, "yaw": 0}},
              {{"item": "waste_bin", "on": "floor", "x": 1.5, "y": -1.0, "yaw": 0}}],
@@ -413,7 +447,19 @@ def layout_messages(prompt: str, pick: dict) -> tuple[str, str]:
     sizes = {i: "x".join(str(round(100 * v)) for v in catalog.meta(i)["size"]) for i in set(items)}
     furn = [i for i in set(items) if catalog.item(i)["fixed"]]
     sys_ = LAYOUT_SYSTEM.format(robots=json.dumps(robots), items=json.dumps(items), sizes=json.dumps(sizes))
-    user = (f"The person's request:\n{prompt.strip()[:2000]}\n\nScene name: {pick['title']}\n"
+    zones = ""
+    if pick.get("brief"):            # a v2 pick (scenebrief.py): the room, its zones, each object's slot
+        br = pick["brief"]
+        roles = {}
+        for i, k in (pick.get("slot_of") or {}).items():
+            sl = br["slots"][k]
+            roles[i] = {"zone": sl["zone"], "role": sl["role"], "what": sl["want"] or sl["node"]}
+        zones = (f"Room: {br['room']}\nZones (lay the scene out by these; the 'robot' zone is the robots' own "
+                 f"tables): {json.dumps(br['zones'])}\nEach object's zone and role (role task: on the robot's table, "
+                 f"within reach; role scene: in its zone, making the place look real): {json.dumps(roles)}\n"
+                 "Make it look like a real place of that kind: furniture against the zone's edges with fronts "
+                 "facing the room, appliances on counters, things grouped the way people keep them.\n")
+    user = (f"The person's request:\n{prompt.strip()[:2000]}\n\nScene name: {pick['title']}\n" + zones +
             f"Furniture among the objects: {json.dumps(furn)}\n"
             + (f"Things we don't have (leave them out): {json.dumps([m['name'] for m in pick['missing']])}\n"
                if pick.get("missing") else "")
@@ -719,6 +765,51 @@ def pick(prompt: str, model_id: str, public: bool) -> dict:
     return out
 
 
+
+FIX_SYSTEM = """You check a scene you laid out in a robot physics playground (MuJoCo, metres, z \
+up). You get two pictures of it and the list of what's placed where. Compare it with the person's \
+request and the plan, and fix what looks wrong:
+- Fronts (doors, controls, openings, screens) turned to a wall, away from the robots or the room.
+- Things in the wrong zone, scattered oddly, or not grouped the way people keep them.
+- The robot's table cluttered so the task objects are hard to reach, or a task object hidden.
+- Something that doesn't belong in this place at all (take it out; never a task object).
+Leave what is fine alone: only fix real problems, at most 8. Positions are in the scene's \
+frame (the pictures' axes). "face" turns an object's front towards "station N" or a point [x, y]; \
+or give "yaw" in degrees. Every move is checked: it won't land where something else is.
+
+Answer with JSON only:
+{"plan": "one or two plain sentences: what you saw and what you changed (or that it looks right)",
+ "fixes": [{"n": 3, "action": "move", "x": 1.2, "y": -0.4, "face": "station 0"},
+           {"n": 5, "action": "remove"}]}"""
+
+
+def snapshot(sim, view: dict, w: int = 1024, h: int = 640) -> bytes:
+    """A JPEG of the scene from a free camera (lookat, distance, azimuth, elevation)."""
+    import io
+    import mujoco
+    from PIL import Image
+    with sim.lock:
+        m = sim.m
+        d = mujoco.MjData(m)
+        d.qpos[:] = sim.d.qpos
+    mujoco.mj_forward(m, d)
+    cam = mujoco.MjvCamera()
+    cam.type = mujoco.mjtCamera.mjCAMERA_FREE
+    cam.lookat[:] = view["lookat"]
+    cam.distance, cam.azimuth, cam.elevation = view["distance"], view["azimuth"], view["elevation"]
+    m.vis.global_.offwidth = max(m.vis.global_.offwidth, w)
+    m.vis.global_.offheight = max(m.vis.global_.offheight, h)
+    r = mujoco.Renderer(m, h, w)
+    try:
+        r.update_scene(d, camera=cam)
+        img = r.render()
+    finally:
+        r.close()
+    buf = io.BytesIO()
+    Image.fromarray(img).save(buf, format="JPEG", quality=85)
+    return buf.getvalue()
+
+
 # ------------------------------------------------------------------ building it
 def _rot(x: float, y: float, yaw: float):
     c, s = math.cos(yaw), math.sin(yaw)
@@ -765,6 +856,11 @@ class Build:
         self.stations: list[str] = []
         self.objects: list[str] = []
         self.skipped: list[str] = []
+        self.fixes: list[str] = []      # what the look-and-fix step changed ("turned the fridge")
+        self.role: dict[str, str] = {}  # each placed object's uid -> "task" or "scene" (v2 picks)
+        self.look = bool(pck.get("brief")) and not preset   # check the built scene from pictures
+        if self.look:
+            self.counts["check"] = [0, FIX_ROUNDS]
         self.task = pck.get("task", "")
         self.zone = None
         self.undone = False
@@ -780,7 +876,8 @@ class Build:
                 "counts": self.counts, "title": self.pick["title"], "stations": self.stations,
                 "objects": len(self.objects), "skipped": self.skipped, "task": self.task,
                 "undone": self.undone, "now": self.now, "names": self.names,
-                "model": next((m["label"] for m in SCENE_MODELS if m["id"] == self.model_id), ""), "active": self.phase in ("plan", "robots", "furniture", "objects")}
+                "model": next((m["label"] for m in SCENE_MODELS if m["id"] == self.model_id), ""),
+                "fixes": self.fixes, "active": self.phase in ("plan", "robots", "furniture", "objects", "check")}
 
     def start(self):
         threading.Thread(target=self._run, daemon=True, name="scene-build").start()
@@ -830,6 +927,18 @@ class Build:
                 self.now = catalog.item(o["item"])["label"]
                 self._place_object(o, off, fixed_uids)
             self.now = ""
+            if self.look and not fake() and can_see(self.model_id, self.public):
+                self.phase = "check"
+                for k in range(FIX_ROUNDS):
+                    if self.stop:
+                        return self._end("stopped")
+                    self.now = "Looking over the scene"
+                    changed = self._look_and_fix(k)
+                    self.counts["check"][0] = k + 1
+                    if not changed:
+                        self.counts["check"][0] = FIX_ROUNDS
+                        break
+                self.now = ""
             if self.stations and self.task:
                 for u in self.stations:
                     self.sess.unsent[u] = {"task": self.task, "model": ""}
@@ -874,7 +983,8 @@ class Build:
             if it in want_f:
                 want_f.remove(it)
                 furniture.append({"item": it, "x": _f(f.get("x")), "y": _f(f.get("y")),
-                                  "yaw": math.radians(_f(f.get("yaw"))),
+                                  "yaw": _facing(it, _f(f.get("x")), _f(f.get("y")), f.get("face"), stations,
+                                                 math.radians(_f(f.get("yaw")))),
                                   # a ready-made scene may butt pieces together (conveyor sections)
                                   "gap": max(0.0, _f(f.get("gap", 0.15))) if self.preset else 0.15})
         for it in want_f:
@@ -885,12 +995,22 @@ class Build:
             if it in want_o:
                 want_o.remove(it)
                 on = o.get("on") if o.get("on") in ("station", "furniture", "floor") else "station"
+                k_st = max(0, min(len(stations) - 1, _int(o.get("station"), 0)))
+                yaw = math.radians(_f(o.get("yaw")))
+                if on == "station":       # in the station's frame: its robot sits at robot_xy
+                    rx, ry = W.KINDS[stations[k_st]["kind"]].get("robot_xy", (-0.42, 0.0))
+                    face = o.get("face")
+                    if isinstance(face, str) and face.strip().lower().startswith("station"):
+                        face = [rx, ry]
+                    yaw = _facing(it, _f(o.get("x")), _f(o.get("y")), face, [], yaw)
+                elif on == "floor":
+                    yaw = _facing(it, _f(o.get("x")), _f(o.get("y")), o.get("face"), stations, yaw)
                 objects.append({"item": it, "on": on,
-                                "station": max(0, min(len(stations) - 1, _int(o.get("station"), 0))),
+                                "station": k_st,
                                 "furniture": _int(o.get("furniture"), 0),
                                 "x": _f(o.get("x")), "y": _f(o.get("y")),
                                 "dx": _f(o.get("dx")), "dy": _f(o.get("dy")),
-                                "yaw": math.radians(_f(o.get("yaw"))),
+                                "yaw": yaw,
                                 # a ready-made scene's big part may hang over its pallet's edges
                                 "overhang": bool(self.preset and o.get("overhang"))})
         for k, it in enumerate(want_o):
@@ -1009,6 +1129,14 @@ class Build:
         return self._taken()
 
     def _place_object(self, o, off, fixed_uids):
+        uid = self._place_object1(o, off, fixed_uids)
+        if uid:
+            sl = (self.pick.get("slot_of") or {}).get(o["item"])
+            if sl is not None:
+                self.role[uid] = self.pick["brief"]["slots"][sl]["role"]
+        return uid
+
+    def _place_object1(self, o, off, fixed_uids):
         s = self.sim
         it, yaw = o["item"], o["yaw"]
         if o["on"] == "station" and o["station"] < len(self.stations):
@@ -1076,6 +1204,128 @@ class Build:
         self.counts[what][1] -= 1
         return None
 
+
+    # -------------------------------------------------- look and fix (v2 picks)
+    def views(self) -> list[dict]:
+        """Two views of the built scene: from above at a slant, and from the robots' front."""
+        rs = []
+        s = self.sim
+        for st in (s.station(u) for u in self.stations):
+            if st is not None:
+                rs.append(_station_rect(st.kind, st.robot, st.pos[0], st.pos[1], st.yaw))
+        for u in self.objects:
+            p = s.find(u)
+            if p is not None:
+                rs.append(_item_rect(p.item, p.pos[0], p.pos[1], p.yaw))
+        if not rs:
+            return []
+        x0, y0 = min(r[0] for r in rs), min(r[1] for r in rs)
+        x1, y1 = max(r[2] for r in rs), max(r[3] for r in rs)
+        cx, cy, span = (x0 + x1) / 2, (y0 + y1) / 2, max(x1 - x0, y1 - y0, 2.0)
+        st = s.station(self.stations[0]) if self.stations else None
+        az = (math.degrees(st.yaw) + 180.0) % 360 if st else 145.0     # looking at the robot's face... from behind its table
+        return [{"lookat": [cx, cy, 0.4], "distance": 1.3 * span + 1.0, "azimuth": 90.0, "elevation": -70.0},
+                {"lookat": [cx, cy, 0.7], "distance": 1.0 * span + 1.2, "azimuth": az, "elevation": -25.0}]
+
+    def pictures(self, w: int = 1024, h: int = 640) -> list[bytes]:
+        return [snapshot(self.sim, v, w, h) for v in self.views()]
+
+    def _placed_rows(self) -> list[dict]:
+        s = self.sim
+        rows = []
+        for n, u in enumerate(self.objects):
+            p = s.find(u)
+            if p is None:
+                continue
+            on = "floor"
+            st = next((st for st in s.stations if st.holds(p.pos[0], p.pos[1])), None)
+            if st is not None:
+                on = f"table of {st.name}"
+            elif p.pos[2] > 0.05:
+                on = "on furniture"
+            rows.append({"n": n, "uid": u, "item": p.item, "label": catalog.item(p.item)["label"],
+                         "x": round(p.pos[0], 2), "y": round(p.pos[1], 2), "yaw": round(math.degrees(p.yaw)) % 360,
+                         "size_cm": [round(100 * v) for v in catalog.meta(p.item)["size"]],
+                         "on": on, "role": self.role.get(u, "furniture" if catalog.item(p.item)["fixed"] else "scene")})
+        return rows
+
+    def _look_and_fix(self, round_no: int) -> bool:
+        """Show the model the scene it built and let it fix what looks wrong: turn things to
+        face the right way, move what's misplaced, take out what doesn't belong. Every move
+        goes through the same drop check as drag and drop. True if anything changed."""
+        s = self.sim
+        rows = self._placed_rows()
+        if not rows:
+            return False
+        imgs = self.pictures()
+        stations = [{"name": st.name, "robot": st.robot, "x": round(st.pos[0], 2), "y": round(st.pos[1], 2),
+                     "faces_deg": round(math.degrees(st.yaw)) % 360}
+                    for st in (s.station(u) for u in self.stations) if st is not None]
+        br = self.pick.get("brief") or {}
+        user = (f"The person's request:\n{self.prompt.strip()[:2000]}\n\nRoom: {br.get('room', '')}\n"
+                f"Zones: {json.dumps(br.get('zones', []))}\nTask: {self.task}\n"
+                f"Robots' stations (x, y in metres; the robot faces faces_deg): {json.dumps(stations)}\n"
+                f"Objects placed (n, label, x, y, yaw in degrees, size, what it stands on, role): "
+                f"{json.dumps([{k: r[k] for k in ('n', 'label', 'x', 'y', 'yaw', 'size_cm', 'on', 'role')} for r in rows])}\n"
+                f"Front sides: an object turned yaw 0 has its front towards -y, except "
+                f"{[r['n'] for r in rows if front_sign(r['item']) > 0]} whose front is towards +y at yaw 0. "
+                "Picture 1 looks down from above (+x to the right, +y up); picture 2 looks at the robots from the side.")
+        try:
+            out = ask_json(self.model_id, FIX_SYSTEM, user, self.public, effort="medium", images=imgs)
+        except ModelError:
+            return False
+        if out.get("plan") and round_no == 0:
+            self.plan_text = (self.plan_text + " Check: " + str(out["plan"]).strip())[:900]
+        changed = False
+        by_n = {r["n"]: r for r in rows}
+        with_lock = []
+        for f in (out.get("fixes") or [])[:10]:
+            r = by_n.get(_int((f or {}).get("n"), -1))
+            if r is None:
+                continue
+            p = s.find(r["uid"])
+            if p is None:
+                continue
+            if f.get("action") == "remove":
+                if r["role"] == "task":
+                    continue                 # the task needs it
+                s.remove(r["uid"])
+                self.objects.remove(r["uid"])
+                kk = "objects" if not catalog.item(p.item)["fixed"] else "furniture"
+                self.counts[kk][0] -= 1
+                self.counts[kk][1] -= 1
+                self.fixes.append(f"took out the {r['label'].lower()}")
+                changed = True
+                continue
+            x = _f(f.get("x")) if f.get("x") is not None else p.pos[0]
+            y = _f(f.get("y")) if f.get("y") is not None else p.pos[1]
+            yaw = p.yaw
+            if f.get("face") is not None:
+                yaw = _facing(p.item, x, y, f.get("face"), [{"x": st["x"], "y": st["y"]} for st in stations], yaw)
+            elif f.get("yaw") is not None:
+                yaw = math.radians(_f(f.get("yaw")))
+            if abs(x - p.pos[0]) < 0.01 and abs(y - p.pos[1]) < 0.01 and abs(yaw - p.yaw) < 0.03:
+                continue
+            spot = None
+            for dx, dy in _spiral(0.04, 5):
+                sp = s.support(p.item, x + dx, y + dy, yaw, exclude_uid=r["uid"])
+                if sp["valid"] and (sp["level"] or catalog.item(p.item)["fixed"]):
+                    if catalog.item(p.item)["fixed"] and sp["surface"] != "the floor":
+                        continue
+                    if r["role"] == "task":          # a task object stays on a robot's table
+                        st = next((st for st in s.stations if st.holds(x + dx, y + dy, -0.06)), None)
+                        if st is None or st.near_base(x + dx, y + dy):
+                            continue
+                    spot = sp
+                    break
+            if spot is None:
+                continue
+            s.move(r["uid"], spot["pos"], yaw)
+            moved = abs(x - p.pos[0]) > 0.01 or abs(y - p.pos[1]) > 0.01
+            self.fixes.append(f"{'moved' if moved else 'turned'} the {r['label'].lower()}")
+            changed = True
+        return changed
+
     # -------------------------------------------------- undo
     def undo(self) -> str | None:
         if self.status()["active"]:
@@ -1096,6 +1346,29 @@ class Build:
             self.sess.unsent.pop(u, None)
         self.undone = True
         return None
+
+
+def front_sign(item: str) -> int:
+    """Which way an object's front faces when it isn't turned: -1 for -y (NVIDIA SimReady,
+    USDCraft and most sources), +1 for +y (Tripo's models)."""
+    return 1 if catalog.item(item)["hf"].startswith("tripo:") else -1
+
+
+def _facing(item: str, x: float, y: float, face, stations: list, yaw: float) -> float:
+    """The turn (radians) that points an object's front at what "face" names: "station N" (that
+    station's robot) or [x, y]; else the yaw it was given."""
+    tx = ty = None
+    if isinstance(face, str):
+        m = re.search(r"(\d+)", face)
+        if face.strip().lower().startswith("station") and stations:
+            st = stations[max(0, min(len(stations) - 1, int(m.group(1)) if m else 0))]
+            tx, ty = st["x"], st["y"]
+    elif isinstance(face, (list, tuple)) and len(face) == 2:
+        tx, ty = _f(face[0]), _f(face[1])
+    if tx is None or (abs(tx - x) < 1e-6 and abs(ty - y) < 1e-6):
+        return yaw
+    phi = math.atan2(ty - y, tx - x)
+    return phi - math.pi / 2 if front_sign(item) > 0 else phi + math.pi / 2
 
 
 def _f(v) -> float:

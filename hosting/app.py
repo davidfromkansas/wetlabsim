@@ -84,6 +84,11 @@ LINK_SECRET = "wetlab-link"
 DB_SECRET = "wetlab-db"
 # No AI keys of the site's own: every run uses its owner's (from the website, with LINK_SECRET).
 lab_secrets = [*_optional_secret(LINK_SECRET), *_optional_secret(DB_SECRET)]
+# David's own Jev key (Modal secret JEV_API_KEY): only for picking objects when a scene is built
+# from a prompt (playground/scenebrief.py), for every session. It reaches the server under another
+# name (WETLAB_SCENE_JEV_KEY) so no robot run can ever use it: Jev runs use their owner's key.
+JEV_SECRET = "JEV_API_KEY"
+lab_secrets += _optional_secret(JEV_SECRET)
 app = modal.App(APP, image=image)
 
 
@@ -119,6 +124,8 @@ def lab(lab_id: str, owner_key: str, owner_user: str = ""):
         env = dict(os.environ, WETLAB_SESSION_DIR="/tmp/sessions", WETLAB_LAB_ID=lab_id, WETLAB_OWNER_KEY=owner_key, WETLAB_LAB_URL=page.url,
                    WETLAB_OWNER_USER=owner_user,
                    WETLAB_RUN_TAG=lab_id, WETLAB_MODEL_PROXY_URL=proxy.url)
+        env["WETLAB_SCENE_JEV_KEY"] = env.pop("JEV_API_KEY", "") or env.pop("TYPESAFE_API_KEY", "")
+        env.pop("TYPESAFE_API_KEY", None)
         _commit_loop()
         proc = subprocess.Popen(
             ["python", "-m", "playground.server", "--host", "0.0.0.0", "--port", "8780", "--no-browser",

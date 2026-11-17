@@ -39,6 +39,7 @@ from . import wetrobo as WR
 from . import savestore as SAVE
 from . import scene3d as S3
 from . import scenegen as SG
+from . import scenebrief as SB
 from . import settings as ST
 from . import wetlab as WL
 from .bench import LiberoScores
@@ -1589,7 +1590,9 @@ class PGHandler(Handler):
             return self._json({"ok": False, "error": "describe the scene first"})
         if what == "pick":
             try:
-                return self._json({"ok": True, "pick": SG.pick(prompt, model, PUBLIC)})
+                pk = SB.pick(prompt, model, PUBLIC)
+                self.sess.scene_brief = {"prompt": prompt, "brief": pk["brief"], "slot_of": pk["slot_of"]}
+                return self._json({"ok": True, "pick": {k: pk[k] for k in ("title", "robots", "items", "missing", "task")}})
             except SG.ModelError as e:
                 return self._json({"ok": False, "error": str(e)[:1].upper() + str(e)[1:] + "."})
         if what == "build":
@@ -1598,6 +1601,9 @@ class PGHandler(Handler):
             if cur is not None and cur.status()["active"]:
                 return self._json({"ok": False, "error": "a scene is already being built"})
             pick = SG.clean_pick(b.get("pick") or {})
+            br = getattr(self.sess, "scene_brief", None)
+            if br and br["prompt"] == prompt:       # the plan behind this pick (zones, each object's slot)
+                pick.update(brief=br["brief"], slot_of=br["slot_of"])
             if not pick["robots"]:
                 return self._json({"ok": False, "error": "a scene needs at least one robot"})
             build = SG.Build(s, self.sess, prompt, pick, model, PUBLIC)

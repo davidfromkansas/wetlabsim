@@ -352,7 +352,7 @@ function drawProg() {
   }
   let html;
   if (b.active) {
-    const order = ['plan', 'robots', 'furniture', 'objects'], at = order.indexOf(b.phase);
+    const order = ['plan', 'robots', 'furniture', 'objects', 'check'], at = order.indexOf(b.phase);
     const pct = b.phase === 'plan' ? 6 : 10 + 90 * done / Math.max(1, all);
     const plan = b.plan
       ? `<div class="plan"><span class="pi">${ic('plan')}</span><div><b>Layout plan</b><p>${e(b.plan)}</p></div></div>`
@@ -366,7 +366,7 @@ function drawProg() {
     const nm = b.names || {};
     const objSub = b.phase === 'objects' && b.now ? `Placing the ${b.now.toLowerCase()}` : list(nm.objects);
     const furSub = b.phase === 'furniture' && b.now ? `Placing the ${b.now.toLowerCase()}` : list(nm.furniture);
-    html = `<div class="bar"><i style="width:${pct}%"></i></div>${plan}<ul>${row('robots', c.robots[1] === 1 ? 'Robot' : 'Robots', list(nm.robots))}${c.furniture[1] ? row('furniture', 'Furniture', furSub) : ''}${row('objects', 'Objects', objSub)}</ul>`;
+    html = `<div class="bar"><i style="width:${pct}%"></i></div>${plan}<ul>${row('robots', c.robots[1] === 1 ? 'Robot' : 'Robots', list(nm.robots))}${c.furniture[1] ? row('furniture', 'Furniture', furSub) : ''}${row('objects', 'Objects', objSub)}${c.check ? row('check', 'Final look', b.phase === 'check' ? (b.fixes && b.fixes.length ? cap(b.fixes[b.fixes.length - 1]) : 'Looking over the scene') : 'Checks it from above and the front') : ''}</ul>`;
   } else {
     const undo = b.stations.length || b.objects ? `<button class="gb g" id="sgUndo">${ic('undo', 14)}Undo</button>` : '';
     if (b.phase === 'done') {
