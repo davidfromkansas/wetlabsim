@@ -563,6 +563,50 @@ def hot_plate():
     return _write("hot_plate", parts, masses, "; knobs turn on their shafts")
 
 
+# Painted beech toy blocks: the plain coloured cubes robot tests sort, stack and count.
+BEECH = 720.0           # kg/m3
+PINE = 500.0
+BLOCK_COLOURS = {"red": [0.78, 0.09, 0.08], "green": [0.10, 0.52, 0.20],
+                 "blue": [0.08, 0.27, 0.70], "yellow": [0.95, 0.76, 0.06]}
+
+
+def toy_block(colour):
+    """A 5 cm painted beech cube with softly rounded edges."""
+    _reset()
+    e = 50 * MM
+    obj = rounded_box((e, e, e), 2.5 * MM, segments=4)
+    m = _arrays(obj)
+    look = dict(rgba=[*BLOCK_COLOURS[colour], 1], roughness=0.55, metallic=0.0)
+    p = Part("block").visual(m, look).collide([box((e, e, e), (0, 0, e / 2))])
+    return _write(f"block_{colour}", [p], [e ** 3 * BEECH])
+
+
+def shelf_three_level():
+    """A small pine shelf that stands on a table: three open levels 14 cm high inside (a soup
+    can or a mug stands on each), sides, a back and a top; its open front is -y."""
+    _reset()
+    W, D, t = 400 * MM, 220 * MM, 12 * MM
+    gap = 140 * MM
+    H = 4 * t + 3 * gap
+    parts = []
+    def board(size, at):
+        obj = rounded_box(size, 1.0 * MM, segments=2, at=at)
+        parts.append((obj, size, at))
+    for k in range(4):                                  # bottom, two shelves, top
+        board((W - 2 * t, D - t, t), (0, -t / 2, k * (t + gap)))
+    for sx in (-1, 1):                                  # the two sides
+        board((t, D, H), (sx * (W - t) / 2, 0, 0))
+    board((W - 2 * t, t, H), (0, (D - t) / 2, 0))       # the back
+    look = dict(rgba=[0.80, 0.64, 0.44, 1], roughness=0.6, metallic=0.0)
+    p = Part("shelf")
+    mass = 0.0
+    for obj, size, at in parts:
+        p.visual(_arrays(obj), look)
+        p.collide([box(size, (at[0], at[1], at[2] + size[2] / 2))])
+        mass += size[0] * size[1] * size[2] * PINE
+    return _write("shelf_three_level", [p], [mass])
+
+
 BUILD = {
     "test_tube": lambda: test_tube("test_tube", 16, 150, 1.2, cap=True),
     "test_tube_small": lambda: test_tube("test_tube_small", 13, 100, 0.9, cap=False),
@@ -575,6 +619,8 @@ BUILD = {
     "petri_dish_60": petri_dish_60,
     "petri_dish_60_lid": petri_dish_60_lid,
     "hot_plate": hot_plate,
+    **{f"block_{c}": (lambda c=c: toy_block(c)) for c in BLOCK_COLOURS},
+    "shelf_three_level": shelf_three_level,
 }
 
 
@@ -649,6 +695,7 @@ def thumb(out: pathlib.Path, meta: dict):
         sc.collection.objects.link(lo)
     cam = bpy.data.cameras.new("c")
     cam.lens = 50
+    cam.clip_start = 0.002          # small things sit closer than Blender's default 10 cm near plane
     co = bpy.data.objects.new("c", cam)
     az, el = math.radians(-45), math.radians(28)
     dist = max(max(sz), 0.06) * 2.2

@@ -348,6 +348,162 @@ def ask_json(model_id: str, system: str, user: str, public: bool, effort: str = 
     return parse_json(text)
 
 
+def _post_stream(url: str, headers: dict, body: dict, timeout: float = 240.0):
+    """The events of a streamed answer (server-sent events), as dicts."""
+    req = urllib.request.Request(url, data=json.dumps({**body, "stream": True}).encode(), method="POST",
+                                 headers={"content-type": "application/json", **headers})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            for line in r:
+                line = line.decode("utf-8", "replace").strip()
+                if line.startswith("data:"):
+                    data = line[5:].strip()
+                    if data and data != "[DONE]":
+                        try:
+                            yield json.loads(data)
+                        except json.JSONDecodeError:
+                            continue
+    except urllib.error.HTTPError as e:
+        try:
+            msg = json.loads(e.read()).get("error", {}).get("message", "")
+        except Exception:  # noqa: BLE001
+            msg = ""
+        raise ModelError(f"the model's company said no ({e.code}{': ' + msg[:200] if msg else ''})") from None
+    except (urllib.error.URLError, TimeoutError) as e:
+        raise ModelError(f"couldn't reach the model ({e})") from None
+
+
+def _anthropic_stream(model: str, system: str, user: str, key: str, effort: str):
+    body = {"model": model, "max_tokens": 32000, "system": system,
+            "messages": [{"role": "user", "content": user}], "output_config": {"effort": effort}}
+    headers = {"x-api-key": key, "anthropic-version": "2023-06-01"}
+    usage = {}
+    for ev in _post_stream("https://api.anthropic.com/v1/messages", headers, body):
+        t = ev.get("type")
+        if t == "content_block_delta" and (ev.get("delta") or {}).get("type") == "text_delta":
+            yield ev["delta"].get("text", "")
+        elif t == "message_start":
+            usage.update((ev.get("message") or {}).get("usage") or {})
+        elif t == "message_delta":
+            usage.update(ev.get("usage") or {})
+            if (ev.get("delta") or {}).get("stop_reason") == "refusal":
+                raise ModelError("the model declined this request")
+        elif t == "error":
+            raise ModelError(f"the model stopped: {(ev.get('error') or {}).get('message', '')[:200]}")
+    _count(model, {"usage": usage})
+
+
+def _openai_stream(model: str, system: str, user: str, key: str, effort: str):
+    body = {"model": model, "instructions": system, "input": user, "max_output_tokens": 32000,
+            "reasoning": {"effort": effort}}
+    for ev in _post_stream("https://api.openai.com/v1/responses", {"authorization": f"Bearer {key}"}, body):
+        t = ev.get("type")
+        if t == "response.output_text.delta":
+            yield ev.get("delta", "")
+        elif t == "response.completed":
+            _count(model, ev.get("response") or {})
+        elif t in ("error", "response.failed"):
+            raise ModelError("the model stopped partway")
+
+
+def _claude_plan_stream(model: str, system: str, user: str):
+    """As _claude_plan, the words as they come (Claude Code's stream-json with partial messages)."""
+    import subprocess
+    import tempfile
+    home = tempfile.mkdtemp(prefix="wetlab-scene-claude-")
+    env = {k: v for k, v in os.environ.items() if k not in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN",
+                                                              "ANTHROPIC_BASE_URL", "CLAUDE_CODE_USE_BEDROCK")}
+    cmd = ["claude", "-p", "--model", model, "--output-format", "stream-json", "--include-partial-messages",
+           "--verbose", "--system-prompt", system, "--tools", ""]
+    try:
+        p = subprocess.Popen(cmd, env=env, cwd=home, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE, text=True)
+    except FileNotFoundError:
+        raise ModelError("Claude Code isn't installed on this machine") from None
+    try:
+        p.stdin.write(user + "\n\nAnswer with the JSON only.")
+        p.stdin.close()
+        t0 = time.time()
+        for line in p.stdout:
+            if time.time() - t0 > CODEX_TIMEOUT:
+                raise ModelError("Claude Code took too long to answer")
+            try:
+                d = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            e = d.get("event") or {}
+            if d.get("type") == "stream_event" and e.get("type") == "content_block_delta" \
+                    and (e.get("delta") or {}).get("type") == "text_delta":
+                yield e["delta"].get("text", "")
+            elif d.get("type") == "result":
+                if d.get("is_error"):
+                    raise ModelError(f"Claude Code couldn't answer: {str(d.get('result', ''))[:300]}")
+                _count(model + " (Claude plan)", d)
+    finally:
+        if p.poll() is None:
+            p.kill()
+        import shutil
+        shutil.rmtree(home, ignore_errors=True)
+
+
+def ask_stream(model_id: str, system: str, user: str, public: bool, effort: str = "medium"):
+    """A model's answer as it is written, piece by piece (all at once where the route can't
+    stream: Codex with a ChatGPT sign-in)."""
+    m = next((m for m in SCENE_MODELS if m["id"] == model_id), None)
+    if m is None:
+        raise ModelError("that model can't build scenes")
+    if m["provider"] == "anthropic" and not public and os.environ.get("WETLAB_SCENE_CLAUDE_PLAN"):
+        yield from _claude_plan_stream(m["id"], system, user)
+        return
+    kind, key = _cred(m["provider"], public)
+    if not key:
+        label = ACCT.PROVIDERS[m["provider"]]["label"]
+        raise ModelError(f"connect your {label} API key in Settings to use {m['label']}")
+    if kind == "chatgpt":
+        yield _codex(m["id"], system, user, key, effort)
+        USAGE.setdefault(m["id"] + " (ChatGPT plan)", [0, 0])[0] += 1
+    elif m["provider"] == "anthropic":
+        yield from _anthropic_stream(m["id"], system, user, key, effort)
+    else:
+        yield from _openai_stream(m["id"], system, user, key, effort)
+
+
+def stream_items(text: str, key: str) -> tuple[list[dict], bool, bool]:
+    """From a JSON answer still being written: the finished entries of its list `key` so far,
+    whether that list has started, and whether it is closed."""
+    m = re.search(r'"%s"\s*:\s*\[' % re.escape(key), text)
+    if not m:
+        return [], False, False
+    out, depth, start, in_str, esc = [], 0, None, False, False
+    for i in range(m.end(), len(text)):
+        c = text[i]
+        if in_str:
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == '"':
+                in_str = False
+            continue
+        if c == '"':
+            in_str = True
+        elif c == "{":
+            if depth == 0:
+                start = i
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0 and start is not None:
+                try:
+                    out.append(json.loads(text[start:i + 1]))
+                except json.JSONDecodeError:
+                    pass
+                start = None
+        elif c == "]" and depth == 0:
+            return out, True, True
+    return out, True, False
+
+
 def parse_json(text: str) -> dict:
     """The JSON object in a model's answer (alone, or in a ``` block, or among words)."""
     t = text.strip()
@@ -972,8 +1128,7 @@ class Build:
                 time.sleep(0.8)
                 lay = fake_layout(self.pick)
             else:
-                sys_, user = layout_messages(self.prompt, self.pick)
-                lay = ask_json(self.model_id, sys_, user, self.public, effort="high")
+                return self._run_streamed(was_playing)
             self.plan_text = str(lay.get("plan") or "").strip()[:800]
             self.task = str(lay.get("task") or self.task).strip()[:600] or self.task
             if self.stop:
@@ -1036,6 +1191,132 @@ class Build:
             if was_playing and self.phase != "plan":
                 s.play()
 
+    def _run_streamed(self, was_playing: bool):
+        """The model's layout, built as it is written: once its robots and furniture are down
+        (the start of its objects list), they are placed while it goes on, and each object
+        goes down as soon as its line is finished. Then whatever it left out, then the look."""
+        s = self.sim
+        try:
+            sys_, user = layout_messages(self.prompt, self.pick)
+            buf, started = "", False
+            stations = furniture = None
+            off, fixed_uids, placed, inside_wait = None, [], [], []
+            plan_seen = False
+
+            def place_new(objs):
+                for k in range(len(placed), len(objs)):
+                    o = objs[k]
+                    placed.append(None)
+                    if o["on"] == "inside" and not o.get("in_furniture") and \
+                            not (0 <= o["object"] < k and placed[o["object"]]):
+                        inside_wait.append(k)        # its holder isn't down yet
+                        continue
+                    self.now = catalog.item(o["item"])["label"]
+                    placed[k] = self._place_object(o, off, fixed_uids, placed)
+
+            for chunk in ask_stream(self.model_id, sys_, user, self.public, effort="high"):
+                if self.stop:
+                    return self._end("stopped")
+                buf += chunk
+                if not plan_seen:
+                    m = re.search(r'"plan"\s*:\s*"((?:[^"\\]|\\.)*)"', buf)
+                    if m:
+                        plan_seen = True
+                        try:
+                            self.plan_text = json.loads('"' + m.group(1) + '"').strip()[:800]
+                        except json.JSONDecodeError:
+                            pass
+                objs_raw, obj_started, _ = stream_items(buf, "objects")
+                if not obj_started:
+                    continue
+                if not started:          # robots and furniture are all written: put them down
+                    st_raw, _, st_closed = stream_items(buf, "stations")
+                    f_raw, _, _ = stream_items(buf, "furniture")
+                    stations, furniture, _ = self._clean_layout(
+                        {"stations": st_raw, "furniture": f_raw, "objects": []}, partial=True)
+                    s.pause()
+                    off = self._free_spot(stations, furniture, [])
+                    if off is None:
+                        raise ModelError("there's no free floor space big enough for this scene: "
+                                         "remove something, or ask for a smaller scene")
+                    self._show_zone(stations, furniture, [], off)
+                    self.phase = "robots"
+                    for k, st in enumerate(stations):
+                        if self.stop:
+                            return self._end("stopped")
+                        self._place_station(st, off, k, len(stations))
+                    self.phase = "furniture"
+                    for f in furniture:
+                        if self.stop:
+                            return self._end("stopped")
+                        self.now = catalog.item(f["item"])["label"]
+                        fixed_uids.append(self._place_furniture(f, off))
+                    self.phase = "objects"
+                    started = True
+                    n_f = len(furniture)
+                _, _, objs = self._clean_layout({"stations": stream_items(buf, "stations")[0],
+                                                 "furniture": stream_items(buf, "furniture")[0],
+                                                 "objects": objs_raw}, partial=True)
+                self.counts["furniture"][1] = max(self.counts["furniture"][1], n_f)
+                place_new(objs)
+            lay = parse_json(buf)
+            self.plan_text = str(lay.get("plan") or self.plan_text).strip()[:800]
+            self.task = str(lay.get("task") or self.task).strip()[:600] or self.task
+            stations2, furniture2, objects = self._clean_layout(lay)
+            self.raw_layout, self.laid = lay, objects
+            if not started:              # it couldn't stream (or wrote no objects): all at once
+                s.pause()
+                stations, furniture = stations2, furniture2
+                off = self._free_spot(stations, furniture, objects)
+                if off is None:
+                    raise ModelError("there's no free floor space big enough for this scene: "
+                                     "remove something, or ask for a smaller scene")
+                self._show_zone(stations, furniture, objects, off)
+                self.phase = "robots"
+                for k, st in enumerate(stations):
+                    self._place_station(st, off, k, len(stations))
+                self.phase = "furniture"
+            for f in furniture2[len(fixed_uids):]:    # furniture it left out
+                self.now = catalog.item(f["item"])["label"]
+                fixed_uids.append(self._place_furniture(f, off))
+            self.phase = "objects"
+            place_new(objects)
+            for k in inside_wait:                       # things that go inside others, now all down
+                if self.stop:
+                    return self._end("stopped")
+                self.now = catalog.item(objects[k]["item"])["label"]
+                placed[k] = self._place_object(objects[k], off, fixed_uids, placed)
+            self.now = ""
+            self._finish()
+        except Exception as e:  # noqa: BLE001
+            self.error = str(e) if isinstance(e, (ModelError,)) else f"something went wrong: {e}"
+            self._end("error")
+        finally:
+            s.zone = []
+            if was_playing and self.phase != "plan":
+                s.play()
+
+    def _finish(self):
+        """The look-and-fix rounds, the task handed to the robots, done."""
+        if self.look and not fake() and can_see(self.model_id, self.public):
+            self.phase = "check"
+            for k in range(FIX_ROUNDS):
+                if self.stop:
+                    return self._end("stopped")
+                self.now = "Looking over the scene"
+                changed = self._look_and_fix(k)
+                self.counts["check"][0] = k + 1
+                if not changed:
+                    self.counts["check"][0] = FIX_ROUNDS
+                    break
+            self.now = ""
+        if self.stations and self.task:
+            for u in self.stations:
+                self.sess.unsent[u] = {"task": self.task, "model": ""}
+        for u, t in self.station_tasks.items():     # a ready-made scene's own task per robot
+            self.sess.unsent[u] = {"task": t, "model": ""}
+        self._end("done")
+
     def _end(self, phase: str):
         self.phase = phase
         self.sim.zone = []
@@ -1043,9 +1324,11 @@ class Build:
             self.sim.active_station = self.stations[0]
             self.sim.frame_station(self.stations[0])
 
-    def _clean_layout(self, lay: dict):
+    def _clean_layout(self, lay: dict, partial: bool = False):
         """The layout kept to what the person checked: the robots and objects on their list
-        (anything the model left out goes in a sensible default spot)."""
+        (anything the model left out goes in a sensible default spot). partial: the layout is
+        still being written, so nothing left out is filled in yet (what is there keeps its place
+        in the lists as more comes)."""
         want_r = [r["robot"] for r in self.pick["robots"] for _ in range(r["count"])]
         stations = []
         for st in lay.get("stations") or []:
@@ -1083,7 +1366,7 @@ class Build:
                                   # a ready-made scene may butt pieces together (conveyor sections)
                                   "gap": max(0.0, _f(f.get("gap", 0.15))) if self.preset
                                   else min(0.15, max(0.02, _f(f.get("gap", 0.15))))})
-        for it in want_f:
+        for it in ([] if partial else want_f):
             furniture.append({"item": it, "x": 2.5, "y": -1.5 + 1.5 * len(furniture), "yaw": math.pi})
         objects, where = [], {}       # where: the model's own index of each object -> ours
         for k_raw, o in enumerate(lay.get("objects") or []):
@@ -1117,14 +1400,15 @@ class Build:
         for o in objects:
             if o["on"] == "inside" and not o["in_furniture"]:
                 o["object"] = where.get(o["object"], -1)
-        for k, it in enumerate(want_o):
+        to_come = len(want_o)
+        for k, it in enumerate([] if partial else want_o):
             objects.append({"item": it, "on": "station", "station": k % max(1, len(stations)),
                             "x": 0.3, "y": 0.0, "dx": 0.0, "dy": 0.0, "yaw": 0.0})
         if not stations:
             raise ModelError("the scene has no robot")
         # the progress counts as laid out (small furniture may have gone on a table as an object)
         self.counts["furniture"][1] = len(furniture)
-        self.counts["objects"][1] = len(objects)
+        self.counts["objects"][1] = len(objects) + (to_come if partial else 0)
         if any(o["on"] == "furniture" for o in objects) and not furniture:
             for o in objects:
                 if o["on"] == "furniture":
@@ -1413,6 +1697,8 @@ class Build:
         return host, None
 
     def _place_inside(self, item, host, o):
+        if not hasattr(self, "_host_levels"):
+            self._host_levels = {}
         s = self.sim
         p = s.find(host)
         yaw = p.yaw + (o["yaw"] or 0.0)
@@ -1426,9 +1712,14 @@ class Build:
                 lv = [sp for sp, open_top in all_lv if open_top and sp["pos"][2] < top - 0.02]
             if not lv:
                 continue
+            # which level is meant is read off the holder as it first was (empty), so things
+            # already on a lower level don't shift the count
+            heights = self._host_levels.setdefault(host, [sp["pos"][2] for sp in lv])
             n = o.get("level", 1)
-            spot = lv[min(max(n - 1, 0), len(lv) - 1)] if n > 0 else lv[max(len(lv) + n, 0)]
-            return self._add(item, spot, yaw)
+            want = heights[min(max(n - 1, 0), len(heights) - 1)] if n > 0 else heights[max(len(heights) + n, 0)]
+            spot = next((sp for sp in lv if abs(sp["pos"][2] - want) < 0.006), None)
+            if spot is not None:
+                return self._add(item, spot, yaw)
         return None
 
     def _add(self, item, spot, yaw):

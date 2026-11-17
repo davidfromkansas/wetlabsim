@@ -74,9 +74,11 @@ a plate, a shelf, a drawer cabinet...). Only if nothing like it is there does it
 If the task works with furniture (a drawer, a cabinet door, a shelf, a microwave), it must be \
 one small enough to stand on the robot's table, in reach: these can: {tabletop}. Big furniture \
 stands on the floor, out of reach, and is only scenery.
-Our objects have fixed colours. If a task sorts or tells things apart, choose objects that really \
-differ (different kinds, sizes or colours as they come) and word the task by what they are \
-("put the apples in the bowl and the lemons in the basket"), never by a colour they may not have.
+Our objects have fixed colours. For tasks by colour, use the plain toy blocks (red, green, blue \
+and yellow, as many of each as needed). Otherwise, if a task sorts or tells things apart, choose \
+objects that really differ (different kinds, sizes or colours as they come) and word the task by \
+what they are ("put the apples in the bowl and the lemons in the basket"), never by a colour \
+they may not have.
 Something the task puts things into must be open (a basket, tray, bowl, tote, bin, rack), \
 never a closed box.
 
@@ -169,7 +171,8 @@ def tabletop() -> list[str]:
     """Furniture small enough to stand on a robot's table (LIBERO's little cabinets with drawers,
     a microwave, a short fridge...): placed with the same drop check as any object."""
     skip = ("Fixtures", "Doors, windows", "Sinks & taps", "Boards")   # built into rooms, not table things
-    return [i for i, t in T.tags().items() if t["fixed"] and max(t["size_cm"][:2]) <= 50 and t["size_cm"][2] <= 50
+    return [i for i, t in T.tags().items() if max(t["size_cm"][:2]) <= 50 and t["size_cm"][2] <= 50
+            and (t["fixed"] or any("Shelves" in p for p in t["paths"]))
             and not any(k in p for p in t["paths"] for k in skip)]
 
 
