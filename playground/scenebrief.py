@@ -71,9 +71,14 @@ furniture, no decoration. One zone, "robot".
 place has (below).
 Every thing the person names must be in the plan: find it by name in the tree's lists (a basket, \
 a plate, a shelf, a drawer cabinet...). Only if nothing like it is there does it go in "missing".
-If the request is about one robot task on furniture (a drawer, a cabinet door, a shelf), that \
-furniture must stand where the robot can reach it: on the robot's table if it's small enough, \
-otherwise say so in the task and keep the task to what the robot can reach.
+If the task works with furniture (a drawer, a cabinet door, a shelf, a microwave), it must be \
+one small enough to stand on the robot's table, in reach: these can: {tabletop}. Big furniture \
+stands on the floor, out of reach, and is only scenery.
+Our objects have fixed colours. If a task sorts or tells things apart, choose objects that really \
+differ (different kinds, sizes or colours as they come) and word the task by what they are \
+("put the apples in the bowl and the lemons in the basket"), never by a colour they may not have.
+Something the task puts things into must be open (a basket, tray, bowl, tote, bin, rack), \
+never a closed box.
 
 Plan it like a set designer:
 - room: the kind of place, in a few words ("home kitchen", "cell culture lab", "garage workshop").
@@ -112,7 +117,7 @@ def _robots_text() -> str:
 
 
 def brief_messages(prompt: str) -> tuple[str, str]:
-    sys_ = BRIEF_SYSTEM.format(robots=_robots_text(), tree=T.tree_text(labels=True), max_robots=SG.MAX_ROBOTS)
+    sys_ = BRIEF_SYSTEM.format(robots=_robots_text(), tree=T.tree_text(labels=True), tabletop=", ".join(sorted({T.tags()[i]["label"] for i in tabletop()})), max_robots=SG.MAX_ROBOTS)
     return sys_, f"The person's request:\n{prompt.strip()[:2000]}"
 
 
@@ -160,6 +165,30 @@ def clean_brief(raw: dict) -> dict:
             "missing": missing[:8]}
 
 
+def tabletop() -> list[str]:
+    """Furniture small enough to stand on a robot's table (LIBERO's little cabinets with drawers,
+    a microwave, a short fridge...): placed with the same drop check as any object."""
+    skip = ("Fixtures", "Doors, windows", "Sinks & taps", "Boards")   # built into rooms, not table things
+    return [i for i, t in T.tags().items() if t["fixed"] and max(t["size_cm"][:2]) <= 50 and t["size_cm"][2] <= 50
+            and not any(k in p for p in t["paths"] for k in skip)]
+
+
+def lookup(name: str) -> str:
+    """A library object whose name matches a thing the model called missing ("flat dinner plate"
+    -> Dinner plate), or "": every word of the object's name must be in the thing's name, and
+    its last word (what it is) too."""
+    want = _words(name)
+    best, score = "", 0
+    for i, t in T.tags().items():
+        lab = [w for w in re.findall(r"[a-z0-9]+", t["label"].lower()) if w not in STOP and not w.isdigit()]
+        if not lab or lab[-1] not in want and lab[-1].rstrip("s") not in want:
+            continue
+        hit = sum(w in want for w in lab)
+        if hit == len(lab) and hit > score or (hit == len(lab) == score and t["look"] == "full"):
+            best, score = i, hit
+    return best
+
+
 # ------------------------------------------------------------------ 2. the short lists
 def _words(s: str) -> set[str]:
     return {w for w in re.findall(r"[a-z0-9]+", s.lower()) if w not in STOP and len(w) > 1}
@@ -168,10 +197,9 @@ def _words(s: str) -> set[str]:
 def _candidates(slot: dict, room: str) -> list[str]:
     """The objects under a slot's branch that could fill it: a task slot only takes things a
     hand can pick up; full-quality looks first."""
-    tags = T.tags()
     ids = T.under(slot["node"])
-    if slot["role"] == "task":
-        ids = [i for i in ids if tags[i]["graspable"]] or ids
+    # every object under the branch stays a candidate (a basket the task puts things in needn't be
+    # one a hand can lift); the ranking and the final choice judge the fit
     return ids
 
 
@@ -358,6 +386,19 @@ def pick(prompt: str, model_id: str, public: bool) -> dict:
     missing = brief["missing"] + [{"name": str((m or {}).get("name") or "")[:40], "instead": ""}
                                   for m in raw.get("missing") or [] if (m or {}).get("name")]
     labels = {c["id"]: c for c in SG._catalog_rows()}
+    kept = []
+    for m in missing:                 # "missing" things we do have: put them in
+        i = lookup(m.get("name") or "")
+        if i and i in labels:
+            if i not in items:
+                items[i] = 1
+                brief["slots"].append({"node": T.tags()[i]["paths"][0], "count": 1, "zone": "robot",
+                                       "role": "task", "want": T.tags()[i]["label"]})
+                lists.append([i])
+                slot_of[i] = len(brief["slots"]) - 1
+        else:
+            kept.append(m)
+    missing = kept
     miss = []
     for m in missing:
         inst = ""

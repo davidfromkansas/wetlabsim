@@ -386,7 +386,12 @@ from -0.8 to 0.8; the island x from -0.05 to 0.25, y from -0.55 to 0.55; the cou
 to 0.25, y from -1.05 to 1.05), at least 0.25 m from the robot's base. Small things can go in a hollow object \
 (an apple in a bowl): give them the same spot. Objects can also go on top of a piece of furniture \
 (its index, and dx, dy from its centre) or on the floor (scene frame).
-- Leave space between objects (about their size plus 3 cm) so a gripper can get to each.
+- Leave space between objects (about their size plus 3 cm) so a gripper can get to each, \
+unless the request asks for clutter: then pack them close, at different turns, still each \
+reachable.
+- Small furniture (a little cabinet with drawers, a microwave, a short fridge) can stand on a \
+station's table like an object: list it under "objects" with "on": "station", its front facing \
+the robot. Only these can: {tabletop}.
 - Which way things face: instead of a yaw you may give "face": what the thing's front (its door, \
 controls, opening) should turn towards: "station 0" (that station's robot), or [x, y] (a point in \
 the scene's frame; for an object on a station, in that station's frame). Use it for furniture \
@@ -455,7 +460,9 @@ def layout_messages(prompt: str, pick: dict) -> tuple[str, str]:
     items = [i["id"] for i in pick["items"] for _ in range(i["count"])]
     sizes = {i: "x".join(str(round(100 * v)) for v in catalog.meta(i)["size"]) for i in set(items)}
     furn = [i for i in set(items) if catalog.item(i)["fixed"]]
-    sys_ = LAYOUT_SYSTEM.format(robots=json.dumps(robots), items=json.dumps(items), sizes=json.dumps(sizes))
+    from .scenebrief import tabletop
+    sys_ = LAYOUT_SYSTEM.format(robots=json.dumps(robots), items=json.dumps(items), sizes=json.dumps(sizes),
+                                tabletop=json.dumps(sorted(set(tabletop()) & set(items)) or "none in this scene"))
     zones = ""
     if pick.get("brief"):            # a v2 pick (scenebrief.py): the room, its zones, each object's slot
         br = pick["brief"]
@@ -984,12 +991,24 @@ class Build:
         for rb in want_r:
             stations.append({"robot": rb, "kind": "table", "x": 0.0, "y": 2.0 * len(stations), "yaw": 0.0})
         items = [i["id"] for i in self.pick["items"] for _ in range(i["count"])]
-        want_f = [i for i in items if catalog.item(i)["fixed"]]
+        from .scenebrief import tabletop
+        small = set(tabletop()) if self.pick.get("brief") else set()
+        # small furniture the layout puts on a robot's table goes down like an object
+        on_table = [str((o or {}).get("item", "")) for o in lay.get("objects") or []
+                    if (o or {}).get("on", "station") == "station"]
         want_o = [i for i in items if not catalog.item(i)["fixed"]]
+        want_f = []
+        for i in items:
+            if catalog.item(i)["fixed"]:
+                if i in small and i in on_table:
+                    on_table.remove(i)
+                    want_o.append(i)
+                else:
+                    want_f.append(i)
         furniture = []
         for f in lay.get("furniture") or []:
             it = str((f or {}).get("item", ""))
-            if it in want_f:
+            if it in want_f and it in [x for x in want_f]:
                 want_f.remove(it)
                 furniture.append({"item": it, "x": _f(f.get("x")), "y": _f(f.get("y")),
                                   "yaw": _facing(it, _f(f.get("x")), _f(f.get("y")), f.get("face"), stations,
@@ -1027,6 +1046,9 @@ class Build:
                             "x": 0.3, "y": 0.0, "dx": 0.0, "dy": 0.0, "yaw": 0.0})
         if not stations:
             raise ModelError("the scene has no robot")
+        # the progress counts as laid out (small furniture may have gone on a table as an object)
+        self.counts["furniture"][1] = len(furniture)
+        self.counts["objects"][1] = len(objects)
         if any(o["on"] == "furniture" for o in objects) and not furniture:
             for o in objects:
                 if o["on"] == "furniture":
