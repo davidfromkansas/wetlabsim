@@ -1,0 +1,133 @@
+{
+ "source": "D00699",
+ "usd": "D00699.usd",
+ "mass": 0.0034,
+ "friction": 0.5,
+ "com": null,
+ "size": [
+  0.0606,
+  0.0865,
+  0.0778
+ ],
+ "collision": "convex hulls per part (as the asset specifies), moving parts on their joints",
+ "visuals": [],
+ "collision_parts": [],
+ "bodies": [
+  {
+   "name": "part_00",
+   "visuals": [
+    {
+     "mesh": "b0_vis_0.obj",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "roughness": 0.6,
+     "metallic": 0.0,
+     "texture": "b0_tex_0.png"
+    }
+   ],
+   "collision_parts": [
+    {
+     "mesh": "b0_col_0.obj",
+     "volume": 1.5227561126403892e-06,
+     "friction": 0.5,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b0_col_1.obj",
+     "volume": 4.896838649398042e-06,
+     "friction": 0.5,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b0_col_2.obj",
+     "volume": 1.2303558351368978e-06,
+     "friction": 0.5,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b0_col_3.obj",
+     "volume": 4.57666711102128e-07,
+     "friction": 0.5,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b0_col_4.obj",
+     "volume": 6.570554457838354e-07,
+     "friction": 0.5,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b0_col_5.obj",
+     "volume": 7.086605724345861e-07,
+     "friction": 0.5,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b0_col_6.obj",
+     "volume": 7.288174351474205e-07,
+     "friction": 0.5,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b0_col_7.obj",
+     "volume": 1.1822421955031106e-06,
+     "friction": 0.5,
+     "restitution": 0.1
+    },
+    {
+     "mesh": "b0_col_8.obj",
+     "volume": 3.276562465250224e-06,
+     "friction": 0.5,
+     "restitution": 0.1
+    }
+   ],
+   "mass": 0.0034,
+   "inertial": {
+    "mass": 0.0034,
+    "pos": [
+     -0.001589,
+     -0.001812,
+     0.048111
+    ],
+    "diaginertia": [
+     2.92699e-07,
+     2.45298e-06,
+     2.46774e-06
+    ],
+    "quat": [
+     -0.125343,
+     0.829003,
+     0.458095,
+     0.295282
+    ]
+   },
+   "parent": null,
+   "root": true,
+   "pos": [
+    0.005112,
+    0.011042,
+    -5e-06
+   ],
+   "quat": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frame": [
+    0.005112,
+    0.011042,
+    -5e-06,
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "unstated_mass": []
+}
