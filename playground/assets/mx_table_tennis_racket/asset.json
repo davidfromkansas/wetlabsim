@@ -1,0 +1,47 @@
+{
+ "source": "table_tennis_racket",
+ "usd": "table_tennis_racket.usda",
+ "mass": 0.17693,
+ "friction": 0.9,
+ "com": null,
+ "size": [
+  0.2329,
+  0.1509,
+  0.0298
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 6.111731707216478e-05,
+   "friction": 0.6,
+   "restitution": 0.2
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 0.0002481293085035013,
+   "friction": 0.9,
+   "restitution": 0.6
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 2.1505260083927585e-05,
+   "friction": 0.9,
+   "restitution": 0.6
+  }
+ ]
+}

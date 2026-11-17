@@ -1,0 +1,47 @@
+{
+ "source": "valve_core_tool_7JBZD1Z8TY",
+ "usd": "valve_core_tool_7JBZD1Z8TY.usd",
+ "mass": 0.021,
+ "friction": 0.515,
+ "com": null,
+ "size": [
+  0.1053,
+  0.0438,
+  0.0157
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 1.004095504887157e-06,
+   "friction": 0.5149,
+   "restitution": 0.5
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 2.276582521683388e-06,
+   "friction": 0.3277,
+   "restitution": 0.35
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 1.1956289783961894e-05,
+   "friction": 0.3277,
+   "restitution": 0.35
+  }
+ ]
+}

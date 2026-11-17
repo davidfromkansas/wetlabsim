@@ -1,0 +1,59 @@
+{
+ "source": "military_canteen",
+ "usd": "military_canteen.usda",
+ "mass": 0.33,
+ "friction": 0.6,
+ "com": null,
+ "size": [
+  0.1419,
+  0.09,
+  0.2074
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 2.95008376742857e-05,
+   "friction": 0.6,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 0.0003085616148919202,
+   "friction": 0.6,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 0.00027773803615270103,
+   "friction": 0.6,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 0.0005609167865626004,
+   "friction": 0.6,
+   "restitution": 0.1
+  },
+  {
+   "mesh": "col_4.obj",
+   "volume": 0.00021814173463103128,
+   "friction": 0.6,
+   "restitution": 0.1
+  }
+ ]
+}
