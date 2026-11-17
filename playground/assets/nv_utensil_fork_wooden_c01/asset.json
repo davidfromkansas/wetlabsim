@@ -1,0 +1,64 @@
+{
+ "source": "utensil_fork_wooden_c01",
+ "usd": "sm_utensil_fork_wooden_c01_01.usda",
+ "mass": 0.16344,
+ "friction": 0.5,
+ "com": [
+  0.0612,
+  -0.00075,
+  0.00335
+ ],
+ "size": [
+  0.2785,
+  0.0399,
+  0.0082
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 2.2804158476606272e-05,
+   "friction": 0.5,
+   "restitution": 0.4
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 2.244104582686446e-05,
+   "friction": 0.5,
+   "restitution": 0.4
+  }
+ ],
+ "inertial": {
+  "mass": 0.163439,
+  "pos": [
+   0.061201,
+   -0.000755,
+   0.003354
+  ],
+  "diaginertia": [
+   1.44357e-05,
+   0.00145749,
+   0.0014687
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ }
+}

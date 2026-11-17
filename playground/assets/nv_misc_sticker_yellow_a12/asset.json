@@ -1,0 +1,70 @@
+{
+ "source": "misc_sticker_yellow_a12",
+ "usd": "sm_misc_sticker_yellow_a12_01.usda",
+ "mass": 0.00475,
+ "friction": 0.5,
+ "com": [
+  0.00369,
+  -0.0022,
+  0.00056
+ ],
+ "size": [
+  0.0837,
+  0.0837,
+  0.0011
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 5.298120258908976e-07,
+   "friction": 0.5,
+   "restitution": 0.12
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 5.458295933994043e-07,
+   "friction": 0.5,
+   "restitution": 0.12
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 6.503521737488238e-07,
+   "friction": 0.5,
+   "restitution": 0.12
+  }
+ ],
+ "inertial": {
+  "mass": 0.004753,
+  "pos": [
+   0.003693,
+   -0.002204,
+   0.000563
+  ],
+  "diaginertia": [
+   1.18071e-07,
+   2.69114e-06,
+   2.80845e-06
+  ],
+  "quat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ }
+}

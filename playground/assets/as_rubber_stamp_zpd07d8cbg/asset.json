@@ -1,0 +1,65 @@
+{
+ "source": "rubber_stamp_ZPD07D8CBG",
+ "usd": "rubber_stamp_ZPD07D8CBG.usd",
+ "mass": 0.062,
+ "friction": 0.783,
+ "com": null,
+ "size": [
+  0.0507,
+  0.081,
+  0.023
+ ],
+ "collision": "convex pieces (CoACD)",
+ "visuals": [
+  {
+   "mesh": "vis_0.obj",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "roughness": 0.6,
+   "metallic": 0.0,
+   "texture": "tex_0.png"
+  }
+ ],
+ "collision_parts": [
+  {
+   "mesh": "col_0.obj",
+   "volume": 4.2688697122848016e-05,
+   "friction": 0.7828,
+   "restitution": 0.75
+  },
+  {
+   "mesh": "col_1.obj",
+   "volume": 1.4329738850779974e-05,
+   "friction": 0.3914,
+   "restitution": 0.28
+  },
+  {
+   "mesh": "col_2.obj",
+   "volume": 2.5032784258182257e-05,
+   "friction": 0.3914,
+   "restitution": 0.28
+  },
+  {
+   "mesh": "col_3.obj",
+   "volume": 9.52358749961632e-07,
+   "friction": 0.7828,
+   "restitution": 0.75
+  },
+  {
+   "mesh": "col_4.obj",
+   "volume": 3.525308560848646e-06,
+   "friction": 0.7828,
+   "restitution": 0.75
+  },
+  {
+   "mesh": "col_5.obj",
+   "volume": 1.0059793852699922e-06,
+   "friction": 0.7828,
+   "restitution": 0.75
+  }
+ ]
+}
