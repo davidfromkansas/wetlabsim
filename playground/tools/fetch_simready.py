@@ -11,6 +11,7 @@ import argparse
 import json
 import pathlib
 import urllib.request
+import urllib.parse
 
 # Where assets come from: NVIDIA's SimReady set, and Tripo's SimReady assets (the same packaging
 # under usd/ instead of simready_usd/, with jointed parts).
@@ -65,7 +66,7 @@ def fetch(folder: str, out: pathlib.Path, repo: str = "nvidia") -> pathlib.Path:
         if target.exists() and target.stat().st_size == f.get("size"):
             continue
         target.parent.mkdir(parents=True, exist_ok=True)
-        with urllib.request.urlopen(f"https://huggingface.co/datasets/{REPOS[repo]}/resolve/main/{f['path']}", timeout=120) as r:
+        with urllib.request.urlopen(f"https://huggingface.co/datasets/{REPOS[repo]}/resolve/main/{urllib.parse.quote(f['path'])}", timeout=120) as r:
             target.write_bytes(r.read())
     return dest
 

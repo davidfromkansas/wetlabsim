@@ -12,7 +12,13 @@ Items marked "Built in-house" we modelled ourselves in Blender (`playground/tool
 - **QUIKTECH SimReady** (quiktech): https://huggingface.co/datasets/quiktech/SimReady-Assets
 - **NVIDIA USDCraft-10K (Apache 2.0)** (usdcraft): https://huggingface.co/datasets/nvidia/USDCraft-10K
 - **ForgeCAD SimReady** (forgecad): https://huggingface.co/datasets/ForgeCAD/simready-assets
-- **Palatial SimReady** (palatial): https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library
+- **Palatial NV Asset Library (Palatial Platforms)** (palatial): https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library
+- **projectsim SimReady Assets (Kaedim)** (projectsim): https://huggingface.co/datasets/projectsim/simready-assets
+- **Allsides SimReady Assets** (allsides): https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects
+- **NdotLight SimReady Assets** (ndotlight): https://huggingface.co/datasets/NdotLight/SimReady_Assets
+- **Marso by M-XR SimReady assets** (mxr): https://huggingface.co/datasets/M-XR/marso-simready
+- **Yamato Protec SimReady fire protection** (yamato): https://huggingface.co/datasets/YAMATOPROTEC/simready-fire-protection
+- **atech SimReady assets** (atech): https://huggingface.co/datasets/atechdev/simready-assets
 
 AutoBio's lab models (the tubes, racks, dish, pipette and its stand) are used with credit to
 its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
@@ -240,8 +246,8 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Range oven | Furniture | ForgeCAD SimReady | [`range_oven`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/range_oven) |
 | French-door fridge | Furniture | ForgeCAD SimReady | [`refrigerator`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/refrigerator) |
 | Gondola shelf | Furniture | ForgeCAD SimReady | [`gondola_shelf`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/gondola_shelf) |
-| Bakery display rack | Furniture | Palatial SimReady | [`D00326`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00326) |
-| Metal shelving unit | Furniture | Palatial SimReady | [`D00661`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00661) |
+| Bakery display rack | Furniture | Palatial NV Asset Library (Palatial Platforms) | [`D00326`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00326) |
+| Metal shelving unit | Furniture | Palatial NV Asset Library (Palatial Platforms) | [`D00661`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00661) |
 | Workbench with drawers | Furniture | NVIDIA SimReady | [`furniture_workbench_standard_e01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/furniture_workbench_standard_e01) |
 | Fridge freezer | Furniture | NVIDIA SimReady | [`appliance_refrigerator_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/appliance_refrigerator_a01) |
 | Kitchen island | Furniture | NVIDIA SimReady | [`fixture_island_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fixture_island_a01) |
@@ -258,15 +264,15 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Dish drying rack | Kitchen | ForgeCAD SimReady | [`dish_drying_rack`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/dish_drying_rack) |
 | Latching food container | Kitchen | ForgeCAD SimReady | [`latching_food_container`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/latching_food_container) |
 | Mug, white gloss | Kitchen | ForgeCAD SimReady | [`mug`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/mug) |
-| Espresso machine | Kitchen | Palatial SimReady | [`D00154`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00154) |
-| Toaster with crumb tray | Kitchen | Palatial SimReady | [`D00866`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00866) |
-| Camping gas stove | Kitchen | Palatial SimReady | [`D00336`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00336) |
-| Kitchen scale | Kitchen | Palatial SimReady | [`D00505`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00505) |
-| Knife block | Kitchen | Palatial SimReady | [`D00477`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00477) |
-| Chef's knife | Kitchen | Palatial SimReady | [`D00478`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00478) |
-| Paper towel holder | Kitchen | Palatial SimReady | [`D00587`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00587) |
-| Paper towel roll | Kitchen | Palatial SimReady | [`D00588`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00588) |
-| Slice of toast | Kitchen | Palatial SimReady | [`D00865`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00865) |
+| Espresso machine | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00154`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00154) |
+| Toaster with crumb tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00866`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00866) |
+| Camping gas stove | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00336`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00336) |
+| Kitchen scale | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00505`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00505) |
+| Knife block | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00477`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00477) |
+| Chef's knife | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00478`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00478) |
+| Paper towel holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00587`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00587) |
+| Paper towel roll | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00588`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00588) |
+| Slice of toast | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00865`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00865) |
 | Dishwasher | Furniture | ForgeCAD SimReady | [`dishwasher`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/dishwasher) |
 | Range hood | Furniture | ForgeCAD SimReady | [`range_hood`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/range_hood) |
 | Bar stool | Furniture | ForgeCAD SimReady | [`gas_lift_bar_stool`](https://huggingface.co/datasets/ForgeCAD/simready-assets/tree/main/gas_lift_bar_stool) |
@@ -485,7 +491,6 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Wok | Kitchen | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/kitchen_dining/R063_wok/01_round_bottom_wok`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/kitchen_dining/R063_wok/01_round_bottom_wok) |
 | Dutch oven | Kitchen | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/kitchen_dining/R064_dutch_oven/02_oval_dutch_oven`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/kitchen_dining/R064_dutch_oven/02_oval_dutch_oven) |
 | Baking sheet | Kitchen | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/kitchen_dining/R065_baking_sheet/02_quarter_sheet_pan`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/kitchen_dining/R065_baking_sheet/02_quarter_sheet_pan) |
-| Muffin tin | Kitchen | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/kitchen_dining/R066_muffin_tin/01_twelve_cup_muffin_tin`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/kitchen_dining/R066_muffin_tin/01_twelve_cup_muffin_tin) |
 | Cake pan | Kitchen | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/kitchen_dining/R067_cake_pan/03_springform_pan`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/kitchen_dining/R067_cake_pan/03_springform_pan) |
 | Casserole dish | Kitchen | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/kitchen_dining/R068_casserole_dish/02_round_casserole`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/kitchen_dining/R068_casserole_dish/02_round_casserole) |
 | Chef knife | Kitchen | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/kitchen_dining/R069_chef_knife/05_damascus_gyuto`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/kitchen_dining/R069_chef_knife/05_damascus_gyuto) |
@@ -532,7 +537,6 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Folding table | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/living_bedroom_electronics_toys/R128_folding_table/01_six_foot_plastic_folding_table`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/living_bedroom_electronics_toys/R128_folding_table/01_six_foot_plastic_folding_table) |
 | Drop-leaf table | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/living_bedroom_electronics_toys/R129_drop_leaf_table/09_narrow_drop_leaf_console_100_x_30_x_76_cm_closed`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/living_bedroom_electronics_toys/R129_drop_leaf_table/09_narrow_drop_leaf_console_100_x_30_x_76_cm_closed) |
 | Lift-top coffee table | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/living_bedroom_electronics_toys/R130_lift_top_coffee_table/04_industrial_pipe_lift_table`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/living_bedroom_electronics_toys/R130_lift_top_coffee_table/04_industrial_pipe_lift_table) |
-| Crib | Toys & Basics | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/living_bedroom_electronics_toys/R131_crib/01_classic_white_slat_crib`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/living_bedroom_electronics_toys/R131_crib/01_classic_white_slat_crib) |
 | Sofa bed | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/living_bedroom_electronics_toys/R132_sofa_bed/01_click_clack_sofa_bed`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/living_bedroom_electronics_toys/R132_sofa_bed/01_click_clack_sofa_bed) |
 | Murphy bed | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/living_bedroom_electronics_toys/R133_murphy_bed/01_vertical_murphy_bed_cabinet`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/living_bedroom_electronics_toys/R133_murphy_bed/01_vertical_murphy_bed_cabinet) |
 | Trundle bed | Toys & Basics | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/living_bedroom_electronics_toys/R134_trundle_bed/10_modern_trundle_bed_98_x_205_x_90_cm_with_a_tall`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/living_bedroom_electronics_toys/R134_trundle_bed/10_modern_trundle_bed_98_x_205_x_90_cm_with_a_tall) |
@@ -1041,7 +1045,6 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Humidifier | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/living_bedroom_electronics_toys/R679_humidifier/01_ultrasonic_cool_mist_humidifier_22_x_22_x_30_cm`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/living_bedroom_electronics_toys/R679_humidifier/01_ultrasonic_cool_mist_humidifier_22_x_22_x_30_cm) |
 | Dehumidifier | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/living_bedroom_electronics_toys/R680_dehumidifier/08_wood_effect_dehumidifier_30_x_22_x_48_cm_in_waln`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/living_bedroom_electronics_toys/R680_dehumidifier/08_wood_effect_dehumidifier_30_x_22_x_48_cm_in_waln) |
 | Portable air conditioner | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/living_bedroom_electronics_toys/R681_portable_air_conditioner/03_dual_duct_portable_air_conditioner_48_x_40_x_80`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/living_bedroom_electronics_toys/R681_portable_air_conditioner/03_dual_duct_portable_air_conditioner_48_x_40_x_80) |
-| Fireplace screen | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/living_bedroom_electronics_toys/R682_fireplace_screen/01_three_panel_folding_fireplace_screen_120_x_25_x`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/living_bedroom_electronics_toys/R682_fireplace_screen/01_three_panel_folding_fireplace_screen_120_x_25_x) |
 | Fireplace tool set | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/living_bedroom_electronics_toys/R683_fireplace_tool_set/01_classic_four_piece_fireplace_tool_set_30_x_20_x`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/living_bedroom_electronics_toys/R683_fireplace_tool_set/01_classic_four_piece_fireplace_tool_set_30_x_20_x) |
 | Rotating media tower | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/living_bedroom_electronics_toys/R684_rotating_media_tower/07_spinning_bookcase_style_media_tower_50_x_50_x_14`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/living_bedroom_electronics_toys/R684_rotating_media_tower/07_spinning_bookcase_style_media_tower_50_x_50_x_14) |
 | Valet stand | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/living_bedroom_electronics_toys/R685_valet_stand/01_classic_wooden_valet_stand_45_x_35_x_110_cm_in_w`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/living_bedroom_electronics_toys/R685_valet_stand/01_classic_wooden_valet_stand_45_x_35_x_110_cm_in_w) |
@@ -1147,7 +1150,6 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Toilet brush holder | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/bath_laundry_hardware/R786_toilet_brush_holder/06_retro_enamel_toilet_brush_holder_12_cm_in_diamet`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/bath_laundry_hardware/R786_toilet_brush_holder/06_retro_enamel_toilet_brush_holder_12_cm_in_diamet) |
 | Wall hand dryer | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/bath_laundry_hardware/R787_wall_hand_dryer/02_hands_in_blade_hand_dryer_30_x_22_x_66_cm_in_whi`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/bath_laundry_hardware/R787_wall_hand_dryer/02_hands_in_blade_hand_dryer_30_x_22_x_66_cm_in_whi) |
 | Paper towel dispenser | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/bath_laundry_hardware/R788_paper_towel_dispenser/05_crank_paper_towel_dispenser_34_x_23_x_36_cm_in_g`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/bath_laundry_hardware/R788_paper_towel_dispenser/05_crank_paper_towel_dispenser_34_x_23_x_36_cm_in_g) |
-| Rain shower head | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/bath_laundry_hardware/R789_rain_shower_head/01_square_rain_shower_head_30_x_30_x_1_cm_in_polish`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/bath_laundry_hardware/R789_rain_shower_head/01_square_rain_shower_head_30_x_30_x_1_cm_in_polish) |
 | Nail clipper | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/bath_laundry_hardware/R790_nail_clipper/06_gold_finish_nail_clipper_6_x_1_5_x_1_5_cm_in_gol`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/bath_laundry_hardware/R790_nail_clipper/06_gold_finish_nail_clipper_6_x_1_5_x_1_5_cm_in_gol) |
 | Safety razor | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/bath_laundry_hardware/R791_safety_razor/04_safety_razor_on_a_stand_12_x_6_x_14_cm_overall_w`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/bath_laundry_hardware/R791_safety_razor/04_safety_razor_on_a_stand_12_x_6_x_14_cm_overall_w) |
 | Curling iron | Home | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/bath_laundry_hardware/R792_curling_iron/03_large_barrel_curling_iron_35_cm_long_with_a_3_8`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/bath_laundry_hardware/R792_curling_iron/03_large_barrel_curling_iron_35_cm_long_with_a_3_8) |
@@ -1306,7 +1308,6 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Potting bench | Outdoor | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R955_potting_bench/01_cedar_potting_bench_120_x_50_x_140_cm_with_a_sla`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R955_potting_bench/01_cedar_potting_bench_120_x_50_x_140_cm_with_a_sla) |
 | Cold frame greenhouse | Outdoor | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R956_cold_frame_greenhouse/05_galvanized_steel_cold_frame_100_x_80_x_45_cm_wit`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R956_cold_frame_greenhouse/05_galvanized_steel_cold_frame_100_x_80_x_45_cm_wit) |
 | Broadcast spreader | Outdoor | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R957_broadcast_spreader/09_vintage_broadcast_spreader_60_x_50_x_95_cm_with`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R957_broadcast_spreader/09_vintage_broadcast_spreader_60_x_50_x_95_cm_with) |
-| Chicken coop | Outdoor | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R958_chicken_coop/04_mobile_chicken_tractor_240_x_120_x_110_cm_with_a`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R958_chicken_coop/04_mobile_chicken_tractor_240_x_120_x_110_cm_with_a) |
 | Farm tube gate | Outdoor | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R959_farm_tube_gate/04_mesh_filled_tube_gate_366_x_8_x_122_cm_with_a_ga`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R959_farm_tube_gate/04_mesh_filled_tube_gate_366_x_8_x_122_cm_with_a_ga) |
 | Garden tractor | Outdoor | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R960_garden_tractor/10_professional_garden_tractor_210_x_125_x_125_cm_i`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R960_garden_tractor/10_professional_garden_tractor_210_x_125_x_125_cm_i) |
 | Adirondack chair | Outdoor | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R961_adirondack_chair/01_classic_adirondack_chair_75_x_90_x_95_cm_in_unfi`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R961_adirondack_chair/01_classic_adirondack_chair_75_x_90_x_95_cm_in_unfi) |
@@ -1347,3 +1348,1838 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Electric keyboard with stand | Sports & Leisure | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R997_electric_keyboard_with_stand/05_arranger_keyboard_on_a_folding_stand_105_x_42_x`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R997_electric_keyboard_with_stand/05_arranger_keyboard_on_a_folding_stand_105_x_42_x) |
 | Music stand | Sports & Leisure | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R998_music_stand/01_folding_wire_music_stand_50_x_45_x_75_to_130_cm`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R998_music_stand/01_folding_wire_music_stand_50_x_45_x_75_to_130_cm) |
 | Guitar amplifier | Sports & Leisure | NVIDIA USDCraft-10K (Apache 2.0) | [`rigid/medical_outdoor_garden_transport_sports/R999_guitar_amplifier/03_guitar_amp_head_on_a_speaker_cabinet_75_x_36_x_1`](https://huggingface.co/datasets/nvidia/USDCraft-10K/tree/main/rigid/medical_outdoor_garden_transport_sports/R999_guitar_amplifier/03_guitar_amp_head_on_a_speaker_cabinet_75_x_36_x_1) |
+| Adhesive remover bottle | Cleaning | projectsim SimReady Assets (Kaedim) | [`adhesive_remover_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/adhesive_remover_bottle) |
+| Aerosol can | Cleaning | projectsim SimReady Assets (Kaedim) | [`aerosol_can`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/aerosol_can) |
+| All purpose cleaner bottle | Cleaning | projectsim SimReady Assets (Kaedim) | [`all_purpose_cleaner_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/all_purpose_cleaner_bottle) |
+| Angle bracket long | Factory | projectsim SimReady Assets (Kaedim) | [`angle_bracket_long`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/angle_bracket_long) |
+| Angle bracket short | Factory | projectsim SimReady Assets (Kaedim) | [`angle_bracket_short`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/angle_bracket_short) |
+| Antifreeze bottle | Cleaning | projectsim SimReady Assets (Kaedim) | [`antifreeze_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/antifreeze_bottle) |
+| Apple, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`apple`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/apple) |
+| Apple half | Kitchen | projectsim SimReady Assets (Kaedim) | [`apple_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/apple_half) |
+| Apricot | Kitchen | projectsim SimReady Assets (Kaedim) | [`apricot`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/apricot) |
+| Apricot half | Kitchen | projectsim SimReady Assets (Kaedim) | [`apricot_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/apricot_half) |
+| Bag clip | Kitchen | projectsim SimReady Assets (Kaedim) | [`bag_clip`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bag_clip) |
+| Balsamic vinegar bottle | Kitchen | projectsim SimReady Assets (Kaedim) | [`balsamic_vinegar_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/balsamic_vinegar_bottle) |
+| Bar stool beige round back | Tools | projectsim SimReady Assets (Kaedim) | [`bar_stool_beige_round_back`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bar_stool_beige_round_back) |
+| Bar stool black armchair | Tools | projectsim SimReady Assets (Kaedim) | [`bar_stool_black_armchair`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bar_stool_black_armchair) |
+| Bar stool black quilted | Tools | projectsim SimReady Assets (Kaedim) | [`bar_stool_black_quilted`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bar_stool_black_quilted) |
+| Bar stool black round back | Tools | projectsim SimReady Assets (Kaedim) | [`bar_stool_black_round_back`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bar_stool_black_round_back) |
+| Bar stool blue fabric | Tools | projectsim SimReady Assets (Kaedim) | [`bar_stool_blue_fabric`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bar_stool_blue_fabric) |
+| Bar stool brown leather | Tools | projectsim SimReady Assets (Kaedim) | [`bar_stool_brown_leather`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bar_stool_brown_leather) |
+| Bar stool charcoal wingback | Tools | projectsim SimReady Assets (Kaedim) | [`bar_stool_charcoal_wingback`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bar_stool_charcoal_wingback) |
+| Bar stool dark brown shell | Tools | projectsim SimReady Assets (Kaedim) | [`bar_stool_dark_brown_shell`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bar_stool_dark_brown_shell) |
+| Bar stool gray fabric | Tools | projectsim SimReady Assets (Kaedim) | [`bar_stool_gray_fabric`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bar_stool_gray_fabric) |
+| Bar stool gray tufted | Tools | projectsim SimReady Assets (Kaedim) | [`bar_stool_gray_tufted`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bar_stool_gray_tufted) |
+| Bar stool navy shell | Tools | projectsim SimReady Assets (Kaedim) | [`bar_stool_navy_shell`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bar_stool_navy_shell) |
+| Bar stool patchwork tan | Tools | projectsim SimReady Assets (Kaedim) | [`bar_stool_patchwork_tan`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bar_stool_patchwork_tan) |
+| Bar stool silver shell | Tools | projectsim SimReady Assets (Kaedim) | [`bar_stool_silver_shell`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bar_stool_silver_shell) |
+| Bar stool white patterned | Tools | projectsim SimReady Assets (Kaedim) | [`bar_stool_white_patterned`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bar_stool_white_patterned) |
+| Beverage can | Kitchen | projectsim SimReady Assets (Kaedim) | [`beverage_can`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/beverage_can) |
+| Blackberry | Kitchen | projectsim SimReady Assets (Kaedim) | [`blackberry`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/blackberry) |
+| Blackberry half | Kitchen | projectsim SimReady Assets (Kaedim) | [`blackberry_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/blackberry_half) |
+| Blackcurrant | Kitchen | projectsim SimReady Assets (Kaedim) | [`blackcurrant`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/blackcurrant) |
+| Blackcurrant half | Kitchen | projectsim SimReady Assets (Kaedim) | [`blackcurrant_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/blackcurrant_half) |
+| Bleach bottle | Cleaning | projectsim SimReady Assets (Kaedim) | [`bleach_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bleach_bottle) |
+| Blender, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`blender`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/blender) |
+| Blueberry | Kitchen | projectsim SimReady Assets (Kaedim) | [`blueberry`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/blueberry) |
+| Blueberry half | Kitchen | projectsim SimReady Assets (Kaedim) | [`blueberry_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/blueberry_half) |
+| Bowl ornate 01 | Kitchen | projectsim SimReady Assets (Kaedim) | [`bowl_ornate_01`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bowl_ornate_01) |
+| Bowl ornate 02 | Kitchen | projectsim SimReady Assets (Kaedim) | [`bowl_ornate_02`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bowl_ornate_02) |
+| Bowl ornate 03 | Kitchen | projectsim SimReady Assets (Kaedim) | [`bowl_ornate_03`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bowl_ornate_03) |
+| Bowl ornate 04 | Kitchen | projectsim SimReady Assets (Kaedim) | [`bowl_ornate_04`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bowl_ornate_04) |
+| Bowl ornate 05 | Kitchen | projectsim SimReady Assets (Kaedim) | [`bowl_ornate_05`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bowl_ornate_05) |
+| Brake fluid bottle | Cleaning | projectsim SimReady Assets (Kaedim) | [`brake_fluid_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/brake_fluid_bottle) |
+| Breakfast cereal box | Kitchen | projectsim SimReady Assets (Kaedim) | [`breakfast_cereal_box`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/breakfast_cereal_box) |
+| Broth jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`broth_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/broth_jar) |
+| Bubble bath bottle | Home | projectsim SimReady Assets (Kaedim) | [`bubble_bath_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bubble_bath_bottle) |
+| Bubble solution bottle | Toys & Basics | projectsim SimReady Assets (Kaedim) | [`bubble_solution_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bubble_solution_bottle) |
+| Bubble solution refill bottle | Toys & Basics | projectsim SimReady Assets (Kaedim) | [`bubble_solution_refill_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/bubble_solution_refill_bottle) |
+| Butt hinge | Factory | projectsim SimReady Assets (Kaedim) | [`butt_hinge`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/butt_hinge) |
+| Cake mix box | Kitchen | projectsim SimReady Assets (Kaedim) | [`cake_mix_box`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/cake_mix_box) |
+| Can opener | Kitchen | projectsim SimReady Assets (Kaedim) | [`can_opener`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/can_opener) |
+| Caramel sauce jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`caramel_sauce_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/caramel_sauce_jar) |
+| Cardboard divider box 01 | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`cardboard_divider_box_01`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/cardboard_divider_box_01) |
+| Cardboard divider box 02 | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`cardboard_divider_box_02`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/cardboard_divider_box_02) |
+| Cardboard divider box 03 | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`cardboard_divider_box_03`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/cardboard_divider_box_03) |
+| Cardboard divider box 04 | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`cardboard_divider_box_04`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/cardboard_divider_box_04) |
+| Cardboard shoe box | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`cardboard_shoe_box`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/cardboard_shoe_box) |
+| Carpet shampoo | Cleaning | projectsim SimReady Assets (Kaedim) | [`carpet_shampoo`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/carpet_shampoo) |
+| Celeriac | Kitchen | projectsim SimReady Assets (Kaedim) | [`celeriac`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/celeriac) |
+| Ceramic serving bowl | Kitchen | projectsim SimReady Assets (Kaedim) | [`ceramic_serving_bowl`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/ceramic_serving_bowl) |
+| Cherry | Kitchen | projectsim SimReady Assets (Kaedim) | [`cherry`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/cherry) |
+| Cherry half | Kitchen | projectsim SimReady Assets (Kaedim) | [`cherry_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/cherry_half) |
+| Chilli oil jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`chilli_oil_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/chilli_oil_jar) |
+| Chocolate assortment box | Kitchen | projectsim SimReady Assets (Kaedim) | [`chocolate_assortment_box`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/chocolate_assortment_box) |
+| Chocolate sauce jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`chocolate_sauce_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/chocolate_sauce_jar) |
+| Clamshell food container | Kitchen | projectsim SimReady Assets (Kaedim) | [`clamshell_food_container`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/clamshell_food_container) |
+| Cleaning caddy white | Cleaning | projectsim SimReady Assets (Kaedim) | [`cleaning_caddy_white`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/cleaning_caddy_white) |
+| Coconut | Kitchen | projectsim SimReady Assets (Kaedim) | [`coconut`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/coconut) |
+| Coconut half | Kitchen | projectsim SimReady Assets (Kaedim) | [`coconut_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/coconut_half) |
+| Coconut milk jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`coconut_milk_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/coconut_milk_jar) |
+| Colander, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`colander`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/colander) |
+| Combination pliers, 2 | Tools | projectsim SimReady Assets (Kaedim) | [`combination_pliers`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/combination_pliers) |
+| Condensed milk jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`condensed_milk_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/condensed_milk_jar) |
+| Contact lens solution bottle | Home | projectsim SimReady Assets (Kaedim) | [`contact_lens_solution_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/contact_lens_solution_bottle) |
+| Cooking oil bottle | Kitchen | projectsim SimReady Assets (Kaedim) | [`cooking_oil_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/cooking_oil_bottle) |
+| Cough syrup bottle | Home | projectsim SimReady Assets (Kaedim) | [`cough_syrup_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/cough_syrup_bottle) |
+| Cracker box | Kitchen | projectsim SimReady Assets (Kaedim) | [`cracker_box`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/cracker_box) |
+| Cranberry | Kitchen | projectsim SimReady Assets (Kaedim) | [`cranberry`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/cranberry) |
+| Cranberry half | Kitchen | projectsim SimReady Assets (Kaedim) | [`cranberry_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/cranberry_half) |
+| Crosne | Kitchen | projectsim SimReady Assets (Kaedim) | [`crosne`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/crosne) |
+| Cutting board, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`cutting_board`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/cutting_board) |
+| Descaler bottle | Cleaning | projectsim SimReady Assets (Kaedim) | [`descaler_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/descaler_bottle) |
+| Desk divider screen | Furniture | projectsim SimReady Assets (Kaedim) | [`desk_divider_screen`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/desk_divider_screen) |
+| Desk lamp | Home | projectsim SimReady Assets (Kaedim) | [`desk_lamp`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/desk_lamp) |
+| Dishwasher, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`dishwasher`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/dishwasher) |
+| Dishwasher rinse aid bottle | Cleaning | projectsim SimReady Assets (Kaedim) | [`dishwasher_rinse_aid_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/dishwasher_rinse_aid_bottle) |
+| Dishwashing liquid | Cleaning | projectsim SimReady Assets (Kaedim) | [`dishwashing_liquid`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/dishwashing_liquid) |
+| Disinfectant bottle, 3 | Cleaning | projectsim SimReady Assets (Kaedim) | [`disinfectant_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/disinfectant_bottle) |
+| Divided crate green | Factory | projectsim SimReady Assets (Kaedim) | [`divided_crate_green`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/divided_crate_green) |
+| Divided crate yellow | Factory | projectsim SimReady Assets (Kaedim) | [`divided_crate_yellow`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/divided_crate_yellow) |
+| Divided crate yellow blue 01 | Factory | projectsim SimReady Assets (Kaedim) | [`divided_crate_yellow_blue_01`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/divided_crate_yellow_blue_01) |
+| Divided shelf tray | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`divided_shelf_tray`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/divided_shelf_tray) |
+| Drain cleaner | Cleaning | projectsim SimReady Assets (Kaedim) | [`drain_cleaner`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/drain_cleaner) |
+| Dropper bottle | Home | projectsim SimReady Assets (Kaedim) | [`dropper_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/dropper_bottle) |
+| Egg carton eight eggs | Factory | projectsim SimReady Assets (Kaedim) | [`egg_carton_eight_eggs`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/egg_carton_eight_eggs) |
+| Electric deep fryer | Kitchen | projectsim SimReady Assets (Kaedim) | [`electric_deep_fryer`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/electric_deep_fryer) |
+| Electric egg cooker | Kitchen | projectsim SimReady Assets (Kaedim) | [`electric_egg_cooker`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/electric_egg_cooker) |
+| Electric kettle, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`electric_kettle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/electric_kettle) |
+| Engine degreaser bottle | Cleaning | projectsim SimReady Assets (Kaedim) | [`engine_degreaser_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/engine_degreaser_bottle) |
+| Equipment case divided | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`equipment_case_divided`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/equipment_case_divided) |
+| Equipment case empty | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`equipment_case_empty`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/equipment_case_empty) |
+| Eye drop bottle | Home | projectsim SimReady Assets (Kaedim) | [`eye_drop_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/eye_drop_bottle) |
+| Face cream jar | Home | projectsim SimReady Assets (Kaedim) | [`face_cream_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/face_cream_jar) |
+| Faucet kitchen | Home | projectsim SimReady Assets (Kaedim) | [`faucet_kitchen`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/faucet_kitchen) |
+| Film can | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`film_can`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/film_can) |
+| Finger lime | Kitchen | projectsim SimReady Assets (Kaedim) | [`finger_lime`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/finger_lime) |
+| Finger lime half | Kitchen | projectsim SimReady Assets (Kaedim) | [`finger_lime_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/finger_lime_half) |
+| Fish sauce bottle | Kitchen | projectsim SimReady Assets (Kaedim) | [`fish_sauce_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/fish_sauce_bottle) |
+| Floor cleaner bottle | Cleaning | projectsim SimReady Assets (Kaedim) | [`floor_cleaner_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/floor_cleaner_bottle) |
+| Folding probe thermometer | Kitchen | projectsim SimReady Assets (Kaedim) | [`folding_probe_thermometer`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/folding_probe_thermometer) |
+| Food can | Kitchen | projectsim SimReady Assets (Kaedim) | [`food_can`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/food_can) |
+| Food storage container large | Kitchen | projectsim SimReady Assets (Kaedim) | [`food_storage_container_large`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/food_storage_container_large) |
+| Food storage container small | Kitchen | projectsim SimReady Assets (Kaedim) | [`food_storage_container_small`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/food_storage_container_small) |
+| Fruit bowl | Kitchen | projectsim SimReady Assets (Kaedim) | [`fruit_bowl`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/fruit_bowl) |
+| Furniture polish | Cleaning | projectsim SimReady Assets (Kaedim) | [`furniture_polish`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/furniture_polish) |
+| Garlic press, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`garlic_press`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/garlic_press) |
+| Gazpacho jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`gazpacho_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/gazpacho_jar) |
+| Glass cleaner | Cleaning | projectsim SimReady Assets (Kaedim) | [`glass_cleaner`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/glass_cleaner) |
+| Glycerin bottle | Home | projectsim SimReady Assets (Kaedim) | [`glycerin_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/glycerin_bottle) |
+| Gooseberry | Kitchen | projectsim SimReady Assets (Kaedim) | [`gooseberry`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/gooseberry) |
+| Grape | Kitchen | projectsim SimReady Assets (Kaedim) | [`grape`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/grape) |
+| Grape half | Kitchen | projectsim SimReady Assets (Kaedim) | [`grape_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/grape_half) |
+| Grapefruit | Kitchen | projectsim SimReady Assets (Kaedim) | [`grapefruit`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/grapefruit) |
+| Grapefruit half | Kitchen | projectsim SimReady Assets (Kaedim) | [`grapefruit_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/grapefruit_half) |
+| Gravy jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`gravy_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/gravy_jar) |
+| Hair gel jar | Home | projectsim SimReady Assets (Kaedim) | [`hair_gel_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/hair_gel_jar) |
+| Hard equipment case | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`hard_equipment_case`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/hard_equipment_case) |
+| Hinged egg carton six eggs | Factory | projectsim SimReady Assets (Kaedim) | [`hinged_egg_carton_six_eggs`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/hinged_egg_carton_six_eggs) |
+| Hinged lid carton large | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`hinged_lid_carton_large`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/hinged_lid_carton_large) |
+| Hinged lid carton small | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`hinged_lid_carton_small`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/hinged_lid_carton_small) |
+| Hinged plastic case | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`hinged_plastic_case`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/hinged_plastic_case) |
+| Hinged toolbox | Tools | projectsim SimReady Assets (Kaedim) | [`hinged_toolbox`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/hinged_toolbox) |
+| Honey jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`honey_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/honey_jar) |
+| Honey jar 02 | Kitchen | projectsim SimReady Assets (Kaedim) | [`honey_jar_02`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/honey_jar_02) |
+| Hot sauce bottle | Kitchen | projectsim SimReady Assets (Kaedim) | [`hot_sauce_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/hot_sauce_bottle) |
+| Hot sauce bottle tall | Kitchen | projectsim SimReady Assets (Kaedim) | [`hot_sauce_bottle_tall`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/hot_sauce_bottle_tall) |
+| Hydrogen peroxide bottle | Home | projectsim SimReady Assets (Kaedim) | [`hydrogen_peroxide_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/hydrogen_peroxide_bottle) |
+| Industrial pipe valve | Factory | projectsim SimReady Assets (Kaedim) | [`industrial_pipe_valve`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/industrial_pipe_valve) |
+| Industrial shears | Tools | projectsim SimReady Assets (Kaedim) | [`industrial_shears`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/industrial_shears) |
+| Ink jar | Cleaning | projectsim SimReady Assets (Kaedim) | [`ink_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/ink_jar) |
+| Isopropyl alcohol bottle | Home | projectsim SimReady Assets (Kaedim) | [`isopropyl_alcohol_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/isopropyl_alcohol_bottle) |
+| Jam jar, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`jam_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/jam_jar) |
+| Jewelry cleaner bottle | Cleaning | projectsim SimReady Assets (Kaedim) | [`jewelry_cleaner_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/jewelry_cleaner_bottle) |
+| Juice carton | Kitchen | projectsim SimReady Assets (Kaedim) | [`juice_carton`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/juice_carton) |
+| Kitchen scale, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`kitchen_scale`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/kitchen_scale) |
+| Kitchen shears | Kitchen | projectsim SimReady Assets (Kaedim) | [`kitchen_shears`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/kitchen_shears) |
+| Kiwifruit | Kitchen | projectsim SimReady Assets (Kaedim) | [`kiwifruit`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/kiwifruit) |
+| Kiwifruit half | Kitchen | projectsim SimReady Assets (Kaedim) | [`kiwifruit_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/kiwifruit_half) |
+| Kohlrabi | Kitchen | projectsim SimReady Assets (Kaedim) | [`kohlrabi`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/kohlrabi) |
+| Kumquat half | Kitchen | projectsim SimReady Assets (Kaedim) | [`kumquat_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/kumquat_half) |
+| Laundry detergent | Cleaning | projectsim SimReady Assets (Kaedim) | [`laundry_detergent`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/laundry_detergent) |
+| Laundry stain remover bottle | Cleaning | projectsim SimReady Assets (Kaedim) | [`laundry_stain_remover_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/laundry_stain_remover_bottle) |
+| Lemon half | Kitchen | projectsim SimReady Assets (Kaedim) | [`lemon_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/lemon_half) |
+| Lemon juice bottle | Kitchen | projectsim SimReady Assets (Kaedim) | [`lemon_juice_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/lemon_juice_bottle) |
+| Lime half | Kitchen | projectsim SimReady Assets (Kaedim) | [`lime_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/lime_half) |
+| Liquid fertilizer bottle | Cleaning | projectsim SimReady Assets (Kaedim) | [`liquid_fertilizer_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/liquid_fertilizer_bottle) |
+| Liquid glue bottle | Cleaning | projectsim SimReady Assets (Kaedim) | [`liquid_glue_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/liquid_glue_bottle) |
+| Liquid hand soap jar | Home | projectsim SimReady Assets (Kaedim) | [`liquid_hand_soap_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/liquid_hand_soap_jar) |
+| Liquid latex jar | Cleaning | projectsim SimReady Assets (Kaedim) | [`liquid_latex_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/liquid_latex_jar) |
+| Liquid latex tub | Cleaning | projectsim SimReady Assets (Kaedim) | [`liquid_latex_tub`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/liquid_latex_tub) |
+| Mandarin half | Kitchen | projectsim SimReady Assets (Kaedim) | [`mandarin_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/mandarin_half) |
+| Mangosteen | Kitchen | projectsim SimReady Assets (Kaedim) | [`mangosteen`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/mangosteen) |
+| Maple syrup jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`maple_syrup_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/maple_syrup_jar) |
+| Maraschino cherry jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`maraschino_cherry_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/maraschino_cherry_jar) |
+| Mayonnaise jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`mayonnaise_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/mayonnaise_jar) |
+| Meat slicer | Kitchen | projectsim SimReady Assets (Kaedim) | [`meat_slicer`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/meat_slicer) |
+| Metal lunch box | Kitchen | projectsim SimReady Assets (Kaedim) | [`metal_lunch_box`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/metal_lunch_box) |
+| Microwave oven, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`microwave_oven`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/microwave_oven) |
+| Milk carton, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`milk_carton`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/milk_carton) |
+| Mineral water bottle | Kitchen | projectsim SimReady Assets (Kaedim) | [`mineral_water_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/mineral_water_bottle) |
+| Molasses jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`molasses_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/molasses_jar) |
+| Mortar and pestle, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`mortar_and_pestle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/mortar_and_pestle) |
+| Motor oil bottle | Cleaning | projectsim SimReady Assets (Kaedim) | [`motor_oil_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/motor_oil_bottle) |
+| Mouthwash bottle | Home | projectsim SimReady Assets (Kaedim) | [`mouthwash_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/mouthwash_bottle) |
+| Mustard jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`mustard_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/mustard_jar) |
+| Nail polish bottle | Home | projectsim SimReady Assets (Kaedim) | [`nail_polish_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/nail_polish_bottle) |
+| Nail polish bottle square | Home | projectsim SimReady Assets (Kaedim) | [`nail_polish_bottle_square`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/nail_polish_bottle_square) |
+| Oca | Kitchen | projectsim SimReady Assets (Kaedim) | [`oca`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/oca) |
+| Orange half | Kitchen | projectsim SimReady Assets (Kaedim) | [`orange_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/orange_half) |
+| Oven cleaner | Cleaning | projectsim SimReady Assets (Kaedim) | [`oven_cleaner`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/oven_cleaner) |
+| Oven mitt | Kitchen | projectsim SimReady Assets (Kaedim) | [`oven_mitt`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/oven_mitt) |
+| Paint can | Cleaning | projectsim SimReady Assets (Kaedim) | [`paint_can`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/paint_can) |
+| Pasta box | Kitchen | projectsim SimReady Assets (Kaedim) | [`pasta_box`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/pasta_box) |
+| Pasta machine | Kitchen | projectsim SimReady Assets (Kaedim) | [`pasta_machine`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/pasta_machine) |
+| Pasta sauce jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`pasta_sauce_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/pasta_sauce_jar) |
+| Peach jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`peach_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/peach_jar) |
+| Peanut butter jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`peanut_butter_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/peanut_butter_jar) |
+| Perfume bottle | Home | projectsim SimReady Assets (Kaedim) | [`perfume_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/perfume_bottle) |
+| Pesto jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`pesto_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/pesto_jar) |
+| Picking basket | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`picking_basket`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/picking_basket) |
+| Pickle jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`pickle_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/pickle_jar) |
+| Pineapple half | Kitchen | projectsim SimReady Assets (Kaedim) | [`pineapple_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/pineapple_half) |
+| Plastic compartment tray | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`plastic_compartment_tray`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/plastic_compartment_tray) |
+| Plastic lunch box | Kitchen | projectsim SimReady Assets (Kaedim) | [`plastic_lunch_box`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/plastic_lunch_box) |
+| Plastic shelf bin | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`plastic_shelf_bin`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/plastic_shelf_bin) |
+| Plastic storage basket | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`plastic_storage_basket`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/plastic_storage_basket) |
+| Plate ornate 01 | Kitchen | projectsim SimReady Assets (Kaedim) | [`plate_ornate_01`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/plate_ornate_01) |
+| Plate ornate 02 | Kitchen | projectsim SimReady Assets (Kaedim) | [`plate_ornate_02`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/plate_ornate_02) |
+| Pliers red handles | Tools | projectsim SimReady Assets (Kaedim) | [`pliers_red_handles`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/pliers_red_handles) |
+| Pomelo half | Kitchen | projectsim SimReady Assets (Kaedim) | [`pomelo_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/pomelo_half) |
+| Raspberry half | Kitchen | projectsim SimReady Assets (Kaedim) | [`raspberry_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/raspberry_half) |
+| Red metal toolbox | Tools | projectsim SimReady Assets (Kaedim) | [`red_metal_toolbox`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/red_metal_toolbox) |
+| Red tool chest | Tools | projectsim SimReady Assets (Kaedim) | [`red_tool_chest`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/red_tool_chest) |
+| Red wine vinegar bottle | Kitchen | projectsim SimReady Assets (Kaedim) | [`red_wine_vinegar_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/red_wine_vinegar_bottle) |
+| Red wine vinegar plastic bottle | Kitchen | projectsim SimReady Assets (Kaedim) | [`red_wine_vinegar_plastic_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/red_wine_vinegar_plastic_bottle) |
+| Redcurrant half | Kitchen | projectsim SimReady Assets (Kaedim) | [`redcurrant_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/redcurrant_half) |
+| Retail display stand | Furniture | projectsim SimReady Assets (Kaedim) | [`retail_display_stand`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/retail_display_stand) |
+| Rice cooker, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`rice_cooker`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/rice_cooker) |
+| Rotating lid trash bin narrow | Cleaning | projectsim SimReady Assets (Kaedim) | [`rotating_lid_trash_bin_narrow`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/rotating_lid_trash_bin_narrow) |
+| Rotating lid trash bin wide | Cleaning | projectsim SimReady Assets (Kaedim) | [`rotating_lid_trash_bin_wide`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/rotating_lid_trash_bin_wide) |
+| Rubber cement jar | Cleaning | projectsim SimReady Assets (Kaedim) | [`rubber_cement_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/rubber_cement_jar) |
+| Rubbing alcohol bottle | Home | projectsim SimReady Assets (Kaedim) | [`rubbing_alcohol_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/rubbing_alcohol_bottle) |
+| Rust remover bottle | Cleaning | projectsim SimReady Assets (Kaedim) | [`rust_remover_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/rust_remover_bottle) |
+| Safety goggles clear | PPE | projectsim SimReady Assets (Kaedim) | [`safety_goggles_clear`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/safety_goggles_clear) |
+| Salad dressing jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`salad_dressing_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/salad_dressing_jar) |
+| Salad spinner, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`salad_spinner`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/salad_spinner) |
+| Saline nasal spray bottle | Home | projectsim SimReady Assets (Kaedim) | [`saline_nasal_spray_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/saline_nasal_spray_bottle) |
+| Salsa jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`salsa_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/salsa_jar) |
+| Scouring powder | Cleaning | projectsim SimReady Assets (Kaedim) | [`scouring_powder`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/scouring_powder) |
+| Screw cap glass bottle | Kitchen | projectsim SimReady Assets (Kaedim) | [`screw_cap_glass_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/screw_cap_glass_bottle) |
+| Shampoo bottle | Home | projectsim SimReady Assets (Kaedim) | [`shampoo_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/shampoo_bottle) |
+| Shopping basket gray dinosaur | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`shopping_basket_gray_dinosaur`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/shopping_basket_gray_dinosaur) |
+| Shopping basket red | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`shopping_basket_red`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/shopping_basket_red) |
+| Singing bowl | Sports & Leisure | projectsim SimReady Assets (Kaedim) | [`singing_bowl`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/singing_bowl) |
+| Socket ratchet wrench | Tools | projectsim SimReady Assets (Kaedim) | [`socket_ratchet_wrench`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/socket_ratchet_wrench) |
+| Soy sauce bottle | Kitchen | projectsim SimReady Assets (Kaedim) | [`soy_sauce_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/soy_sauce_bottle) |
+| Spatula, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`spatula`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/spatula) |
+| Spring tea infuser | Kitchen | projectsim SimReady Assets (Kaedim) | [`spring_tea_infuser`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/spring_tea_infuser) |
+| Stackable parts bin | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`stackable_parts_bin`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/stackable_parts_bin) |
+| Strawberry half | Kitchen | projectsim SimReady Assets (Kaedim) | [`strawberry_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/strawberry_half) |
+| Sugar bowl, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`sugar_bowl`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/sugar_bowl) |
+| Sunchoke | Kitchen | projectsim SimReady Assets (Kaedim) | [`sunchoke`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/sunchoke) |
+| Table dark wood metal frame | Furniture | projectsim SimReady Assets (Kaedim) | [`table_dark_wood_metal_frame`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/table_dark_wood_metal_frame) |
+| Table gray inset top | Furniture | projectsim SimReady Assets (Kaedim) | [`table_gray_inset_top`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/table_gray_inset_top) |
+| Table ivory cabriole | Furniture | projectsim SimReady Assets (Kaedim) | [`table_ivory_cabriole`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/table_ivory_cabriole) |
+| Table navy graphic top | Furniture | projectsim SimReady Assets (Kaedim) | [`table_navy_graphic_top`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/table_navy_graphic_top) |
+| Table yellow blue | Furniture | projectsim SimReady Assets (Kaedim) | [`table_yellow_blue`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/table_yellow_blue) |
+| Tahini jar | Kitchen | projectsim SimReady Assets (Kaedim) | [`tahini_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/tahini_jar) |
+| Tilt head stand mixer | Kitchen | projectsim SimReady Assets (Kaedim) | [`tilt_head_stand_mixer`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/tilt_head_stand_mixer) |
+| Toilet bowl cleaner | Cleaning | projectsim SimReady Assets (Kaedim) | [`toilet_bowl_cleaner`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/toilet_bowl_cleaner) |
+| Tortilla press, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`tortilla_press`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/tortilla_press) |
+| Trash bin pedal metal | Cleaning | projectsim SimReady Assets (Kaedim) | [`trash_bin_pedal_metal`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/trash_bin_pedal_metal) |
+| Trash can | Home | projectsim SimReady Assets (Kaedim) | [`trash_can`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/trash_can) |
+| Tuck flap mailer box | Bins & Trays | projectsim SimReady Assets (Kaedim) | [`tuck_flap_mailer_box`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/tuck_flap_mailer_box) |
+| Unripe banana | Kitchen | projectsim SimReady Assets (Kaedim) | [`unripe_banana`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/unripe_banana) |
+| Unripe tomato | Kitchen | projectsim SimReady Assets (Kaedim) | [`unripe_tomato`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/unripe_tomato) |
+| Utility knife | Tools | projectsim SimReady Assets (Kaedim) | [`utility_knife`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/utility_knife) |
+| Vacuum flask | Kitchen | projectsim SimReady Assets (Kaedim) | [`vacuum_flask`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/vacuum_flask) |
+| Vanilla extract bottle | Kitchen | projectsim SimReady Assets (Kaedim) | [`vanilla_extract_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/vanilla_extract_bottle) |
+| Varnish jar | Cleaning | projectsim SimReady Assets (Kaedim) | [`varnish_jar`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/varnish_jar) |
+| Vegetable peeler, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`vegetable_peeler`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/vegetable_peeler) |
+| Vinegar bottle | Kitchen | projectsim SimReady Assets (Kaedim) | [`vinegar_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/vinegar_bottle) |
+| Wastebasket black hexagonal slots | Cleaning | projectsim SimReady Assets (Kaedim) | [`wastebasket_black_hexagonal_slots`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/wastebasket_black_hexagonal_slots) |
+| Wastebasket coral vertical slots | Cleaning | projectsim SimReady Assets (Kaedim) | [`wastebasket_coral_vertical_slots`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/wastebasket_coral_vertical_slots) |
+| Wastebasket gray heart slots | Cleaning | projectsim SimReady Assets (Kaedim) | [`wastebasket_gray_heart_slots`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/wastebasket_gray_heart_slots) |
+| Wastebasket pink patterned | Cleaning | projectsim SimReady Assets (Kaedim) | [`wastebasket_pink_patterned`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/wastebasket_pink_patterned) |
+| Wastebasket white oval slots | Cleaning | projectsim SimReady Assets (Kaedim) | [`wastebasket_white_oval_slots`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/wastebasket_white_oval_slots) |
+| Wastebasket white square perforated | Tools | projectsim SimReady Assets (Kaedim) | [`wastebasket_white_square_perforated`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/wastebasket_white_square_perforated) |
+| Wastebasket yellow recycling | Cleaning | projectsim SimReady Assets (Kaedim) | [`wastebasket_yellow_recycling`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/wastebasket_yellow_recycling) |
+| Water cooler half full | Kitchen | projectsim SimReady Assets (Kaedim) | [`water_cooler_half_full`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/water_cooler_half_full) |
+| Watering can, 2 | Outdoor | projectsim SimReady Assets (Kaedim) | [`watering_can`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/watering_can) |
+| Watermelon half | Kitchen | projectsim SimReady Assets (Kaedim) | [`watermelon_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/watermelon_half) |
+| Wheeled trash bin green | Cleaning | projectsim SimReady Assets (Kaedim) | [`wheeled_trash_bin_green`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/wheeled_trash_bin_green) |
+| White wine vinegar bottle | Kitchen | projectsim SimReady Assets (Kaedim) | [`white_wine_vinegar_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/white_wine_vinegar_bottle) |
+| Wine bottle, 2 | Kitchen | projectsim SimReady Assets (Kaedim) | [`wine_bottle`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/wine_bottle) |
+| Wooden bookend | Home | projectsim SimReady Assets (Kaedim) | [`wooden_bookend`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/wooden_bookend) |
+| Wooden shelving worn | Furniture | projectsim SimReady Assets (Kaedim) | [`wooden_shelving_worn`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/wooden_shelving_worn) |
+| Wooden wall shelf | Furniture | projectsim SimReady Assets (Kaedim) | [`wooden_wall_shelf`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/wooden_wall_shelf) |
+| Yuzu half | Kitchen | projectsim SimReady Assets (Kaedim) | [`yuzu_half`](https://huggingface.co/datasets/projectsim/simready-assets/tree/main/yuzu_half) |
+| Balance board | Sports & Leisure | Allsides SimReady Assets | [`balance_board_BJ2USD8NG9`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/balance_board_BJ2USD8NG9) |
+| Ball valve, 2 | Factory | Allsides SimReady Assets | [`ball_valve_4PEJRAAP12`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/ball_valve_4PEJRAAP12) |
+| Bamboo steamer, 2 | Kitchen | Allsides SimReady Assets | [`bamboo_steamer_A0LUXT8FND`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/bamboo_steamer_A0LUXT8FND) |
+| Basket, 2 | Bins & Trays | Allsides SimReady Assets | [`basket_BGNZ83B577`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/basket_BGNZ83B577) |
+| Basket, 3 | Bins & Trays | Allsides SimReady Assets | [`basket_HTE4DW880X`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/basket_HTE4DW880X) |
+| Basket, 4 | Bins & Trays | Allsides SimReady Assets | [`basket_KN6XD9DJXF`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/basket_KN6XD9DJXF) |
+| Beer stein | Kitchen | Allsides SimReady Assets | [`beer_stein_K58BL2P1CR`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/beer_stein_K58BL2P1CR) |
+| Belt tensioner | Kitchen | Allsides SimReady Assets | [`belt_tensioner_QAYA89FF17`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/belt_tensioner_QAYA89FF17) |
+| Bicycle basket | Bins & Trays | Allsides SimReady Assets | [`bicycle_basket_ZE0VUFECF3`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/bicycle_basket_ZE0VUFECF3) |
+| Bird feeder, 2 | Outdoor | Allsides SimReady Assets | [`bird_feeder_HZ4Q5JBMTV`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/bird_feeder_HZ4Q5JBMTV) |
+| Bolt | Factory | Allsides SimReady Assets | [`bolt_QABQ5FUC3Q`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/bolt_QABQ5FUC3Q) |
+| Bolt cutter, 2 | Factory | Allsides SimReady Assets | [`bolt_cutter_GQSK96TWRP`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/bolt_cutter_GQSK96TWRP) |
+| Book | Home | Allsides SimReady Assets | [`book_1XEPZDW9R2`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/book_1XEPZDW9R2) |
+| Bottle holder | Kitchen | Allsides SimReady Assets | [`bottle_holder_SL1NUQC0CF`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/bottle_holder_SL1NUQC0CF) |
+| Bowl, 2 | Kitchen | Allsides SimReady Assets | [`bowl_TF0HE6WFDV`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/bowl_TF0HE6WFDV) |
+| Box | Bins & Trays | Allsides SimReady Assets | [`box_X31S41389H`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/box_X31S41389H) |
+| Boxing shoe | Sports & Leisure | Allsides SimReady Assets | [`boxing_shoe_2U1TDZCE7H`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/boxing_shoe_2U1TDZCE7H) |
+| Brake shoe | Car parts | Allsides SimReady Assets | [`brake_shoe_LJWPGAT207`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/brake_shoe_LJWPGAT207) |
+| Bread | Kitchen | Allsides SimReady Assets | [`bread_DS9TX9P1K4`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/bread_DS9TX9P1K4) |
+| Bread roll | Kitchen | Allsides SimReady Assets | [`bread_roll_0YFGDCBSU3`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/bread_roll_0YFGDCBSU3) |
+| Bucket | Bins & Trays | Allsides SimReady Assets | [`bucket_RMK5F7MQ4A`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/bucket_RMK5F7MQ4A) |
+| Candle | Home | Allsides SimReady Assets | [`candle_9PKUUAL7E9`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/candle_9PKUUAL7E9) |
+| Candle holder, 2 | Home | Allsides SimReady Assets | [`candle_holder_E93SQV1QGZ`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/candle_holder_E93SQV1QGZ) |
+| Candle holder, 3 | Home | Allsides SimReady Assets | [`candle_holder_SNKC75LXJM`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/candle_holder_SNKC75LXJM) |
+| Canteen | Kitchen | Allsides SimReady Assets | [`canteen_RUJGTQFGA3`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/canteen_RUJGTQFGA3) |
+| Carburetor | Car parts | Allsides SimReady Assets | [`carburetor_1W6SMCD6T7`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/carburetor_1W6SMCD6T7) |
+| Cardboard box, 2 | Bins & Trays | Allsides SimReady Assets | [`cardboard_box_HTP2AJ6HXJ`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/cardboard_box_HTP2AJ6HXJ) |
+| Chessboard | Sports & Leisure | Allsides SimReady Assets | [`chessboard_FKD0W642EJ`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/chessboard_FKD0W642EJ) |
+| Chisel | Tools | Allsides SimReady Assets | [`chisel_RM5WM20LQD`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/chisel_RM5WM20LQD) |
+| Clamp, 2 | Tools | Allsides SimReady Assets | [`clamp_KB0ACUFTEA`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/clamp_KB0ACUFTEA) |
+| Clay pot | Kitchen | Allsides SimReady Assets | [`clay_pot_T43CD9HMZM`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/clay_pot_T43CD9HMZM) |
+| Coat rack, 2 | Factory | Allsides SimReady Assets | [`coat_rack_4JRAMU6H5M`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/coat_rack_4JRAMU6H5M) |
+| Computer mouse, 2 | Electronics | Allsides SimReady Assets | [`computer_mouse_62RQ5CXV0E`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/computer_mouse_62RQ5CXV0E) |
+| Cosmetic bag | Home | Allsides SimReady Assets | [`cosmetic_bag_UQM9XA6AS8`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/cosmetic_bag_UQM9XA6AS8) |
+| Crate | Factory | Allsides SimReady Assets | [`crate_0L73TE1UJ5`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/crate_0L73TE1UJ5) |
+| Crate, 2 | Factory | Allsides SimReady Assets | [`crate_BEALL3ACW9`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/crate_BEALL3ACW9) |
+| Cultivator | Outdoor | Allsides SimReady Assets | [`cultivator_EKZPPCB02V`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/cultivator_EKZPPCB02V) |
+| Cultivator, 2 | Outdoor | Allsides SimReady Assets | [`cultivator_FQDRBWXA5P`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/cultivator_FQDRBWXA5P) |
+| Cutting board, 3 | Kitchen | Allsides SimReady Assets | [`cutting_board_K1NAWU4TGW`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/cutting_board_K1NAWU4TGW) |
+| Cutting board, 4 | Kitchen | Allsides SimReady Assets | [`cutting_board_SN9N14FW83`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/cutting_board_SN9N14FW83) |
+| Cutting board stand | Kitchen | Allsides SimReady Assets | [`cutting_board_stand_LL30CBKKQH`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/cutting_board_stand_LL30CBKKQH) |
+| Cutting torch | Tools | Allsides SimReady Assets | [`cutting_torch_RA5PJN2M2Y`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/cutting_torch_RA5PJN2M2Y) |
+| Cylinder lock | Kitchen | Allsides SimReady Assets | [`cylinder_lock_3FKU5BGJTL`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/cylinder_lock_3FKU5BGJTL) |
+| Dartboard | Sports & Leisure | Allsides SimReady Assets | [`dartboard_SLXRSTZD87`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/dartboard_SLXRSTZD87) |
+| Dish rack | Factory | Allsides SimReady Assets | [`dish_rack_RHVLDJ6WJF`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/dish_rack_RHVLDJ6WJF) |
+| Diya | Home | Allsides SimReady Assets | [`diya_9QY58Q4Q37`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/diya_9QY58Q4Q37) |
+| Dollhouse, 2 | Toys & Basics | Allsides SimReady Assets | [`dollhouse_ME3NFCEXE0`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/dollhouse_ME3NFCEXE0) |
+| Doughnut | Factory | Allsides SimReady Assets | [`doughnut_45YY4UKCSW`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/doughnut_45YY4UKCSW) |
+| Drill bit | Tools | Allsides SimReady Assets | [`drill_bit_EU6E14FHF3`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/drill_bit_EU6E14FHF3) |
+| Drum | Factory | Allsides SimReady Assets | [`drum_YK08LSWKEY`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/drum_YK08LSWKEY) |
+| Dumbbell, 2 | Sports & Leisure | Allsides SimReady Assets | [`dumbbell_XEAQ9WKHV5`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/dumbbell_XEAQ9WKHV5) |
+| Earth anchor | Factory | Allsides SimReady Assets | [`earth_anchor_G506JN2HVC`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/earth_anchor_G506JN2HVC) |
+| Eggplant | Home | Allsides SimReady Assets | [`eggplant_3JJ8TMJXJG`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/eggplant_3JJ8TMJXJG) |
+| Electronics housing | Factory | Allsides SimReady Assets | [`electronics_housing_1TE8ABXGGQ`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/electronics_housing_1TE8ABXGGQ) |
+| Electronics housing, 2 | Factory | Allsides SimReady Assets | [`electronics_housing_EDACZNQP43`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/electronics_housing_EDACZNQP43) |
+| Electronics housing, 3 | Factory | Allsides SimReady Assets | [`electronics_housing_NG2MTZF86D`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/electronics_housing_NG2MTZF86D) |
+| Electronics housing, 4 | Factory | Allsides SimReady Assets | [`electronics_housing_XUFCAJ0SZU`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/electronics_housing_XUFCAJ0SZU) |
+| Eye bolt | Factory | Allsides SimReady Assets | [`eye_bolt_9YKA1GD1G3`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/eye_bolt_9YKA1GD1G3) |
+| Figurine | Toys & Basics | Allsides SimReady Assets | [`figurine_1F2FH7DEVB`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/figurine_1F2FH7DEVB) |
+| Flowerpot | Outdoor | Allsides SimReady Assets | [`flowerpot_66GY3SZFMM`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/flowerpot_66GY3SZFMM) |
+| Flowerpot, 2 | Outdoor | Allsides SimReady Assets | [`flowerpot_MS1PN11A7F`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/flowerpot_MS1PN11A7F) |
+| Flowerpot, 3 | Outdoor | Allsides SimReady Assets | [`flowerpot_WW1H274MDB`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/flowerpot_WW1H274MDB) |
+| Folding wagon | Outdoor | Allsides SimReady Assets | [`folding_wagon_FP3YEANLHG`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/folding_wagon_FP3YEANLHG) |
+| Foot massager | Home | Allsides SimReady Assets | [`foot_massager_7JTDV89DL1`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/foot_massager_7JTDV89DL1) |
+| Football | Sports & Leisure | Allsides SimReady Assets | [`football_2KG2ZPDKL5`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/football_2KG2ZPDKL5) |
+| Football, 2 | Sports & Leisure | Allsides SimReady Assets | [`football_MSK26TUZZ1`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/football_MSK26TUZZ1) |
+| Footstool | Tools | Allsides SimReady Assets | [`footstool_RP2B4ZW65H`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/footstool_RP2B4ZW65H) |
+| Garden hose | Outdoor | Allsides SimReady Assets | [`garden_hose_SHLU88LKAQ`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/garden_hose_SHLU88LKAQ) |
+| Garden trowel | Outdoor | Allsides SimReady Assets | [`garden_trowel_25NZ9LFX99`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/garden_trowel_25NZ9LFX99) |
+| Geode | Outdoor | Allsides SimReady Assets | [`geode_0R6YF8A7X2`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/geode_0R6YF8A7X2) |
+| Grinding wheel | Tools | Allsides SimReady Assets | [`grinding_wheel_NN58QXL1FW`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/grinding_wheel_NN58QXL1FW) |
+| Guitar amplifier, 2 | Electronics | Allsides SimReady Assets | [`guitar_amplifier_QDQ6GEKTZF`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/guitar_amplifier_QDQ6GEKTZF) |
+| Hammer | Tools | Allsides SimReady Assets | [`hammer_SFSSHMG73V`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/hammer_SFSSHMG73V) |
+| Handwheel | Car parts | Allsides SimReady Assets | [`handwheel_UMS7GQTHQU`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/handwheel_UMS7GQTHQU) |
+| Hat | Home | Allsides SimReady Assets | [`hat_LHM4AQBQ6S`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/hat_LHM4AQBQ6S) |
+| Hex nut | Factory | Allsides SimReady Assets | [`hex_nut_4NXC9C18SE`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/hex_nut_4NXC9C18SE) |
+| Hose | Outdoor | Allsides SimReady Assets | [`hose_KGZGN68RWC`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/hose_KGZGN68RWC) |
+| Inline skate | Sports & Leisure | Allsides SimReady Assets | [`inline_skate_LBG6PXD726`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/inline_skate_LBG6PXD726) |
+| Jar | Kitchen | Allsides SimReady Assets | [`jar_2CKZZHE3PV`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/jar_2CKZZHE3PV) |
+| Jewelry box, 2 | Home | Allsides SimReady Assets | [`jewelry_box_SGK1UHE4LG`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/jewelry_box_SGK1UHE4LG) |
+| Jug | Kitchen | Allsides SimReady Assets | [`jug_MGD72XYD07`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/jug_MGD72XYD07) |
+| Kickboard | Sports & Leisure | Allsides SimReady Assets | [`kickboard_RB7XELPVRN`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/kickboard_RB7XELPVRN) |
+| Ladle, 2 | Kitchen | Allsides SimReady Assets | [`ladle_VGSHK0R840`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/ladle_VGSHK0R840) |
+| Lantern | Home | Allsides SimReady Assets | [`lantern_UZSY98QSLU`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/lantern_UZSY98QSLU) |
+| Lantern, 2 | Home | Allsides SimReady Assets | [`lantern_V2MUK9DSFY`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/lantern_V2MUK9DSFY) |
+| Lemon, 2 | Kitchen | Allsides SimReady Assets | [`lemon_8SUCD6125H`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/lemon_8SUCD6125H) |
+| Lid | Kitchen | Allsides SimReady Assets | [`lid_KRPSQZF6KB`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/lid_KRPSQZF6KB) |
+| Lid, 2 | Kitchen | Allsides SimReady Assets | [`lid_U9EY373VTP`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/lid_U9EY373VTP) |
+| Mask | Home | Allsides SimReady Assets | [`mask_9DA2UZNFYX`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/mask_9DA2UZNFYX) |
+| Massager | Home | Allsides SimReady Assets | [`massager_PZHQ8TBRRR`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/massager_PZHQ8TBRRR) |
+| Metal file, 2 | Tools | Allsides SimReady Assets | [`metal_file_9L21JN6EYZ`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/metal_file_9L21JN6EYZ) |
+| Microphone | Electronics | Allsides SimReady Assets | [`microphone_F1MQC4NZWE`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/microphone_F1MQC4NZWE) |
+| Model car | Toys & Basics | Allsides SimReady Assets | [`model_car_F2GTZSZVQH`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/model_car_F2GTZSZVQH) |
+| Motor housing | Factory | Allsides SimReady Assets | [`motor_housing_LJD8C0WGUG`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/motor_housing_LJD8C0WGUG) |
+| Muffin | Kitchen | Allsides SimReady Assets | [`muffin_5NMRT24M78`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/muffin_5NMRT24M78) |
+| Mug, 2 | Kitchen | Allsides SimReady Assets | [`mug_A07RDPW843`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/mug_A07RDPW843) |
+| Multimeter | Tools | Allsides SimReady Assets | [`multimeter_E8FBQHZBQM`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/multimeter_E8FBQHZBQM) |
+| Optical disc drive | Electronics | Allsides SimReady Assets | [`optical_disc_drive_KK7EL2TGMG`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/optical_disc_drive_KK7EL2TGMG) |
+| Phone case | Electronics | Allsides SimReady Assets | [`phone_case_PKC9NA2AHZ`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/phone_case_PKC9NA2AHZ) |
+| Phono preamplifier | Electronics | Allsides SimReady Assets | [`phono_preamplifier_SYZ2TL7W2R`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/phono_preamplifier_SYZ2TL7W2R) |
+| Picture frame, 2 | Home | Allsides SimReady Assets | [`picture_frame_L1UFDSSE32`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/picture_frame_L1UFDSSE32) |
+| Pill organizer, 2 | Bins & Trays | Allsides SimReady Assets | [`pill_organizer_K7FK3KXMAA`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/pill_organizer_K7FK3KXMAA) |
+| Pincers | Tools | Allsides SimReady Assets | [`pincers_1JVNJBN2MZ`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/pincers_1JVNJBN2MZ) |
+| Pipe cap | Factory | Allsides SimReady Assets | [`pipe_cap_NAG8VAQC3B`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/pipe_cap_NAG8VAQC3B) |
+| Pipe elbow | Factory | Allsides SimReady Assets | [`pipe_elbow_HL56C5YBSK`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/pipe_elbow_HL56C5YBSK) |
+| Pipe elbow, 2 | Factory | Allsides SimReady Assets | [`pipe_elbow_W85T6R71C3`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/pipe_elbow_W85T6R71C3) |
+| Pipe tee | Factory | Allsides SimReady Assets | [`pipe_tee_4CQ65953D0`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/pipe_tee_4CQ65953D0) |
+| Plate, 2 | Kitchen | Allsides SimReady Assets | [`plate_1ZM0P4LT9E`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/plate_1ZM0P4LT9E) |
+| Pliers | Tools | Allsides SimReady Assets | [`pliers_PT52VQWUV8`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/pliers_PT52VQWUV8) |
+| Power steering pump | Factory | Allsides SimReady Assets | [`power_steering_pump_CDAV0Y4AHT`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/power_steering_pump_CDAV0Y4AHT) |
+| Pruning shears | Outdoor | Allsides SimReady Assets | [`pruning_shears_ZH85EL46FU`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/pruning_shears_ZH85EL46FU) |
+| Pry bar | Tools | Allsides SimReady Assets | [`pry_bar_Y1PY3RYW2S`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/pry_bar_Y1PY3RYW2S) |
+| Pumpkin | Factory | Allsides SimReady Assets | [`pumpkin_3Y5K0UD5RV`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/pumpkin_3Y5K0UD5RV) |
+| Racket | Factory | Allsides SimReady Assets | [`racket_YHBWZE7YQX`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/racket_YHBWZE7YQX) |
+| Rain boot | Sports & Leisure | Allsides SimReady Assets | [`rain_boot_ER8DTMPQ1V`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/rain_boot_ER8DTMPQ1V) |
+| Rock | Outdoor | Allsides SimReady Assets | [`rock_KKDJ4G9LL3`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/rock_KKDJ4G9LL3) |
+| Rolling pin, 2 | Kitchen | Allsides SimReady Assets | [`rolling_pin_9LNJA6WJF4`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/rolling_pin_9LNJA6WJF4) |
+| Rope | Kitchen | Allsides SimReady Assets | [`rope_6SWQTUP4K1`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/rope_6SWQTUP4K1) |
+| Rubber stamp | Kitchen | Allsides SimReady Assets | [`rubber_stamp_ZPD07D8CBG`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/rubber_stamp_ZPD07D8CBG) |
+| Sausage | Kitchen | Allsides SimReady Assets | [`sausage_2H8HNDTZ0M`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/sausage_2H8HNDTZ0M) |
+| Scoop | Kitchen | Allsides SimReady Assets | [`scoop_TRS2RTH92B`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/scoop_TRS2RTH92B) |
+| Sheath | Kitchen | Allsides SimReady Assets | [`sheath_Y45F8UV360`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/sheath_Y45F8UV360) |
+| Shovel | Outdoor | Allsides SimReady Assets | [`shovel_A8JSJ1UQ6H`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/shovel_A8JSJ1UQ6H) |
+| Skull | Toys & Basics | Allsides SimReady Assets | [`skull_LGZH8Q6ER6`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/skull_LGZH8Q6ER6) |
+| Soap dish | Cleaning | Allsides SimReady Assets | [`soap_dish_VUQBRFBVHR`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/soap_dish_VUQBRFBVHR) |
+| Spaghetti spoon | Kitchen | Allsides SimReady Assets | [`spaghetti_spoon_F94HJPXP93`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/spaghetti_spoon_F94HJPXP93) |
+| Spatula, 3 | Kitchen | Allsides SimReady Assets | [`spatula_9N8K3Q2JYK`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/spatula_9N8K3Q2JYK) |
+| Spatula, 4 | Kitchen | Allsides SimReady Assets | [`spatula_MBNE9C9KBU`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/spatula_MBNE9C9KBU) |
+| Squeegee, 2 | Cleaning | Allsides SimReady Assets | [`squeegee_LRE63TAVWL`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/squeegee_LRE63TAVWL) |
+| Stone tile | Outdoor | Allsides SimReady Assets | [`stone_tile_KQKG74NK1J`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/stone_tile_KQKG74NK1J) |
+| Submersible pump | Factory | Allsides SimReady Assets | [`submersible_pump_HBWQTQFJCZ`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/submersible_pump_HBWQTQFJCZ) |
+| Table tennis racket | Factory | Allsides SimReady Assets | [`table_tennis_racket_3BBQBK5EWT`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/table_tennis_racket_3BBQBK5EWT) |
+| Thermal printer | Electronics | Allsides SimReady Assets | [`thermal_printer_HT88VDRDRZ`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/thermal_printer_HT88VDRDRZ) |
+| Tie down strap | Kitchen | Allsides SimReady Assets | [`tie_down_strap_GDMDSU4BZH`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/tie_down_strap_GDMDSU4BZH) |
+| Tire, 2 | Car parts | Allsides SimReady Assets | [`tire_WHECW6YB28`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/tire_WHECW6YB28) |
+| Toolbox | Tools | Allsides SimReady Assets | [`toolbox_9ZPA5K020Z`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/toolbox_9ZPA5K020Z) |
+| Toolbox, 2 | Tools | Allsides SimReady Assets | [`toolbox_FMBRFFJ9VJ`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/toolbox_FMBRFFJ9VJ) |
+| Toolbox, 3 | Tools | Allsides SimReady Assets | [`toolbox_T8Y8DPBHBJ`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/toolbox_T8Y8DPBHBJ) |
+| Toy block | Toys & Basics | Allsides SimReady Assets | [`toy_block_6MPL7NVFVU`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/toy_block_6MPL7NVFVU) |
+| Trailer coupling | Factory | Allsides SimReady Assets | [`trailer_coupling_TNK5K5UTMW`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/trailer_coupling_TNK5K5UTMW) |
+| Tray | Bins & Trays | Allsides SimReady Assets | [`tray_6AWEKYX8G1`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/tray_6AWEKYX8G1) |
+| Valve core tool | Factory | Allsides SimReady Assets | [`valve_core_tool_7JBZD1Z8TY`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/valve_core_tool_7JBZD1Z8TY) |
+| Wall bracket | Factory | Allsides SimReady Assets | [`wall_bracket_P4HJJL626L`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/wall_bracket_P4HJJL626L) |
+| Water pump | Factory | Allsides SimReady Assets | [`water_pump_3S8RXPBCUV`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/water_pump_3S8RXPBCUV) |
+| Water timer | Outdoor | Allsides SimReady Assets | [`water_timer_GR1EWMGWVU`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/water_timer_GR1EWMGWVU) |
+| Weeding hoe | Outdoor | Allsides SimReady Assets | [`weeding_hoe_PB38WY262T`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/weeding_hoe_PB38WY262T) |
+| Whisk, 2 | Kitchen | Allsides SimReady Assets | [`whisk_6AEQWK7XYL`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/whisk_6AEQWK7XYL) |
+| White noise machine | Electronics | Allsides SimReady Assets | [`white_noise_machine_4QVZ1E4JTX`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/white_noise_machine_4QVZ1E4JTX) |
+| Wooden spoon, 2 | Kitchen | Allsides SimReady Assets | [`wooden_spoon_TNYBL05JJZ`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/wooden_spoon_TNYBL05JJZ) |
+| Zucchini | Kitchen | Allsides SimReady Assets | [`zucchini_AFDYFXBMAS`](https://huggingface.co/datasets/ALLSIDES/simready-scanned-objects/tree/main/zucchini_AFDYFXBMAS) |
+| A frame sign | Home | NdotLight SimReady Assets | [`a_frame_sign`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/a_frame_sign) |
+| Angle grinder, 2 | Tools | NdotLight SimReady Assets | [`angle_grinder`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/angle_grinder) |
+| Anvil | Factory | NdotLight SimReady Assets | [`anvil`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/anvil) |
+| Barrier 3r | Factory | NdotLight SimReady Assets | [`barrier_3r`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/barrier_3r) |
+| Bollard, 2 | Factory | NdotLight SimReady Assets | [`bollard`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/bollard) |
+| Carpenter square | Tools | NdotLight SimReady Assets | [`carpenter_square`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/carpenter_square) |
+| Concrete barrier | Factory | NdotLight SimReady Assets | [`concrete_barrier`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/concrete_barrier) |
+| Container box | Bins & Trays | NdotLight SimReady Assets | [`container_box`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/container_box) |
+| Crowbar, 2 | Tools | NdotLight SimReady Assets | [`crowbar`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/crowbar) |
+| Frame cart | Factory | NdotLight SimReady Assets | [`frame_cart`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/frame_cart) |
+| Gas cylinder, 2 | Factory | NdotLight SimReady Assets | [`gas_cylinder`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/gas_cylinder) |
+| H frame scaffolding | Factory | NdotLight SimReady Assets | [`h_frame_scaffolding`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/h_frame_scaffolding) |
+| Hammer, 2 | Tools | NdotLight SimReady Assets | [`hammer`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/hammer) |
+| Hand saw, 2 | Tools | NdotLight SimReady Assets | [`hand_saw`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/hand_saw) |
+| Handheld welding shield | PPE | NdotLight SimReady Assets | [`handheld_welding_shield`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/handheld_welding_shield) |
+| Handtruck | Factory | NdotLight SimReady Assets | [`handtruck`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/handtruck) |
+| Industrial cabinet | Factory | NdotLight SimReady Assets | [`industrial_cabinet`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/industrial_cabinet) |
+| Jerrycan | Factory | NdotLight SimReady Assets | [`jerrycan`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/jerrycan) |
+| Ladder | Kitchen | NdotLight SimReady Assets | [`ladder`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/ladder) |
+| Machine guard, 2 | Factory | NdotLight SimReady Assets | [`machine_guard`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/machine_guard) |
+| Monkey wrench, 2 | Tools | NdotLight SimReady Assets | [`monkey_wrench`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/monkey_wrench) |
+| Office chair | Furniture | NdotLight SimReady Assets | [`office_chair`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/office_chair) |
+| Oil drain cart | Factory | NdotLight SimReady Assets | [`oil_drain_cart`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/oil_drain_cart) |
+| Paint bucket | Bins & Trays | NdotLight SimReady Assets | [`paint_bucket`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/paint_bucket) |
+| Pallet, 2 | Factory | NdotLight SimReady Assets | [`pallet`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/pallet) |
+| Pallet stand | Factory | NdotLight SimReady Assets | [`pallet_stand`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/pallet_stand) |
+| Pegboard | Factory | NdotLight SimReady Assets | [`pegboard`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/pegboard) |
+| Platform dolly | Factory | NdotLight SimReady Assets | [`platform_dolly`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/platform_dolly) |
+| Power drill, 3 | Tools | NdotLight SimReady Assets | [`power_drill`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/power_drill) |
+| Respirator | PPE | NdotLight SimReady Assets | [`respirator`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/respirator) |
+| Safety barrier | Factory | NdotLight SimReady Assets | [`safety_barrier`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/safety_barrier) |
+| Safety cone | Factory | NdotLight SimReady Assets | [`safety_cone`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/safety_cone) |
+| Safety goggles, 2 | PPE | NdotLight SimReady Assets | [`safety_goggles`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/safety_goggles) |
+| Scraper | Tools | NdotLight SimReady Assets | [`scraper`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/scraper) |
+| Screwdriver, 2 | Tools | NdotLight SimReady Assets | [`screwdriver`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/screwdriver) |
+| Shovel, 2 | Outdoor | NdotLight SimReady Assets | [`shovel`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/shovel) |
+| Signal tower | Factory | NdotLight SimReady Assets | [`signal_tower`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/signal_tower) |
+| Spanner | Tools | NdotLight SimReady Assets | [`spanner`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/spanner) |
+| Steel drum, 2 | Factory | NdotLight SimReady Assets | [`steel_drum`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/steel_drum) |
+| Storage rack | Factory | NdotLight SimReady Assets | [`storage_rack`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/storage_rack) |
+| Traffic cone, 2 | Factory | NdotLight SimReady Assets | [`traffic_cone`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/traffic_cone) |
+| Vernier calipers | Tools | NdotLight SimReady Assets | [`vernier_calipers`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/vernier_calipers) |
+| Wheelbarrow, 2 | Factory | NdotLight SimReady Assets | [`wheelbarrow`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/wheelbarrow) |
+| Workbench trolley | Factory | NdotLight SimReady Assets | [`workbench_trolley`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/workbench_trolley) |
+| Fire extinguisher YA-10NX | PPE | Yamato Protec SimReady fire protection | [`ya-10nx`](https://huggingface.co/datasets/YAMATOPROTEC/simready-fire-protection/tree/main/ya-10nx) |
+| Board 14port | Electronics | atech SimReady assets | [`01_atech_board_14port`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/01_atech_board_14port) |
+| Board 10port | Electronics | atech SimReady assets | [`02_atech_board_10port`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/02_atech_board_10port) |
+| Board 8port | Electronics | atech SimReady assets | [`03_atech_board_8port`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/03_atech_board_8port) |
+| Soil sensor | Electronics | atech SimReady assets | [`04_atech_soil_sensor`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/04_atech_soil_sensor) |
+| DC motor | Electronics | atech SimReady assets | [`05_atech_dc_motor`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/05_atech_dc_motor) |
+| AHT20 | Electronics | atech SimReady assets | [`06_atech_aht20`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/06_atech_aht20) |
+| Distance sensor | Electronics | atech SimReady assets | [`07_atech_distance_sensor`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/07_atech_distance_sensor) |
+| ICM40608 | Electronics | atech SimReady assets | [`08_atech_icm40608`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/08_atech_icm40608) |
+| SCD40 air quality | Electronics | atech SimReady assets | [`09_atech_scd40_air_quality`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/09_atech_scd40_air_quality) |
+| Robot arm integrator | Electronics | atech SimReady assets | [`10_atech_robot_arm_integrator`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/10_atech_robot_arm_integrator) |
+| Microphone, 2 | Electronics | atech SimReady assets | [`11_atech_microphone`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/11_atech_microphone) |
+| Speaker | Electronics | atech SimReady assets | [`12_atech_speaker`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/12_atech_speaker) |
+| Neopixel | Electronics | atech SimReady assets | [`13_atech_neopixel`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/13_atech_neopixel) |
+| Rotary encoder | Electronics | atech SimReady assets | [`14_atech_rotary_encoder`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/14_atech_rotary_encoder) |
+| Button | Electronics | atech SimReady assets | [`15_atech_button`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/15_atech_button) |
+| ST7735 TFT | Electronics | atech SimReady assets | [`16_atech_st7735_tft`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/16_atech_st7735_tft) |
+| Big screen | Electronics | atech SimReady assets | [`17_atech_big_screen`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/17_atech_big_screen) |
+| Camera | Electronics | atech SimReady assets | [`18_atech_camera`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/18_atech_camera) |
+| PIR | Electronics | atech SimReady assets | [`19_atech_pir`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/19_atech_pir) |
+| Stepper motor | Electronics | atech SimReady assets | [`20_atech_stepper_motor`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/20_atech_stepper_motor) |
+| Load cell | Electronics | atech SimReady assets | [`21_atech_load_cell`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/21_atech_load_cell) |
+| Micro SD card | Electronics | atech SimReady assets | [`22_atech_micro_sd_card`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/22_atech_micro_sd_card) |
+| USB c | Electronics | atech SimReady assets | [`23_atech_usb_c`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/23_atech_usb_c) |
+| Power jack | Electronics | atech SimReady assets | [`24_atech_power_jack`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/24_atech_power_jack) |
+| Wheel 50mm | Electronics | atech SimReady assets | [`25_atech_wheel_n20_50mm`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/25_atech_wheel_n20_50mm) |
+| Coupler | Electronics | atech SimReady assets | [`26_atech_n20_coupler`](https://huggingface.co/datasets/atechdev/simready-assets/tree/main/26_atech_n20_coupler) |
+| Antique bar stool | Tools | Marso by M-XR SimReady assets | [`antique_bar_stool`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/antique_bar_stool) |
+| Bell pepper | Kitchen | Marso by M-XR SimReady assets | [`bell_pepper`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/bell_pepper) |
+| Black and gold soccer ball | Sports & Leisure | Marso by M-XR SimReady assets | [`black_and_gold_soccer_ball`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/black_and_gold_soccer_ball) |
+| Blue mixing bowl | Kitchen | Marso by M-XR SimReady assets | [`blue_mixing_bowl`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/blue_mixing_bowl) |
+| Bucket blue | Bins & Trays | Marso by M-XR SimReady assets | [`bucket_blue`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/bucket_blue) |
+| Cardboard box, 3 | Bins & Trays | Marso by M-XR SimReady assets | [`cardboard_box`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/cardboard_box) |
+| Carved wooden chest | Furniture | Marso by M-XR SimReady assets | [`carved_wooden_chest`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/carved_wooden_chest) |
+| Caulking gun newborn 250 | Tools | Marso by M-XR SimReady assets | [`caulking_gun_newborn250`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/caulking_gun_newborn250) |
+| Ceramic bowl | Kitchen | Marso by M-XR SimReady assets | [`ceramic_bowl`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/ceramic_bowl) |
+| Ceramic jug | Kitchen | Marso by M-XR SimReady assets | [`ceramic_jug`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/ceramic_jug) |
+| Ceramic pitcher | Kitchen | Marso by M-XR SimReady assets | [`ceramic_pitcher`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/ceramic_pitcher) |
+| Ceramic teapot | Kitchen | Marso by M-XR SimReady assets | [`ceramic_teapot`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/ceramic_teapot) |
+| Ceramic vase | Home | Marso by M-XR SimReady assets | [`ceramic_vase`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/ceramic_vase) |
+| Challah | Kitchen | Marso by M-XR SimReady assets | [`challah`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/challah) |
+| Chocolate eclair | Kitchen | Marso by M-XR SimReady assets | [`chocolate_eclair`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/chocolate_eclair) |
+| Chocolate marshmallow truffle | Kitchen | Marso by M-XR SimReady assets | [`chocolate_marshmallow_truffle`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/chocolate_marshmallow_truffle) |
+| Chocolate muffin | Kitchen | Marso by M-XR SimReady assets | [`chocolate_muffin`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/chocolate_muffin) |
+| Chocolate wafer bar | Kitchen | Marso by M-XR SimReady assets | [`chocolate_wafer_bar`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/chocolate_wafer_bar) |
+| Coffee machine pod | Kitchen | Marso by M-XR SimReady assets | [`coffee_machine_pod`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/coffee_machine_pod) |
+| Coiled rope | Garage | Marso by M-XR SimReady assets | [`coiled_rope`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/coiled_rope) |
+| Cooking pot | Kitchen | Marso by M-XR SimReady assets | [`cooking_pot`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/cooking_pot) |
+| Copper saucepan | Kitchen | Marso by M-XR SimReady assets | [`copper_saucepan`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/copper_saucepan) |
+| Cricket bat | Sports & Leisure | Marso by M-XR SimReady assets | [`cricket_bat`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/cricket_bat) |
+| Dead blow hammer | Tools | Marso by M-XR SimReady assets | [`dead_blow_hammer`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/dead_blow_hammer) |
+| Dessert fork | Kitchen | Marso by M-XR SimReady assets | [`dessert_fork`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/dessert_fork) |
+| Enamel mug | Kitchen | Marso by M-XR SimReady assets | [`enamel_mug`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/enamel_mug) |
+| Feature phone | Electronics | Marso by M-XR SimReady assets | [`feature_phone`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/feature_phone) |
+| Folding chair, 2 | Furniture | Marso by M-XR SimReady assets | [`folding_chair`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/folding_chair) |
+| Folding step ladder | Kitchen | Marso by M-XR SimReady assets | [`folding_step_ladder`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/folding_step_ladder) |
+| Fried chicken wing | Kitchen | Marso by M-XR SimReady assets | [`fried_chicken_wing`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/fried_chicken_wing) |
+| Garden trowel, 2 | Outdoor | Marso by M-XR SimReady assets | [`garden_trowel`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/garden_trowel) |
+| Ginger root | Kitchen | Marso by M-XR SimReady assets | [`ginger_root`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/ginger_root) |
+| Glazed ceramic planter | Outdoor | Marso by M-XR SimReady assets | [`glazed_ceramic_planter`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/glazed_ceramic_planter) |
+| Glazed ceramic plate | Kitchen | Marso by M-XR SimReady assets | [`glazed_ceramic_plate`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/glazed_ceramic_plate) |
+| Gold heeled sandal | Sports & Leisure | Marso by M-XR SimReady assets | [`gold_heeled_sandal`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/gold_heeled_sandal) |
+| Gold soccer ball | Sports & Leisure | Marso by M-XR SimReady assets | [`gold_soccer_ball`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/gold_soccer_ball) |
+| Green mesh wastebasket | Cleaning | Marso by M-XR SimReady assets | [`green_mesh_wastebasket`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/green_mesh_wastebasket) |
+| Green plastic canteen | Kitchen | Marso by M-XR SimReady assets | [`green_plastic_canteen`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/green_plastic_canteen) |
+| Griddle spatula | Kitchen | Marso by M-XR SimReady assets | [`griddle_spatula`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/griddle_spatula) |
+| Ground coffee bag | Kitchen | Marso by M-XR SimReady assets | [`ground_coffee_bag`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/ground_coffee_bag) |
+| Hanging ladle | Kitchen | Marso by M-XR SimReady assets | [`hanging_ladle`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/hanging_ladle) |
+| Ice cream scoop, 2 | Kitchen | Marso by M-XR SimReady assets | [`ice_cream_scoop`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/ice_cream_scoop) |
+| Ice skate | Sports & Leisure | Marso by M-XR SimReady assets | [`ice_skate`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/ice_skate) |
+| Jug kettle | Kitchen | Marso by M-XR SimReady assets | [`jug_kettle`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/jug_kettle) |
+| Kabocha squash | Kitchen | Marso by M-XR SimReady assets | [`kabocha_squash`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/kabocha_squash) |
+| Marble rolling pin | Kitchen | Marso by M-XR SimReady assets | [`marble_rolling_pin`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/marble_rolling_pin) |
+| Messy paint can | Kitchen | Marso by M-XR SimReady assets | [`messy_paint_can`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/messy_paint_can) |
+| Metal cantilever toolbox crystals | Tools | Marso by M-XR SimReady assets | [`metal_cantilever_toolbox_crystals`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/metal_cantilever_toolbox_crystals) |
+| Military canteen | Kitchen | Marso by M-XR SimReady assets | [`military_canteen`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/military_canteen) |
+| Muddy work boot | Sports & Leisure | Marso by M-XR SimReady assets | [`muddy_work_boot`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/muddy_work_boot) |
+| Ninja coffee maker | Kitchen | Marso by M-XR SimReady assets | [`ninja_coffee_maker`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/ninja_coffee_maker) |
+| Oat milk carton | Factory | Marso by M-XR SimReady assets | [`oat_milk_carton`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/oat_milk_carton) |
+| Old paint can | Kitchen | Marso by M-XR SimReady assets | [`old_paint_can`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/old_paint_can) |
+| Ornate soap dish | Cleaning | Marso by M-XR SimReady assets | [`ornate_soap_dish`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/ornate_soap_dish) |
+| Painted terracotta planter | Outdoor | Marso by M-XR SimReady assets | [`painted_terracotta_planter`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/painted_terracotta_planter) |
+| Partially eaten red apple | Kitchen | Marso by M-XR SimReady assets | [`partially_eaten_red_apple`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/partially_eaten_red_apple) |
+| Pewter mug | Kitchen | Marso by M-XR SimReady assets | [`pewter_mug`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/pewter_mug) |
+| Pipe prop | Factory | Marso by M-XR SimReady assets | [`pipe_prop`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/pipe_prop) |
+| Pizza box | Bins & Trays | Marso by M-XR SimReady assets | [`pizza_box`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/pizza_box) |
+| Plastic jerrycan | Factory | Marso by M-XR SimReady assets | [`plastic_jerrycan`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/plastic_jerrycan) |
+| Potted succulent | Kitchen | Marso by M-XR SimReady assets | [`potted_succulent`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/potted_succulent) |
+| Puukko knife | Kitchen | Marso by M-XR SimReady assets | [`puukko_knife`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/puukko_knife) |
+| Quickgrip handclamp | Tools | Marso by M-XR SimReady assets | [`quickgrip_handclamp`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/quickgrip_handclamp) |
+| Ratchet socket wera 8004a | Tools | Marso by M-XR SimReady assets | [`ratchet_socket_wera8004a`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/ratchet_socket_wera8004a) |
+| Red bell pepper | Kitchen | Marso by M-XR SimReady assets | [`red_bell_pepper`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/red_bell_pepper) |
+| Red high heel shoe | Sports & Leisure | Marso by M-XR SimReady assets | [`red_high_heel_shoe`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/red_high_heel_shoe) |
+| Rotten tomato | Kitchen | Marso by M-XR SimReady assets | [`rotten_tomato`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/rotten_tomato) |
+| Rotten tomato b | Kitchen | Marso by M-XR SimReady assets | [`rotten_tomato_b`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/rotten_tomato_b) |
+| Salami | Kitchen | Marso by M-XR SimReady assets | [`salami`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/salami) |
+| Split joint pliers | Tools | Marso by M-XR SimReady assets | [`split_joint_pliers`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/split_joint_pliers) |
+| Spring clamp | Tools | Marso by M-XR SimReady assets | [`spring_clamp`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/spring_clamp) |
+| Step stool, 2 | Tools | Marso by M-XR SimReady assets | [`step_stool`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/step_stool) |
+| Table tennis racket, 2 | Factory | Marso by M-XR SimReady assets | [`table_tennis_racket`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/table_tennis_racket) |
+| Tactical boot | Sports & Leisure | Marso by M-XR SimReady assets | [`tactical_boot`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/tactical_boot) |
+| Tamagoyaki pan | Kitchen | Marso by M-XR SimReady assets | [`tamagoyaki_pan`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/tamagoyaki_pan) |
+| Tare squeeze bottle | Kitchen | Marso by M-XR SimReady assets | [`tare_squeeze_bottle`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/tare_squeeze_bottle) |
+| Toaster oven, 2 | Kitchen | Marso by M-XR SimReady assets | [`toaster_oven`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/toaster_oven) |
+| Travel mug | Kitchen | Marso by M-XR SimReady assets | [`travel_mug`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/travel_mug) |
+| Utility cart | Factory | Marso by M-XR SimReady assets | [`utility_cart`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/utility_cart) |
+| Vintage car wheel | Car parts | Marso by M-XR SimReady assets | [`vintage_car_wheel`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/vintage_car_wheel) |
+| Vintage oil can | Car parts | Marso by M-XR SimReady assets | [`vintage_oil_can`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/vintage_oil_can) |
+| Walnut | Factory | Marso by M-XR SimReady assets | [`walnut`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/walnut) |
+| Wellington boot | Sports & Leisure | Marso by M-XR SimReady assets | [`wellington_boot`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/wellington_boot) |
+| Window squeegee | Cleaning | Marso by M-XR SimReady assets | [`window_squeegee`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/window_squeegee) |
+| Wok, 2 | Kitchen | Marso by M-XR SimReady assets | [`wok`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/wok) |
+| Wooden scoop | Kitchen | Marso by M-XR SimReady assets | [`wooden_scoop`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/wooden_scoop) |
+| Workshop trolley fetra 2436 | Factory | Marso by M-XR SimReady assets | [`workshop_trolley_fetra_2436`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/workshop_trolley_fetra_2436) |
+| Woven leather armchair | Furniture | Marso by M-XR SimReady assets | [`woven_leather_armchair`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/woven_leather_armchair) |
+| Zucchini, 2 | Kitchen | Marso by M-XR SimReady assets | [`zucchini`](https://huggingface.co/datasets/M-XR/marso-simready/tree/main/zucchini) |
+| Alarm clock | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00001`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00001) |
+| Banana, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00002`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00002) |
+| Assorted fruit | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00003`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00003) |
+| Bag | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00004`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00004) |
+| Bagel, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00005`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00005) |
+| Bamboo basket | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00006`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00006) |
+| Bamboo bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00007`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00007) |
+| Bamboo container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00008`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00008) |
+| Bamboo skewers | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00009`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00009) |
+| Bamboo steamer, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00010`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00010) |
+| Bamboo steamer board wooden container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00011`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00011) |
+| Container jar cup | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00012`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00012) |
+| Olive oil jar bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00013`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00013) |
+| Container jar spice | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00014`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00014) |
+| Banana, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00015`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00015) |
+| Basket, 5 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00016`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00016) |
+| Basket bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00017`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00017) |
+| Basket muffin tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00018`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00018) |
+| Beans | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00019`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00019) |
+| Bell | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00020`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00020) |
+| Bell pepper, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00021`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00021) |
+| Red bell pepper, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00022`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00022) |
+| Red apple | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00023`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00023) |
+| Black bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00024`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00024) |
+| Black bowl, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00025`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00025) |
+| Black pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00026`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00026) |
+| Jar bottle water | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00027`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00027) |
+| Glass cup jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00028`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00028) |
+| Juice drink | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00029`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00029) |
+| Turner | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00030`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00030) |
+| Fry pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00031`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00031) |
+| Lemon pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00032`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00032) |
+| Wooden toy block | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00034`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00034) |
+| Blue bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00035`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00035) |
+| Blue mug | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00036`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00036) |
+| Blueberry, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00037`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00037) |
+| Board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00038`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00038) |
+| Board placemat | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00040`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00040) |
+| Ceramic serving paddle board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00041`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00041) |
+| Board tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00042`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00042) |
+| Board utensil holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00043`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00043) |
+| Board wooden tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00044`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00044) |
+| Book, 2 | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00045`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00045) |
+| Bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00046`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00046) |
+| Bottle bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00047`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00047) |
+| Plastic bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00048`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00048) |
+| Bottle glass jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00049`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00049) |
+| Butter knife | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00052`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00052) |
+| Bowl, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00054`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00054) |
+| Ceramic lattice basket | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00055`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00055) |
+| Ceramic mixing bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00056`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00056) |
+| Bowl cup | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00058`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00058) |
+| Bowl cup bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00059`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00059) |
+| Bowl dish | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00060`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00060) |
+| Bowl jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00061`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00061) |
+| Stainless steel cooking pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00062`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00062) |
+| Bowl lemon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00063`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00063) |
+| Footed wooden bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00064`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00064) |
+| Bowl muffin pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00065`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00065) |
+| Bowl pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00066`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00066) |
+| Bowl plate | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00067`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00067) |
+| Bowl pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00068`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00068) |
+| Bowl pot strainer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00069`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00069) |
+| Bowl small dish | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00070`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00070) |
+| Bowl stack | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00071`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00071) |
+| Bowl steamer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00072`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00072) |
+| Ceramic colander | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00073`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00073) |
+| Bowl strainer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00074`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00074) |
+| Rimmed ceramic soup bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00075`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00075) |
+| Box container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00077`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00077) |
+| Box pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00078`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00078) |
+| Herb stripper | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00079`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00079) |
+| Bread, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00080`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00080) |
+| Bread basket | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00081`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00081) |
+| Bread box, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00082`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00082) |
+| Bread roll, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00084`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00084) |
+| Broccoli | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00085`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00085) |
+| Brown sugar jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00086`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00086) |
+| Bun | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00088`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00088) |
+| Burger | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00089`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00089) |
+| Butter dish | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00091`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00091) |
+| Cabinet | Furniture | Palatial NV Asset Library (Palatial Platforms) | [`D00092`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00092) |
+| Cake | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00093`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00093) |
+| Cake stand, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00094`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00094) |
+| Can | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00095`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00095) |
+| Can container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00096`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00096) |
+| Candle, 2 | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00097`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00097) |
+| Candle holder vase | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00098`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00098) |
+| Canister | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00099`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00099) |
+| Pie server | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00101`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00101) |
+| Cheese knife | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00102`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00102) |
+| Garlic peeler | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00104`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00104) |
+| Egg separator | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00105`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00105) |
+| Pastry blender | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00106`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00106) |
+| Canister mug | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00107`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00107) |
+| Carafe | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00110`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00110) |
+| Carrot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00111`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00111) |
+| Cashew | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00112`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00112) |
+| Casserole | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00113`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00113) |
+| Casserole dish, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00114`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00114) |
+| Celery | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00115`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00115) |
+| Ceramic jug, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00116`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00116) |
+| Ceramic mug | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00117`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00117) |
+| Ceramic pitcher, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00118`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00118) |
+| Cereal box, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00120`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00120) |
+| Cereal jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00121`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00121) |
+| Cheese | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00122`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00122) |
+| Cherry, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00123`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00123) |
+| Chickpea | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00124`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00124) |
+| Chili | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00125`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00125) |
+| Chili flakes | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00126`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00126) |
+| Chocolate | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00127`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00127) |
+| Chop | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00128`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00128) |
+| Chop tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00129`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00129) |
+| Chopping board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00130`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00130) |
+| Potato peeler | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00131`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00131) |
+| Chopping board tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00132`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00132) |
+| Chopstick | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00133`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00133) |
+| Citrus | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00135`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00135) |
+| Citrus juicer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00136`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00136) |
+| Classic coffee maker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00137`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00137) |
+| Clay | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00139`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00139) |
+| Clay pot, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00140`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00140) |
+| Clock | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00141`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00141) |
+| Egg timer | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00142`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00142) |
+| Cloth | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00143`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00143) |
+| Cloth mat | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00144`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00144) |
+| Coaster | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00145`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00145) |
+| Coaster board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00146`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00146) |
+| Coffee | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00147`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00147) |
+| Coffee beans | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00148`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00148) |
+| Coffee cup | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00149`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00149) |
+| Coffee grinder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00150`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00150) |
+| Bread maker, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00151`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00151) |
+| Coffee jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00152`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00152) |
+| Coffee kettle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00153`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00153) |
+| Coffee maker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00155`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00155) |
+| Deep fryer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00156`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00156) |
+| Hot water dispenser | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00157`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00157) |
+| Coffee maker mixer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00158`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00158) |
+| Ice maker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00159`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00159) |
+| Coffee mug | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00160`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00160) |
+| Coffee pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00161`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00161) |
+| Measuring spoons | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00162`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00162) |
+| Mandoline slicer, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00163`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00163) |
+| Box grater, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00164`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00164) |
+| Cola | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00165`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00165) |
+| Colander, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00166`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00166) |
+| Colander bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00167`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00167) |
+| Speckled ceramic colander | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00168`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00168) |
+| Ceramic colander, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00169`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00169) |
+| Colander pot bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00170`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00170) |
+| Colander sauce | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00171`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00171) |
+| Condiment | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00173`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00173) |
+| Container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00174`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00174) |
+| Ceramic cup | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00175`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00175) |
+| Container box, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00176`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00176) |
+| Crab cracker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00177`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00177) |
+| Poultry shears | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00179`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00179) |
+| Ceramic mug, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00180`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00180) |
+| Gravy separator | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00181`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00181) |
+| Avocado slicer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00182`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00182) |
+| Container storage jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00183`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00183) |
+| Strawberry huller | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00184`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00184) |
+| Pineapple corer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00185`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00185) |
+| Cook pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00186`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00186) |
+| Cookbook | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00188`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00188) |
+| Cooker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00189`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00189) |
+| Cookie | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00190`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00190) |
+| Cookie jar, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00191`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00191) |
+| Lidded ceramic cup with saucer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00192`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00192) |
+| Whetstone | Tools | Palatial NV Asset Library (Palatial Platforms) | [`D00193`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00193) |
+| Range hood, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00194`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00194) |
+| Cooking bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00195`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00195) |
+| Cooking knife | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00196`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00196) |
+| Cooking oil | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00197`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00197) |
+| Cooking oil bottle, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00198`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00198) |
+| Cooking pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00199`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00199) |
+| Cooking pot, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00200`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00200) |
+| Mini fridge | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00201`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00201) |
+| Cooking spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00202`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00202) |
+| Cooking spoon spatula | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00203`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00203) |
+| Cooking utensil | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00204`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00204) |
+| Cooking utensil holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00205`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00205) |
+| Cooktop | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00206`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00206) |
+| Stainless steel saucepan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00208`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00208) |
+| Cookware spoon holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00209`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00209) |
+| Cookware towel | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00210`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00210) |
+| Cork coaster cutting board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00212`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00212) |
+| Corkscrew | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00213`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00213) |
+| Corn | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00214`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00214) |
+| Countertop | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00215`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00215) |
+| Cream pitcher | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00217`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00217) |
+| Crockpot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00218`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00218) |
+| Croissant, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00219`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00219) |
+| Cucumber | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00220`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00220) |
+| Cup | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00221`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00221) |
+| Chocolate mold | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00222`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00222) |
+| Ceramic cup, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00223`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00223) |
+| Cup cake | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00224`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00224) |
+| Cup cake stand | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00225`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00225) |
+| Cup can | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00226`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00226) |
+| Cup cookie | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00227`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00227) |
+| Cup glass | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00228`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00228) |
+| Cup glass pitcher pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00229`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00229) |
+| Cup jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00230`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00230) |
+| Stovetop kettle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00231`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00231) |
+| Cup milk jug | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00232`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00232) |
+| Cup mug | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00233`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00233) |
+| Cup mug bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00234`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00234) |
+| Cup plate | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00235`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00235) |
+| Cast iron dutch oven | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00236`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00236) |
+| Cup salt shaker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00237`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00237) |
+| Cup strainer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00239`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00239) |
+| Cup teapot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00240`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00240) |
+| Cupboard | Furniture | Palatial NV Asset Library (Palatial Platforms) | [`D00241`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00241) |
+| Cupcake | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00242`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00242) |
+| Cupcake pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00243`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00243) |
+| Cupcake stand | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00244`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00244) |
+| Cups salt | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00245`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00245) |
+| Current image | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00246`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00246) |
+| Cutlery | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00247`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00247) |
+| Cultery | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00248`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00248) |
+| Cutlery holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00249`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00249) |
+| Cutter | Tools | Palatial NV Asset Library (Palatial Platforms) | [`D00250`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00250) |
+| Cutter board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00251`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00251) |
+| Cutting board, 5 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00252`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00252) |
+| Cutting board knife | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00253`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00253) |
+| Cutting board napkin | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00254`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00254) |
+| Wooden butcher-block cutting board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00255`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00255) |
+| End-grain cutting board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00256`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00256) |
+| Cutting board tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00257`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00257) |
+| Cutting board wooden | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00258`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00258) |
+| Cutting board wooden tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00259`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00259) |
+| Decorative bowl, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00260`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00260) |
+| Decorative lamp | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00261`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00261) |
+| Decorative plant | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00262`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00262) |
+| Decorative plate | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00263`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00263) |
+| Oval wooden board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00264`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00264) |
+| Decorativeur | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00265`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00265) |
+| Digital scale | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00266`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00266) |
+| Dill | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00267`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00267) |
+| Dish | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00268`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00268) |
+| Small ceramic bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00270`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00270) |
+| Nonstick frying pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00271`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00271) |
+| Dish hand soap | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00272`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00272) |
+| Dish plate | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00273`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00273) |
+| Dish rack, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00274`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00274) |
+| Dish saucepan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00275`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00275) |
+| Dish soap | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00276`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00276) |
+| Dish soap dispenser | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00277`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00277) |
+| Dish towel | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00278`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00278) |
+| Dough | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00280`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00280) |
+| Doughnut, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00281`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00281) |
+| Drawer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00282`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00282) |
+| Drink | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00284`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00284) |
+| Spice tin | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00285`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00285) |
+| Dumplings | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00286`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00286) |
+| Egg, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00287`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00287) |
+| Egg carton | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00288`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00288) |
+| Egg holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00289`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00289) |
+| Egg tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00290`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00290) |
+| Electric kettle, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00291`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00291) |
+| Utensils | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00292`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00292) |
+| Dinner fork | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00293`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00293) |
+| Utensils holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00294`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00294) |
+| Cheese board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00295`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00295) |
+| Soup bowl, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00296`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00296) |
+| Espresso cup | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00297`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00297) |
+| Small ceramic bowl, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00298`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00298) |
+| Faucet, 2 | Tools | Palatial NV Asset Library (Palatial Platforms) | [`D00300`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00300) |
+| Flour | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00301`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00301) |
+| Flour canister | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00302`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00302) |
+| Flour container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00303`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00303) |
+| White ceramic baking dish | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00304`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00304) |
+| Flower | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00305`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00305) |
+| Flower arrangement | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00306`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00306) |
+| Flower pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00307`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00307) |
+| Flower vase | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00308`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00308) |
+| Croissant, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00309`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00309) |
+| Food jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00311`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00311) |
+| Food processor, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00312`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00312) |
+| Fork, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00313`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00313) |
+| Fork knife | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00314`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00314) |
+| Fork spatula | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00315`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00315) |
+| Fork spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00316`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00316) |
+| Fork wooden spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00317`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00317) |
+| Frame | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00318`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00318) |
+| French press, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00319`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00319) |
+| Fries | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00321`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00321) |
+| Fruit | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00322`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00322) |
+| Fruit basket | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00323`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00323) |
+| Fruit bowl, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00324`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00324) |
+| Fruit dumplings | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00325`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00325) |
+| Frying pan, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00327`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00327) |
+| Frying pan cooking pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00328`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00328) |
+| Nonstick frying pan, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00329`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00329) |
+| Stainless steel frying pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00330`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00330) |
+| Garden salad | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00331`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00331) |
+| Garlic | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00332`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00332) |
+| Garlic press, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00333`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00333) |
+| Garlic shallot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00334`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00334) |
+| Gas jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00335`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00335) |
+| Gathering bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00337`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00337) |
+| Ginger | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00338`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00338) |
+| Glass | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00339`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00339) |
+| Glass bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00340`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00340) |
+| Glass bottle jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00341`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00341) |
+| Glass bottle spice | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00342`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00342) |
+| Glass bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00343`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00343) |
+| Glass container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00344`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00344) |
+| Highball glass | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00345`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00345) |
+| Glass honey jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00346`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00346) |
+| Glass jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00347`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00347) |
+| Whiskey glass | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00348`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00348) |
+| Champagne flute | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00349`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00349) |
+| Cocktail shaker, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00350`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00350) |
+| Jigger | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00351`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00351) |
+| Muddler | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00352`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00352) |
+| Bar spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00353`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00353) |
+| Trivet | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00354`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00354) |
+| Glass jug | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00355`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00355) |
+| Glass oil bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00356`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00356) |
+| Glass olive oil bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00357`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00357) |
+| Glass pitcher | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00358`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00358) |
+| Glass pitcher milk jug | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00359`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00359) |
+| Glass vase | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00360`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00360) |
+| Glasses | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00361`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00361) |
+| Grains | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00362`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00362) |
+| Grape, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00363`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00363) |
+| Green citrus fruit | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00364`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00364) |
+| Grater | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00365`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00365) |
+| Green beans | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00367`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00367) |
+| Green bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00368`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00368) |
+| Green onion sesame seeds | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00369`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00369) |
+| Green placemat | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00370`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00370) |
+| Griddle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00371`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00371) |
+| Grinder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00372`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00372) |
+| Hand soap | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00374`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00374) |
+| Herb | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00375`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00375) |
+| Herb basket | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00376`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00376) |
+| Herb plant | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00377`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00377) |
+| Herb pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00378`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00378) |
+| His spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00380`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00380) |
+| Sponge holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00381`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00381) |
+| Honey | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00382`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00382) |
+| Honey jar, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00383`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00383) |
+| Honey jar bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00384`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00384) |
+| Il holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00385`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00385) |
+| Lunch box, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00386`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00386) |
+| Immersion blender | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00387`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00387) |
+| Ing pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00388`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00388) |
+| Mason jar, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00390`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00390) |
+| Carbon steel wok | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00391`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00391) |
+| Oil cruet | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00392`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00392) |
+| Vinegar cruet | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00393`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00393) |
+| Jar, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00394`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00394) |
+| Egg basket | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00395`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00395) |
+| Banana hanger | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00396`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00396) |
+| Wine rack, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00397`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00397) |
+| Mug tree | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00398`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00398) |
+| Plastic wrap roll | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00399`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00399) |
+| Jar cup | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00400`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00400) |
+| Parchment paper roll | Office | Palatial NV Asset Library (Palatial Platforms) | [`D00401`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00401) |
+| Jar glass | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00402`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00402) |
+| Jar glass canister | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00403`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00403) |
+| Glass preserve jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00404`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00404) |
+| Jar mug | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00405`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00405) |
+| Carving fork | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00406`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00406) |
+| Apricot, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00407`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00407) |
+| Carving knife | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00408`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00408) |
+| Fondue fork | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00409`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00409) |
+| Dip bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00410`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00410) |
+| Sauce dish | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00411`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00411) |
+| Condiment caddy | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00412`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00412) |
+| Cutlery tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00413`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00413) |
+| Drawer organizer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00414`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00414) |
+| Jar utensil holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00415`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00415) |
+| Pot rack | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00416`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00416) |
+| Jaril holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00417`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00417) |
+| Cookie cutter | Tools | Palatial NV Asset Library (Palatial Platforms) | [`D00418`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00418) |
+| Jug, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00419`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00419) |
+| Jug pitcher | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00420`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00420) |
+| Juice | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00421`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00421) |
+| Juice jug | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00422`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00422) |
+| Masticating juicer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00423`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00423) |
+| Decorative letter k | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00424`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00424) |
+| Botanical letter k figurine | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00425`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00425) |
+| Kettle, 5 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00426`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00426) |
+| Kettle coffee maker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00427`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00427) |
+| Madeleine pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00428`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00428) |
+| Pudding mold | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00429`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00429) |
+| Kettle food processor | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00430`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00430) |
+| Jelly mold | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00431`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00431) |
+| Ice bucket | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00432`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00432) |
+| Champagne bucket | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00433`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00433) |
+| Toothpick holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00434`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00434) |
+| Keys | Tools | Palatial NV Asset Library (Palatial Platforms) | [`D00435`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00435) |
+| Compost bin, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00436`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00436) |
+| Kitchen appliance | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00437`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00437) |
+| Garlic keeper | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00438`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00438) |
+| Kitchen mixer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00439`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00439) |
+| Kitchen board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00440`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00440) |
+| Kitchen bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00441`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00441) |
+| Kitchen bowl saucepan pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00442`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00442) |
+| Kitchen box | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00443`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00443) |
+| Kitchen canister | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00444`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00444) |
+| Kitchen clock | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00445`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00445) |
+| Kitchen container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00446`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00446) |
+| Kitchen griddle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00447`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00447) |
+| Kitchen herbs | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00448`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00448) |
+| Kitchen knife | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00449`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00449) |
+| Kitchen knife block | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00450`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00450) |
+| Kitchen knife holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00451`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00451) |
+| Kitchen knives | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00452`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00452) |
+| Irish coffee glass | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00453`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00453) |
+| Kitchen mat | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00454`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00454) |
+| Kitchen plant | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00456`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00456) |
+| Kitchen pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00457`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00457) |
+| Kitchen potpan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00459`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00459) |
+| Martini glass | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00460`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00460) |
+| Kitchen range | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00461`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00461) |
+| Kitchen scale, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00462`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00462) |
+| Kitchen sponge, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00463`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00463) |
+| Kitchen spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00464`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00464) |
+| Wine decanter, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00465`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00465) |
+| Kitchen tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00467`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00467) |
+| Punch bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00468`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00468) |
+| Kitchen utensil | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00469`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00469) |
+| Kitchen utensil holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00470`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00470) |
+| Kitchen utensil spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00471`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00471) |
+| Kitchen whisk | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00472`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00472) |
+| Produce basket | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00473`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00473) |
+| Knife | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00474`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00474) |
+| Knife block, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00475`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00475) |
+| Knife board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00476`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00476) |
+| Steamed bun | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00479`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00479) |
+| Potato bin | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00480`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00480) |
+| Knife utens | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00481`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00481) |
+| Knives | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00482`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00482) |
+| Lad spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00483`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00483) |
+| Ladle, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00484`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00484) |
+| Ladle spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00485`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00485) |
+| Large bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00486`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00486) |
+| Lemon, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00487`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00487) |
+| Lemon bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00488`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00488) |
+| Lemon half, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00489`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00489) |
+| Lemon slice | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00490`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00490) |
+| Lemon wedge | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00491`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00491) |
+| Lettuce | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00492`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00492) |
+| Level | Tools | Palatial NV Asset Library (Palatial Platforms) | [`D00493`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00493) |
+| Lid, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00494`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00494) |
+| Lid bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00495`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00495) |
+| Lime | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00496`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00496) |
+| Loaf | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00497`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00497) |
+| Magazine | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00498`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00498) |
+| Pie weights | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00499`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00499) |
+| Mango pieces | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00500`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00500) |
+| Marble tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00501`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00501) |
+| Mat | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00502`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00502) |
+| Cake leveler | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00503`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00503) |
+| Measuring cup, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00504`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00504) |
+| Medium bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00506`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00506) |
+| Melon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00507`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00507) |
+| Meringue | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00508`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00508) |
+| Metal ball | Toys & Basics | Palatial NV Asset Library (Palatial Platforms) | [`D00509`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00509) |
+| Metal bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00510`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00510) |
+| Metal container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00511`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00511) |
+| Metal cup | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00512`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00512) |
+| Metal jug | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00513`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00513) |
+| Metal spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00514`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00514) |
+| Metal strainer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00515`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00515) |
+| Microwave, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00516`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00516) |
+| Milk, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00517`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00517) |
+| Milk bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00518`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00518) |
+| Cake turntable | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00519`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00519) |
+| Icing spatula | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00520`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00520) |
+| Spoon scoop | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00521`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00521) |
+| Milk frother | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00522`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00522) |
+| Milk jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00523`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00523) |
+| Milk jug | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00524`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00524) |
+| Milk jug glass jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00525`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00525) |
+| Oil sprayer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00526`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00526) |
+| Milk pitcher | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00527`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00527) |
+| Mill | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00528`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00528) |
+| Mill salt shaker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00529`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00529) |
+| Minced meat garlic | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00530`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00530) |
+| Mint | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00531`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00531) |
+| Mixer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00532`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00532) |
+| Mortar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00533`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00533) |
+| Mortar bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00534`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00534) |
+| Muffin, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00535`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00535) |
+| Muffin basket | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00536`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00536) |
+| Muffin cookie | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00537`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00537) |
+| Muffin tin | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00538`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00538) |
+| Muffin tin container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00539`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00539) |
+| Pour over dripper | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00540`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00540) |
+| Muffin tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00541`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00541) |
+| Mug, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00542`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00542) |
+| Mug cup | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00543`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00543) |
+| Mug glass | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00544`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00544) |
+| Mug jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00545`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00545) |
+| Mug jug | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00546`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00546) |
+| Mushroom | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00547`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00547) |
+| Napkin holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00549`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00549) |
+| Butter bell | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00550`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00550) |
+| Noodle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00551`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00551) |
+| Notebook | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00552`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00552) |
+| Notebook cookbook | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00553`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00553) |
+| Nut | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00554`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00554) |
+| Oil | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00555`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00555) |
+| Oil bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00556`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00556) |
+| Sugar dispenser | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00557`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00557) |
+| Oil dispenser | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00558`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00558) |
+| Olive | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00559`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00559) |
+| Olive oil | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00560`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00560) |
+| Salt pig | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00562`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00562) |
+| Olive oil bottle spice jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00563`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00563) |
+| Steamer rack | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00564`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00564) |
+| Olive oil dispenser | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00565`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00565) |
+| Olive oil jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00566`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00566) |
+| Meat grinder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00567`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00567) |
+| Toast rack | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00568`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00568) |
+| Lychee | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00569`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00569) |
+| Bamboo tongs | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00570`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00570) |
+| Onion | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00571`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00571) |
+| Onion kettle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00572`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00572) |
+| Open notebook | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00573`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00573) |
+| Orange, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00574`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00574) |
+| Orange bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00575`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00575) |
+| Orange spatula | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00576`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00576) |
+| Pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00578`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00578) |
+| Pan bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00579`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00579) |
+| Guava | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00580`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00580) |
+| Passion fruit | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00581`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00581) |
+| Knife sharpener | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00582`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00582) |
+| Paper | Office | Palatial NV Asset Library (Palatial Platforms) | [`D00583`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00583) |
+| Paper bag | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00584`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00584) |
+| Paper napkins | Office | Palatial NV Asset Library (Palatial Platforms) | [`D00585`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00585) |
+| Paper towel | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00586`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00586) |
+| Fixed-blade hunting knife | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00589`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00589) |
+| Parsley | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00590`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00590) |
+| Pasta | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00591`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00591) |
+| Pasta jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00592`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00592) |
+| Pasta maker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00593`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00593) |
+| Pastry cutter | Tools | Palatial NV Asset Library (Palatial Platforms) | [`D00594`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00594) |
+| Pastry dough | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00595`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00595) |
+| Pear | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00596`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00596) |
+| Peeler | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00597`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00597) |
+| Pen | Office | Palatial NV Asset Library (Palatial Platforms) | [`D00598`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00598) |
+| Pen holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00599`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00599) |
+| Pencil holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00600`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00600) |
+| Pepper | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00601`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00601) |
+| Pepper grinder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00602`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00602) |
+| Pepper mill, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00603`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00603) |
+| Electric can opener, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00604`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00604) |
+| Water filter pitcher, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00605`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00605) |
+| Soda maker, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00606`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00606) |
+| Cold brew maker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00607`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00607) |
+| Raspberry | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00608`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00608) |
+| Pepper shaker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00609`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00609) |
+| Blackberry, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00610`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00610) |
+| Pepper spice jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00611`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00611) |
+| Pestle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00612`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00612) |
+| Picture | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00613`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00613) |
+| Picture frame, 3 | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00614`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00614) |
+| Pie | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00615`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00615) |
+| Pineapple | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00616`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00616) |
+| Pink bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00617`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00617) |
+| Pitcher | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00618`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00618) |
+| Pitcher kettle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00619`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00619) |
+| Placemat | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00620`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00620) |
+| Plant | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00621`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00621) |
+| Plant pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00622`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00622) |
+| Plate, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00623`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00623) |
+| Plate board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00624`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00624) |
+| Plate bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00625`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00625) |
+| Plate butter dish | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00626`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00626) |
+| Plate cutting board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00627`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00627) |
+| Plate cutting board tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00628`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00628) |
+| Plate glass bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00629`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00629) |
+| Plate pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00630`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00630) |
+| Plate salad bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00631`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00631) |
+| Plate tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00632`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00632) |
+| Plates bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00633`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00633) |
+| Platter | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00634`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00634) |
+| Popcorn, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00635`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00635) |
+| Popcorn butter | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00636`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00636) |
+| Pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00637`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00637) |
+| Eggplant, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00638`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00638) |
+| Pot bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00639`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00639) |
+| Pot bowl pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00640`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00640) |
+| Pot frying pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00641`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00641) |
+| Leek | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00642`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00642) |
+| Pot kettle pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00643`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00643) |
+| Pot pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00644`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00644) |
+| Napa cabbage | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00645`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00645) |
+| Cabbage | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00646`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00646) |
+| Pot plant | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00647`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00647) |
+| Artichoke | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00648`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00648) |
+| Brussels sprouts | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00649`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00649) |
+| Daikon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00650`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00650) |
+| Lotus root | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00651`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00651) |
+| Pot wok | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00652`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00652) |
+| Nonstick saute pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00653`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00653) |
+| Potpan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00654`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00654) |
+| Potted plant | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00655`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00655) |
+| Burger press | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00656`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00656) |
+| Pressure cooker, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00657`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00657) |
+| Pumpkin, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00658`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00658) |
+| Pumpkin orange mango | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00659`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00659) |
+| Recipe book | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00662`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00662) |
+| Red bowl, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00663`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00663) |
+| Dish soap bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00664`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00664) |
+| Rice | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00665`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00665) |
+| Rice bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00666`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00666) |
+| Rice bun | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00667`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00667) |
+| Rice container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00668`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00668) |
+| Rice cooker, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00669`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00669) |
+| Kitchen tongs, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00671`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00671) |
+| Rolling pin, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00672`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00672) |
+| Rolls | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00674`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00674) |
+| Round container bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00675`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00675) |
+| Round cutting board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00676`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00676) |
+| S | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00677`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00677) |
+| S lemons | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00678`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00678) |
+| Salad | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00680`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00680) |
+| Salad bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00681`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00681) |
+| Edamame | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00682`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00682) |
+| Salt | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00683`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00683) |
+| Salt bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00684`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00684) |
+| Salt container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00685`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00685) |
+| Salt mill | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00688`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00688) |
+| Salt shaker, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00689`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00689) |
+| Salt storage jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00690`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00690) |
+| Sandwich | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00691`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00691) |
+| Sandwich maker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00692`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00692) |
+| Espresso machine, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00693`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00693) |
+| Sauce | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00694`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00694) |
+| Dipping bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00695`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00695) |
+| Sauce kettle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00696`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00696) |
+| Saucepan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00697`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00697) |
+| Saucepan bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00698`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00698) |
+| Enoki mushroom | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00699`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00699) |
+| Saucepan cooking pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00700`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00700) |
+| Saucepan frying pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00701`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00701) |
+| Saucepan kettle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00702`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00702) |
+| Saucepan pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00703`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00703) |
+| Saucepan pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00704`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00704) |
+| Saucepan skillet | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00705`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00705) |
+| Saucepan strainer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00706`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00706) |
+| Saucepan teapot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00707`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00707) |
+| Stainless steel wok | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00708`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00708) |
+| Saucepan wooden spoon knife | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00709`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00709) |
+| Saucepaning pan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00710`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00710) |
+| Saucer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00711`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00711) |
+| Scale | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00712`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00712) |
+| Scale food processor | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00713`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00713) |
+| Scallions | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00714`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00714) |
+| Scissors, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00715`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00715) |
+| Scoop, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00716`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00716) |
+| Serving board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00717`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00717) |
+| Serving plate | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00718`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00718) |
+| Serving platter, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00719`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00719) |
+| Serving tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00720`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00720) |
+| Copper ladle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00721`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00721) |
+| Sesame seeds | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00722`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00722) |
+| Set bowls | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00723`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00723) |
+| Shaker, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00724`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00724) |
+| Shallot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00725`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00725) |
+| Sketchbook | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00728`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00728) |
+| Slow cooker, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00729`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00729) |
+| Small bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00730`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00730) |
+| Small container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00731`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00731) |
+| Small cup | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00732`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00732) |
+| Small dish | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00733`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00733) |
+| Small jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00734`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00734) |
+| Small pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00735`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00735) |
+| Small spice container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00736`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00736) |
+| Small tomato | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00737`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00737) |
+| Smartphone, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00738`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00738) |
+| Snack | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00739`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00739) |
+| Snack jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00740`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00740) |
+| Soy sauce | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00742`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00742) |
+| Soy sauce bottle, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00743`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00743) |
+| Soy sauce bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00744`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00744) |
+| Soy sauce vinegar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00745`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00745) |
+| Soy sauce vinegar oil | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00746`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00746) |
+| Spaghetti | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00747`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00747) |
+| Hazelnut | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00748`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00748) |
+| Wood-handled serving spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00749`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00749) |
+| Spatula, 5 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00750`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00750) |
+| Spatula knife | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00751`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00751) |
+| Stainless steel ladle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00752`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00752) |
+| Spatula spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00753`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00753) |
+| Spatula wooden | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00754`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00754) |
+| Spatula wooden spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00755`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00755) |
+| Slotted spatula | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00756`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00756) |
+| Whole spice seed | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00757`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00757) |
+| Spice bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00758`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00758) |
+| Spice container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00759`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00759) |
+| White peach | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00760`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00760) |
+| Plantain | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00761`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00761) |
+| Spice container bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00762`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00762) |
+| Spice grinder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00763`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00763) |
+| Spice jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00764`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00764) |
+| Jicama | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00765`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00765) |
+| Celeriac, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00766`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00766) |
+| Endive | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00767`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00767) |
+| Radicchio | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00768`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00768) |
+| Spice rack | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00769`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00769) |
+| Spice shaker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00770`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00770) |
+| Spinach | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00771`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00771) |
+| Sponge | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00772`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00772) |
+| Spoon, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00773`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00773) |
+| Baguette | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00774`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00774) |
+| Waffle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00776`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00776) |
+| Spoon holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00777`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00777) |
+| Spoon kitchen | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00778`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00778) |
+| Spoon knife | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00779`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00779) |
+| Spoon ladle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00780`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00780) |
+| Spoon rest | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00781`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00781) |
+| Spoon rest saucepan | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00782`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00782) |
+| Onigiri | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00783`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00783) |
+| Spoon spatula | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00784`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00784) |
+| Silver dessert spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00785`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00785) |
+| Egg tart | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00786`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00786) |
+| Black dessert spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00787`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00787) |
+| Spoon wooden | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00788`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00788) |
+| Ceramic spoon rest | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00790`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00790) |
+| Eclair | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00791`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00791) |
+| Spoons cutter | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00792`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00792) |
+| Spoonware | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00793`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00793) |
+| Spray bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00794`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00794) |
+| Sprig | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00795`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00795) |
+| Spring onion | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00796`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00796) |
+| Hot dog | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00797`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00797) |
+| Stackable glass jars | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00798`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00798) |
+| Stainless steel bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00799`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00799) |
+| Stainless steel bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00800`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00800) |
+| Stainless steel container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00801`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00801) |
+| Pizza | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00802`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00802) |
+| Stainless steel pitcher | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00803`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00803) |
+| Stainless steel tumbler | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00804`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00804) |
+| Stand mixer, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00805`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00805) |
+| Coffee urn, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00806`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00806) |
+| Steamer basket | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00808`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00808) |
+| Steamer container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00809`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00809) |
+| Steamer cooker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00810`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00810) |
+| Steel bowl pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00811`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00811) |
+| Stopwatch | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00812`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00812) |
+| Taco | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00813`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00813) |
+| Storage basket, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00814`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00814) |
+| Storage basket bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00815`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00815) |
+| Storage box | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00816`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00816) |
+| Storage container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00817`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00817) |
+| Storage container bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00818`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00818) |
+| Samosa | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00819`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00819) |
+| Storage container tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00820`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00820) |
+| Storage jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00821`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00821) |
+| Scone | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00822`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00822) |
+| Shortbread biscuit | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00823`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00823) |
+| Cracker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00824`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00824) |
+| Storage jaril holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00825`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00825) |
+| Stove | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00826`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00826) |
+| Stovetop | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00827`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00827) |
+| Strain | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00828`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00828) |
+| Strainer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00829`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00829) |
+| Straw | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00830`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00830) |
+| Strawberry, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00831`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00831) |
+| Succulent | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00832`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00832) |
+| Sugar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00833`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00833) |
+| Sugar bowl, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00834`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00834) |
+| Sugar container jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00836`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00836) |
+| Lollipop | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00837`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00837) |
+| Sugar jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00838`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00838) |
+| Stoneware salt crock with scoop | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00839`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00839) |
+| Sugar spaghetti | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00840`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00840) |
+| Sugarshaker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00841`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00841) |
+| Cup noodles | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00842`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00842) |
+| Sushi | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00843`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00843) |
+| Sushi platter | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00844`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00844) |
+| Canned soup | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00845`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00845) |
+| Canned tomatoes | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00846`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00846) |
+| Table jug | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00847`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00847) |
+| Table mat | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00848`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00848) |
+| Tableware | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00850`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00850) |
+| Tap | Tools | Palatial NV Asset Library (Palatial Platforms) | [`D00851`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00851) |
+| Tea container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00852`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00852) |
+| Tea kettle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00853`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00853) |
+| Tea pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00854`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00854) |
+| Teacup | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00855`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00855) |
+| Sardine can | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00856`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00856) |
+| Jam jar, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00858`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00858) |
+| Teapot pot | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00859`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00859) |
+| Teaspoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00860`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00860) |
+| The teaspoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00861`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00861) |
+| Thermos | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00862`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00862) |
+| Timer | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00863`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00863) |
+| To go cup | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00864`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00864) |
+| Toaster food processor | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00867`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00867) |
+| Rotary grater | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00868`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00868) |
+| Chocolate fountain | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00869`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00869) |
+| Mustard bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00870`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00870) |
+| Tomato, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00871`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00871) |
+| Tomato yellow bell | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00872`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00872) |
+| Tongs | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00873`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00873) |
+| Offset icing spatula | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00874`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00874) |
+| Bbq sauce bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00875`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00875) |
+| Towel | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00877`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00877) |
+| Towel dishcloth | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00878`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00878) |
+| Transparent jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00879`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00879) |
+| Tray, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00880`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00880) |
+| Tray board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00881`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00881) |
+| White ceramic serving bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00882`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00882) |
+| Tray chopping board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00883`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00883) |
+| Tray cutting board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00884`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00884) |
+| Tray plate platter | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00885`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00885) |
+| Tray platter | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00886`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00886) |
+| Tray wooden cutting board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00887`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00887) |
+| Tweezers | Tools | Palatial NV Asset Library (Palatial Platforms) | [`D00888`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00888) |
+| Uncooked grains | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00889`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00889) |
+| Pesto jar, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00890`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00890) |
+| Tahini jar, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00891`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00891) |
+| Miso paste tub | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00892`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00892) |
+| Utensil | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00893`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00893) |
+| Utensil holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00894`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00894) |
+| Utensil holder container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00895`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00895) |
+| Utensil spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00896`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00896) |
+| Utensils container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00897`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00897) |
+| Utensils holder, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00898`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00898) |
+| Juice box | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00899`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00899) |
+| Utensils spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00900`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00900) |
+| Utensils whisk | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00901`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00901) |
+| Vase, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00902`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00902) |
+| Vegetable | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00903`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00903) |
+| White ceramic serving bowl, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00904`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00904) |
+| Vegetable oil bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00905`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00905) |
+| Vegetable peeler, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00906`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00906) |
+| Vinegar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00907`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00907) |
+| Vinegar bottle, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00908`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00908) |
+| Vinegar dienser spice jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00909`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00909) |
+| Vinegar oil bottle spice jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00910`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00910) |
+| Decorative wooden letter w | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00911`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00911) |
+| Wooden cooking spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00912`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00912) |
+| Wall clock, 2 | Home | Palatial NV Asset Library (Palatial Platforms) | [`D00913`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00913) |
+| Cocoa powder tin | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00914`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00914) |
+| Balloon whisk | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00915`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00915) |
+| Water | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00916`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00916) |
+| Water bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00917`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00917) |
+| Water jug | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00918`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00918) |
+| Water pitcher | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00919`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00919) |
+| Baking powder tin | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00920`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00920) |
+| Watermelon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00921`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00921) |
+| Vanilla extract bottle, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00922`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00922) |
+| Wooden cooking spoon, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00923`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00923) |
+| Whisk, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00924`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00924) |
+| Kitchenware | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00925`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00925) |
+| Ladle, 4 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00926`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00926) |
+| Pasta box, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00927`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00927) |
+| Spoon, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00928`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00928) |
+| Whisk utensil holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00929`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00929) |
+| Flour bag | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00930`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00930) |
+| Whisk wooden | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00931`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00931) |
+| Whisk wooden spoon rest | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00933`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00933) |
+| White bowl, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00934`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00934) |
+| White container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00935`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00935) |
+| White cup | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00936`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00936) |
+| White grey bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00937`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00937) |
+| White mug | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00938`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00938) |
+| White pitcher | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00939`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00939) |
+| White vase | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00940`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00940) |
+| Wine bottle, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00941`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00941) |
+| Wine glass, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00942`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00942) |
+| Wire basket | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00943`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00943) |
+| Wooden ox yoke | Tools | Palatial NV Asset Library (Palatial Platforms) | [`D00944`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00944) |
+| Wok, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00945`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00945) |
+| Cast-iron wok | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00946`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00946) |
+| Chicken drumstick | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00947`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00947) |
+| Stainless steel wok, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00948`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00948) |
+| Articulated wooden horse figure | Toys & Basics | Palatial NV Asset Library (Palatial Platforms) | [`D00949`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00949) |
+| Wooden board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00950`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00950) |
+| Wooden board tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00951`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00951) |
+| Wooden bowl | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00952`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00952) |
+| Wooden box | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00953`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00953) |
+| Wooden container | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00954`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00954) |
+| Croquette | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00955`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00955) |
+| Wooden cup | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00956`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00956) |
+| Wooden cutting board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00957`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00957) |
+| Wooden figure | Toys & Basics | Palatial NV Asset Library (Palatial Platforms) | [`D00958`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00958) |
+| Wooden fork | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00959`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00959) |
+| Wooden holder cutting board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00960`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00960) |
+| Wooden ladle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00961`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00961) |
+| Wooden lid | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00962`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00962) |
+| Bamboo cutting board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00963`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00963) |
+| Wooden lid storage jar | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00964`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00964) |
+| Wooden pedestal | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00965`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00965) |
+| Wooden pedestal cutting board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00966`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00966) |
+| Wooden pepper mill | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00967`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00967) |
+| Wooden pestle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00968`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00968) |
+| Wooden plate | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00969`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00969) |
+| Wooden platter | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00970`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00970) |
+| Wooden spatula | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00971`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00971) |
+| Wooden spatula board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00972`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00972) |
+| Gingerbread cookie | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00973`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00973) |
+| Wooden cooking spoon, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00974`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00974) |
+| Wooden spoon, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00975`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00975) |
+| Wooden spoon holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00976`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00976) |
+| Wooden spoon knife | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00977`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00977) |
+| Wooden ladle, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00978`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00978) |
+| Oval wooden serving tray | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00979`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00979) |
+| Wooden rolling pin | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00980`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00980) |
+| Wooden spoon spatula | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00981`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00981) |
+| Wooden cooking spoon, 4 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00982`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00982) |
+| Wooden steamer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00983`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00983) |
+| Wooden tray, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00984`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00984) |
+| Wooden tray cutting board | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00985`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00985) |
+| Wooden utensil | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00986`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00986) |
+| Wooden utensil holder | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00987`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00987) |
+| Wooden utensils knife block | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00988`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00988) |
+| Wooden vase | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00989`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00989) |
+| Wooden whisk | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00990`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00990) |
+| Woodenspoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00991`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00991) |
+| Yellow bell pepper | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00992`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00992) |
+| Zesting tool wooden spoon | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00994`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00994) |
+| Zucchini, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D00995`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D00995) |
+| Primal kitchen organic spicy brown mustard | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01001`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01001) |
+| Primal kitchen cocktail sauce | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01002`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01002) |
+| Primal kitchen tartar sauce | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01003`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01003) |
+| Primal kitchen mayo with avocado oil | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01004`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01004) |
+| Primal kitchen chipotle lime mayo | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01005`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01005) |
+| Primal kitchen garlic aioli mayo | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01006`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01006) |
+| Primal kitchen organic unsweetened ketchup | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01007`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01007) |
+| Caplansky's deli ballpark mustard | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01008`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01008) |
+| Caplansky's deli old fashioned mustard | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01009`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01009) |
+| Caplansky's deli horseradish mustard | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01010`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01010) |
+| Caplansky's deli spicy mustard | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01011`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01011) |
+| Mustard girl american dijon mustard | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01012`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01012) |
+| Mustard girl stoneground deli mustard | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01013`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01013) |
+| Eden foods organic brown mustard | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01014`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01014) |
+| Red duck organic cocktail sauce | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01015`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01015) |
+| Chosen foods classic avocado oil mayo | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01016`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01016) |
+| Chosen foods chipotle avocado oil mayo | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01017`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01017) |
+| Chosen foods roasted garlic mayo | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01018`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01018) |
+| Sir kensington's classic mayonnaise | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01019`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01019) |
+| Sir kensington's avocado oil mayonnaise | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01020`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01020) |
+| Sir kensington's chipotle mayonnaise | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01021`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01021) |
+| Sir kensington's special sauce | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01022`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01022) |
+| Woodstock foods organic mayonnaise with organic soybean oil | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01023`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01023) |
+| The ojai cook lemonaise | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01024`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01024) |
+| The ojai cook lemonaise light | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01025`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01025) |
+| Stubb's hickory bourbon bar-b-q sauce | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01026`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01026) |
+| Stubb's original bar-b-q sauce | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01027`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01027) |
+| Manual can opener, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01028`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01028) |
+| Salad spinner, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01029`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01029) |
+| Mandoline slicer, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01030`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01030) |
+| Potato ricer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01031`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01031) |
+| Cherry pitter, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01032`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01032) |
+| Apple corer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01033`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01033) |
+| Egg separator, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01034`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01034) |
+| Egg slicer, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01035`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01035) |
+| Hinged nutcracker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01036`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01036) |
+| Meat tenderizer mallet | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01037`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01037) |
+| Fish scaler | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01038`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01038) |
+| Digital probe thermometer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01039`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01039) |
+| Kitchen funnel | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01040`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01040) |
+| Kitchen blowtorch | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01041`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01041) |
+| Dough docker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01042`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01042) |
+| Honey dipper | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01043`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01043) |
+| Coffee tamper | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01044`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01044) |
+| Espresso knock box | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01045`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01045) |
+| Pizza peel, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01046`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01046) |
+| Tortilla press, 4 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01047`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01047) |
+| Burger patty press | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01048`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01048) |
+| Vacuum wine stopper pump | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01049`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01049) |
+| Manual vegetable spiralizer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01050`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01050) |
+| Dumpling press | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01051`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01051) |
+| Knife sharpening steel | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01052`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01052) |
+| Fat separator jug | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01053`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01053) |
+| Spaghetti portion gauge | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01054`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01054) |
+| Corn kernel stripper | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01055`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01055) |
+| Poultry baster | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01056`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01056) |
+| Sous vide immersion circulator | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01057`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01057) |
+| Countertop vacuum sealer | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01058`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01058) |
+| Ice cream maker | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01060`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01060) |
+| Countertop ice maker, 2 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01062`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01062) |
+| Bread maker, 3 | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`D01063`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/D01063) |
+| Dijon mustard squeeze bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`Dijon_Mustard_Squeeze_Bottle`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/Dijon_Mustard_Squeeze_Bottle) |
+| Organic spicy brown mustard squeeze bottle | Kitchen | Palatial NV Asset Library (Palatial Platforms) | [`Organic_Spicy_Brown_Mustard_squeeze_bottle`](https://huggingface.co/datasets/PalatialSim/palatial-nv-asset-library/tree/main/Organic_Spicy_Brown_Mustard_squeeze_bottle) |
+| Charcoal stove taiwanese | Furniture | NVIDIA SimReady | [`appliance_charcoalStove_taiwanese_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/appliance_charcoalStove_taiwanese_a01) |
+| Dishwasher, 3 | Furniture | NVIDIA SimReady | [`appliance_dishwasher_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/appliance_dishwasher_b01) |
+| Extractor aged | Kitchen | NVIDIA SimReady | [`appliance_extractor_aged_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/appliance_extractor_aged_a01) |
+| Gas stove table | Furniture | NVIDIA SimReady | [`appliance_gasStove_table_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/appliance_gasStove_table_a01) |
+| Gas tank painted | Kitchen | NVIDIA SimReady | [`appliance_gasTank_painted_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/appliance_gasTank_painted_a01) |
+| Refrigerator two door | Furniture | NVIDIA SimReady | [`appliance_refrigerator_twoDoor_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/appliance_refrigerator_twoDoor_a01) |
+| Stove hood | Furniture | NVIDIA SimReady | [`appliance_stoveHood_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/appliance_stoveHood_a01) |
+| Bathproduct | Cleaning | NVIDIA SimReady | [`cleaning_bathproduct_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_bathproduct_a01) |
+| Bathproduct, 2 | Cleaning | NVIDIA SimReady | [`cleaning_bathproduct_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_bathproduct_a02) |
+| Bathproduct, 3 | Cleaning | NVIDIA SimReady | [`cleaning_bathproduct_a03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_bathproduct_a03) |
+| Cloth crumpled | Cleaning | NVIDIA SimReady | [`cleaning_cloth_crumpled_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_cloth_crumpled_a01) |
+| Napkin | Cleaning | NVIDIA SimReady | [`cleaning_napkin_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_napkin_a01) |
+| Spray | Cleaning | NVIDIA SimReady | [`cleaning_spray_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_spray_a01) |
+| Towel crumpled | Cleaning | NVIDIA SimReady | [`cleaning_towel_crumpled_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_towel_crumpled_a01) |
+| Towel crumpled, 2 | Cleaning | NVIDIA SimReady | [`cleaning_towel_crumpled_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_towel_crumpled_a02) |
+| Towel crumpled, 3 | Cleaning | NVIDIA SimReady | [`cleaning_towel_crumpled_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_towel_crumpled_b01) |
+| Towel folded | Cleaning | NVIDIA SimReady | [`cleaning_towel_folded_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_towel_folded_a01) |
+| Towel folded, 2 | Cleaning | NVIDIA SimReady | [`cleaning_towel_folded_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_towel_folded_a02) |
+| Towel folded, 3 | Cleaning | NVIDIA SimReady | [`cleaning_towel_folded_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_towel_folded_b01) |
+| Towel folded, 4 | Cleaning | NVIDIA SimReady | [`cleaning_towel_folded_b02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_towel_folded_b02) |
+| Towel folded, 5 | Cleaning | NVIDIA SimReady | [`cleaning_towel_folded_b03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_towel_folded_b03) |
+| Towel folded, 6 | Cleaning | NVIDIA SimReady | [`cleaning_towel_folded_d01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cleaning_towel_folded_d01) |
+| Colander enamel old | Kitchen | NVIDIA SimReady | [`cookware_colander_enamel_old_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cookware_colander_enamel_old_a01) |
+| Colander enamel old, 2 | Kitchen | NVIDIA SimReady | [`cookware_colander_enamel_old_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cookware_colander_enamel_old_a02) |
+| Colander enamel old, 3 | Kitchen | NVIDIA SimReady | [`cookware_colander_enamel_old_a03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cookware_colander_enamel_old_a03) |
+| Muffinform | Kitchen | NVIDIA SimReady | [`cookware_muffinform_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cookware_muffinform_a01) |
+| Pan, 2 | Kitchen | NVIDIA SimReady | [`cookware_pan_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cookware_pan_a01) |
+| Pan, 3 | Kitchen | NVIDIA SimReady | [`cookware_pan_a03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cookware_pan_a03) |
+| Pan copper | Kitchen | NVIDIA SimReady | [`cookware_pan_copper_b02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cookware_pan_copper_b02) |
+| Pot clay | Kitchen | NVIDIA SimReady | [`cookware_pot_clay_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cookware_pot_clay_a01) |
+| Pot clay, 2 | Kitchen | NVIDIA SimReady | [`cookware_pot_clay_a03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cookware_pot_clay_a03) |
+| Pot copper | Kitchen | NVIDIA SimReady | [`cookware_pot_copper_d01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/cookware_pot_copper_d01) |
+| Book, 3 | Home | NVIDIA SimReady | [`decor_book_b02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_book_b02) |
+| Book, 4 | Home | NVIDIA SimReady | [`decor_book_b05`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_book_b05) |
+| Book cooking | Home | NVIDIA SimReady | [`decor_book_cooking_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_book_cooking_a01) |
+| Book cooking, 2 | Home | NVIDIA SimReady | [`decor_book_cooking_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_book_cooking_a02) |
+| Book cooking, 3 | Home | NVIDIA SimReady | [`decor_book_cooking_a03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_book_cooking_a03) |
+| Book cooking, 4 | Home | NVIDIA SimReady | [`decor_book_cooking_a04`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_book_cooking_a04) |
+| Book cooking, 5 | Home | NVIDIA SimReady | [`decor_book_cooking_a05`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_book_cooking_a05) |
+| Book cooking, 6 | Home | NVIDIA SimReady | [`decor_book_cooking_a06`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_book_cooking_a06) |
+| Book cooking, 7 | Home | NVIDIA SimReady | [`decor_book_cooking_a07`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_book_cooking_a07) |
+| Book cooking, 8 | Home | NVIDIA SimReady | [`decor_book_cooking_a08`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_book_cooking_a08) |
+| Book cooking, 9 | Home | NVIDIA SimReady | [`decor_book_cooking_a09`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_book_cooking_a09) |
+| Book cooking, 10 | Home | NVIDIA SimReady | [`decor_book_cooking_a10`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_book_cooking_a10) |
+| Candleholder | Home | NVIDIA SimReady | [`decor_candleholder_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_candleholder_a01) |
+| Cup decorative | Home | NVIDIA SimReady | [`decor_cup_decorative_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_cup_decorative_a01) |
+| Mirror | Furniture | NVIDIA SimReady | [`decor_mirror_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_mirror_a01) |
+| Painting | Home | NVIDIA SimReady | [`decor_painting_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_painting_a01) |
+| Photo frame | Home | NVIDIA SimReady | [`decor_photoFrame_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_photoFrame_a01) |
+| Photo frame, 2 | Home | NVIDIA SimReady | [`decor_photoFrame_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_photoFrame_b01) |
+| Photoframe | Home | NVIDIA SimReady | [`decor_photoframe_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_photoframe_a02) |
+| Photoframe, 2 | Home | NVIDIA SimReady | [`decor_photoframe_b02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_photoframe_b02) |
+| Photoframe, 3 | Home | NVIDIA SimReady | [`decor_photoframe_b03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_photoframe_b03) |
+| Place mat table woven | Kitchen | NVIDIA SimReady | [`decor_placeMat_table_woven_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_placeMat_table_woven_a01) |
+| Plant big potted | Home | NVIDIA SimReady | [`decor_plant_big_potted_c01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_plant_big_potted_c01) |
+| Plant dried vase | Home | NVIDIA SimReady | [`decor_plant_dried_vase_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_plant_dried_vase_a01) |
+| Plant dried vase, 2 | Home | NVIDIA SimReady | [`decor_plant_dried_vase_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_plant_dried_vase_b01) |
+| Vase, 3 | Home | NVIDIA SimReady | [`decor_vase_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_vase_a01) |
+| Vase, 4 | Home | NVIDIA SimReady | [`decor_vase_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_vase_b01) |
+| Vase, 5 | Home | NVIDIA SimReady | [`decor_vase_c01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_vase_c01) |
+| Wall clock, 3 | Home | NVIDIA SimReady | [`decor_wallClock_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/decor_wallClock_a01) |
+| Bowl decor old | Kitchen | NVIDIA SimReady | [`dishware_bowl_decor_old_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_bowl_decor_old_a01) |
+| Bowl decor old, 2 | Kitchen | NVIDIA SimReady | [`dishware_bowl_decor_old_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_bowl_decor_old_a02) |
+| Bowl large | Kitchen | NVIDIA SimReady | [`dishware_bowl_large_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_bowl_large_b01) |
+| Cutlery fork | Kitchen | NVIDIA SimReady | [`dishware_cutlery_fork_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_cutlery_fork_a01) |
+| Cutlery knife | Kitchen | NVIDIA SimReady | [`dishware_cutlery_knife_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_cutlery_knife_a01) |
+| Cutlery spoon | Kitchen | NVIDIA SimReady | [`dishware_cutlery_spoon_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_cutlery_spoon_a01) |
+| Cutlery tea spoon old | Kitchen | NVIDIA SimReady | [`dishware_cutlery_teaSpoon_old_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_cutlery_teaSpoon_old_a01) |
+| Cutlery tea spoon old, 2 | Kitchen | NVIDIA SimReady | [`dishware_cutlery_teaSpoon_old_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_cutlery_teaSpoon_old_a02) |
+| Cutlery tea spoon old, 3 | Kitchen | NVIDIA SimReady | [`dishware_cutlery_teaSpoon_old_a03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_cutlery_teaSpoon_old_a03) |
+| Cutlery tea spoon old, 4 | Kitchen | NVIDIA SimReady | [`dishware_cutlery_teaSpoon_old_a04`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_cutlery_teaSpoon_old_a04) |
+| Cutlery teaspoon | Kitchen | NVIDIA SimReady | [`dishware_cutlery_teaspoon_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_cutlery_teaspoon_a01) |
+| Glass liqueur | Kitchen | NVIDIA SimReady | [`dishware_glass_liqueur_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_glass_liqueur_b01) |
+| Glass shampagne | Kitchen | NVIDIA SimReady | [`dishware_glass_shampagne_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_glass_shampagne_b01) |
+| Glass tumbler, 2 | Kitchen | NVIDIA SimReady | [`dishware_glass_tumbler_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_glass_tumbler_b01) |
+| Glass wine red | Kitchen | NVIDIA SimReady | [`dishware_glass_wineRed_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_glass_wineRed_b01) |
+| Glass wine white | Kitchen | NVIDIA SimReady | [`dishware_glass_wineWhite_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_glass_wineWhite_b01) |
+| Milk pitcher ceramic old | Kitchen | NVIDIA SimReady | [`dishware_milkPitcher_ceramic_old_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_milkPitcher_ceramic_old_a01) |
+| Mug coffee | Kitchen | NVIDIA SimReady | [`dishware_mug_coffee_g01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_mug_coffee_g01) |
+| Mug, 4 | Kitchen | NVIDIA SimReady | [`dishware_mug_d01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_mug_d01) |
+| Mug vintage | Kitchen | NVIDIA SimReady | [`dishware_mug_vintage_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_mug_vintage_a01) |
+| Mug vintage, 2 | Kitchen | NVIDIA SimReady | [`dishware_mug_vintage_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_mug_vintage_b01) |
+| Plate, 4 | Kitchen | NVIDIA SimReady | [`dishware_plate_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_plate_a01) |
+| Plate, 5 | Kitchen | NVIDIA SimReady | [`dishware_plate_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_plate_a02) |
+| Plate, 6 | Kitchen | NVIDIA SimReady | [`dishware_plate_a03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_plate_a03) |
+| Plate, 7 | Kitchen | NVIDIA SimReady | [`dishware_plate_a04`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_plate_a04) |
+| Plate large | Kitchen | NVIDIA SimReady | [`dishware_plate_large_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_plate_large_b01) |
+| Plate large, 2 | Kitchen | NVIDIA SimReady | [`dishware_plate_large_d01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_plate_large_d01) |
+| Plate medium | Kitchen | NVIDIA SimReady | [`dishware_plate_medium_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_plate_medium_b01) |
+| Plate middle | Kitchen | NVIDIA SimReady | [`dishware_plate_middle_d01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_plate_middle_d01) |
+| Plate small | Kitchen | NVIDIA SimReady | [`dishware_plate_small_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_plate_small_b01) |
+| Plate small, 2 | Kitchen | NVIDIA SimReady | [`dishware_plate_small_d01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_plate_small_d01) |
+| Plate soup | Kitchen | NVIDIA SimReady | [`dishware_plate_soup_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_plate_soup_b01) |
+| Teaset cup ceramic old | Kitchen | NVIDIA SimReady | [`dishware_teaset_cup_ceramic_old_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_teaset_cup_ceramic_old_a01) |
+| Teaset mug ceramic old | Kitchen | NVIDIA SimReady | [`dishware_teaset_mug_ceramic_old_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_teaset_mug_ceramic_old_a01) |
+| Teaset mug enamel old | Kitchen | NVIDIA SimReady | [`dishware_teaset_mug_enamel_old_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_teaset_mug_enamel_old_a01) |
+| Teaset plate ceramic old | Kitchen | NVIDIA SimReady | [`dishware_teaset_plate_ceramic_old_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/dishware_teaset_plate_ceramic_old_a01) |
+| Cable, 2 | Factory | NVIDIA SimReady | [`electrical_cable_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/electrical_cable_a02) |
+| Cord reel electric | Factory | NVIDIA SimReady | [`equipment_cord_reel_electric_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/equipment_cord_reel_electric_a01) |
+| Extension cord 12v | Factory | NVIDIA SimReady | [`equipment_extensionCord_12v_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/equipment_extensionCord_12v_b01) |
+| Extension cord ev type2 | Factory | NVIDIA SimReady | [`equipment_extensionCord_EV_type2_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/equipment_extensionCord_EV_type2_a01) |
+| Factory bolt M4 loose | Factory | NVIDIA SimReady | [`factory_bolt_m4_loose`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/factory_bolt_m4_loose) |
+| Factory bolt M4 tight | Factory | NVIDIA SimReady | [`factory_bolt_m4_tight`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/factory_bolt_m4_tight) |
+| Cabinet pantry | Furniture | NVIDIA SimReady | [`fixture_cabinet_pantry_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fixture_cabinet_pantry_a01) |
+| Cabinet single | Furniture | NVIDIA SimReady | [`fixture_cabinet_single_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fixture_cabinet_single_a01) |
+| Cabinet top | Furniture | NVIDIA SimReady | [`fixture_cabinet_top_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fixture_cabinet_top_a01) |
+| Cabinet top, 2 | Furniture | NVIDIA SimReady | [`fixture_cabinet_top_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fixture_cabinet_top_a02) |
+| Cabinet top, 3 | Furniture | NVIDIA SimReady | [`fixture_cabinet_top_a03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fixture_cabinet_top_a03) |
+| Ceilinglamp | Furniture | NVIDIA SimReady | [`fixture_ceilinglamp_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fixture_ceilinglamp_a01) |
+| Ceilinglamp, 2 | Furniture | NVIDIA SimReady | [`fixture_ceilinglamp_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fixture_ceilinglamp_b01) |
+| Faucet stainless | Cleaning | NVIDIA SimReady | [`fixture_faucet_stainless_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fixture_faucet_stainless_a01) |
+| Sink basin, 2 | Furniture | NVIDIA SimReady | [`fixture_sink_basin_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fixture_sink_basin_b01) |
+| Socket | Tools | NVIDIA SimReady | [`fixture_socket_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fixture_socket_a01) |
+| Switch | Furniture | NVIDIA SimReady | [`fixture_switch_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fixture_switch_a01) |
+| Beverage soda bottle | Kitchen | NVIDIA SimReady | [`food_beverage_sodaBottle_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/food_beverage_sodaBottle_a01) |
+| Coffee table, 2 | Furniture | NVIDIA SimReady | [`furniture_coffeeTable_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/furniture_coffeeTable_a01) |
+| Couch | Furniture | NVIDIA SimReady | [`furniture_couch_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/furniture_couch_a01) |
+| Highstool | Tools | NVIDIA SimReady | [`furniture_highstool_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/furniture_highstool_a01) |
+| Stand | Furniture | NVIDIA SimReady | [`furniture_stand_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/furniture_stand_a01) |
+| Stool wooden old | Tools | NVIDIA SimReady | [`furniture_stool_wooden_old_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/furniture_stool_wooden_old_a01) |
+| Bakery baguette | Kitchen | NVIDIA SimReady | [`grocery_bakery_baguette_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_bakery_baguette_a01) |
+| Bakery bread | Kitchen | NVIDIA SimReady | [`grocery_bakery_bread_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_bakery_bread_a01) |
+| Bakery bread cutted | Kitchen | NVIDIA SimReady | [`grocery_bakery_bread_cutted_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_bakery_bread_cutted_b01) |
+| Bakery bread cutted, 2 | Kitchen | NVIDIA SimReady | [`grocery_bakery_bread_cutted_b02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_bakery_bread_cutted_b02) |
+| Bakery cookie palmieres | Kitchen | NVIDIA SimReady | [`grocery_bakery_cookie_palmieres_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_bakery_cookie_palmieres_a01) |
+| Bakery cookie palmieres, 2 | Kitchen | NVIDIA SimReady | [`grocery_bakery_cookie_palmieres_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_bakery_cookie_palmieres_a02) |
+| Bakery cookie palmieres, 3 | Kitchen | NVIDIA SimReady | [`grocery_bakery_cookie_palmieres_a03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_bakery_cookie_palmieres_a03) |
+| Bakery croissant | Kitchen | NVIDIA SimReady | [`grocery_bakery_croissant_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_bakery_croissant_a01) |
+| Bakery croissant, 2 | Kitchen | NVIDIA SimReady | [`grocery_bakery_croissant_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_bakery_croissant_a02) |
+| Bakery croissant, 3 | Kitchen | NVIDIA SimReady | [`grocery_bakery_croissant_a03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_bakery_croissant_a03) |
+| Bakery croissant, 4 | Kitchen | NVIDIA SimReady | [`grocery_bakery_croissant_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_bakery_croissant_b01) |
+| Bakery croissant chocolate | Kitchen | NVIDIA SimReady | [`grocery_bakery_croissant_chocolate_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_bakery_croissant_chocolate_a01) |
+| Condiment mustard dijon | Kitchen | NVIDIA SimReady | [`grocery_condiment_mustard_dijon_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_condiment_mustard_dijon_a01) |
+| Condiment olive oil bottled | Kitchen | NVIDIA SimReady | [`grocery_condiment_oliveOil_bottled_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_condiment_oliveOil_bottled_a01) |
+| Condiment pepper shaker | Kitchen | NVIDIA SimReady | [`grocery_condiment_pepperShaker_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_condiment_pepperShaker_a01) |
+| Condiment salt shaker | Kitchen | NVIDIA SimReady | [`grocery_condiment_saltShaker_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_condiment_saltShaker_a01) |
+| Dairy butter | Kitchen | NVIDIA SimReady | [`grocery_dairy_butter_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_dairy_butter_a01) |
+| Jarred sugar | Kitchen | NVIDIA SimReady | [`grocery_jarred_sugar_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_jarred_sugar_a01) |
+| Snack chips packaged | Kitchen | NVIDIA SimReady | [`grocery_snack_chips_packaged_b02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/grocery_snack_chips_packaged_b02) |
+| Caster | Kitchen | NVIDIA SimReady | [`hardware_caster_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hardware_caster_a01) |
+| Gear base | Factory | NVIDIA SimReady | [`hardware_gear_base_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hardware_gear_base_a02) |
+| Gear base base | Factory | NVIDIA SimReady | [`hardware_gear_base_base_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hardware_gear_base_base_a01) |
+| Gear base physics | Factory | NVIDIA SimReady | [`hardware_gear_base_physics_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hardware_gear_base_physics_a01) |
+| Gear large | Factory | NVIDIA SimReady | [`hardware_gear_large_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hardware_gear_large_a02) |
+| Gear large base | Factory | NVIDIA SimReady | [`hardware_gear_large_base_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hardware_gear_large_base_a01) |
+| Gear medium | Factory | NVIDIA SimReady | [`hardware_gear_medium_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hardware_gear_medium_a02) |
+| Gear medium base | Factory | NVIDIA SimReady | [`hardware_gear_medium_base_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hardware_gear_medium_base_a01) |
+| Gear small base | Factory | NVIDIA SimReady | [`hardware_gear_small_base_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hardware_gear_small_base_a01) |
+| Labware beaker 500ml | Kitchen | NVIDIA SimReady | [`labware_beaker_500ml_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/labware_beaker_500ml_a01) |
+| Labware table seattle | Furniture | NVIDIA SimReady | [`labware_table_seattle_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/labware_table_seattle_a01) |
+| Box delivered | Bins & Trays | NVIDIA SimReady | [`misc_box_delivered_e01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_box_delivered_e01) |
+| Cardboard box, 4 | Bins & Trays | NVIDIA SimReady | [`misc_cardboardBox_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_cardboardBox_a01) |
+| Headphones | Electronics | NVIDIA SimReady | [`misc_headphones_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_headphones_a01) |
+| Speaker, 2 | Electronics | NVIDIA SimReady | [`misc_speaker_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_speaker_a01) |
+| Sticker yellow | Home | NVIDIA SimReady | [`misc_sticker_yellow_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_sticker_yellow_a01) |
+| Sticker yellow, 2 | Home | NVIDIA SimReady | [`misc_sticker_yellow_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_sticker_yellow_a02) |
+| Sticker yellow, 3 | Home | NVIDIA SimReady | [`misc_sticker_yellow_a03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_sticker_yellow_a03) |
+| Sticker yellow, 4 | Home | NVIDIA SimReady | [`misc_sticker_yellow_a04`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_sticker_yellow_a04) |
+| Sticker yellow, 5 | Home | NVIDIA SimReady | [`misc_sticker_yellow_a05`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_sticker_yellow_a05) |
+| Sticker yellow, 6 | Home | NVIDIA SimReady | [`misc_sticker_yellow_a06`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_sticker_yellow_a06) |
+| Sticker yellow, 7 | Home | NVIDIA SimReady | [`misc_sticker_yellow_a07`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_sticker_yellow_a07) |
+| Sticker yellow, 8 | Home | NVIDIA SimReady | [`misc_sticker_yellow_a08`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_sticker_yellow_a08) |
+| Sticker yellow, 9 | Home | NVIDIA SimReady | [`misc_sticker_yellow_a09`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_sticker_yellow_a09) |
+| Sticker yellow, 10 | Home | NVIDIA SimReady | [`misc_sticker_yellow_a10`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_sticker_yellow_a10) |
+| Sticker yellow, 11 | Home | NVIDIA SimReady | [`misc_sticker_yellow_a11`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_sticker_yellow_a11) |
+| Sticker yellow, 12 | Home | NVIDIA SimReady | [`misc_sticker_yellow_a12`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_sticker_yellow_a12) |
+| Sticker yellow, 13 | Home | NVIDIA SimReady | [`misc_sticker_yellow_a13`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_sticker_yellow_a13) |
+| Sticker yellow, 14 | Home | NVIDIA SimReady | [`misc_sticker_yellow_a14`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_sticker_yellow_a14) |
+| Sticker yellow, 15 | Home | NVIDIA SimReady | [`misc_sticker_yellow_a15`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_sticker_yellow_a15) |
+| Sticker yellow, 16 | Home | NVIDIA SimReady | [`misc_sticker_yellow_a16`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/misc_sticker_yellow_a16) |
+| Pallet assembly | Factory | NVIDIA SimReady | [`pallet_assembly_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_a02) |
+| Pallet assembly, 2 | Factory | NVIDIA SimReady | [`pallet_assembly_a03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_a03) |
+| Pallet assembly, 3 | Factory | NVIDIA SimReady | [`pallet_assembly_a05`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_a05) |
+| Pallet assembly, 4 | Factory | NVIDIA SimReady | [`pallet_assembly_a06`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_a06) |
+| Pallet assembly, 5 | Factory | NVIDIA SimReady | [`pallet_assembly_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_b01) |
+| Pallet assembly, 6 | Factory | NVIDIA SimReady | [`pallet_assembly_b02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_b02) |
+| Pallet assembly brown | Factory | NVIDIA SimReady | [`pallet_assembly_brown_e04`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_brown_e04) |
+| Pallet assembly brown, 2 | Factory | NVIDIA SimReady | [`pallet_assembly_brown_e05`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_brown_e05) |
+| Pallet assembly brown, 3 | Factory | NVIDIA SimReady | [`pallet_assembly_brown_f05`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_brown_f05) |
+| Pallet assembly brown, 4 | Factory | NVIDIA SimReady | [`pallet_assembly_brown_f06`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_brown_f06) |
+| Pallet assembly, 7 | Factory | NVIDIA SimReady | [`pallet_assembly_c01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_c01) |
+| Pallet assembly, 8 | Factory | NVIDIA SimReady | [`pallet_assembly_c02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_c02) |
+| Pallet assembly, 9 | Factory | NVIDIA SimReady | [`pallet_assembly_d01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_d01) |
+| Pallet assembly, 10 | Factory | NVIDIA SimReady | [`pallet_assembly_d02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_d02) |
+| Pallet assembly mixed | Factory | NVIDIA SimReady | [`pallet_assembly_mixed_e05`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_mixed_e05) |
+| Pallet assembly red | Factory | NVIDIA SimReady | [`pallet_assembly_red_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_red_a01) |
+| Pallet assembly red, 2 | Factory | NVIDIA SimReady | [`pallet_assembly_red_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_red_a02) |
+| Pallet assembly red, 3 | Factory | NVIDIA SimReady | [`pallet_assembly_red_a03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_red_a03) |
+| Pallet assembly red, 4 | Factory | NVIDIA SimReady | [`pallet_assembly_red_a04`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_red_a04) |
+| Pallet assembly red, 5 | Factory | NVIDIA SimReady | [`pallet_assembly_red_a05`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_red_a05) |
+| Pallet assembly red, 6 | Factory | NVIDIA SimReady | [`pallet_assembly_red_a06`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_red_a06) |
+| Pallet assembly transparent | Factory | NVIDIA SimReady | [`pallet_assembly_transparent_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_transparent_a01) |
+| Pallet assembly transparent, 2 | Factory | NVIDIA SimReady | [`pallet_assembly_transparent_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_transparent_a02) |
+| Pallet assembly transparent, 3 | Factory | NVIDIA SimReady | [`pallet_assembly_transparent_a03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_transparent_a03) |
+| Pallet assembly transparent, 4 | Factory | NVIDIA SimReady | [`pallet_assembly_transparent_a04`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_transparent_a04) |
+| Pallet assembly transparent, 5 | Factory | NVIDIA SimReady | [`pallet_assembly_transparent_a05`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_transparent_a05) |
+| Pallet assembly transparent, 6 | Factory | NVIDIA SimReady | [`pallet_assembly_transparent_a06`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_transparent_a06) |
+| Pallet assembly white | Factory | NVIDIA SimReady | [`pallet_assembly_white_e02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_white_e02) |
+| Pallet assembly yellow | Factory | NVIDIA SimReady | [`pallet_assembly_yellow_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_yellow_a01) |
+| Pallet assembly yellow, 2 | Factory | NVIDIA SimReady | [`pallet_assembly_yellow_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_yellow_a02) |
+| Pallet assembly yellow, 3 | Factory | NVIDIA SimReady | [`pallet_assembly_yellow_a03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_yellow_a03) |
+| Pallet assembly yellow, 4 | Factory | NVIDIA SimReady | [`pallet_assembly_yellow_a04`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_yellow_a04) |
+| Pallet assembly yellow, 5 | Factory | NVIDIA SimReady | [`pallet_assembly_yellow_a05`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_yellow_a05) |
+| Pallet assembly yellow, 6 | Factory | NVIDIA SimReady | [`pallet_assembly_yellow_a06`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_assembly_yellow_a06) |
+| Pallet composition | Factory | NVIDIA SimReady | [`pallet_composition_a13`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_composition_a13) |
+| Pallet composition, 2 | Factory | NVIDIA SimReady | [`pallet_composition_a59`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/pallet_composition_a59) |
+| Block | Toys & Basics | NVIDIA SimReady | [`primitives_block_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/primitives_block_a01) |
+| Block blue | Toys & Basics | NVIDIA SimReady | [`primitives_block_blue_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/primitives_block_blue_a01) |
+| Block green | Toys & Basics | NVIDIA SimReady | [`primitives_block_green_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/primitives_block_green_a01) |
+| Block red | Toys & Basics | NVIDIA SimReady | [`primitives_block_red_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/primitives_block_red_a01) |
+| Block yellow | Toys & Basics | NVIDIA SimReady | [`primitives_block_yellow_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/primitives_block_yellow_a01) |
+| Cube nvidia | Toys & Basics | NVIDIA SimReady | [`primitives_cube_nvidia_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/primitives_cube_nvidia_a01) |
+| Caution hearing protection | Kitchen | NVIDIA SimReady | [`signage_caution_hearingProtection_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/signage_caution_hearingProtection_a01) |
+| Caution hearing protection, 2 | Kitchen | NVIDIA SimReady | [`signage_caution_hearingProtection_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/signage_caution_hearingProtection_a02) |
+| Bin bamboo | Cleaning | NVIDIA SimReady | [`storage_bin_bamboo_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/storage_bin_bamboo_a01) |
+| Crate wooden | Factory | NVIDIA SimReady | [`storage_crate_wooden_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/storage_crate_wooden_a01) |
+| Textile decor doormat | Home | NVIDIA SimReady | [`textileDecor_doormat_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/textileDecor_doormat_a01) |
+| Textile decor rug | Home | NVIDIA SimReady | [`textileDecor_rug_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/textileDecor_rug_a01) |
+| Bread basket, 2 | Kitchen | NVIDIA SimReady | [`utensil_breadBasket_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_breadBasket_a01) |
+| Canopener | Kitchen | NVIDIA SimReady | [`utensil_canopener_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_canopener_a01) |
+| Cellar view | Kitchen | NVIDIA SimReady | [`utensil_cellarView_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_cellarView_a01) |
+| Cheese board wooden | Kitchen | NVIDIA SimReady | [`utensil_cheeseBoard_wooden_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_cheeseBoard_wooden_a02) |
+| Condiment dispenser ceramic | Kitchen | NVIDIA SimReady | [`utensil_condiment_dispenser_ceramic_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_condiment_dispenser_ceramic_a02) |
+| Condiment dispenser salt | Kitchen | NVIDIA SimReady | [`utensil_condiment_dispenser_salt_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_condiment_dispenser_salt_a01) |
+| Cutting board wooden, 2 | Kitchen | NVIDIA SimReady | [`utensil_cuttingBoard_wooden_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_cuttingBoard_wooden_a01) |
+| Cuttingboard wooden | Kitchen | NVIDIA SimReady | [`utensil_cuttingboard_wooden_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_cuttingboard_wooden_b01) |
+| Cuttingboard wooden, 2 | Kitchen | NVIDIA SimReady | [`utensil_cuttingboard_wooden_c01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_cuttingboard_wooden_c01) |
+| Dishrack wooden | Kitchen | NVIDIA SimReady | [`utensil_dishrack_wooden_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_dishrack_wooden_a01) |
+| Egg slicer, 3 | Kitchen | NVIDIA SimReady | [`utensil_eggSlicer_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_eggSlicer_a01) |
+| Fork wooden | Kitchen | NVIDIA SimReady | [`utensil_fork_wooden_c01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_fork_wooden_c01) |
+| Garlic press, 4 | Kitchen | NVIDIA SimReady | [`utensil_garlicPress_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_garlicPress_a01) |
+| Gaslighter | Kitchen | NVIDIA SimReady | [`utensil_gaslighter_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_gaslighter_a01) |
+| Kitchen timer, 2 | Kitchen | NVIDIA SimReady | [`utensil_kitchenTimer_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_kitchenTimer_a01) |
+| Knife sharpener, 2 | Kitchen | NVIDIA SimReady | [`utensil_knifeSharpener_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_knifeSharpener_a01) |
+| Knife cleaver | Kitchen | NVIDIA SimReady | [`utensil_knife_cleaver_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_knife_cleaver_a01) |
+| Knife large | Kitchen | NVIDIA SimReady | [`utensil_knife_large_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_knife_large_a01) |
+| Knife long | Kitchen | NVIDIA SimReady | [`utensil_knife_long_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_knife_long_a01) |
+| Knife saw | Kitchen | NVIDIA SimReady | [`utensil_knife_saw_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_knife_saw_a01) |
+| Knife scissors | Kitchen | NVIDIA SimReady | [`utensil_knife_scissors_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_knife_scissors_a01) |
+| Knife small | Kitchen | NVIDIA SimReady | [`utensil_knife_small_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_knife_small_a01) |
+| Knife small, 2 | Kitchen | NVIDIA SimReady | [`utensil_knife_small_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_knife_small_a02) |
+| Knife stand | Kitchen | NVIDIA SimReady | [`utensil_knife_stand_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_knife_stand_a01) |
+| Ladle wooden | Kitchen | NVIDIA SimReady | [`utensil_ladle_wooden_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_ladle_wooden_a01) |
+| Organizer metal | Kitchen | NVIDIA SimReady | [`utensil_organizer_metal_c01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_organizer_metal_c01) |
+| Pot heat protection metal | Kitchen | NVIDIA SimReady | [`utensil_potHeatProtection_metal_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_potHeatProtection_metal_a01) |
+| Rack wooden | Kitchen | NVIDIA SimReady | [`utensil_rack_wooden_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_rack_wooden_a01) |
+| Rolling pin wooden | Kitchen | NVIDIA SimReady | [`utensil_rollingPin_wooden_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_rollingPin_wooden_a01) |
+| Serving board wooden | Kitchen | NVIDIA SimReady | [`utensil_servingBoard_wooden_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_servingBoard_wooden_a01) |
+| Serving board wooden, 2 | Kitchen | NVIDIA SimReady | [`utensil_servingBoard_wooden_a02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_servingBoard_wooden_a02) |
+| Serving tray wooden | Kitchen | NVIDIA SimReady | [`utensil_servingTray_wooden_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_servingTray_wooden_a01) |
+| Serving tray wooden, 2 | Kitchen | NVIDIA SimReady | [`utensil_servingTray_wooden_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_servingTray_wooden_b01) |
+| Set wooden | Kitchen | NVIDIA SimReady | [`utensil_set_wooden_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_set_wooden_a01) |
+| Set wooden, 2 | Kitchen | NVIDIA SimReady | [`utensil_set_wooden_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_set_wooden_b01) |
+| Spatula slotted wooden | Kitchen | NVIDIA SimReady | [`utensil_spatula_slotted_wooden_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_spatula_slotted_wooden_a01) |
+| Spoon forked wooden | Kitchen | NVIDIA SimReady | [`utensil_spoon_forked_wooden_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_spoon_forked_wooden_a01) |
+| Spoon wooden, 2 | Kitchen | NVIDIA SimReady | [`utensil_spoon_wooden_d01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_spoon_wooden_d01) |
+| Spoon wooden, 3 | Kitchen | NVIDIA SimReady | [`utensil_spoon_wooden_d02`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_spoon_wooden_d02) |
+| Spoon wooden, 4 | Kitchen | NVIDIA SimReady | [`utensil_spoon_wooden_d03`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_spoon_wooden_d03) |
+| Spoon wooden, 5 | Kitchen | NVIDIA SimReady | [`utensil_spoon_wooden_d04`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_spoon_wooden_d04) |
+| Stand ceramic | Kitchen | NVIDIA SimReady | [`utensil_stand_ceramic_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_stand_ceramic_b01) |
+| Stand stailness steel | Kitchen | NVIDIA SimReady | [`utensil_stand_stailnessSteel_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_stand_stailnessSteel_b01) |
+| Strainer stainlessteel | Kitchen | NVIDIA SimReady | [`utensil_strainer_stainlessteel_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_strainer_stainlessteel_b01) |
+| Tin vintage sugar | Kitchen | NVIDIA SimReady | [`utensil_tin_vintage_sugar_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/utensil_tin_vintage_sugar_a01) |
+| Cardboard box partially open | Factory | NVIDIA SimReady | [`warehouse_cardboardBox_partiallyOpen_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/warehouse_cardboardBox_partiallyOpen_a01) |
+| Container, 2 | Factory | NVIDIA SimReady | [`warehouse_container_h20_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/warehouse_container_h20_a01) |
+| Crate, 3 | Factory | NVIDIA SimReady | [`warehouse_crate_b01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/warehouse_crate_b01) |
+| Crate yellow | Factory | NVIDIA SimReady | [`warehouse_crate_yellow_a07`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/warehouse_crate_yellow_a07) |
+| Dolly | Factory | NVIDIA SimReady | [`warehouse_dolly_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/warehouse_dolly_a01) |
+| KLT small | Factory | NVIDIA SimReady | [`warehouse_klt_small_a01`](https://huggingface.co/datasets/nvidia/simready-assets/tree/main/warehouse_klt_small_a01) |

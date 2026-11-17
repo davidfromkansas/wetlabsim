@@ -80,6 +80,9 @@ NVIDIA_WORDS = re.compile(r"^(pallet_assembly|pallet_composition|warehouse_klt|e
 NVIDIA_SINCE = "wuhanlanqi/simready-assets"   # a copy of NVIDIA's set as it was on Nov 11 (2,677 items)
 SKIP_NVIDIA = re.compile(r"^modular_warehouse_")   # building walls, not objects
 
+# Items the word rules put in the wrong tab
+TAB_FIX = {"as_mask_9da2uznfyx": "Home", "ps_wheeled_trash_bin_green": "Cleaning", "mx_coiled_rope": "Garage"}
+
 # Names that read badly when made from the folder name
 LABELS = {"lancable": "LAN cable", "klt": "KLT", "tv": "TV", "usb": "USB", "pcr": "PCR", "led": "LED",
           "aht20": "AHT20", "icm40608": "ICM40608", "scd40": "SCD40", "tft": "TFT", "pir": "PIR",
@@ -151,7 +154,7 @@ def main(argv=None):
             label, n = f"{base}, {n}", n + 1
         labels.add(label)
         id_ = PREFIX[src] + "_" + re.sub(r"[^a-z0-9]+", "_", folder.lower()).strip("_")
-        rows.append({"id": id_, "source": src, "folder": folder, "label": label, "tab": tab, "fixed": False})
+        rows.append({"id": id_, "source": src, "folder": folder, "label": label, "tab": TAB_FIX.get(id_, tab), "fixed": False})
 
     cats = projectsim_categories()
     for f in _dirs(REPOS["projectsim"]):
