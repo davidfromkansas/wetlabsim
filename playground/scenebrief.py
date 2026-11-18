@@ -226,6 +226,12 @@ def _candidates(slot: dict, room: str) -> list[str]:
     tags = T.tags()
     ids = [i for i in ids if i not in WALL_HUNG or
            {"wall", "hood", "basin"} & _words(tags[i]["label"]) & want & _words(slot.get("asked", ""))] or ids
+    # a task that opens a door (or pulls a drawer) needs a thing that really does: when the branch
+    # has no table-size one, tabletop things from anywhere that open that way join the list
+    if slot.get("role") == "task":
+        for words, kind in (({"door", "doors", "hinged", "lid"}, "hinged"), ({"drawer", "drawers"}, "drawers")):
+            if words & want and not any(kind in opens(i) and max(tags[i]["size_cm"]) <= 60 for i in ids):
+                ids = ids + [i for i in tabletop() if kind in opens(i) and i not in ids]
     # every object under the branch stays a candidate (a basket the task puts things in needn't be
     # one a hand can lift); the ranking and the final choice judge the fit
     return ids
