@@ -36,10 +36,31 @@ def local_files(root: pathlib.Path, ids: list[str]) -> dict[str, pathlib.Path]:
     return {str(f.relative_to(root)): f for d in dirs for f in d.rglob("*") if f.is_file()}
 
 
+INDEX_KEYS = ("size", "mass", "friction", "collision")
+
+
+def write_index(root: pathlib.Path) -> pathlib.Path:
+    """root/index.json: the catalog's few fields from every object's asset.json (catalog.available)."""
+    import json
+    index = {}
+    for f in sorted(root.glob("*/asset.json")):
+        m = json.loads(f.read_text())
+        index[f.parent.name] = {k: m.get(k) for k in INDEX_KEYS}
+    out = root / "index.json"
+    out.write_text(json.dumps(index, separators=(",", ":")))
+    return out
+
+
 def push(ids: list[str], every: bool = False, root: pathlib.Path = catalog.ASSETS):
+    if not any(root.glob("*/asset.json")):
+        raise SystemExit(f"no objects in {root}: run `pull` first (pushing would empty the index)")
+    write_index(root)
     vol = volume()
     have = {} if every else remote_sizes(vol)
-    todo = [(rel, f) for rel, f in sorted(local_files(root, ids).items()) if have.get(rel) != f.stat().st_size]
+    files = local_files(root, ids)
+    files["index.json"] = root / "index.json"
+    todo = [(rel, f) for rel, f in sorted(files.items())
+            if rel == "index.json" or have.get(rel) != f.stat().st_size]
     print(len(todo), "files to upload", flush=True)
     for k in range(0, len(todo), BATCH):
         with vol.batch_upload(force=True) as b:

@@ -607,11 +607,17 @@ def available() -> list[dict]:
 
 
 def _available() -> list[dict]:
+    # index.json (written by tools/library.py push): every object's asset.json in one file, so the
+    # Modal Volume is read once instead of ~3,000 times. Objects not in it are read one by one.
+    idx = ASSETS / "index.json"
+    index = json.loads(idx.read_text()) if idx.exists() else {}
     out = []
     for i, tab, label, hf, hollow, fixed in ITEMS:
         f = ASSETS / i / "asset.json"
-        if f.exists():
+        m = index.get(i)
+        if m is None and f.exists():
             m = json.loads(f.read_text())
+        if m is not None:
             out.append({"id": i, "tab": tab, "label": label, "fixed": fixed, "size": m["size"],
                         "mass": m["mass"], "friction": m.get("friction"),
                         "collision": m.get("collision", ""), "thumb": f"/pg/thumb/{i}.png",
