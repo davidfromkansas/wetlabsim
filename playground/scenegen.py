@@ -1167,6 +1167,7 @@ class Build:
         self.station_tasks: dict[str, str] = {}
         self.model_id, self.public = model_id, public
         self.id = os.urandom(4).hex()
+        self.measured = []            # how many measured problems each check round started with
         self.rationale = {}           # the layout step's own reasons, checked against after the build
         self.phase = "plan"           # plan, robots, furniture, objects, done, stopped, error
         self.plan_text = ""
@@ -2138,6 +2139,58 @@ class Build:
                          "on": on, "role": self.role.get(u, "furniture" if catalog.item(p.item)["fixed"] else "scene")})
         return rows
 
+    def _problems(self, rows: list[dict]) -> list[str]:
+        """What measuring the built scene finds wrong, in plain words for the check step: a
+        cabinet's, fridge's or machine's front with something standing in the way of its doors,
+        and a thing the task works (role task) whose front the arm doesn't reach."""
+        from . import object_tree as T
+        from .scenegrid import long_y
+        s = self.sim
+        tags = T.tags()
+        fronted = tuple(k for k in WALL_KINDS if k not in ("Sinks & taps", "Electrical", "Boards & presenting"))
+        sts = [st for st in (s.station(u) for u in self.stations) if st is not None]
+        boxes = [(f"the table of {st.name}", _station_rect(st.kind, st.robot, st.pos[0], st.pos[1], st.yaw), None)
+                 for st in sts]
+        boxes += [(f"the {r['label'].lower()} (n {r['n']})", _item_rect(r["item"], r["x"], r["y"], math.radians(r["yaw"])),
+                   r["n"]) for r in rows if catalog.item(r["item"])["fixed"] and r["on"] == "floor"]
+        out = []
+        for r in rows:
+            it = r["item"]
+            if not catalog.item(it)["fixed"] or r["on"] != "floor" or it in FENCE or \
+                    not any(k in pth for pth in tags.get(it, {}).get("paths", []) for k in fronted):
+                continue
+            sx, sy, _ = catalog.meta(it)["size"]
+            yaw = math.radians(r["yaw"])
+            lng = long_y(it)
+            fx, fy = _rot(1.0, 0.0, yaw) if lng else _rot(0.0, float(front_sign(it)), yaw)
+            deep, wide = (sx, sy) if lng else (sy, sx)
+            need = 0.5                                   # room for a door to swing and a hand to reach in
+            cx, cy = r["x"] + fx * (deep / 2 + need / 2 + 0.03), r["y"] + fy * (deep / 2 + need / 2 + 0.03)
+            hw, hd = 0.35 * wide, need / 2
+            ex, ey = (hd, hw) if abs(fx) > abs(fy) else (hw, hd)
+            zone = (cx - ex, cy - ey, cx + ex, cy + ey)
+            # (a thing the task works stands right at its robot's table on purpose: front to the arm)
+            hit = next((name for name, b, n in boxes if n != r["n"] and _hit(zone, b)
+                        and not (n is None and r["role"] == "task")), None)
+            if hit:
+                out.append(f"n {r['n']} ({r['label']}): its front is blocked by {hit}; it needs {need} m clear "
+                           f"in front of it. Move one of them or turn it.")
+            if r["role"] == "task" and sts:
+                px, py = r["x"] + fx * deep / 2, r["y"] + fy * deep / 2
+                best = None
+                for st in sts:
+                    reach = next((q["reach_mm"] for q in catalog.robots() if q["id"] == st.robot), 850) / 1000.0
+                    for b in st.bases():
+                        wx, wy = st.to_world(*b)[:2]
+                        d = math.hypot(px - wx, py - wy)
+                        if best is None or d - reach < best[0] - best[1]:
+                            best = (d, reach, st.name)
+                if best and best[0] > best[1]:
+                    out.append(f"n {r['n']} ({r['label']}): the task works it, but its front is {best[0]:.2f} m from "
+                               f"{best[2]}'s robot, which reaches {best[1]:.2f} m. Stand it at a side end of that "
+                               f"robot's table, front to the robot.")
+        return out[:8]
+
     def _look_and_fix(self, round_no: int) -> bool:
         """Show the model the scene it built and let it fix what looks wrong: turn things to
         face the right way, move what's misplaced, take out what doesn't belong. Every move
@@ -2162,6 +2215,11 @@ class Build:
                 f"Front sides: an object turned yaw 0 has its front towards -y, except "
                 f"{[r['n'] for r in rows if front_sign(r['item']) > 0]} whose front is towards +y at yaw 0. "
                 "Picture 1 looks down from above (+x to the right, +y up); picture 2 looks at the robots from the side.")
+        probs = self._problems(rows)
+        self.measured.append(len(probs))
+        if probs:
+            user += ("\nMeasured on the built scene (fix these first; they are facts, not guesses):\n- "
+                     + "\n- ".join(probs))
         from . import scenegrid
         if scenegrid.on():
             user += (" Picture 1 has the floor's grid drawn on it: 25 cm squares, a bold line at each metre "

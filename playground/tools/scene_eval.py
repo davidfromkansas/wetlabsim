@@ -88,6 +88,7 @@ def build_one(p: dict, model: str, judge: str, out: pathlib.Path) -> dict:
             time.sleep(0.3)
         st = b.status()
         res["build"] = {k: st[k] for k in ("phase", "error", "counts", "skipped", "task", "plan", "fixes")}
+        res["build"]["measured"] = getattr(b, "measured", [])     # measured problems at each check round
         res["layout"] = {"raw": getattr(b, "raw_layout", None),
                          "objects": [{k: v for k, v in o.items() if k != "yaw"} for o in getattr(b, "laid", [])]}
         res["seconds"] = round(time.time() - t0, 1)
