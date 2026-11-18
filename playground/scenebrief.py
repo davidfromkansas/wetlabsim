@@ -280,7 +280,7 @@ def jev_rank(prompt: str, brief: dict, pools: list[list[str]], key: str) -> list
                                             f"{slot['want'] or slot['node'].split(' > ')[-1]} "
                                             f"(for the {slot['zone']} zone; {'the robot task needs it' if slot['role'] == 'task' else 'there so the place looks real'})?",
                             "criteria": {_option_key(i): f"{tags[i]['label']} ({'x'.join(map(str, tags[i]['size_cm']))} cm, "
-                                                         f"{'textured' if tags[i]['look'] == 'full' else 'plain grey CAD look'})"
+                                                         f"{'textured' if tags[i]['look'] == 'full' else 'plain grey CAD look'}{opens(i)})"
                                          for i in chunk}}
             parts.append((k, q, chunk))
     state = {"scene": {"request": prompt[:2000], "room": brief["room"], "task": brief["task"],
@@ -339,6 +339,8 @@ the count asks for more than one of the same thing, like 4 dinner plates for a t
 - Variety: avoid near duplicates across the whole scene (not three different kettles) unless \
 the task needs them.
 - One look: prefer textured objects; a plain grey CAD object only when nothing textured fits.
+- A task that opens a door needs a thing that "opens: hinged door"; one that pulls a drawer \
+needs "drawers". A thing with no "opens" note doesn't open at all.
 - Task slots: the object must fit the task; check its size suits a robot hand. Something \
 that starts inside a closed drawer must be short enough for it (a small cabinet's drawer is \
 about 5.5 cm tall inside): choose a low thing for that, or say so in the task.
@@ -354,12 +356,36 @@ Answer with JSON only:
  "task": "the task, one sentence, rewritten only if a needed object is missing"}"""
 
 
+_OPENS: dict[str, str] = {}
+
+
+def opens(item: str) -> str:
+    """How a thing opens, from its own joints: ", hinged door or lid", ", drawers or sliding
+    parts", both, or "" (nothing moves). So a door task gets a thing with a real hinge."""
+    if item not in _OPENS:
+        kinds = set()
+        try:
+            m = catalog.meta(item)
+            for b in m.get("bodies") or []:
+                j = (b.get("joint") or {}) if isinstance(b, dict) else {}
+                if j.get("type"):
+                    kinds.add(j["type"])
+            if m.get("mjcf"):
+                kinds |= set(re.findall(r'<joint[^>]*type="(hinge|slide)"',
+                                        (catalog.ASSETS / item / m["mjcf"]).read_text()))
+        except (OSError, ValueError, KeyError):
+            pass
+        words = [w for k, w in (("hinge", "hinged door or lid"), ("slide", "drawers or sliding parts")) if k in kinds]
+        _OPENS[item] = (", opens: " + " and ".join(words)) if words else ""
+    return _OPENS[item]
+
+
 def choose_messages(prompt: str, brief: dict, lists: list[list[str]]) -> tuple[str, str]:
     tags = T.tags()
     rows = []
     for k, (s, ids) in enumerate(zip(brief["slots"], lists)):
         opts = "; ".join(f"{i} = {tags[i]['label']} ({'x'.join(map(str, tags[i]['size_cm']))} cm, "
-                         f"{'textured' if tags[i]['look'] == 'full' else 'plain CAD'})" for i in ids)
+                         f"{'textured' if tags[i]['look'] == 'full' else 'plain CAD'}{opens(i)})" for i in ids)
         rows.append(f"slot {k}: {s['count']} x {s['want'] or s['node']} | branch {s['node']} | zone {s['zone']} | "
                     f"role {s['role']}\n  options: {opts or '(none)'}")
     user = (f"The person's request:\n{prompt.strip()[:2000]}\n\nRoom: {brief['room']}\nTask: {brief['task']}\n"
