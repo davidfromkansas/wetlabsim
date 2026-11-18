@@ -1515,8 +1515,59 @@ class Build:
                 if o["on"] == "furniture":
                     o["on"] = "station"
         if self.pick.get("brief") and not self.preset:
+            self._dock_task_furniture(stations, furniture, objects)
             self._arrange_room(stations, furniture)
         return stations, furniture, objects
+
+    def _dock_task_furniture(self, stations, furniture, objects):
+        """A floor-standing thing the task itself works (the brief's role "task": an incubator to
+        open, a fridge to load) with a door or drawer, or with task things starting inside it:
+        stood against its robot's table, front to the robot, its front within the arm's reach.
+        The side the model chose if the arm reaches it there, else the nearest side that it does."""
+        br = self.pick.get("brief") or {}
+        slot_of = self.pick.get("slot_of") or {}
+        from .scenegrid import long_y
+        hosts = {o["furniture"] for o in objects if o["on"] == "inside" and o.get("in_furniture")}
+        for n, f in enumerate(furniture):
+            it = f["item"]
+            k = slot_of.get(it)
+            try:
+                role = br["slots"][k]["role"]
+            except (KeyError, IndexError, TypeError):
+                continue
+            meta = catalog.meta(it)
+            sx, sy, _ = meta["size"]
+            if role != "task" or it in FENCE or max(sx, sy) > 1.5 or \
+                    not (n in hosts or len(meta.get("bodies") or []) > 1):
+                continue
+            lng = long_y(it)
+            deep = sx if lng else sy
+            best = None
+            for st in stations:
+                pr = W.Station("probe", st["robot"], (st["x"], st["y"]), st["yaw"], kind=st["kind"])
+                if len(pr.bases()) != 1:
+                    continue
+                bx, by = pr.bases()[0]
+                tx, ty = pr.footprint()
+                reach = 0.85 * next((r["reach_mm"] for r in catalog.robots() if r["id"] == st["robot"]), 850) / 1000.0
+                lx, ly = _rot(f["x"] - st["x"], f["y"] - st["y"], -st["yaw"])
+                ax = min(tx / 2 - 0.1, max(bx + 0.3, -tx / 2 + 0.1))       # along the table, just ahead of the base
+                # (the front's spot, the way the front points, how far the model's spot is from it)
+                cands = [((ax, ty / 2 + 0.05), -math.pi / 2), ((ax, -ty / 2 - 0.05), math.pi / 2),
+                         ((tx / 2 + 0.05, by), math.pi)]
+                for (qx, qy), phi in cands:
+                    if math.hypot(qx - bx, qy - by) > reach:
+                        continue
+                    cx, cy = qx - math.cos(phi) * deep / 2, qy - math.sin(phi) * deep / 2
+                    d = math.hypot(cx - lx, cy - ly)
+                    if best is None or d < best[0]:
+                        best = (d, st, cx, cy, phi)
+            if best is None:
+                continue
+            _, st, cx, cy, phi = best
+            wx, wy = _rot(cx, cy, st["yaw"])
+            turn = phi if lng else (phi - math.pi / 2 if front_sign(it) > 0 else phi + math.pi / 2)
+            f["x"], f["y"], f["yaw"], f["gap"] = st["x"] + wx, st["y"] + wy, st["yaw"] + turn, 0.02
 
     def _arrange_room(self, stations, furniture):
         """Floor furniture that lines a wall in a real room (WALL_KINDS) stood in one run behind
@@ -1628,7 +1679,7 @@ class Build:
             out, length, deep, last = [], 0.0, 0.0, None
             for f, _, _ in rows:
                 sx, sy, _ = catalog.meta(f["item"])["size"]
-                if sy > 1.25 * sx:      # long front to back as modelled (NVIDIA's counters and
+                if sy > 1.25 * sx and front_sign(f["item"]) < 0:   # long front to back as modelled (NVIDIA's counters and
                     yaw = math.atan2(norm[wall][1], norm[wall][0])   # benches): its long side along the wall
                 else:
                     yaw = _facing(f["item"], 0.0, 0.0, list(norm[wall]), [], 0.0)

@@ -48,8 +48,9 @@ def _dir(v) -> str:
 
 def long_y(item: str) -> bool:
     """Modelled long from front to back (NVIDIA's counters and benches): its front is its +x side."""
+    from .scenegen import front_sign
     sx, sy, _ = catalog.meta(item)["size"]
-    return sy > 1.25 * sx
+    return sy > 1.25 * sx and front_sign(item) < 0      # a Tripo model's front is its +y side whatever its shape
 
 
 def squares(item: str) -> tuple[int, int]:
