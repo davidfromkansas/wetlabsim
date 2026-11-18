@@ -34,7 +34,7 @@ from playground.sim import PlaygroundSim
 
 JUDGE_SYSTEM = """You judge scenes built for a robot physics playground from a person's typed \
 request. You get pictures of the scene (from above, from the side facing the robots, and the \
-first robot's table close up), \
+first robot's table close up, from over the robot's shoulder), \
 the list of robots and objects placed, and the task the robot will be given. Judge only what the \
 request asked for; our object library is limited, so a sensible stand-in for something we don't \
 have is fine and a missing thing that was asked for costs a little.

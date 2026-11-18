@@ -1566,6 +1566,8 @@ class Build:
                 continue
             lng = long_y(it)
             deep = sx if lng else sy
+            if self._onto_table(n, f, stations, furniture, objects, deep):
+                return self._dock_task_furniture(stations, furniture, objects)
             best = None
             for st in stations:
                 pr = W.Station("probe", st["robot"], (st["x"], st["y"]), st["yaw"], kind=st["kind"])
@@ -1592,6 +1594,42 @@ class Build:
             wx, wy = _rot(cx, cy, st["yaw"])
             turn = phi if lng else (phi - math.pi / 2 if front_sign(it) > 0 else phi + math.pi / 2)
             f["x"], f["y"], f["yaw"], f["gap"] = st["x"] + wx, st["y"] + wy, st["yaw"] + turn, 0.02
+
+    def _onto_table(self, n, f, stations, furniture, objects, deep) -> bool:
+        """A thing the task opens that is small enough for a bench top (under 0.9 m each way,
+        like a benchtop incubator or an under-counter fridge) and has a door or drawer: stood ON
+        the first robot's table, 0.48 m in front of the arm with its front to it, instead of on
+        the floor where a table-mounted arm can't work it. The table becomes the big packing
+        table if its own is too shallow. True if it was moved (it is then the first object)."""
+        it = f["item"]
+        meta = catalog.meta(it)
+        sx, sy, sz = meta["size"]
+        if max(sx, sy, sz) > 0.9 or len(meta.get("bodies") or []) < 2 or not stations:
+            return False
+        st = stations[0]
+        pr = W.Station("probe", st["robot"], (0.0, 0.0), 0.0, kind="table")
+        bx, by = pr.bases()[0]
+        tx, ty = pr.footprint()
+        if len(pr.bases()) != 1 or abs(bx) > tx / 2 or bx + 0.48 + deep > tx / 2 + 0.05:
+            return False
+        st["kind"] = "table"
+        furniture.pop(n)
+        for o in objects:
+            if o["on"] == "inside" and not o.get("in_furniture") and o["object"] >= 0:
+                o["object"] += 1
+            if o.get("in_furniture") or o["on"] == "furniture":
+                if o["furniture"] == n:
+                    if o["on"] == "inside":
+                        o["in_furniture"], o["object"] = False, 0
+                    else:
+                        o["on"] = "station"
+                elif o["furniture"] > n:
+                    o["furniture"] -= 1
+        x = bx + 0.48 + deep / 2
+        objects.insert(0, {"item": it, "on": "station", "station": 0, "furniture": 0, "x": x, "y": by,
+                           "dx": 0.0, "dy": 0.0, "yaw": _facing(it, x, by, [bx, by], [], 0.0),
+                           "object": -1, "in_furniture": False, "level": 1, "overhang": False})
+        return True
 
     def _arrange_room(self, stations, furniture):
         """Floor furniture that lines a wall in a real room (WALL_KINDS) stood in one run behind
@@ -2118,8 +2156,10 @@ class Build:
         return [{"lookat": [cx, cy, 0.4], "distance": 1.3 * span + 1.0, "azimuth": 90.0, "elevation": -70.0,
                  "area": (x0, y0, x1, y1)},
                 {"lookat": [cx, cy, 0.7], "distance": 1.0 * span + 1.2, "azimuth": az, "elevation": -25.0}] + \
-            ([{"lookat": [st.pos[0], st.pos[1], st.top + 0.1], "distance": 2.1, "azimuth": az,
-               "elevation": -42.0}] if st else [])        # and the first robot's table, close up
+            ([{"lookat": [st.pos[0], st.pos[1], st.top + 0.15], "distance": 2.3,
+               "azimuth": (math.degrees(st.yaw) + 40.0) % 360, "elevation": -38.0}] if st else [])
+        # ...and the first robot's table close up, from over the robot's shoulder (what it works on,
+        # and the fronts turned to it)
 
     def pictures(self, w: int = 1024, h: int = 640) -> list[bytes]:
         from . import scenegrid
@@ -2223,7 +2263,7 @@ class Build:
                 f"Front sides: an object turned yaw 0 has its front towards -y, except "
                 f"{[r['n'] for r in rows if front_sign(r['item']) > 0]} whose front is towards +y at yaw 0. "
                 "Picture 1 looks down from above (+x to the right, +y up); picture 2 looks at the robots from the side; "
-                "picture 3 is the first robot's table close up, seen from in front of the robot.")
+                "picture 3 is the first robot's table close up, seen from over the robot's shoulder.")
         probs = self._problems(rows)
         self.measured.append(len(probs))
         if probs:
