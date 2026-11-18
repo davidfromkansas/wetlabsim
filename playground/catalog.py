@@ -594,8 +594,19 @@ def meta(id_: str) -> dict:
     return json.loads((ASSETS / id_ / "asset.json").read_text())
 
 
+_AVAILABLE: list[dict] | None = None
+
+
 def available() -> list[dict]:
-    """Library items whose converted files are present."""
+    """Library items whose converted files are present. Read once per process: on Modal the files
+    are on a Volume, where reading ~3,000 asset.json files per request would be slow."""
+    global _AVAILABLE
+    if _AVAILABLE is None:
+        _AVAILABLE = _available()
+    return _AVAILABLE
+
+
+def _available() -> list[dict]:
     out = []
     for i, tab, label, hf, hollow, fixed in ITEMS:
         f = ASSETS / i / "asset.json"

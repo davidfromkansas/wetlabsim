@@ -31,7 +31,7 @@ import modal
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 IGNORE = [".git", ".venv", "runs", "build", "**/__pycache__", ".pytest_cache", "*.mp4", ".DS_Store",
           "playground/libero_assets/files", "hosting",
-          "playground/assets",          # baked into the image instead (below)
+          "playground/assets",          # in the "wetlab-library" Volume instead (below)
           "wetlabsim/assets/unitree_g1/sonic/*.onnx"]   # downloaded into the image instead (below)
 # The app: "wetlab-playground" is the public site. Another name (WETLAB_APP=wetlab-playground-staging
 # when deploying) is a separate copy with its own address, run records and lab registry, for testing.
@@ -43,17 +43,6 @@ MAX_LABS = 2 if STAGING else 30
 BUILD = os.environ.get("WETLAB_BUILD") or time.strftime("%Y%m%d-%H%M%S") + "-" + subprocess.run(
     ["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
 FRONT_URL = f"https://davidfromkansas--{APP}-web.us-east.modal.run"
-
-# The object library (playground/assets) has ~180,000 files, more than one Modal mount may hold
-# (125,000). It goes into the image in a few parts, each under that limit; a part whose files
-# haven't changed is reused from the last deploy, so only changed objects are uploaded.
-ASSET_PARTS = 4
-
-
-def _asset_part(i: int):
-    """ignore= for part i: keep only the objects whose folder name falls in this part."""
-    import zlib
-    return lambda rel: zlib.crc32(rel.parts[0].encode()) % ASSET_PARTS != i if rel.parts else False
 
 image = (
     modal.Image.debian_slim(python_version="3.12")
@@ -68,13 +57,8 @@ image = (
                   "planner_sonic.onnx; do python -c \"import urllib.request,sys; urllib.request.urlretrieve("
                   "'https://huggingface.co/nvidia/GEAR-SONIC/resolve/6733128a3d8a523b1418b06bca3cdf61c8b0987f/'"
                   "+sys.argv[1], sys.argv[1])\" $f; done && ls -la /opt/sonic")
-)
-for _i in range(ASSET_PARTS):
-    image = image.add_local_dir(str(ROOT / "playground" / "assets"), "/opt/assets", copy=True, ignore=_asset_part(_i))
-image = (
-    image
     .env({"MUJOCO_GL": "egl", "EGL_PLATFORM": "surfaceless", "PYTHONPATH": "/app", "PYTHONUNBUFFERED": "1",
-          "WETLAB_SONIC_DIR": "/opt/sonic", "WETLAB_ASSETS_DIR": "/opt/assets",
+          "WETLAB_SONIC_DIR": "/opt/sonic", "WETLAB_ASSETS_DIR": "/library",
           "WETLAB_MAX_LABS": str(MAX_LABS), "WETLAB_FRONT_URL": FRONT_URL, "WETLAB_MODAL_APP": APP,
           "WETLAB_BUILD": BUILD, "WETLAB_DICT_PREFIX": f"{APP}-" if STAGING else "",
           # The website: finished runs' files go to its private Blob store through it.
@@ -82,6 +66,9 @@ image = (
     .add_local_dir(str(ROOT), "/app", ignore=IGNORE)
 )
 runs = modal.Volume.from_name(f"{APP}-runs", create_if_missing=True)
+# The object library's files (playground/tools/library.py pushes them; not in git, not in the deploy):
+# read when a scene uses an object, so new objects need no deploy. Shared by the site and staging.
+library = modal.Volume.from_name("wetlab-library", create_if_missing=True, version=2).with_mount_options(read_only=True)
 
 
 def _optional_secret(name: str) -> list:
@@ -117,7 +104,7 @@ def _commit_loop(every=30):
     threading.Thread(target=loop, daemon=True).start()
 
 
-@app.function(cpu=1.0, memory=2048, volumes={"/data": runs}, max_containers=2, scaledown_window=600,
+@app.function(cpu=1.0, memory=2048, volumes={"/data": runs, "/library": library}, max_containers=2, scaledown_window=600,
               secrets=[*_optional_secret(LINK_SECRET), *_optional_secret(DB_SECRET)])
 @modal.concurrent(max_inputs=500)
 @modal.web_server(8780, startup_timeout=300)
@@ -129,7 +116,7 @@ def web():
 
 
 @app.function(cpu=4.0, memory=6144, secrets=lab_secrets,
-              volumes={"/data": runs}, max_containers=MAX_LABS, timeout=12 * 3600)
+              volumes={"/data": runs, "/library": library}, max_containers=MAX_LABS, timeout=12 * 3600)
 def lab(lab_id: str, owner_key: str, owner_user: str = ""):
     """One visitor's lab, for as long as it is in use (its server exits after 5 minutes with no real activity)."""
     with modal.forward(8780) as page, modal.forward(8781) as robot, modal.forward(8782) as proxy:

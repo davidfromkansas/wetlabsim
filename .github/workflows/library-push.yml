@@ -1,0 +1,39 @@
+# One-off: upload the object library to the "wetlab-library" Modal Volume, then deploy this branch
+# to the staging copy and check it serves objects from the Volume. Removed before merge.
+name: Library to Volume (one-off)
+on:
+  push:
+    branches: [claude/project-thread-ms2bfd]
+    paths: [".github/workflows/library-push.yml"]
+concurrency:
+  group: library-push
+  cancel-in-progress: true
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+      MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install modal
+      - name: Upload the library
+        run: python -m playground.tools.library push
+      - name: Upload again (should find nothing left)
+        run: python -m playground.tools.library push
+      - name: Deploy staging
+        env:
+          WETLAB_APP: wetlab-playground-staging
+        run: modal deploy hosting/app.py
+      - name: Staging serves objects from the Volume
+        run: |
+          B=https://davidfromkansas--wetlab-playground-staging-web.us-east.modal.run
+          sleep 20
+          time curl -sf -m 300 $B/pg/catalog -o cat.json
+          python -c "import json; d=json.load(open('cat.json')); n=len(d['items']); print(n, 'items'); assert n > 3000"
+          time curl -sf -m 120 $B/pg/catalog -o /dev/null
+          curl -sf -m 120 $B/pg/thumb/nd_roller_conveyor.png -o t.png && ls -la t.png
