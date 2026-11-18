@@ -109,8 +109,11 @@ zone is "robot": the robot's own table/counter where the task happens.
 like "Kitchen & dining > Tableware > Drinkware"; prefer the deepest branch that fits, and only \
 branches with objects under them), how many objects from it, which zone it goes in, its role \
 ("task": the task needs it, it goes on the robot's table, and must be small enough for a robot \
-hand; "scene": there so the place looks real), and "want": a few words on what you'd like from \
-that branch ("a white mug", "any toaster").
+hand; "scene": there so the place looks real; also "task" for the big thing the request names \
+as what the robot works on: the pallet it unloads or stacks, the machine it tends, the conveyor \
+it feeds, the shelf it stocks), and "want": a few words on what you'd like from that branch \
+("a white mug", "any toaster"). The task works on what the request names: depalletizing takes \
+boxes off the wrapped pallet, not off a table.
   For a place, variety makes it look real: cover the different kinds of things such a place has (a \
 kitchen has big appliances, countertop appliances, cookware, tableware, food, utensils...), \
 usually 6 to 12 different branches. About 8 to 20 objects in all; keep the robot's table to \

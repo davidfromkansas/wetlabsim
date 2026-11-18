@@ -1591,8 +1591,10 @@ class Build:
             meta = catalog.meta(it)
             sx, sy, _ = meta["size"]
             small_ = max(sx, sy) <= 0.5 and meta["size"][2] <= 0.7
+            # (a pallet to unload or stack, a conveyor to feed: the task works it, so it stands at the table too)
+            worked = any(w in catalog.item(it)["label"].lower() for w in ("pallet", "conveyor", "cart", "rack", "shelf"))
             if role != "task" or it in FENCE or max(sx, sy) > 1.5 or \
-                    not (small_ or n in hosts or len(meta.get("bodies") or []) > 1):
+                    not (small_ or worked or n in hosts or len(meta.get("bodies") or []) > 1):
                 continue
             lng = long_y(it)
             deep = sx if lng else sy
