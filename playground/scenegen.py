@@ -591,6 +591,9 @@ them in one line behind the robot, not loose on the floor.
 stand there); put them on a table, counter or shelf.
 - Furniture (the items marked as furniture) stands on the floor, in the scene's frame: never \
 over a station table, and at least 0.3 m from every table and from other furniture, except:
+  - A big thing that rests on another piece of furniture (a car on its lift, a load on a pallet, \
+a machine on its stand) is listed after it with "on": that furniture's index (from 0): it goes on \
+top, centred.
   - Furniture that belongs together stands side by side in one straight run, fronts the same \
 way, backs on one line, with "gap": 0.02: a kitchen run (base cabinets, counter, sink, stove, \
 dishwasher, fridge), a row of server racks, a conveyor line, a lab bench run. A room should read \
@@ -1156,6 +1159,28 @@ def _item_rect(item: str, x: float, y: float, yaw: float):
             x + max(p[0] for p in pts), y + max(p[1] for p in pts))
 
 
+# Furniture made to carry another big thing on top (a car on a lift, a load on a pallet)
+CARRIER = re.compile(r"\b(lift|platform|pallet|stand|dolly|turntable|skid|plinth|riser|trolley|cart|"
+                     r"jack|base|table)\b", re.I)
+
+
+def _rest_on(furniture: list, fwhere: dict) -> None:
+    """Furniture the plan sets on another piece ("on": its index), or puts at the same spot as an
+    earlier carrier (a lift, a pallet, a stand), rests on top of it: "rest_on" = our index."""
+    for k, f in enumerate(furniture):
+        raw = f.pop("on_raw", None)
+        j = fwhere.get(raw) if isinstance(raw, int) and not isinstance(raw, bool) else None
+        if j is None:
+            for i, b in enumerate(furniture[:k]):
+                r = _item_rect(b["item"], b["x"], b["y"], b["yaw"])
+                if (r[0] <= f["x"] <= r[2] and r[1] <= f["y"] <= r[3]
+                        and CARRIER.search(catalog.item(b["item"])["label"])):
+                    j = i
+                    break
+        if j is not None and j < k:
+            f["rest_on"] = j
+
+
 def _hit(a, b, m: float = 0.0) -> bool:
     return a[0] - m < b[2] and b[0] - m < a[2] and a[1] - m < b[3] and b[1] - m < a[3]
 
@@ -1246,7 +1271,7 @@ class Build:
                 if self.stop:
                     return self._end("stopped")
                 self.now = catalog.item(f["item"])["label"]
-                fixed_uids.append(self._place_furniture(f, off))
+                fixed_uids.append(self._place_furniture(f, off, fixed_uids))
             self.phase = "objects"
             placed = [None] * len(objects)
             # things that go inside other things go down last, once what holds them is there
@@ -1342,7 +1367,7 @@ class Build:
                         if self.stop:
                             return self._end("stopped")
                         self.now = catalog.item(f["item"])["label"]
-                        fixed_uids.append(self._place_furniture(f, off))
+                        fixed_uids.append(self._place_furniture(f, off, fixed_uids))
                     self.phase = "objects"
                     started = True
                     n_f = len(furniture)
@@ -1371,7 +1396,7 @@ class Build:
                 self.phase = "furniture"
             for f in furniture2[len(fixed_uids):]:    # furniture it left out
                 self.now = catalog.item(f["item"])["label"]
-                fixed_uids.append(self._place_furniture(f, off))
+                fixed_uids.append(self._place_furniture(f, off, fixed_uids))
             self.phase = "objects"
             place_new(objects)
             for k in inside_wait:                       # things that go inside others, now all down
@@ -1462,18 +1487,21 @@ class Build:
                     want_o.append(i)
                 else:
                     want_f.append(i)
-        furniture = []
-        for f in lay.get("furniture") or []:
+        furniture, fwhere = [], {}     # fwhere: the model's own index of each furniture -> ours
+        for k_raw, f in enumerate(lay.get("furniture") or []):
             it = str((f or {}).get("item", ""))
             if it in want_f and it in [x for x in want_f]:
                 want_f.remove(it)
+                fwhere[k_raw] = len(furniture)
                 furniture.append({"item": it, "x": _f(f.get("x")), "y": _f(f.get("y")),
                                   "yaw": _facing(it, _f(f.get("x")), _f(f.get("y")), f.get("face"), stations,
                                                  math.radians(_f(f.get("yaw")))),
                                   # a ready-made scene may butt pieces together (conveyor sections)
                                   "gap": max(0.0, _f(f.get("gap", 0.15))) if self.preset
                                   else min(0.15, max(0.02, _f(f.get("gap", 0.15)))),
-                                  "open": bool(f.get("open"))})
+                                  "open": bool(f.get("open")),
+                                  "on_raw": f.get("on")})
+        _rest_on(furniture, fwhere)
         for it in ([] if partial else want_f):
             furniture.append({"item": it, "x": 2.5, "y": -1.5 + 1.5 * len(furniture), "yaw": math.pi})
         objects, where = [], {}       # where: the model's own index of each object -> ours
@@ -2018,9 +2046,22 @@ class Build:
         self.stations.append(uid)
         self.counts["robots"][0] += 1
 
-    def _place_furniture(self, f, off):
+    def _place_furniture(self, f, off, done=()):
         s = self.sim
         x, y, yaw = f["x"] + off[0], f["y"] + off[1], f["yaw"]
+        j = f.get("rest_on")
+        base = s.find(done[j]) if j is not None and j < len(done) and done[j] else None
+        if base:       # on top of the lift / pallet it belongs on, centred, turned the same way
+            label = catalog.item(base.item)["label"]
+            cx, cy = self._top_middle(base)
+            for yw in (base.yaw, base.yaw + math.pi / 2):
+                spot = s.support(f["item"], cx, cy, yw)
+                if spot["valid"] and spot["surface"] == label:
+                    uid = s.add(f["item"], spot["pos"], yw)
+                    self.objects.append(uid)
+                    self.counts["furniture"][0] += 1
+                    self._open(uid, f)
+                    return uid
         mine = self._mine_rects()
         for dx, dy in _spiral(0.2, 8):
             r = _item_rect(f["item"], x + dx, y + dy, yaw)
@@ -2049,6 +2090,27 @@ class Build:
                     return uid
         self._skip(f["item"], "furniture")
         return None
+
+    def _top_middle(self, base):
+        """The middle of a carrier's top (a lift's two runways, a pallet's deck), which needn't be
+        the middle of its box (a lift's control box stands off to one side): rays down over it,
+        the points within 15 cm of its highest."""
+        s = self.sim
+        r = _item_rect(base.item, base.pos[0], base.pos[1], base.yaw)
+        hits = []
+        with s.lock:
+            me = s.m.body(f"obj_{base.uid}").id
+        import numpy as np
+        for gx in np.linspace(r[0], r[2], 15):
+            for gy in np.linspace(r[1], r[3], 15):
+                dist, body, _ = s._ray_past_robots((gx, gy, 4.0), (0, 0, -1.0))
+                if dist is not None and s._owner(body) == ("object", base.uid):
+                    hits.append((gx, gy, 4.0 - dist))
+        if not hits:
+            return base.pos[0], base.pos[1]
+        top = max(h[2] for h in hits)
+        hi = [h for h in hits if h[2] >= top - 0.15]
+        return (sum(h[0] for h in hi) / len(hi), sum(h[1] for h in hi) / len(hi))
 
     def _mine_rects(self):
         """Tables and floor things already standing (this scene's and everyone else's)."""
