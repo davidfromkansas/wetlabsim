@@ -1,6 +1,7 @@
 """How real places are laid out: short notes the scene planner and layout read for the kind of
 place a request names (the scene builder's own reference; the robot AI never sees them).
-Each note: the words that call it up, then what stands next to what and which way things face."""
+Each note: the words that call it up (each matches the start of a word: "medic" finds "medicine"),
+then what stands next to what and which way things face."""
 from __future__ import annotations
 
 import json
@@ -8,71 +9,138 @@ import os
 import re
 import urllib.request
 
+# How robot benchmark scenes and real places are laid out. The tabletop rules follow LIBERO's
+# scenes (one table; the fixtures the task uses on it at its left and right ends, fronts to the
+# robot; loose things in the middle in front of the robot) and RoboCasa's kitchens (the robot
+# stands at a fitted counter run; the sink, stove, microwave and dishwasher it works with are
+# in that run, the things it handles on the counter right beside them). Rooms follow the usual
+# house plans of AI2-THOR / BEHAVIOR-style homes; work cells and labs follow real practice.
 NOTES = [
-    (("kitchen", "breakfast", "cook", "galley"),
-     "Kitchen: one fitted run along a wall: fridge at one end, then counter with the sink, then the "
-     "range with its hood over it; wall cabinets belong over the counter. Small appliances (kettle, "
-     "toaster, coffee maker) sit on that counter, not on the robot's. The robot's island or counter "
-     "stands parallel to the run, about 1 m in front of it. A dining table with its chairs tucked in "
-     "stands at one end, clear of the walkway. The bin stands at the end of the run."),
-    (("dish", "restaurant", "cafe", "back room", "scullery"),
-     "Dish room: one line in the order the dishes travel: bus cart with dirty dishes, the sink, "
-     "the robot's table, the dishwasher, then the drying rack and clean shelving. The robot's table is "
-     "part of that line, right beside the sink and dishwasher. Mop, bucket and wet-floor sign together "
-     "in one corner."),
-    (("wet lab", "biology", "molecular", "foundry", "pcr", "pipett", "reagent", "microscope", "sample"),
-     "Wet lab: benches in parallel rows; the robot works at one bench with only its task's labware. A "
-     "second bench right behind or beside it holds the instruments (centrifuge, vortex, balance, thermal "
-     "cycler) in a row at its back edge. Tall units (fridge, freezer, cabinets, fume hood, biosafety "
-     "cabinet) stand together along one wall. Sharps and waste containers go on a bench end or beside "
-     "a bench leg, never out on the open floor. A stool is tucked under a bench."),
+    (("tabletop", "benchmark", "libero", "pick and place", "pick-and-place", "plain table", "simple",
+      "test", "sort", "stack", "block", "cube", "puzzle", "chess", "clutter", "on a table", "a table with",
+      "drawer cabinet", "shelf with", "everyday objects", "rearrange", "crammed"),
+     "Tabletop task scene (as in LIBERO): everything is on the robot's one table. Loose things sit in "
+     "a band 30 to 70 cm in front of the robot, spread across the middle, a hand's width apart. "
+     "Containers they go into (bins, trays, baskets, bowls) stand open at the left and right ends of "
+     "that band, all within reach, never behind the robot or past the far edge. Small fixtures the "
+     "task uses (a cabinet with drawers, a stove, a microwave, a rack) stand on the same table at its "
+     "left or right end, fronts turned to the robot. A plain or test request has nothing else: no "
+     "room, no furniture on the floor."),
+    (("kitchen", "breakfast", "cook", "galley", "pasta", "dinner", "groceries", "cupboard"),
+     "Kitchen (as in RoboCasa): one fitted run along the back wall, fronts in a straight line: fridge "
+     "at one end, base cabinets and counter, the sink in the counter, the dishwasher right next to "
+     "the sink, then the range with the hood over it; wall cabinets hang above the counter. The robot "
+     "works at that run or at an island parallel to it about 1 m in front; when the task uses the "
+     "sink, stove, microwave or dishwasher, the robot's counter is right beside that one, and the "
+     "things it handles sit on the counter next to it. Small appliances (kettle, toaster, coffee "
+     "maker) sit on the counter, never on the floor. Fridge and oven doors need about 1 m clear in "
+     "front: no table, chair or robot there. A dining table with chairs tucked in stands at one end."),
+    (("dish", "dishwasher", "restaurant", "cafe", "back room", "scullery", "sink"),
+     "Dish line: in the order the dishes travel: dirty dishes on the counter or a bus cart, the sink "
+     "set into the counter at counter height, the robot's table, the dishwasher with its door to the "
+     "robot, then the drying rack and clean shelving. The robot's table is part of that line, the sink "
+     "and dishwasher at its ends within reach. A sink basin always sits in a counter, never on the "
+     "floor. Mop, bucket and wet-floor sign together in one corner."),
+    (("living room", "lounge", "sofa", "couch", "coffee table", "tv", "remote", "tidy", "pet", "cat ",
+      "dog ", "home robot"),
+     "Living room: the sofa against a wall facing the TV on its stand across the room; the coffee "
+     "table between them, about 45 cm in front of the sofa; an armchair at one end of the coffee table "
+     "angled towards it; side table and lamp at the sofa's arm; bookshelf flat against a wall, shelves "
+     "facing the room. When the task tidies a table, that table is the robot's work surface and the "
+     "clutter starts on it. Rug under the coffee table. Nothing stands in the walkway."),
+    (("bedroom", "kid", "child", "toy", "bed", "nursery", "wardrobe"),
+     "Bedroom: the bed with its head against a wall, a bedside table at one or both sides of the head; "
+     "wardrobe and chest of drawers flat against another wall, fronts facing the room with space to "
+     "open them; desk under a window with its chair tucked in. In a kid's room the toy box stands open "
+     "at the foot of the bed or against a wall, toys scattered on the floor or rug in the middle and "
+     "on the robot's low table. Laundry folded on the bed means the bed is the work surface, in "
+     "reach."),
+    (("laundry", "washer", "washing machine", "dryer", "fold", "towel", "clothes"),
+     "Laundry room: washer and dryer side by side against one wall, doors facing the room, a counter or "
+     "folding table next to them; the laundry basket on the floor or table right in front of the "
+     "washer. When the task loads the washer, it stands right at the robot's table, its door facing "
+     "the robot and in reach. Drying rack and ironing board along another wall."),
+    (("bathroom", "toilet", "shower", "bath"),
+     "Bathroom: the toilet, the vanity with its basin and mirror, and the bath or shower all against "
+     "walls; towels on a rail by the shower; bin under the vanity end. The robot works at the vanity "
+     "counter; toiletries stand on it."),
+    (("bartender", "bar counter", "cocktail", "pub", "coffee shop", "espresso", "barista", "bakery",
+      "pastry", "counter service", "sushi", "vending", "making coffee", "make coffee", "latte"),
+     "Bar, coffee shop or bakery: one long service counter; the robot works behind it on the staff "
+     "side; the machine it uses (espresso machine, tap, ice maker) sits on the back counter right "
+     "behind or beside it, in reach. Stools or the customer queue on the other side of the counter, "
+     "lined up along it. Display case at one end of the counter, filled. Fridge and shelving on the "
+     "back wall behind the robot. A conveyor (sushi) runs along the counter, touching it."),
+    (("wet lab", "biology", "molecular", "foundry", "pcr", "pipett", "reagent", "microscope", "sample",
+      "autoclave", "centrifuge", "tube", "beaker", "science", "chemistry"),
+     "Wet lab: benches in parallel rows; the robot works at one bench with only its task's labware, "
+     "racks and plates in a row in front of it. The instrument the task loads (centrifuge, thermal "
+     "cycler, autoclave, plate sealer) sits on the robot's own bench at one end, lid or door towards "
+     "the robot; a benchtop instrument never stands on the floor. Other instruments stand on a second "
+     "bench behind or beside it. Tall units (fridge, freezer, cabinets, fume hood, biosafety cabinet) "
+     "stand together along one wall, fronts facing the room. Sharps and waste at a bench end."),
     (("cellculture", "biosafety", "incubator", "sterile", "tissue culture"),
      "Cell culture room: the biosafety cabinet is the work place: the robot's bench stands right "
      "at it or the task happens in front of it. The CO2 incubator stands next to the cabinet, its "
      "door opening towards the work place with a full door's width clear in front. The fridge and the "
      "liquid nitrogen dewar stand together a little apart as cold storage. Centrifuge and microscope "
      "on a side bench."),
-    (("cell", "bin picking", "machine tend", "cnc", "weld", "assembly"),
+    (("cold room", "freezer", "storage shelf", "sample box", "cryo"),
+     "Cold storage: the shelf or rack the task takes from stands right at one end of the robot's "
+     "table, shelves facing the robot, the boxes on its lower shelves in reach; the fridge or freezer "
+     "it fills stands at the other end, door facing the robot with space to swing open."),
+    (("cell", "bin picking", "machine tend", "cnc", "weld", "assembly", "press", "moulding", "molding",
+      "fixture", "gear", "inspection", "factory", "production"),
      "Robot work cell: the robot's table in the middle; the conveyor runs along one side of the "
-     "table, touching it, so the robot can reach the belt; the machine it tends stands on the other "
-     "side with its door facing the robot. The fence stands round the back and sides about 1 m out, "
-     "the door in the back. The control cabinet, signal tower and e-stop stand together just outside "
-     "the fence by the door. Pallets, carts and shelving stand outside the fence in one tidy row."),
+     "table, touching it, its belt within reach, carrying the parts; the machine it tends stands at "
+     "the other side, door facing the robot, its loading spot within reach. Parts start in a tote, "
+     "tray or fixture on the table, not loose. The fence closes round the back and both sides about "
+     "1 m out, in a continuous line, the door in the back; the front stays open. Control cabinet, "
+     "signal tower and e-stop just outside the fence by the door. Carts and shelving outside the fence "
+     "in one tidy row."),
     (("pallet", "depallet", "end-of-line", "end of line", "packing", "stretch", "shrink"),
      "Palletizing or packing line: a straight flow: infeed conveyor ending at the robot's table, "
-     "the pallet the robot builds (or unloads) on the floor right beside the table within reach, then "
-     "the stretch wrapper, then finished wrapped pallets in a row. Pallet jack or forklift parked by "
-     "the finished pallets. Boxes the robot handles are on the conveyor's end or the table, upright, "
-     "all the same way round."),
-    (("warehouse", "returns", "e-commerce", "fulfil", "sorting", "parcel", "logistics", "kitting"),
+     "the pallet the robot builds (or unloads) on the floor right beside the table within reach, "
+     "loaded boxes stacked squarely on it in layers, then the stretch wrapper, then finished wrapped "
+     "pallets in a row. Pallet jack parked by the finished pallets. Boxes the robot packs into stand "
+     "open on the conveyor's end or the table; the tape and labels on the table's near corner."),
+    (("warehouse", "returns", "e-commerce", "fulfil", "sorting", "parcel", "logistics", "kitting", "tote"),
      "Warehouse station: inbound on one side, outbound on the other: the conveyor (or cart) of "
-     "incoming things ends at one end of the robot's table; totes or bins for sorted things stand at "
-     "the other end or on the table's far edge in a row; the roll cage or pallet for outgoing stands "
-     "beside those. Shelving in a straight row behind the station, stocked. Scanner, tape and label "
-     "maker together on the table's near corner."),
-    (("server", "data cent", "rack", "network", "cable"),
+     "incoming things ends at one end of the robot's table; totes or bins for sorted things stand open "
+     "at the other end or along the table's far edge in a row; the roll cage or pallet for outgoing "
+     "stands beside those. Shelving in a straight row behind the station, stocked. Scanner, tape and "
+     "label maker together on the table's near corner. Things to pick start inside the source tote."),
+    (("server", "data cent", "network", "cable"),
      "Server room: racks side by side in one straight row, fronts the same way; the robot's table "
      "stands right in front of the rack it works on, so the ports are within reach; the cable tray "
      "runs along the row. A small desk with tools at the end of the row. Cooling unit at the other "
      "end."),
-    (("workshop", "garage", "workbench", "repair", "screw", "tool"),
-     "Workshop: the workbench against a wall with the pegboard or tool wall directly behind it, "
-     "the tool cabinet beside it; machines (drill press, grinder, lathe) in a row along another wall; "
-     "small bench machines stand on a bench, not on the floor. Hand tools laid out in a row on the "
-     "bench, handles towards the robot, fasteners in a small tray."),
-    (("hospital", "clinic", "pharmacy", "patient", "ward", "medic"),
+    (("workshop", "garage", "workbench", "repair", "screw", "tool", "tire", "tyre", "car lift", "car door", "wheel"),
+     "Workshop or garage: the workbench against a wall with the pegboard or tool wall directly behind "
+     "it, the tool cabinet beside it; machines (drill press, grinder, lathe) in a row along another "
+     "wall; small bench machines stand on a bench, not on the floor. Hand tools in a row on the bench, "
+     "handles towards the robot, fasteners in a small tray. In a garage the car or lift is the centre: "
+     "the robot's table and the wheel or parts stand right beside it."),
+    (("hospital", "clinic", "pharmacy", "patient", "ward", "medic", "iv bag", "iv pole", "nurse", "syringe", "operating room", "surgical"),
      "Hospital room or pharmacy: the bed with its head against a wall, the bedside cabinet and IV "
      "pole at its head, the overbed table across it; supply cart and cabinets along the opposite "
-     "wall. In a pharmacy the shelves stand in one row behind the counter and the robot works at the "
-     "counter."),
-    (("office", "desk", "mail", "print"),
-     "Office: the desk with its chair tucked in, monitor and keyboard at the back of the desk; "
-     "filing cabinet and bookshelf side by side against a wall behind; printer on its own stand next "
-     "to them; the bin beside the desk."),
-    (("shop", "store", "retail", "shelf stock", "grocery", "checkout"),
+     "wall. A medication cart stands right at the robot's table, drawers facing the robot. In a "
+     "pharmacy the shelves stand in one row behind the counter and the robot works at the counter."),
+    (("office", "desk", "mail", "print", "study", "book", "classroom", "school", "whiteboard"),
+     "Office, study or classroom (as in LIBERO's study scenes): the desk with its chair tucked in, "
+     "books, mug and desk caddy on the desk within reach of the robot; filing cabinet and bookshelf "
+     "side by side against a wall behind; whiteboard flat on a wall or on a stand beside the desk, "
+     "facing the room; printer on its own stand; bin beside the desk."),
+    (("shop", "store", "retail", "shelf stock", "grocery", "checkout", "restock", "supermarket"),
      "Shop: shelving units side by side in a straight aisle, stocked, labels facing the aisle; the "
-     "checkout counter near the front with the till on it; baskets stacked by the entrance. The robot "
-     "works in the aisle right at the shelf it stocks."),
+     "robot works in the aisle right at the shelf it stocks, its shelves facing the robot and the gaps "
+     "on shelves within reach, the crate of stock beside the robot. The checkout counter near the "
+     "front with the till and scanner on it, the queue lined up along it; baskets stacked by the "
+     "entrance."),
+    (("garden", "greenhouse", "plant", "windowsill", "potting"),
+     "Plants: pots stand together on a bench, shelf or windowsill at counter height within the "
+     "robot's reach, the watering can beside them; bags of soil and tools under the bench; a window or "
+     "greenhouse wall right behind the pots."),
 ]
 
 
