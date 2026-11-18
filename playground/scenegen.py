@@ -1564,8 +1564,8 @@ class Build:
                 lx, ly = _rot(f["x"] - st["x"], f["y"] - st["y"], -st["yaw"])
                 ax = min(tx / 2 - 0.1, max(bx + 0.3, -tx / 2 + 0.1))       # along the table, just ahead of the base
                 # (the front's spot, the way the front points, how far the model's spot is from it)
-                cands = [((ax, ty / 2 + 0.05), -math.pi / 2), ((ax, -ty / 2 - 0.05), math.pi / 2),
-                         ((tx / 2 + 0.05, by), math.pi)]
+                # at a side end of the table (across the table its door would open into the table)
+                cands = [((ax, ty / 2 + 0.05), -math.pi / 2), ((ax, -ty / 2 - 0.05), math.pi / 2)]
                 for (qx, qy), phi in cands:
                     if math.hypot(qx - bx, qy - by) > reach:
                         continue
