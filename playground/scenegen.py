@@ -706,6 +706,10 @@ def layout_messages(prompt: str, pick: dict) -> tuple[str, str]:
                  f"within reach; role scene: in its zone, making the place look real): {json.dumps(roles)}\n"
                  "Make it look like a real place of that kind: furniture against the zone's edges with fronts "
                  "facing the room, appliances on counters, things grouped the way people keep them.\n")
+        from .scene_notes import note
+        ref = note(prompt, br["room"])
+        if ref:
+            zones += f"How such a place is really laid out (follow this where the objects allow):\n{ref}\n"
     user = (f"The person's request:\n{prompt.strip()[:2000]}\n\nScene name: {pick['title']}\n" + zones +
             f"Furniture among the objects: {json.dumps(furn)}\n"
             + (f"Things we don't have (leave them out): {json.dumps([m['name'] for m in pick['missing']])}\n"
