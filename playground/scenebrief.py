@@ -350,8 +350,9 @@ the task needs them.
 - One look: prefer textured objects; a plain grey CAD object only when nothing textured fits.
 - A task that opens a door needs a thing that "opens: hinged door"; one that pulls a drawer \
 needs "drawers". A thing with no "opens" note doesn't open at all: a closed box or bin with no \
-"opens" note can't be filled, so for a container the task fills choose an open one (a tray, \
-basket, tote) or one that opens.
+"opens" note can't be filled or emptied, so for a container the task fills or takes things \
+from (restocking "from a box") choose an open one (a tray, basket, tote, open crate) or one that \
+opens.
 - Task slots: the object must fit the task; check its size suits a robot hand. Something \
 that starts inside a closed drawer must be short enough for it (a small cabinet's drawer is \
 about 5.5 cm tall inside): choose a low thing for that, or say so in the task.
