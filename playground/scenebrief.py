@@ -371,26 +371,40 @@ Answer with JSON only:
 _OPENS: dict[str, str] = {}
 
 
+CONTROLS = re.compile(r"button|knob|dial|wheel|valve|press|switch|trigger|(?<![a-z])tab(?![a-z])|height|caster|swivel|pedal|lever|"
+                      r"handle|key|spin|rotat|tilt|roll|clamp|jaw|blade|arm\b", re.I)
+
+
 def opens(item: str) -> str:
-    """How a thing opens, from its own joints: ", hinged door or lid", ", drawers or sliding
-    parts", both, or "" (nothing moves). So a door task gets a thing with a real hinge."""
+    """How a thing opens, from its own joints: ", opens: hinged door or lid", "drawers or sliding
+    parts", "only a small flap", "a lift-off lid", or "" (nothing opens). Buttons, knobs, wheels and
+    the like don't count. So a door task gets a thing with a real door."""
     if item not in _OPENS:
         kinds = set()
         try:
             m = catalog.meta(item)
+            joints = []
             for b in m.get("bodies") or []:
                 j = (b.get("joint") or {}) if isinstance(b, dict) else {}
                 if j.get("type"):
-                    kinds.add(j["type"])
+                    joints.append((j["type"], f'{j.get("name", "")} {b.get("name", "")}'))
                 if isinstance(b, dict) and b.get("free") and re.search(r"lid|cover|cap", str(b.get("name", "")).lower()):
                     kinds.add("lid")
             if m.get("mjcf"):
-                kinds |= set(re.findall(r'<joint[^>]*type="(hinge|slide)"',
-                                        (catalog.ASSETS / item / m["mjcf"]).read_text()))
+                for tag in re.findall(r"<joint[^>]*>", (catalog.ASSETS / item / m["mjcf"]).read_text()):
+                    t = re.search(r'type="(hinge|slide)"', tag)
+                    if t:
+                        joints.append((t.group(1), (re.search(r'name="([^"]*)"', tag) or [None, ""])[1]))
+            for typ, name in joints:
+                if CONTROLS.search(name):
+                    continue
+                kinds.add("flap" if typ == "hinge" and re.search(r"flap", name, re.I) else typ)
         except (OSError, ValueError, KeyError):
             pass
         words = [w for k, w in (("hinge", "hinged door or lid"), ("slide", "drawers or sliding parts"),
                                 ("lid", "a lift-off lid")) if k in kinds]
+        if not words and "flap" in kinds:
+            words = ["only a small flap (no door to load it through)"]
         _OPENS[item] = (", opens: " + " and ".join(words)) if words else ""
     return _OPENS[item]
 
