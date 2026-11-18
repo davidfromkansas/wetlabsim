@@ -647,6 +647,9 @@ Answer with JSON only, exactly this shape:
              {{"item": "waste_bin", "on": "floor", "x": 1.5, "y": -1.0, "yaw": 0}},
              {{"item": "can", "on": "inside", "object": 0, "level": 1, "dx": 0.05, "dy": 0, "yaw": 0}}],
  "task": "the robot's task, one sentence, naming things in plain words (never by index or id)"}}
+"open": true on a container, lid, door or drawer the task puts things into or takes things \
+out of, when the request doesn't ask the robot to open it (the robot can't lift a lid it isn't \
+asked to). Leave it out when opening is part of the task.
 When the request wants the stations to match ("identical", "the same setup"), share the \
 objects out evenly and put each station's set at the same spots in its own frame.
 List every station and every object exactly once per copy (an item asked for twice appears \
@@ -1469,7 +1472,8 @@ class Build:
                                                  math.radians(_f(f.get("yaw")))),
                                   # a ready-made scene may butt pieces together (conveyor sections)
                                   "gap": max(0.0, _f(f.get("gap", 0.15))) if self.preset
-                                  else min(0.15, max(0.02, _f(f.get("gap", 0.15))))})
+                                  else min(0.15, max(0.02, _f(f.get("gap", 0.15)))),
+                                  "open": bool(f.get("open"))})
         for it in ([] if partial else want_f):
             furniture.append({"item": it, "x": 2.5, "y": -1.5 + 1.5 * len(furniture), "yaw": math.pi})
         objects, where = [], {}       # where: the model's own index of each object -> ours
@@ -1514,7 +1518,8 @@ class Build:
                                 "in_furniture": "object" not in o and o.get("furniture") is not None,
                                 "level": _int(o.get("level"), 1),
                                 # a ready-made scene's big part may hang over its pallet's edges
-                                "overhang": bool(self.preset and o.get("overhang"))})
+                                "overhang": bool(self.preset and o.get("overhang")),
+                                "open": bool(o.get("open"))})
         for o in objects:
             if o["on"] == "inside" and not o["in_furniture"]:
                 o["object"] = where.get(o["object"], -1)
@@ -2024,7 +2029,22 @@ class Build:
                 uid = s.add(f["item"], spot["pos"], yaw)
                 self.objects.append(uid)
                 self.counts["furniture"][0] += 1
+                self._open(uid, f)
                 return uid
+        if not f.get("wide"):        # no room near its spot: the nearest free floor further out, tight
+            for dx, dy in _spiral(0.25, 16):
+                if abs(dx) + abs(dy) < 1.5:
+                    continue
+                r = _item_rect(f["item"], x + dx, y + dy, yaw)
+                if any(_hit(r, b, 0.05) for b in mine):
+                    continue
+                spot = s.support(f["item"], x + dx, y + dy, yaw)
+                if spot["valid"] and spot["surface"] == "the floor":
+                    uid = s.add(f["item"], spot["pos"], yaw)
+                    self.objects.append(uid)
+                    self.counts["furniture"][0] += 1
+                    self._open(uid, f)
+                    return uid
         self._skip(f["item"], "furniture")
         return None
 
@@ -2050,11 +2070,32 @@ class Build:
                     break
                 self.skipped.pop()
                 self.counts["objects"][1] += 1
+        if not uid and o["on"] == "station" and self._role_of(o["item"]) != "task" and o.get("station") is not None:
+            # a scene thing that didn't fit where it was put: any free spot on that table, else
+            # on another robot's table
+            self.skipped.pop()
+            self.counts["objects"][1] += 1
+            for k_st in [o["station"]] + [k for k in range(len(self.stations)) if k != o["station"]]:
+                for fx_ in (0.55, 0.35, 0.75, 0.2):
+                    for fy_ in (-0.45, 0.45, -0.25, 0.25, 0.0):
+                        uid = self._place_object1({**o, "station": k_st, "x": fx_, "y": fy_}, off, fixed_uids, placed)
+                        if uid:
+                            break
+                        self.skipped.pop()
+                        self.counts["objects"][1] += 1
+                    if uid:
+                        break
+                if uid:
+                    break
+            if not uid:
+                self._skip(o["item"], "objects")
         if not uid and o["on"] == "inside":
             # nothing on its list fits inside: the first choice, next to what should hold it
             self.skipped.pop()
             self.counts["objects"][1] += 1
             uid = self._place_object1({**o, "last_try": True}, off, fixed_uids, placed)
+        if uid:
+            self._open(uid, o)
         if uid and sl is not None:
             self.role[uid] = self.pick["brief"]["slots"][sl]["role"]
         return uid
@@ -2253,6 +2294,28 @@ class Build:
         self.objects.append(uid)
         self.counts["objects"][0] += 1
         return uid
+
+    def _open(self, uid: str, spec: dict):
+        """A container, lid, door or drawer the layout marked "open": true starts open: its hinge
+        joints (or, with none, its first slide joint) set near the open end of the range its
+        asset gives. MuJoCo's own joint positions; the item stays where it was put."""
+        if not spec.get("open"):
+            return
+        import mujoco
+        s = self.sim
+        with s.lock:
+            m, d = s.m, s.d
+            pre = f"obj_{uid}__"
+            js = [j for j in range(m.njnt) if m.joint(j).name.startswith(pre)
+                  and m.jnt_type[j] in (int(mujoco.mjtJoint.mjJNT_HINGE), int(mujoco.mjtJoint.mjJNT_SLIDE))
+                  and m.jnt_limited[j]]
+            hinges = [j for j in js if m.jnt_type[j] == int(mujoco.mjtJoint.mjJNT_HINGE)]
+            for j in (hinges or js[:1]):
+                lo, hi = m.jnt_range[j]
+                d.qpos[m.jnt_qposadr[j]] = 0.9 * (hi if abs(hi) >= abs(lo) else lo)
+            if js:
+                mujoco.mj_forward(m, d)
+                s._sync_placed()
 
     def _skip(self, item, what: str = "objects"):
         self.skipped.append(catalog.item(item)["label"])

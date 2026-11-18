@@ -219,6 +219,9 @@ on a shelf, a mug in a drawer) go "on": "inside" it: "object": the index (from 0
 "objects" list of the holder (or "furniture": its index), "level": 1 for the lowest space \
 inside, 2 the next up, -1 the highest, and dx, dy in metres from its centre to spread several \
 things out. On top of a piece of furniture: "on": "furniture" with its index and dx, dy in metres.
+- "open": true on a container, lid, door or drawer the task puts things into or takes things \
+out of, when the request doesn't ask the robot to open it (the robot can't lift a lid it isn't \
+asked to). Leave it out when opening is part of the task.
 - When the request wants stations to match ("identical", "the same setup"), give every station \
 the same things on the same squares.
 
