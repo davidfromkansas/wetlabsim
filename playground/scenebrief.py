@@ -343,7 +343,9 @@ the count asks for more than one of the same thing, like 4 dinner plates for a t
 the task needs them.
 - One look: prefer textured objects; a plain grey CAD object only when nothing textured fits.
 - A task that opens a door needs a thing that "opens: hinged door"; one that pulls a drawer \
-needs "drawers". A thing with no "opens" note doesn't open at all.
+needs "drawers". A thing with no "opens" note doesn't open at all: a closed box or bin with no \
+"opens" note can't be filled, so for a container the task fills choose an open one (a tray, \
+basket, tote) or one that opens.
 - Task slots: the object must fit the task; check its size suits a robot hand. Something \
 that starts inside a closed drawer must be short enough for it (a small cabinet's drawer is \
 about 5.5 cm tall inside): choose a low thing for that, or say so in the task.
@@ -373,12 +375,15 @@ def opens(item: str) -> str:
                 j = (b.get("joint") or {}) if isinstance(b, dict) else {}
                 if j.get("type"):
                     kinds.add(j["type"])
+                if isinstance(b, dict) and b.get("free") and re.search(r"lid|cover|cap", str(b.get("name", "")).lower()):
+                    kinds.add("lid")
             if m.get("mjcf"):
                 kinds |= set(re.findall(r'<joint[^>]*type="(hinge|slide)"',
                                         (catalog.ASSETS / item / m["mjcf"]).read_text()))
         except (OSError, ValueError, KeyError):
             pass
-        words = [w for k, w in (("hinge", "hinged door or lid"), ("slide", "drawers or sliding parts")) if k in kinds]
+        words = [w for k, w in (("hinge", "hinged door or lid"), ("slide", "drawers or sliding parts"),
+                                ("lid", "a lift-off lid")) if k in kinds]
         _OPENS[item] = (", opens: " + " and ".join(words)) if words else ""
     return _OPENS[item]
 

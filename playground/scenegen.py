@@ -2312,12 +2312,37 @@ class Build:
                   and m.jnt_type[j] in (int(mujoco.mjtJoint.mjJNT_HINGE), int(mujoco.mjtJoint.mjJNT_SLIDE))
                   and m.jnt_limited[j]]
             hinges = [j for j in js if m.jnt_type[j] == int(mujoco.mjtJoint.mjJNT_HINGE)]
-            for j in (hinges or js[:1]):
+
+            def named(j, words):
+                n = m.joint(j).name[len(pre):].lower()
+                return re.search(words, n) and not re.search(r"wheel|valve|knob|handle|button|dial", n)
+            # the way in by its name: a door, lid or flap; else a drawer or tray; else the hinges
+            pick = [j for j in hinges if named(j, r"door")] or \
+                   [j for j in hinges if named(j, r"lid|flap|hatch|cover|gate")][:1] or \
+                   [j for j in js if named(j, r"drawer|tray|shelf|level|region")][:1] or hinges or js[:1]
+            for j in pick:
                 lo, hi = m.jnt_range[j]
                 d.qpos[m.jnt_qposadr[j]] = 0.9 * (hi if abs(hi) >= abs(lo) else lo)
             if js:
                 mujoco.mj_forward(m, d)
                 s._sync_placed()
+            # a loose lid or cover (its own free body, like a hamper's): set down beside it, the
+            # same way up, as a person leaves a lid they took off
+            s._sync_placed()
+            pl = s.find(uid)
+            bodies = catalog.meta(pl.item).get("bodies") or [] if pl else []
+
+            def part_name(k):            # obj_<uid>__<n>: the asset's body n
+                tail = k[len(pre):]
+                return str(bodies[int(tail)].get("name", "")) if tail.isdigit() and int(tail) < len(bodies) else tail
+            loose = [k for k in ((pl.parts or {}) if pl else {})
+                     if re.search(r"lid|cover|cap|top", part_name(k).lower())]
+            if loose and not js:
+                sx, sy, _ = catalog.meta(pl.item)["size"]
+                for k in loose[:1]:
+                    pos, quat = pl.parts[k]
+                    pl.parts[k] = ((sx + 0.06, 0.0, 0.01), quat)
+                s.rebuild(sync=False)          # (a sync would read the lid back from where it sits)
 
     def _skip(self, item, what: str = "objects"):
         self.skipped.append(catalog.item(item)["label"])
