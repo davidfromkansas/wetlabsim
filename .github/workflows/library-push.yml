@@ -1,4 +1,4 @@
-# One-off (run 2: + index.json): upload the object library to the "wetlab-library" Modal Volume, then deploy this branch
+# One-off (run 3: + scene build check): upload the object library to the "wetlab-library" Modal Volume, then deploy this branch
 # to the staging copy and check it serves objects from the Volume. Removed before merge.
 name: Library to Volume (one-off)
 on:
@@ -37,3 +37,31 @@ jobs:
           python -c "import json; d=json.load(open('cat.json')); n=len(d['items']); print(n, 'items'); assert n > 3000"
           time curl -sf -m 120 $B/pg/catalog -o /dev/null
           curl -sf -m 120 $B/pg/thumb/nd_roller_conveyor.png -o t.png && ls -la t.png
+      - name: A scene with new objects builds on Modal from the Volume
+        env:
+          WETLAB_APP: wetlab-playground-staging
+        run: |
+          cat > /tmp/scene_check.py <<'P'
+          import sys, time
+          sys.path.insert(0, ".")
+          import modal
+          from hosting.app import image, library
+          app = modal.App("wetlab-library-scene-check", image=image)
+          @app.function(volumes={"/library": library}, timeout=900, cpu=4.0, memory=6144)
+          def check():
+              import mujoco
+              from playground import world as W, catalog
+              ids = ["nd_roller_conveyor", "pl_d00033", "as_mask_9da2uznfyx", "nv_warehouse_klt_small_a01",
+                     "ps_aerosol_can", "mx_caulking_gun_newborn250", "at_01_atech_board_14port"]
+              ids = [i for i in ids if (catalog.ASSETS / i / "asset.json").exists()]
+              t = time.time()
+              m = W.build([W.Placed(f"o{k}", i, (0.6 * k, 0, 0.05)) for k, i in enumerate(ids)], [])
+              d = mujoco.MjData(m)
+              [mujoco.mj_step(m, d) for _ in range(200)]
+              return ids, m.nbody, m.nmesh, round(time.time() - t, 1), len(catalog.available())
+          @app.local_entrypoint()
+          def main():
+              r = check.remote(); print(r)
+              assert len(r[0]) >= 5 and r[2] > 10, r
+          P
+          modal run /tmp/scene_check.py
