@@ -78,7 +78,7 @@ def note(*texts: str) -> str:
     t = " ".join(texts).lower().replace("cell culture", "cellculture")   # not a robot "cell"
     hits = []
     for words, text in NOTES:
-        n = sum(1 for w in words if re.search(r"\b" + re.escape(w), t))
+        n = sum(1 for w in words if re.search(r"\b" + re.escape(w) + (r"s?\b" if w == "cell" else ""), t))
         if n:
             hits.append((n, text))
     hits.sort(key=lambda h: -h[0])
