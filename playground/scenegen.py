@@ -1565,12 +1565,14 @@ class Build:
                         face = [rx, ry]
                     if it in small and catalog.item(it)["fixed"]:
                         face = [rx, ry]      # a small appliance or cabinet on the table: its front to the robot
-                        # ...and far enough off for its door to swing: its front 0.4 m from the base
+                        # ...far enough off for its door to swing clear of the arm (its front 0.45 m
+                        # from the base), and in front of the robot, never beside or behind its base
                         ox_, oy_ = _f(o.get("x")) - rx, _f(o.get("y")) - ry
                         dist = math.hypot(ox_, oy_) or 1.0
-                        need = 0.4 + min(catalog.meta(it)["size"][:2]) / 2
-                        if dist < need:
-                            o = {**o, "x": rx + ox_ / dist * need, "y": ry + oy_ / dist * need}
+                        ang = math.atan2(oy_, ox_) if dist > 1e-6 else 0.0
+                        ang = max(-1.15, min(1.15, ang))
+                        need = max(dist, 0.45 + max(catalog.meta(it)["size"][:2]) / 2)
+                        o = {**o, "x": rx + need * math.cos(ang), "y": ry + need * math.sin(ang)}
                     yaw = _facing(it, _f(o.get("x")), _f(o.get("y")), face, [], yaw)
                 elif on == "floor":
                     yaw = _facing(it, _f(o.get("x")), _f(o.get("y")), o.get("face"), stations, yaw)
