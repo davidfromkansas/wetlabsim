@@ -386,7 +386,7 @@ def pick(prompt: str, model_id: str, public: bool) -> dict:
         brief = clean_brief(fake_brief(prompt))
     else:
         sys_, user = brief_messages(prompt)
-        brief = clean_brief(SG.ask_json(model_id, sys_, user, public, effort="low"))
+        brief = clean_brief(SG.ask_json(model_id, sys_, user, public, effort="medium"))
     if not brief["robots"]:
         raise SG.ModelError("the model didn't choose any robot: try saying which robot you want")
     t1 = time.time()
