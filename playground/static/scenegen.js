@@ -149,13 +149,13 @@ const nItems = () => (G.pick ? G.pick.items.reduce((a, r) => a + r.count, 0) : 0
 const modelInfo = (id) => G.models.find(m => m.id === id) || null;
 
 function defaultModel() {
-  // one company: its most capable model; both: the model of your last task run, if it can build
+  // always a connected company's most capable model: with both connected, the company of your
+  // last task run (a model you pick in the menu stays for this visit)
+  if (modelInfo(G.model)) return G.model;
   let last = '';
   try { last = localStorage.getItem('pgLastModel') || ''; } catch (err) {}
-  last = G.fromRun[last] || last;
-  if (G.models.length && new Set(G.models.map(m => m.provider)).size > 1 && modelInfo(last)) return last;
-  if (modelInfo(G.model)) return G.model;
-  return (G.models.find(m => m.default) || G.models[0] || {}).id || '';
+  const co = (modelInfo(G.fromRun[last] || last) || {}).provider;
+  return (G.models.find(m => m.default && m.provider === co) || G.models.find(m => m.default) || G.models[0] || {}).id || '';
 }
 
 async function loadInfo() {
