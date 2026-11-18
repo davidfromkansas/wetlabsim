@@ -80,7 +80,7 @@ def build_one(p: dict, model: str, judge: str, out: pathlib.Path) -> dict:
         sim = PlaygroundSim(stations=[])
         sim.pause()
         pk = SB.pick(p["prompt"], model, False)
-        res["pick"] = {k: pk[k] for k in ("title", "robots", "items", "missing", "task", "ranked_by", "seconds")}
+        res["pick"] = {k: pk[k] for k in ("title", "robots", "items", "missing", "task", "ranked_by", "seconds", "slot_of") if k in pk}
         res["brief"] = pk["brief"]
         b = SG.Build(sim, _Sess(), p["prompt"], pk, model, False)
         b.start()
