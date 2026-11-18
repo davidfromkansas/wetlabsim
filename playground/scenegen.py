@@ -1037,8 +1037,9 @@ Answer with JSON only:
            {"n": 5, "action": "remove"}]}"""
 
 
-def snapshot(sim, view: dict, w: int = 1024, h: int = 640) -> bytes:
-    """A JPEG of the scene from a free camera (lookat, distance, azimuth, elevation)."""
+def snapshot(sim, view: dict, w: int = 1024, h: int = 640, grid: tuple | None = None) -> bytes:
+    """A JPEG of the scene from a free camera (lookat, distance, azimuth, elevation). grid
+    (x0, y0, x1, y1): the floor's 25 cm squares drawn over that area, each metre numbered."""
     import io
     import mujoco
     from PIL import Image
@@ -1056,12 +1057,66 @@ def snapshot(sim, view: dict, w: int = 1024, h: int = 640) -> bytes:
     r = mujoco.Renderer(m, h, w)
     try:
         r.update_scene(d, camera=cam)
+        marks = _grid_lines(mujoco, r.scene, grid) if grid else []
         img = r.render()
+        pic = Image.fromarray(img)
+        if marks:
+            _grid_numbers(pic, r.scene, m.vis.global_.fovy, marks)
     finally:
         r.close()
     buf = io.BytesIO()
-    Image.fromarray(img).save(buf, format="JPEG", quality=85)
+    pic.save(buf, format="JPEG", quality=85)
     return buf.getvalue()
+
+
+def _grid_lines(mujoco, scn, grid: tuple) -> list:
+    """The floor grid as line geoms in a render's scene (25 cm squares, each metre's line
+    bolder). Gives back the points to number: (x, y, text)."""
+    import numpy as np
+    from .scenegrid import FLOOR
+    x0, y0 = math.floor(grid[0]) - 1, math.floor(grid[1]) - 1
+    x1, y1 = math.ceil(grid[2]) + 1, math.ceil(grid[3]) + 1
+
+    def line(a, b, bold):
+        if scn.ngeom >= scn.maxgeom:
+            return
+        g = scn.geoms[scn.ngeom]
+        mujoco.mjv_initGeom(g, mujoco.mjtGeom.mjGEOM_LINE, np.zeros(3), np.zeros(3), np.zeros(9),
+                            np.array([0.1, 0.25, 0.7, 0.9 if bold else 0.35], dtype=np.float32))
+        mujoco.mjv_connector(g, mujoco.mjtGeom.mjGEOM_LINE, 3.0 if bold else 1.0,
+                             np.array([a[0], a[1], 0.004]), np.array([b[0], b[1], 0.004]))
+        scn.ngeom += 1
+    for k in range(round((x1 - x0) / FLOOR) + 1):
+        x = x0 + k * FLOOR
+        line((x, y0), (x, y1), k % 4 == 0)
+    for k in range(round((y1 - y0) / FLOOR) + 1):
+        y = y0 + k * FLOOR
+        line((x0, y), (x1, y), k % 4 == 0)
+    return ([(x, y, f"x {x}") for x in range(x0, x1 + 1) for y in (y0, y1)] +
+            [(x, y, f"y {y}") for y in range(y0, y1 + 1) for x in (x0, x1)])
+
+
+def _grid_numbers(pic, scn, fovy: float, marks: list):
+    """Writes each metre line's number where it meets the grid's edge, by the render's camera."""
+    import numpy as np
+    from PIL import ImageDraw
+    c0, c1 = scn.camera[0], scn.camera[1]
+    pos = (np.array(c0.pos) + np.array(c1.pos)) / 2
+    fwd, up = np.array(c0.forward), np.array(c0.up)
+    right = np.cross(fwd, up)
+    w, h = pic.size
+    t = math.tan(math.radians(fovy) / 2)
+    dr = ImageDraw.Draw(pic)
+    for x, y, text in marks:
+        v = np.array([x, y, 0.0]) - pos
+        z = float(v @ fwd)
+        if z <= 0.05:
+            continue
+        px = w / 2 + float(v @ right) / (z * t) * h / 2
+        py = h / 2 - float(v @ up) / (z * t) * h / 2
+        if 0 <= px < w - 24 and 0 <= py < h - 10:
+            dr.rectangle([px - 1, py - 1, px + 6 * len(text) + 2, py + 10], fill=(255, 255, 255))
+            dr.text((px + 1, py - 1), text, fill=(20, 50, 160))
 
 
 # ------------------------------------------------------------------ building it
@@ -1953,11 +2008,16 @@ class Build:
         cx, cy, span = (x0 + x1) / 2, (y0 + y1) / 2, max(x1 - x0, y1 - y0, 2.0)
         st = s.station(self.stations[0]) if self.stations else None
         az = (math.degrees(st.yaw) + 180.0) % 360 if st else 145.0     # looking at the robot's face... from behind its table
-        return [{"lookat": [cx, cy, 0.4], "distance": 1.3 * span + 1.0, "azimuth": 90.0, "elevation": -70.0},
+        return [{"lookat": [cx, cy, 0.4], "distance": 1.3 * span + 1.0, "azimuth": 90.0, "elevation": -70.0,
+                 "area": (x0, y0, x1, y1)},
                 {"lookat": [cx, cy, 0.7], "distance": 1.0 * span + 1.2, "azimuth": az, "elevation": -25.0}]
 
     def pictures(self, w: int = 1024, h: int = 640) -> list[bytes]:
-        return [snapshot(self.sim, v, w, h) for v in self.views()]
+        from . import scenegrid
+        vs = self.views()
+        # with the layout grid on, the picture from above shows the floor's squares and metres
+        return [snapshot(self.sim, v, w, h, grid=v.get("area") if scenegrid.on() and k == 0 else None)
+                for k, v in enumerate(vs)]
 
     def _placed_rows(self) -> list[dict]:
         s = self.sim
@@ -1999,6 +2059,11 @@ class Build:
                 f"Front sides: an object turned yaw 0 has its front towards -y, except "
                 f"{[r['n'] for r in rows if front_sign(r['item']) > 0]} whose front is towards +y at yaw 0. "
                 "Picture 1 looks down from above (+x to the right, +y up); picture 2 looks at the robots from the side.")
+        from . import scenegrid
+        if scenegrid.on():
+            user += (" Picture 1 has the floor's grid drawn on it: 25 cm squares, a bold line at each metre "
+                     "with its x or y number (metres, the same frame as the positions above). Read positions "
+                     "and gaps off it, and give moves on its squares (multiples of 0.25 for furniture).")
         try:
             out = ask_json(self.model_id, FIX_SYSTEM, user, self.public, effort="medium", images=imgs)
         except ModelError:
