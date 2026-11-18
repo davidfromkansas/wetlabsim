@@ -1720,6 +1720,38 @@ class Build:
                 y = cy + sign * (half + deep) - (r[3] if sign > 0 else r[1])
                 f["x"], f["y"] = (lambda q: (q[0] + ox, q[1] + oy))(_rot(x, y, th))
                 f["yaw"], f["gap"] = yaw + th, 0.02
+        self._pull_in(furniture, local, lambda f: any(
+            _hit(_item_rect(f["item"], f["x"], f["y"], f["yaw"]), b, 0.08) for b in srects),
+            {id(t[0]) for w in walls.values() for t in w}, zone_of, (bx0, by0, bx1, by1), (ox, oy, th))
+
+    def _pull_in(self, furniture, local, at_table, walled, zone_of, box, frame, walk=0.9):
+        """The loose floor things of each zone (a dining set, a cart, a bin and a mop) moved as
+        one group, keeping their own arrangement, to a walkway's width from the tables when the
+        model stood them further off: to the side or the front it chose. Never pushed out."""
+        bx0, by0, bx1, by1 = box
+        ox, oy, th = frame
+        groups = {}
+        for f in furniture:
+            if id(f) in walled or f["item"] in FENCE or at_table(f):
+                continue
+            groups.setdefault(zone_of.get(f["item"], ""), []).append(f)
+        for fs in groups.values():
+            lo = [local(f["x"], f["y"]) for f in fs]
+            half = [max(catalog.meta(f["item"])["size"][:2]) / 2 for f in fs]
+            gx0, gx1 = min(q[0] - h for q, h in zip(lo, half)), max(q[0] + h for q, h in zip(lo, half))
+            gy0, gy1 = min(q[1] - h for q, h in zip(lo, half)), max(q[1] + h for q, h in zip(lo, half))
+            dx = dy = 0.0
+            if gy0 > by1 + walk:
+                dy = by1 + walk - gy0
+            elif gy1 < by0 - walk:
+                dy = by0 - walk - gy1
+            if gx0 > bx1 + walk:
+                dx = bx1 + walk - gx0
+            if not (dx or dy):
+                continue
+            wx, wy = _rot(dx, dy, th)
+            for f in fs:
+                f["x"], f["y"] = f["x"] + wx, f["y"] + wy
 
     def _rects(self, stations, furniture, objects, ox=0.0, oy=0.0):
         rs = [_station_rect(st["kind"], st["robot"], st["x"] + ox, st["y"] + oy, st["yaw"]) for st in stations]
