@@ -1034,7 +1034,7 @@ def pick(prompt: str, model_id: str, public: bool) -> dict:
 
 
 FIX_SYSTEM = """You check a scene you laid out in a robot physics playground (MuJoCo, metres, z \
-up). You get two pictures of it and the list of what's placed where. Compare it with the person's \
+up). You get pictures of it and the list of what's placed where. Compare it with the person's \
 request and the plan, and fix what looks wrong:
 - Fronts (doors, controls, openings, screens) turned to a wall, away from the robots or the room.
 - Things in the wrong zone, scattered oddly, or not grouped the way people keep them.
@@ -1477,6 +1477,12 @@ class Build:
                         face = [rx, ry]
                     if it in small and catalog.item(it)["fixed"]:
                         face = [rx, ry]      # a small appliance or cabinet on the table: its front to the robot
+                        # ...and far enough off for its door to swing: its front 0.4 m from the base
+                        ox_, oy_ = _f(o.get("x")) - rx, _f(o.get("y")) - ry
+                        dist = math.hypot(ox_, oy_) or 1.0
+                        need = 0.4 + min(catalog.meta(it)["size"][:2]) / 2
+                        if dist < need:
+                            o = {**o, "x": rx + ox_ / dist * need, "y": ry + oy_ / dist * need}
                     yaw = _facing(it, _f(o.get("x")), _f(o.get("y")), face, [], yaw)
                 elif on == "floor":
                     yaw = _facing(it, _f(o.get("x")), _f(o.get("y")), o.get("face"), stations, yaw)
@@ -2111,7 +2117,9 @@ class Build:
         az = (math.degrees(st.yaw) + 180.0) % 360 if st else 145.0     # looking at the robot's face... from behind its table
         return [{"lookat": [cx, cy, 0.4], "distance": 1.3 * span + 1.0, "azimuth": 90.0, "elevation": -70.0,
                  "area": (x0, y0, x1, y1)},
-                {"lookat": [cx, cy, 0.7], "distance": 1.0 * span + 1.2, "azimuth": az, "elevation": -25.0}]
+                {"lookat": [cx, cy, 0.7], "distance": 1.0 * span + 1.2, "azimuth": az, "elevation": -25.0}] + \
+            ([{"lookat": [st.pos[0], st.pos[1], st.top + 0.1], "distance": 2.1, "azimuth": az,
+               "elevation": -42.0}] if st else [])        # and the first robot's table, close up
 
     def pictures(self, w: int = 1024, h: int = 640) -> list[bytes]:
         from . import scenegrid
@@ -2214,7 +2222,8 @@ class Build:
                 f"{json.dumps([{k: r[k] for k in ('n', 'label', 'x', 'y', 'yaw', 'size_cm', 'on', 'role')} for r in rows])}\n"
                 f"Front sides: an object turned yaw 0 has its front towards -y, except "
                 f"{[r['n'] for r in rows if front_sign(r['item']) > 0]} whose front is towards +y at yaw 0. "
-                "Picture 1 looks down from above (+x to the right, +y up); picture 2 looks at the robots from the side.")
+                "Picture 1 looks down from above (+x to the right, +y up); picture 2 looks at the robots from the side; "
+                "picture 3 is the first robot's table close up, seen from in front of the robot.")
         probs = self._problems(rows)
         self.measured.append(len(probs))
         if probs:

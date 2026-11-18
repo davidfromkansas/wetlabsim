@@ -33,7 +33,8 @@ from playground import catalog
 from playground.sim import PlaygroundSim
 
 JUDGE_SYSTEM = """You judge scenes built for a robot physics playground from a person's typed \
-request. You get two pictures of the scene (from above, and from the side facing the robots), \
+request. You get pictures of the scene (from above, from the side facing the robots, and the \
+first robot's table close up), \
 the list of robots and objects placed, and the task the robot will be given. Judge only what the \
 request asked for; our object library is limited, so a sensible stand-in for something we don't \
 have is fine and a missing thing that was asked for costs a little.
@@ -95,7 +96,7 @@ def build_one(p: dict, model: str, judge: str, out: pathlib.Path) -> dict:
         if st["phase"] != "done":
             raise RuntimeError(f"build {st['phase']}: {st['error']}")
         imgs = b.pictures()
-        for name, img in zip(("top.jpg", "front.jpg"), imgs):
+        for name, img in zip(("top.jpg", "front.jpg", "table.jpg"), imgs):
             (d / name).write_bytes(img)
         placed = [catalog.item(sim.find(u).item)["label"] for u in b.objects if sim.find(u)]
         robots = [f"{sim.station(u).robot}" for u in b.stations if sim.station(u)]
