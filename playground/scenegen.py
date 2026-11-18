@@ -694,6 +694,9 @@ def layout_messages(prompt: str, pick: dict) -> tuple[str, str]:
     from .scenebrief import tabletop
     sys_ = LAYOUT_SYSTEM.format(robots=json.dumps(robots), items=json.dumps(items), sizes=json.dumps(sizes),
                                 tabletop=json.dumps(sorted(set(tabletop()) & set(items)) or "none in this scene"))
+    from . import scenegrid
+    if scenegrid.on():               # place by square on the layout grid (scenegrid.py)
+        sys_ = scenegrid.system(robots, items, sorted(set(tabletop()) & set(items)))
     zones = ""
     if pick.get("brief"):            # a v2 pick (scenebrief.py): the room, its zones, each object's slot
         br = pick["brief"]
@@ -1345,6 +1348,9 @@ class Build:
         (anything the model left out goes in a sensible default spot). partial: the layout is
         still being written, so nothing left out is filled in yet (what is there keeps its place
         in the lists as more comes)."""
+        from . import scenegrid
+        if scenegrid.on() and not self.preset and not fake():      # written in squares: to metres
+            lay = scenegrid.to_metres(lay)
         want_r = [r["robot"] for r in self.pick["robots"] for _ in range(r["count"])]
         stations = []
         for st in lay.get("stations") or []:

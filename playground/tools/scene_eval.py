@@ -155,7 +155,11 @@ def main(argv=None):
     ap.add_argument("--jobs", type=int, default=3)
     ap.add_argument("--claude-plan", action="store_true",
                     help="ask Claude through the Claude Code app's sign-in (a Claude plan), not an API key")
+    ap.add_argument("--grid", action="store_true", help="lay out by square (playground/scenegrid.py)")
     a = ap.parse_args(argv)
+    if a.grid:
+        import os
+        os.environ["WETLAB_SCENE_GRID"] = "1"
     if a.claude_plan:
         import os
         os.environ["WETLAB_SCENE_CLAUDE_PLAN"] = "1"
