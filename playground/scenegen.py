@@ -1470,6 +1470,8 @@ class Build:
                     face = o.get("face")
                     if isinstance(face, str) and face.strip().lower().startswith("station"):
                         face = [rx, ry]
+                    if it in small and catalog.item(it)["fixed"]:
+                        face = [rx, ry]      # a small appliance or cabinet on the table: its front to the robot
                     yaw = _facing(it, _f(o.get("x")), _f(o.get("y")), face, [], yaw)
                 elif on == "floor":
                     yaw = _facing(it, _f(o.get("x")), _f(o.get("y")), o.get("face"), stations, yaw)
