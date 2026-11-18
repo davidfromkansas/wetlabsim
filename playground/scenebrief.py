@@ -331,6 +331,10 @@ the task needs them.
 - Task slots: the object must fit the task; check its size suits a robot hand. Something \
 that starts inside a closed drawer must be short enough for it (a small cabinet's drawer is \
 about 5.5 cm tall inside): choose a low thing for that, or say so in the task.
+- The scene has a floor and no walls: nothing that hangs on a wall or is built into one (a wall \
+cabinet, a range hood, a window, a door, a towel bar) unless the request names it. A basin or tap \
+only where a counter or sink unit is also chosen for it to sit in; never one that would stand \
+on the floor.
 - If no object on a slot's list fits at all, leave the slot empty and add it to "missing" \
 with "instead": "".
 
