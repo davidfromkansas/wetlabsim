@@ -1682,9 +1682,9 @@ class Build:
             wide = wd + 2 * k * wp
             ns = math.ceil((bx1 - bx0 + 2 * m) / wp)
             nf = max(0, int((wide / 2 - 0.6) / wp))
-            while 2 * k + 2 * ns + 2 * nf > 14 and nf:        # at most 14 panels: the front goes first
+            while 2 * k + 2 * ns + 2 * nf > 22 and nf:        # at most 22 panels: the front goes first
                 nf -= 1
-            while 2 * k + 2 * ns > 14 and ns > 1:
+            while 2 * k + 2 * ns > 22 and ns > 1:
                 ns -= 1
             spots = []                                        # (x, y, turn) in the room's frame
             xb = bx0 - m
@@ -1728,6 +1728,10 @@ class Build:
             w = "back" if used <= room or not walls["back"] else "left" if used <= room + 3.5 else "right"
             # in the order they stand: the back run by y, a side run by its place in the list
             walls[w].append((f, float(k), ly if w == "back" else float(k)))
+        if self._extend_run(stations, furniture, rows, srects, zone_of):
+            return self._pull_in(furniture, local, lambda f: any(
+                _hit(_item_rect(f["item"], f["x"], f["y"], f["yaw"]), b, 0.08) for b in srects),
+                {id(t[0]) for t in rows}, zone_of, (bx0, by0, bx1, by1), (ox, oy, th))
         if sum(len(v) for v in walls.values()) < 2:
             return
         clear, gap, zgap = 0.7, 0.03, 0.15
@@ -1756,22 +1760,79 @@ class Build:
             return out, length, deep
 
         back, lb, db = run("back")
+        half = max((by1 - by0) / 2 + clear, lb / 2)
+        # a run that turns one corner is one joined L: the back run ends in that corner
+        slide = (half - lb / 2) * (1 if walls["left"] and not walls["right"] else
+                                   -1 if walls["right"] and not walls["left"] else 0)
         for f, yaw, r, at in back:                     # backs on one line, the run centred on the tables
             x = bx0 - clear - db - r[0]
-            y = cy - lb / 2 + at - r[1]
+            y = cy + slide - lb / 2 + at - r[1]
             f["x"], f["y"] = (lambda q: (q[0] + ox, q[1] + oy))(_rot(x, y, th))
             f["yaw"], f["gap"] = yaw + th, 0.02
-        half = max((by1 - by0) / 2 + clear, lb / 2 + 0.3)
         for wall, sign in (("right", -1), ("left", 1)):
             rows, _, deep = run(wall)
-            for f, yaw, r, at in rows:                 # from the back corner towards the front
-                x = bx0 - clear + at - r[0]
+            for f, yaw, r, at in rows:                 # from the back corner (filled) towards the front
+                x = bx0 - clear - db + at - r[0]
                 y = cy + sign * (half + deep) - (r[3] if sign > 0 else r[1])
                 f["x"], f["y"] = (lambda q: (q[0] + ox, q[1] + oy))(_rot(x, y, th))
                 f["yaw"], f["gap"] = yaw + th, 0.02
         self._pull_in(furniture, local, lambda f: any(
             _hit(_item_rect(f["item"], f["x"], f["y"], f["yaw"]), b, 0.08) for b in srects),
             {id(t[0]) for w in walls.values() for t in w}, zone_of, (bx0, by0, bx1, by1), (ox, oy, th))
+
+    def _extend_run(self, stations, furniture, rows, srects, zone_of) -> bool:
+        """When the model stood a long counter or bench right at a robot's table (a fitted
+        kitchen's counter run, a lab's bench line), the other wall furniture carries that run on:
+        side by side from its free end, backs on its back line, fronts the same way, instead of
+        a second run somewhere behind. True if it placed them."""
+        from .scenegrid import long_y
+        from . import object_tree as T
+        tags = T.tags()
+        moving = {id(t[0]) for t in rows}
+
+        def dims(it):          # (wide along its front, deep front to back)
+            sx, sy, _ = catalog.meta(it)["size"]
+            return (sy, sx) if long_y(it) else (sx, sy)
+
+        def front(f):
+            return _rot(1.0, 0.0, f["yaw"]) if long_y(f["item"]) else _rot(0.0, float(front_sign(f["item"])), f["yaw"])
+
+        anchors = [f for f in furniture if id(f) not in moving and f["item"] not in FENCE
+                   and dims(f["item"])[0] >= 1.2
+                   and any(k in pth for pth in tags.get(f["item"], {}).get("paths", []) for k in WALL_KINDS)
+                   and any(_hit(_item_rect(f["item"], f["x"], f["y"], f["yaw"]), b, 0.08) for b in srects)]
+        if not anchors or not rows:
+            return False
+        a = max(anchors, key=lambda f: dims(f["item"])[0])
+        nx, ny = front(a)
+        tx, ty = -ny, nx
+        wa, da = dims(a["item"])
+        st = stations[0]
+        sgn = 1.0 if (a["x"] - st["x"]) * tx + (a["y"] - st["y"]) * ty >= 0 else -1.0
+        solid = srects + [_item_rect(f["item"], f["x"], f["y"], f["yaw"]) for f in furniture
+                          if id(f) not in moving and f is not a]
+        at = {1.0: wa / 2, -1.0: wa / 2}
+        last = {1.0: None, -1.0: None}
+        for f, _, _ in rows:
+            it = f["item"]
+            w, d = dims(it)
+            phi = math.atan2(ny, nx)
+            yaw = phi if long_y(it) else (phi - math.pi / 2 if front_sign(it) > 0 else phi + math.pi / 2)
+            z = zone_of.get(it, "")
+            for side in (sgn, -sgn):
+                g = 0.03 if last[side] in (None, z) else 0.12
+                c = at[side] + g + w / 2
+                x = a["x"] + tx * side * c + nx * (d - da) / 2
+                y = a["y"] + ty * side * c + ny * (d - da) / 2
+                if at[side] + g + w > wa / 2 + 4.5 or any(_hit(_item_rect(it, x, y, yaw), b, -0.02) for b in solid):
+                    continue
+                f["x"], f["y"], f["yaw"], f["gap"] = x, y, yaw, 0.02
+                at[side] += g + w
+                last[side] = z
+                break
+            else:
+                return False          # no room along the run: the usual run behind the robots
+        return True
 
     def _pull_in(self, furniture, local, at_table, walled, zone_of, box, frame, walk=0.9):
         """The loose floor things of each zone (a dining set, a cart, a bin and a mop) moved as
@@ -1784,7 +1845,21 @@ class Build:
             if id(f) in walled or f["item"] in FENCE or at_table(f):
                 continue
             groups.setdefault(zone_of.get(f["item"], ""), []).append(f)
-        for fs in groups.values():
+        sets = []                    # a zone's things that stand together (within 1.2 m) move together
+        for zs in groups.values():
+            left = list(zs)
+            while left:
+                grp = [left.pop()]
+                grew = True
+                while grew:
+                    grew = False
+                    for f in list(left):
+                        if any(math.hypot(f["x"] - g["x"], f["y"] - g["y"]) < 1.2 for g in grp):
+                            grp.append(f)
+                            left.remove(f)
+                            grew = True
+                sets.append(grp)
+        for fs in sets:
             lo = [local(f["x"], f["y"]) for f in fs]
             half = [max(catalog.meta(f["item"])["size"][:2]) / 2 for f in fs]
             gx0, gx1 = min(q[0] - h for q, h in zip(lo, half)), max(q[0] + h for q, h in zip(lo, half))
@@ -1799,6 +1874,11 @@ class Build:
             if not (dx or dy):
                 continue
             wx, wy = _rot(dx, dy, th)
+            others = [_item_rect(f["item"], f["x"], f["y"], f["yaw"]) for f in furniture
+                      if all(f is not g for g in fs)]
+            if any(_hit(_item_rect(f["item"], f["x"] + wx, f["y"] + wy, f["yaw"]), b, 0.3)
+                   for f in fs for b in others):
+                continue             # something stands between: it stays where the model put it
             for f in fs:
                 f["x"], f["y"] = f["x"] + wx, f["y"] + wy
 
