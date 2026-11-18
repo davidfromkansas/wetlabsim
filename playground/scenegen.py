@@ -1433,6 +1433,17 @@ class Build:
                                  "yaw": math.radians(_f(st.get("yaw"))), "task": str(st.get("task") or "")})
         for rb in want_r:
             stations.append({"robot": rb, "kind": "table", "x": 0.0, "y": 2.0 * len(stations), "yaw": 0.0})
+        if len(stations) == 2 and HANDOVER.search(self.prompt or "") and not self.preset and \
+                all(len(W.Station("probe", q["robot"], (0.0, 0.0), 0.0, kind="wetlab").bases()) == 1
+                    and W.Station("probe", q["robot"], (0.0, 0.0), 0.0, kind="wetlab").bases()[0][0] > -0.3
+                    for q in stations):
+            # two robots that pass things to each other: face to face across one work top (two
+            # narrow benches back to back, so both arms reach the middle)
+            a_, b_ = stations
+            a_["kind"] = b_["kind"] = "wetlab"
+            deep = W.Station("probe", a_["robot"], (0.0, 0.0), 0.0, kind="wetlab").footprint()[0]
+            fx, fy = _rot(deep, 0.0, a_["yaw"])
+            b_["x"], b_["y"], b_["yaw"] = a_["x"] + fx, a_["y"] + fy, a_["yaw"] + math.pi
         items = [i["id"] for i in self.pick["items"] for _ in range(i["count"])]
         from .scenebrief import tabletop
         small = set(tabletop()) if self.pick.get("brief") else set()
@@ -1469,6 +1480,12 @@ class Build:
                 want_o.remove(it)
                 on = o.get("on") if o.get("on") in ("station", "furniture", "floor", "inside") else "station"
                 k_st = max(0, min(len(stations) - 1, _int(o.get("station"), 0)))
+                if on == "floor" and self._role_of(it) == "task" and max(catalog.meta(it)["size"][:2]) <= 0.5:
+                    # a small thing the task uses, put on the bare floor: onto the robot's table, in reach
+                    rx0, ry0 = W.KINDS[stations[k_st]["kind"]].get("robot_xy", (-0.42, 0.0))
+                    ang = (-0.9, 0.9, -0.45, 0.45, 0.0)[len(objects) % 5]
+                    o = {**o, "on": "station", "x": rx0 + 0.5 * math.cos(ang), "y": ry0 + 0.5 * math.sin(ang)}
+                    on = "station"
                 yaw = math.radians(_f(o.get("yaw")))
                 if on == "station":       # in the station's frame: its robot sits at robot_xy
                     rx, ry = W.KINDS[stations[k_st]["kind"]].get("robot_xy", (-0.42, 0.0))
@@ -1543,6 +1560,13 @@ class Build:
             self._arrange_room(stations, furniture)
         return stations, furniture, objects
 
+    def _role_of(self, item: str) -> str:
+        """The brief's role for an object: "task" (the robot's task uses it), "scene", or ""."""
+        try:
+            return self.pick["brief"]["slots"][self.pick["slot_of"][item]]["role"]
+        except (KeyError, IndexError, TypeError):
+            return ""
+
     def _dock_task_furniture(self, stations, furniture, objects):
         """A floor-standing thing the task itself works (the brief's role "task": an incubator to
         open, a fridge to load) with a door or drawer, or with task things starting inside it:
@@ -1561,8 +1585,9 @@ class Build:
                 continue
             meta = catalog.meta(it)
             sx, sy, _ = meta["size"]
+            small_ = max(sx, sy) <= 0.5 and meta["size"][2] <= 0.7
             if role != "task" or it in FENCE or max(sx, sy) > 1.5 or \
-                    not (n in hosts or len(meta.get("bodies") or []) > 1):
+                    not (small_ or n in hosts or len(meta.get("bodies") or []) > 1):
                 continue
             lng = long_y(it)
             deep = sx if lng else sy
@@ -1604,15 +1629,37 @@ class Build:
         it = f["item"]
         meta = catalog.meta(it)
         sx, sy, sz = meta["size"]
-        if max(sx, sy, sz) > 0.9 or len(meta.get("bodies") or []) < 2 or not stations:
+        if not stations:
             return False
         st = stations[0]
+        if max(sx, sy) <= 0.5 and sz <= 0.7:
+            # a small stand, rack or fixture the task works: on the table it is nearest, where
+            # the model had it but within the arm's reach
+            st = min(stations, key=lambda q: math.hypot(f["x"] - q["x"], f["y"] - q["y"]))
+            pr = W.Station("probe", st["robot"], (st["x"], st["y"]), st["yaw"], kind=st["kind"])
+            if len(pr.bases()) != 1:
+                return False
+            bx, by = pr.bases()[0]
+            lx, ly = pr.to_local(f["x"], f["y"])
+            ang = math.atan2(ly - by, lx - bx)
+            ang = max(-1.2, min(1.2, ang))                  # in front of the robot, to the side it was on
+            x, y = bx + 0.5 * math.cos(ang), by + 0.5 * math.sin(ang)
+            return self._as_object(n, f, stations.index(st), x, y, _facing(it, x, y, [bx, by], [], 0.0),
+                                   furniture, objects)
+        if max(sx, sy, sz) > 0.9 or len(meta.get("bodies") or []) < 2:
+            return False
         pr = W.Station("probe", st["robot"], (0.0, 0.0), 0.0, kind="table")
         bx, by = pr.bases()[0]
         tx, ty = pr.footprint()
         if len(pr.bases()) != 1 or abs(bx) > tx / 2 or bx + 0.48 + deep > tx / 2 + 0.05:
             return False
         st["kind"] = "table"
+        x = bx + 0.48 + deep / 2
+        return self._as_object(n, f, 0, x, by, _facing(it, x, by, [bx, by], [], 0.0), furniture, objects)
+
+    def _as_object(self, n, f, k_st, x, y, yaw, furniture, objects) -> bool:
+        """Furniture n taken off the floor list and put first among the objects, on a table."""
+        it = f["item"]
         furniture.pop(n)
         for o in objects:
             if o["on"] == "inside" and not o.get("in_furniture") and o["object"] >= 0:
@@ -1625,9 +1672,8 @@ class Build:
                         o["on"] = "station"
                 elif o["furniture"] > n:
                     o["furniture"] -= 1
-        x = bx + 0.48 + deep / 2
-        objects.insert(0, {"item": it, "on": "station", "station": 0, "furniture": 0, "x": x, "y": by,
-                           "dx": 0.0, "dy": 0.0, "yaw": _facing(it, x, by, [bx, by], [], 0.0),
+        objects.insert(0, {"item": it, "on": "station", "station": k_st, "furniture": 0, "x": x, "y": y,
+                           "dx": 0.0, "dy": 0.0, "yaw": yaw,
                            "object": -1, "in_furniture": False, "level": 1, "overhang": False})
         return True
 
@@ -2439,6 +2485,10 @@ def front_sign(item: str) -> int:
         return 1
     return 1 if catalog.item(item)["hf"].startswith("tripo:") else -1
 
+
+# Words for two robots that pass something between them
+HANDOVER = re.compile(r"\b(hand(s|ing)?\b.{0,30}\b(over|to the other|to each other|off)|handover|hand-over|"
+                      r"pass(es|ing)?\b.{0,30}\b(to the other|to each other|between)|across a (shared )?table)\b", re.I)
 
 # Words that ask for every station to be the same
 MATCHING = re.compile(r"\b(identical|same (setup|objects|scene|things|items|layout)|the same \d+ objects|"
