@@ -2,7 +2,7 @@
 
 The files are the makers', unchanged. Their sources and checksums are in
 agent/datasheets/sources.json (Franka), agent/aloha/datasheets/sources.json (ALOHA) and
-agent/fr3_duo/datasheets/sources.json (FR3 Duo) and agent/g1/datasheets/sources.json (Unitree G1) and agent/piper/datasheets/sources.json (AgileX PiPER) and agent/rby1/datasheets/sources.json (RB-Y1);
+agent/fr3_duo/datasheets/sources.json (FR3 Duo) and agent/g1/datasheets/sources.json (Unitree G1) and agent/piper/datasheets/sources.json (AgileX PiPER) and agent/rby1/datasheets/sources.json (RB-Y1) and agent/<robot>/datasheets/sources.json (the Menagerie arms);
 this fetches any that are missing and checks them:
 
     python -m wetlabsim.datasheets
@@ -20,6 +20,10 @@ DIRS = {"franka": AGENT / "datasheets", "aloha": AGENT / "aloha" / "datasheets",
         "piper": AGENT / "piper" / "datasheets", "n220": AGENT / "n220" / "datasheets",
         "crx30ia": AGENT / "crx30ia" / "datasheets",
         "rby1": AGENT / "rby1" / "datasheets"}
+# The arms from MuJoCo Menagerie (wetlabsim/menagerie_arms.py): agent/<robot>/datasheets.
+DIRS.update({r: AGENT / r / "datasheets" for r in (
+    "arx_l5", "crx5ia", "rizon4", "rizon4s", "fr3", "fr3_v2", "yam", "gen3", "iiwa14", "koch", "sawyer",
+    "omy_3m", "so101", "devarm", "vx300s", "wx250s", "wxai", "so100", "lite6", "xarm7", "z1", "ur10e")})
 DIR = DIRS["franka"]
 
 

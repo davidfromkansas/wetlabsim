@@ -10,6 +10,7 @@ import math
 
 from . import catalog
 from . import world as W
+from wetlabsim import menagerie_arms as _MA
 
 TEMPLATE = """# Site sheet: this installation
 
@@ -93,6 +94,9 @@ TOOL = {
   readings.""",
 }
 HAND = {"franka": "hand", "ur5e": "tool", "piper": "gripper", "n220": "vacuum tool", "crx30ia": "vacuum tool"}
+# The arms from MuJoCo Menagerie (wetlabsim/menagerie_arms.py).
+TOOL.update({r: _MA.site_tool(r) for r in _MA.ARMS})
+HAND.update({r: "gripper" for r in _MA.ARMS})
 
 # A big floor-standing arm (the Comau N-220, the FANUC CRX-30iA): on the floor, facing its
 # table, pallet, conveyor or car body.

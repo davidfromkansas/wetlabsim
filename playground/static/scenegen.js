@@ -216,10 +216,10 @@ function draw() {
 <div class="f"><span class="sp"></span><button class="btn g" id="sgBack">Cancel</button></div>`;
   } else if (G.step === 'check') {
     const p = G.pick, full = nRobots() >= G.maxRobots;
-    const robots = p.robots.map((r, i) => `<div class="rc"><div class="art"><img src="${PIC[r.robot] || ''}" alt="${e(robotLabel(r.robot))}"></div>
+    const robots = p.robots.map((r, i) => `<div class="rc"><div class="art"><img src="${PIC[r.robot] || `/pg/static/robot_${r.robot}.png`}" alt="${e(robotLabel(r.robot))}"></div>
 <div class="nm"><b>${e(robotLabel(r.robot))}</b><div class="stp"><button data-r="${i}" data-d="-1" aria-label="One fewer ${e(robotLabel(r.robot))}">−</button><span>${r.count}</span><button data-r="${i}" data-d="1" aria-label="One more ${e(robotLabel(r.robot))}" ${full ? 'disabled' : ''}>+</button></div></div></div>`).join('');
     const addR = G.adding === 'robot'
-      ? `<div class="rc" style="width:200px"><div class="dd open" style="position:static;width:auto;box-shadow:0 0 0 1px #E5E7EB">${robotsCat().map(r => `<button data-addr="${r.id}"><img src="${PIC[r.id] || ''}" alt="" width="22" height="22" style="object-fit:contain">${e(robotLabel(r.id))}</button>`).join('')}</div></div>`
+      ? `<div class="rc" style="width:200px"><div class="dd open" style="position:static;width:auto;box-shadow:0 0 0 1px #E5E7EB">${robotsCat().map(r => `<button data-addr="${r.id}"><img src="${PIC[r.id] || `/pg/static/robot_${r.id}.png`}" alt="" width="22" height="22" style="object-fit:contain">${e(robotLabel(r.id))}</button>`).join('')}</div></div>`
       : `<button class="addr" id="sgAddR" ${full ? 'disabled' : ''}>${PLUS}Add a robot</button>`;
     const objs = p.items.map((it, i) => { const c = item(it.id); return `<div class="oc">${it.count > 1 ? `<span class="n">×${it.count}</span>` : ''}<img src="${c.thumb}" alt=""><b title="${e(c.label)}">${e(c.label)}</b><button class="rm" data-o="${i}" aria-label="Remove ${e(c.label)}">${XS}</button></div>`; }).join('');
     let addO = `<button class="oc add" id="sgAddO">${PLUS} Add</button>`;

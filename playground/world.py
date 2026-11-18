@@ -19,6 +19,7 @@ import mujoco
 import numpy as np
 
 from wetlabsim import scene as S
+from wetlabsim import menagerie_arms as _MA
 
 from . import catalog
 from . import settings as ST
@@ -55,6 +56,8 @@ FLOOR_ARMS = {"n220": {"gap": 1.15, "base": 0.75, "above": 3.4, "ahead": 1.6},
 STANDS = {"franka": [(-0.041, 0.0, 0.115, 0.095)], "ur5e": [(0.0, 0.0, 0.08, 0.08)],
           "piper": [(-0.01, 0.0, 0.05, 0.045)], "fr3_duo": [(0.0, 0.0, 0.12, 0.145)],
           "aloha": [(-0.019, 0.5, 0.1, 0.16), (-0.019, -0.5, 0.1, 0.16)]}
+STANDS.update(_MA.STANDS)    # the arms from MuJoCo Menagerie
+BASE_CLEARANCE_BY.update({r: 0.18 for r in _MA.SMALL})
 STAND_RGBA = [0.55, 0.57, 0.6, 1.0]     # brushed steel
 STAND_MIN = 0.002        # a gap this small under a mount needs no stand
 ROBOT_REACH_OFF = 1.0    # a robot moved off its table stays this near the table (m)

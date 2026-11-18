@@ -130,6 +130,16 @@ Three modes, picked in the header:
   `agent/piper`). The PiPER is smaller (626 mm reach, and pointing straight down it reaches no
   higher than 12 cm above its base), so each lab has its own layout for it, with the arm
   nearer the kit; the scoreboard lists each model with each robot.
+- **22 more arms from [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie)**
+  (robot picker, `wetlabsim/menagerie_arms.py`): ARX L5, FANUC CRX-5iA, Flexiv Rizon 4 and 4s,
+  Franka FR3 (v1 and v2), I2RT YAM, Kinova Gen3, KUKA LBR iiwa 14, the Low-Cost Robot Arm (Koch),
+  Rethink Sawyer, ROBOTIS OMY-3M, SO-100 and SO-101, Seeed reBot DevArm, Trossen ViperX 300 S,
+  WidowX 250 S and WidowX AI, UFACTORY Lite 6 and xArm 7, Unitree Z1 and UR10e. Each model is
+  Menagerie's, unchanged, in `wetlabsim/assets/<model>/` with its own LICENSE and README
+  (Menagerie commit `370c439`). Arms that come without a gripper get Menagerie's Robotiq 2F-85
+  (the FR3s the Franka Hand). Each has an AI kit in `agent/<robot>/` with the maker's own
+  documents (`datasheets/SOURCES.md` says where each came from and which simulator numbers they
+  set); ARX publishes none for the L5. Pictures: `playground/tools/render_menagerie_arm_pictures.py`.
 - **Factory and Car assembly scenes** (+ Station): two ready-made scenes of eight robots each,
   every robot with a task filled in (`PRESETS` in `playground/scenegen.py`). The factory is a
   roller conveyor with six assembly benches (ForgeCAD's peg, task board, gearbox, breaker and

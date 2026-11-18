@@ -548,6 +548,14 @@ ROBOTS = [
      "reach_mm": 600, "payload_kg": 3, "joints": "2 wheels + 6 + 2 × 7 + 2", "arms": 2, "thumb": "/pg/static/station_rby1.png"},
 ]
 
+# The arms from MuJoCo Menagerie (wetlabsim/menagerie_arms.py): figures from the makers' documents
+# (agent/<robot>/datasheets/SOURCES.md says which).
+from wetlabsim import menagerie_arms as _MA   # noqa: E402
+ROBOTS += [{"id": r, "label": a["name"], "maker": a["maker"], "gripper": _MA.profile(r)["gripper"],
+            "reach_mm": a["reach_mm"], "payload_kg": a["payload_kg"], "joints": a["joints"],
+            "open_mm": _MA.profile(r)["max_opening_mm"],
+            "thumb": f"/pg/static/station_{r}.png"} for r, a in _MA.ARMS.items()]
+
 
 def robots() -> list[dict]:
     return ROBOTS
