@@ -3,7 +3,10 @@ place a request names (the scene builder's own reference; the robot AI never see
 Each note: the words that call it up, then what stands next to what and which way things face."""
 from __future__ import annotations
 
+import json
+import os
 import re
+import urllib.request
 
 NOTES = [
     (("kitchen", "breakfast", "cook", "galley"),
@@ -83,3 +86,63 @@ def note(*texts: str) -> str:
             hits.append((n, text))
     hits.sort(key=lambda h: -h[0])
     return "\n".join(text for _, text in hits[:2])
+
+
+# ------------------------------------------------------------------ looked up on the web (Exa)
+WEB_FILE = os.path.expanduser("~/.wetlab/scene_web_notes.json")
+
+
+def exa_key() -> str:
+    """The Exa search key: EXA_API_KEY in the environment, or a line EXA_API_KEY=... in
+    ~/.wetlab/exa.env. Empty: no web lookup."""
+    k = os.environ.get("EXA_API_KEY", "").strip()
+    if k:
+        return k
+    try:
+        for line in open(os.path.expanduser("~/.wetlab/exa.env")):
+            if line.strip().startswith("EXA_API_KEY="):
+                return line.strip().split("=", 1)[1].strip().strip("'\"")
+    except OSError:
+        pass
+    return ""
+
+
+def web_note(room: str, timeout: float = 12.0) -> str:
+    """How a place of this kind is really laid out, from a web search (Exa): a few sources'
+    summaries. Only the kind of place is sent (the brief's room, e.g. "restaurant dish room"),
+    never the person's request. Kept per kind of place, so each is looked up once. Empty with
+    no key, or when the search fails."""
+    room = re.sub(r"\s+", " ", room or "").strip().lower()[:80]
+    key = exa_key()
+    if not room or not key:
+        return ""
+    try:
+        kept = json.load(open(WEB_FILE))
+    except (OSError, ValueError):
+        kept = {}
+    if room in kept:
+        return kept[room]
+    body = {"query": f"how a {room} is physically laid out: where the equipment and furniture stand "
+                     f"relative to each other and in what order along the workflow",
+            "type": "auto", "numResults": 3,
+            "contents": {"summary": {"query": "In 2 or 3 plain sentences, only the physical layout: what stands "
+                                              "next to what, what lines the walls, what is kept within arm's "
+                                              "reach of the work spot, and the order of things along the workflow."}}}
+    req = urllib.request.Request("https://api.exa.ai/search", data=json.dumps(body).encode(),
+                                 headers={"x-api-key": key, "Content-Type": "application/json",
+                                          "User-Agent": "scene-builder"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            res = json.load(r).get("results") or []
+    except Exception:  # noqa: BLE001      no network, a bad key, Exa down: the scene is built without it
+        return ""
+    text = "\n".join("- " + re.sub(r"\s+", " ", str(x.get("summary") or "")).strip()[:450]
+                     for x in res if x.get("summary"))[:1400]
+    if text:
+        kept[room] = text
+        try:
+            os.makedirs(os.path.dirname(WEB_FILE), exist_ok=True)
+            json.dump(kept, open(WEB_FILE, "w"))
+        except OSError:
+            pass
+    return text
