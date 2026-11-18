@@ -1795,6 +1795,7 @@ its authors; see `wetlabsim/assets/autobio/NOTICE.md`.
 | Platform dolly | Factory | NdotLight SimReady Assets | [`platform_dolly`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/platform_dolly) |
 | Power drill, 3 | Tools | NdotLight SimReady Assets | [`power_drill`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/power_drill) |
 | Respirator | PPE | NdotLight SimReady Assets | [`respirator`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/respirator) |
+| Roller conveyor, 2 | Factory | NdotLight SimReady Assets | [`roller_conveyor`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/roller_conveyor) |
 | Safety barrier | Factory | NdotLight SimReady Assets | [`safety_barrier`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/safety_barrier) |
 | Safety cone | Factory | NdotLight SimReady Assets | [`safety_cone`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/safety_cone) |
 | Safety goggles, 2 | PPE | NdotLight SimReady Assets | [`safety_goggles`](https://huggingface.co/datasets/NdotLight/SimReady_Assets/tree/main/safety_goggles) |

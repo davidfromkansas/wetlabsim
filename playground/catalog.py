@@ -14,9 +14,11 @@ tools/build_soft.py).
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 
-ASSETS = pathlib.Path(__file__).parent / "assets"
+# The converted objects. On Modal they come from the "wetlab-library" Volume at /library (hosting/app.py).
+ASSETS = pathlib.Path(os.environ.get("WETLAB_ASSETS_DIR") or pathlib.Path(__file__).parent / "assets")
 
 TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Glassware", "Instruments", "PPE", "Tools", "Kitchen", "Bins & Trays", "Cleaning", "Electronics", "Toys & Basics", "Factory", "Car parts", "Garage", "Home", "Office", "Shops & Hotels", "Sports & Leisure", "Outdoor", "Soft", "LIBERO"]
 
@@ -592,13 +594,30 @@ def meta(id_: str) -> dict:
     return json.loads((ASSETS / id_ / "asset.json").read_text())
 
 
+_AVAILABLE: list[dict] | None = None
+
+
 def available() -> list[dict]:
-    """Library items whose converted files are present."""
+    """Library items whose converted files are present. Read once per process: on Modal the files
+    are on a Volume, where reading ~3,000 asset.json files per request would be slow."""
+    global _AVAILABLE
+    if _AVAILABLE is None:
+        _AVAILABLE = _available()
+    return _AVAILABLE
+
+
+def _available() -> list[dict]:
+    # index.json (written by tools/library.py push): every object's asset.json in one file, so the
+    # Modal Volume is read once instead of ~3,000 times. Objects not in it are read one by one.
+    idx = ASSETS / "index.json"
+    index = json.loads(idx.read_text()) if idx.exists() else {}
     out = []
     for i, tab, label, hf, hollow, fixed in ITEMS:
         f = ASSETS / i / "asset.json"
-        if f.exists():
+        m = index.get(i)
+        if m is None and f.exists():
             m = json.loads(f.read_text())
+        if m is not None:
             out.append({"id": i, "tab": tab, "label": label, "fixed": fixed, "size": m["size"],
                         "mass": m["mass"], "friction": m.get("friction"),
                         "collision": m.get("collision", ""), "thumb": f"/pg/thumb/{i}.png",

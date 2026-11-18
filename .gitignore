@@ -7,7 +7,9 @@ __pycache__/
 .venv/
 MUJOCO_LOG.TXT
 
-!playground/assets/**/*.png
+# The object library lives in the Modal Volume "wetlab-library" (playground/tools/library.py)
+playground/assets/*
+!playground/assets/CREDITS.md
 !playground/textures/*.png
 playground/libero_assets/files/
 build/
