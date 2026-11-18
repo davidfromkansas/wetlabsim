@@ -54,7 +54,7 @@ NOTES = [
      "open them; desk under a window with its chair tucked in. In a kid's room the toy box stands open "
      "at the foot of the bed or against a wall, toys scattered on the floor or rug in the middle and "
      "on the robot's low table. Laundry folded on the bed means the bed is the work surface, in "
-     "reach."),
+     "reach, the laundry lying on the bed itself."),
     (("laundry", "washer", "washing machine", "dryer", "fold", "towel", "clothes"),
      "Laundry room: washer and dryer side by side against one wall, doors facing the room, a counter or "
      "folding table next to them; the laundry basket on the floor or table right in front of the "
@@ -95,21 +95,24 @@ NOTES = [
      "table, touching it, its belt within reach, carrying the parts; the machine it tends stands at "
      "the other side, door facing the robot, its loading spot within reach. Parts start in a tote, "
      "tray or fixture on the table, not loose. The fence closes round the back and both sides about "
-     "1 m out, in a continuous line, the door in the back; the front stays open. Control cabinet, "
+     "1 m out, in a continuous line, the door in the back; the front stays open. When the robot picks "
+     "from the conveyor, the parts start on the belt itself, spaced along it within reach. Control cabinet, "
      "signal tower and e-stop just outside the fence by the door. Carts and shelving outside the fence "
      "in one tidy row."),
     (("pallet", "depallet", "end-of-line", "end of line", "packing", "stretch", "shrink"),
      "Palletizing or packing line: a straight flow: infeed conveyor ending at the robot's table, "
      "the pallet the robot builds (or unloads) on the floor right beside the table within reach, "
-     "loaded boxes stacked squarely on it in layers, then the stretch wrapper, then finished wrapped "
+     "loaded boxes stacked squarely on it in layers (whatever the task takes off a pallet starts on "
+     "the pallet, never on the floor or the bench), then the stretch wrapper, then finished wrapped "
      "pallets in a row. Pallet jack parked by the finished pallets. Boxes the robot packs into stand "
      "open on the conveyor's end or the table; the tape and labels on the table's near corner."),
-    (("warehouse", "returns", "e-commerce", "fulfil", "sorting", "parcel", "logistics", "kitting", "tote"),
+    (("warehouse", "returns", "e-commerce", "fulfil", "sorting", "parcel", "logistics", "kitting", "tote", "payload", "onto the cart"),
      "Warehouse station: inbound on one side, outbound on the other: the conveyor (or cart) of "
      "incoming things ends at one end of the robot's table; totes or bins for sorted things stand open "
      "at the other end or along the table's far edge in a row; the roll cage or pallet for outgoing "
      "stands beside those. Shelving in a straight row behind the station, stocked. Scanner, tape and "
-     "label maker together on the table's near corner. Things to pick start inside the source tote."),
+     "label maker together on the table's near corner. Things to pick start inside the source tote. "
+     "A box the robot lifts onto a cart starts on the robot's table, the cart right beside it."),
     (("server", "data cent", "network", "cable"),
      "Server room: racks side by side in one straight row, fronts the same way; the robot's table "
      "stands right in front of the rack it works on, so the ports are within reach; the cable tray "
@@ -120,7 +123,8 @@ NOTES = [
      "it, the tool cabinet beside it; machines (drill press, grinder, lathe) in a row along another "
      "wall; small bench machines stand on a bench, not on the floor. Hand tools in a row on the bench, "
      "handles towards the robot, fasteners in a small tray. In a garage the car or lift is the centre: "
-     "the robot's table and the wheel or parts stand right beside it."),
+     "the robot's table and the wheel or parts stand right beside it. A pit crew: the car in the "
+     "middle, each robot at its own wheel with the tyre, rim and wrench on its own table in reach."),
     (("hospital", "clinic", "pharmacy", "patient", "ward", "medic", "iv bag", "iv pole", "nurse", "syringe", "operating room", "surgical"),
      "Hospital room or pharmacy: the bed with its head against a wall, the bedside cabinet and IV "
      "pole at its head, the overbed table across it; supply cart and cabinets along the opposite "
@@ -129,12 +133,14 @@ NOTES = [
     (("office", "desk", "mail", "print", "study", "book", "classroom", "school", "whiteboard"),
      "Office, study or classroom (as in LIBERO's study scenes): the desk with its chair tucked in, "
      "books, mug and desk caddy on the desk within reach of the robot; filing cabinet and bookshelf "
-     "side by side against a wall behind; whiteboard flat on a wall or on a stand beside the desk, "
-     "facing the room; printer on its own stand; bin beside the desk."),
+     "side by side against a wall behind; a whiteboard the robot writes on lies flat on its table or "
+     "stands at the table's end with its writing side turned to the robot, otherwise it hangs on a "
+     "wall facing the room; printer on its own stand; bin beside the desk."),
     (("shop", "store", "retail", "shelf stock", "grocery", "checkout", "restock", "supermarket"),
      "Shop: shelving units side by side in a straight aisle, stocked, labels facing the aisle; the "
      "robot works in the aisle right at the shelf it stocks, its shelves facing the robot and the gaps "
-     "on shelves within reach, the crate of stock beside the robot. The checkout counter near the "
+     "on shelves within reach; the stock it shelves starts in a crate or on the cart's top shelf at "
+     "table height beside the robot, never low on the floor. The checkout counter near the "
      "front with the till and scanner on it, the queue lined up along it; baskets stacked by the "
      "entrance."),
     (("garden", "greenhouse", "plant", "windowsill", "potting"),
