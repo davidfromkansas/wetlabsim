@@ -629,8 +629,17 @@ The scene's robots (each entry is one station): {robots}
 The scene's objects: {items}
 Sizes (x by y by z, cm): {sizes}
 
+Before any position, write the layout rationale ("rationale" in the answer): reason the layout out from the task, not from the list of objects. Every position you then give must follow from it; if a position doesn't fit the rationale, change the position.
+
 Answer with JSON only, exactly this shape:
-{{"plan": "2 to 4 plain sentences on the layout and the choices you made",
+{{"rationale": {{"task_steps": "what the robot does, step by step, and what it must reach or open at each step",
+                "in_reach": "each thing the task uses: where it starts and why the arm reaches it there",
+                "task_furniture": "each piece of furniture the task uses or feeds: which side of the robot's table it stands at, its front to the arm, and why",
+                "room": "where each zone goes relative to the robots and why (what a person there would keep together, what lines the walls, what stays clear)",
+                "starts_in": "what starts inside or on top of what, with the level or shelf, as the request says",
+                "left_out": "anything left out or swapped for something else, and why (or 'nothing')",
+                "checks": "the gaps and overlaps you checked: anything that would collide, block a door or a camera, or sit out of reach, and how you moved it"}},
+ "plan": "2 to 4 plain sentences for the person on the layout and the choices you made",
  "stations": [{{"robot": "franka", "kind": "table", "x": 0, "y": 0, "yaw": 0}}],
  "furniture": [{{"item": "refrigerator", "x": 2.0, "y": 1.2, "face": "station 0", "gap": 0.15}}],
  "objects": [{{"item": "mug", "on": "station", "station": 0, "x": 0.3, "y": 0.1, "yaw": 0}},
@@ -1154,6 +1163,7 @@ class Build:
         self.station_tasks: dict[str, str] = {}
         self.model_id, self.public = model_id, public
         self.id = os.urandom(4).hex()
+        self.rationale = {}           # the layout step's own reasons, checked against after the build
         self.phase = "plan"           # plan, robots, furniture, objects, done, stopped, error
         self.plan_text = ""
         self.error = ""
@@ -1335,6 +1345,7 @@ class Build:
                 place_new(objs)
             lay = parse_json(buf)
             self.plan_text = str(lay.get("plan") or self.plan_text).strip()[:800]
+            self.rationale = lay.get("rationale") if isinstance(lay.get("rationale"), dict) else {}
             self.task = str(lay.get("task") or self.task).strip()[:600] or self.task
             stations2, furniture2, objects = self._clean_layout(lay)
             self.raw_layout, self.laid = lay, objects
@@ -2104,6 +2115,9 @@ class Build:
         br = self.pick.get("brief") or {}
         user = (f"The person's request:\n{self.prompt.strip()[:2000]}\n\nRoom: {br.get('room', '')}\n"
                 f"Zones: {json.dumps(br.get('zones', []))}\nTask: {self.task}\n"
+                + (f"Your layout rationale (the scene must match it; fix what doesn't, e.g. something "
+                   f"meant to start inside or beside a thing but placed elsewhere): {json.dumps(self.rationale)}\n"
+                   if self.rationale else "") +
                 f"Robots' stations (x, y in metres; the robot faces faces_deg): {json.dumps(stations)}\n"
                 f"Objects placed (n, label, x, y, yaw in degrees, size, what it stands on, role): "
                 f"{json.dumps([{k: r[k] for k in ('n', 'label', 'x', 'y', 'yaw', 'size_cm', 'on', 'role')} for r in rows])}\n"

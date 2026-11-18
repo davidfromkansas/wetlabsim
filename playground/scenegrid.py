@@ -226,8 +226,17 @@ The scene's robots (each entry is one station): {robots}
 The scene's objects: {items}
 Footprints: {sizes}
 
+Before any position, write the layout rationale ("rationale" in the answer): reason the layout out from the task, not from the list of objects. Every position you then give must follow from it; if a position doesn't fit the rationale, change the position.
+
 Answer with JSON only, exactly this shape:
-{{"plan": "2 to 4 plain sentences on the layout and the choices you made",
+{{"rationale": {{"task_steps": "what the robot does, step by step, and what it must reach or open at each step",
+                "in_reach": "each thing the task uses: where it starts and why the arm reaches it there",
+                "task_furniture": "each piece of furniture the task uses or feeds: which side of the robot's table it stands at, its front to the arm, and why",
+                "room": "where each zone goes relative to the robots and why (what a person there would keep together, what lines the walls, what stays clear)",
+                "starts_in": "what starts inside or on top of what, with the level or shelf, as the request says",
+                "left_out": "anything left out or swapped for something else, and why (or 'nothing')",
+                "checks": "the gaps and overlaps you checked: anything that would collide, block a door or a camera, or sit out of reach, and how you moved it"}},
+ "plan": "2 to 4 plain sentences for the person on the layout and the choices you made",
  "stations": [{{"robot": "franka", "kind": "table", "x": 0, "y": 0, "facing": "+x"}}],
  "furniture": [{{"item": "refrigerator", "x": -8, "y": 2, "facing": "+x"}}],
  "objects": [{{"item": "mug", "on": "station", "station": 0, "f": 8, "s": -3, "turn": 0}},
