@@ -208,10 +208,19 @@ def _words(s: str) -> set[str]:
     return {w for w in re.findall(r"[a-z0-9]+", s.lower()) if w not in STOP and len(w) > 1}
 
 
+# Furniture made to hang on a wall (the playground's floor has none)
+WALL_HUNG = {"kitchen_wall_cabinet", "range_hood"}
+
+
 def _candidates(slot: dict, room: str) -> list[str]:
     """The objects under a slot's branch that could fill it: a task slot only takes things a
     hand can pick up; full-quality looks first."""
     ids = T.under(slot["node"])
+    # the floor has no walls: a thing that only hangs on one stays out unless the slot asks for it by name
+    want = _words(slot.get("want", ""))
+    tags = T.tags()
+    ids = [i for i in ids if i not in WALL_HUNG or
+           {"wall", "hood"} & _words(tags[i]["label"]) & want] or ids
     # every object under the branch stays a candidate (a basket the task puts things in needn't be
     # one a hand can lift); the ranking and the final choice judge the fit
     return ids
