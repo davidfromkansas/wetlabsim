@@ -1732,6 +1732,15 @@ class Build:
                 return self._skip(it)
             want = f"the table of {st.name}"
             lx, ly = o["x"], o["y"]
+            # within the arm's comfortable reach (three quarters of the maker's figure), measured
+            # to a big thing's near side: a spot further out is pulled in along its line to the base
+            reach = next((r["reach_mm"] for r in catalog.robots() if r["id"] == st.robot), 850) / 1000.0
+            sx, sy, _ = catalog.meta(it)["size"]
+            far = 0.75 * reach + (max(sx, sy) / 2 if max(sx, sy) > 0.3 else 0.0)
+            bx, by = min(st.bases(), key=lambda b: math.hypot(lx - b[0], ly - b[1]))
+            d = math.hypot(lx - bx, ly - by)
+            if d > far:
+                lx, ly = bx + (lx - bx) * far / d, by + (ly - by) * far / d
             for dx, dy in _spiral(0.04, 9):
                 x, y, _ = st.to_world(lx + dx, ly + dy)
                 if not st.holds(x, y, -0.06) or st.near_base(x, y):
