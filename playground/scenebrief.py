@@ -88,6 +88,8 @@ count every task object once per robot (2 robots with a bowl and 4 blocks each =
 Things the task presses, turns, opens or solves must really move: pick objects with working \
 parts (a cabinet with a door, a box with a lid); our puzzle cube and phones don't move, so \
 word such a task as moving the thing instead.
+The scene has a floor and no walls: never ask for things that hang on a wall or are built \
+into one (wall cabinets, range hoods, windows, doors, loose basins).
 A robot cell with a fence or guard: 5 or 6 Safety fence panels and one Robot cell safety \
 fence door, so the fence can close round the cell (one or two panels guard nothing).
 Something the task puts things into must be open (a basket, tray, bowl, tote, bin, rack), \
@@ -209,7 +211,7 @@ def _words(s: str) -> set[str]:
 
 
 # Furniture made to hang on a wall (the playground's floor has none)
-WALL_HUNG = {"kitchen_wall_cabinet", "range_hood"}
+WALL_HUNG = {"kitchen_wall_cabinet", "range_hood", "fixture_cabinet", "wash_basin"}
 
 
 def _candidates(slot: dict, room: str) -> list[str]:
@@ -220,7 +222,7 @@ def _candidates(slot: dict, room: str) -> list[str]:
     want = _words(slot.get("want", ""))
     tags = T.tags()
     ids = [i for i in ids if i not in WALL_HUNG or
-           {"wall", "hood"} & _words(tags[i]["label"]) & want] or ids
+           {"wall", "hood", "basin"} & _words(tags[i]["label"]) & want & _words(slot.get("asked", ""))] or ids
     # every object under the branch stays a candidate (a basket the task puts things in needn't be
     # one a hand can lift); the ranking and the final choice judge the fit
     return ids

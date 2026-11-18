@@ -646,7 +646,7 @@ Answer with JSON only, exactly this shape:
              {{"item": "kettle", "on": "furniture", "furniture": 0, "dx": 0, "dy": 0, "yaw": 0}},
              {{"item": "waste_bin", "on": "floor", "x": 1.5, "y": -1.0, "yaw": 0}},
              {{"item": "can", "on": "inside", "object": 0, "level": 1, "dx": 0.05, "dy": 0, "yaw": 0}}],
- "task": "the robot's task, one sentence"}}
+ "task": "the robot's task, one sentence, naming things in plain words (never by index or id)"}}
 When the request wants the stations to match ("identical", "the same setup"), share the \
 objects out evenly and put each station's set at the same spots in its own frame.
 List every station and every object exactly once per copy (an item asked for twice appears \

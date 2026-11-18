@@ -243,7 +243,7 @@ Answer with JSON only, exactly this shape:
              {{"item": "kettle", "on": "furniture", "furniture": 0, "dx": 0, "dy": 0, "turn": 0}},
              {{"item": "waste_bin", "on": "floor", "x": 6, "y": -4, "turn": 0}},
              {{"item": "can", "on": "inside", "object": 0, "level": 1, "dx": 0.05, "dy": 0, "turn": 0}}],
- "task": "the robot's task, one sentence"}}
+ "task": "the robot's task, one sentence, naming things in plain words (never by index or id)"}}
 List every station and every object exactly once per copy (an item asked for twice appears \
 twice). Put furniture items in "furniture" only."""
 
