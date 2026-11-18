@@ -328,7 +328,7 @@ def can_see(model_id: str, public: bool) -> bool:
     return any(m["id"] == model_id for m in SCENE_MODELS)
 
 
-def ask_json(model_id: str, system: str, user: str, public: bool, effort: str = "medium", images=()) -> dict:
+def _ask_json1(model_id: str, system: str, user: str, public: bool, effort: str = "medium", images=()) -> dict:
     m = next((m for m in SCENE_MODELS if m["id"] == model_id), None)
     if m is None:
         raise ModelError("that model can't build scenes")
@@ -446,7 +446,7 @@ def _claude_plan_stream(model: str, system: str, user: str):
         shutil.rmtree(home, ignore_errors=True)
 
 
-def ask_stream(model_id: str, system: str, user: str, public: bool, effort: str = "medium"):
+def _ask_stream1(model_id: str, system: str, user: str, public: bool, effort: str = "medium"):
     """A model's answer as it is written, piece by piece (all at once where the route can't
     stream: Codex with a ChatGPT sign-in)."""
     m = next((m for m in SCENE_MODELS if m["id"] == model_id), None)
@@ -466,6 +466,42 @@ def ask_stream(model_id: str, system: str, user: str, public: bool, effort: str 
         yield from _anthropic_stream(m["id"], system, user, key, effort)
     else:
         yield from _openai_stream(m["id"], system, user, key, effort)
+
+
+REFUSED = re.compile(r"safeguards|declined|refus", re.I)
+
+
+def _other_model(model_id: str) -> str | None:
+    """The same company's other strong model, for when one turns a harmless request down."""
+    m = next((m for m in SCENE_MODELS if m["id"] == model_id), None)
+    alts = [x["id"] for x in SCENE_MODELS if m and x["provider"] == m["provider"] and x["id"] != model_id]
+    return alts[0] if alts else None
+
+
+def ask_json(model_id: str, system: str, user: str, public: bool, effort: str = "medium", images=()) -> dict:
+    """A model's JSON answer; if the model's safety check turns the request down (it happens now and
+    then on plain scene requests), the same company's other model answers instead."""
+    try:
+        return _ask_json1(model_id, system, user, public, effort, images)
+    except ModelError as e:
+        alt = _other_model(model_id)
+        if not alt or not REFUSED.search(str(e)):
+            raise
+        return _ask_json1(alt, system, user, public, effort, images)
+
+
+def ask_stream(model_id: str, system: str, user: str, public: bool, effort: str = "medium"):
+    """As ask_json, as it is written: the other model takes over only if nothing came yet."""
+    got = False
+    try:
+        for piece in _ask_stream1(model_id, system, user, public, effort):
+            got = got or bool(piece)
+            yield piece
+    except ModelError as e:
+        alt = _other_model(model_id)
+        if got or not alt or not REFUSED.search(str(e)):
+            raise
+        yield from _ask_stream1(alt, system, user, public, effort)
 
 
 def stream_items(text: str, key: str) -> tuple[list[dict], bool, bool]:
