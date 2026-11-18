@@ -170,7 +170,7 @@ def _openai(model: str, system: str, user: str, key: str, effort: str, images=()
 
 
 WHERE = "local"     # where Codex runs for a ChatGPT sign-in: "local", or "modal" (server.RUN_LAUNCHER)
-CODEX_TIMEOUT = 300
+CODEX_TIMEOUT = 480
 
 
 def _codex_cmd(model: str, effort: str, out: str, jail: bool, images=()) -> list:
@@ -639,6 +639,9 @@ shelf to stock, the sink and dishwasher of a dish line, the conveyor a robot loa
 robot, the part the robot works on within 0.8 m of the robot's base, at a\
 side end of the table (its -y or +y end), not past its far edge. Better still, use small \
 furniture on the table (below) when one fits the request.
+  - The request's centrepiece (the car on its lift in a tire change, the patient bed by a care \
+robot, the machine being serviced) stands within 0.5 m of the robot's table, on the side the work \
+faces, even when the task itself is done on the table: the robot must look like it works on it.
 - Objects for the robots' task go on their station's table, within reach of the robot: station \
 frame x from -0.15 to 0.75 and y from -0.5 to 0.5 (for the wet lab bench x from -0.1 to 0.3 and y \
 from -0.8 to 0.8; the island x from -0.05 to 0.25, y from -0.55 to 0.55; the counter x from -0.05 \
