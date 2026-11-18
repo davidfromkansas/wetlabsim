@@ -1,0 +1,50 @@
+# Temporary: deploy this branch to the staging copy (wetlab-playground-staging) to check the
+# object-library image change before it reaches main. Removed before merge.
+name: Staging test deploy
+on:
+  push:
+    branches: [claude/project-thread-ms2bfd]
+    paths: [".github/workflows/staging-test.yml", "hosting/app.py"]
+concurrency:
+  group: staging-test
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install modal
+      - name: Deploy staging
+        env:
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+          WETLAB_APP: wetlab-playground-staging
+        run: modal deploy hosting/app.py
+      - name: Check the image has the objects
+        env:
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+          WETLAB_APP: wetlab-playground-staging
+        run: |
+          cat > /tmp/chk.py <<'P'
+          import modal, sys
+          sys.path.insert(0, ".")
+          from hosting.app import image
+          app = modal.App("wetlab-assets-check", image=image)
+          @app.function(timeout=600)
+          def chk():
+              import os, pathlib
+              from playground import catalog
+              n = sum(1 for _ in pathlib.Path("/opt/assets").rglob("*") if _.is_file())
+              miss = [i[0] for i in catalog.ITEMS if not (catalog.ASSETS / i[0]).exists()]
+              return str(catalog.ASSETS), n, len(catalog.ITEMS), miss[:20]
+          @app.local_entrypoint()
+          def main():
+              r = chk.remote(); print(r)
+              assert r[1] > 150000, r
+          P
+          modal run /tmp/chk.py
