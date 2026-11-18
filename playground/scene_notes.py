@@ -23,7 +23,7 @@ NOTES = [
      "cycler) in a row at its back edge. Tall units (fridge, freezer, cabinets, fume hood, biosafety "
      "cabinet) stand together along one wall. Sharps and waste containers go on a bench end or beside "
      "a bench leg, never out on the open floor. A stool is tucked under a bench."),
-    (("cell culture", "biosafety", "incubator", "sterile", "tissue culture"),
+    (("cellculture", "biosafety", "incubator", "sterile", "tissue culture"),
      "Cell culture room: the biosafety cabinet is the work place: the robot's bench stands right "
      "at it or the task happens in front of it. The CO2 incubator stands next to the cabinet, its "
      "door opening towards the work place with a full door's width clear in front. The fridge and the "
@@ -75,7 +75,7 @@ NOTES = [
 
 def note(*texts: str) -> str:
     """The notes (at most two) whose words turn up in the request or the room's name."""
-    t = " ".join(texts).lower()
+    t = " ".join(texts).lower().replace("cell culture", "cellculture")   # not a robot "cell"
     hits = []
     for words, text in NOTES:
         n = sum(1 for w in words if re.search(r"\b" + re.escape(w), t))
