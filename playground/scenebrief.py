@@ -426,6 +426,11 @@ def pick(prompt: str, model_id: str, public: bool) -> dict:
                                                  for p in T.tags()[i]["paths"])), "")
         if m["name"] and m["name"].lower() not in [x["name"].lower() for x in miss]:
             miss.append({"name": m["name"], "instead": inst if inst in labels else ""})
+    n_robots = sum(r["count"] for r in brief["robots"])
+    if n_robots > 1 and SG.MATCHING.search(prompt):     # matching stations: every table gets each thing
+        for i in list(items):
+            if not catalog.item(i)["fixed"] and items[i] % n_robots:
+                items[i] += n_robots - items[i] % n_robots
     out = SG.clean_pick({"title": brief["title"], "robots": brief["robots"],
                          "items": [{"id": i, "count": n} for i, n in items.items()],
                          "missing": miss, "task": str(raw.get("task") or "").strip() or brief["task"]})

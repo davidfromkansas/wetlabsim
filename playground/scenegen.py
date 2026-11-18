@@ -1416,6 +1416,30 @@ class Build:
         for o in objects:
             if o["on"] == "inside" and not o["in_furniture"]:
                 o["object"] = where.get(o["object"], -1)
+        if len(stations) > 1 and MATCHING.search(self.prompt or ""):
+            # stations asked to match: each one's things at the spots of the first station's
+            if not partial:          # the copies of each thing shared out evenly over the stations
+                by_item = {}
+                for o in objects:
+                    if o["on"] == "station":
+                        by_item.setdefault(o["item"], []).append(o)
+                for rows in by_item.values():
+                    if len(rows) % len(stations) == 0:
+                        rows.sort(key=lambda o: o["station"])
+                        for j, o in enumerate(rows):
+                            o["station"] = j // (len(rows) // len(stations))
+            first = {}
+            for o in objects:
+                if o["on"] == "station" and o["station"] == 0:
+                    first.setdefault(o["item"], []).append(o)
+            seen = {}
+            for o in objects:
+                if o["on"] == "station" and o["station"] > 0:
+                    k = seen.setdefault((o["station"], o["item"]), 0)
+                    seen[(o["station"], o["item"])] += 1
+                    src = first.get(o["item"], [])
+                    if k < len(src):
+                        o["x"], o["y"], o["yaw"] = src[k]["x"], src[k]["y"], src[k]["yaw"]
         to_come = len(want_o)
         for k, it in enumerate([] if partial else want_o):
             objects.append({"item": it, "on": "station", "station": k % max(1, len(stations)),
@@ -1449,6 +1473,11 @@ class Build:
         srects = [_station_rect(st["kind"], st["robot"], st["x"], st["y"], st["yaw"]) for st in stations]
         for r in srects:
             pts += [local(x, y) for x in (r[0], r[2]) for y in (r[1], r[3])]
+        for st in stations:          # and the robots themselves (a big one stands beside its table)
+            pr = W.Station("probe", st["robot"], (st["x"], st["y"]), st["yaw"], kind=st["kind"])
+            for bxy in pr.bases():
+                wx, wy = pr.to_world(*bxy)[:2]
+                pts += [local(wx + dx, wy + dy) for dx in (-0.45, 0.45) for dy in (-0.45, 0.45)]
         from . import object_tree as T
         tags = T.tags()
 
@@ -1466,36 +1495,45 @@ class Build:
         bx0, bx1 = min(q[0] for q in pts), max(q[0] for q in pts)
         by0, by1 = min(q[1] for q in pts), max(q[1] for q in pts)
         cy = (by0 + by1) / 2
-        # a guarded cell: its fence panels (and door) round the back and both sides of the
-        # tables, the front left open; the wall furniture then stands outside the fence
+        # a guarded cell: its fence as a ring round the tables and robots, the door mid-back, an
+        # opening left mid-front; panels are added to close it. The wall furniture stands outside.
         fence = [f for f in furniture if f["item"] in FENCE]
         if len(fence) >= 3:
-            m = 0.9
-            fence.sort(key=lambda f: -catalog.meta(f["item"])["size"][0])      # the door first: mid-back
-            back_len = by1 - by0 + 2 * m
-            back, sides, got = [], [[], []], 0.0
-            for f in fence:
-                w = catalog.meta(f["item"])["size"][0]
-                if got + w <= back_len + 0.3 or not back:
-                    back.insert(len(back) // 2, f)
-                    got += w
-                else:
-                    sides[len(sides[0]) > len(sides[1])].append(f)
-            at = cy - got / 2
-            for f in back:
-                w = catalog.meta(f["item"])["size"][0]
-                q = _rot(bx0 - m, at + w / 2, th)
-                f["x"], f["y"], f["yaw"], f["gap"] = q[0] + ox, q[1] + oy, th + math.pi / 2, 0.0
-                at += w + 0.01
-            half = max(back_len, got) / 2
-            for sign, row in ((-1, sides[0]), (1, sides[1])):
-                at = bx0 - m + 0.14                    # clear of the back run's corner
-                for f in row:
-                    w = catalog.meta(f["item"])["size"][0]
-                    q = _rot(at + w / 2, cy + sign * (half + 0.14), th)
-                    f["x"], f["y"], f["yaw"], f["gap"] = q[0] + ox, q[1] + oy, th, 0.0
-                    at += w + 0.01
-            bx0, by0, by1 = bx0 - m - 0.3, cy - half - 0.3, cy + half + 0.3
+            m, wp = 0.9, catalog.meta("safety_fence")["size"][0] + 0.01
+            doors = [f for f in fence if f["item"] != "safety_fence"][:1]
+            panels = [f for f in fence if f not in doors]
+            wd = catalog.meta(doors[0]["item"])["size"][0] + 0.01 if doors else 0.0
+            k = math.ceil(max(0.0, by1 - by0 + 2 * m - wd) / (2 * wp)) if doors else \
+                math.ceil((by1 - by0 + 2 * m) / wp / 2)
+            wide = wd + 2 * k * wp
+            ns = math.ceil((bx1 - bx0 + 2 * m) / wp)
+            nf = max(0, int((wide / 2 - 0.6) / wp))
+            while 2 * k + 2 * ns + 2 * nf > 14 and nf:        # at most 14 panels: the front goes first
+                nf -= 1
+            while 2 * k + 2 * ns > 14 and ns > 1:
+                ns -= 1
+            spots = []                                        # (x, y, turn) in the room's frame
+            xb = bx0 - m
+            for j in range(k):
+                spots += [(xb, cy - wide / 2 + (j + 0.5) * wp, math.pi / 2),
+                          (xb, cy + wide / 2 - (j + 0.5) * wp, math.pi / 2)]
+            for j in range(ns):
+                spots += [(xb + 0.14 + (j + 0.5) * wp, cy - wide / 2 - 0.14, 0.0),
+                          (xb + 0.14 + (j + 0.5) * wp, cy + wide / 2 + 0.14, 0.0)]
+            xf = xb + 0.28 + ns * wp
+            for j in range(nf):
+                spots += [(xf, cy - wide / 2 + (j + 0.5) * wp, math.pi / 2),
+                          (xf, cy + wide / 2 - (j + 0.5) * wp, math.pi / 2)]
+            while len(panels) < len(spots):
+                panels.append({"item": "safety_fence", "x": 0.0, "y": 0.0, "yaw": 0.0})
+                furniture.append(panels[-1])
+            for f in panels[len(spots):]:                     # more than the ring takes: left out
+                furniture.remove(f)
+            for f, (x, y, turn) in zip(panels + doors, spots[:len(panels)] + [(xb, cy, math.pi / 2)]):
+                q = _rot(x, y, th)
+                f["x"], f["y"], f["yaw"], f["gap"] = q[0] + ox, q[1] + oy, th + turn, 0.0
+            bx0, by0, by1 = xb - 0.3, cy - wide / 2 - 0.44, cy + wide / 2 + 0.44
+            self.counts["furniture"][1] = len(furniture)
         zone_of = {}
         br = self.pick["brief"]
         for i, k in (self.pick.get("slot_of") or {}).items():
@@ -1665,8 +1703,9 @@ class Build:
     def _place_object(self, o, off, fixed_uids, placed=()):
         sl = (self.pick.get("slot_of") or {}).get(o["item"])
         uid = self._place_object1(o, off, fixed_uids, placed)
-        if not uid and sl is not None and self.pick.get("lists"):
-            # it didn't fit: the next object on its slot's short list, in the same spot
+        if not uid and sl is not None and self.pick.get("lists") and o["on"] != "inside":
+            # it didn't fit: the next object on its slot's short list, in the same spot (a thing
+            # that should go inside another stays the thing that was asked for: it goes beside it)
             used = {i["id"] for i in self.pick["items"]}
             for alt in self.pick["lists"][sl]:
                 if alt in used or catalog.item(alt)["fixed"] != catalog.item(o["item"])["fixed"]:
@@ -2039,6 +2078,10 @@ def front_sign(item: str) -> int:
         return 1
     return 1 if catalog.item(item)["hf"].startswith("tripo:") else -1
 
+
+# Words that ask for every station to be the same
+MATCHING = re.compile(r"\b(identical|same (setup|objects|scene|things|items|layout)|the same \d+ objects|"
+                      r"side by side.{0,40}compare|duplicate|copies of)\b", re.I)
 
 # The panels of a robot cell's guard: three or more are stood round the cell (Build._arrange_room)
 FENCE = ("safety_fence", "uc_robot_cell_safety_fence_door")
