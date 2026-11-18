@@ -17,7 +17,7 @@ import json
 import os
 import pathlib
 
-# The converted objects. On Modal they are baked into the image at /opt/assets (hosting/app.py).
+# The converted objects. On Modal they come from the "wetlab-library" Volume at /library (hosting/app.py).
 ASSETS = pathlib.Path(os.environ.get("WETLAB_ASSETS_DIR") or pathlib.Path(__file__).parent / "assets")
 
 TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Glassware", "Instruments", "PPE", "Tools", "Kitchen", "Bins & Trays", "Cleaning", "Electronics", "Toys & Basics", "Factory", "Car parts", "Garage", "Home", "Office", "Shops & Hotels", "Sports & Leisure", "Outdoor", "Soft", "LIBERO"]
