@@ -36,6 +36,7 @@ MAX_ROBOTS = 4
 MAX_EACH = 6          # copies of one object a scene may ask for
 MAX_ITEMS = 40        # objects in one scene, all told
 MAX_MADE = 15         # different objects the AI may make for one scene (things the library lacks)
+MAKE_AT_ONCE = 6      # objects the AI makes side by side, each in its own request (then tested as it arrives)
 
 # The models that can build a scene, by company, most capable first (the default).
 SCENE_MODELS = [
@@ -452,19 +453,24 @@ playground adds those itself).
 object's bottom. A loose object must stand steady on a flat floor.
 """
 
-MAKE_ASK = """Make these {n} objects for a scene ("{title}", from the request: "{prompt}"):
+MAKE_ASK = """Make {these} for a scene ("{title}", from the request: "{prompt}"):
 
-{wants}"""
+{wants}{others}"""
 
 
-def make_messages(prompt: str, title: str, make: list) -> str:
+def make_messages(prompt: str, title: str, make: list, others: list | None = None) -> str:
+    """The ask for the objects on `make`; `others` names the rest of the scene (made in requests
+    of their own, or from the library), so sizes and looks match."""
     rows = []
     for k, m in enumerate(make, 1):
         size = (" x ".join(f"{v:.2f}" for v in m["size"]) + " m (width x depth x height)") if m.get("size") else "its real size"
         rows.append(f'{k}. name="{m["name"]}" kind="{"fixed" if m["kind"] == "furniture" else "loose"}": size {size}; '
                     f'looks: {m.get("looks") or "as the real thing"}; moving parts: {m.get("moves") or "none"}')
-    return MAKE_ASK.format(n=len(make), title=title.replace('"', "'"), prompt=prompt.strip()[:600].replace('"', "'"),
-                           wants="\n".join(rows))
+    these = "this object" if len(make) == 1 else f"these {len(make)} objects"
+    return MAKE_ASK.format(these=these, title=title.replace('"', "'"), prompt=prompt.strip()[:600].replace('"', "'"),
+                           wants="\n".join(rows),
+                           others=("\n\nThe rest of the scene, made separately (match its scale and style): "
+                                   + ", ".join(others[:40])) if others else "")
 
 
 def pick_messages(prompt: str) -> tuple[str, str]:
@@ -922,6 +928,7 @@ class Build:
         self.thought = ""             # the model's latest thinking heading, while it makes objects
         self.last_heard = time.time()  # when the model last sent anything (thinking or answer)
         self.answers: list[str] = []
+        self.making: list[dict] = []  # each object being made: {"name", "state": waiting/making/testing/fixing/done/failed}
         self.names = {}
         self._recount(bool(self.counts["make"][1]))
         if self.counts["make"][1]:
@@ -949,6 +956,7 @@ class Build:
                 "counts": self.counts, "title": self.pick["title"], "stations": self.stations,
                 "objects": len(self.objects), "skipped": self.skipped, "task": self.task,
                 "undone": self.undone, "now": self.now, "names": self.names, "thought": self.thought,
+                "making": self.making,
                 "quiet": round(time.time() - self.last_heard, 1),
                 "elapsed": round(time.time() - self.started, 1),
                 "model": next((m["label"] for m in SCENE_MODELS if m["id"] == self.model_id), ""),
@@ -1025,44 +1033,71 @@ class Build:
 
     # -------------------------------------------------- objects the library lacks, made by the model
     def _make_missing(self):
-        """Every thing on the pick's "make" list built by the model in one answer (the photo scene's
-        object format), then each one checked and physics-tested (aimade), sent back to the model
-        to fix when it fails (photoscene.PhotoBuild._make). What passes joins the pick's items."""
+        """Each thing on the pick's "make" list built by the model in a request of its own, up to
+        MAKE_AT_ONCE side by side (the photo scene's object format). Each one is checked and
+        physics-tested (aimade) as soon as its answer arrives, and sent back to the model to fix
+        when it fails (photoscene.PhotoBuild._make). What passes joins the pick's items, in the
+        list's order."""
+        from concurrent.futures import ThreadPoolExecutor
+
         from . import photoscene as PS
         wants = self.pick["make"]
         self.now = ""
-        ans = self._ask(make_messages(self.prompt, self.pick["title"], wants), "high", on_text=self._made_text)
-        if self.stop:
-            return
-        _, objs = PS.parse_scene(ans)
-        by_name = {o["name"].strip().lower(): o for o in objs}
-        for k, w in enumerate(wants):
+        self.making = [{"name": w["name"], "state": "waiting"} for w in wants]
+        errors: list[Exception] = []
+        lock = threading.Lock()
+
+        def one(k: int):
+            w, row = wants[k], self.making[k]
             if self.stop:
-                return
-            o = by_name.get(w["name"].lower()) or (objs[k] if k < len(objs) and objs[k]["name"].lower() not in
-                                                   {x["name"].lower() for x in wants} else None)
-            self.now = f"Testing the {w['name'].lower()}"
+                return None
+            row["state"] = "making"
+            try:
+                rest = [x["name"] for x in wants if x is not w] + \
+                    [catalog.item(i["id"])["label"] for i in self.pick["items"]]
+                ans = self._ask(make_messages(self.prompt, self.pick["title"], [w], rest), "high",
+                                on_text=lambda t: setattr(self, "last_heard", time.time()))
+            except Exception as e:  # noqa: BLE001
+                errors.append(e)
+                row["state"] = "failed"
+                return None
+            if self.stop:
+                return None
+            objs = PS.parse_scene(ans)[1]
+            o = next((x for x in objs if x["name"].strip().lower() == w["name"].lower()), objs[0] if objs else None)
             got = None
             if o and o["xml"]:
+                row["state"] = "testing"
                 o = {**o, "name": w["name"], "kind": "fixed" if w["kind"] == "furniture" else "loose"}
                 got = PS.PhotoBuild._make(self, o)    # the same checks and fixing as a scene from a photo
             elif w["name"] not in self.skipped:
                 self.skipped.append(w["name"])
+            row["state"] = "done" if got else "failed"
+            if got:
+                with lock:
+                    self.counts["make"][0] += 1
+            return got
+
+        with ThreadPoolExecutor(max_workers=MAKE_AT_ONCE) as pool:
+            made = list(pool.map(one, range(len(wants))))
+        if self.stop:
+            return
+        for w, got in zip(wants, made):
             if got:
                 self.pick["items"].append({"id": got["item"], "count": w["count"]})
-                self.counts["make"][0] += 1
-
-    def _made_text(self, full: str):
-        self.last_heard = time.time()
-        names = re.findall(r'<object\b[^>]*\bname="([^"]*)"', full)
-        if names:
-            self.now = f"Making the {names[-1].lower()}" + (f" ({len(names)} of {self.counts['make'][1]})"
-                                                             if self.counts["make"][1] > 1 else "")
+        if errors and not any(made):
+            e = errors[0]
+            raise e if isinstance(e, ModelError) else ModelError(str(e))
 
     def _think(self, s):
         self.last_heard = time.time()
         if not s:
             return
+        fix = re.search(r"\*\*Fixing the (.+?)\*\*", s)
+        if fix:                          # PhotoBuild._make sending one back to the model
+            for row in self.making:
+                if row["name"].lower() == fix.group(1).strip().lower():
+                    row["state"] = "fixing"
         heads = re.findall(r"\*\*(.+?)\*\*", s)
         if heads:
             self.thought = heads[-1].strip()[:80]

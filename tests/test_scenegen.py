@@ -143,6 +143,9 @@ def test_build_makes_what_the_library_lacks(monkeypatch):
     st = b.status()
     assert st["phase"] == "done", st
     assert st["counts"]["make"] == [2, 2] and not st["skipped"]
+    assert [(m["name"], m["state"]) for m in st["making"]] == [("Loaf of bread", "done"), ("Bread rack", "done")]
+    asks = [a for a in b.answers if a.startswith("===== asked: Make this object")]
+    assert len(asks) == 2                                 # each object in a request of its own
     assert st["counts"]["objects"] == [2, 2] and st["counts"]["furniture"] == [1, 1]
     made = [p for p in sim.placed if p.item.startswith("ai_")]
     assert len(made) == 3
