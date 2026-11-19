@@ -936,9 +936,9 @@ class Build:
             my = sum(st.pos[1] for st in s.stations) / len(s.stations)
         else:
             mx = my = 0.0
-        cands = sorted({(round(mx + 0.5 * i, 2), round(my + 0.5 * j, 2)) for i in range(-34, 35)
-                        for j in range(-34, 35)}, key=lambda v: (v[0] - mx) ** 2 + (v[1] - my) ** 2)
-        lim = 8.3
+        cands = sorted({(round(mx + 0.5 * i, 2), round(my + 0.5 * j, 2)) for i in range(-60, 61)
+                        for j in range(-60, 61)}, key=lambda v: (v[0] - mx) ** 2 + (v[1] - my) ** 2)
+        lim = W.FLOOR_HALF - 0.2
         for tx, ty in cands:
             ox, oy = tx - cx, ty - cy
             if x0 + ox < -lim or x1 + ox > lim or y0 + oy < -lim or y1 + oy > lim:

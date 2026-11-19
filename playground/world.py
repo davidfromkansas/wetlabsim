@@ -26,6 +26,10 @@ from . import wetrobo as WR
 
 # The floor: 12-inch speckled vinyl tiles (playground/tools/make_lab_floor.py draws them), a 4 x 4
 # patch of tiles to the picture.
+# How far the usable floor reaches from the middle, each way (m): stations, robots and objects
+# stay inside it. (The floor plane itself is 120 m across.) 15 m = a 30 x 30 m floor, room for
+# a whole room built from a photo next to what's already there.
+FLOOR_HALF = 15.0
 FLOOR_TEXTURE = Path(__file__).resolve().parent / "textures" / "lab_floor.png"
 FLOOR_PATCH = 4 * 0.3048          # metres the picture covers
 TABLE_UID = "table"     # (older saved scenes) the one table a robot stood on
