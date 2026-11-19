@@ -70,6 +70,7 @@ Secrets: Modal secrets `wetlab-link` (LAB_LINK_SECRET, shared with Vercel) and `
 | `playground/catalog.py` | Object library (`TABS`, `ITEMS`, `SOFT`) and robot picker list (`ROBOTS`). |
 | `playground/site.py` | The per-station "site sheet" (SITE.md) the AI gets: table, cameras, tool. **Must not list objects.** |
 | `playground/scenegen.py` | AI scene generator + one-click preset scenes (`PRESETS`: Factory, Car assembly, kitchen, wet lab...). |
+| `playground/photoscene.py`, `playground/aimade.py` | "Create scene" from a photo: the model rebuilds each object from simple shapes as its own MJCF (thinking streamed live); `aimade.py` cleans, measures and physics-tests each one, registers it as an `ai_<hex>` item, and saves its definition with the session. |
 | `playground/libero.py`, `playground/libero_assets/` | LIBERO suites, rooms, success checker. Meshes (~200 MB) download on first use. |
 | `playground/wetrobo.py` | WetRobo tasks, live success checks, scoreboard. |
 | `playground/accounts.py`, `savestore.py`, `labs.py` | User keys, saving sessions/runs to Neon/Blob, container bookkeeping on Modal. |

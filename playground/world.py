@@ -1073,7 +1073,10 @@ def _add_mjcf(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool = False):
     "free_damping" is the free joint's damping the model's source gives it (LIBERO's 0.0005), and
     "hide_collision" draws the model's collision shapes (group 0) only when debugging, as its
     source does."""
-    child = mujoco.MjSpec.from_file(str(catalog.ASSETS / p.item / meta["mjcf"]))
+    if meta.get("mjcf_xml"):        # an AI-made object (playground/aimade.py): its checked model
+        child = mujoco.MjSpec.from_string(meta["mjcf_xml"])
+    else:
+        child = mujoco.MjSpec.from_file(str(catalog.ASSETS / p.item / meta["mjcf"]))
     if meta.get("hide_collision"):
         for g in child.geoms:
             if g.group == 0 and (g.contype or g.conaffinity):
@@ -1089,7 +1092,7 @@ def _add_mjcf(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool = False):
 
 
 def _add_item(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_cache: set):
-    if meta.get("mjcf"):
+    if meta.get("mjcf") or meta.get("mjcf_xml"):
         return _add_mjcf(world, p, meta, fixed)
     if meta.get("bodies"):
         return _add_jointed(world, p, meta, fixed, mesh_cache)

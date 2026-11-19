@@ -38,6 +38,8 @@ from . import libero as LB
 from . import wetrobo as WR
 from . import savestore as SAVE
 from . import scene3d as S3
+from . import aimade as AI
+from . import photoscene as PS
 from . import scenegen as SG
 from . import settings as ST
 from . import wetlab as WL
@@ -795,7 +797,12 @@ class Session:
                                  for st in s.stations],
                     "objects": [{"uid": o.uid, "item": o.item, "pos": list(o.pos), "yaw": o.yaw,
                                  "quat": list(o.quat) if o.quat is not None else None} for o in s.placed],
-                    "paused": bool(s.paused), "settings": ST.jsonable(s.settings)}
+                    "paused": bool(s.paused), "settings": ST.jsonable(s.settings),
+                    # AI-made objects (aimade.py) travel with the session; so do the photos they came from
+                    **({"ai_items": AI.export({o.item for o in s.placed if AI.is_ai(o.item)})}
+                       if any(AI.is_ai(o.item) for o in s.placed) else {}),
+                    **({"photos": [{k: v for k, v in r.items()} for r in self.photos[-50:]]}
+                       if getattr(self, "photos", None) else {})}
 
     def stop(self):
         for b in self.batches.values():
@@ -937,7 +944,7 @@ def _world_from_layout(layout: dict | None):
                                         if mt.get("z") is not None else None)
             except (TypeError, ValueError, IndexError):
                 pass
-    known = {i["id"] for i in catalog.available()}
+    known = {i["id"] for i in catalog.available()} | set(AI.load(layout.get("ai_items")))
     for o in (layout.get("objects") or [])[:200]:
         if o.get("item") not in known or not re.match(r"^[\w.-]{1,80}$", str(o.get("uid", ""))):
             continue
@@ -986,6 +993,8 @@ def new_session(owner: str, name: str | None = None, layout: dict | None = None,
             SESSIONS.pop(sid, None)
         raise
     sess = Session(sid, name[:60], owner, sim, PGHandler.base_url, PGHandler.runs_dir)
+    sess.photos = [{k: r.get(k) for k in ("id", "made", "file", "blob", "build")}      # scenes made from photos
+                   for r in ((layout or {}).get("photos") or [])[-50:] if isinstance(r, dict)]
     if SAVE.enabled():
         import uuid
         sess.db_id = db_id or str(uuid.uuid4())
@@ -1569,6 +1578,25 @@ class PGHandler(Handler):
             return self._json({"ok": not err, "error": err or ""})
         if s.scene_mode != "free":
             return self._json({"ok": False, "error": "scenes are built in free play"})
+        if what == "photo":            # a scene from a photo (photoscene.py): AI-made objects, no robot
+            model = str(b.get("model") or "")
+            if model not in {m["id"] for m in SG.models(PUBLIC)}:
+                return self._json({"ok": False, "error": "Connect an Anthropic or OpenAI account in Settings to build a scene."})
+            if self._busy():
+                return self._json({"ok": False, "error": "A robot is working on a task. Stop it first to build a scene."})
+            if cur is not None and cur.status()["active"]:
+                return self._json({"ok": False, "error": "a scene is already being built"})
+            try:
+                photo, _ = PS.jpeg_from_data_url(str(b.get("photo") or ""))
+            except SG.ModelError as e:
+                return self._json({"ok": False, "error": str(e)[:1].upper() + str(e)[1:] + "."})
+            rec = PS.keep_photo(os.urandom(4).hex(), photo, PGHandler.runs_dir)
+            self.sess.photos = (getattr(self.sess, "photos", None) or []) + [rec]
+            build = PS.PhotoBuild(s, self.sess, photo, str(b.get("note") or "").strip()[:1000], model, PUBLIC, rec)
+            rec["build"] = build.id
+            self.sess.scenegen = build
+            build.start()
+            return self._json({"ok": True, "build": build.status()})
         if what == "preset":           # a ready-made scene from Add station: no prompt, no model
             name = str(b.get("name") or "")
             if name not in SG.PRESETS:
@@ -1722,6 +1750,8 @@ class PGHandler(Handler):
                                    "website": SAVE.WEBSITE_URL if LABS.OWNER_USER else "",
                                    "lab_url": LABS.LAB_URL})
             if p.startswith("/pg/thumb/"):
+                if AI.is_ai(pathlib.Path(p).stem):      # an AI-made object: a plain picture of its kind
+                    return self._send(200, AI.THUMB_SVG.encode(), "image/svg+xml", {"Cache-Control": "max-age=86400"})
                 f = catalog.ASSETS / pathlib.Path(p).stem / "thumb.png"
                 if f.is_file():
                     return self._send(200, f.read_bytes(), "image/png", {"Cache-Control": "max-age=86400"})

@@ -1289,7 +1289,11 @@ class PlaygroundSim(Sim):
                               "mid": [round(float(v), 4) for v in self._obj_mid(p, R)],
                               "bodies": sorted(b for b, u in self.body_uid.items() if u == p.uid),
                               "lift": self.can_lift(p.uid) == "", "lift_why": self.can_lift(p.uid),
-                              **({"at": self.obj_at(p.uid)} if p.uid == sel else {})})
+                              **({"at": self.obj_at(p.uid)} if p.uid == sel else {}),
+                              # an AI-made object (aimade.py) isn't in the page's library list: its own details
+                              **({"ai": {"size": catalog.meta(p.item)["size"], "mass": catalog.meta(p.item)["mass"],
+                                         "collision": "Simple shapes, made by AI", "thumb": f"/pg/thumb/{p.item}.png"}}
+                                 if it.get("ai") else {})})
             return {"mode": "free", "objects": items, "paused": self.paused, "selected": self.selected,
                     "time": round(self.d.time, 3), "realtime_factor": round(self.rt_factor, 3),
                     "active": self.active_station,

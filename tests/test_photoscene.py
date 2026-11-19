@@ -1,0 +1,145 @@
+"""A scene from a photo (playground/photoscene.py) and AI-made objects (playground/aimade.py):
+the model's MJCF is cleaned, measured and shaken before it goes into a scene; a failing object
+goes back to the model; the scene is put down in a session and saved with it. No model is asked
+(WETLAB_SCENEGEN_FAKE)."""
+import base64
+import io
+import json
+
+import mujoco
+import pytest
+from PIL import Image
+
+from playground import aimade as AI
+from playground import catalog
+from playground import photoscene as PS
+from playground import world as W
+
+MUG = """<mujoco><worldbody><body name="mug">
+<geom type="cylinder" size="0.04 0.005" pos="0 0 -0.045" rgba="0.2 0.4 0.8 1" mass="0.08"/>
+<geom type="box" size="0.04 0.004 0.05" pos="0 0.038 0" mass="0.05"/>
+<geom type="box" size="0.04 0.004 0.05" pos="0 -0.038 0" mass="0.05"/>
+</body></worldbody></mujoco>"""
+
+
+@pytest.fixture(autouse=True)
+def fake(monkeypatch):
+    monkeypatch.setenv("WETLAB_SCENEGEN_FAKE", "1")
+    monkeypatch.setenv("WETLAB_PHOTOSCENE_FAKE_DELAY", "0")
+
+
+def test_clean_keeps_plain_shapes_and_drops_the_rest():
+    xml = AI.clean("""<mujoco><asset><texture name="t" file="/etc/passwd"/><material name="m" rgba="1 0 0 1"/></asset>
+<worldbody><light pos="0 0 1"/><camera name="c"/><body name="b"><freejoint/><geom type="box" size=".1 .1 .1" material="m" mass="1"/>
+<body name="lid" pos="0 0 .1"><joint type="hinge" axis="1 0 0" range="0 90"/><geom type="box" size=".1 .1 .01" mass=".1"/></body>
+</body></worldbody><actuator><motor joint="x"/></actuator></mujoco>""")
+    assert "texture" not in xml and "light" not in xml and "camera" not in xml and "freejoint" not in xml
+    assert "actuator" not in xml and 'name="j0"' in xml          # unnamed joints get names
+    for bad in ('<mujoco><worldbody><geom type="mesh" mesh="x"/></worldbody></mujoco>',
+                '<mujoco><include file="x.xml"/><worldbody/></mujoco>',
+                '<mujoco><worldbody><body><joint type="ball"/><geom type="sphere" size=".1"/></body></worldbody></mujoco>',
+                '<!DOCTYPE x [<!ENTITY a "b">]><mujoco/>', "not xml"):
+        with pytest.raises(AI.Bad):
+            AI.clean(bad)
+
+
+def test_measure_gives_size_bottom_centre_and_mass():
+    size, frame, mass = AI.measure(AI.clean(MUG))
+    assert size == pytest.approx([0.08, 0.084, 0.1], abs=1e-3)
+    assert frame[2] == pytest.approx(0.05, abs=1e-3)       # the model's origin sits 5 cm above its bottom
+    assert mass == pytest.approx(0.18)
+
+
+def test_shake_catches_an_object_that_sinks_or_explodes():
+    ok = AI.clean(MUG)
+    uid = AI.register("Mug", ok, False, *AI.measure(ok))
+    AI.shake(uid)
+    roll = AI.clean('<mujoco><worldbody><body euler="90 0 0"><geom type="cylinder" size=".05 .2" mass="1"/></body></worldbody></mujoco>')
+    uid2 = AI.register("Roller", roll, False, *AI.measure(roll))
+    AI.shake(uid2)              # lying on its side it rests (rolls only if pushed)
+    ghost = AI.clean('<mujoco><worldbody><body><geom type="box" size=".1 .1 .1" mass="1" contype="0" conaffinity="0"/>'
+                     '</body></worldbody></mujoco>')
+    uid3 = AI.register("Ghost", ghost, False, *AI.measure(ghost))
+    with pytest.raises(AI.Bad, match="sinks"):
+        AI.shake(uid3)          # no collision shapes: it falls through the floor
+
+
+def test_ai_items_work_like_library_items():
+    xml = AI.clean(MUG)
+    uid = AI.register("Mug", xml, False, *AI.measure(xml))
+    assert catalog.item(uid)["label"] == "Mug" and catalog.item(uid)["tab"] == "AI-made"
+    m = W.build([W.Placed("o_1", uid, (0.5, 0.0, 0.0), 0.3)], [])
+    assert mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, "obj_o_1") >= 0
+    # saved with a session and registered again from it
+    saved = json.loads(json.dumps(AI.export([uid])))
+    AI._REG.pop(uid)
+    assert AI.load(saved) == [uid] and catalog.meta(uid)["size"] == saved[uid]["size"]
+
+
+def test_parse_scene():
+    title, objs = PS.parse_scene(PS.FAKE_SCENE)
+    assert title == "Small kitchen" and [o["name"] for o in objs] == ["Counter", "Microwave", "Mug"]
+    assert objs[1]["z"] == pytest.approx(0.9) and objs[2]["kind"] == "loose" and "<mujoco>" in objs[0]["xml"]
+
+
+def _photo() -> bytes:
+    buf = io.BytesIO()
+    Image.new("RGB", (64, 48), "white").save(buf, "PNG")
+    data, _ = PS.jpeg_from_data_url("data:image/png;base64," + base64.b64encode(buf.getvalue()).decode())
+    return data
+
+
+class _Sess:
+    def __init__(self):
+        self.unsent = {}
+
+
+def _build(tmp_path, sim):
+    rec = PS.keep_photo("feedbeef", _photo(), tmp_path)
+    assert (tmp_path / rec["file"]).exists()
+    return PS.PhotoBuild(sim, _Sess(), _photo(), "", "claude-fable-5-2", False, rec)
+
+
+def test_photo_build_puts_a_settled_scene_down(tmp_path):
+    from playground.sim import PlaygroundSim
+    s = PlaygroundSim(placed=[], stations=[])
+    b = _build(tmp_path, s)
+    b._run()
+    st = b.status()
+    assert st["phase"] == "done" and st["counts"]["placed"] == 3 and not st["skipped"], st
+    assert "Setting the scale" in st["thinking"] and st["title"] == "Small kitchen"
+    for _ in range(int(2.0 / s.m.opt.timestep)):
+        mujoco.mj_step(s.m, s.d)
+    mug = next(p for p in s.placed if catalog.item(p.item)["label"] == "Mug")
+    z = s.d.xpos[s.m.body(f"obj_{mug.uid}").id][2]
+    assert 0.85 < z < 0.95                     # still standing on the counter
+    b.undo()
+    assert not s.placed
+
+
+def test_a_failing_object_goes_back_to_the_model(tmp_path, monkeypatch):
+    from playground.sim import PlaygroundSim
+    s = PlaygroundSim(placed=[], stations=[])
+    b = _build(tmp_path, s)
+    bad = '<scene title="Desk" objects="1"><object name="Mug" kind="loose" x="0" y="0" z="0" yaw="0"><mujoco><worldbody><body><geom type="mesh"/></body></worldbody></mujoco></object></scene>'
+    good = f'<object name="Mug" kind="loose" x="0" y="0" z="0" yaw="0">{MUG}</object>'
+    asked = []
+
+    def ask(text, effort):
+        asked.append(text)
+        return bad if len(asked) == 1 else good
+    monkeypatch.setattr(b, "_ask", ask)
+    b._run()
+    assert b.phase == "done" and b.counts["retries"] == 1 and len(asked) == 2
+    assert "geom type 'mesh' isn't allowed" in asked[1]
+
+
+def test_an_object_that_never_passes_is_left_out(tmp_path, monkeypatch):
+    from playground.sim import PlaygroundSim
+    s = PlaygroundSim(placed=[], stations=[])
+    b = _build(tmp_path, s)
+    title, objs = PS.parse_scene(PS.FAKE_SCENE)
+    broken = PS.FAKE_SCENE.replace('<geom type="cylinder" size="0.04 0.005"', '<geom type="mesh" size="0.04 0.005"')
+    monkeypatch.setattr(b, "_ask", lambda text, effort: broken if "Rebuild" in text else "no fix")
+    b._run()
+    assert b.phase == "done" and b.skipped == ["Mug"] and b.counts["placed"] == 2

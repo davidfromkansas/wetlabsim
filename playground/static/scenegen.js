@@ -122,6 +122,36 @@ body:not(.freeplay) #sgBar, body.watch #sgBar, body.sgHide #sgBar{display:none}
 #sgProg .gb.g:hover{background:#F9FAFB}
 #sgProg .gb.p{background:#111827;color:#fff}
 .sgRing{width:16px;height:16px;flex:none;display:block;animation:sgSpin .8s linear infinite}
+#sgCard .tabs{display:flex;gap:4px;padding:10px 16px 0}
+#sgCard .tabs button{height:30px;padding:0 12px;border-radius:8px;border:0;background:none;font:600 13px Inter,sans-serif;color:#6B7280;cursor:pointer;display:flex;align-items:center;gap:6px}
+#sgCard .tabs button:hover{color:#111827}
+#sgCard .tabs button[aria-selected=true]{background:#F3F4F6;color:#111827}
+#sgCard .drop{border:1.5px dashed #D1D5DB;border-radius:14px;padding:28px 16px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;color:#4B5563;font-size:13px;margin:4px 0 8px;transition:background 120ms ease-out,border-color 120ms ease-out}
+#sgCard .drop.over{background:#EFF4FF;border-color:#2563EB}
+#sgCard .drop b{font:650 14px Inter,sans-serif;color:#111827}
+#sgCard .drop .btn{margin-top:6px}
+#sgCard .pv{display:flex;gap:12px;align-items:flex-start;margin:4px 0 8px}
+#sgCard .pv .im{position:relative;flex:none}
+#sgCard .pv img{display:block;width:168px;height:126px;object-fit:cover;border-radius:10px;background:#F3F4F6}
+#sgCard .pv .rm{position:absolute;right:6px;top:6px;width:24px;height:24px;border-radius:7px;border:0;background:rgba(17,24,39,.6);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#sgCard .pv .pm{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+#sgCard .pv label{font:600 12.5px Inter,sans-serif;color:#374151}
+#sgCard .pv textarea{min-height:96px;border:1px solid #E5E7EB;border-radius:9px;padding:8px 10px;font-size:13.5px}
+#sgCard .hint{font-size:12.5px;color:#6B7280;margin:0 0 4px;line-height:1.45}
+#sgProg.ph{width:min(420px,calc(100% - 32px))}
+#sgProg .phd{display:flex;gap:12px;align-items:center;padding:12px 12px 12px 14px;border-bottom:1px solid #F1F2F4}
+#sgProg .phd .pth{width:56px;height:42px;border-radius:8px;object-fit:cover;flex:none;background:#EFF4FF;display:flex;align-items:center;justify-content:center;color:#2563EB}
+#sgProg .phd .ptt{flex:1;min-width:0}
+#sgProg .phd b{display:block;font:650 13.5px Inter,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sgProg .phd small{color:#6B7280;font-size:12px;font-variant-numeric:tabular-nums}
+#sgProg .phd .gb{height:30px}
+#sgProg .think{margin:0 12px 12px;border-radius:10px;background:#F7F8FA;padding:10px 12px;font-size:12.5px;color:#374151}
+#sgProg .think .thl{font:600 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#6B7280;display:flex;gap:6px;align-items:center;margin-bottom:6px}
+#sgProg .think .thx{max-height:132px;overflow:auto;overscroll-behavior:contain}
+#sgProg .think p{margin:0 0 6px}
+#sgProg .think p:last-child{margin:0}
+#sgProg .think b{color:#111827}
+#sgProg .think .empty{color:#9CA3AF}
 `;
 document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
 const stage = document.getElementById('stage');
@@ -138,7 +168,7 @@ const LOGO = {anthropic: '/static/anthropic.svg', openai: '/static/openai.svg'};
 stage.insertAdjacentHTML('beforeend', `<button id="sgBar" aria-haspopup="dialog" aria-expanded="false">${SPARK}<span id="sgBarT">Describe a scene…</span><span class="k" aria-hidden="true">/</span></button>
 <div id="sgScrim"></div><div id="sgCard" role="dialog" aria-label="Describe a scene"></div><div id="sgProg" role="status" aria-live="polite"></div>`);
 const bar = document.getElementById('sgBar'), card = document.getElementById('sgCard'), scrim = document.getElementById('sgScrim'), prog = document.getElementById('sgProg');
-const G = {open: false, step: 'describe', prompt: '', model: '', models: [], maxRobots: 4, fromRun: {}, pick: null, err: '', build: null, poll: 0, adding: '', q: ''};
+const G = {open: false, step: 'describe', mode: 'describe', photo: null, note: '', prompt: '', model: '', models: [], maxRobots: 4, fromRun: {}, pick: null, err: '', build: null, poll: 0, adding: '', q: ''};
 
 const robotsCat = () => (S.cat && S.cat.robots) || [];
 const itemsCat = () => (S.cat && S.cat.items) || [];
@@ -200,8 +230,25 @@ function draw() {
   const head = (t) => `<div class="h">${SPARK}<h3>${e(t)}</h3><button class="x" id="sgX" aria-label="Close">${XI}</button></div>`;
   if (!G.models.length) {
     card.innerHTML = head('Describe a scene') + `<div class="body"><div class="empty"><span><b>Connect an AI model first</b>Scenes are built by your own Anthropic or OpenAI model. Add a key in Settings.</span><button class="btn g" id="sgSet">Open Settings</button></div></div><div class="f"></div>`;
+  } else if (G.step === 'describe' && G.mode === 'photo') {
+    const ph = G.photo;
+    const inner = ph
+      ? `<div class="pv"><div class="im"><img src="${ph.url}" alt="Your photo"><button class="rm" id="sgPhX" aria-label="Remove the photo">${XS}</button></div>
+<div class="pm"><label for="sgNote">Note for the AI <span style="font-weight:400;color:#9CA3AF">optional</span></label><textarea id="sgNote" placeholder="e.g. the fridge door opens to the left; leave out the people" aria-label="Note for the AI">${e(G.note)}</textarea></div></div>`
+      : `<div class="drop" id="sgDrop">${PHOTO(28)}<b>Drop in a photo</b><span>or paste one, or</span><button class="btn g" id="sgBrowse">Choose photo</button><span style="font-size:12px;color:#9CA3AF">JPG, PNG or WebP</span></div>`;
+    card.innerHTML = head('Create a scene') + tabs() + `<div class="body">${inner}<p class="hint">The AI rebuilds everything it sees as objects you can move, open and pick up. You add robots after.</p>${G.err ? `<p class="err">${e(G.err)}</p>` : ''}</div>
+<div class="f">${modelBtn()}<span class="sp"></span><button class="btn blue" id="sgPhGo" ${ph ? '' : 'disabled'}>Create scene<span class="kb">↵</span></button>${modelMenu()}</div><input type="file" id="sgFile" accept="image/*" hidden>`;
+    const note = document.getElementById('sgNote');
+    if (note) { note.oninput = () => { G.note = note.value; }; note.onkeydown = (ev) => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); createPhoto(); } }; }
+    const drop = document.getElementById('sgDrop'), file = document.getElementById('sgFile');
+    if (drop) {
+      drop.ondragover = (ev) => { ev.preventDefault(); drop.classList.add('over'); };
+      drop.ondragleave = () => drop.classList.remove('over');
+      drop.ondrop = (ev) => { ev.preventDefault(); drop.classList.remove('over'); const f = ev.dataTransfer.files && ev.dataTransfer.files[0]; if (f) readPhoto(f); };
+    }
+    file.onchange = () => { if (file.files[0]) readPhoto(file.files[0]); };
   } else if (G.step === 'describe') {
-    card.innerHTML = head('Describe a scene') + `<div class="body"><textarea id="sgTa" placeholder="A robot making breakfast in a kitchen: cereal, milk, a mug and a kettle…" aria-label="Describe the scene">${e(G.prompt)}</textarea>${G.err ? `<p class="err">${e(G.err)}</p>` : ''}</div>
+    card.innerHTML = head('Create a scene') + tabs() + `<div class="body"><textarea id="sgTa" placeholder="A robot making breakfast in a kitchen: cereal, milk, a mug and a kettle…" aria-label="Describe the scene">${e(G.prompt)}</textarea>${G.err ? `<p class="err">${e(G.err)}</p>` : ''}</div>
 <div class="f">${modelBtn()}<span class="sp"></span><button class="btn blue" id="sgGo" ${G.prompt.trim() ? '' : 'disabled'}>Find robots and objects<span class="kb">↵</span></button>${modelMenu()}</div>`;
     const ta = document.getElementById('sgTa');
     ta.oninput = () => { G.prompt = ta.value; document.getElementById('sgGo').disabled = !ta.value.trim(); };
@@ -243,9 +290,55 @@ ${G.err ? `<p class="err">${e(G.err)}</p>` : ''}</div>
   wire();
 }
 
+function tabs() {
+  const t = (k, label, icon) => `<button role="tab" data-tab="${k}" aria-selected="${G.mode === k}">${icon}${label}</button>`;
+  return `<div class="tabs" role="tablist" aria-label="How to make the scene">${t('describe', 'Describe', ic('text', 14))}${t('photo', 'From a photo', PHOTO(14))}</div>`;
+}
+
+// A photo, made small enough to send (longest side 1600 px, JPEG), shown at once in the card.
+function readPhoto(f) {
+  G.err = '';
+  if (!/^image\//.test(f.type || '') && !/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name || '')) { G.err = 'That file isn\'t a photo.'; draw(); return; }
+  const url = URL.createObjectURL(f), im = new Image();
+  im.onload = () => {
+    const k = Math.min(1, 1600 / Math.max(im.naturalWidth, im.naturalHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
+    c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    const data = c.toDataURL('image/jpeg', 0.88);
+    G.photo = {url: data, data, name: f.name || 'photo.jpg'};
+    G.photoThumb = data;
+    draw();
+  };
+  im.onerror = () => { URL.revokeObjectURL(url); G.err = 'This photo can\'t be read in this browser. Save it as JPG or PNG and try again.'; draw(); };
+  im.src = url;
+}
+document.addEventListener('paste', (ev) => {
+  if (!G.open || G.mode !== 'photo' || G.step !== 'describe') return;
+  const f = [...((ev.clipboardData || {}).files || [])].find(x => /^image\//.test(x.type));
+  if (f) { ev.preventDefault(); readPhoto(f); }
+});
+
+async function createPhoto() {
+  if (!G.photo || !G.model) return;
+  G.err = '';
+  const btn = document.getElementById('sgPhGo'); if (btn) btn.disabled = true;
+  G.lastPhoto = {photo: G.photo.data, note: G.note, model: G.model};
+  const r = await api('/pg/scenegen/photo', G.lastPhoto);
+  if (!r || !r.ok) { G.err = (r && r.error) || 'Something went wrong.'; draw(); return; }
+  closeCard();
+  G.photo = null; G.note = '';
+  follow(r.build);
+}
+
 function wire() {
   const on = (id, f) => { const n = document.getElementById(id); if (n) n.onclick = f; };
   on('sgX', closeCard);
+  card.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { G.mode = b.dataset.tab; G.err = ''; draw(); });
+  on('sgBrowse', () => document.getElementById('sgFile').click());
+  on('sgPhX', () => { G.photo = null; draw(); });
+  on('sgPhGo', createPhoto);
   on('sgSet', () => { closeCard(); window.openSettings && window.openSettings('general'); });
   on('sgGo', find);
   on('sgBack', () => { G.step = 'describe'; G.findId = 0; draw(); });
@@ -295,14 +388,22 @@ async function create() {
 // ------------------------------------------------ the build, as it goes
 function follow(b) {
   G.build = b; drawProg(); clearInterval(G.poll);
+  if (typeof render === 'function' && S.scene) render();      // Add robot steps aside while it builds
   G.poll = setInterval(async () => {
+    const id = G.poll;
     const r = await api('/pg/scenegen/status', {});
-    if (!r || !r.ok || !r.build) return;
+    // a slow answer from a poll this one has replaced or ended (a scene build keeps the server busy)
+    if (!r || !r.ok || !r.build || id !== G.poll) return;
     const was = G.build && G.build.active;
     G.build = r.build; drawProg();
     if (typeof refresh === 'function' && r.build.objects !== (G.seen || 0)) { G.seen = r.build.objects; refresh(); }
     if (was && !r.build.active) {
-      clearInterval(G.poll);
+      clearInterval(G.poll); G.poll = 0;
+      if (r.build.photo && r.build.phase === 'done') {     // straight back to the playground, scene in place
+        const sk = r.build.skipped || [];
+        toast(`${r.build.title || 'Your scene'} is ready${sk.length ? `. Left out: ${sk.slice(0, 3).join(', ')}${sk.length > 3 ? '…' : ''}` : ''}`);
+        G.build = null; drawProg();
+      }
       if (r.build.phase === 'done' && r.build.task) {
         for (const u of r.build.stations) S.drafts[u] = r.build.task;
         S.taskFor = null;
@@ -326,7 +427,12 @@ const IC = {
   alert: '<path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17h.01"/>',
   pause: '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>',
   retry: '<path d="M20 11a8 8 0 10-2.3 5.7"/><path d="M20 4v7h-7"/>',
+  text: '<path d="M4 6h16M4 12h16M4 18h10"/>',
+  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  ruler: '<path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/>',
+  pulse: '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
 };
+function PHOTO(s = 16) { return `<svg aria-hidden="true" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="2.5"/><circle cx="9" cy="11" r="2"/><path d="M21 16l-5-5-8 9"/></svg>`; }
 const ic = (k, s = 16, c = 'currentColor', w = 1.75) => `<svg aria-hidden="true" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg>`;
 const ring = (s = 16) => { const r = s / 2 - 1.5; return `<svg class="sgRing" style="width:${s}px;height:${s}px" viewBox="0 0 ${s} ${s}" aria-hidden="true"><circle cx="${s / 2}" cy="${s / 2}" r="${r}" fill="none" stroke="#DBE5FF" stroke-width="2"/><path d="M${s / 2} ${s / 2 - r}a${r} ${r} 0 0 1 ${r} ${r}" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/></svg>`; };
 const cap = (s) => String(s || '').replace(/^./, c => c.toUpperCase());
@@ -338,7 +444,9 @@ function drawProg() {
   const key = JSON.stringify(b);
   if (key === G.progKey) return;          // redraw only on a change (keeps the spinners smooth)
   G.progKey = key;
-  if (!b || b.undone) { prog.classList.remove('open'); bar.classList.remove('busy'); bar.innerHTML = REST(); return; }
+  if (!b || b.undone) { prog.classList.remove('open', 'ph'); bar.classList.remove('busy'); bar.innerHTML = REST(); if (typeof render === 'function' && S.scene) render(); return; }
+  if (b.photo) return drawPhotoProg(b);
+  prog.classList.remove('ph');
   const c = b.counts, done = c.robots[0] + c.furniture[0] + c.objects[0], all = c.robots[1] + c.furniture[1] + c.objects[1];
   if (b.active) {
     bar.classList.add('busy');
@@ -400,6 +508,77 @@ function drawProg() {
   };
 }
 
+// ------------------------------------------------ a scene from a photo, as it goes
+const mmss = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+function thinkHtml(t) {
+  const paras = String(t || '').split(/\n\s*\n/).map(x => x.trim()).filter(Boolean).slice(-10);
+  if (!paras.length) return '<p class="empty">The model\'s thinking shows here as it works…</p>';
+  return paras.map(x => `<p>${e(x).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>')}</p>`).join('');
+}
+function drawPhotoProg(b) {
+  if (b.phase === 'done') { prog.classList.remove('open', 'ph'); bar.classList.remove('busy'); bar.innerHTML = REST(); return; }
+  const c = b.counts, total = c.total || b.expected || 0;
+  const name = b.title ? b.title.replace(/^./, x => x.toLowerCase()) : 'scene';
+  if (b.active) {
+    bar.classList.add('busy');
+    const ct = b.phase === 'build' ? `${c.built} of ${b.expected || '?'}` : b.phase === 'test' ? `${c.tested} of ${total}` : b.phase === 'place' ? `${c.placed} of ${total - (b.skipped || []).length}` : '';
+    bar.innerHTML = `${ring()}<span>Building your ${e(name)}</span>${ct ? `<span class="ct">${ct}</span>` : ''}<span class="sep"></span><span class="stop" id="sgStop" role="button" tabindex="0">${ic('stop', 10)}Stop</span>`;
+    const st = document.getElementById('sgStop');
+    st.onclick = async (ev) => { ev.stopPropagation(); await api('/pg/scenegen/stop', {}); };
+    st.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); st.click(); } };
+  } else {
+    bar.classList.remove('busy');
+    bar.innerHTML = REST();
+  }
+  const thumb = G.photoThumb ? `<img class="pth" src="${G.photoThumb}" alt="Your photo">` : `<span class="pth">${PHOTO(18)}</span>`;
+  let html;
+  if (b.active) {
+    const order = ['look', 'measure', 'build', 'test', 'place'], at = order.indexOf(b.phase);
+    const row = (k, icon, label, sub, n, frac) => {
+      const i = order.indexOf(k), st = at > i ? 'ok' : at === i ? 'now' : 'todo';
+      const badge = st === 'ok' ? `<span class="bd">${ic('check', 9, '#fff', 3)}</span>` : st === 'now' ? `<span class="bd">${ring(13)}</span>` : '';
+      const mini = st === 'now' && frac != null ? `<span class="mini"><i style="width:${Math.round(100 * frac)}%"></i></span>` : '';
+      return `<li class="${st}"><span class="ti">${ic(icon)}${badge}</span><span class="nm">${label}${sub ? `<small>${e(sub)}</small>` : ''}</span>${mini}<span class="n">${n || ''}</span></li>`;
+    };
+    const fixing = /\*\*Fixing the ([^*]+)\*\*[^\n]*$/.exec(b.thinking || '');
+    const pct = [4, 14, 20 + 40 * c.built / Math.max(1, b.expected || 1), 60 + 25 * c.tested / Math.max(1, total), 85 + 15 * c.placed / Math.max(1, total)][Math.max(0, at)];
+    html = `<div class="bar"><i style="width:${Math.min(100, pct)}%"></i></div>
+<div class="phd">${thumb}<div class="ptt"><b>Building your ${e(name)}</b><small>${e(b.model || 'The model')} · ${mmss(b.elapsed || 0)}</small></div><button class="gb g" id="sgStop2">${ic('stop', 10)}Stop</button></div>
+<ul>${row('look', 'eye', 'Looking at the photo', b.expected ? `${b.expected} things` : '', '')}
+${row('measure', 'ruler', 'Measuring sizes', '', '')}
+${row('build', 'objects', 'Building objects', at === 2 && b.now ? b.now : '', b.expected ? `${c.built} of ${b.expected}` : '', b.expected ? c.built / b.expected : null)}
+${row('test', 'pulse', 'Testing physics', at === 3 ? (fixing ? `Asking the AI to fix the ${fixing[1]}` : b.now || '') : c.retries ? `${c.retries} fixed by the AI` : '', total && at >= 3 ? `${c.tested} of ${total}` : '', total ? c.tested / total : null)}
+${row('place', 'plan', 'Placing in your session', at === 4 ? b.now || '' : '', at >= 4 ? `${c.placed} of ${total - (b.skipped || []).length}` : '', total ? c.placed / Math.max(1, total - (b.skipped || []).length) : null)}</ul>
+<div class="think"><div class="thl">${SPARK.replace('width="16" height="16"', 'width="12" height="12"')}Thinking</div><div class="thx" id="sgTx">${thinkHtml(b.thinking)}</div></div>`;
+  } else if (b.phase === 'stopped') {
+    html = `<div class="res"><span class="ri" style="background:#F3F4F6;color:#374151">${ic('pause', 15)}</span><div><b>Stopped</b><p>${b.objects ? `${b.objects} object${b.objects === 1 ? '' : 's'} placed. They stay, or undo them.` : 'Nothing was placed.'}</p></div></div>
+<div class="acts">${b.objects ? `<button class="gb g" id="sgUndo">${ic('undo', 14)}Undo</button>` : ''}<button class="gb p" id="sgOk">Done</button></div>`;
+  } else {
+    html = `<div class="res"><span class="ri" style="background:#FEF2F2">${ic('alert', 16, '#DC2626')}</span><div><b>Couldn't build the scene</b><p>${e(cap(b.error || 'something went wrong'))}.</p></div></div>
+${(b.skipped || []).length ? `<div class="skip">${ic('info', 14, '#9CA3AF')}<span>Failed the physics test: ${e(b.skipped.join(', '))}</span></div>` : ''}
+<div class="acts"><button class="gb g" id="sgOk">Close</button>${G.lastPhoto ? `<button class="gb p" id="sgRetry">${ic('retry', 14)}Try again</button>` : ''}</div>`;
+  }
+  const tx0 = document.getElementById('sgTx');
+  const atEnd = !tx0 || tx0.scrollTop + tx0.clientHeight >= tx0.scrollHeight - 8;
+  prog.innerHTML = html;
+  prog.classList.add('open', 'ph');
+  const tx = document.getElementById('sgTx');
+  if (tx) tx.scrollTop = atEnd ? tx.scrollHeight : tx0.scrollTop;
+  const ok = document.getElementById('sgOk'), un = document.getElementById('sgUndo'), re = document.getElementById('sgRetry'), st2 = document.getElementById('sgStop2');
+  if (st2) st2.onclick = async () => { await api('/pg/scenegen/stop', {}); };
+  if (ok) ok.onclick = () => { G.build = null; drawProg(); };
+  if (re) re.onclick = async () => {
+    const r = await api('/pg/scenegen/photo', G.lastPhoto);
+    if (!r || !r.ok) { toast((r && r.error) || 'Something went wrong.'); return; }
+    follow(r.build);
+  };
+  if (un) un.onclick = async () => {
+    const r = await api('/pg/scenegen/undo', {id: b.id});
+    if (!r.ok) { toast(r.error); return; }
+    G.build = null; drawProg(); toast('Scene removed'); if (typeof refresh === 'function') refresh();
+  };
+}
+
 bar.onclick = () => { if (!(G.build && G.build.active)) openCard(); };
 scrim.onclick = closeCard;
 document.addEventListener('keydown', (ev) => {
@@ -420,6 +599,6 @@ async function preset(name) {
   G.last = null;
   follow(r.build);
 }
-window.sceneGen = {open: openCard, preset};
+window.sceneGen = {open: openCard, preset, busy: () => !!(G.build && G.build.active)};
 setTimeout(loadInfo, 1500);
 })();
