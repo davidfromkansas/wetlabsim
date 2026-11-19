@@ -115,6 +115,23 @@ def web():
     _commit_loop()
 
 
+def _end_old_servers():
+    """Stop any Playground server a previous call on this container left running (no pkill in the image)."""
+    import signal
+    left = []
+    for d in pathlib.Path("/proc").iterdir():
+        if d.name.isdigit() and int(d.name) != os.getpid():
+            try:
+                if b"playground.server" in (d / "cmdline").read_bytes():
+                    os.kill(int(d.name), signal.SIGKILL)
+                    left.append(d.name)
+            except (OSError, ValueError):
+                pass
+    if left:
+        print("stopped a server left from an earlier call:", ", ".join(left))
+        time.sleep(0.5)
+
+
 @app.function(cpu=4.0, memory=6144, secrets=lab_secrets,
               volumes={"/data": runs, "/library": library}, max_containers=MAX_LABS, timeout=12 * 3600)
 def lab(lab_id: str, owner_key: str, owner_user: str = ""):
@@ -127,11 +144,18 @@ def lab(lab_id: str, owner_key: str, owner_user: str = ""):
                    WETLAB_T_FN=str(t_fn))
         print(f"startup: tunnels open {time.time() - t_fn:.1f} s after the function began")
         _commit_loop()
+        # Modal can hand this container the next call after a cancelled one: that call's server may
+        # still hold the ports, and a second one would crash at its start. End it first.
+        _end_old_servers()
         proc = subprocess.Popen(
             ["python", "-m", "playground.server", "--host", "0.0.0.0", "--port", "8780", "--no-browser",
              "--public", "--max-active", "15", "--idle-minutes", "5",
              "--launcher", "modal", "--robot-port", "8781", "--agent-robot-url", robot.url,
              "--model-proxy-port", "8782", "--runs", "/data/runs"],
             cwd="/app", env=env)
-        proc.wait()
+        try:
+            proc.wait()
+        finally:              # cancelled: don't leave the server behind for the next call
+            if proc.poll() is None:
+                proc.terminate()
     runs.commit()
