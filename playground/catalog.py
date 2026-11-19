@@ -618,6 +618,19 @@ def meta(id_: str) -> dict:
     return json.loads((ASSETS / id_ / "asset.json").read_text())
 
 
+# The library's category tree (category_tree.json: L1 -> L2 -> list of L3) and each object's place
+# in it (categories.json: id -> ["Kitchen", "Food", "Fruit"], each object judged from its name,
+# source and size). The front end browses it with breadcrumbs. An object not tagged yet (say, one
+# added since) shows under its tab's name until it gets a line in categories.json.
+_HERE = pathlib.Path(__file__).parent
+CATEGORY_TREE = json.loads((_HERE / "category_tree.json").read_text())
+CATEGORIES = json.loads((_HERE / "categories.json").read_text()) if (_HERE / "categories.json").exists() else {}
+
+
+def category(id_: str, tab: str) -> list[str]:
+    return CATEGORIES.get(id_) or [tab]
+
+
 _AVAILABLE: list[dict] | None = None
 
 
@@ -645,5 +658,6 @@ def _available() -> list[dict]:
             out.append({"id": i, "tab": tab, "label": label, "fixed": fixed, "size": m["size"],
                         "mass": m["mass"], "friction": m.get("friction"),
                         "collision": m.get("collision", ""), "thumb": f"/pg/thumb/{i}.png",
-                        "soft": i in SOFT, "source": source(hf), "cite": citation(hf)})
+                        "soft": i in SOFT, "source": source(hf), "cite": citation(hf),
+                        "cat": category(i, tab)})
     return out
