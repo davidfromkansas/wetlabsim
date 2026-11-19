@@ -450,49 +450,43 @@ export function start({stage, base = '', onReady}) {
   floorGlass.position.z = 0.006; floorGlass.receiveShadow = true; glassRoom.add(floorGlass);
   glassRoom.visible = false; scene.add(glassRoom);
 
-  // Robots at work: glowing see-through copies of each working robot's own shape keep rising off
-  // it into the sky and fading, like a beam of light. Each copy is a twin of the robot's meshes
-  // in its current pose, only lifted, so the beam bends and moves with the arm. A copy is clear
-  // where it faces the camera and glows where it curves away (a rim), its light adds to what is
-  // behind it, and it fades in just above the robot, so the robot itself stays clear.
+  // Robots at work: a hologram shell round each working robot's own shape that moves with it.
+  // Each of the robot's meshes gets a twin pushed out along smoothed normals (about 9 px at any
+  // zoom). The shell is nearly clear where it faces the camera and glows only where it curves
+  // away (a rim, so the robot stays visible through it), with faint scan lines drifting up. Its
+  // light adds to what is behind it rather than covering it.
   // zones: [{bodies: [MuJoCo body ids of the robot], waiting}] (waiting = queued: dimmer).
-  const BEAM_COPIES = 7, BEAM_HEIGHT = 3.0, BEAM_SPEED = 0.22;   // copies, metres, rises per second
   const outlineVertex = `
     attribute vec3 outlineNormal;
-    uniform float time, phase;
-    varying vec3 vNormal, vView;
-    varying float vRise;
+    uniform float widthPx;
+    varying vec3 vNormal, vView, vWorld;
     void main() {
       vec4 world = modelMatrix * vec4(position, 1.0);
       vec3 n = normalize(mat3(modelMatrix) * outlineNormal);
-      vRise = fract(time * ${BEAM_SPEED.toFixed(3)} + phase);
-      world.z += vRise * ${BEAM_HEIGHT.toFixed(2)};
-      world.xyz += n * 0.004 * (1.0 + vRise * 4.0);          // a little fuller as it rises
-      vNormal = n; vView = normalize(cameraPosition - world.xyz);
+      float dist = length(cameraPosition - world.xyz);
+      world.xyz += n * clamp(dist * widthPx * 0.0011, 0.006, 0.12);
+      vNormal = n; vView = normalize(cameraPosition - world.xyz); vWorld = world.xyz;
       gl_Position = projectionMatrix * viewMatrix * world;
     }`;
   const outlineFragment = `
-    uniform float strength;
-    varying vec3 vNormal, vView;
-    varying float vRise;
+    uniform float strength, time;
+    varying vec3 vNormal, vView, vWorld;
     void main() {
-      float rim = pow(1.0 - abs(dot(normalize(vNormal), vView)), 2.5);
-      float fade = smoothstep(0.0, 0.12, vRise) * pow(1.0 - vRise, 1.6);
-      float a = (0.05 + rim * 0.75) * fade * strength;
+      float facing = abs(dot(normalize(vNormal), vView));
+      float rim = pow(1.0 - facing, 3.0);
+      float scan = smoothstep(0.82, 1.0, sin(vWorld.z * 140.0 - time * 3.0)) * 0.10;
+      float a = (rim * 0.85 + scan * (0.4 + rim)) * strength;
       vec3 color = mix(vec3(0.10, 0.72, 0.82), vec3(0.80, 0.98, 1.0), rim);
       gl_FragColor = vec4(color, a);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
     }`;
-  const beamTime = {value: 0};
-  const outlineStrength = {on: {value: 1.0}, wait: {value: 0.35}};
-  const outlineMats = {on: [], wait: []};
-  for (const kind of ['on', 'wait'])
-    for (let k = 0; k < BEAM_COPIES; k++)
-      outlineMats[kind].push(new THREE.ShaderMaterial({
-        uniforms: {time: beamTime, phase: {value: k / BEAM_COPIES}, strength: outlineStrength[kind]},
-        vertexShader: outlineVertex, fragmentShader: outlineFragment, side: THREE.FrontSide,
-        transparent: true, depthWrite: false, blending: THREE.AdditiveBlending}));
+  const outlineUniforms = {strength: {value: 1.0}, widthPx: {value: 9.0}, time: {value: 0}};
+  const outlineWaitUniforms = {strength: {value: 0.4}, widthPx: {value: 6.0}, time: outlineUniforms.time};
+  const outlineMat = (u) => new THREE.ShaderMaterial({uniforms: u, vertexShader: outlineVertex,
+    fragmentShader: outlineFragment, side: THREE.FrontSide, transparent: true, depthWrite: false,
+    blending: THREE.AdditiveBlending});
+  const outlineMats = {on: outlineMat(outlineUniforms), wait: outlineMat(outlineWaitUniforms)};
   // Normals averaged over vertices at the same place, so a box's or a mesh's hard edges don't
   // open cracks in the outline. Once per geometry (robots' meshes are shared between sessions).
   function outlineNormals(geo) {
@@ -519,28 +513,27 @@ export function start({stage, base = '', onReady}) {
     for (const b of outlined.keys()) if (!next.has(b)) outlineBody(b, null);
     outlined = next;
   }
-  // Give a body's meshes their rising copies (or hide them: kind null). Run every frame, as a
+  // Give a body's meshes their outline twins (or hide them: kind null). Run every frame, as a
   // world's meshes arrive a little after its bodies.
   function outlineBody(b, kind) {
     const body = V.bodies[b]; if (!body) return;
     for (const obj of body.children) {
       if (!obj.isMesh || obj.userData.isOutline) continue;
-      let copies = obj.userData.outline;
-      if (!copies) {
+      let o = obj.userData.outline;
+      if (!o) {
         if (!kind || !obj.geometry || !obj.geometry.attributes.position) continue;
         outlineNormals(obj.geometry);
-        copies = obj.userData.outline = outlineMats[kind].map(m => {
-          const o = new THREE.Mesh(obj.geometry, m);
-          o.userData.isOutline = true; o.renderOrder = 5; o.castShadow = o.receiveShadow = false;
-          o.frustumCulled = false;        // lifted in the shader, past the mesh's own bounds
-          obj.add(o); return o;
-        });
+        o = obj.userData.outline = new THREE.Mesh(obj.geometry, outlineMats[kind]);
+        o.userData.isOutline = true; o.renderOrder = 5; o.castShadow = o.receiveShadow = false;
+        obj.add(o);
       }
-      copies.forEach((o, k) => { o.visible = !!kind; if (kind) o.material = outlineMats[kind][k]; });
+      o.visible = !!kind;
+      if (kind) o.material = outlineMats[kind];
     }
   }
   function pulseZones(t) {
-    beamTime.value = t;
+    outlineUniforms.strength.value = 0.92 + 0.08 * Math.sin(t * 2.2);
+    outlineUniforms.time.value = t;
     for (const [b, kind] of outlined) outlineBody(b, kind);
   }
   V.setZones = setZones;
