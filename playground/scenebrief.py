@@ -68,7 +68,10 @@ First, match how much the person asked for:
 table with 6 blocks and 3 bins"): only what they name and what the task needs. No room, no extra \
 furniture, no decoration. One zone, "robot".
 - A place ("a kitchen", "a wet lab", "our packing station"): the place, with the variety such a \
-place has (below).
+place has (below). A test bench for a product ("a test bench for a phone", "a QA station") is a \
+place, not a bare benchmark: give it the gear such a bench has (fixtures, a stand, trays, a \
+tester, cables, a light). When the task moves something "between stations", plan each station \
+as its own marked spot (a tray, mat, fixture or stand per station), all in the robot's reach.
 Every thing the person names must be in the plan: find it by name in the tree's lists (a basket, \
 a plate, a shelf, a drawer cabinet...). Only if nothing like it is there does it go in "missing".
 If the task works with furniture (a drawer, a cabinet door, a shelf, a microwave), it must be \
