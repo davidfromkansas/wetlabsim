@@ -85,7 +85,7 @@ body.fixed .taskcard{display:none!important}
 .tcrow .mdl select{border:0;height:34px;flex:1;min-width:0;padding:0 4px;background:transparent}
 .tcrow .primary{width:auto;height:36px;padding:0 16px;border-radius:8px;display:flex;align-items:center;gap:6px}
 /* add-a-station picker */
-#addModal{position:fixed;inset:0;background:rgba(17,24,39,.35);z-index:8;align-items:center;justify-content:center;padding:16px}
+#addModal{position:fixed;inset:0;background:rgba(17,24,39,.35);z-index:20;align-items:center;justify-content:center;padding:16px}
 #addModal .am{background:#fff;border-radius:14px;padding:22px 24px;max-width:640px;width:100%;display:flex;flex-direction:column;gap:14px;box-shadow:0 10px 30px rgba(17,24,39,.2);max-height:calc(100vh - 32px);overflow:auto}
 .rcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
 .rcard{border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;background:#fff}
@@ -502,7 +502,7 @@ body{background:var(--bg)}
 #right{background:var(--bg);border-left:0!important;width:340px;display:flex;flex-direction:column;transition:width 200ms cubic-bezier(.23,1,.32,1)}
 body.rclosed #right{display:none}
 #tabObjects,.dock{display:none!important}
-.tl{top:auto!important;bottom:14px}
+.tl{top:auto!important;bottom:78px}
 /* the cameras the AI sees: top left, so the menu bar has the bottom middle */
 .pips{top:12px;bottom:auto;align-items:flex-start}
 #sessNav.closed ~ #stage .pips{left:62px}
@@ -1934,10 +1934,11 @@ async function undoRedo(back) {
     const r = await api(back ? '/pg/undo' : '/pg/redo', {});
     if (playing) await api('/pg/play', {});
     if (!r.ok) toast(r.error || 'Could not do that.');
-    else { S.scene.undo = r.undo; S.scene.redo = r.redo; }
+    else { S.scene.undo = r.undo; S.scene.redo = r.redo; loadSessions(); }
   } finally { S.undoBusy = false; refresh(); }
 }
 $('undoBtn').onclick = () => undoRedo(true);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('addModal').style.display === 'flex') { e.preventDefault(); closeAdd(true); } });
 $('redoBtn').onclick = () => undoRedo(false);
 $('setBtn').onclick = () => { $('sbTip').hidden = true; window.openSettings && window.openSettings(); };
 document.addEventListener('keydown', (e) => {
