@@ -364,7 +364,8 @@ class _watch:
 
 
 def _codex_args(model, effort, out, jail, images):
-    cmd = SG._codex_cmd(model, effort, out, jail) + ["--json"]
+    # Ask Codex for the model's thinking summaries, so they can stream into the panel.
+    cmd = SG._codex_cmd(model, effort, out, jail) + ["--json", "-c", 'model_reasoning_summary="detailed"']
     for p in images:
         cmd += ["--image", p]
     return cmd + ["--"]
