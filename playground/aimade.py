@@ -71,6 +71,15 @@ def meta(id_: str) -> dict:
             "mass": d["mass"], "label": d["label"], "parts": parts, "friction": friction}
 
 
+# Words for moving parts, found in the names the model gives them ("cab_door_l" -> door);
+# a part with no such word is a "hinged part" or "sliding part".
+_PART_WORDS = {w: w for w in ("door", "drawer", "lid", "flap", "hatch", "window", "sash", "blind", "shutter",
+                              "shelf", "tray", "wheel", "caster", "seat", "screen", "knob", "dial", "handle",
+                              "lever", "cap", "valve", "tap", "faucet", "arm", "hood", "cover", "panel", "button",
+                              "switch", "chair", "stool", "leg", "rack", "basket", "sliding", "slider")}
+_PART_WORDS.update({"castor": "caster", "sliding": "sliding part", "slider": "sliding part"})
+
+
 def describe(xml: str) -> tuple[str, float | None]:
     """("2 doors and 1 drawer", 0.6): the object's moving parts in words, and its usual friction."""
     try:
@@ -82,11 +91,9 @@ def describe(xml: str) -> tuple[str, float | None]:
         js = [j for j in body.findall("joint") if j.get("type", "hinge") in ("hinge", "slide")]
         if not js:
             continue
-        nm = re.sub(r"[_\-]+", " ", body.get("name") or "").strip().lower()
-        nm = re.sub(r"\s*\d+$", "", nm)                       # "door 2" -> "door"
-        nm = re.sub(r"^(left|right|top|bottom|front|back|upper|lower) ", "", nm)
-        if len(nm) < 3:                                        # unnamed (named "b3" when cleaned)
-            nm = "sliding part" if js[0].get("type") == "slide" else "hinged part"
+        raw = re.sub(r"[_\-]+", " ", body.get("name") or "").lower()
+        word = next((w for w in _PART_WORDS if re.search(rf"\b{w}", raw)), None)
+        nm = _PART_WORDS.get(word) if word else ("sliding part" if js[0].get("type") == "slide" else "hinged part")
         names.append(nm)
     counts: dict[str, int] = {}
     for n in names:

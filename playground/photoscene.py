@@ -105,7 +105,8 @@ Rules for every object:
 counter-clockwise seen from above, 0 = its front faces the camera.
 - Inside <mujoco>, build the object around its own origin with its front facing -y (towards the camera). \
 Angles are in degrees.
-- One top <body> per object. Moving parts are child bodies, each with one hinge or slide <joint>.
+- One top <body> per object. Moving parts are child bodies, each with one hinge or slide <joint> and a plain name \
+saying what it is ("door_left", "drawer_top", "lid").
 - Allowed: <asset> with <material name rgba specular shininess reflectance> only; <body>, <geom> \
 (type box, cylinder, capsule, sphere or ellipsoid), <joint> (type hinge or slide), <inertial>. NOT allowed: \
 meshes, textures, files, <include>, <default>, lights, cameras, actuators, <freejoint> (the playground adds \
