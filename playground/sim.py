@@ -6,6 +6,7 @@ agent drives the Franka here exactly as it does in the wet lab evals.
 """
 from __future__ import annotations
 
+import copy
 import ctypes
 import gc
 import io
@@ -554,6 +555,33 @@ class PlaygroundSim(Sim):
             self._model_ver += 1
             del old_d, snaps
             _release_memory()
+
+    def scene_state(self) -> dict:
+        """The scene as the user built it (stations, objects where they are now, the active
+        station), for Undo / Redo: put back with restore_scene."""
+        with self.lock:
+            self._sync_placed()
+            return {"stations": copy.deepcopy(self.stations), "placed": copy.deepcopy(self.placed),
+                    "active": self.active_station}
+
+    def restore_scene(self, state: dict):
+        """Put the scene back as scene_state saw it. Robots still on the same station keep their
+        pose; a robot that is gone or swapped starts at its ready pose."""
+        if self.scene_mode != "free":
+            raise RobotError("this scene can't be edited")
+        with self.lock:
+            self.stations = copy.deepcopy(state["stations"])
+            self.placed = copy.deepcopy(state["placed"])
+            for uid in list(self.arms):
+                st = self.station(uid)
+                if st is None or st.robot != self.arms[uid].robot:
+                    self.arms.pop(uid, None)
+            self.selected = None
+            uids = {st.uid for st in self.stations}
+            self.active_station = state.get("active") if state.get("active") in uids else \
+                (self.active_station if self.active_station in uids else
+                 (self.stations[0].uid if self.stations else None))
+            self.rebuild(sync=False)
 
     def add(self, item: str, pos, yaw: float = 0.0) -> str:
         if catalog.item(item)["soft"] and W.soft_count(self.placed) >= SOFT_MAX:
