@@ -1711,7 +1711,7 @@ class PGHandler(Handler):
                     return self._err("only this lab's owner can see its settings", 403)
                 return self._json(self._account_info(fresh=True))
             if p == "/pg/catalog":
-                return self._json({"tabs": catalog.TABS, "items": catalog.available(), "robots": catalog.robots(),
+                return self._json({"tabs": catalog.TABS, "tree": catalog.CATEGORY_TREE, "items": catalog.available(), "robots": catalog.robots(),
                                    "models": [{**{k: m[k] for k in ("id", "label", "via", "provider") if k in m},
                                                **({"needs": _needs(m)} if _needs(m) else {})}
                                               for m in MODELS if not PUBLIC or m["agent"] in _site_agents()],
