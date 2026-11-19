@@ -20,7 +20,7 @@ import pathlib
 # The converted objects. On Modal they come from the "wetlab-library" Volume at /library (hosting/app.py).
 ASSETS = pathlib.Path(os.environ.get("WETLAB_ASSETS_DIR") or pathlib.Path(__file__).parent / "assets")
 
-TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Glassware", "Instruments", "PPE", "Tools", "Kitchen", "Bins & Trays", "Cleaning", "Electronics", "Toys & Basics", "Factory", "Car parts", "Garage", "Home", "Office", "Shops & Hotels", "Sports & Leisure", "Outdoor", "Soft", "LIBERO"]
+TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Glassware", "Instruments", "PPE", "Tools", "Kitchen", "Bins & Trays", "Cleaning", "Electronics", "Toys & Basics", "Factory", "Car parts", "Garage", "Home", "Office", "Shops & Hotels", "Sports & Leisure", "Outdoor", "Soft", "LIBERO", "RoboCasa", "Scanned Objects"]
 
 # id, tab, label, Hugging Face folder, hollow, fixed
 ITEMS = [
@@ -470,6 +470,14 @@ EXTRA = json.loads((pathlib.Path(__file__).parent / "extra_library.json").read_t
 ITEMS += [(u["id"], u["tab"], u["label"], (u["source"] + ":" if u["source"] != "nvidia" else "") + u["folder"],
            True, u["fixed"]) for u in EXTRA if not u.get("skip")]
 
+# Ready-made MuJoCo objects, each kept as its source made it (tools/build_mjcf_sets.py), listed in
+# mjcf_library.json: Google Scanned Objects as MuJoCo models (Kevin Zakka's mujoco_scanned_objects,
+# 1,030 scans) and RoboCasa's kitchen objects as RoboCasa loads them. Items that failed to build or
+# the drop test are left out there.
+MJCF_SETS = json.loads((pathlib.Path(__file__).parent / "mjcf_library.json").read_text())
+ITEMS += [(u["id"], u["tab"], u["label"], u["source"] + ":" + u["folder"], False, u["fixed"])
+          for u in MJCF_SETS if not u.get("skip")]
+
 # Triangles an item's visuals may keep before they are simplified (tools/convert_simready; the
 # default is 60,000). Simplifying drops a texture, so items whose whole look is one texture keep
 # all their detail (Palatial's are about 100,000 to 160,000 triangles).
@@ -583,11 +591,27 @@ SOURCE_NAMES = {"": "NVIDIA", "tripo": "Tripo", "quiktech": "QUIKTECH", "usdcraf
                 "autobio": "AutoBio", "mujoco": "MuJoCo", "inhouse": "Built in-house",
                 "forgecad": "ForgeCAD", "palatial": "Palatial", "libero": "LIBERO",
                 "projectsim": "projectsim", "allsides": "Allsides", "ndotlight": "NdotLight", "mxr": "Marso",
-                "yamato": "Yamato Protec", "atech": "atech"}
+                "yamato": "Yamato Protec", "atech": "atech",
+                "gso": "Scanned Objects", "robocasa": "RoboCasa"}
 
 
 def source(hf: str) -> str:
     return SOURCE_NAMES[hf.rpartition(":")[0]]
+
+
+# How to cite a source whose authors ask for it, shown with the library's source chip (full BibTeX
+# in assets/CREDITS.md): item folder prefix -> citation, licence.
+CITATIONS = {
+    "gso": "Downs et al., \"Google Scanned Objects: A High-Quality Dataset of 3D Scanned Household Items\", "
+           "ICRA 2022 (arXiv:2204.11918). MuJoCo models: Zakka, \"Scanned Objects MuJoCo Models\", 2022. "
+           "CC BY 4.0 (meshes, textures), MIT (MJCF).",
+    "robocasa": "Nasiriany et al., \"RoboCasa: Large-Scale Simulation of Everyday Tasks for Generalist Robots\", "
+                "RSS 2024; Nasiriany et al., \"RoboCasa365\", ICLR 2026. CC BY 4.0.",
+}
+
+
+def citation(hf: str) -> str | None:
+    return CITATIONS.get(hf.rpartition(":")[0])
 
 
 def item(id_: str) -> dict:
@@ -600,6 +624,19 @@ def item(id_: str) -> dict:
 
 def meta(id_: str) -> dict:
     return json.loads((ASSETS / id_ / "asset.json").read_text())
+
+
+# The library's category tree (category_tree.json: L1 -> L2 -> list of L3) and each object's place
+# in it (categories.json: id -> ["Kitchen", "Food", "Fruit"], each object judged from its name,
+# source and size). The front end browses it with breadcrumbs. An object not tagged yet (say, one
+# added since) shows under its tab's name until it gets a line in categories.json.
+_HERE = pathlib.Path(__file__).parent
+CATEGORY_TREE = json.loads((_HERE / "category_tree.json").read_text())
+CATEGORIES = json.loads((_HERE / "categories.json").read_text()) if (_HERE / "categories.json").exists() else {}
+
+
+def category(id_: str, tab: str) -> list[str]:
+    return CATEGORIES.get(id_) or [tab]
 
 
 _AVAILABLE: list[dict] | None = None
@@ -629,5 +666,6 @@ def _available() -> list[dict]:
             out.append({"id": i, "tab": tab, "label": label, "fixed": fixed, "size": m["size"],
                         "mass": m["mass"], "friction": m.get("friction"),
                         "collision": m.get("collision", ""), "thumb": f"/pg/thumb/{i}.png",
-                        "soft": i in SOFT, "source": source(hf)})
+                        "soft": i in SOFT, "source": source(hf), "cite": citation(hf),
+                        "cat": category(i, tab)})
     return out
