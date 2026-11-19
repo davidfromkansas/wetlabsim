@@ -26,6 +26,7 @@ import time
 import urllib.parse
 from http.server import ThreadingHTTPServer
 
+from wetlabsim import menagerie_arms as _MA
 from wetlabsim import robot_api as RA
 from wetlabsim import tasks as WT
 from wetlabsim.server import Handler, RunBoard
@@ -557,7 +558,8 @@ class Session:
     def station_runner(self, uid: str) -> Runner:
         r = self.runners.get(uid)
         st = self.sim.station(uid)
-        docs = "standard" if st is None or st.robot in ("franka", "aloha", "fr3_duo", "g1", "piper", "n220", "crx30ia", "rby1") else "assisted"
+        docs = "standard" if st is None or st.robot in ("franka", "aloha", "fr3_duo", "g1", "piper", "n220", "crx30ia", "rby1") \
+            or st.robot in _MA.ARMS else "assisted"
         if r is None or r.docs != docs and not r.active():
             r = self.runners[uid] = Runner(f"{self.base_url}/s/{self.id}/st/{uid}", self.runs, docs)
             r.on_done = lambda runner, uid=uid: self.run_ended(uid, runner)
@@ -1743,7 +1745,7 @@ class PGHandler(Handler):
                     return self._err("only this lab's owner can see its settings", 403)
                 return self._json(self._account_info(fresh=True))
             if p == "/pg/catalog":
-                return self._json({"tabs": catalog.TABS, "items": catalog.available(), "robots": catalog.robots(),
+                return self._json({"tabs": catalog.TABS, "tree": catalog.CATEGORY_TREE, "items": catalog.available(), "robots": catalog.robots(),
                                    "models": [{**{k: m[k] for k in ("id", "label", "via", "provider") if k in m},
                                                **({"needs": _needs(m)} if _needs(m) else {})}
                                               for m in MODELS if not PUBLIC or m["agent"] in _site_agents()],

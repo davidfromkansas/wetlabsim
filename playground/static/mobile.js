@@ -5,7 +5,7 @@
 //  - fingers move the view: one finger turns it, two fingers slide and pinch (no joystick)
 //  - objects: tap one, tap the scene to see where it lands, then "Place here"
 //  - a full-screen button hides every control so the scene fills the whole phone
-// Loaded after the page's own script (uses S, $, api, uv, camera, probe, place, renderItems,
+// Loaded after the page's own script (uses S, $, api, uv, camera, probe, place, renderItems, markArmed,
 // hideTag, setObjects, openStMenu, openPicker, openAdd, setNav).
 (() => {
 const MQ = matchMedia('(max-width:760px)');
@@ -116,14 +116,32 @@ const css = `
   .mlinks{flex-direction:column;gap:2px}
   .mlinks button,.mlinks a{display:flex;align-items:center;gap:12px;height:46px;padding:0 10px;border-radius:10px;border:0;background:transparent;font:500 15px Inter,sans-serif;color:#111827;text-decoration:none;text-align:left;width:100%}
   /* the object library: a tall sheet */
-  #objDrawer{position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:calc(64px + env(safe-area-inset-top))!important;width:auto!important;border-radius:22px 22px 0 0!important;z-index:72!important;transform:translateY(105%)!important;opacity:1!important;transition:transform 500ms cubic-bezier(.32,.72,0,1)!important;padding-bottom:env(safe-area-inset-bottom)}
+  #objDrawer{position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:calc(64px + env(safe-area-inset-top))!important;width:auto!important;max-width:none!important;border-radius:22px 22px 0 0!important;z-index:72!important;transform:translateY(105%)!important;opacity:1!important;transition:transform 500ms cubic-bezier(.32,.72,0,1)!important;padding-bottom:env(safe-area-inset-bottom)}
   body.objopen #objDrawer{transform:none!important;pointer-events:auto}
   #objTab{display:none!important}
   #objDrawer .tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
   #objDrawer .tabs::-webkit-scrollbar{display:none}
   #objDrawer .tabs button{flex:none;height:34px}
   #objClose{width:44px;height:44px}
-  #objDrawer .card{cursor:pointer}
+  #objDrawer .card,#objDrawer .pin{cursor:pointer}
+  /* the pin board on a phone: back button + category name in the header instead of breadcrumbs,
+     one swipeable row of pills that fades at the edge, a big search, larger names */
+  #objDrawer #crumbs,#objDrawer .tabs button.up,#objDrawer .tabs .here{display:none!important}
+  #objDrawer .dh{gap:6px;min-height:52px}
+  #objDrawer.deep .dh{padding-left:6px!important}
+  #objDrawer.deep .dh h2{display:none}
+  #objDrawer.deep .dh .mback{display:flex;flex:none;width:44px;height:44px;border:0;border-radius:999px;background:transparent;align-items:center;justify-content:center}
+  #objDrawer.deep .dh .mtitle{display:flex;flex-direction:column;flex:1;min-width:0}
+  #objDrawer .dh .mtrail{font-size:12.5px;color:#4B5563;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #objDrawer .dh .mname{font-size:20px;font-weight:700;line-height:1.2;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #objDrawer .dh h2{font-size:20px!important}
+  #objDrawer #search{height:46px;font-size:16px}
+  #objDrawer .tabs{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);padding-right:30px}
+  #objDrawer .tabs button{height:40px!important;padding:0 16px;font-size:14px}
+  #objDrawer #items{padding:2px 12px 16px}
+  #objDrawer .mcols{gap:10px}
+  #objDrawer .pin .n{font-size:14px}
+  #objDrawer .pin .w{font-size:12px}
   /* placing an object: a preview, then Place here */
   #mPlace{position:fixed;left:0;right:0;bottom:0;z-index:60;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -8px 30px -10px rgba(17,24,39,.3);padding:14px 16px calc(14px + env(safe-area-inset-bottom));flex-direction:column;gap:12px}
   #mPlace[hidden]{display:none!important}
@@ -164,7 +182,7 @@ const css = `
   /* the sheet follows the keyboard (browsers that don't resize the page for it) */
   html body #right{bottom:var(--kb,0px)}
   /* touch basics */
-  button,a,[role=button],[role=tab],.rbot,.radd,#objDrawer .card{touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+  button,a,[role=button],[role=tab],.rbot,.radd,#objDrawer .card,#objDrawer .pin{touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
   #feed,#items,#filespane,#datapane,#resultspane,#sessNav .in,#rpk,#addModal .am,#runpop .card,#rpage,#gal,#objPanel,#ss,#ss *,#objDrawer,#sgCard{overscroll-behavior:contain}
   #rrail{touch-action:pan-x}
   #sessNav,#sessNav *{touch-action:pan-y!important}
@@ -361,10 +379,10 @@ async function plTap(p) {
   plP = p; $('mPlGo').disabled = false;
   await probe(S.armed, p); sync();
 }
-$('mPlCancel').onclick = () => { S.armed = null; plP = null; probeNext = null; renderItems(); hideTag(); api('/pg/ghost/clear', {}); sync(); };
+$('mPlCancel').onclick = () => { S.armed = null; plP = null; probeNext = null; markArmed(); hideTag(); api('/pg/ghost/clear', {}); sync(); };
 $('mPlGo').onclick = async () => {
   if (!S.armed || !plP) return;
-  const id = S.armed, p = plP; S.armed = null; plP = null; probeNext = null; renderItems(); hideTag();
+  const id = S.armed, p = plP; S.armed = null; plP = null; probeNext = null; markArmed(); hideTag();
   sync(); await place(id, p); sync();
 };
 
@@ -490,7 +508,7 @@ function sync() {
       $('mPlImg').src = it.thumb || ''; $('mPlName').textContent = `Placing ${(it.label || 'an object').toLowerCase()}`;
       $('mPlHint').textContent = 'Tap the scene where it should go'; $('mPlGo').disabled = true; plP = null;
       if (body.classList.contains('objopen')) setObjects(false), S.armed = lastArmed;   // closing the library clears it: keep it
-      renderItems();
+      markArmed();
     }
   }
   if (S.armed && plP) {   // where it lands, or why it can't go there

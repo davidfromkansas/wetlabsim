@@ -547,21 +547,47 @@ body.watch #vbtns .fbtn:not(#openLeft){display:none}
 /* the object library: a drawer over the scene that steps aside while you drag */
 #objDrawer{position:absolute;left:14px;top:60px;bottom:14px;width:340px;z-index:7;background:#fff;border-radius:14px;box-shadow:0 14px 36px rgba(17,24,39,.22),0 0 0 1px rgba(17,24,39,.08);display:flex;flex-direction:column;overflow:hidden;transform:translateX(calc(-100% - 24px));opacity:0;pointer-events:none;transition:transform 220ms cubic-bezier(.23,1,.32,1),opacity 220ms cubic-bezier(.23,1,.32,1)}
 body.objopen #objDrawer{transform:none;opacity:1;pointer-events:auto}
-body.objopen.dragging #objDrawer{transform:translateX(calc(-100% - 24px));opacity:0;pointer-events:none}
+body.objopen.dragging #objDrawer,body.objopen.libarmed #objDrawer{transform:translateX(calc(-100% - 24px));opacity:0;pointer-events:none}
 #objTab{position:absolute;left:0;top:60px;bottom:14px;width:26px;z-index:7;background:rgba(255,255,255,.92);border-radius:0 12px 12px 0;box-shadow:0 6px 18px rgba(17,24,39,.15);display:none;align-items:center;justify-content:center}
-body.objopen.dragging #objTab{display:flex}
+body.objopen.dragging #objTab,body.objopen.libarmed #objTab{display:flex}
 #objDrawer .dh{display:flex;align-items:center;justify-content:space-between;padding:14px 10px 4px 16px}
 #objDrawer .dh h2{margin:0;font:700 16px Inter,sans-serif;color:var(--ink)}
 #objDrawer .lib-top{border-bottom:0;padding:6px 16px 10px}
 #objDrawer .lib-top > div:first-child,#objDrawer .libhint{display:none}
-#objDrawer #items{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px;padding:2px 16px 16px}
-#objDrawer .card{border:0;background:transparent;display:flex;flex-direction:column;gap:6px;min-width:0}
-#objDrawer .card .th{height:auto;aspect-ratio:4/3;border-radius:10px;overflow:hidden}
-#objDrawer .card .th img{max-height:88%;max-width:88%}
-#objDrawer .card .tx{padding:0}
-#objDrawer .card .n{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#objDrawer .card .s{display:none}
-#objDrawer .card.armed .th{box-shadow:0 0 0 2px var(--blue)}
+/* the library as a pin board: 3 masonry columns, a category path (breadcrumbs) and the next
+   level's categories as pills */
+#objDrawer{width:780px;max-width:calc(100% - 28px)}
+body.objopen #sgBar{visibility:hidden}
+#objDrawer .dh .mback,#objDrawer .dh .mtitle{display:none}   /* the phone header (mobile.js) */   /* "Describe a scene" sits where the drawer's title is */
+#objDrawer .lib-top{gap:8px}
+#objDrawer #search{height:42px;border-radius:999px;border:0;background:#F1F2F4;padding:0 18px;font-size:14.5px}
+#crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:2px;min-height:30px}
+#crumbs button{border:0;background:transparent;padding:4px 6px;border-radius:8px;cursor:pointer;font:500 13.5px Inter,sans-serif;color:var(--muted)}
+#crumbs button:hover{background:var(--soft);color:var(--ink)}
+#crumbs button[aria-current=page]{font-weight:700;font-size:15px;color:var(--ink)}
+#crumbs svg{flex:none}
+#objDrawer .tabs{gap:6px}
+#objDrawer .tabs button{height:34px;padding:0 14px;border:0;background:#F1F2F4;color:var(--ink);font-weight:600;font-size:13px}
+#objDrawer .tabs button:hover{background:#E5E7EB}
+#objDrawer .tabs button.up{width:34px;padding:0;display:flex;align-items:center;justify-content:center}
+#objDrawer .tabs .here{font-size:12.5px;color:var(--muted);align-self:center;padding-left:2px}
+#objDrawer #items{display:block;padding:2px 14px 16px}
+.mcols{display:flex;gap:12px;align-items:flex-start}
+.mcol{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:14px}
+.pin{display:flex;flex-direction:column;gap:6px;border:0;background:transparent;padding:0;text-align:left;cursor:grab;min-width:0;font:inherit;color:inherit}
+.pin .th{position:relative;border-radius:14px;overflow:hidden;background:#F3F4F6;display:flex;align-items:center;justify-content:center}
+.pin .th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 200ms ease}
+.pin .th.ready img{opacity:1}
+.pin .th .iml-loader{color:#9CA3AF}
+.pin .th.ready .iml-loader{display:none}
+.pin .ov{position:absolute;inset:0;background:rgba(17,24,39,.32);opacity:0;transition:opacity 150ms ease}
+.pin .ov b{position:absolute;right:8px;top:8px;height:32px;padding:0 14px;border-radius:999px;background:var(--blue);color:#fff;font:600 13px/32px Inter,sans-serif}
+.pin .ov i{position:absolute;left:8px;bottom:8px;padding:2px 9px;border-radius:999px;background:#fff;color:var(--ink);font:500 11.5px/18px Inter,sans-serif;font-style:normal}
+@media (hover:hover){.pin:hover .ov{opacity:1}}
+.pin:focus-visible{outline:none}.pin:focus-visible .th{box-shadow:0 0 0 2px var(--blue)}.pin:focus-visible .ov{opacity:1}
+.pin.armed .th{box-shadow:0 0 0 3px var(--blue)}
+.pin .n{font-size:13px;font-weight:600;color:var(--ink);line-height:1.3;padding:0 4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pin .w{font-size:11.5px;color:var(--muted);padding:0 4px;margin-top:-4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (prefers-reduced-motion:reduce){#objDrawer{transition:opacity 150ms ease}}
 /* the starter-station picker */
 .tcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
@@ -967,7 +993,8 @@ body.watch #physBtn{display:none}
     <div class="lib-top freeonly">
       <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0;font-size:15px;color:var(--ink)">Objects</h2><span class="small">NVIDIA &amp; Tripo SimReady</span></div>
       <input id="search" type="search" placeholder="Search, e.g. mug, bowl, crate" aria-label="Search objects">
-      <div class="tabs" role="tablist" id="tabs"></div>
+      <nav id="crumbs" aria-label="Category path"></nav>
+      <div class="tabs" id="tabs"></div>
     </div>
     <div id="items" class="freeonly" role="tabpanel"></div>
     <section id="filespane" aria-label="The AI's work folder">
@@ -1026,7 +1053,7 @@ const api = async (path, body) => {
   const r = await fetch(U(path), body === undefined ? {headers} : {method: 'POST', headers: {...headers, 'Content-Type': 'application/json'}, body: JSON.stringify(body)});
   return r.json();
 };
-const S = {cat: null, tab: 'All', search: '', scene: null, armed: null, sel: 'robot', runKey: null, model: 'claude'};
+const S = {cat: null, path: [], search: '', scene: null, armed: null, sel: 'robot', runKey: null, model: 'claude'};
 const view = $('view'), stage = $('stage');
 // In free play each station's robot has its own API under /st/<station>; the fixed scenes have one robot at /.
 const stBase = () => `/s/${SID}` + ((S.scene && S.scene.mode === 'free' && S.scene.active) ? '/st/' + S.scene.active : '');
@@ -1049,32 +1076,121 @@ function uv(e) {
 // ---------------------------------------------------------------- library
 function fmtSize(s) { return s.map(v => (v * 100).toFixed(v < 0.1 ? 1 : 0)).join(' × ') + ' cm'; }
 function fmtMass(m) { return m == null ? '' : (m < 1 ? Math.round(m * 1000) + ' g' : m.toFixed(1) + ' kg'); }
-function renderTabs() {
-  const tabs = $('tabs'); tabs.innerHTML = '';
-  for (const t of ['All', ...S.cat.tabs]) {
-    if (t === 'Robots') continue;
-    const n = S.cat.items.filter(i => t === 'All' ? i.tab !== 'Robots' : i.tab === t).length;
-    const b = document.createElement('button'); b.role = 'tab'; b.setAttribute('aria-selected', S.tab === t && !S.search);
-    b.innerHTML = `${t} <span style="opacity:.7">${n}</span>`; b.onclick = () => { S.tab = t; S.search = ''; $('search').value = ''; renderTabs(); renderItems(); };
-    tabs.appendChild(b);
+// The library: a category path (breadcrumbs) over the tree in /pg/catalog ("tree": L1 -> L2 ->
+// L3 list; each item's "cat" is its path), the next level's categories as pills, and the items
+// under the current category as a 3-column pin board, drawn a page at a time as you scroll.
+const CHEV = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+// generative-loaders' ImageLoader variant="resolution" (the markup its React component renders;
+// the styles are vendored in /pg/static/generative-loaders.css)
+function imageLoader(size = 192, label = 'Generating image') {
+  const cells = Array.from({length: 36}, (_, k) => { const x = k % 6, y = Math.floor(k / 6);
+    return `<i style="--iml-delay:${((Math.abs(x - 2.5) + Math.abs(y - 2.5) - 6) * .055).toFixed(3)}s;--iml-tone:${28 + ((x * 13 + y * 9) % 34)}%"></i>`; }).join('');
+  return `<span class="iml-loader" data-variant="resolution" data-speed="1" data-paused="${matchMedia('(prefers-reduced-motion: reduce)').matches}" role="status" aria-label="${label}" style="--iml-color:currentColor;--iml-size:${size}px;--iml-radius:10%;--iml-duration:2.35s"><span class="iml-visual" aria-hidden="true"><span class="iml-resolution">${cells}</span></span></span>`;
+}
+function libItems() { return S.cat.items.filter(i => i.tab !== 'Robots'); }
+function catKids(path) {
+  // the categories under `path`: the tree's, plus any an item names that the tree doesn't
+  let node = S.cat.tree || {};
+  for (const k of path) node = node && !Array.isArray(node) ? node[k] : null;
+  const kids = node ? (Array.isArray(node) ? [...node] : Object.keys(node)) : [];
+  for (const it of libItems()) {
+    const c = it.cat || [it.tab];
+    if (c.length > path.length && path.every((k, j) => c[j] === k) && !kids.includes(c[path.length])) kids.push(c[path.length]);
   }
+  return kids;
+}
+function inPath(it, path) { const c = it.cat || [it.tab]; return path.every((k, j) => c[j] === k); }
+function goPath(path) { S.path = path; S.search = ''; $('search').value = ''; renderTabs(); renderItems(); }
+function renderTabs() {
+  const here = S.path.length ? S.path[S.path.length - 1] : '';
+  $('search').placeholder = here ? `Search in ${here}` : `Search ${libItems().length.toLocaleString()} objects`;
+  // on a phone the path is a back button and the category's name in the sheet's header
+  const dh = $('objDrawer').querySelector('.dh');
+  if (dh && !dh.querySelector('.mback')) {
+    dh.insertAdjacentHTML('afterbegin', '<button type="button" class="mback" aria-label="Back"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button><div class="mtitle"><span class="mtrail"></span><b class="mname"></b></div>');
+    dh.querySelector('.mback').onclick = () => goPath(S.path.slice(0, -1));
+  }
+  if (dh) {
+    $('objDrawer').classList.toggle('deep', S.path.length > 0);
+    dh.querySelector('.mtrail').textContent = ['All objects', ...S.path.slice(0, -1)].join(' › ');
+    dh.querySelector('.mname').textContent = here;
+  }
+  const nav = $('crumbs'); nav.innerHTML = '';
+  ['All objects', ...S.path].forEach((name, k) => {
+    if (k) nav.insertAdjacentHTML('beforeend', CHEV);
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = name;
+    if (k === S.path.length) b.setAttribute('aria-current', 'page');
+    b.onclick = () => goPath(S.path.slice(0, k)); nav.appendChild(b);
+  });
+  const tabs = $('tabs'); tabs.innerHTML = '';
+  if (S.path.length) {
+    const up = document.createElement('button'); up.type = 'button'; up.className = 'up'; up.setAttribute('aria-label', 'Up one level');
+    up.innerHTML = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>';
+    up.onclick = () => goPath(S.path.slice(0, -1)); tabs.appendChild(up);
+  }
+  const kids = catKids(S.path).map(k => ({k, n: libItems().filter(it => inPath(it, [...S.path, k])).length})).filter(x => x.n);
+  for (const {k, n} of kids) {
+    const b = document.createElement('button'); b.type = 'button';
+    b.innerHTML = `${esc(k)} <span style="opacity:.6;font-weight:500">${n.toLocaleString()}</span>`;
+    b.onclick = () => goPath([...S.path, k]); tabs.appendChild(b);
+  }
+  if (!kids.length && S.path.length) tabs.insertAdjacentHTML('beforeend', `<span class="here">Everything in ${esc(here)}</span>`);
+}
+const LIB_PAGE = 45;
+function pinCard(it) {
+  const c = document.createElement('button'); c.type = 'button'; c.className = 'pin' + (S.armed === it.id ? ' armed' : ''); c.draggable = true;
+  c.dataset.id = it.id; c.title = 'Drag onto the scene, or click and then click in the scene';
+  // the tile takes the object's own proportions (height over footprint), a little tamed
+  const s = it.size || [1, 1, 1], r = Math.min(1.45, Math.max(.72, s[2] / ((s[0] + s[1]) / 2 || 1)));
+  const c0 = it.cat || [it.tab], where = [it.source, c0[c0.length - 1]].filter(Boolean).join(' · ');
+  c.innerHTML = `<div class="th" style="aspect-ratio:1/${r.toFixed(3)}">${imageLoader(Math.min(120, 192))}<img src="${it.thumb}" alt="" loading="lazy" decoding="async"><span class="ov" aria-hidden="true"><b>Add</b><i>${fmtSize(it.size)}${it.mass ? ' · ' + fmtMass(it.mass) : ''}</i></span></div>` +
+    `<span class="n">${esc(it.label)}</span><span class="w" title="${esc(it.source ? 'Source: ' + it.source + (it.cite ? '. Cite: ' + it.cite : '') : '').replace(/"/g, '&quot;')}">${esc(where)}</span>`;
+  const th = c.querySelector('.th'), img = c.querySelector('img');
+  img.onload = () => th.classList.add('ready'); img.onerror = () => th.classList.add('ready');
+  if (img.complete && img.naturalWidth) th.classList.add('ready');
+  c.ondragstart = (e) => { document.body.classList.add('dragging'); e.dataTransfer.setData('text/plain', it.id); e.dataTransfer.effectAllowed = 'copy'; S.dragItem = it; e.dataTransfer.setDragImage(img, 30, 30); };
+  c.ondragend = () => { document.body.classList.remove('dragging'); S.dragItem = null; hideTag(); api('/pg/ghost/clear', {}); };
+  c.onclick = () => { S.armed = S.armed === it.id ? null : it.id; markArmed(); $('libhint').textContent = S.armed ? `Now click in the scene to place the ${it.label.toLowerCase()}. Esc to cancel.` : LIBHINT; };
+  return c;
+}
+// a picked object steps the drawer aside (as dragging does), so the scene is there to click in
+function markArmed() {
+  document.querySelectorAll('#items .pin').forEach(c => c.classList.toggle('armed', c.dataset.id === S.armed));
+  document.body.classList.toggle('libarmed', !!S.armed);
+}
+function libMore() {
+  const L = S.lib; if (!L || L.shown >= L.list.length) return;
+  for (const it of L.list.slice(L.shown, L.shown + LIB_PAGE)) {
+    // each card goes to the shortest column (by the heights the tiles will have)
+    const s = it.size || [1, 1, 1], r = Math.min(1.45, Math.max(.72, s[2] / ((s[0] + s[1]) / 2 || 1)));
+    let k = 0; for (let j = 1; j < L.h.length; j++) if (L.h[j] < L.h[k]) k = j;
+    L.cols[k].appendChild(pinCard(it)); L.h[k] += r + .25;
+  }
+  L.shown = Math.min(L.list.length, L.shown + LIB_PAGE);
+  L.sentinel.hidden = L.shown >= L.list.length;
 }
 function renderItems() {
-  const box = $('items'); box.innerHTML = '';
-  const q = S.search.toLowerCase();
-  const list = S.cat.items.filter(i => q ? (i.label + ' ' + i.tab + ' ' + (i.source || '')).toLowerCase().includes(q) : (S.tab === 'All' ? i.tab !== 'Robots' : i.tab === S.tab));
-  for (const it of list) {
-    const c = document.createElement('button'); c.className = 'card' + (S.armed === it.id ? ' armed' : ''); c.draggable = true;
-    c.title = 'Drag onto the scene, or click and then click in the scene';
-    c.innerHTML = `<div class="th"><img src="${it.thumb}" alt="" loading="lazy">${it.source ? `<span class="src" title="${esc('Source: ' + it.source + (it.cite ? '. Cite: ' + it.cite : '')).replace(/"/g, '&quot;')}">${it.source}</span>` : ''}</div><div class="tx"><div class="n">${it.label}</div><div class="s">${fmtSize(it.size)}${it.mass ? ' · ' + fmtMass(it.mass) : ''}</div></div>`;
-    c.ondragstart = (e) => { document.body.classList.add('dragging'); e.dataTransfer.setData('text/plain', it.id); e.dataTransfer.effectAllowed = 'copy'; S.dragItem = it; const img = new Image(); img.src = it.thumb; e.dataTransfer.setDragImage(c.querySelector('img'), 30, 30); };
-    c.ondragend = () => { document.body.classList.remove('dragging'); S.dragItem = null; hideTag(); api('/pg/ghost/clear', {}); };
-    c.onclick = () => { S.armed = S.armed === it.id ? null : it.id; renderItems(); $('libhint').textContent = S.armed ? `Now click in the scene to place the ${it.label.toLowerCase()}. Esc to cancel.` : LIBHINT; };
-    box.appendChild(c);
-  }
-  if (!list.length) box.innerHTML = '<p class="small">Nothing matches.</p>';
+  const box = $('items');
+  const q = S.search.trim().toLowerCase();
+  const words = q.split(/\s+/).filter(Boolean);
+  const list = libItems().filter(i => inPath(i, S.path) &&
+    (!words.length || words.every(w => (i.label + ' ' + (i.cat || [i.tab]).join(' ') + ' ' + i.tab + ' ' + (i.source || '')).toLowerCase().includes(w))));
+  const n = box.clientWidth && box.clientWidth < 520 ? 2 : 3;
+  box.innerHTML = '';
+  if (!list.length) { box.innerHTML = '<p class="small">Nothing matches.</p>'; S.lib = null; return; }
+  const wrap = document.createElement('div'); wrap.className = 'mcols';
+  const cols = Array.from({length: n}, () => { const d = document.createElement('div'); d.className = 'mcol'; wrap.appendChild(d); return d; });
+  const sentinel = document.createElement('div'); sentinel.style.height = '1px';
+  box.append(wrap, sentinel);
+  S.lib = {list, shown: 0, cols, h: cols.map(() => 0), sentinel, n};
+  box.scrollTop = 0;
+  libMore();
+  if (!renderItems.io) renderItems.io = new IntersectionObserver((es) => { if (es.some(e => e.isIntersecting)) libMore(); }, {root: box, rootMargin: '600px'});
+  renderItems.io.disconnect(); renderItems.io.observe(sentinel);
 }
-$('search').oninput = (e) => { S.search = e.target.value; renderTabs(); renderItems(); };
+$('search').oninput = (e) => { S.search = e.target.value; renderItems(); };
+// redraw the board when the drawer changes between 2 and 3 columns
+new ResizeObserver(() => { const w = $('items').clientWidth; if (S.lib && w && (w < 520 ? 2 : 3) !== S.lib.n) renderItems(); }).observe($('items'));
 
 // ---------------------------------------------------------------- dropping
 let probeBusy = false, probeNext = null;
@@ -1230,7 +1346,7 @@ window.addEventListener('mouseup', async (e) => {
     return;
   }
   if (S.placing) { await placeStation(p); return; }
-  if (S.armed) { const id = S.armed; S.armed = null; probeNext = null; renderItems(); hideTag(); $('libhint').textContent = LIBHINT; await place(id, p); return; }
+  if (S.armed) { const id = S.armed; S.armed = null; probeNext = null; markArmed(); hideTag(); $('libhint').textContent = LIBHINT; await place(id, p); return; }
   const hit = await api('/pg/pick', {u: p.u, v: p.v});
   S.sel = hit.kind === 'robot' || hit.station ? 'robot' : hit.kind === 'object' ? hit.uid : S.sel === 'robot' ? S.sel : null;
   // a click on the robot itself (not its table) opens its card: what it is, Move and Rotate
@@ -1358,7 +1474,7 @@ const CAM_KEYS = {ArrowUp: [0, 1, 0], ArrowDown: [0, -1, 0], ArrowLeft: [-1, 0, 
                   PageUp: [0, 0, 1], PageDown: [0, 0, -1], '+': [0, 0, 1], '=': [0, 0, 1], '-': [0, 0, -1]};
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
-  if (e.key === 'Escape') { const busy = S.placing || S.armed; if (S.placing) cancelPlacing(); S.armed = null; renderItems(); hideTag(); api('/pg/ghost/clear', {}); if (!busy && !S.bigCam) deselect(); }
+  if (e.key === 'Escape') { const busy = S.placing || S.armed; if (S.placing) cancelPlacing(); S.armed = null; markArmed(); hideTag(); api('/pg/ghost/clear', {}); if (!busy && !S.bigCam) deselect(); }
   if (S.placing && (e.key === 'r' || e.key === 'R')) { S.placeYaw += Math.PI / 2; if (S.lastUV) probeStation(S.lastUV); return; }
   if ((e.key === 'Delete' || e.key === 'Backspace') && S.sel && S.sel !== 'robot') removeSel();
   if (e.key === 'r' && S.sel && S.sel !== 'robot') rotateSel();
@@ -1395,7 +1511,7 @@ function renderDock() {
   const key = JSON.stringify([SID, list, sc.active, sc.runs, S.drafts, S.watch]);
   if (key === S.dockKey) return; S.dockKey = key;
   const chips = list.map(st => { const [d, t] = chipDot(st);
-    return `<div class="schipw${st.id === sc.active ? ' on' : ''}"><button class="schip" data-st="${esc(st.id)}" aria-pressed="${st.id === sc.active}"><img src="${STATION_IMG[st.robot] || STATION_IMG.franka}" alt=""><span><b>${esc(st.name)}</b><br><span class="sub">${esc(st.label)}</span></span><span class="sdot ${d}" title="${esc(t)}"></span></button>${S.watch ? '' : `<button class="smore" data-more="${esc(st.id)}" aria-label="More actions for ${esc(st.name)}" aria-haspopup="menu" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg></button>`}</div>`; });
+    return `<div class="schipw${st.id === sc.active ? ' on' : ''}"><button class="schip" data-st="${esc(st.id)}" aria-pressed="${st.id === sc.active}"><img src="${STATION_IMG[st.robot] || `/pg/static/station_${st.robot}.png`}" alt=""><span><b>${esc(st.name)}</b><br><span class="sub">${esc(st.label)}</span></span><span class="sdot ${d}" title="${esc(t)}"></span></button>${S.watch ? '' : `<button class="smore" data-more="${esc(st.id)}" aria-label="More actions for ${esc(st.name)}" aria-haspopup="menu" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg></button>`}</div>`; });
   const add = list.length ? `<button class="schip add" id="dockAdd" aria-label="Add a station"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 12 12" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg>${list.length > 3 ? '' : 'Add station'}</button>`
     : `<button class="schip add big" id="dockAdd"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 12 12" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg>Add your first station</button>`;
   $('dock').innerHTML = chips.join('') + (S.watch ? '' : add);
@@ -1419,7 +1535,9 @@ function renderDock() {
 // ---------------------------------------------------------------- layout v3: robots are the unit
 // The lab's robots, listed under the open session in the sidebar, and the robot panel's header.
 const ROBOT_PIC = {franka: '/pg/static/robot_franka.png', ur5e: '/pg/static/robot_ur5e.png', aloha: '/pg/static/robot_aloha.png', fr3_duo: '/pg/static/robot_fr3_duo.png', g1: '/pg/static/robot_g1.png', piper: '/pg/static/robot_piper.png', n220: '/pg/static/robot_n220.png', crx30ia: '/pg/static/robot_crx30ia.png', rby1: '/pg/static/robot_rby1.png'};
-const ROBOT_IMG = (r) => ROBOT_PIC[r] || ROBOT_PIC.franka;
+// A Menagerie arm's gripper opening (mm) from the catalog; 0 for a swinging jaw.
+const catOpenMm = (r) => ((S.cat && S.cat.robots || []).find(x => x.id === r) || {}).open_mm || 0;
+const ROBOT_IMG = (r) => ROBOT_PIC[r] || (r ? `/pg/static/robot_${r}.png` : ROBOT_PIC.franka);   // the Menagerie arms: by name
 // Make a robot the active one. The highlight and the camera glide start on the click itself;
 // the server is told afterwards (it skips its own glide when the page is already gliding).
 function selectStation(id) {
@@ -1563,7 +1681,7 @@ try { if (localStorage.getItem('pgRight') === '0') setRight(false); } catch (e) 
 function setObjects(open) {
   document.body.classList.toggle('objopen', open);
   $('addObjBtn').classList.toggle('on', open); $('addObjBtn').setAttribute('aria-expanded', String(open));
-  if (!open) { S.armed = null; if (S.cat) renderItems(); }
+  if (!open) { S.armed = null; if (S.cat) markArmed(); }
 }
 $('addObjBtn').onclick = () => setObjects(!document.body.classList.contains('objopen'));
 $('objClose').onclick = () => setObjects(false);
@@ -1914,7 +2032,7 @@ const STATION_KINDS = {table: {label: 'Table', items: 0}, wetlab: {label: 'Wet l
   island: {label: 'Kitchen island', items: 0}, counter: {label: 'Kitchen counter', items: 0}, libero: {label: 'LIBERO room', items: 0},
   wetrobo_x: {label: 'WetRobo Lab X', items: 0}, wetrobo_y: {label: 'WetRobo Lab Y', items: 0}};
 function startPlacing(robot, kind = 'table', task = '', free = false) {
-  closeAdd(); S.placing = robot; S.placeKind = kind; S.placeTask = task; S.placeFree = !!free; S.placeYaw = 0; S.armed = null; renderItems();
+  closeAdd(); S.placing = robot; S.placeKind = kind; S.placeTask = task; S.placeFree = !!free; S.placeYaw = 0; S.armed = null; markArmed();
   api('/pg/camera', {preset: 'lab'});
   const lab = ((S.cat.robots || []).find(x => x.id === robot) || {}).label || 'the robot';
   $('hintTag').textContent = kind !== 'table' ? `Click the floor to place the ${kind === 'libero' ? 'LIBERO room' : kind.startsWith('wetrobo') ? STATION_KINDS[kind].label : STATION_KINDS[kind].label.toLowerCase()} with the ${lab}. R turns it, Esc cancels.`
@@ -2880,7 +2998,9 @@ function renderData() {
   const openMm = (g) => stn.robot === 'g1' ? 120 * (1 - (g.position || 0) / 255)    // Dex3-1: fingertips apart
     : stn.robot === 'rby1' ? 6 + 100 * (1 - (g.position || 0) / 255)                     // RB-Y1: 6-106 mm
     : stn.robot === 'ur5e' || stn.robot === 'fr3_duo' ? 85 * (1 - (g.position || 0) / 255)
-    : stn.robot === 'aloha' ? 2 * (37 - 35 * (g.position || 0) / 255) : stn.robot === 'piper' ? 70 * (1 - (g.position || 0) / 255) : 3 + 80 * (1 - (g.position || 0) / 255);
+    : stn.robot === 'aloha' ? 2 * (37 - 35 * (g.position || 0) / 255) : stn.robot === 'piper' ? 70 * (1 - (g.position || 0) / 255)
+    : catOpenMm(stn.robot) ? catOpenMm(stn.robot) * (1 - (g.position || 0) / 255)                    // the Menagerie arms
+    : 3 + 80 * (1 - (g.position || 0) / 255);
   const rows = [];
   for (const [n, a] of arms) {
     const p = a.tcp_pose || [0, 0, 0, 0, 0, 0], g = a.gripper || {}, lc = n ? n.trim().toLowerCase() + ' ' : '';

@@ -546,6 +546,9 @@ ROBOTS = {
                     "side": "side"},      # the station's audience camera (people only)
     },
 }
+# The single arms from MuJoCo Menagerie (wetlabsim/menagerie_arms.py), each on its table.
+from . import menagerie_arms as _MA  # noqa: E402
+ROBOTS.update({r: _MA.profile(r) for r in _MA.ARMS})
 DEFAULT_ROBOT = "franka"
 # The robots the robot cell (and LIBERO, Wet Lab) can stand at its bench; the ALOHA is for the
 # playground's stations.
@@ -1294,6 +1297,8 @@ def add_robot(world, robot: str, mount: str = "robot_mount", prefix: str = ""):
         return _big_arm(world, robot, mount, prefix)
     if robot == "rby1":
         return _rby1(world, mount, prefix)
+    if robot in _MA.ARMS:
+        return _MA.build(world, robot, mount, prefix)
     ft_site = _franka(world, mount, prefix) if robot == "franka" else _ur5e(world, mount, prefix)
     # Wrist force/torque sensor (UR5e: built in at the flange; Panda: estimated from joint torques).
     world.add_sensor(name=prefix + "ft_force", type=mujoco.mjtSensor.mjSENS_FORCE,
@@ -1320,7 +1325,7 @@ def profile_for(robot: str, prefix: str = "", world_cameras: str | None = None) 
     for k in ("arm_joints", "arm_actuators"):
         if k in P:
             P[k] = [prefix + n for n in P[k]]
-    for k in ("hand_joints", "hand_actuators"):
+    for k in ("hand_joints", "hand_actuators", "grip_also"):
         if k in P:
             P[k] = [prefix + n for n in P[k]]
     for k in ("tcp_site", "ft_site", "ft_body", "base_body", "frame_body", "grip_actuator", "grip_joint", "tool_body"):

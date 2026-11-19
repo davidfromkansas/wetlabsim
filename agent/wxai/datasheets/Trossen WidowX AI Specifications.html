@@ -1,0 +1,413 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WidowX AI &mdash; Trossen Robotics Trossen Arm Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/collapsible-lists/css/tree_view.css?v=a885cde7" />
+      <link rel="stylesheet" type="text/css" href="../_static/tr_style.css?v=b84dacd0" />
+
+  
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=2b91c5f0"></script>
+      <script src="../_static/doctools.js?v=888ff710"></script>
+      <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=a56c686a"></script>
+      <script src="../_static/collapsible-lists/js/CollapsibleLists.compressed.js?v=73120307"></script>
+      <script src="../_static/collapsible-lists/js/apply-collapsible-lists.js?v=660e4f45"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Systems" href="systems.html" />
+    <link rel="prev" title="Glide" href="glide.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+  <div class="sidebartitle-docs-home">
+    <a href="https://docs.trossenrobotics.com/" target="_blank" class="icon icon-home">
+      &nbsp;Trossen Robotics Docs Home
+    </a>
+    <div class="sidebartitle-docs-home-hr">
+      <hr>
+    </div>
+  </div>
+  
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../specifications.html">Specifications</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="arms.html">Arms</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="wxcore.html">WidowX Core</a></li>
+<li class="toctree-l3"><a class="reference internal" href="wxpro.html">WidowX Pro</a></li>
+<li class="toctree-l3"><a class="reference internal" href="wxheavy.html">WidowX Heavy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="glide.html">Glide</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">WidowX AI</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="systems.html">Systems</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compute.html">Compute</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../software_tools.html">Software &amp; Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../programming_guide.html">Programming Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../downloads.html">Downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../service.html">Service and Maintenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Trossen Robotics Trossen Arm Documentation</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../specifications.html">Specifications</a></li>
+          <li class="breadcrumb-item"><a href="arms.html">Arms</a></li>
+      <li class="breadcrumb-item active">WidowX AI</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/TrossenRobotics/libtrossen_arm/blob/main/docs/specifications/wxai.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="widowx-ai">
+<h1>WidowX AI<a class="headerlink" href="#widowx-ai" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<table class="docutils align-center">
+<thead>
+<tr class="row-odd"><th class="head" colspan="2"><p><strong>WidowX AI</strong></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Degrees of Freedom</p></td>
+<td><p>6 + Gripper</p></td>
+</tr>
+<tr class="row-odd"><td><p>Payload Capacity</p></td>
+<td><p>1.5 kg</p></td>
+</tr>
+<tr class="row-even"><td><p>Weight</p></td>
+<td><p>4 kg</p></td>
+</tr>
+<tr class="row-odd"><td><p>Reach</p></td>
+<td><p>0.769 m</p></td>
+</tr>
+<tr class="row-even"><td><p>Nominal Voltage</p></td>
+<td><p>24 V</p></td>
+</tr>
+<tr class="row-odd"><td><p>Peak Current</p></td>
+<td><p>15 A</p></td>
+</tr>
+<tr class="row-even"><td><p>Communication</p></td>
+<td><p>Ethernet</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="joint-limits">
+<h2>Joint Limits<a class="headerlink" href="#joint-limits" title="Permalink to this heading"></a></h2>
+<table class="docutils align-center">
+<thead>
+<tr class="row-odd"><th class="head"><p>Joint</p></th>
+<th class="head"><p>Min Position [rad (deg)]</p></th>
+<th class="head"><p>Max Position [rad (deg)]</p></th>
+<th class="head"><p>Velocity [rad/s (deg/s)]</p></th>
+<th class="head"><p>Effort [N*m]</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Joint 0</p></td>
+<td><p>-3.1416 (-180)</p></td>
+<td><p>3.1416 (180)</p></td>
+<td><p>6.2832 (360)</p></td>
+<td><p>27</p></td>
+</tr>
+<tr class="row-odd"><td><p>Joint 1</p></td>
+<td><p>0 (0)</p></td>
+<td><p>3.1416 (180)</p></td>
+<td><p>6.2832 (360)</p></td>
+<td><p>27</p></td>
+</tr>
+<tr class="row-even"><td><p>Joint 2</p></td>
+<td><p>0 (0)</p></td>
+<td><p>2.3562 (135)</p></td>
+<td><p>6.2832 (360)</p></td>
+<td><p>27</p></td>
+</tr>
+<tr class="row-odd"><td><p>Joint 3</p></td>
+<td><p>-1.5708 (-90)</p></td>
+<td><p>1.5708 (90)</p></td>
+<td><p>9.4248 (540)</p></td>
+<td><p>7</p></td>
+</tr>
+<tr class="row-even"><td><p>Joint 4</p></td>
+<td><p>-1.5708 (-90)</p></td>
+<td><p>1.5708 (90)</p></td>
+<td><p>9.4248 (540)</p></td>
+<td><p>7</p></td>
+</tr>
+<tr class="row-odd"><td><p>Joint 5</p></td>
+<td><p>-3.1416 (-180)</p></td>
+<td><p>3.1416 (180)</p></td>
+<td><p>9.4248 (540)</p></td>
+<td><p>7</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-center">
+<thead>
+<tr class="row-odd"><th class="head"><p>Specification</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Max Finger Displacement [m]</p></td>
+<td><p>0.04</p></td>
+</tr>
+<tr class="row-odd"><td><p>Max Gripping Force [N]</p></td>
+<td><p>100</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>These effort limits are nominal values.
+The actual limits are computed with the following formula:</p>
+<div class="math notranslate nohighlight">
+\[\text{effort}_\max = \frac{\text{effort}_\text{max_nominal}}{\text{effort_correction}}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\text{effort_nominal}\)</span> is the nominal effort limit of a joint, <span class="math notranslate nohighlight">\(\text{effort_correction}\)</span> is the effort correction factor of this joint, and <span class="math notranslate nohighlight">\(\text{effort}_\max\)</span> is the actual effort limit of this joint.</p>
+<p>The effort corrections can be retrieved with <a class="reference internal" href="../api/classtrossen__arm_1_1TrossenArmDriver.html#_CPPv4N11trossen_arm16TrossenArmDriver22get_effort_correctionsEv" title="trossen_arm::TrossenArmDriver::get_effort_corrections"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">trossen_arm::TrossenArmDriver::get_effort_corrections()</span></code></a>.</p>
+</div>
+</section>
+<section id="workspace">
+<h2>Workspace<a class="headerlink" href="#workspace" title="Permalink to this heading"></a></h2>
+<img alt="WidowX AI Workspace" class="align-center" src="../_images/wxai_workspace.png" />
+</section>
+<section id="denavit-hartenberg-parameters">
+<h2>Denavit-Hartenberg parameters<a class="headerlink" href="#denavit-hartenberg-parameters" title="Permalink to this heading"></a></h2>
+<section id="classic">
+<h3>Classic<a class="headerlink" href="#classic" title="Permalink to this heading"></a></h3>
+<p>This set of parameters follows the <a class="reference external" href="https://en.wikipedia.org/wiki/Denavit%E2%80%93Hartenberg_parameters#Denavit%E2%80%93Hartenberg_convention" rel="noopener noreferrer" target="_blank">classic Denavit-Hartenberg convention</a>.</p>
+<table class="docutils align-center">
+<thead>
+<tr class="row-odd"><th class="head"><p>Transformation</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(d\)</span> [m]</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\theta\)</span> [rad]</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(a\)</span> [m]</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\alpha\)</span> [rad]</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(^\text{base}T_0\)</span></p></td>
+<td><p>0.1035</p></td>
+<td><p><span class="math notranslate nohighlight">\(\theta_0\)</span></p></td>
+<td><p>0.02</p></td>
+<td><p><span class="math notranslate nohighlight">\(-\pi/2\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(^0T_1\)</span></p></td>
+<td><p>0.0</p></td>
+<td><p><span class="math notranslate nohighlight">\(\theta_1+\pi\)</span></p></td>
+<td><p>0.264</p></td>
+<td><p><span class="math notranslate nohighlight">\(\pi\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(^1T_2\)</span></p></td>
+<td><p>0.0</p></td>
+<td><p><span class="math notranslate nohighlight">\(\theta_2-\pi/2-\arctan(0.245/0.06)\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\sqrt{0.245^2+0.06^2}\)</span></p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(^2T_3\)</span></p></td>
+<td><p>0.0</p></td>
+<td><p><span class="math notranslate nohighlight">\(\theta_3-\arctan(0.06/0.245)\)</span></p></td>
+<td><p>0.06775</p></td>
+<td><p><span class="math notranslate nohighlight">\(\pi/2\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(^3T_4\)</span></p></td>
+<td><p>0.0</p></td>
+<td><p><span class="math notranslate nohighlight">\(\theta_4+\pi/2\)</span></p></td>
+<td><p>0.0</p></td>
+<td><p><span class="math notranslate nohighlight">\(\pi/2\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(^4T_5\)</span></p></td>
+<td><p>0.02895</p></td>
+<td><p><span class="math notranslate nohighlight">\(\theta_5\)</span></p></td>
+<td><p>0.0</p></td>
+<td><p><span class="math notranslate nohighlight">\(\pi/2\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(^5T_\text{Flange}\)</span></p></td>
+<td><p>0.0</p></td>
+<td><p><span class="math notranslate nohighlight">\(\pi/2\)</span></p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(^\text{Flange}T_\text{Tool, default}\)</span></p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+<td><p>0.15606</p></td>
+<td><p>0.0</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="modified">
+<h3>Modified<a class="headerlink" href="#modified" title="Permalink to this heading"></a></h3>
+<p>This set of parameters follows the <a class="reference external" href="https://en.wikipedia.org/wiki/Denavit%E2%80%93Hartenberg_parameters#Modified_DH_parameters" rel="noopener noreferrer" target="_blank">modified Denavit-Hartenberg convention</a>.</p>
+<table class="docutils align-center">
+<thead>
+<tr class="row-odd"><th class="head"><p>Transformation</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\alpha\)</span> [rad]</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(a\)</span> [m]</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\theta\)</span> [rad]</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(d\)</span> [m]</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(^\text{base}T_0\)</span></p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+<td><p><span class="math notranslate nohighlight">\(\theta_0\)</span></p></td>
+<td><p>0.1035</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(^0T_1\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(-\pi/2\)</span></p></td>
+<td><p>0.02</p></td>
+<td><p><span class="math notranslate nohighlight">\(\theta_1+\pi\)</span></p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(^1T_2\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\pi\)</span></p></td>
+<td><p>0.264</p></td>
+<td><p><span class="math notranslate nohighlight">\(\theta_2-\pi/2-\arctan(0.245/0.06)\)</span></p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(^2T_3\)</span></p></td>
+<td><p>0.0</p></td>
+<td><p><span class="math notranslate nohighlight">\(\sqrt{0.245^2+0.06^2}\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\theta_3-\arctan(0.06/0.245)\)</span></p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(^3T_4\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\pi/2\)</span></p></td>
+<td><p>0.06775</p></td>
+<td><p><span class="math notranslate nohighlight">\(\theta_4+\pi/2\)</span></p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(^4T_5\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\pi/2\)</span></p></td>
+<td><p>0.0</p></td>
+<td><p><span class="math notranslate nohighlight">\(\theta_5\)</span></p></td>
+<td><p>0.02895</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(^5T_\text{Flange}\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\pi/2\)</span></p></td>
+<td><p>0.0</p></td>
+<td><p><span class="math notranslate nohighlight">\(\pi/2\)</span></p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(^\text{Flange}T_\text{Tool, default}\)</span></p></td>
+<td><p>0.0</p></td>
+<td><p>0.15606</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="glide.html" class="btn btn-neutral float-left" title="Glide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="systems.html" class="btn btn-neutral float-right" title="Systems" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Trossen Robotics.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+  
+     
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    main
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dd><a href="wxai.html">main</a></dd>
+      <dd><a href="../../v1.3/index.html">v1.3</a></dd>
+      <dd><a href="../../v1.4/index.html">v1.4</a></dd>
+      <dd><a href="../../v1.5/index.html">v1.5</a></dd>
+      <dd><a href="../../v1.6/index.html">v1.6</a></dd>
+      <dd><a href="../../v1.7/index.html">v1.7</a></dd>
+      <dd><a href="../../v1.8/specifications/wxai.html">v1.8</a></dd>
+      <dd><a href="../../v1.9/specifications/wxai.html">v1.9</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

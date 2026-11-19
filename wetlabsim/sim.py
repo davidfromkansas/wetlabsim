@@ -166,6 +166,8 @@ class Arm:
         self.arm_dadr = np.array([m.joint(j).dofadr[0] for j in P["arm_joints"]])
         self.arm_act = np.array([m.actuator(a).id for a in P["arm_actuators"]])
         self.grip_act = m.actuator(P["grip_actuator"]).id
+        # Grippers with a motor per finger (the reBot DevArm): the others follow the first.
+        self.grip_also = [m.actuator(a).id for a in P.get("grip_also", ())]
         # A vacuum tool (the big arms') has no fingers: its "gripper" is the vacuum itself.
         self.suction = bool(P.get("suction"))
         if not self.suction:
@@ -181,8 +183,12 @@ class Arm:
         # has one (an FR3 Duo's arms are mounted tilted; both report in the Duo's origin frame).
         self.frame_body = m.body(P.get("frame_body") or P["base_body"]).id
         self.ready_q = P["ready_q"]
-        self.joint_lo = m.jnt_range[[m.joint(j).id for j in P["arm_joints"]], 0]
-        self.joint_hi = m.jnt_range[[m.joint(j).id for j in P["arm_joints"]], 1]
+        jid = [m.joint(j).id for j in P["arm_joints"]]
+        # A joint that turns without end (the Kinova Gen3's 1, 3, 5, 7) is kept within one turn
+        # either way of zero.
+        lim = m.jnt_limited[jid].astype(bool)
+        self.joint_lo = np.where(lim, m.jnt_range[jid, 0], -2 * np.pi)
+        self.joint_hi = np.where(lim, m.jnt_range[jid, 1], 2 * np.pi)
         self.grip_force_base = m.actuator_forcerange[self.grip_act].copy()
         self.grip_force_full = float(m.actuator_gainprm[self.grip_act, 0])     # a vacuum tool's rated pull (N)
         # A servo-driven gripper (ALOHA) is limited at its joint (the servo's effort limit).
@@ -198,6 +204,8 @@ class Arm:
         root = self.base_body
         self.bodies = {b for b in range(m.nbody) if self._in_subtree(b, root)}
         self.own_joints = [m.joint(j).name for j in range(m.njnt) if m.jnt_bodyid[j] in self.bodies]
+        self.own_limited = [j for j in range(m.njnt) if m.jnt_bodyid[j] in self.bodies and m.jnt_limited[j]
+                            and m.jnt_type[j] in (int(mujoco.mjtJoint.mjJNT_SLIDE), int(mujoco.mjtJoint.mjJNT_HINGE))]
 
     def _in_subtree(self, b, root):
         m = self.sim.m
@@ -213,6 +221,12 @@ class Arm:
         d.qpos[self.arm_qadr] = self.ready_q
         d.ctrl[self.arm_act] = self.ready_q
         d.ctrl[self.grip_act] = self._grip_ctrl(0.0)
+        # Finger joints whose zero lies outside their travel (the WidowX 250 S's) start inside it,
+        # not with the fingers through each other.
+        m = self.sim.m
+        for j in self.own_limited:
+            a = m.jnt_qposadr[j]
+            d.qpos[a] = np.clip(d.qpos[a], *m.jnt_range[j])
 
     def reset_state(self):
         """Controller state back to power-on (motion, protective stop, gripper, wrist sensor)."""
@@ -291,6 +305,8 @@ class Arm:
         step = self.grip_rate * self.sim.m.opt.timestep
         self.grip_cmd += np.clip(self.grip_target - self.grip_cmd, -step, step)
         d.ctrl[self.grip_act] = self._grip_ctrl(self.grip_cmd)
+        for a in self.grip_also:
+            d.ctrl[a] = d.ctrl[self.grip_act]
         # Safety checks (every 10 steps).
         if self.mode == "running" and not self.driven and int(d.time / self.sim.m.opt.timestep) % 10 == 0:
             err = np.max(np.abs(d.ctrl[self.arm_act] - d.qpos[self.arm_qadr]))
@@ -502,7 +518,8 @@ class Arm:
             elif "grip_ctrl_range" in P:
                 self.grip_rate = 40.0 + 360.0 * sp
                 if P.get("grip_force_at") == "actuator":     # limited at the gripper's motor (PiPER)
-                    m.actuator_forcerange[self.grip_act] = self.grip_force_base * (0.2 + 0.8 * fo)
+                    for a in [self.grip_act, *self.grip_also]:
+                        m.actuator_forcerange[a] = self.grip_force_base * (0.2 + 0.8 * fo)
                 else:
                     m.jnt_actfrcrange[self.grip_jnt] = self.grip_jnt_force_base * (0.2 + 0.8 * fo)
             else:

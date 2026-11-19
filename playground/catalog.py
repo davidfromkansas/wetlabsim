@@ -556,6 +556,14 @@ ROBOTS = [
      "reach_mm": 600, "payload_kg": 3, "joints": "2 wheels + 6 + 2 × 7 + 2", "arms": 2, "thumb": "/pg/static/station_rby1.png"},
 ]
 
+# The arms from MuJoCo Menagerie (wetlabsim/menagerie_arms.py): figures from the makers' documents
+# (agent/<robot>/datasheets/SOURCES.md says which).
+from wetlabsim import menagerie_arms as _MA   # noqa: E402
+ROBOTS += [{"id": r, "label": a["name"], "maker": a["maker"], "gripper": _MA.profile(r)["gripper"],
+            "reach_mm": a["reach_mm"], "payload_kg": a["payload_kg"], "joints": a["joints"],
+            "open_mm": _MA.profile(r)["max_opening_mm"],
+            "thumb": f"/pg/static/station_{r}.png"} for r, a in _MA.ARMS.items()]
+
 
 def robots() -> list[dict]:
     return ROBOTS
@@ -626,6 +634,19 @@ def meta(id_: str) -> dict:
     return json.loads((ASSETS / id_ / "asset.json").read_text())
 
 
+# The library's category tree (category_tree.json: L1 -> L2 -> list of L3) and each object's place
+# in it (categories.json: id -> ["Kitchen", "Food", "Fruit"], each object judged from its name,
+# source and size). The front end browses it with breadcrumbs. An object not tagged yet (say, one
+# added since) shows under its tab's name until it gets a line in categories.json.
+_HERE = pathlib.Path(__file__).parent
+CATEGORY_TREE = json.loads((_HERE / "category_tree.json").read_text())
+CATEGORIES = json.loads((_HERE / "categories.json").read_text()) if (_HERE / "categories.json").exists() else {}
+
+
+def category(id_: str, tab: str) -> list[str]:
+    return CATEGORIES.get(id_) or [tab]
+
+
 _AVAILABLE: list[dict] | None = None
 
 
@@ -653,5 +674,6 @@ def _available() -> list[dict]:
             out.append({"id": i, "tab": tab, "label": label, "fixed": fixed, "size": m["size"],
                         "mass": m["mass"], "friction": m.get("friction"),
                         "collision": m.get("collision", ""), "thumb": f"/pg/thumb/{i}.png",
-                        "soft": i in SOFT, "source": source(hf), "cite": citation(hf)})
+                        "soft": i in SOFT, "source": source(hf), "cite": citation(hf),
+                        "cat": category(i, tab)})
     return out
