@@ -1591,6 +1591,7 @@ class Build:
                                 # a ready-made scene's big part may hang over its pallet's edges
                                 "overhang": bool(self.preset and o.get("overhang")),
                                 "open": bool(o.get("open"))})
+        self._open_for_task(furniture + objects)
         for o in objects:
             if o["on"] == "inside" and not o["in_furniture"]:
                 o["object"] = where.get(o["object"], -1)
@@ -2286,7 +2287,8 @@ class Build:
             for dx, dy in _spiral(0.04, 8):
                 ddx, ddy = _rot(o["dx"] + dx, o["dy"] + dy, p.yaw)
                 spot = s.support(it, bx + ddx, by + ddy, yaw)
-                if spot["valid"] and (spot["level"] or o.get("overhang")) and spot["surface"] == want:
+                if spot["valid"] and spot["surface"] == want and \
+                        (spot["level"] or o.get("overhang") or self._flat_on(it, bx + ddx, by + ddy, yaw, p)):
                     return self._add(it, spot, yaw)
             return self._skip(it)
         # the floor (or a furniture piece that wasn't placed: next to the scene's first table)
@@ -2304,6 +2306,47 @@ class Build:
             if spot["valid"] and spot["surface"] == "the floor":
                 return self._add(it, spot, yaw)
         return self._skip(it)
+
+    def _open_for_task(self, rows):
+        """A thing the task loads, unloads or fills (a dishwasher to load, an autoclave to put
+        flasks in) starts open even when the plan forgot to say so, unless opening it is part of
+        the task: only things that really open (their own door, drawer or lid)."""
+        from . import scenebrief as SB
+        task = ((self.pick.get("brief") or {}).get("task") or "").lower()
+        if not task or re.search(r"\bopen", task):
+            return
+        for r in rows:
+            if r.get("open"):
+                continue
+            words = [w for w in re.findall(r"[a-z]+", catalog.item(r["item"])["label"].lower()) if len(w) > 2]
+            if not words:
+                continue
+            name = words[-1]
+            near = re.search(r"\b(into|in|inside|from|out of|load|loads|loading|unload|unloads|unloading|stock|"
+                             r"restock|fill|fills|empty|empties)\b[^.;]{0,30}\b%s" % re.escape(name), task)
+            if near and re.search(r"hinged|drawers|lift-off", SB.opens(r["item"])):
+                r["open"] = True
+
+    def _flat_on(self, item, x, y, yaw, host) -> bool:
+        """Whether item, its middle over (x, y), lies flat on host's top though that top has gaps
+        (a conveyor's rollers, a pallet's slats): rays down over its footprint, and the points
+        that hit the host at its highest there spread under most of the item both ways."""
+        import numpy as np
+        s = self.sim
+        sx, sy, _ = catalog.meta(item)["size"]
+        pts = []
+        for u in np.linspace(-0.45, 0.45, 7):
+            for v in np.linspace(-0.45, 0.45, 7):
+                wx, wy = _rot(u * sx, v * sy, yaw)
+                dist, body, _ = s._ray_past_robots((x + wx, y + wy, 4.0), (0, 0, -1.0))
+                if dist is not None and s._owner(body) == ("object", host.uid):
+                    pts.append((u, v, 4.0 - dist))
+        if not pts:
+            return False
+        top = max(q[2] for q in pts)
+        hi = [q for q in pts if q[2] >= top - 0.012]
+        us, vs = [q[0] for q in hi], [q[1] for q in hi]
+        return len(hi) >= 6 and max(us) - min(us) >= 0.6 and max(vs) - min(vs) >= 0.6
 
     def _levels(self, item, host, x, y, yaw):
         """The spaces inside the object host where item would rest with its middle over (x, y),
