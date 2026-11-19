@@ -66,6 +66,7 @@ STAND_RGBA = [0.55, 0.57, 0.6, 1.0]     # brushed steel
 STAND_MIN = 0.002        # a gap this small under a mount needs no stand
 ROBOT_REACH_OFF = 1.0    # a robot moved off its table stays this near the table (m)
 ROBOT_Z_MAX = 2.0        # and its mount at most this high above the floor (m)
+BARE_FLOOR_MOUNT = 0.75  # an arm put down on the floor on its own: its stand's height (m), a table's
 
 CAR_TURN = math.pi / 2       # the car body's long side faces its robot
 CAR_STAND_Y = 1.0
@@ -124,6 +125,10 @@ KINDS = {
     # A steel workbench with a cupboard under it.
     "workbench": {"label": "Workbench", "table": "workbench", "turn": math.pi / 2, "robot_xy": (-0.2, 0.0),
                   "layout": []},
+    # A robot on its own, with no table: dropped straight onto the floor, a table or a piece of
+    # furniture. The station's place is the robot's base; Station.ground is the height of what it
+    # stands on. A table arm dropped on the floor stands on a steel stand at table height.
+    "bare": {"label": "Robot", "table": None, "turn": 0.0, "robot_xy": (0.0, 0.0), "layout": []},
     "libero": {"label": "LIBERO", "table": None, "turn": 0.0, "robot_xy": (-1.16, 0.0), "layout": []},
     # WetRobo's two labs (playground/wetrobo.py): the same kit (a benchtop incubator with its
     # door facing the arm, a screw-cap reagent bottle, a Petri dish) in two different places.
@@ -282,6 +287,12 @@ class Station:
     robot_at: tuple | None = None
     robot_turn: float = 0.0
     robot_z: float | None = None
+    ground: float = 0.0   # a robot with no table ("bare"): the height of what it stands on (m)
+
+    @property
+    def bare(self) -> bool:
+        """A robot on its own, with no table of its own."""
+        return self.kind == "bare"
 
     @property
     def libero(self) -> bool:
@@ -352,6 +363,8 @@ class Station:
     @property
     def home_xy(self) -> tuple:
         """Where the station's kind puts its robot (station frame)."""
+        if self.bare:                 # the station's place is the robot's own
+            return (0.0, 0.0)
         if self.robot == "aloha":     # two arms facing each other across the middle of the table
             return (0.0, 0.0)
         if self.standing:             # on the floor, facing the table's near edge, HUMANOID_GAP from it
@@ -396,7 +409,11 @@ class Station:
 
     @property
     def home_z(self) -> float:
-        return 0.0 if self.standing else self.top
+        if self.standing:
+            return 0.0
+        if self.bare and self.ground < STAND_MIN:     # an arm put down on the floor: on a stand at table height
+            return BARE_FLOOR_MOUNT
+        return self.top
 
     @property
     def mount_z(self) -> float:
@@ -428,13 +445,15 @@ class Station:
 
     def robot_side(self) -> str:
         """Where the robot stands: "on" its table, "off" it (on the floor), or "edge" (across it)."""
-        if self.libero:
+        if self.libero or self.bare:
             return "on"
         sides = {self._foot_side(*f) for f in self.foot()}
         return sides.pop() if len(sides) == 1 else "edge"
 
     def surface_z(self) -> float:
         """What is under the robot's mount: its table top, or the floor."""
+        if self.bare:
+            return 0.0 if self.standing else self.ground
         return self.top if self.robot_side() == "on" and not self.standing else 0.0
 
     def stands(self) -> list:
@@ -451,6 +470,8 @@ class Station:
     def snap_robot(self, x: float, y: float) -> tuple:
         """The nearest place to (x, y) (station frame) where the robot stands either fully on its
         table or fully off it, never across its edge. A robot on the floor: fully off it."""
+        if self.bare:
+            return (x, y)
         sx, sy = self.footprint()
         old = self.robot_at
         try:
@@ -477,6 +498,8 @@ class Station:
 
     def robot_far(self) -> bool:
         """Whether the robot is further from its table than a robot is let go (ROBOT_REACH_OFF)."""
+        if self.bare:
+            return False
         sx, sy = self.footprint()
         x, y = self.robot_xy
         return max(abs(x) - sx / 2, abs(y) - sy / 2) > ROBOT_REACH_OFF + (self.stand_gap if self.standing else 0.0)
@@ -493,6 +516,8 @@ class Station:
         if self.libero:        # the robot's base height: LIBERO's table top, or the floor
             r = self.room()
             return float(r["base"]["pos"][2]) if r else 0.9
+        if self.bare:          # what it stands on
+            return self.ground
         return table_top(self.table_item)
 
     def to_world(self, x: float, y: float, z: float = 0.0):
@@ -512,7 +537,7 @@ class Station:
         frame: its table (and a moved robot's base)."""
         sx, sy = self.footprint()
         hx, hy = sx / 2, sy / 2
-        if self.moved:         # a robot moved off its table: its base too
+        if self.moved or self.bare:    # a robot moved off its table (or with none): its base too
             for (x, y), fx, fy in self.foot():
                 r = math.hypot(fx, fy)
                 hx, hy = max(hx, abs(x) + r), max(hy, abs(y) + r)
@@ -535,6 +560,8 @@ class Station:
         if self.libero:
             r = self.room()
             return tuple(r["size"]) if r else LIBERO_ROOM
+        if self.bare:
+            return (0.0, 0.0)
         sx, sy, _ = catalog.meta(self.table_item)["size"]
         c, s = abs(math.cos(self.spec["turn"])), abs(math.sin(self.spec["turn"]))
         return c * sx + s * sy, s * sx + c * sy
@@ -555,6 +582,8 @@ class Station:
             out["mount"] = {"at": [round(float(v), 4) for v in self.robot_at or self.home_xy],
                             "turn": round(float(self.robot_turn), 4),
                             **({"z": round(float(self.robot_z), 4)} if self.robot_z is not None else {})}
+        if self.bare:
+            out["ground"] = round(float(self.ground), 4)
         if self.free:
             out["free"] = True
         elif self.libero and self.task:
@@ -1119,6 +1148,8 @@ def overhead_pose(st: Station) -> tuple:
     the table's whole length fits across the picture (up to WALL_ABOVE over the top)."""
     sx, sy = st.footprint()
     rx, _ = st.robot_xy
+    if st.bare and not st.floor_arm:   # no table: in front of the robot, over what it reaches
+        return rx + OVERHEAD_IN_FRONT, OVERHEAD_ABOVE
     if st.floor_arm:           # a big arm's: high over the middle of what it reaches
         return rx + st.floor_arm["ahead"], st.floor_arm["above"]
     x = min(rx + OVERHEAD_IN_FRONT, sx / 2 - OVERHEAD_EDGE)
@@ -1156,10 +1187,13 @@ def add_station(world: mujoco.MjSpec, st: Station, cache: set):
     """A station's table, its robot on it, and the robot's overhead and side cameras."""
     if st.libero:
         return _add_libero(world, st)
-    tmeta = catalog.meta(st.table_item)
-    top = table_top(st.table_item)
-    _add_item(world, Placed(table_uid(st), st.table_item, (st.pos[0], st.pos[1], 0.0), st.table_yaw),
-              tmeta, True, cache)
+    if st.bare:                # no table: its cameras work out from its own mount
+        top = st.mount_z if not st.standing else 0.0
+    else:
+        tmeta = catalog.meta(st.table_item)
+        top = table_top(st.table_item)
+        _add_item(world, Placed(table_uid(st), st.table_item, (st.pos[0], st.pos[1], 0.0), st.table_yaw),
+                  tmeta, True, cache)
     rx, ry = st.robot_xy
     mount = _quat_mul(yaw_quat(st.yaw + st.robot_turn), [float(v) for v in S.ROBOTS[st.robot]["mount_quat"].split()])
     world.worldbody.add_site(name=st.prefix + "robot_mount", pos=list(st.to_world(rx, ry, st.mount_z)),
@@ -1169,7 +1203,7 @@ def add_station(world: mujoco.MjSpec, st: Station, cache: set):
     if not S.ROBOTS[st.robot].get("sides"):   # a two-arm robot brings its own (ALOHA's four, the Duo's head)
         cx, above = overhead_pose(st)
         _camera(world, st.prefix + "overhead", st.to_world(cx, ry, top + above),
-                st.to_world(cx if st.floor_arm else 0.0, ry, top), OVERHEAD_FOVY, up=(-c, -s_, 0))
+                st.to_world(cx if st.floor_arm or st.bare else 0.0, ry, top), OVERHEAD_FOVY, up=(-c, -s_, 0))
     if st.floor_arm:           # the audience's side view stands back to take the whole arm in
         k = st.floor_arm["gap"] / 0.55
         _camera(world, st.prefix + "side", st.to_world(rx + 1.2 * k, ry - 3.0 * k, 1.1 * k + 0.6),

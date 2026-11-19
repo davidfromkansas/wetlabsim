@@ -735,12 +735,6 @@ body.robotdrag #rpk{opacity:0;pointer-events:none;transition:opacity 120ms ease-
 #rpk .x{margin-left:auto;width:28px;height:28px;border-radius:7px;border:0;background:none;color:#6B7280;cursor:pointer;flex:none;font-size:13px}
 #rpk .x:hover{background:#F3F4F6;color:var(--ink)}
 #rpk .sh{display:block;padding:2px 16px 6px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-#rpk .kinds{padding:0 16px 12px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
-#rpk .kd{border-radius:10px;border:1px solid var(--line);background:#fff;padding:8px 10px;text-align:left;cursor:pointer;font:inherit;color:inherit;display:flex;flex-direction:column;gap:1px}
-#rpk .kd:hover{border-color:#C3C8D0}
-#rpk .kd b{font-size:13px;font-weight:650}
-#rpk .kd span{font-size:11.5px;color:var(--muted)}
-#rpk .kd[aria-checked=true]{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue);background:#F5F8FF}
 #rpk .grid{padding:4px 16px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
 #rpk .ri{position:relative;border-radius:14px;border:1px solid var(--line);background:#fff;padding:8px 8px 12px;display:flex;flex-direction:column;text-align:left;cursor:pointer;font:inherit;color:inherit;transition:border-color 120ms,background 120ms}
 #rpk .ri:hover:not(:disabled){border-color:#C3C8D0}
@@ -900,7 +894,7 @@ body.robotdrag #rpk{opacity:0;pointer-events:none;transition:opacity 120ms ease-
 
   <section id="stage" aria-label="3D scene">
     <div id="playpill"></div>
-    <div id="sbar" role="toolbar" aria-label="Scene"><span class="sg ed"><button type="button" class="sb ic" id="undoBtn" aria-label="Undo" aria-disabled="true" data-tip="Undo|⌘Z"><svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><button type="button" class="sb ic" id="redoBtn" aria-label="Redo" aria-disabled="true" data-tip="Redo|⇧⌘Z"><svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button></span><i class="sep ed" aria-hidden="true"></i><button type="button" class="sb ed" id="physBtn" role="switch" aria-checked="false"><span class="w">Physics</span><span class="tg" aria-hidden="true"><i></i></span></button><i class="sep ed" aria-hidden="true"></i><span class="sg ed adds"><button type="button" class="sb add" id="addRobot" aria-label="Add robot" aria-haspopup="dialog" data-tip="Add a robot|Pick one, then click the floor"><span class="ai"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3zM12 4v4M9.5 13.5h.01M14.5 13.5h.01"/></svg><b class="pl" aria-hidden="true"><svg width="8" height="8" viewBox="0 0 12 12" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg></b></span><span class="w">Robot</span></button><button type="button" class="sb add" id="addStationTop" aria-label="Add station" aria-haspopup="dialog" data-tip="Add a station|Starter stations, benchmarks and ready-made scenes"><span class="ai"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M5 10v9M19 10v9M8 10V6h8v4"/></svg><b class="pl" aria-hidden="true"><svg width="8" height="8" viewBox="0 0 12 12" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg></b></span><span class="w">Station</span></button><button type="button" class="sb add" id="addObjBtn" aria-label="Add objects" aria-expanded="false" aria-controls="objDrawer" data-tip="Add objects|Open the library, then drag one in"><span class="ai"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg><b class="pl" aria-hidden="true"><svg width="8" height="8" viewBox="0 0 12 12" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg></b></span><span class="w">Objects</span></button></span><i class="sep ed" aria-hidden="true"></i><span class="sg" id="sbView"><a class="sb ic" id="pastBtn" href="/pg/runs" target="_blank" rel="noopener" aria-label="Past runs" data-tip="Past runs|Replays of every finished run"><svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h11M6.5 21h11M7.5 3c0 4.5 4.5 6 4.5 9s-4.5 4.5-4.5 9M16.5 3c0 4.5-4.5 6-4.5 9s4.5 4.5 4.5 9"/></svg></a><button type="button" class="sb ic ed" id="setBtn" aria-label="Settings" aria-haspopup="dialog" data-tip="Settings"><svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M16 4v4M10 10v4M18 16v4"/></svg></button></span></div><div id="sbTip" role="tooltip" hidden></div>
+    <div id="sbar" role="toolbar" aria-label="Scene"><span class="sg ed"><button type="button" class="sb ic" id="undoBtn" aria-label="Undo" aria-disabled="true" data-tip="Undo|⌘Z"><svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><button type="button" class="sb ic" id="redoBtn" aria-label="Redo" aria-disabled="true" data-tip="Redo|⇧⌘Z"><svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button></span><i class="sep ed" aria-hidden="true"></i><button type="button" class="sb ed" id="physBtn" role="switch" aria-checked="false"><span class="w">Physics</span><span class="tg" aria-hidden="true"><i></i></span></button><i class="sep ed" aria-hidden="true"></i><span class="sg ed adds"><button type="button" class="sb add" id="addRobot" aria-label="Add robot" aria-haspopup="dialog" data-tip="Add a robot|Pick one, then drop it on the floor, a table or furniture"><span class="ai"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3zM12 4v4M9.5 13.5h.01M14.5 13.5h.01"/></svg><b class="pl" aria-hidden="true"><svg width="8" height="8" viewBox="0 0 12 12" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg></b></span><span class="w">Robot</span></button><button type="button" class="sb add" id="addStationTop" aria-label="Add station" aria-haspopup="dialog" data-tip="Add a station|Starter stations, benchmarks and ready-made scenes"><span class="ai"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M5 10v9M19 10v9M8 10V6h8v4"/></svg><b class="pl" aria-hidden="true"><svg width="8" height="8" viewBox="0 0 12 12" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg></b></span><span class="w">Station</span></button><button type="button" class="sb add" id="addObjBtn" aria-label="Add objects" aria-expanded="false" aria-controls="objDrawer" data-tip="Add objects|Open the library, then drag one in"><span class="ai"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg><b class="pl" aria-hidden="true"><svg width="8" height="8" viewBox="0 0 12 12" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg></b></span><span class="w">Objects</span></button></span><i class="sep ed" aria-hidden="true"></i><span class="sg" id="sbView"><a class="sb ic" id="pastBtn" href="/pg/runs" target="_blank" rel="noopener" aria-label="Past runs" data-tip="Past runs|Replays of every finished run"><svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h11M6.5 21h11M7.5 3c0 4.5 4.5 6 4.5 9s-4.5 4.5-4.5 9M16.5 3c0 4.5-4.5 6-4.5 9s4.5 4.5 4.5 9"/></svg></a><button type="button" class="sb ic ed" id="setBtn" aria-label="Settings" aria-haspopup="dialog" data-tip="Settings"><svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M16 4v4M10 10v4M18 16v4"/></svg></button></span></div><div id="sbTip" role="tooltip" hidden></div>
     <div id="vbtns"><button class="fbtn sq" id="openLeft" aria-label="Show sidebar" title="Show sidebar"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#374151" stroke-width="1.5"><rect x="1.75" y="2.75" width="14.5" height="12.5" rx="2.5"/><path d="M6.5 2.75 V15.25"/></svg></button></div>
     <div id="objDrawer" role="dialog" aria-label="Objects"><div class="dh"><h2>Objects</h2><button class="iconbtn" id="objClose" aria-label="Close objects"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" stroke="#374151" stroke-width="1.7" stroke-linecap="round"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div></div>
     <div id="objTab" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#374151" stroke-width="1.8" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></div>
@@ -1998,18 +1992,12 @@ function openPicker(mode, uid, from) {
   const robots = S.cat.robots || [];
   const cur = st ? st.robot : null;
   const first = robots.find(r => r.id !== cur) || robots[0];
-  S.pick = {mode, uid: st && st.id, sel: first && first.id, kind: 'table', from: from || ''};
+  S.pick = {mode, uid: st && st.id, sel: first && first.id, kind: 'bare', from: from || ''};
   const n = (sc.robots || []).length + 1;
   $('rpk').innerHTML = `${mode === 'add' ? '<span class="caret"></span>' : ''}<div class="ph"><div><h3 id="rpkTitle">${mode === 'add' ? 'Add a robot' : 'Swap ' + esc(st.name)}</h3>
-    <p>${mode === 'add' ? 'Pick an arm, then click the floor to place it.' : 'Replace the arm. It keeps its spot, its table and whatever is on it.'}</p></div>
+    <p>${mode === 'add' ? 'Pick a robot, then drop it on the floor, a table or furniture.' : 'Replace the arm. It keeps its spot, its table and whatever is on it.'}</p></div>
     <button class="x" aria-label="Close">✕</button></div>
-    ${mode === 'add' ? `<span class="sh" id="rpkKinds">Station</span><div class="kinds" role="radiogroup" aria-labelledby="rpkKinds">
-      <button class="kd" role="radio" data-k="table" aria-checked="true"><b>Table</b><span>An empty packing table</span></button>
-      <button class="kd" role="radio" data-k="wetlab" aria-checked="false"><b>Wet lab bench</b><span>Stainless bench with ${STATION_KINDS.wetlab.items} lab items</span></button>
-      <button class="kd" role="radio" data-k="island" aria-checked="false"><b>Kitchen island</b><span>The arm on an island's worktop</span></button>
-      <button class="kd" role="radio" data-k="counter" aria-checked="false"><b>Kitchen counter</b><span>Worktop over cabinets with drawers that open</span></button></div>
-      <span class="sh" id="rpkArms">Arm</span>` : ''}
-    <div class="grid" role="radiogroup" aria-label="Robots"${mode === 'add' ? ' aria-labelledby="rpkArms"' : ''}>${robots.map(r => `<button class="ri" role="radio" data-r="${esc(r.id)}" aria-checked="false" ${r.id === cur ? 'disabled' : ''}>
+    <div class="grid" role="radiogroup" aria-label="Robots">${robots.map(r => `<button class="ri" role="radio" data-r="${esc(r.id)}" aria-checked="false" ${r.id === cur ? 'disabled' : ''}>
       ${r.id === cur ? '<span class="tag">Current</span>' : ''}<span class="ck">✓</span><span class="th"><img src="${ROBOT_IMG(r.id)}" alt=""></span>
       <span class="nm">${esc(r.label)}</span><span class="sp">${r.joints} joints · ${esc(r.gripper)}</span></button>`).join('')}
       ${SOON_ROBOTS.map(r => `<button class="ri soon" disabled aria-disabled="true"><span class="tag">Coming soon</span><span class="th"><span style="color:#C3C8D0;font-size:34px">◌</span></span>
@@ -2020,20 +2008,13 @@ function openPicker(mode, uid, from) {
     pk.querySelectorAll('.ri[data-r]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.r === S.pick.sel)));
     const r = robots.find(x => x.id === S.pick.sel);
     pk.querySelector('.go').disabled = !r;
-    pk.querySelectorAll('.kd').forEach(b => b.setAttribute('aria-checked', String(b.dataset.k === S.pick.kind)));
-    pk.querySelector('.go').textContent = !r ? (mode === 'add' ? 'Add' : 'Swap') : mode === 'add'
-      ? (S.pick.kind !== 'table' ? `Add ${STATION_KINDS[S.pick.kind].label.toLowerCase()} · ${r.label}` : `Add ${r.label}`) : `Swap to ${r.label}`;
+    pk.querySelector('.go').textContent = !r ? (mode === 'add' ? 'Add' : 'Swap') : mode === 'add' ? `Add ${r.label}` : `Swap to ${r.label}`;
   };
-  pk.querySelectorAll('.kd').forEach(b => b.onclick = () => {
-    S.pick.kind = b.dataset.k;
-    if (b.dataset.k === 'wetlab' && robots.some(x => x.id === 'franka')) S.pick.sel = 'franka';   // the bench's default arm
-    paint();
-  });
   pk.querySelectorAll('.ri[data-r]').forEach(b => {
     b.onclick = () => { S.pick.sel = b.dataset.r; paint(); };
     b.ondblclick = () => { S.pick.sel = b.dataset.r; paint(); pickerGo(); };
     if (mode === 'add') {     // or drag it onto the floor, like an object from the library
-      b.draggable = true; b.title = 'Drag onto the floor, or pick it and press Add';
+      b.draggable = true; b.title = 'Drag it into the scene, or pick it and press Add';
       b.ondragstart = (e) => robotDragStart(e, b);
       b.ondragend = robotDragEnd;
     }
@@ -2112,7 +2093,7 @@ function closeAdd(dismissed) { $('addModal').style.display = 'none'; $('addStati
 $('addStationBtn').onclick = openAdd; $('amClose').onclick = () => closeAdd(true);
 $('addModal').onclick = (e) => { if (e.target === $('addModal')) closeAdd(true); };
 // What each kind of station starts as (the server's world.KINDS).
-const STATION_KINDS = {table: {label: 'Table', items: 0}, wetlab: {label: 'Wet lab bench', items: 18},
+const STATION_KINDS = {bare: {label: 'Robot', items: 0}, table: {label: 'Table', items: 0}, wetlab: {label: 'Wet lab bench', items: 18},
   island: {label: 'Kitchen island', items: 0}, counter: {label: 'Kitchen counter', items: 0}, libero: {label: 'LIBERO room', items: 0},
   wetrobo_x: {label: 'WetRobo Lab X', items: 0}, wetrobo_y: {label: 'WetRobo Lab Y', items: 0}};
 // Dragging a robot out of the Add picker: the picker steps aside and the station's outline
@@ -2121,7 +2102,7 @@ function robotDragStart(e, b) {
   if (runLock(S.scene)) { e.preventDefault(); toast(runLock(S.scene)); return; }
   const robot = b.dataset.r; S.pick.sel = robot;
   pk_paint();
-  S.dragRobot = robot; S.placing = robot; S.placeKind = S.pick.kind || 'table'; S.placeTask = ''; S.placeFree = false; S.placeYaw = 0;
+  S.dragRobot = robot; S.placing = robot; S.placeKind = S.pick.kind || 'bare'; S.placeTask = ''; S.placeFree = false; S.placeYaw = 0;
   S.armed = null; markArmed();
   e.dataTransfer.setData('text/plain', 'robot:' + robot); e.dataTransfer.effectAllowed = 'copy';
   const img = b.querySelector('img'); if (img) e.dataTransfer.setDragImage(img, 40, 40);
@@ -2137,7 +2118,8 @@ function startPlacing(robot, kind = 'table', task = '', free = false) {
   closeAdd(); S.placing = robot; S.placeKind = kind; S.placeTask = task; S.placeFree = !!free; S.placeYaw = 0; S.armed = null; markArmed();
   api('/pg/camera', {preset: 'lab'});
   const lab = ((S.cat.robots || []).find(x => x.id === robot) || {}).label || 'the robot';
-  $('hintTag').textContent = kind !== 'table' ? `Click the floor to place the ${kind === 'libero' ? 'LIBERO room' : kind.startsWith('wetrobo') ? STATION_KINDS[kind].label : STATION_KINDS[kind].label.toLowerCase()} with the ${lab}. R turns it, Esc cancels.`
+  $('hintTag').textContent = kind === 'bare' ? `Click where the ${lab} should stand: the floor, a table or furniture. R turns it, Esc cancels.`
+    : kind !== 'table' ? `Click the floor to place the ${kind === 'libero' ? 'LIBERO room' : kind.startsWith('wetrobo') ? STATION_KINDS[kind].label : STATION_KINDS[kind].label.toLowerCase()} with the ${lab}. R turns it, Esc cancels.`
     : `Click the floor to place the ${lab}. R turns it, Esc cancels.`;
 }
 function cancelPlacing() { S.placing = null; hideTag(); api('/pg/ghost/clear', {}); resumePhysics(); render(); }
@@ -2147,10 +2129,11 @@ async function probeStation(p) {
   if (stProbeBusy) { stProbeNext = p; return; }
   stProbeBusy = true;
   try {
-    const r = await api('/pg/station/probe', {u: p.u, v: p.v, yaw: S.placeYaw, kind: S.placeKind, task: S.placeTask || ''});
+    const r = await api('/pg/station/probe', {u: p.u, v: p.v, yaw: S.placeYaw, kind: S.placeKind, task: S.placeTask || '', robot: S.placing});
     if (!S.placing) { hideTag(); api('/pg/ghost/clear', {}); return; }
     const label = (S.cat.robots.find(x => x.id === S.placing) || {}).label || '';
-    const what = S.placeKind !== 'table' ? `${STATION_KINDS[S.placeKind].label} · ${label}` : `${label} station`;
+    const what = S.placeKind === 'bare' ? `${label}${r.surface ? ' on ' + r.surface : ''}`
+      : S.placeKind !== 'table' ? `${STATION_KINDS[S.placeKind].label} · ${label}` : `${label} station`;
     showTag(p, r.valid ? `${what} · ${S.dragRobot ? 'let go to place' : 'click to place'}` : (r.reason || "can't go there"), !r.valid);
   } finally { stProbeBusy = false; if (stProbeNext) { const n = stProbeNext; stProbeNext = null; probeStation(n); } }
 }
@@ -2593,7 +2576,9 @@ function render() {
     if (document.activeElement !== $('objName')) $('objName').textContent = obj.label;
     if ($('objImg').getAttribute('src') !== ROBOT_IMG(st.robot)) $('objImg').src = ROBOT_IMG(st.robot);
     $('robModel').textContent = st.label;
-    $('robOn').textContent = !p.lift ? 'The floor' : p.side !== 'on' ? `Steel stand, ${(p.stand * 100).toFixed(0)} cm`
+    $('robOn').textContent = p.bare ? (p.stand ? `${p.surface < 0.01 ? 'Steel stand' : 'Riser'}, ${(p.stand * 100).toFixed(0)} cm`
+        : p.surface < 0.01 ? 'The floor' : `A surface ${(p.surface * 100).toFixed(0)} cm up`)
+      : !p.lift ? 'The floor' : p.side !== 'on' ? `Steel stand, ${(p.stand * 100).toFixed(0)} cm`
       : p.stand ? `Riser on its table, ${(p.stand * 100).toFixed(0)} cm` : 'Its table';
     $('robH').textContent = `${(p.at[2] * 100).toFixed(1)} cm`;
     $('robFace').textContent = `${Math.round(((p.heading % 360) + 360) % 360)}°`;
