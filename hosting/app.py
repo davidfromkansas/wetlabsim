@@ -7,7 +7,7 @@ web (the front, Modal's stable web address): gives each visitor (a browser cooki
   their own lab, at most WETLAB_MAX_LABS open at once; lists live runs to watch (/live) and
   every finished run (/pg/runs, each opening the replay viewer: chat, files, rewind).
 lab (one container per visitor): a playground server in public mode (free play only, at most
-  4 runs at once across all labs, more wait in a queue). Every run uses the owner's own API key
+  15 runs at once per account, more wait in a queue). Every run uses the owner's own API key
   for its company (Settings > General > Connections: OpenAI, Anthropic, Devin, Jev), kept
   encrypted in the website's database and fetched by the lab for that run only; a company with
   no key can't be used. Each run stops at the owner's time limit (1 to 30 minutes, default 5). Its page is reached through a tunnel of its own; only the owner's link
@@ -31,12 +31,13 @@ import modal
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 IGNORE = [".git", ".venv", "runs", "build", "**/__pycache__", ".pytest_cache", "*.mp4", ".DS_Store",
           "playground/libero_assets/files", "hosting",
+          "playground/assets",          # in the "wetlab-library" Volume instead (below)
           "wetlabsim/assets/unitree_g1/sonic/*.onnx"]   # downloaded into the image instead (below)
 # The app: "wetlab-playground" is the public site. Another name (WETLAB_APP=wetlab-playground-staging
 # when deploying) is a separate copy with its own address, run records and lab registry, for testing.
 APP = os.environ.get("WETLAB_APP") or os.environ.get("WETLAB_MODAL_APP") or "wetlab-playground"
 STAGING = APP != "wetlab-playground"
-MAX_LABS = 2 if STAGING else 10
+MAX_LABS = 2 if STAGING else 30
 # This deploy's build: a new one each deploy (inside a container, the one it was deployed with).
 # Labs from an older build aren't handed out again and shut down once nothing runs in them.
 BUILD = os.environ.get("WETLAB_BUILD") or time.strftime("%Y%m%d-%H%M%S") + "-" + subprocess.run(
@@ -57,7 +58,7 @@ image = (
                   "'https://huggingface.co/nvidia/GEAR-SONIC/resolve/6733128a3d8a523b1418b06bca3cdf61c8b0987f/'"
                   "+sys.argv[1], sys.argv[1])\" $f; done && ls -la /opt/sonic")
     .env({"MUJOCO_GL": "egl", "EGL_PLATFORM": "surfaceless", "PYTHONPATH": "/app", "PYTHONUNBUFFERED": "1",
-          "WETLAB_SONIC_DIR": "/opt/sonic",
+          "WETLAB_SONIC_DIR": "/opt/sonic", "WETLAB_ASSETS_DIR": "/library",
           "WETLAB_MAX_LABS": str(MAX_LABS), "WETLAB_FRONT_URL": FRONT_URL, "WETLAB_MODAL_APP": APP,
           "WETLAB_BUILD": BUILD, "WETLAB_DICT_PREFIX": f"{APP}-" if STAGING else "",
           # The website: finished runs' files go to its private Blob store through it.
@@ -65,6 +66,9 @@ image = (
     .add_local_dir(str(ROOT), "/app", ignore=IGNORE)
 )
 runs = modal.Volume.from_name(f"{APP}-runs", create_if_missing=True)
+# The object library's files (playground/tools/library.py pushes them; not in git, not in the deploy):
+# read when a scene uses an object, so new objects need no deploy. Shared by the site and staging.
+library = modal.Volume.from_name("wetlab-library", create_if_missing=True, version=2).with_mount_options(read_only=True)
 
 
 def _optional_secret(name: str) -> list:
@@ -100,7 +104,7 @@ def _commit_loop(every=30):
     threading.Thread(target=loop, daemon=True).start()
 
 
-@app.function(cpu=1.0, memory=2048, volumes={"/data": runs}, max_containers=2, scaledown_window=600,
+@app.function(cpu=1.0, memory=2048, volumes={"/data": runs, "/library": library}, max_containers=2, scaledown_window=600,
               secrets=[*_optional_secret(LINK_SECRET), *_optional_secret(DB_SECRET)])
 @modal.concurrent(max_inputs=500)
 @modal.web_server(8780, startup_timeout=300)
@@ -112,7 +116,7 @@ def web():
 
 
 @app.function(cpu=4.0, memory=6144, secrets=lab_secrets,
-              volumes={"/data": runs}, max_containers=MAX_LABS, timeout=12 * 3600)
+              volumes={"/data": runs, "/library": library}, max_containers=MAX_LABS, timeout=12 * 3600)
 def lab(lab_id: str, owner_key: str, owner_user: str = ""):
     """One visitor's lab, for as long as it is in use (its server exits after 5 minutes with no real activity)."""
     with modal.forward(8780) as page, modal.forward(8781) as robot, modal.forward(8782) as proxy:
@@ -122,7 +126,7 @@ def lab(lab_id: str, owner_key: str, owner_user: str = ""):
         _commit_loop()
         proc = subprocess.Popen(
             ["python", "-m", "playground.server", "--host", "0.0.0.0", "--port", "8780", "--no-browser",
-             "--public", "--max-active", "4", "--idle-minutes", "5",
+             "--public", "--max-active", "15", "--idle-minutes", "5",
              "--launcher", "modal", "--robot-port", "8781", "--agent-robot-url", robot.url,
              "--model-proxy-port", "8782", "--runs", "/data/runs"],
             cwd="/app", env=env)

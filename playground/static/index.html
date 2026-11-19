@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#F4F5F7">
 <title>MuJoCo Playground</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -364,6 +365,8 @@ body.watch .smore{display:none}body.watch .schipw .schip{padding-right:10px}
 .stmenu .danger{color:#B91C1C}.stmenu .danger svg{color:#B91C1C}
 .stmenu hr{border:0;height:1px;background:var(--line);margin:4px 2px}
 .stmenu [hidden]{display:none!important}
+#selBox{position:absolute;display:none;z-index:6;pointer-events:none;border:1.5px solid #2563EB;background:rgba(37,99,235,.10);border-radius:3px}
+.stmenu .mhead{font:600 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#6B7280;padding:6px 10px 4px}
 .stmenu .why{font-size:11.5px;color:#6B7280;padding:4px 10px 3px;line-height:1.35}
 body.watch #objPanel .acts{display:none!important}
 .glass{background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 0 0 1px rgba(17,24,39,.08),0 4px 14px rgba(17,24,39,.08)}
@@ -391,7 +394,15 @@ body.fixed .tl{top:12px}
 #bigCamWrap.on{display:flex}#bigCamWrap.open{opacity:1}
 .bigcam{width:min(78%,900px);border-radius:12px;overflow:hidden;background:#111827;box-shadow:0 20px 50px rgba(17,24,39,.4);transform-origin:bottom left;transform:scale(.3);transition:transform 220ms cubic-bezier(.23,1,.32,1)}
 #bigCamWrap.open .bigcam{transform:none}
-.bigcam img{display:block;width:100%;aspect-ratio:4/3;max-height:calc(100vh - 220px);object-fit:contain;background:#1F2937}
+.bigcam .bigview{position:relative;background:#1F2937}
+.bigcam img,.bigcam canvas{display:block;width:100%;aspect-ratio:4/3;max-height:calc(100vh - 220px);object-fit:contain}
+/* the small card's last picture, scaled up at once while the large stream connects */
+.bigcam canvas{position:absolute;inset:0;height:100%}
+.bigcam canvas[hidden]{display:none}
+.bigload{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(17,24,39,.72);color:#fff;font:500 13px Inter,sans-serif}
+.bigload[hidden]{display:none}
+.bigload i{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:bigspin .8s linear infinite}
+@keyframes bigspin{to{transform:rotate(360deg)}}
 .vb{height:32px;padding:0 10px;border-radius:8px;border:1px solid #D1D5DB;background:#fff;font:500 12px Inter,sans-serif;color:var(--ink);cursor:pointer;white-space:nowrap}
 /* the selected object, floating at the top right */
 #objPanel{position:absolute;right:14px;top:84px;width:300px;border-radius:12px;padding:12px 14px;z-index:3;max-height:calc(100% - 100px);overflow:auto}
@@ -536,21 +547,47 @@ body.watch #vbtns .fbtn:not(#openLeft){display:none}
 /* the object library: a drawer over the scene that steps aside while you drag */
 #objDrawer{position:absolute;left:14px;top:60px;bottom:14px;width:340px;z-index:7;background:#fff;border-radius:14px;box-shadow:0 14px 36px rgba(17,24,39,.22),0 0 0 1px rgba(17,24,39,.08);display:flex;flex-direction:column;overflow:hidden;transform:translateX(calc(-100% - 24px));opacity:0;pointer-events:none;transition:transform 220ms cubic-bezier(.23,1,.32,1),opacity 220ms cubic-bezier(.23,1,.32,1)}
 body.objopen #objDrawer{transform:none;opacity:1;pointer-events:auto}
-body.objopen.dragging #objDrawer{transform:translateX(calc(-100% - 24px));opacity:0;pointer-events:none}
+body.objopen.dragging #objDrawer,body.objopen.libarmed #objDrawer{transform:translateX(calc(-100% - 24px));opacity:0;pointer-events:none}
 #objTab{position:absolute;left:0;top:60px;bottom:14px;width:26px;z-index:7;background:rgba(255,255,255,.92);border-radius:0 12px 12px 0;box-shadow:0 6px 18px rgba(17,24,39,.15);display:none;align-items:center;justify-content:center}
-body.objopen.dragging #objTab{display:flex}
+body.objopen.dragging #objTab,body.objopen.libarmed #objTab{display:flex}
 #objDrawer .dh{display:flex;align-items:center;justify-content:space-between;padding:14px 10px 4px 16px}
 #objDrawer .dh h2{margin:0;font:700 16px Inter,sans-serif;color:var(--ink)}
 #objDrawer .lib-top{border-bottom:0;padding:6px 16px 10px}
 #objDrawer .lib-top > div:first-child,#objDrawer .libhint{display:none}
-#objDrawer #items{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px;padding:2px 16px 16px}
-#objDrawer .card{border:0;background:transparent;display:flex;flex-direction:column;gap:6px;min-width:0}
-#objDrawer .card .th{height:auto;aspect-ratio:4/3;border-radius:10px;overflow:hidden}
-#objDrawer .card .th img{max-height:88%;max-width:88%}
-#objDrawer .card .tx{padding:0}
-#objDrawer .card .n{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#objDrawer .card .s{display:none}
-#objDrawer .card.armed .th{box-shadow:0 0 0 2px var(--blue)}
+/* the library as a pin board: 3 masonry columns, a category path (breadcrumbs) and the next
+   level's categories as pills */
+#objDrawer{width:780px;max-width:calc(100% - 28px)}
+body.objopen #sgBar{visibility:hidden}
+#objDrawer .dh .mback,#objDrawer .dh .mtitle{display:none}   /* the phone header (mobile.js) */   /* "Describe a scene" sits where the drawer's title is */
+#objDrawer .lib-top{gap:8px}
+#objDrawer #search{height:42px;border-radius:999px;border:0;background:#F1F2F4;padding:0 18px;font-size:14.5px}
+#crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:2px;min-height:30px}
+#crumbs button{border:0;background:transparent;padding:4px 6px;border-radius:8px;cursor:pointer;font:500 13.5px Inter,sans-serif;color:var(--muted)}
+#crumbs button:hover{background:var(--soft);color:var(--ink)}
+#crumbs button[aria-current=page]{font-weight:700;font-size:15px;color:var(--ink)}
+#crumbs svg{flex:none}
+#objDrawer .tabs{gap:6px}
+#objDrawer .tabs button{height:34px;padding:0 14px;border:0;background:#F1F2F4;color:var(--ink);font-weight:600;font-size:13px}
+#objDrawer .tabs button:hover{background:#E5E7EB}
+#objDrawer .tabs button.up{width:34px;padding:0;display:flex;align-items:center;justify-content:center}
+#objDrawer .tabs .here{font-size:12.5px;color:var(--muted);align-self:center;padding-left:2px}
+#objDrawer #items{display:block;padding:2px 14px 16px}
+.mcols{display:flex;gap:12px;align-items:flex-start}
+.mcol{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:14px}
+.pin{display:flex;flex-direction:column;gap:6px;border:0;background:transparent;padding:0;text-align:left;cursor:grab;min-width:0;font:inherit;color:inherit}
+.pin .th{position:relative;border-radius:14px;overflow:hidden;background:#F3F4F6;display:flex;align-items:center;justify-content:center}
+.pin .th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 200ms ease}
+.pin .th.ready img{opacity:1}
+.pin .th .iml-loader{color:#9CA3AF}
+.pin .th.ready .iml-loader{display:none}
+.pin .ov{position:absolute;inset:0;background:rgba(17,24,39,.32);opacity:0;transition:opacity 150ms ease}
+.pin .ov b{position:absolute;right:8px;top:8px;height:32px;padding:0 14px;border-radius:999px;background:var(--blue);color:#fff;font:600 13px/32px Inter,sans-serif}
+.pin .ov i{position:absolute;left:8px;bottom:8px;padding:2px 9px;border-radius:999px;background:#fff;color:var(--ink);font:500 11.5px/18px Inter,sans-serif;font-style:normal}
+@media (hover:hover){.pin:hover .ov{opacity:1}}
+.pin:focus-visible{outline:none}.pin:focus-visible .th{box-shadow:0 0 0 2px var(--blue)}.pin:focus-visible .ov{opacity:1}
+.pin.armed .th{box-shadow:0 0 0 3px var(--blue)}
+.pin .n{font-size:13px;font-weight:600;color:var(--ink);line-height:1.3;padding:0 4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pin .w{font-size:11.5px;color:var(--muted);padding:0 4px;margin-top:-4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (prefers-reduced-motion:reduce){#objDrawer{transition:opacity 150ms ease}}
 /* the starter-station picker */
 .tcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
@@ -642,10 +679,12 @@ body.rclosed #rmain{margin:8px 8px 8px 0;box-shadow:none}
 #physBtn:disabled{cursor:not-allowed}#physBtn:disabled .tg{opacity:.5}
 body.watch #physBtn{display:none}
 #playpill:empty,#playpill.none{display:none}
-/* a session's "⋮" menu (Share, Delete) */
+/* a session's "⋮" menu (Edit Name, Share, Delete) */
 .sroww{position:relative}.sroww .srow{padding-right:34px}
 .ssmore{position:absolute;right:6px;top:12px;width:24px;height:26px;border-radius:7px;border:0;background:transparent;color:#374151;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .ssmore:hover,.ssmore[aria-expanded=true]{background:rgba(17,24,39,.08)}
+.srow.editing{cursor:default}
+.srow .sname{display:block;width:100%;box-sizing:border-box;font:600 13px/1.3 Inter,sans-serif;color:var(--ink);background:#fff;border:0;border-radius:5px;padding:1px 4px;margin:-1px 0 0 -4px;outline:none;box-shadow:0 0 0 2px var(--blue)}
 #sharePop{position:fixed!important;right:auto!important}
 .cdlg{position:fixed;inset:0;z-index:120;background:rgba(17,24,39,.32);display:flex;align-items:center;justify-content:center}
 .cdlg[hidden]{display:none}
@@ -878,7 +917,7 @@ body.watch #physBtn{display:none}
       <div class="pip"><img id="camOver" alt="Overhead camera, what the AI sees"><div class="pcap">Overhead<span>AI SEES</span><button class="exp" data-cam="overhead" aria-label="Expand overhead camera" title="Expand"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M7 1 H11 V5 M5 11 H1 V7 M11 1 L7 5 M1 11 L5 7"/></svg></button></div></div>
       <div class="pip"><img id="camWrist" alt="Wrist camera, what the AI sees"><div class="pcap">Wrist<span>AI SEES</span><button class="exp" data-cam="wrist" aria-label="Expand wrist camera" title="Expand"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M7 1 H11 V5 M5 11 H1 V7 M11 1 L7 5 M1 11 L5 7"/></svg></button></div></div>
     </div>
-    <div id="bigCamWrap" role="dialog" aria-modal="true" aria-label="Camera, large"><div class="bigcam"><img id="bigCam" alt=""><div class="pcap" style="padding:8px 10px 8px 14px;font-size:13px"><b id="bigName" style="font-weight:600"></b><span>AI SEES THIS</span><button class="exp wide" id="shrinkBtn" aria-label="Shrink camera"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M11 5 H7 V1 M1 7 H5 V11 M7 5 L11 1 M5 7 L1 11"/></svg>Shrink</button></div></div></div>
+    <div id="bigCamWrap" role="dialog" aria-modal="true" aria-label="Camera, large"><div class="bigcam"><div class="bigview"><img id="bigCam" alt=""><canvas id="bigPoster" aria-hidden="true" hidden></canvas><div class="bigload" id="bigLoad" role="status" hidden><i aria-hidden="true"></i>Loading camera…</div></div><div class="pcap" style="padding:8px 10px 8px 14px;font-size:13px"><b id="bigName" style="font-weight:600"></b><span>AI SEES THIS</span><button class="exp wide" id="shrinkBtn" aria-label="Shrink camera"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M11 5 H7 V1 M1 7 H5 V11 M7 5 L11 1 M5 7 L1 11"/></svg>Shrink</button></div></div></div>
     <div class="tl"><span class="live" id="liveTag" style="display:none">● Running · real time</span><span class="libtag wetlab" id="libTag"></span><span class="hint" id="hintTag"></span></div>
     <div class="bl"><button class="fbtn" id="openRight" aria-label="Show robot panel" title="Show robot panel"><img id="openRightImg" alt=""><span id="openRightName">Robot</span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#374151" stroke-width="1.5"><rect x="1.75" y="2.75" width="14.5" height="12.5" rx="2.5"/><path d="M11.5 2.75 V15.25"/></svg></button></div>
     <div class="campad" role="group" aria-label="Camera">
@@ -907,6 +946,12 @@ body.watch #physBtn{display:none}
       <b id="closedTitle">This lab closed</b>
       <span>It shut down after 5 minutes with no activity. Its sessions weren't saved.</span>
       <button id="closedOpen">Open a new lab</button>
+    </div>
+    <div id="selBox" aria-hidden="true"></div>
+    <div class="stmenu" id="selMenu" role="menu" aria-label="Selected objects">
+      <div class="mhead" id="selCount"></div>
+      <button role="menuitem" data-act="duplicate"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5" y="5" width="9" height="9" rx="2"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/></svg>Duplicate</button>
+      <button role="menuitem" data-act="delete" class="danger"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5"/></svg>Delete</button>
     </div>
     <div class="stmenu" id="stMenu" role="menu" aria-label="Robot actions">
       <button role="menuitem" data-act="swap"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 5h10l-2.5-2.5M14 11H4l2.5 2.5"/></svg><span id="swapLabel">Swap robot</span></button>
@@ -943,7 +988,8 @@ body.watch #physBtn{display:none}
     <div class="lib-top freeonly">
       <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0;font-size:15px;color:var(--ink)">Objects</h2><span class="small">NVIDIA &amp; Tripo SimReady</span></div>
       <input id="search" type="search" placeholder="Search, e.g. mug, bowl, crate" aria-label="Search objects">
-      <div class="tabs" role="tablist" id="tabs"></div>
+      <nav id="crumbs" aria-label="Category path"></nav>
+      <div class="tabs" id="tabs"></div>
     </div>
     <div id="items" class="freeonly" role="tabpanel"></div>
     <section id="filespane" aria-label="The AI's work folder">
@@ -1002,7 +1048,7 @@ const api = async (path, body) => {
   const r = await fetch(U(path), body === undefined ? {headers} : {method: 'POST', headers: {...headers, 'Content-Type': 'application/json'}, body: JSON.stringify(body)});
   return r.json();
 };
-const S = {cat: null, tab: 'All', search: '', scene: null, armed: null, sel: 'robot', runKey: null, model: 'claude'};
+const S = {cat: null, path: [], search: '', scene: null, armed: null, sel: 'robot', runKey: null, model: 'claude'};
 const view = $('view'), stage = $('stage');
 // In free play each station's robot has its own API under /st/<station>; the fixed scenes have one robot at /.
 const stBase = () => `/s/${SID}` + ((S.scene && S.scene.mode === 'free' && S.scene.active) ? '/st/' + S.scene.active : '');
@@ -1025,32 +1071,121 @@ function uv(e) {
 // ---------------------------------------------------------------- library
 function fmtSize(s) { return s.map(v => (v * 100).toFixed(v < 0.1 ? 1 : 0)).join(' × ') + ' cm'; }
 function fmtMass(m) { return m == null ? '' : (m < 1 ? Math.round(m * 1000) + ' g' : m.toFixed(1) + ' kg'); }
-function renderTabs() {
-  const tabs = $('tabs'); tabs.innerHTML = '';
-  for (const t of ['All', ...S.cat.tabs]) {
-    if (t === 'Robots') continue;
-    const n = S.cat.items.filter(i => t === 'All' ? i.tab !== 'Robots' : i.tab === t).length;
-    const b = document.createElement('button'); b.role = 'tab'; b.setAttribute('aria-selected', S.tab === t && !S.search);
-    b.innerHTML = `${t} <span style="opacity:.7">${n}</span>`; b.onclick = () => { S.tab = t; S.search = ''; $('search').value = ''; renderTabs(); renderItems(); };
-    tabs.appendChild(b);
+// The library: a category path (breadcrumbs) over the tree in /pg/catalog ("tree": L1 -> L2 ->
+// L3 list; each item's "cat" is its path), the next level's categories as pills, and the items
+// under the current category as a 3-column pin board, drawn a page at a time as you scroll.
+const CHEV = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+// generative-loaders' ImageLoader variant="resolution" (the markup its React component renders;
+// the styles are vendored in /pg/static/generative-loaders.css)
+function imageLoader(size = 192, label = 'Generating image') {
+  const cells = Array.from({length: 36}, (_, k) => { const x = k % 6, y = Math.floor(k / 6);
+    return `<i style="--iml-delay:${((Math.abs(x - 2.5) + Math.abs(y - 2.5) - 6) * .055).toFixed(3)}s;--iml-tone:${28 + ((x * 13 + y * 9) % 34)}%"></i>`; }).join('');
+  return `<span class="iml-loader" data-variant="resolution" data-speed="1" data-paused="${matchMedia('(prefers-reduced-motion: reduce)').matches}" role="status" aria-label="${label}" style="--iml-color:currentColor;--iml-size:${size}px;--iml-radius:10%;--iml-duration:2.35s"><span class="iml-visual" aria-hidden="true"><span class="iml-resolution">${cells}</span></span></span>`;
+}
+function libItems() { return S.cat.items.filter(i => i.tab !== 'Robots'); }
+function catKids(path) {
+  // the categories under `path`: the tree's, plus any an item names that the tree doesn't
+  let node = S.cat.tree || {};
+  for (const k of path) node = node && !Array.isArray(node) ? node[k] : null;
+  const kids = node ? (Array.isArray(node) ? [...node] : Object.keys(node)) : [];
+  for (const it of libItems()) {
+    const c = it.cat || [it.tab];
+    if (c.length > path.length && path.every((k, j) => c[j] === k) && !kids.includes(c[path.length])) kids.push(c[path.length]);
   }
+  return kids;
+}
+function inPath(it, path) { const c = it.cat || [it.tab]; return path.every((k, j) => c[j] === k); }
+function goPath(path) { S.path = path; S.search = ''; $('search').value = ''; renderTabs(); renderItems(); }
+function renderTabs() {
+  const here = S.path.length ? S.path[S.path.length - 1] : '';
+  $('search').placeholder = here ? `Search in ${here}` : `Search ${libItems().length.toLocaleString()} objects`;
+  // on a phone the path is a back button and the category's name in the sheet's header
+  const dh = $('objDrawer').querySelector('.dh');
+  if (dh && !dh.querySelector('.mback')) {
+    dh.insertAdjacentHTML('afterbegin', '<button type="button" class="mback" aria-label="Back"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button><div class="mtitle"><span class="mtrail"></span><b class="mname"></b></div>');
+    dh.querySelector('.mback').onclick = () => goPath(S.path.slice(0, -1));
+  }
+  if (dh) {
+    $('objDrawer').classList.toggle('deep', S.path.length > 0);
+    dh.querySelector('.mtrail').textContent = ['All objects', ...S.path.slice(0, -1)].join(' › ');
+    dh.querySelector('.mname').textContent = here;
+  }
+  const nav = $('crumbs'); nav.innerHTML = '';
+  ['All objects', ...S.path].forEach((name, k) => {
+    if (k) nav.insertAdjacentHTML('beforeend', CHEV);
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = name;
+    if (k === S.path.length) b.setAttribute('aria-current', 'page');
+    b.onclick = () => goPath(S.path.slice(0, k)); nav.appendChild(b);
+  });
+  const tabs = $('tabs'); tabs.innerHTML = '';
+  if (S.path.length) {
+    const up = document.createElement('button'); up.type = 'button'; up.className = 'up'; up.setAttribute('aria-label', 'Up one level');
+    up.innerHTML = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>';
+    up.onclick = () => goPath(S.path.slice(0, -1)); tabs.appendChild(up);
+  }
+  const kids = catKids(S.path).map(k => ({k, n: libItems().filter(it => inPath(it, [...S.path, k])).length})).filter(x => x.n);
+  for (const {k, n} of kids) {
+    const b = document.createElement('button'); b.type = 'button';
+    b.innerHTML = `${esc(k)} <span style="opacity:.6;font-weight:500">${n.toLocaleString()}</span>`;
+    b.onclick = () => goPath([...S.path, k]); tabs.appendChild(b);
+  }
+  if (!kids.length && S.path.length) tabs.insertAdjacentHTML('beforeend', `<span class="here">Everything in ${esc(here)}</span>`);
+}
+const LIB_PAGE = 45;
+function pinCard(it) {
+  const c = document.createElement('button'); c.type = 'button'; c.className = 'pin' + (S.armed === it.id ? ' armed' : ''); c.draggable = true;
+  c.dataset.id = it.id; c.title = 'Drag onto the scene, or click and then click in the scene';
+  // the tile takes the object's own proportions (height over footprint), a little tamed
+  const s = it.size || [1, 1, 1], r = Math.min(1.45, Math.max(.72, s[2] / ((s[0] + s[1]) / 2 || 1)));
+  const c0 = it.cat || [it.tab], where = [it.source, c0[c0.length - 1]].filter(Boolean).join(' · ');
+  c.innerHTML = `<div class="th" style="aspect-ratio:1/${r.toFixed(3)}">${imageLoader(Math.min(120, 192))}<img src="${it.thumb}" alt="" loading="lazy" decoding="async"><span class="ov" aria-hidden="true"><b>Add</b><i>${fmtSize(it.size)}${it.mass ? ' · ' + fmtMass(it.mass) : ''}</i></span></div>` +
+    `<span class="n">${esc(it.label)}</span><span class="w" title="${esc(it.source ? 'Source: ' + it.source + (it.cite ? '. Cite: ' + it.cite : '') : '').replace(/"/g, '&quot;')}">${esc(where)}</span>`;
+  const th = c.querySelector('.th'), img = c.querySelector('img');
+  img.onload = () => th.classList.add('ready'); img.onerror = () => th.classList.add('ready');
+  if (img.complete && img.naturalWidth) th.classList.add('ready');
+  c.ondragstart = (e) => { document.body.classList.add('dragging'); e.dataTransfer.setData('text/plain', it.id); e.dataTransfer.effectAllowed = 'copy'; S.dragItem = it; e.dataTransfer.setDragImage(img, 30, 30); };
+  c.ondragend = () => { document.body.classList.remove('dragging'); S.dragItem = null; hideTag(); api('/pg/ghost/clear', {}); };
+  c.onclick = () => { S.armed = S.armed === it.id ? null : it.id; markArmed(); $('libhint').textContent = S.armed ? `Now click in the scene to place the ${it.label.toLowerCase()}. Esc to cancel.` : LIBHINT; };
+  return c;
+}
+// a picked object steps the drawer aside (as dragging does), so the scene is there to click in
+function markArmed() {
+  document.querySelectorAll('#items .pin').forEach(c => c.classList.toggle('armed', c.dataset.id === S.armed));
+  document.body.classList.toggle('libarmed', !!S.armed);
+}
+function libMore() {
+  const L = S.lib; if (!L || L.shown >= L.list.length) return;
+  for (const it of L.list.slice(L.shown, L.shown + LIB_PAGE)) {
+    // each card goes to the shortest column (by the heights the tiles will have)
+    const s = it.size || [1, 1, 1], r = Math.min(1.45, Math.max(.72, s[2] / ((s[0] + s[1]) / 2 || 1)));
+    let k = 0; for (let j = 1; j < L.h.length; j++) if (L.h[j] < L.h[k]) k = j;
+    L.cols[k].appendChild(pinCard(it)); L.h[k] += r + .25;
+  }
+  L.shown = Math.min(L.list.length, L.shown + LIB_PAGE);
+  L.sentinel.hidden = L.shown >= L.list.length;
 }
 function renderItems() {
-  const box = $('items'); box.innerHTML = '';
-  const q = S.search.toLowerCase();
-  const list = S.cat.items.filter(i => q ? (i.label + ' ' + i.tab + ' ' + (i.source || '')).toLowerCase().includes(q) : (S.tab === 'All' ? i.tab !== 'Robots' : i.tab === S.tab));
-  for (const it of list) {
-    const c = document.createElement('button'); c.className = 'card' + (S.armed === it.id ? ' armed' : ''); c.draggable = true;
-    c.title = 'Drag onto the scene, or click and then click in the scene';
-    c.innerHTML = `<div class="th"><img src="${it.thumb}" alt="" loading="lazy">${it.source ? `<span class="src" title="Source: ${it.source}">${it.source}</span>` : ''}</div><div class="tx"><div class="n">${it.label}</div><div class="s">${fmtSize(it.size)}${it.mass ? ' · ' + fmtMass(it.mass) : ''}</div></div>`;
-    c.ondragstart = (e) => { document.body.classList.add('dragging'); e.dataTransfer.setData('text/plain', it.id); e.dataTransfer.effectAllowed = 'copy'; S.dragItem = it; const img = new Image(); img.src = it.thumb; e.dataTransfer.setDragImage(c.querySelector('img'), 30, 30); };
-    c.ondragend = () => { document.body.classList.remove('dragging'); S.dragItem = null; hideTag(); api('/pg/ghost/clear', {}); };
-    c.onclick = () => { S.armed = S.armed === it.id ? null : it.id; renderItems(); $('libhint').textContent = S.armed ? `Now click in the scene to place the ${it.label.toLowerCase()}. Esc to cancel.` : LIBHINT; };
-    box.appendChild(c);
-  }
-  if (!list.length) box.innerHTML = '<p class="small">Nothing matches.</p>';
+  const box = $('items');
+  const q = S.search.trim().toLowerCase();
+  const words = q.split(/\s+/).filter(Boolean);
+  const list = libItems().filter(i => inPath(i, S.path) &&
+    (!words.length || words.every(w => (i.label + ' ' + (i.cat || [i.tab]).join(' ') + ' ' + i.tab + ' ' + (i.source || '')).toLowerCase().includes(w))));
+  const n = box.clientWidth && box.clientWidth < 520 ? 2 : 3;
+  box.innerHTML = '';
+  if (!list.length) { box.innerHTML = '<p class="small">Nothing matches.</p>'; S.lib = null; return; }
+  const wrap = document.createElement('div'); wrap.className = 'mcols';
+  const cols = Array.from({length: n}, () => { const d = document.createElement('div'); d.className = 'mcol'; wrap.appendChild(d); return d; });
+  const sentinel = document.createElement('div'); sentinel.style.height = '1px';
+  box.append(wrap, sentinel);
+  S.lib = {list, shown: 0, cols, h: cols.map(() => 0), sentinel, n};
+  box.scrollTop = 0;
+  libMore();
+  if (!renderItems.io) renderItems.io = new IntersectionObserver((es) => { if (es.some(e => e.isIntersecting)) libMore(); }, {root: box, rootMargin: '600px'});
+  renderItems.io.disconnect(); renderItems.io.observe(sentinel);
 }
-$('search').oninput = (e) => { S.search = e.target.value; renderTabs(); renderItems(); };
+$('search').oninput = (e) => { S.search = e.target.value; renderItems(); };
+// redraw the board when the drawer changes between 2 and 3 columns
+new ResizeObserver(() => { const w = $('items').clientWidth; if (S.lib && w && (w < 520 ? 2 : 3) !== S.lib.n) renderItems(); }).observe($('items'));
 
 // ---------------------------------------------------------------- dropping
 let probeBusy = false, probeNext = null;
@@ -1103,6 +1238,14 @@ view.addEventListener('mousedown', async (e) => {
     window.V3.setGizmo({active: ring});
     return;
   }
+  // Cmd (Mac) or Ctrl (Windows) + drag: draw a box; every object inside it is selected
+  if (e.button === 0 && (e.metaKey || e.ctrlKey) && window.V3 && S.scene && S.scene.mode === 'free' && !S.watch && !S.placing && !S.armed) {
+    closeSelMenu();
+    if (S.scene.locked) { toast(typeof S.scene.locked === 'string' ? S.scene.locked : 'Pause physics to select objects.'); return; }
+    const sp = stage.getBoundingClientRect();
+    drag = {x: e.clientX, y: e.clientY, btn: 0, moved: false, p0: p, obj: null, box: {x0: e.clientX - sp.left, y0: e.clientY - sp.top, uids: [], stations: []}};
+    return;
+  }
   drag = {x: e.clientX, y: e.clientY, btn: e.button, shift: e.shiftKey, moved: false, p0: p, obj: null};
   if (e.button === 0 && !S.armed && S.scene && !S.scene.locked) {
     const hit = await api('/pg/pick', {u: p.u, v: p.v});
@@ -1143,6 +1286,7 @@ window.addEventListener('mousemove', (e) => {
     t.innerHTML = `<b style="color:${{x: '#F87171', y: '#4ADE80', z: '#60A5FA'}[r.k]}">${r.k.toUpperCase()}</b> ${deg > 0 ? '+' : ''}${deg}°`;
     return;
   }
+  if (drag && drag.box) { boxSelect(e); return; }
   if (!drag) return;
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
   if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
@@ -1156,6 +1300,12 @@ window.addEventListener('mousemove', (e) => {
 window.addEventListener('mouseup', async (e) => {
   if (!drag) return;
   const d = drag; drag = null; view.classList.remove('dragging');
+  if (d.box) {
+    $('selBox').style.display = 'none';
+    if (d.box.uids.length || d.box.stations.length) openSelMenu(d.box, e.clientX, e.clientY);
+    else window.V3.setMarked(null);
+    return;
+  }
   if (d.mv) {
     $('rotTag').style.display = 'none';
     window.V3.setGizmo({active: null});
@@ -1191,7 +1341,7 @@ window.addEventListener('mouseup', async (e) => {
     return;
   }
   if (S.placing) { await placeStation(p); return; }
-  if (S.armed) { const id = S.armed; S.armed = null; probeNext = null; renderItems(); hideTag(); $('libhint').textContent = LIBHINT; await place(id, p); return; }
+  if (S.armed) { const id = S.armed; S.armed = null; probeNext = null; markArmed(); hideTag(); $('libhint').textContent = LIBHINT; await place(id, p); return; }
   const hit = await api('/pg/pick', {u: p.u, v: p.v});
   S.sel = hit.kind === 'robot' || hit.station ? 'robot' : hit.kind === 'object' ? hit.uid : S.sel === 'robot' ? S.sel : null;
   // a click on the robot itself (not its table) opens its card: what it is, Move and Rotate
@@ -1199,6 +1349,70 @@ window.addEventListener('mouseup', async (e) => {
   if (hit.kind === 'robot' && S.scene && S.scene.mode === 'free') S.sideTab = 'chat';
   refresh();
 });
+// ---------------------------------------------------------------- box select
+// The objects whose middle falls inside the box, outlined in the 3D view as the box grows.
+function boxSelect(e) {
+  const b = drag.box, sp = stage.getBoundingClientRect();
+  const x1 = e.clientX - sp.left, y1 = e.clientY - sp.top;
+  const l = Math.min(b.x0, x1), t = Math.min(b.y0, y1), r = Math.max(b.x0, x1), btm = Math.max(b.y0, y1);
+  if (r - l + btm - t > 4) drag.moved = true;
+  const el = $('selBox');
+  Object.assign(el.style, {display: 'block', left: l + 'px', top: t + 'px', width: (r - l) + 'px', height: (btm - t) + 'px'});
+  const isIn = (p) => { const q = window.V3.project(p); return q.visible && q.x >= l && q.x <= r && q.y >= t && q.y <= btm; };
+  const inside = (S.scene.objects || []).filter(o => isIn(o.mid));
+  // a robot with its table: in when the robot's base or the middle of its table top is
+  const sts = (S.scene.robots || []).filter(st => st.table && ((st.base && isIn(st.base)) || isIn([st.pos[0], st.pos[1], st.table.top])));
+  b.uids = inside.map(o => o.uid); b.stations = sts.map(st => st.id);
+  window.V3.setMarked([...inside.map(o => o.bodies), ...sts.map(stationMark)]);
+}
+// A station's outline: its robot's bodies and its table's box (floor to table top).
+function stationMark(st) {
+  const [hx, hy] = st.table.half, c = Math.cos(st.yaw), s = Math.sin(st.yaw), corners = [];
+  for (const a of [-hx, hx]) for (const b of [-hy, hy]) for (const z of [0, st.table.top])
+    corners.push([st.pos[0] + c * a - s * b, st.pos[1] + s * a + c * b, z]);
+  return {bodies: st.bodies || [], corners};
+}
+const countText = (n, one) => n ? `${n} ${one}${n === 1 ? '' : 's'}` : '';
+function openSelMenu(sel, x, y) {
+  const m = $('selMenu');
+  S.boxSel = {uids: sel.uids, stations: sel.stations};
+  $('selCount').textContent = [countText(sel.stations.length, 'robot'), countText(sel.uids.length, 'object')].filter(Boolean).join(', ');
+  m.classList.add('open');
+  const w = m.offsetWidth, h = m.offsetHeight;
+  m.style.left = Math.max(8, Math.min(x + 6, innerWidth - w - 8)) + 'px';
+  m.style.top = Math.max(8, Math.min(y + 6, innerHeight - h - 8)) + 'px';
+  m.querySelector('button').focus({preventScroll: true});
+}
+function closeSelMenu() {
+  if (!S.boxSel) return;
+  S.boxSel = null; $('selMenu').classList.remove('open');
+  if (window.V3) window.V3.setMarked(null);
+}
+$('selMenu').addEventListener('click', async (e) => {
+  const b = e.target.closest('button'); if (!b || !S.boxSel) return;
+  const {uids, stations} = S.boxSel; closeSelMenu();
+  const dup = b.dataset.act === 'duplicate';
+  if (!dup && stations.length && !await askConfirm(`Delete ${[countText(stations.length, 'robot'), countText(uids.length, 'object')].filter(Boolean).join(' and ')}?`,
+      'Each robot goes with its table and what is on it. Its chat goes too; past runs stay in Your runs.', 'Delete')) return;
+  const r = await api('/pg/selection', {action: dup ? 'duplicate' : 'delete', uids, stations});
+  if (!r.ok) toast(r.error || 'That didn\'t work');
+  else {
+    if (!dup && uids.includes(S.sel)) S.sel = 'robot';
+    const what = [countText(r.stations.length, 'robot'), countText(r.objects.length, 'object')].filter(Boolean).join(' and ');
+    toast(`${dup ? 'Copied' : 'Deleted'} ${what}`);
+  }
+  refresh();
+});
+document.addEventListener('mousedown', (e) => { if (S.boxSel && !e.target.closest('#selMenu')) closeSelMenu(); }, true);
+document.addEventListener('keydown', (e) => {
+  if (!S.boxSel) return;
+  if (e.key === 'Escape') { e.stopPropagation(); closeSelMenu(); }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault(); e.stopPropagation();
+    const bs = [...$('selMenu').querySelectorAll('button')], i = bs.indexOf(document.activeElement);
+    bs[(i + (e.key === 'ArrowDown' ? 1 : bs.length - 1)) % bs.length].focus();
+  }
+}, true);
 let camQ = null, camBusy = false;
 async function camera(delta) {
   if (window.V3) {        // move the in-page view now; the server follows (for picking and glides)
@@ -1255,7 +1469,7 @@ const CAM_KEYS = {ArrowUp: [0, 1, 0], ArrowDown: [0, -1, 0], ArrowLeft: [-1, 0, 
                   PageUp: [0, 0, 1], PageDown: [0, 0, -1], '+': [0, 0, 1], '=': [0, 0, 1], '-': [0, 0, -1]};
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
-  if (e.key === 'Escape') { const busy = S.placing || S.armed; if (S.placing) cancelPlacing(); S.armed = null; renderItems(); hideTag(); api('/pg/ghost/clear', {}); if (!busy && !S.bigCam) deselect(); }
+  if (e.key === 'Escape') { const busy = S.placing || S.armed; if (S.placing) cancelPlacing(); S.armed = null; markArmed(); hideTag(); api('/pg/ghost/clear', {}); if (!busy && !S.bigCam) deselect(); }
   if (S.placing && (e.key === 'r' || e.key === 'R')) { S.placeYaw += Math.PI / 2; if (S.lastUV) probeStation(S.lastUV); return; }
   if ((e.key === 'Delete' || e.key === 'Backspace') && S.sel && S.sel !== 'robot') removeSel();
   if (e.key === 'r' && S.sel && S.sel !== 'robot') rotateSel();
@@ -1297,11 +1511,9 @@ function renderDock() {
     : `<button class="schip add big" id="dockAdd"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 12 12" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg>Add your first station</button>`;
   $('dock').innerHTML = chips.join('') + (S.watch ? '' : add);
   $('dock').parentElement.style.display = list.length || !S.watch ? '' : 'none';
-  $('dock').querySelectorAll('.schip[data-st]').forEach(b => b.onclick = async () => {
+  $('dock').querySelectorAll('.schip[data-st]').forEach(b => b.onclick = () => {
     S.sel = 'robot'; S.robotEdit = null; if (S.sideTab === 'objects') S.sideTab = 'chat';
-    if (!S.watch) await api('/pg/station/select', {uid: b.dataset.st, frame: true});
-    else S.scene.active = b.dataset.st;      // a watcher just looks: the owner's view stays
-    S.taskFor = null; refresh();
+    selectStation(b.dataset.st);
   });
   $('dock').querySelectorAll('.smore').forEach(b => b.onclick = (e) => {
     e.stopPropagation();
@@ -1319,12 +1531,24 @@ function renderDock() {
 // The lab's robots, listed under the open session in the sidebar, and the robot panel's header.
 const ROBOT_PIC = {franka: '/pg/static/robot_franka.png', ur5e: '/pg/static/robot_ur5e.png', aloha: '/pg/static/robot_aloha.png', fr3_duo: '/pg/static/robot_fr3_duo.png', g1: '/pg/static/robot_g1.png', piper: '/pg/static/robot_piper.png', n220: '/pg/static/robot_n220.png', crx30ia: '/pg/static/robot_crx30ia.png', rby1: '/pg/static/robot_rby1.png'};
 const ROBOT_IMG = (r) => ROBOT_PIC[r] || ROBOT_PIC.franka;
-async function pickRobot(id) {
+// Make a robot the active one. The highlight and the camera glide start on the click itself;
+// the server is told afterwards (it skips its own glide when the page is already gliding).
+function selectStation(id) {
+  const st = (S.scene.robots || []).find(r => r.id === id);
+  S.scene.active = id;
+  if (S.scene.mode === 'free') S.scene.run = (S.scene.runs || {})[id] || {active: false};   // its chat, as the server would send it
+  S.taskFor = null; render();             // the new robot shows as chosen right away
+  if (S.watch) return refresh();          // a watcher just looks: the owner's view stays
+  S.pendingActive = id;
+  const glide = !!(window.V3 && st && st.view);
+  if (glide) window.V3.glideTo(st.view);
+  return api('/pg/station/select', {uid: id, frame: true, glide: !glide})
+    .finally(() => { if (S.pendingActive === id) S.pendingActive = null; }).then(refresh);
+}
+function pickRobot(id) {
   $('rmenu').hidden = true; $('rpick').setAttribute('aria-expanded', 'false');
   S.sel = 'robot'; S.robotEdit = null;
-  if (!S.watch) await api('/pg/station/select', {uid: id, frame: true});
-  else S.scene.active = id;
-  S.taskFor = null; refresh();
+  selectStation(id);
 }
 function renderRobots() {
   const sc = S.scene; if (!sc) return;
@@ -1450,7 +1674,7 @@ try { if (localStorage.getItem('pgRight') === '0') setRight(false); } catch (e) 
 function setObjects(open) {
   document.body.classList.toggle('objopen', open);
   $('addObjBtn').classList.toggle('on', open); $('addObjBtn').setAttribute('aria-expanded', String(open));
-  if (!open) { S.armed = null; if (S.cat) renderItems(); }
+  if (!open) { S.armed = null; if (S.cat) markArmed(); }
 }
 $('addObjBtn').onclick = () => setObjects(!document.body.classList.contains('objopen'));
 $('objClose').onclick = () => setObjects(false);
@@ -1464,11 +1688,10 @@ function renderStations() {
   $('stCap').textContent = sc.mode === 'free' ? 'Stations in the lab' : 'Robot';
   $('stationList').innerHTML = list.map(st => { const x = stationStatus(st);
     return `<button class="strow" role="listitem" data-st="${st.id}" aria-pressed="${st.id === sc.active && S.sel === 'robot'}"><span class="dot" style="background:${x.color}"></span><span class="nm"><b>${esc(sc.mode === 'free' ? st.name : st.label)}</b><span class="small">${sc.mode === 'free' ? esc(st.label) + ' · ' : ''}${x.text}</span></span></button>`; }).join('');
-  $('stationList').querySelectorAll('.strow').forEach(b => b.onclick = async () => {
+  $('stationList').querySelectorAll('.strow').forEach(b => b.onclick = () => {
     S.sel = 'robot'; S.robotEdit = null; if (S.scene.mode === 'free') S.sideTab = 'chat';
-    if (S.scene.mode === 'free') await api('/pg/station/select', {uid: b.dataset.st, frame: true});
-    else api('/pg/select', {uid: 'robot'});
-    refresh();
+    if (S.scene.mode === 'free') selectStation(b.dataset.st);
+    else { api('/pg/select', {uid: 'robot'}); refresh(); }
   });
 }
 function curStation() { const sc = S.scene; return (sc.robots || []).find(r => r.id === sc.active) || (sc.robots || [])[0] || {}; }
@@ -1783,7 +2006,7 @@ const STATION_KINDS = {table: {label: 'Table', items: 0}, wetlab: {label: 'Wet l
   island: {label: 'Kitchen island', items: 0}, counter: {label: 'Kitchen counter', items: 0}, libero: {label: 'LIBERO room', items: 0},
   wetrobo_x: {label: 'WetRobo Lab X', items: 0}, wetrobo_y: {label: 'WetRobo Lab Y', items: 0}};
 function startPlacing(robot, kind = 'table', task = '', free = false) {
-  closeAdd(); S.placing = robot; S.placeKind = kind; S.placeTask = task; S.placeFree = !!free; S.placeYaw = 0; S.armed = null; renderItems();
+  closeAdd(); S.placing = robot; S.placeKind = kind; S.placeTask = task; S.placeFree = !!free; S.placeYaw = 0; S.armed = null; markArmed();
   api('/pg/camera', {preset: 'lab'});
   const lab = ((S.cat.robots || []).find(x => x.id === robot) || {}).label || 'the robot';
   $('hintTag').textContent = kind !== 'table' ? `Click the floor to place the ${kind === 'libero' ? 'LIBERO room' : kind.startsWith('wetrobo') ? STATION_KINDS[kind].label : STATION_KINDS[kind].label.toLowerCase()} with the ${lab}. R turns it, Esc cancels.`
@@ -2361,6 +2584,7 @@ async function refresh() {
     if (next && next !== SID) { switchSession(next); return; }
     throw new Error(sc.error || 'no session');
   }
+  if (S.pendingActive && (sc.robots || []).some(r => r.id === S.pendingActive)) sc.active = S.pendingActive;   // a click not yet reached the server
   S.scene = sc;
   const watch = !(sc.session && sc.session.mine);
   if (watch !== S.watch) { S.watch = watch; document.body.classList.toggle('watch', watch); S.dockKey = ''; if (watch && S.sideTab === 'objects') S.sideTab = 'chat'; }
@@ -2431,20 +2655,45 @@ function openCams() {
     $('pips').querySelectorAll('img[data-cam]').forEach(im => { im.src = none ? '' : base + `/stream/${im.dataset.cam}.mjpg?fps=4&r=` + t; });
   }
   if (S.bigCam && !cams.includes(S.bigCam)) S.bigCam = cams[0];
-  if (S.bigCam) $('bigCam').src = none ? '' : base + `/stream/${S.bigCam}.mjpg?fps=8&r=` + t;
+  openBigCam();
+}
+// The large view's own stream (twice the small cards' frame rate). Until its first picture
+// arrives, the small card's picture is copied into it, scaled up, so it never sits blank.
+function openBigCam() {
+  if (!S.bigCam || document.hidden) return;
+  const none = S.scene && S.scene.mode === 'free' && !S.scene.active, big = $('bigCam');
+  big.removeAttribute('src');
+  if (!none) big.src = stBase() + `/stream/${S.bigCam}.mjpg?fps=8&r=` + Date.now();
+  mirrorSmall();
+}
+function mirrorSmall() {
+  clearTimeout(mirrorSmall.t);
+  const big = $('bigCam'), cv = $('bigPoster'), cam = S.bigCam;
+  if (!cam) { cv.hidden = true; $('bigLoad').hidden = true; return; }
+  if (big.naturalWidth) { cv.hidden = true; $('bigLoad').hidden = true; return; }   // the large stream is up
+  const small = $('pips').querySelector(`img[data-cam="${cam}"]`);
+  let drew = false;
+  if (small && small.naturalWidth) {
+    try {
+      if (cv.width !== small.naturalWidth) { cv.width = small.naturalWidth; cv.height = small.naturalHeight; }
+      cv.getContext('2d').drawImage(small, 0, 0, cv.width, cv.height); drew = true;
+    } catch (e) { /* no picture to copy yet */ }
+  }
+  cv.hidden = !drew; $('bigLoad').hidden = drew;
+  mirrorSmall.t = setTimeout(mirrorSmall, 100);
 }
 // Expand a camera: it grows out of the lower-left corner into a large view; Shrink puts it back.
 S.bigCam = null;
 function expandCam(cam) {
   S.bigCam = cam; const w = $('bigCamWrap');
   $('bigName').textContent = (CAM_NAMES[cam] || cam) + ' camera · ' + (curStation().name || curStation().label || 'Robot');
-  $('bigCam').alt = $('bigName').textContent; openCams();
+  $('bigCam').alt = $('bigName').textContent; openBigCam();   // the small cards keep their streams
   w.classList.add('on'); w.getBoundingClientRect(); w.classList.add('open'); $('shrinkBtn').focus();
 }
 function shrinkCam() {
   if (!S.bigCam) return; S.bigCam = null; const w = $('bigCamWrap');
   w.classList.remove('open');
-  clearTimeout(shrinkCam.h); shrinkCam.h = setTimeout(() => { if (!S.bigCam) { w.classList.remove('on'); $('bigCam').src = ''; } }, 230);
+  clearTimeout(shrinkCam.h); shrinkCam.h = setTimeout(() => { if (!S.bigCam) { w.classList.remove('on'); $('bigCam').removeAttribute('src'); mirrorSmall(); } }, 230);
 }
 document.querySelectorAll('.pip .exp').forEach(b => b.onclick = () => expandCam(b.dataset.cam));
 $('shrinkBtn').onclick = shrinkCam;
@@ -2476,7 +2725,8 @@ function openSessMenu(btn) {
   let m = $('sessMenu');
   if (!m) {
     m = document.createElement('div'); m.id = 'sessMenu'; m.className = 'stmenu'; m.setAttribute('role', 'menu'); m.setAttribute('aria-label', 'Session actions');
-    m.innerHTML = '<button role="menuitem" data-act="share"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Share</button>'
+    m.innerHTML = '<button role="menuitem" data-act="name"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 2.5l3 3L6 13H3v-3z"/></svg>Edit Name</button>'
+      + '<button role="menuitem" data-act="share"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Share</button>'
       + '<hr data-act="sep"><button role="menuitem" data-act="delete" class="danger"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5"/></svg>Delete session</button>';
     document.body.appendChild(m);
     m.querySelector('[data-act=share]').onclick = () => {
@@ -2487,15 +2737,49 @@ function openSessMenu(btn) {
       p.style.top = Math.max(8, Math.min(r.top - 8, innerHeight - p.offsetHeight - 8)) + 'px';
       $('shareOn').focus();
     };
+    m.querySelector('[data-act=name]').onclick = () => { const id = m.dataset.sid; closeSessMenu(); editSessName(id); };
     m.querySelector('[data-act=delete]').onclick = () => { const id = m.dataset.sid; closeSessMenu(); deleteSession(id); };
   }
   if (m.classList.contains('open') && S.menuBtn === btn) return closeSessMenu();
   const sid = btn.dataset.msid, share = sid === SID && S.canShare;
   m.dataset.sid = sid;
-  m.querySelector('[data-act=share]').hidden = m.querySelector('[data-act=sep]').hidden = !share;
+  m.querySelector('[data-act=share]').hidden = !share;
   S.menuBtn = btn; m.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
   const r = btn.getBoundingClientRect();
   m.style.left = Math.min(r.left, innerWidth - m.offsetWidth - 8) + 'px'; m.style.top = (r.bottom + 4) + 'px';
+}
+// Edit Name: the row's name becomes a text box; Enter or clicking away saves, Esc puts it back.
+// The name is saved with the session (autosave keeps it in your account).
+function editSessName(id) {
+  if (!S.sess.mine.find(y => y.id === id)) return;
+  S.sessEdit = id; S.sessKey = null; renderSessions();
+}
+function wireSessName(inp) {
+  const id = inp.dataset.esid, before = inp.value;
+  let done = false;
+  const finish = async (save) => {
+    if (done) return; done = true;
+    const name = inp.value.replace(/\s+/g, ' ').trim().slice(0, 60);
+    const x = S.sess.mine.find(y => y.id === id);
+    S.sessEdit = null;
+    if (save && name && name !== before && x) {
+      x.name = name; S.sessKey = null; renderSessions();
+      try {
+        const r = await fetch(`/s/${encodeURIComponent(id)}/pg/session/rename`, {method: 'POST',
+          headers: {'X-Browser-Id': BID, ...(LAB_KEY ? {'X-Lab-Key': LAB_KEY} : {}), 'Content-Type': 'application/json'},
+          body: JSON.stringify({name})}).then(r => r.json());
+        if (r.ok === false) { toast(r.error || "Couldn't rename this session"); x.name = before; }
+      } catch (e) { toast("Couldn't rename this session"); x.name = before; }
+      if (id === SID) { S.sessName = null; refresh().catch(() => {}); }
+      S.sessKey = null; loadSessions();
+    } else { S.sessKey = null; renderSessions(); }
+  };
+  inp.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finish(false); }
+  });
+  inp.addEventListener('blur', () => finish(true));
+  inp.focus(); inp.select();
 }
 async function deleteSession(id) {
   const x = S.sess.mine.find(y => y.id === id); if (!x) return;
@@ -2558,13 +2842,17 @@ async function loadSessions(starter = false) {
 function renderSessions() {
   const {mine, live} = S.sess;
   const key = JSON.stringify([SID, S.canShare, mine.map(x => [x.id, x.name, x.stations, x.status, Math.round((Date.now() / 1000 - x.used) / 60)]), live.map(x => [x.url, x.id, x.name, x.task]), (S.sess.older || []).map(x => x.db)]);
-  if (key === S.sessKey) return; S.sessKey = key;
+  if (key === S.sessKey) return;
+  if (S.sessEdit && $('mineList').querySelector('.sname')) return;   // don't redraw under someone typing a name
+  S.sessKey = key;
   const dot = {working: ['run', 'Working'], finished: ['ok', 'Finished'], empty: ['', 'Nothing run yet']};
   $('mineList').innerHTML = mine.map(x => { const [d, t] = dot[x.status] || dot.empty;
     const more = !S.watch && S.sess.owner;
+    if (S.sessEdit === x.id) return `<div class="sroww"><div class="srow editing" aria-current="${x.id === SID}"><span class="sico">${CUBE}</span><span class="t"><input class="sname" data-esid="${esc(x.id)}" maxlength="60" value="${esc(x.name)}" aria-label="Session name"><span class="sub">${x.mode === 'free' ? nStations(x.stations) : x.mode === 'libero' ? 'LIBERO test' : 'Wet Lab'} · ${ago(x.used)}</span></span></div></div>`;
     return `<div class="sroww"><button class="srow" data-sid="${esc(x.id)}" aria-current="${x.id === SID}"><span class="sico">${CUBE}</span><span class="t"><b>${esc(x.name)}${x.shared ? '<span class="sharedmini">Shared</span>' : ''}</b><span class="sub">${x.mode === 'free' ? nStations(x.stations) : x.mode === 'libero' ? 'LIBERO test' : 'Wet Lab'} · ${ago(x.used)}</span></span><span class="sdot ${d}" title="${t}"></span></button>${more ? `<button class="ssmore" data-msid="${esc(x.id)}" aria-label="More actions for ${esc(x.name)}" aria-haspopup="menu" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg></button>` : ''}</div>`; }).join('')
     || '<span class="snone">None yet. Press New session.</span>';
   $('mineList').querySelectorAll('.ssmore').forEach(b => b.onclick = (e) => { e.stopPropagation(); openSessMenu(b); });
+  const inp = $('mineList').querySelector('.sname'); if (inp) wireSessName(inp);
   $('liveList').innerHTML = live.map((x, i) => `<button class="srow" data-live="${i}" aria-current="${!x.url && x.id === SID}" title="${esc(x.task || '')}"><span class="sico">${EYE}</span><span class="t"><b>${esc(x.name)}</b><span class="sub">${esc(x.task || nStations(x.stations))}</span></span><span class="sdot run" title="Running now"></span></button>`).join('')
     || '<span class="snone">Nobody else is running anything right now.</span>';
   $('mineList').querySelectorAll('[data-sid]').forEach(b => b.onclick = () => switchSession(b.dataset.sid));
@@ -2896,5 +3184,6 @@ window.onAccount = (r) => { S.acct = r; fillModels(); if (S.scene) render(); };
 <script src="/pg/static/runpage.js?v=HASH"></script>
 <script src="/pg/static/gallery.js?v=HASH"></script>
 <script src="/pg/static/scenegen.js?v=HASH"></script>
+<script src="/pg/static/mobile.js?v=HASH"></script>
 </body>
 </html>

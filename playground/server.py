@@ -53,7 +53,7 @@ def _page() -> bytes:
     view3d.js (an hour, like every static file) loads the new one as soon as it changes."""
     import hashlib
     page = PAGE.read_bytes()
-    for name in ("view3d.js", "runpanel.js", "scenesettings.js", "results.js", "runpage.js", "gallery.js"):
+    for name in ("view3d.js", "runpanel.js", "scenesettings.js", "results.js", "runpage.js", "gallery.js", "scenegen.js", "mobile.js"):
         v = hashlib.sha1((HERE / "static" / name).read_bytes()).hexdigest()[:12]
         page = page.replace(f"/pg/static/{name}?v=HASH".encode(), f"/pg/static/{name}?v={v}".encode())
     return page
@@ -64,8 +64,8 @@ TIME_LIMIT = 180.0     # seconds: a run's default time limit (Wet Lab sets its o
 # every run capped, the AI in a cloud sandbox, a few runs at once with a queue.
 PUBLIC = False
 FRONT = False               # the public site's front: hands out labs, lists live runs and past runs
-MAX_ACTIVE = 4              # runs at once on the public site; more wait in a queue
-LOCAL_PARALLEL = 4          # Run task N times on this computer: robots side by side at most
+MAX_ACTIVE = 15             # runs at once per account on the public site; more wait in a queue
+LOCAL_PARALLEL = 15         # Run task N times on this computer: robots side by side at most
 RUN_LAUNCHER = "local"      # where agents run (wetlabsim.launchers)
 AGENT_ROBOT_URL = ""        # the robot API as agents outside this machine reach it ("" = ROBOT_API_URL)
 FREE_TIME_LIMIT = 0.0  # free play: no limit, the run goes until the AI finishes or you stop it
@@ -1100,8 +1100,9 @@ def _start_queued():
     """Start waiting runs while there is room (MAX_ACTIVE on the public site; no limit locally)."""
     with QUEUE_LOCK:
         while QUEUE:
-            # Runs at once: across every lab on the shared site, else on this server.
-            active = LABS.slots_in_use() if LABS.shared() else sum(1 for r in _all_runners() if r.active())
+            # Runs at once on this server: on the public site that is one account's Modal container,
+            # so the limit is per account.
+            active = sum(1 for r in _all_runners() if r.active())
             if PUBLIC and active >= MAX_ACTIVE:
                 return
             job = QUEUE.pop(0)
@@ -1109,7 +1110,7 @@ def _start_queued():
             st = sess.sim.station(job["station"]) if sess else None
             if st is None:
                 continue
-            slot = LABS.take_slot() if LABS.shared() else None
+            slot = None
             try:
                 r = sess.station_runner(job["station"])
                 r.slot = slot
@@ -1710,7 +1711,7 @@ class PGHandler(Handler):
                     return self._err("only this lab's owner can see its settings", 403)
                 return self._json(self._account_info(fresh=True))
             if p == "/pg/catalog":
-                return self._json({"tabs": catalog.TABS, "items": catalog.available(), "robots": catalog.robots(),
+                return self._json({"tabs": catalog.TABS, "tree": catalog.CATEGORY_TREE, "items": catalog.available(), "robots": catalog.robots(),
                                    "models": [{**{k: m[k] for k in ("id", "label", "via", "provider") if k in m},
                                                **({"needs": _needs(m)} if _needs(m) else {})}
                                               for m in MODELS if not PUBLIC or m["agent"] in _site_agents()],
@@ -1996,8 +1997,8 @@ class PGHandler(Handler):
                     return self._json({"ok": False, "error": "no such station"})
                 s.active_station = b["uid"]
                 s.selected = None
-                if b.get("frame", True):
-                    s.frame_station()
+                if b.get("frame", True):     # glide: False when the page already glides there itself
+                    s.frame_station(glide=bool(b.get("glide", True)))
                 return self._json({"ok": True})
             if p == "/pg/station/probe":
                 lock = self._locked()
@@ -2009,7 +2010,7 @@ class PGHandler(Handler):
             if p.startswith("/pg/scenegen/"):
                 return self._scenegen(p[len("/pg/scenegen/"):], b)
             lock = self._locked()
-            if (p in ("/pg/place", "/pg/move", "/pg/remove", "/pg/rotate", "/pg/orient", "/pg/translate", "/pg/clear") or p.startswith("/pg/station/")) and lock:
+            if (p in ("/pg/place", "/pg/move", "/pg/remove", "/pg/remove_many", "/pg/duplicate_many", "/pg/selection", "/pg/rotate", "/pg/orient", "/pg/translate", "/pg/clear") or p.startswith("/pg/station/")) and lock:
                 # Rename any time; Reset while physics plays too, but not while an AI works.
                 if p != "/pg/station/rename" and not (p in ("/pg/station/reset", "/pg/station/remove_copies")
                                                       and self.sim.paused is False and not self._busy()):
@@ -2191,6 +2192,21 @@ class PGHandler(Handler):
             if p == "/pg/remove":
                 s.remove(b["uid"])
                 return self._json({"ok": True})
+            if p == "/pg/remove_many":     # the objects a box drawn over the scene took in
+                n = s.remove_many([str(u) for u in b.get("uids") or []])
+                return self._json({"ok": True, "removed": n})
+            if p == "/pg/selection":       # duplicate or delete a box's stations and objects
+                r = s.edit_selection(str(b.get("action", "")), [str(u) for u in b.get("uids") or []],
+                                     [str(u) for u in b.get("stations") or []])
+                if b.get("action") == "delete":
+                    for u in r["stations"]:
+                        self.runners.pop(u, None)
+                elif r["stations"]:
+                    s.frame_station(r["stations"][-1])
+                return self._json({"ok": True, **r})
+            if p == "/pg/duplicate_many":  # copies of them, beside them
+                uids = s.duplicate_many([str(u) for u in b.get("uids") or []])
+                return self._json({"ok": True, "uids": uids})
             if p == "/pg/clear":
                 s.clear()
                 return self._json({"ok": True})
@@ -2472,7 +2488,7 @@ def main(argv=None):
     ap.add_argument("--run-minutes", type=float, default=5.0)
     ap.add_argument("--idle-minutes", type=float, default=5.0,
                     help="a hosted lab shuts down after this long with no clicks, typing or scrolling from its owner and nothing running")
-    ap.add_argument("--max-active", type=int, default=4)
+    ap.add_argument("--max-active", type=int, default=15)
     ap.add_argument("--launcher", default="local", help="where agents run (wetlabsim.launchers)")
     ap.add_argument("--agent-robot-url", default="",
                     help="the robot API's address as agents elsewhere reach it (a public tunnel)")

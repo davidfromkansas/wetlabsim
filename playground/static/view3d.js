@@ -24,7 +24,7 @@ function applyDelta(c, d) {
   c = {...c, lookat: [...c.lookat]};
   c.azimuth = (((c.azimuth + (d.azimuth || 0)) % 360) + 360) % 360;
   c.elevation = clamp(c.elevation + (d.elevation || 0), -89, -3);
-  c.distance = clamp(c.distance * (d.zoom || 1), 0.4, 8.0);
+  c.distance = clamp(c.distance * (d.zoom || 1), 0.4, 48.0);
   const flatOf = (f) => { const v = new THREE.Vector3(f.x, f.y, 0); return v.lengthSq() > 1e-12 ? v.normalize() : v; };
   if (d.pan && (d.pan[0] || d.pan[1])) {
     const {fwd, right} = camFrame(c), flat = flatOf(fwd);
@@ -399,7 +399,7 @@ export function start({stage, base = '', onReady}) {
       return glow * step(0.0, age) * (1.0 - smoothstep(3.5, 4.5, age));
     }
     void main() {
-      vec2 metres = uvRoom * 20.0;
+      vec2 metres = uvRoom * 120.0;
       vec3 cyan = vec3(0.20, 0.68, 0.86);
       vec3 white = vec3(0.68, 0.93, 1.0);
       vec3 light = vec3(0.0);
@@ -407,14 +407,17 @@ export function start({stage, base = '', onReady}) {
       // geometry, diagonal phase field, or animated fill inside the glass tiles.
       vec2 grid = metres / 0.625;
       vec2 joint = abs(grid - floor(grid + 0.5)) * 0.625;
-      vec4 horizontal = texture2D(gridFlow, (vec2(floor(grid.x), floor(grid.y + 0.5)) + 0.5) / 33.0);
-      vec4 vertical = texture2D(gridFlow, (vec2(floor(grid.x + 0.5), floor(grid.y)) + 0.5) / 33.0);
+      // The moving lights live on the middle 33 x 33 cells; the faint lines cover the whole floor.
+      vec2 cell = grid - 80.0;   // (60 m - 10 m) / 0.625
+      float inside = step(0.0, min(cell.x, cell.y)) * step(max(cell.x, cell.y), 33.0);
+      vec4 horizontal = texture2D(gridFlow, (vec2(floor(cell.x), floor(cell.y + 0.5)) + 0.5) / 33.0);
+      vec4 vertical = texture2D(gridFlow, (vec2(floor(cell.x + 0.5), floor(cell.y)) + 0.5) / 33.0);
       float hx = (time - horizontal.r) / gridStep;
       float vy = (time - vertical.b) / gridStep;
       float hp = horizontal.g > 0.0 ? fract(grid.x) : 1.0 - fract(grid.x);
       float vp = vertical.a > 0.0 ? fract(grid.y) : 1.0 - fract(grid.y);
-      float hPulse = ribbon(hp, hx);
-      float vPulse = ribbon(vp, vy);
+      float hPulse = ribbon(hp, hx) * inside;
+      float vPulse = ribbon(vp, vy) * inside;
       float hLine = strip(joint.y, 0.0018), vLine = strip(joint.x, 0.0018);
       vec2 halo = exp(-joint * 180.0) * (1.0 - smoothstep(vec2(0.018), vec2(0.035), joint));
       light = white * max(hLine, vLine) * 0.10 + cyan * max(halo.x, halo.y) * 0.025;
@@ -435,7 +438,7 @@ export function start({stage, base = '', onReady}) {
       blending: THREE.AdditiveBlending,
     }));
   }
-  const floorLight = lightSurface(new THREE.PlaneGeometry(20, 20));
+  const floorLight = lightSurface(new THREE.PlaneGeometry(120, 120));   // the whole floor (playground/world.py)
   floorLight.position.z = 0.002; glassRoom.add(floorLight);
   function glass(geo) {
     return new THREE.Mesh(geo, new THREE.MeshPhongMaterial({color: 0x17303d,
@@ -550,16 +553,17 @@ export function start({stage, base = '', onReady}) {
       // or not at all, and following them pulled the view back to where it was.
       const serverMove = f.camgen === undefined || f.camgen !== V.camGen || f.gliding;
       V.camGen = f.camgen;
-      if (V.follow && serverMove && performance.now() - V.lastLocal > 800) V.cam = f.cam;
+      if (V.follow && serverMove && !V.glide && performance.now() - V.lastLocal > 800) V.cam = f.cam;
     };
     const mine = es;
     es.onerror = () => { mine.close(); if (es === mine) setTimeout(connect, 1500); };
   }
 
   function frame() {
+    if (V.glide) glideStep();
     const {pos, look} = camFrame(V.cam);
     camera.position.copy(pos); camera.lookAt(look);
-    drawPreview(); drawGizmo();
+    drawPreview(); drawGizmo(); drawMarks();
     if (V.onFrame) V.onFrame();
     roomClock.value = performance.now() / 1000;
     if (glassRoom.visible && automaton.advance(roomClock.value)) gridFlow.needsUpdate = true;
@@ -715,8 +719,55 @@ export function start({stage, base = '', onReady}) {
     return out;
   };
 
+  // Objects taken in by a box drawn over the scene: a blue outline box around each, drawn over
+  // everything so it shows through what stands in front. marks: a list of body-index lists, or of
+  // {bodies, corners} (corners: world points the box must take in too, e.g. a table's).
+  let MK = [];
+  const markBoxes = [], markColor = new THREE.Color(0x2563EB);
+  V.setMarked = (marks) => { MK = marks || []; };
+  function drawMarks() {
+    while (markBoxes.length < MK.length) {
+      const h = new THREE.Box3Helper(new THREE.Box3(), markColor);
+      h.material.depthTest = false; h.material.transparent = true; h.renderOrder = 997;
+      scene.add(h); markBoxes.push(h);
+    }
+    markBoxes.forEach((h, i) => {
+      h.visible = i < MK.length;
+      if (!h.visible) return;
+      h.box.makeEmpty();
+      const m = Array.isArray(MK[i]) ? {bodies: MK[i]} : MK[i];
+      for (const b of m.bodies || []) if (V.bodies[b]) h.box.expandByObject(V.bodies[b]);
+      for (const c of m.corners || []) h.box.expandByPoint(new THREE.Vector3(c[0], c[1], c[2]));
+      if (h.box.isEmpty()) h.visible = false;
+      else h.box.expandByScalar(0.008);
+    });
+  }
+
   V._scene = scene;   // for debugging from the console
-  V.applyDelta = (d) => { V.cam = applyDelta(V.cam, d); V.lastLocal = performance.now(); };
+  V.applyDelta = (d) => { V.glide = null; V.cam = applyDelta(V.cam, d); V.lastLocal = performance.now(); };
+  // Glide the view to a camera (e.g. framing the robot just clicked), starting this frame: no
+  // waiting on the server. A strong ease-out, so it moves at once and settles gently. While it
+  // runs, and briefly after, the server's camera is not followed (it is told the end point).
+  const GLIDE_MS = 600;
+  V.glideTo = (to) => {
+    if (!to || !to.lookat) return;
+    const from = {...V.cam, lookat: [...V.cam.lookat]};
+    const daz = ((to.azimuth - from.azimuth + 540) % 360) - 180;   // the short way round
+    V.glide = {from, to, daz, t0: performance.now()};
+    V.follow = true;
+  };
+  function glideStep() {
+    const g = V.glide, t = Math.min(1, (performance.now() - g.t0) / GLIDE_MS);
+    const k = 1 - Math.pow(1 - t, 4);                               // ease-out (quart)
+    const mix = (a, b) => a + (b - a) * k;
+    V.cam = {
+      lookat: g.from.lookat.map((v, i) => mix(v, g.to.lookat[i])),
+      distance: Math.exp(mix(Math.log(g.from.distance), Math.log(g.to.distance))),
+      azimuth: (((g.from.azimuth + g.daz * k) % 360) + 360) % 360,
+      elevation: mix(g.from.elevation, g.to.elevation),
+    };
+    if (t >= 1) { V.glide = null; V.lastLocal = performance.now(); }
+  }
   V.camForServer = () => ({...V.cam, aspect: camera.aspect});
   // A point in the world on screen (CSS pixels within the stage), e.g. to hang a tag over a robot.
   V.project = (p) => {

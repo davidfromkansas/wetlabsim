@@ -14,11 +14,13 @@ tools/build_soft.py).
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 
-ASSETS = pathlib.Path(__file__).parent / "assets"
+# The converted objects. On Modal they come from the "wetlab-library" Volume at /library (hosting/app.py).
+ASSETS = pathlib.Path(os.environ.get("WETLAB_ASSETS_DIR") or pathlib.Path(__file__).parent / "assets")
 
-TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Glassware", "Instruments", "PPE", "Tools", "Kitchen", "Bins & Trays", "Cleaning", "Electronics", "Toys & Basics", "Factory", "Car parts", "Garage", "Home", "Office", "Shops & Hotels", "Sports & Leisure", "Outdoor", "Soft", "LIBERO"]
+TABS = ["Furniture", "Lab equipment", "Lab & Medical", "Glassware", "Instruments", "PPE", "Tools", "Kitchen", "Bins & Trays", "Cleaning", "Electronics", "Toys & Basics", "Factory", "Car parts", "Garage", "Home", "Office", "Shops & Hotels", "Sports & Leisure", "Outdoor", "Soft", "LIBERO", "RoboCasa", "Scanned Objects"]
 
 # id, tab, label, Hugging Face folder, hollow, fixed
 ITEMS = [
@@ -461,10 +463,28 @@ ITEMS = [
 USDCRAFT = json.loads((pathlib.Path(__file__).parent / "usdcraft_library.json").read_text())
 ITEMS += [(u["id"], u["tab"], u["label"], "usdcraft:" + u["folder"], True, u["fixed"]) for u in USDCRAFT]
 
+# The Nov 17 batch: whole SimReady sets from projectsim, Allsides, NdotLight, M-XR (Marso), Palatial,
+# Yamato Protec and atech, plus NVIDIA items we hadn't added, listed in extra_library.json (picked by
+# playground/tools/pick_extra.py). Items that failed to build or the drop test are left out there.
+EXTRA = json.loads((pathlib.Path(__file__).parent / "extra_library.json").read_text())
+ITEMS += [(u["id"], u["tab"], u["label"], (u["source"] + ":" if u["source"] != "nvidia" else "") + u["folder"],
+           True, u["fixed"]) for u in EXTRA if not u.get("skip")]
+
+# Ready-made MuJoCo objects, each kept as its source made it (tools/build_mjcf_sets.py), listed in
+# mjcf_library.json: Google Scanned Objects as MuJoCo models (Kevin Zakka's mujoco_scanned_objects,
+# 1,030 scans) and RoboCasa's kitchen objects as RoboCasa loads them. Items that failed to build or
+# the drop test are left out there.
+MJCF_SETS = json.loads((pathlib.Path(__file__).parent / "mjcf_library.json").read_text())
+ITEMS += [(u["id"], u["tab"], u["label"], u["source"] + ":" + u["folder"], False, u["fixed"])
+          for u in MJCF_SETS if not u.get("skip")]
+
 # Triangles an item's visuals may keep before they are simplified (tools/convert_simready; the
 # default is 60,000). Simplifying drops a texture, so items whose whole look is one texture keep
 # all their detail (Palatial's are about 100,000 to 160,000 triangles).
-MAX_TRIS = {i[0]: 200_000 for i in ITEMS if i[3].startswith("palatial:")}
+# The Nov 17 batch (EXTRA) keeps its texture when simplified (MeshLab's texture-keeping decimation),
+# so it stays at the default and the library stays small enough to ship.
+_EXTRA_IDS = {u["id"] for u in EXTRA}
+MAX_TRIS = {i[0]: 200_000 for i in ITEMS if i[3].startswith("palatial:") and i[0] not in _EXTRA_IDS}
 
 # Furniture whose knobs, dials and buttons turn and press through their range (on other
 # furniture they are fixed, world.part_kind): a cooker's hob knobs, a washer's programme dial
@@ -561,11 +581,29 @@ FITTED_PARTS = {"kitchenette": {"refrigeratorBody_01_obj_00": "body_01_obj_00"}}
 # Where each item comes from, as the library's source chip names it (by its folder's prefix).
 SOURCE_NAMES = {"": "NVIDIA", "tripo": "Tripo", "quiktech": "QUIKTECH", "usdcraft": "USDCraft",
                 "autobio": "AutoBio", "mujoco": "MuJoCo", "inhouse": "Built in-house",
-                "forgecad": "ForgeCAD", "palatial": "Palatial", "libero": "LIBERO"}
+                "forgecad": "ForgeCAD", "palatial": "Palatial", "libero": "LIBERO",
+                "projectsim": "projectsim", "allsides": "Allsides", "ndotlight": "NdotLight", "mxr": "Marso",
+                "yamato": "Yamato Protec", "atech": "atech",
+                "gso": "Scanned Objects", "robocasa": "RoboCasa"}
 
 
 def source(hf: str) -> str:
     return SOURCE_NAMES[hf.rpartition(":")[0]]
+
+
+# How to cite a source whose authors ask for it, shown with the library's source chip (full BibTeX
+# in assets/CREDITS.md): item folder prefix -> citation, licence.
+CITATIONS = {
+    "gso": "Downs et al., \"Google Scanned Objects: A High-Quality Dataset of 3D Scanned Household Items\", "
+           "ICRA 2022 (arXiv:2204.11918). MuJoCo models: Zakka, \"Scanned Objects MuJoCo Models\", 2022. "
+           "CC BY 4.0 (meshes, textures), MIT (MJCF).",
+    "robocasa": "Nasiriany et al., \"RoboCasa: Large-Scale Simulation of Everyday Tasks for Generalist Robots\", "
+                "RSS 2024; Nasiriany et al., \"RoboCasa365\", ICLR 2026. CC BY 4.0.",
+}
+
+
+def citation(hf: str) -> str | None:
+    return CITATIONS.get(hf.rpartition(":")[0])
 
 
 def item(id_: str) -> dict:
@@ -580,15 +618,46 @@ def meta(id_: str) -> dict:
     return json.loads((ASSETS / id_ / "asset.json").read_text())
 
 
+# The library's category tree (category_tree.json: L1 -> L2 -> list of L3) and each object's place
+# in it (categories.json: id -> ["Kitchen", "Food", "Fruit"], each object judged from its name,
+# source and size). The front end browses it with breadcrumbs. An object not tagged yet (say, one
+# added since) shows under its tab's name until it gets a line in categories.json.
+_HERE = pathlib.Path(__file__).parent
+CATEGORY_TREE = json.loads((_HERE / "category_tree.json").read_text())
+CATEGORIES = json.loads((_HERE / "categories.json").read_text()) if (_HERE / "categories.json").exists() else {}
+
+
+def category(id_: str, tab: str) -> list[str]:
+    return CATEGORIES.get(id_) or [tab]
+
+
+_AVAILABLE: list[dict] | None = None
+
+
 def available() -> list[dict]:
-    """Library items whose converted files are present."""
+    """Library items whose converted files are present. Read once per process: on Modal the files
+    are on a Volume, where reading ~3,000 asset.json files per request would be slow."""
+    global _AVAILABLE
+    if _AVAILABLE is None:
+        _AVAILABLE = _available()
+    return _AVAILABLE
+
+
+def _available() -> list[dict]:
+    # index.json (written by tools/library.py push): every object's asset.json in one file, so the
+    # Modal Volume is read once instead of ~3,000 times. Objects not in it are read one by one.
+    idx = ASSETS / "index.json"
+    index = json.loads(idx.read_text()) if idx.exists() else {}
     out = []
     for i, tab, label, hf, hollow, fixed in ITEMS:
         f = ASSETS / i / "asset.json"
-        if f.exists():
+        m = index.get(i)
+        if m is None and f.exists():
             m = json.loads(f.read_text())
+        if m is not None:
             out.append({"id": i, "tab": tab, "label": label, "fixed": fixed, "size": m["size"],
                         "mass": m["mass"], "friction": m.get("friction"),
                         "collision": m.get("collision", ""), "thumb": f"/pg/thumb/{i}.png",
-                        "soft": i in SOFT, "source": source(hf)})
+                        "soft": i in SOFT, "source": source(hf), "cite": citation(hf),
+                        "cat": category(i, tab)})
     return out

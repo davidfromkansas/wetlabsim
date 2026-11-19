@@ -39,10 +39,10 @@ Browser ──> Vercel website (web/, Next.js 16)          https://simplayground
               ▼
            Modal app "wetlab-playground" (hosting/app.py)
               • web(): the "front" (playground.server --front): hands out containers, live list
-              • lab(): ONE Modal container per signed-in account (max 10 at once), running
+              • lab(): ONE Modal container per signed-in account (max 30 at once), running
                 playground.server --public: physics, 3D stream, robot API, model proxy.
                 Closes after 5 min with no real activity ("Still there?" at 4 min).
-              • Each AI run (max 4 at once) runs its CLI in its own Modal Sandbox that can reach
+              • Each AI run (max 15 at once per account) runs its CLI in its own Modal Sandbox that can reach
                 only the robot API tunnel + the model proxy (or Devin's servers). The user's own
                 API key stays in the container; the proxy adds it. (wetlabsim/launchers.py,
                 playground/model_proxy.py)
@@ -75,7 +75,7 @@ Secrets: Modal secrets `wetlab-link` (LAB_LINK_SECRET, shared with Vercel) and `
 | `playground/accounts.py`, `savestore.py`, `labs.py` | User keys, saving sessions/runs to Neon/Blob, container bookkeeping on Modal. |
 | `playground/settings.py` | Scene settings panel (MuJoCo option/flag/material values by their MuJoCo names). |
 | `playground/static/` | Front end: `index.html` (main app, one big file), `view3d.js` (three.js view), `runpanel.js`, `scenegen.js`, `scenesettings.js`, `results.js`, `gallery.js`, robot/station thumbnails. |
-| `playground/assets/` | Converted SimReady/Tripo/ForgeCAD/AutoBio/LIBERO objects (+ `CREDITS.md`). |
+| `playground/assets/` | Converted SimReady/Tripo/ForgeCAD/AutoBio/LIBERO objects. Not in git (only `CREDITS.md` is): they live in the Modal Volume `wetlab-library` (`python -m playground.tools.library pull` / `push`). |
 | `playground/tools/` | One-off build/convert/render scripts (assets, robots, thumbnails). |
 | `wetlabsim/scene.py` | Robot definitions (`ROBOTS` dict: franka, ur5e, aloha, fr3_duo, g1, piper, n220, crx30ia, rby1), materials, `OPTION`/`FLAGS`. |
 | `wetlabsim/sim.py` | Robot controllers: `Arm`, `TwoArm`, `Humanoid`, `Mobile`; IK, protective stops, sensors, cameras. |
@@ -95,7 +95,8 @@ Secrets: Modal secrets `wetlab-link` (LAB_LINK_SECRET, shared with Vercel) and `
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e . pytest
+pip install -e . pytest modal
+python -m playground.tools.library pull   # the object library (~8 GB, from Modal; needs `modal token new`)
 python -m playground.server          # http://localhost:8780 (robot API on 8781)
 ```
 
@@ -143,8 +144,9 @@ python -m pytest -q                                                             
 
 **An object**: add a row to `ITEMS` in `playground/catalog.py` (id, tab, label, source folder,
 hollow, fixed), build it with `python -m playground.tools.build_assets` (or `build_autobio`,
-`build_inhouse`, `build_libero_objects`, `build_soft`), and credit it in
-`playground/assets/CREDITS.md`. Objects keep their source's own physics data (mass, inertia,
+`build_inhouse`, `build_libero_objects`, `build_soft`), upload it with
+`python -m playground.tools.library push <id>` (the site reads its files from the Modal Volume;
+the catalog row ships with the code as usual), and credit it in `playground/assets/CREDITS.md`. Objects keep their source's own physics data (mass, inertia,
 joints, friction); see `docs/simready-data-audit.md`.
 
 **A station type**: an entry in `KINDS` in `playground/world.py` (table item, turn, robot spot,
