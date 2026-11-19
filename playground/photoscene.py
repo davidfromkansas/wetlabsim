@@ -73,6 +73,14 @@ hinge (turns) or slide (moves in a line) joint at the right edge, with its axis,
 calmly. Doors start closed unless open in the photo. Collision shapes are the visible shapes: build hollow \
 things hollow (a microwave cavity from 5 walls, a cup from a base and a ring of thin boxes) so things \
 can go inside them.
+Every object is tested in MuJoCo before it goes in; build it to pass:
+- Each hinge or slide moves over its whole range: a door swings fully open and shut without hitting its frame, \
+the next door or the worktop (leave 2-3 mm gaps), with its axis on the door's hinge edge. Never give a joint more \
+range than the part can really move (an elbow can't fold through its own arm).
+- Containers (cups, beakers, bowls, bins, trays, tubs, sinks, drawers) are open at the top with a closed bottom.
+- Nothing is thinner than 3 mm (walls, bases, shelves, wires, rods), so things dropped on it don't pass through.
+- Collision shapes follow the visible outside and keep handles, openings and rims usable; the mass of each part \
+fits its material and size.
 5. BUILD each object from simple shapes into a recognisable form: a mug = cylinder walls + base + handle, \
 a chair = seat + back + 4 legs, a microwave = hollow box + hinged door with a handle. Use the colours in the \
 photo.
@@ -816,6 +824,7 @@ class PhotoBuild(SG.Build):
                 fixed = o["kind"] != "loose"
                 uid = AI.register(o["name"], xml, fixed, size, frame, mass)
                 AI.shake(uid)
+                AI.inspect(uid)            # doors and drawers move, containers hold, nothing falls through
                 return {**o, "item": uid, "fixed": fixed, "size": size}
             except AI.Bad as e:
                 err = str(e)

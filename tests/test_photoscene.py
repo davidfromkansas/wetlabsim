@@ -5,6 +5,7 @@ goes back to the model; the scene is put down in a session and saved with it. No
 import base64
 import io
 import json
+import math
 
 import mujoco
 import pytest
@@ -62,6 +63,49 @@ def test_shake_catches_an_object_that_sinks_or_explodes():
     uid3 = AI.register("Ghost", ghost, False, *AI.measure(ghost))
     with pytest.raises(AI.Bad, match="sinks"):
         AI.shake(uid3)          # no collision shapes: it falls through the floor
+
+
+def _reg(name, body, fixed=False):
+    xml = AI.clean(f"<mujoco><worldbody>{body}</worldbody></mujoco>")
+    return AI.register(name, xml, fixed, *AI.measure(xml))
+
+
+CUP_WALLS = "".join(
+    f'<geom type="box" size="0.012 0.003 0.045" pos="{0.03 * math.cos(a):.4f} {0.03 * math.sin(a):.4f} 0.055" '
+    f'euler="0 0 {math.degrees(a) + 90:.2f}" mass="0.02"/>' for a in [k * math.pi / 6 for k in range(12)])
+
+
+def test_inspect_passes_a_well_made_cup_and_cabinet():
+    AI.inspect(_reg("Coffee cup", f'<body><geom type="cylinder" size="0.03 0.005" pos="0 0 0.005" mass="0.05"/>{CUP_WALLS}</body>'))
+    AI.inspect(_reg("Mug", MUG.split("<worldbody>")[1].split("</worldbody>")[0]))
+    cabinet = ('<body><geom type="box" size="0.3 0.3 0.01" pos="0 0 0.01" mass="5"/>'
+               '<geom type="box" size="0.3 0.01 0.3" pos="0 0.29 0.3" mass="5"/>'
+               '<body name="door" pos="-0.3 -0.32 0.3"><joint name="door_hinge" type="hinge" axis="0 0 1" '
+               'range="-110 0" damping="0.2" armature="0.01"/>'
+               '<geom type="box" size="0.3 0.01 0.28" pos="0.3 0 0" mass="2"/></body></body>')
+    AI.inspect(_reg("Cabinet", cabinet, fixed=True))
+
+
+def test_inspect_catches_a_solid_or_bottomless_container():
+    with pytest.raises(AI.Bad, match="hollow"):
+        AI.inspect(_reg("Glass beaker", '<body><geom type="cylinder" size="0.03 0.05" pos="0 0 0.05" mass="0.2"/></body>'))
+    with pytest.raises(AI.Bad, match="no bottom"):
+        AI.inspect(_reg("Plastic cup", f"<body>{CUP_WALLS}</body>"))
+
+
+def test_inspect_catches_a_door_that_cannot_open():
+    blocked = ('<body><geom type="box" size="0.3 0.3 0.01" pos="0 0 0.01" mass="5"/>'
+               '<geom name="post" type="box" size="0.02 0.05 0.3" pos="-0.2 -0.4 0.3" mass="1"/>'
+               '<body name="door" pos="-0.3 -0.32 0.3"><joint name="door_hinge" type="hinge" axis="0 0 1" '
+               'range="-110 0" damping="0.2" armature="0.01"/>'
+               '<geom type="box" size="0.3 0.01 0.28" pos="0.3 0 0" mass="2"/></body></body>')
+    with pytest.raises(AI.Bad, match="door_hinge.*only opens"):
+        AI.inspect(_reg("Blocked cabinet", blocked, fixed=True))
+
+
+def test_inspect_catches_something_too_thin_to_stay_on_a_table():
+    with pytest.raises(AI.Bad, match="passes through"):
+        AI.inspect(_reg("Paper sheet", '<body><geom type="box" size="0.1 0.15 0.0003" pos="0 0 0.0003" mass="0.005"/></body>'))
 
 
 def test_ai_items_work_like_library_items():
