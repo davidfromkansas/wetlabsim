@@ -450,31 +450,42 @@ export function start({stage, base = '', onReady}) {
   floorGlass.position.z = 0.006; floorGlass.receiveShadow = true; glassRoom.add(floorGlass);
   glassRoom.visible = false; scene.add(glassRoom);
 
-  // Robots at work: a glowing outline that hugs each working robot's own shape and moves with
-  // it. Each of the robot's meshes gets a twin drawn just outside it (its back faces, pushed out
-  // along smoothed normals by a few pixels' worth), so only a rim shows round the robot's form.
+  // Robots at work: a hologram shell round each working robot's own shape that moves with it.
+  // Each of the robot's meshes gets a twin pushed out along smoothed normals (about 9 px at any
+  // zoom). The shell is nearly clear where it faces the camera and glows only where it curves
+  // away (a rim, so the robot stays visible through it), with faint scan lines drifting up. Its
+  // light adds to what is behind it rather than covering it.
   // zones: [{bodies: [MuJoCo body ids of the robot], waiting}] (waiting = queued: dimmer).
   const outlineVertex = `
     attribute vec3 outlineNormal;
     uniform float widthPx;
+    varying vec3 vNormal, vView, vWorld;
     void main() {
       vec4 world = modelMatrix * vec4(position, 1.0);
       vec3 n = normalize(mat3(modelMatrix) * outlineNormal);
       float dist = length(cameraPosition - world.xyz);
       world.xyz += n * clamp(dist * widthPx * 0.0011, 0.006, 0.12);
+      vNormal = n; vView = normalize(cameraPosition - world.xyz); vWorld = world.xyz;
       gl_Position = projectionMatrix * viewMatrix * world;
     }`;
   const outlineFragment = `
-    uniform float strength;
+    uniform float strength, time;
+    varying vec3 vNormal, vView, vWorld;
     void main() {
-      gl_FragColor = vec4(mix(vec3(0.10, 0.72, 0.82), vec3(0.78, 0.98, 1.0), 0.45), strength);
+      float facing = abs(dot(normalize(vNormal), vView));
+      float rim = pow(1.0 - facing, 3.0);
+      float scan = smoothstep(0.82, 1.0, sin(vWorld.z * 140.0 - time * 3.0)) * 0.10;
+      float a = (rim * 0.85 + scan * (0.4 + rim)) * strength;
+      vec3 color = mix(vec3(0.10, 0.72, 0.82), vec3(0.80, 0.98, 1.0), rim);
+      gl_FragColor = vec4(color * a, a);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
     }`;
-  const outlineUniforms = {strength: {value: 0.9}, widthPx: {value: 9.0}};
-  const outlineWaitUniforms = {strength: {value: 0.35}, widthPx: {value: 6.0}};
+  const outlineUniforms = {strength: {value: 1.0}, widthPx: {value: 9.0}, time: {value: 0}};
+  const outlineWaitUniforms = {strength: {value: 0.4}, widthPx: {value: 6.0}, time: outlineUniforms.time};
   const outlineMat = (u) => new THREE.ShaderMaterial({uniforms: u, vertexShader: outlineVertex,
-    fragmentShader: outlineFragment, side: THREE.BackSide, transparent: true, depthWrite: false});
+    fragmentShader: outlineFragment, side: THREE.FrontSide, transparent: true, depthWrite: false,
+    blending: THREE.AdditiveBlending});
   const outlineMats = {on: outlineMat(outlineUniforms), wait: outlineMat(outlineWaitUniforms)};
   // Normals averaged over vertices at the same place, so a box's or a mesh's hard edges don't
   // open cracks in the outline. Once per geometry (robots' meshes are shared between sessions).
@@ -521,7 +532,8 @@ export function start({stage, base = '', onReady}) {
     }
   }
   function pulseZones(t) {
-    outlineUniforms.strength.value = 0.82 + 0.12 * Math.sin(t * 2.2);
+    outlineUniforms.strength.value = 0.92 + 0.08 * Math.sin(t * 2.2);
+    outlineUniforms.time.value = t;
     for (const [b, kind] of outlined) outlineBody(b, kind);
   }
   V.setZones = setZones;
