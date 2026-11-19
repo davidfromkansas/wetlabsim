@@ -38,6 +38,8 @@ SCENE_MODELS = [
     {"id": "claude-opus-5-5", "label": "Claude Opus 5.5", "provider": "anthropic"},
     {"id": "claude-sonnet-5-5", "label": "Claude Sonnet 5.5", "provider": "anthropic"},
     {"id": "claude-haiku-5-5", "label": "Claude Haiku 5.5", "provider": "anthropic"},
+    {"id": "gpt-6.2-astra", "label": "GPT-6.2 Astra", "provider": "openai"},
+    {"id": "gpt-6.2-sol", "label": "GPT-6.2 Sol", "provider": "openai"},
     {"id": "gpt-6-astra", "label": "GPT-6 Astra", "provider": "openai"},
     {"id": "gpt-6.1-sol", "label": "GPT-6.1 Sol", "provider": "openai"},
     {"id": "gpt-6.1-terra", "label": "GPT-6.1 Terra", "provider": "openai"},
@@ -45,7 +47,7 @@ SCENE_MODELS = [
     {"id": "gpt-6-luna", "label": "GPT-6 Luna", "provider": "openai"},
 ]
 # A task run's model (server.MODELS ids) as the scene model it is, for "the last model you used".
-FROM_RUN = {"claude": "claude-opus-5-5", "codex": "gpt-6-astra"}
+FROM_RUN = {"claude": "claude-opus-5-5", "codex": "gpt-6-astra"}  # (only its company is used now)
 _ENV = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY"}
 _AGENT = {"anthropic": "claude", "openai": "codex"}
 
@@ -934,9 +936,9 @@ class Build:
             my = sum(st.pos[1] for st in s.stations) / len(s.stations)
         else:
             mx = my = 0.0
-        cands = sorted({(round(mx + 0.5 * i, 2), round(my + 0.5 * j, 2)) for i in range(-34, 35)
-                        for j in range(-34, 35)}, key=lambda v: (v[0] - mx) ** 2 + (v[1] - my) ** 2)
-        lim = 8.3
+        cands = sorted({(round(mx + 0.5 * i, 2), round(my + 0.5 * j, 2)) for i in range(-60, 61)
+                        for j in range(-60, 61)}, key=lambda v: (v[0] - mx) ** 2 + (v[1] - my) ** 2)
+        lim = W.FLOOR_HALF - 0.2
         for tx, ty in cands:
             ox, oy = tx - cx, ty - cy
             if x0 + ox < -lim or x1 + ox > lim or y0 + oy < -lim or y1 + oy > lim:

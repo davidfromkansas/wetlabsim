@@ -615,6 +615,10 @@ def citation(hf: str) -> str | None:
 
 
 def item(id_: str) -> dict:
+    if id_.startswith("ai_"):             # an AI-made object (playground/aimade.py)
+        from . import aimade
+        if aimade.get(id_):
+            return aimade.item(id_)
     for i, tab, label, hf, hollow, fixed in ITEMS:
         if i == id_:
             return {"id": i, "tab": tab, "label": label, "hf": hf, "hollow": hollow, "fixed": fixed,
@@ -623,6 +627,10 @@ def item(id_: str) -> dict:
 
 
 def meta(id_: str) -> dict:
+    if id_.startswith("ai_"):
+        from . import aimade
+        if aimade.get(id_):
+            return aimade.meta(id_)
     return json.loads((ASSETS / id_ / "asset.json").read_text())
 
 

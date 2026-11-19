@@ -615,7 +615,7 @@ class PlaygroundSim(Sim):
             raise RobotError(f"only X and Y: {self.can_lift(uid)}")
         if lift > LIFT_MAX:
             raise RobotError(f"at most {LIFT_MAX * 100:.0f} cm up")
-        if abs(x) > 9.5 or abs(y) > 9.5:
+        if abs(x) > W.FLOOR_HALF + 1.0 or abs(y) > W.FLOOR_HALF + 1.0:
             raise RobotError("off the floor")
         with self.lock:
             R = self.obj_rot(uid)
@@ -725,7 +725,7 @@ class PlaygroundSim(Sim):
             for p in ps:
                 m = mids[p.uid]
                 x, y = float(m[0]) + dx, float(m[1]) + dy
-                if abs(x) > 9.5 or abs(y) > 9.5:
+                if abs(x) > W.FLOOR_HALF + 1.0 or abs(y) > W.FLOOR_HALF + 1.0:
                     spots = None
                     break
                 s = self.support(p.item, x, y, rot=rots[p.uid])
@@ -1116,7 +1116,7 @@ class PlaygroundSim(Sim):
         for o in self.stations:
             if o.uid != st.uid and any(o.claims(px, py, 0.1) for px, py in pts):
                 raise RobotError(f"too close to {o.name or o.uid}")
-        if any(max(abs(px), abs(py)) > 8.9 for px, py in pts):
+        if any(max(abs(px), abs(py)) > W.FLOOR_HALF + 0.4 for px, py in pts):
             raise RobotError("off the floor")
         on = st.robot_side() == "on"
         for p in self.placed:
@@ -1179,7 +1179,7 @@ class PlaygroundSim(Sim):
                 if probe.claims(p.pos[0], p.pos[1], max(fx, fy) / 2):
                     return {"pos": [round(x, 4), round(y, 4)], "yaw": yaw, "valid": False,
                             "reason": "furniture is in the way"}
-        if max(abs(x), abs(y)) > 8.5 or (probe.roomy and max(max(abs(px), abs(py)) for px, py in pts) > 8.9):
+        if max(abs(x), abs(y)) > W.FLOOR_HALF or (probe.roomy and max(max(abs(px), abs(py)) for px, py in pts) > W.FLOOR_HALF + 0.4):
             return {"pos": [round(x, 4), round(y, 4)], "yaw": yaw, "valid": False, "reason": "off the floor"}
         return {"pos": [round(x, 4), round(y, 4)], "yaw": yaw, "valid": True, "reason": ""}
 
@@ -1289,7 +1289,13 @@ class PlaygroundSim(Sim):
                               "mid": [round(float(v), 4) for v in self._obj_mid(p, R)],
                               "bodies": sorted(b for b, u in self.body_uid.items() if u == p.uid),
                               "lift": self.can_lift(p.uid) == "", "lift_why": self.can_lift(p.uid),
-                              **({"at": self.obj_at(p.uid)} if p.uid == sel else {})})
+                              **({"at": self.obj_at(p.uid)} if p.uid == sel else {}),
+                              # an AI-made object (aimade.py) isn't in the page's library list: its own details
+                              **({"ai": {"size": catalog.meta(p.item)["size"], "mass": catalog.meta(p.item)["mass"],
+                                         "collision": "Simple shapes, made by AI", "thumb": f"/pg/thumb/{p.item}.png",
+                                         "parts": catalog.meta(p.item)["parts"],
+                                         "friction": catalog.meta(p.item)["friction"]}}
+                                 if it.get("ai") else {})})
             return {"mode": "free", "objects": items, "paused": self.paused, "selected": self.selected,
                     "time": round(self.d.time, 3), "realtime_factor": round(self.rt_factor, 3),
                     "active": self.active_station,
@@ -1559,7 +1565,7 @@ class PlaygroundSim(Sim):
                 with self.lock:
                     c = self.d.xpos[self.m.body(f"obj_{uid}").id]
                 hit = np.array([c[0], c[1], hit[2]])
-        if abs(hit[0]) > 9.5 or abs(hit[1]) > 9.5:
+        if abs(hit[0]) > W.FLOOR_HALF + 1.0 or abs(hit[1]) > W.FLOOR_HALF + 1.0:
             return {"valid": False, "reason": "off the floor"}
         rot = None
         if exclude_uid:                 # a moved object keeps how it's turned

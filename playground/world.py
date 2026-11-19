@@ -27,6 +27,10 @@ from . import wetrobo as WR
 
 # The floor: 12-inch speckled vinyl tiles (playground/tools/make_lab_floor.py draws them), a 4 x 4
 # patch of tiles to the picture.
+# How far the usable floor reaches from the middle, each way (m): stations, robots and objects
+# stay inside it. (The floor plane itself is 120 m across.) 15 m = a 30 x 30 m floor, room for
+# a whole room built from a photo next to what's already there.
+FLOOR_HALF = 15.0
 FLOOR_TEXTURE = Path(__file__).resolve().parent / "textures" / "lab_floor.png"
 FLOOR_PATCH = 4 * 0.3048          # metres the picture covers
 TABLE_UID = "table"     # (older saved scenes) the one table a robot stood on
@@ -1076,7 +1080,10 @@ def _add_mjcf(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool = False):
     "free_damping" is the free joint's damping the model's source gives it (LIBERO's 0.0005), and
     "hide_collision" draws the model's collision shapes (group 0) only when debugging, as its
     source does."""
-    child = mujoco.MjSpec.from_file(str(catalog.ASSETS / p.item / meta["mjcf"]))
+    if meta.get("mjcf_xml"):        # an AI-made object (playground/aimade.py): its checked model
+        child = mujoco.MjSpec.from_string(meta["mjcf_xml"])
+    else:
+        child = mujoco.MjSpec.from_file(str(catalog.ASSETS / p.item / meta["mjcf"]))
     if meta.get("hide_collision"):
         for g in child.geoms:
             if g.group == 0 and (g.contype or g.conaffinity):
@@ -1092,7 +1099,7 @@ def _add_mjcf(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool = False):
 
 
 def _add_item(world: mujoco.MjSpec, p: Placed, meta: dict, fixed: bool, mesh_cache: set):
-    if meta.get("mjcf"):
+    if meta.get("mjcf") or meta.get("mjcf_xml"):
         return _add_mjcf(world, p, meta, fixed)
     if meta.get("bodies"):
         return _add_jointed(world, p, meta, fixed, mesh_cache)
