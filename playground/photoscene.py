@@ -32,6 +32,7 @@ from . import scenegen as SG
 from .scenegen import ModelError
 
 MAX_TRIES = 3
+FIX_AT_ONCE = 6               # objects tested (and sent back to fix) side by side
 MAX_OBJECTS = 46          # up to 40 things + 6 walls
 MAX_PHOTO_BYTES = 6_000_000
 THINKING_KEEP = 4000          # characters of thinking the page is sent
@@ -734,15 +735,21 @@ class PhotoBuild(SG.Build):
                 raise ModelError("the model's answer had no objects in it")
             self.counts["built"] = self.counts["total"] = len(objs)
             self.phase = "test"
-            ready = []
-            for o in objs:
+            from concurrent.futures import ThreadPoolExecutor
+            lock = threading.Lock()
+
+            def make(o):                # objects are tested side by side: a fix waits on the model
                 if self.stop:
-                    return self._end("stopped")
+                    return None
                 self.now = o["name"]
                 got = self._make(o)
-                if got:
-                    ready.append(got)
-                self.counts["tested"] += 1
+                with lock:
+                    self.counts["tested"] += 1
+                return got
+            with ThreadPoolExecutor(max_workers=FIX_AT_ONCE) as pool:
+                ready = [g for g in pool.map(make, objs) if g]
+            if self.stop:
+                return self._end("stopped")
             if not ready:
                 raise ModelError("none of the objects passed the physics check")
             self.phase = "place"
@@ -817,6 +824,7 @@ class PhotoBuild(SG.Build):
 
     def _make(self, o: dict) -> dict | None:
         """The object checked and tested (sent back to the model to fix, up to MAX_TRIES)."""
+        inspected = False
         for k in range(MAX_TRIES):
             try:
                 xml = AI.clean(o["xml"])
@@ -824,10 +832,18 @@ class PhotoBuild(SG.Build):
                 fixed = o["kind"] != "loose"
                 uid = AI.register(o["name"], xml, fixed, size, frame, mass)
                 AI.shake(uid)
-                AI.inspect(uid)            # doors and drawers move, containers hold, nothing falls through
-                return {**o, "item": uid, "fixed": fixed, "size": size}
             except AI.Bad as e:
                 err = str(e)
+            else:
+                ok = {**o, "item": uid, "fixed": fixed, "size": size}
+                try:
+                    AI.inspect(uid)        # doors and drawers move, containers hold, nothing falls through
+                    return ok
+                except AI.Bad as e:
+                    if inspected:          # it stands and settles; one fix tried: keep it as it is
+                        self._think(f"\n\n**Kept the {o['name'].lower()}** as it is: {e}")
+                        return ok
+                    inspected, err = True, str(e)
             if k == MAX_TRIES - 1 or self.stop:
                 break
             self.counts["retries"] += 1

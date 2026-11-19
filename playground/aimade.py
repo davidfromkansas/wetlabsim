@@ -436,7 +436,8 @@ def _check_moving_parts(id_: str):
     joints = [j for j in range(m.njnt) if int(m.jnt_bodyid[j]) in bodies and j not in tied
               and m.jnt_type[j] in (int(mujoco.mjtJoint.mjJNT_HINGE), int(mujoco.mjtJoint.mjJNT_SLIDE))
               and m.jnt_limited[j]]
-    joints = [j for j in joints if abs(m.jnt_range[j][1] - m.jnt_range[j][0]) > 0.02]
+    joints = [j for j in joints if abs(m.jnt_range[j][1] - m.jnt_range[j][0]) > 0.02
+              and m.body_subtreemass[m.jnt_bodyid[j]] >= 0.1]   # not tiny parts (a bottle's cap)
     if not joints:
         return
     start = {j: float(d.qpos[m.jnt_qposadr[j]]) for j in joints}

@@ -189,6 +189,25 @@ def test_an_object_that_never_passes_is_left_out(tmp_path, monkeypatch):
     assert b.phase == "done" and b.skipped == ["Mug"] and b.counts["placed"] == 2
 
 
+def test_an_inspection_problem_gets_one_fix_then_the_object_is_kept(tmp_path, monkeypatch):
+    from playground.sim import PlaygroundSim
+    s = PlaygroundSim(placed=[], stations=[])
+    b = _build(tmp_path, s)
+    solid = ('<scene title="Lab" objects="1"><object name="Glass beaker" kind="loose" x="0" y="0" z="0" yaw="0">'
+             '<mujoco><worldbody><body><geom type="cylinder" size="0.03 0.05" pos="0 0 0.05" mass="0.2"/>'
+             '</body></worldbody></mujoco></object></scene>')
+    asked = []
+
+    def ask(text, effort):
+        asked.append(text)
+        return solid               # the "fix" is still solid
+    monkeypatch.setattr(b, "_ask", ask)
+    b._run()
+    assert b.phase == "done" and b.counts["placed"] == 1 and not b.skipped
+    assert b.counts["retries"] == 1 and len(asked) == 2 and "hollow" in asked[1]
+    assert "Kept the glass beaker" in b.thinking
+
+
 def test_object_card_lists_moving_parts_and_friction():
     xml = AI.clean('<mujoco><worldbody><body name="cab"><geom type="box" size=".3 .2 .4" friction="0.6" mass="20"/>'
                    '<body name="door_1" pos="-.3 -.2 0"><joint type="hinge" axis="0 0 1" range="0 90"/>'
