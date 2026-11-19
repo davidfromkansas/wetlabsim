@@ -2,8 +2,9 @@
 
 - Google Scanned Objects, as MuJoCo models (github.com/kevinzakka/mujoco_scanned_objects):
   1,030 3D scans of real household items. Meshes and textures CC BY 4.0 (Google), MJCF MIT
-  (Kevin Zakka). The files state no mass: the collision pieces are weighed at the density LIBERO
-  and RoboCasa give scanned objects (GSO_DENSITY). Names and toy categories are Google's own.
+  (Kevin Zakka). The files state no mass: each scan gets its real product's weight
+  (playground/gso_masses.json, estimated per item), spread over its collision pieces; unlisted
+  ones fall back to GSO_DENSITY. Names and toy categories are Google's own.
 - RoboCasa's kitchen objects (github.com/robocasa/robocasa, assets CC BY 4.0): as RoboCasa
   loads them (scaled per category, with its density, friction, solref and solimp), exported by
   tools/export_robocasa.py, which runs RoboCasa's own object code.
@@ -53,6 +54,10 @@ GSO_MASS_FROM_COLLISION = True
 # Google Scanned Objects, RoboCasa's Objaverse scans). A scan is a closed outer surface, so the
 # density of water would weigh a shoe or a box as if solid all the way through.
 GSO_DENSITY = 100
+# Each scan's real weight, estimated from what the product is (name, Google's category, true size)
+# and looked up where needed: id -> {"g": grams, "basis": why}. A scan listed here is weighed at the
+# density that gives that weight over its collision pieces; GSO_DENSITY is the fallback.
+GSO_MASSES = json.loads((OUT.parent / "gso_masses.json").read_text()) if (OUT.parent / "gso_masses.json").exists() else {}
 # Google's own category of a scan (Gazebo Fuel, owner GoogleResearch) -> it's a toy: library tab
 # "Toys & Basics", name starting "Toy" (the scans are true to size; a dollhouse sofa is 21 cm)
 GSO_FUEL = "https://fuel.gazebosim.org/1.0/GoogleResearch/models"
@@ -127,8 +132,8 @@ def pick(gso: pathlib.Path | None, rc: pathlib.Path | None):
     print(len(rows), "items ->", OUT)
 
 
-def _gso_weight(root: ET.Element):
-    """A scan's <compiler> and <default>: weigh its collision pieces only, at GSO_DENSITY."""
+def _gso_weight(root: ET.Element, density: float = GSO_DENSITY):
+    """A scan's <compiler> and <default>: weigh its collision pieces only, at this density."""
     for tag in ("compiler", "default"):
         for el in root.findall(tag):
             if tag == "compiler" or el.get("class") is None:
@@ -138,7 +143,7 @@ def _gso_weight(root: ET.Element):
         comp["inertiagrouprange"] = "3 3"       # weigh the collision pieces (group 3) only
     root.insert(0, ET.Element("compiler", comp))
     default = ET.Element("default")
-    ET.SubElement(default, "geom", {"density": str(GSO_DENSITY)})
+    ET.SubElement(default, "geom", {"density": f"{density:.6g}"})
     root.insert(1, default)
 
 
@@ -162,6 +167,25 @@ def _gso_meta() -> dict:
     return out
 
 
+def _gso_weigh_file(path: pathlib.Path, id_: str) -> float:
+    """Weigh the scan in model.xml at `path`: its real weight from GSO_MASSES when listed (the
+    density that gives it, over the collision pieces' volume), else GSO_DENSITY. Returns kg."""
+    import mujoco
+
+    def mass(root, density):
+        _gso_weight(root, density)
+        path.write_text(ET.tostring(root, encoding="unicode"))
+        sp = mujoco.MjSpec()
+        sp.attach(mujoco.MjSpec.from_file(str(path)), frame=sp.worldbody.add_frame(), prefix="o_")
+        return float(sp.compile().body_subtreemass[0])
+
+    root = ET.parse(path).getroot()
+    g = GSO_MASSES.get(id_, {}).get("g")
+    if not g:
+        return mass(root, GSO_DENSITY)
+    return mass(root, g / 1000 / mass(root, 1.0))     # mass at density 1 = volume in m3
+
+
 def reweigh(ids=None):
     """Re-weigh scans already built (playground/assets/gs_*) after GSO_DENSITY or
     GSO_MASS_FROM_COLLISION change: rewrites their model.xml and asset.json "mass", no rebuild."""
@@ -175,13 +199,8 @@ def reweigh(ids=None):
         d = catalog.ASSETS / r["id"]
         if not (d / "asset.json").exists():
             continue
-        root = ET.parse(d / "model.xml").getroot()
-        _gso_weight(root)
-        (d / "model.xml").write_text(ET.tostring(root, encoding="unicode"))
-        sp = mujoco.MjSpec()
-        sp.attach(mujoco.MjSpec.from_file(str(d / "model.xml")), frame=sp.worldbody.add_frame(), prefix="o_")
         meta = json.loads((d / "asset.json").read_text())
-        meta["mass"] = round(float(sp.compile().body_subtreemass[0]), 5)
+        meta["mass"] = round(_gso_weigh_file(d / "model.xml", r["id"]), 5)
         (d / "asset.json").write_text(json.dumps(meta, indent=1))
         n += 1
     print(n, "scans re-weighed")
@@ -231,6 +250,8 @@ def build(row: dict, src: pathlib.Path) -> dict:
     else:
         root.insert(0, ET.Element("compiler", comp))
     (out / "model.xml").write_text(ET.tostring(root, encoding="unicode"))
+    if row["source"] == "gso":
+        _gso_weigh_file(out / "model.xml", id_)
 
     sp = mujoco.MjSpec()
     sp.attach(mujoco.MjSpec.from_file(str(out / "model.xml")), frame=sp.worldbody.add_frame(), prefix="o_")
