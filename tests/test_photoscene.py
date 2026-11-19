@@ -196,3 +196,33 @@ def test_time_limit_stops_a_silent_model(monkeypatch):
     p.wait()
     w.done()
     assert w.over.is_set() and T.time() - t0 < 5
+
+
+def test_codex_session_log_reasoning_counts_as_steps(tmp_path):
+    import time as T
+    got = []
+    log = tmp_path / "sessions" / "2026" / "r.jsonl"
+    log.parent.mkdir(parents=True)
+    done = PS._follow_logs(str(tmp_path / "sessions"), lambda line: got.append(line))
+    log.write_text('{"type":"event_msg","payload":{"type":"item_completed","item":{"id":"r1","type":"Reasoning","summary_text":[]}}}\n')
+    T.sleep(1.5)
+    done.set()
+    T.sleep(1.2)
+    assert len(got) == 1
+
+
+def test_codex_reasoning_lines_become_steps(monkeypatch):
+    lines = ['{"type":"event_msg","payload":{"type":"item_completed","item":{"id":"r1","type":"Reasoning","summary_text":[]}}}',
+             '{"type":"item.completed","item":{"id":"r1","type":"reasoning","text":""}}',          # same item again
+             '{"type":"item.completed","item":{"id":"r2","type":"reasoning","text":"Measuring the bench"}}',
+             '{"type":"item.started","item":{"id":"r3","type":"reasoning"}}']
+
+    def fake_local(model, prompt, imgs, login, effort, event, stopped):
+        for ln in lines:
+            event(ln)
+        return "<scene/>", login
+    monkeypatch.setattr(PS, "_codex_local_stream", fake_local)
+    monkeypatch.setattr(PS.SG, "WHERE", "local")
+    got = []
+    PS._codex_stream("m", "sys", [{"type": "text", "text": "x"}], "{}", "high", got.append, lambda t: None, lambda: False)
+    assert got == [PS.STEP, "\n\nMeasuring the bench"]

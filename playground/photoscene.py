@@ -235,18 +235,34 @@ def _codex_stream(model, system, content, login, effort, on_think, on_text, stop
         "\n\nDon't run any commands or change any files: answer in the format above, as your final message."
     imgs = [base64.b64decode(c["source"]["data"]) for c in content if c["type"] == "image"]
 
+    seen: set = set()
+
     def event(line: str):
+        """One line of Codex's --json output or of its session log (CODEX_HOME/sessions/*.jsonl):
+        a finished reasoning item is a thinking step, with its summary when there is one."""
         try:
             ev = json.loads(line)
         except json.JSONDecodeError:
             return
-        it = ev.get("item") or ev.get("msg") or {}
-        kind = str(it.get("type") or it.get("item_type") or "")
-        if "reasoning" in kind and ev.get("type", "item.completed") in ("item.completed", "item.updated", ""):
-            txt = it.get("text") or it.get("summary") or ""
-            if isinstance(txt, list):
-                txt = " ".join(str(x.get("text", x)) if isinstance(x, dict) else str(x) for x in txt)
-            on_think("\n\n" + str(txt) if txt else STEP)
+        if not isinstance(ev, dict):
+            return
+        body = ev.get("payload") if isinstance(ev.get("payload"), dict) else ev
+        it = body.get("item") or body.get("msg") or {}
+        if not isinstance(it, dict):
+            return
+        kind = str(it.get("type") or it.get("item_type") or "").lower()
+        what = str(body.get("type") or ev.get("type") or "").lower()
+        if "reasoning" not in kind or "start" in what or "delta" in what:
+            return
+        key = it.get("id")
+        if key:
+            if key in seen:
+                return
+            seen.add(key)
+        txt = it.get("text") or it.get("summary") or it.get("summary_text") or ""
+        if isinstance(txt, list):
+            txt = " ".join(str(x.get("text", x)) if isinstance(x, dict) else str(x) for x in txt)
+        on_think("\n\n" + str(txt).strip() if str(txt).strip() else STEP)
 
     if SG.WHERE == "modal":
         text, new = _codex_modal_stream(model, prompt, imgs, login, effort, event, stopped)
@@ -261,6 +277,33 @@ def _codex_stream(model, system, content, login, effort, on_think, on_text, stop
         raise ModelError("Codex gave no answer (is the ChatGPT sign-in still good? Try signing in again in Settings)")
     on_text(text)
     return text
+
+
+def _follow_logs(folder: str, event) -> threading.Event:
+    """Feeds every line Codex adds to its session logs under `folder` to event(), once a second,
+    until the returned event is set. (`codex exec --json` doesn't always print its reasoning
+    items; its session log does.)"""
+    done = threading.Event()
+
+    def run():
+        at: dict = {}
+        while True:
+            last = done.wait(1.0)
+            for f in pathlib.Path(folder).rglob("*.jsonl") if os.path.isdir(folder) else []:
+                try:
+                    with open(f, "rb") as fh:
+                        fh.seek(at.get(f, 0))
+                        chunk = fh.read()
+                    end = chunk.rfind(b"\n") + 1
+                    at[f] = at.get(f, 0) + end
+                    for line in chunk[:end].decode("utf-8", "replace").splitlines():
+                        event(line)
+                except OSError:
+                    pass
+            if last:
+                return
+    threading.Thread(target=run, daemon=True).start()
+    return done
 
 
 class _watch:
@@ -318,12 +361,14 @@ def _codex_local_stream(model, prompt, imgs, login, effort, event, stopped):
         except FileNotFoundError:
             raise ModelError("Codex isn't installed on this machine (npm install -g @openai/codex)") from None
         w = _watch(p.kill, stopped)
+        follow = _follow_logs(os.path.join(home, "sessions"), event)
         try:
             for line in p.stdout:
                 event(line)
             p.wait()
         finally:
             w.done()
+            follow.set()
         if w.over.is_set():
             raise ModelError(f"the model took longer than {PHOTO_TIMEOUT // 60} minutes, so it was stopped")
         text = open(out).read() if os.path.exists(out) else ""

@@ -515,6 +515,7 @@ const mmss = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart
 function thinkHtml(t, b) {
   const paras = String(t || '').split(/\n\s*\n/).map(x => x.trim()).filter(Boolean).slice(-10);
   if (!paras.length && b && b.steps) return `<p class="empty">${writing(b) ? 'Done thinking. Now writing out every object as shapes, sizes, weights and hinges. This is the longest part, often 5 to 10 minutes.' : `Working through the photo: ${b.steps} thinking step${b.steps === 1 ? '' : 's'} so far. This model doesn't share the words of its thinking, only that it's thinking.`}</p>`;
+  if (!paras.length && b && b.phase === 'look' && b.elapsed > 20) return `<p class="empty">The model is studying the photo and working out every object, size and hinge. It doesn't share its thinking as it goes. A full scene usually takes 8 to 15 minutes.</p>`;
   if (!paras.length) return '<p class="empty">The model\'s thinking shows here as it works…</p>';
   return paras.map(x => `<p>${e(x).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>')}</p>`).join('');
 }
@@ -550,7 +551,7 @@ function drawPhotoProg(b) {
     const pct = [4 + Math.min(9, (b.elapsed || 0) / 60), 14, 20 + 40 * c.built / Math.max(1, b.expected || 1), 60 + 25 * c.tested / Math.max(1, total), 85 + 15 * c.placed / Math.max(1, total)][Math.max(0, at)];
     html = `<div class="bar"><i style="width:${Math.min(100, pct)}%"></i></div>
 <div class="phd">${thumb}<div class="ptt"><b>Building your ${e(name)}</b><small>${e(b.model || 'The model')} · ${mmss(b.elapsed || 0)}</small></div><button class="gb g" id="sgStop2">${ic('stop', 10)}Stop</button></div>
-<ul>${row('look', 'eye', writing(b) ? 'Writing the scene' : 'Looking at the photo', b.expected ? `${b.expected} things` : writing(b) ? `thought in ${b.steps} steps` : b.steps ? `${b.steps} thinking step${b.steps === 1 ? '' : 's'}` : '', '')}
+<ul>${row('look', 'eye', writing(b) ? 'Writing the scene' : 'Looking at the photo', b.expected ? `${b.expected} things` : writing(b) ? `thought in ${b.steps} steps` : b.steps ? `${b.steps} thinking step${b.steps === 1 ? '' : 's'}` : b.phase === 'look' && b.elapsed > 20 ? `thinking for ${mmss(b.elapsed)}` : '', '')}
 ${row('measure', 'ruler', 'Measuring sizes', '', '')}
 ${row('build', 'objects', 'Building objects', at === 2 && b.now ? b.now : '', b.expected ? `${c.built} of ${b.expected}` : '', b.expected ? c.built / b.expected : null)}
 ${row('test', 'pulse', 'Testing physics', at === 3 ? (fixing ? `Asking the AI to fix the ${fixing[1]}` : b.now || '') : c.retries ? `${c.retries} fixed by the AI` : '', total && at >= 3 ? `${c.tested} of ${total}` : '', total ? c.tested / total : null)}
