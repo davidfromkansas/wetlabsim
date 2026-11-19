@@ -22,3 +22,5 @@ build/
 
 # NVIDIA GEAR-SONIC model files: downloaded from Hugging Face (wetlabsim/sonic.py), too big for git
 wetlabsim/assets/unitree_g1/sonic/*.onnx
+# Robot models from MuJoCo Menagerie keep their own textures
+!wetlabsim/assets/**/*.png

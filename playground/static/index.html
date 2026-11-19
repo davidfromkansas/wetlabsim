@@ -1506,7 +1506,7 @@ function renderDock() {
   const key = JSON.stringify([SID, list, sc.active, sc.runs, S.drafts, S.watch]);
   if (key === S.dockKey) return; S.dockKey = key;
   const chips = list.map(st => { const [d, t] = chipDot(st);
-    return `<div class="schipw${st.id === sc.active ? ' on' : ''}"><button class="schip" data-st="${esc(st.id)}" aria-pressed="${st.id === sc.active}"><img src="${STATION_IMG[st.robot] || STATION_IMG.franka}" alt=""><span><b>${esc(st.name)}</b><br><span class="sub">${esc(st.label)}</span></span><span class="sdot ${d}" title="${esc(t)}"></span></button>${S.watch ? '' : `<button class="smore" data-more="${esc(st.id)}" aria-label="More actions for ${esc(st.name)}" aria-haspopup="menu" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg></button>`}</div>`; });
+    return `<div class="schipw${st.id === sc.active ? ' on' : ''}"><button class="schip" data-st="${esc(st.id)}" aria-pressed="${st.id === sc.active}"><img src="${STATION_IMG[st.robot] || `/pg/static/station_${st.robot}.png`}" alt=""><span><b>${esc(st.name)}</b><br><span class="sub">${esc(st.label)}</span></span><span class="sdot ${d}" title="${esc(t)}"></span></button>${S.watch ? '' : `<button class="smore" data-more="${esc(st.id)}" aria-label="More actions for ${esc(st.name)}" aria-haspopup="menu" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg></button>`}</div>`; });
   const add = list.length ? `<button class="schip add" id="dockAdd" aria-label="Add a station"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 12 12" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg>${list.length > 3 ? '' : 'Add station'}</button>`
     : `<button class="schip add big" id="dockAdd"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 12 12" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M6 1 V11 M1 6 H11"/></svg>Add your first station</button>`;
   $('dock').innerHTML = chips.join('') + (S.watch ? '' : add);
@@ -1530,7 +1530,9 @@ function renderDock() {
 // ---------------------------------------------------------------- layout v3: robots are the unit
 // The lab's robots, listed under the open session in the sidebar, and the robot panel's header.
 const ROBOT_PIC = {franka: '/pg/static/robot_franka.png', ur5e: '/pg/static/robot_ur5e.png', aloha: '/pg/static/robot_aloha.png', fr3_duo: '/pg/static/robot_fr3_duo.png', g1: '/pg/static/robot_g1.png', piper: '/pg/static/robot_piper.png', n220: '/pg/static/robot_n220.png', crx30ia: '/pg/static/robot_crx30ia.png', rby1: '/pg/static/robot_rby1.png'};
-const ROBOT_IMG = (r) => ROBOT_PIC[r] || ROBOT_PIC.franka;
+// A Menagerie arm's gripper opening (mm) from the catalog; 0 for a swinging jaw.
+const catOpenMm = (r) => ((S.cat && S.cat.robots || []).find(x => x.id === r) || {}).open_mm || 0;
+const ROBOT_IMG = (r) => ROBOT_PIC[r] || (r ? `/pg/static/robot_${r}.png` : ROBOT_PIC.franka);   // the Menagerie arms: by name
 // Make a robot the active one. The highlight and the camera glide start on the click itself;
 // the server is told afterwards (it skips its own glide when the page is already gliding).
 function selectStation(id) {
@@ -2967,7 +2969,9 @@ function renderData() {
   const openMm = (g) => stn.robot === 'g1' ? 120 * (1 - (g.position || 0) / 255)    // Dex3-1: fingertips apart
     : stn.robot === 'rby1' ? 6 + 100 * (1 - (g.position || 0) / 255)                     // RB-Y1: 6-106 mm
     : stn.robot === 'ur5e' || stn.robot === 'fr3_duo' ? 85 * (1 - (g.position || 0) / 255)
-    : stn.robot === 'aloha' ? 2 * (37 - 35 * (g.position || 0) / 255) : stn.robot === 'piper' ? 70 * (1 - (g.position || 0) / 255) : 3 + 80 * (1 - (g.position || 0) / 255);
+    : stn.robot === 'aloha' ? 2 * (37 - 35 * (g.position || 0) / 255) : stn.robot === 'piper' ? 70 * (1 - (g.position || 0) / 255)
+    : catOpenMm(stn.robot) ? catOpenMm(stn.robot) * (1 - (g.position || 0) / 255)                    // the Menagerie arms
+    : 3 + 80 * (1 - (g.position || 0) / 255);
   const rows = [];
   for (const [n, a] of arms) {
     const p = a.tcp_pose || [0, 0, 0, 0, 0, 0], g = a.gripper || {}, lc = n ? n.trim().toLowerCase() + ' ' : '';

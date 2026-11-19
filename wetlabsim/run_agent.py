@@ -118,6 +118,11 @@ DOCS_LEVELS = ("standard", "assisted")
 STANDARD_KITS = {"franka": "franka_emika_panda", "aloha": "aloha", "fr3_duo": "franka_fr3_duo", "g1": "unitree_g1",
                  "piper": "agilex_piper", "n220": "comau_n220", "crx30ia": "fanuc_crx30ia",
                  "rby1": "rainbow_robotics_rby1"}
+# The arms from MuJoCo Menagerie: their own model folders, plus the gripper we mount on some.
+from .menagerie_arms import ARMS as _MENAGERIE_ARMS
+STANDARD_KITS.update({r: a["folder"] for r, a in _MENAGERIE_ARMS.items()})
+KIT_GRIPPERS = {r: {"robotiq": "robotiq_2f85", "franka_hand": "franka_hand"}[a["add"]]
+                for r, a in _MENAGERIE_ARMS.items() if a.get("add")}
 # Left out of the robot model folder: notes, and for the ALOHA Menagerie's table scene and
 # its MJX patches (the robot only, as for the Franka).
 KIT_LEAVE_OUT = ("*.md", "conversion.json", "scene.xml", "*.patch", "*.png", "tablelegs.obj", "tabletop.obj",
@@ -165,7 +170,7 @@ def prepare_workspace(workspace: pathlib.Path, client: pathlib.Path, robot: str,
                      " from the manual's lab bench, SITE.md is right.")
     else:
         if robot not in STANDARD_KITS:
-            raise SystemExit("the standard docs level exists only for the Franka, the ALOHA, the FR3 Duo, the G1, the PiPER, the N-220, the CRX-30iA and the RB-Y1; use --docs assisted")
+            raise SystemExit("the standard docs level exists only for the Franka, the ALOHA, the FR3 Duo, the G1, the PiPER, the N-220, the CRX-30iA, the RB-Y1 and the Menagerie arms; use --docs assisted")
         kit = STANDARD_KITS[robot]
         from .datasheets import DIRS, fetch
         fetch(robot=robot)
@@ -184,6 +189,16 @@ def prepare_workspace(workspace: pathlib.Path, client: pathlib.Path, robot: str,
         shutil.copy(DIRS[robot] / "sources.json", sheets / "sources.json")
         shutil.copytree(ROOT / "wetlabsim" / "assets" / kit, workspace / "robot_model",
                         ignore=shutil.ignore_patterns(*KIT_LEAVE_OUT))
+        grip = KIT_GRIPPERS.get(robot)
+        if grip == "robotiq_2f85":
+            shutil.copytree(ROOT / "wetlabsim" / "assets" / grip, workspace / "robot_model" / grip,
+                            ignore=shutil.ignore_patterns(*KIT_LEAVE_OUT))
+        elif grip == "franka_hand":   # the hand's file and its meshes from the Panda's folder
+            panda = ROOT / "wetlabsim" / "assets" / "franka_emika_panda"
+            (workspace / "robot_model" / grip).mkdir()
+            shutil.copy(panda / "hand.xml", workspace / "robot_model" / grip / "hand.xml")
+            shutil.copytree(panda / "assets", workspace / "robot_model" / grip / "assets",
+                            ignore=shutil.ignore_patterns("link[0-7]*"))
         # Leave out the pixel/point helpers: at this level agents use the calibration themselves.
         a = robot_py.index("    # --- assisted helpers")
         b = robot_py.index("    # --- end assisted helpers\n") + len("    # --- end assisted helpers\n")
