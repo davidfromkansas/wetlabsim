@@ -1725,8 +1725,10 @@ class Build:
             x, y = bx + 0.5 * math.cos(ang), by + 0.5 * math.sin(ang)
             return self._as_object(n, f, stations.index(st), x, y, _facing(it, x, y, [bx, by], [], 0.0),
                                    furniture, objects)
-        if max(sx, sy, sz) > 0.9 or len(meta.get("bodies") or []) < 2:
-            return False
+        if max(sx, sy, sz) > 0.9 or len(meta.get("bodies") or []) < 2 or \
+                re.search(r"dishwasher|washing|washer|dryer|range|stove|refrigerator|freezer|cabinet|vending",
+                          catalog.item(it)["label"].lower()):
+            return False     # (a floor appliance stands on the floor even when it's small enough)
         pr = W.Station("probe", st["robot"], (0.0, 0.0), 0.0, kind="table")
         bx, by = pr.bases()[0]
         tx, ty = pr.footprint()
