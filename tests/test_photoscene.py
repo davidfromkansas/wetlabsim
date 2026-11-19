@@ -228,6 +228,22 @@ def test_codex_reasoning_lines_become_steps(monkeypatch):
     assert got == [PS.STEP, "\n\nMeasuring the bench"]
 
 
+def test_a_thought_in_both_stdout_and_the_session_log_shows_once(monkeypatch):
+    out = '{"type":"item.completed","item":{"id":"item_0","type":"reasoning","text":"**Mapping the bench**\\n**Hollow flask**"}}'
+    log = '{"type":"event_msg","payload":{"type":"item_completed","item":{"id":"rs_1","type":"Reasoning","summary_text":["**Mapping the bench**","**Hollow flask**"]}}}'
+
+    def fake_local(model, prompt, imgs, login, effort, event, stopped):
+        event(log, True)                 # the log can come first...
+        event(out)
+        event(log.replace("rs_1", "rs_2").replace("Hollow", "Thin"), True)   # ...after stdout it is ignored
+        return "<scene/>", login
+    monkeypatch.setattr(PS, "_codex_local_stream", fake_local)
+    monkeypatch.setattr(PS.SG, "WHERE", "local")
+    got = []
+    PS._codex_stream("m", "sys", [{"type": "text", "text": "x"}], "{}", "high", got.append, lambda t: None, lambda: False)
+    assert got == ["\n\n**Mapping the bench** **Hollow flask**"]
+
+
 def test_split_mode_plans_then_builds_in_parallel(tmp_path, monkeypatch):
     from playground.sim import PlaygroundSim
     monkeypatch.setattr(PS, "SPLIT", True)

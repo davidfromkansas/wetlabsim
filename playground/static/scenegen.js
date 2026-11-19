@@ -514,9 +514,7 @@ function drawProg() {
 const mmss = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 function thinkHtml(t, b) {
   const paras = String(t || '').split(/\n\s*\n/).map(x => x.trim()).filter(Boolean).slice(-10);
-  if (!paras.length && b && b.steps) return `<p class="empty">${writing(b) ? 'Done thinking. Now writing out every object as shapes, sizes, weights and hinges. This is the longest part, often 5 to 10 minutes.' : `Working through the photo: ${b.steps} thinking step${b.steps === 1 ? '' : 's'} so far. This model doesn't share the words of its thinking, only that it's thinking.`}</p>`;
-  if (!paras.length && b && b.phase === 'look' && b.elapsed > 20) return `<p class="empty">The model is studying the photo and working out every object, size and hinge. It doesn't share its thinking as it goes. A full scene usually takes 8 to 15 minutes.</p>`;
-  if (!paras.length) return '<p class="empty">The model\'s thinking shows here as it works…</p>';
+  if (!paras.length) return '';
   return paras.map(x => `<p>${e(x).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>')}</p>`).join('');
 }
 // No word from the model for a while after it has been thinking: it is writing its answer
@@ -556,7 +554,7 @@ ${row('measure', 'ruler', 'Measuring sizes', '', '')}
 ${row('build', 'objects', 'Building objects', at === 2 && b.now ? b.now : '', b.expected ? `${c.built} of ${b.expected}` : '', b.expected ? c.built / b.expected : null)}
 ${row('test', 'pulse', 'Testing physics', at === 3 ? (fixing ? `Asking the AI to fix the ${fixing[1]}` : b.now || '') : c.retries ? `${c.retries} fixed by the AI` : '', total && at >= 3 ? `${c.tested} of ${total}` : '', total ? c.tested / total : null)}
 ${row('place', 'plan', 'Placing in your session', at === 4 ? b.now || '' : '', at >= 4 ? `${c.placed} of ${total - (b.skipped || []).length}` : '', total ? c.placed / Math.max(1, total - (b.skipped || []).length) : null)}</ul>
-<div class="think"><div class="thl">${SPARK.replace('width="16" height="16"', 'width="12" height="12"')}Thinking</div><div class="thx" id="sgTx">${thinkHtml(b.thinking, b)}</div></div>`;
+${thinkHtml(b.thinking, b) ? `<div class="think"><div class="thl">${SPARK.replace('width="16" height="16"', 'width="12" height="12"')}Thinking</div><div class="thx" id="sgTx">${thinkHtml(b.thinking, b)}</div></div>` : ''}`;
   } else if (b.phase === 'stopped') {
     html = `<div class="res"><span class="ri" style="background:#F3F4F6;color:#374151">${ic('pause', 15)}</span><div><b>Stopped</b><p>${b.objects ? `${b.objects} object${b.objects === 1 ? '' : 's'} placed. They stay, or undo them.` : 'Nothing was placed.'}</p></div></div>
 <div class="acts">${b.objects ? `<button class="gb g" id="sgUndo">${ic('undo', 14)}Undo</button>` : ''}<button class="gb p" id="sgOk">Done</button></div>`;
