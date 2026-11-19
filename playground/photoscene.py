@@ -115,6 +115,35 @@ those itself).
 bottom.
 """
 
+# Split mode: one call plans the whole place (what, where, how big), then several calls build
+# their share of the objects at the same time. Same instructions; the long writing is shared out.
+SPLIT = os.environ.get("WETLAB_PHOTOSCENE_SPLIT", "") not in ("", "0")
+PER_BUILDER = 8               # objects each builder makes
+MAX_BUILDERS = 6
+
+PLAN = """Do steps 1-3 above (inventory, scale, measure) for this photo, but don't build anything yet. \
+Answer with the plan only, and nothing after it:
+
+<plan title="Short name of the place">
+<item name="Microwave" kind="fixed" x="0.40" y="2.10" z="0.90" yaw="0" w="0.50" d="0.36" h="0.28" \
+looks="stainless steel, black glass door, handle on the right" moves="door hinged on the left, opens 0-110 degrees"/>
+...
+</plan>
+
+One <item> per object you will build (at most 40, plus the walls), with the same names, kinds and \
+positions you would use in the scene; w, d, h = width, depth, height in metres; looks = colours, materials \
+and the main parts; moves = its moving parts (or "none")."""
+
+BUILD = """Here is the plan for the whole place in the photo, already worked out (positions in the room \
+frame, sizes w x d x h in metres):
+
+{plan}
+
+Now do steps 4 and 5 for ONLY these {n} objects from the plan: {names}.
+Keep each one's name, kind, x, y, z and yaw exactly as in the plan, and match its size, looks and moving \
+parts. Answer in the scene format with only these objects, and nothing after it: \
+<scene title="{title}" objects="{n}"> ... </scene>"""
+
 FIX = """Your object "{name}" failed its physics check in MuJoCo:
 {error}
 
@@ -470,6 +499,27 @@ def parse_scene(text: str) -> tuple[str, list[dict]]:
     return title, out
 
 
+_ITEM = re.compile(r"<item\b([^>]*?)/?>", re.S)
+
+
+def parse_plan(text: str) -> tuple[str, list[dict], str]:
+    """(title, items, the plan's text) from a planning answer."""
+    m = re.search(r"<plan\b([^>]*)>(.*?)(</plan>|$)", text, re.S)
+    if not m:
+        return "", [], ""
+    title = dict(_ATTR.findall(m.group(1))).get("title", "").strip()[:60]
+    items = [dict(_ATTR.findall(a)) for a in _ITEM.findall(m.group(2))]
+    items = [i for i in items if i.get("name")][:MAX_OBJECTS]
+    return title, items, m.group(0)
+
+
+def split_items(items: list[dict]) -> list[list[dict]]:
+    """The plan's items shared out between the builders, big and small mixed so each takes about as long."""
+    n = max(1, min(MAX_BUILDERS, math.ceil(len(items) / PER_BUILDER)))
+    big = sorted(items, key=lambda i: -(_f(i.get("w")) * _f(i.get("d")) * _f(i.get("h"))))
+    return [g for g in (big[k::n] for k in range(n)) if g]
+
+
 def _f(v) -> float:
     try:
         x = float(v)
@@ -634,12 +684,13 @@ class PhotoBuild(SG.Build):
                                              "data": base64.b64encode(self.photo).decode()}},
                 {"type": "text", "text": text}]
 
-    def _ask(self, text: str, effort: str) -> str:
+    def _ask(self, text: str, effort: str, on_text=None) -> str:
+        on_text = on_text or self._text
         if SG.fake():
-            ans = _fake_stream(self, text)
+            ans = _fake_stream(self, text, on_text)
         else:
             ans = ask_stream(self.model_id, self._content(text), self.public, effort, self._think,
-                             self._text, lambda: self.stop)
+                             on_text, lambda: self.stop)
         self.answers.append(f"===== asked: {text[:200]}\n\n{ans}")
         return ans
 
@@ -649,10 +700,13 @@ class PhotoBuild(SG.Build):
         was_playing = not s.paused
         try:
             note = f"\n\nA note from the person who took the photo: {self.note}" if self.note else ""
-            answer = self._ask("Rebuild the place in this photo as a sim-ready MuJoCo scene." + note, "high")
+            if SPLIT:
+                title, objs = self._ask_split(note)
+            else:
+                answer = self._ask("Rebuild the place in this photo as a sim-ready MuJoCo scene." + note, "high")
+                title, objs = parse_scene(answer)
             if self.stop:
                 return self._end("stopped")
-            title, objs = parse_scene(answer)
             self.title = self.title or title
             if not objs:
                 raise ModelError("the model's answer had no objects in it")
@@ -690,6 +744,54 @@ class PhotoBuild(SG.Build):
             s.zone = []
             if was_playing and self.phase in ("done", "stopped", "error"):
                 s.play()
+
+    def _ask_split(self, note: str) -> tuple[str, list[dict]]:
+        """The plan first, then the builders at the same time; their objects in the plan's order."""
+        plan_text = self._ask("Plan a sim-ready MuJoCo rebuild of the place in this photo." + note + "\n\n" + PLAN,
+                              "high", on_text=lambda t: None)
+        title, items, plan = parse_plan(plan_text)
+        if self.stop or not items:
+            if not self.stop:
+                raise ModelError("the model's plan had no objects in it")
+            return title, []
+        self.title = self.title or title
+        self.expected = len(items)
+        self.named = [i["name"] for i in items]
+        self.phase = "build"
+        groups = split_items(items)
+        texts = [""] * len(groups)
+        errors: list[Exception] = []
+
+        def seen(k):
+            def on_text(t):
+                texts[k] = t
+                self.last_heard = time.time()
+                self.counts["built"] = sum(len(re.findall(r"</object>", x)) for x in texts)
+            return on_text
+
+        def build(k, group):
+            ask = BUILD.format(plan=plan, n=len(group), names="; ".join(i["name"] for i in group),
+                               title=title.replace('"', "'"))
+            try:
+                texts[k] = self._ask(ask, "high", on_text=seen(k))
+            except Exception as e:  # noqa: BLE001
+                errors.append(e)
+        threads = [threading.Thread(target=build, args=(k, g), daemon=True) for k, g in enumerate(groups)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        objs = []
+        for t in texts:
+            objs += parse_scene(t)[1]
+        if not objs and errors:
+            raise errors[0] if isinstance(errors[0], ModelError) else ModelError(str(errors[0]))
+        order = {i["name"]: n for n, i in enumerate(items)}
+        objs.sort(key=lambda o: order.get(o["name"], len(order)))
+        lost = [i["name"] for i in items if i["name"] not in {o["name"] for o in objs}]
+        if lost:
+            self.skipped += lost[:20]           # a builder failed or left them out
+        return title, objs[:MAX_OBJECTS]
 
     def _make(self, o: dict) -> dict | None:
         """The object checked and tested (sent back to the model to fix, up to MAX_TRIES)."""
@@ -789,16 +891,28 @@ FAKE_THINKING = ["**Looking at the photo**\nA small kitchen: a light counter alo
                  "**Building the objects**\nThe microwave gets a hollow box and a hinged door; the counter a sliding drawer."]
 
 
-def _fake_stream(b: PhotoBuild, text: str) -> str:
+def _fake_stream(b: PhotoBuild, text: str, on_text=None) -> str:
     delay = float(os.environ.get("WETLAB_PHOTOSCENE_FAKE_DELAY", "0.3"))
+    on_text = on_text or b._text
     if text.startswith("Your object"):
         return ""
+    _, objs = parse_scene(FAKE_SCENE)
+    if text.startswith("Plan a sim-ready"):
+        return '<plan title="Small kitchen">' + "".join(
+            f'<item name="{o["name"]}" kind="{o["kind"]}" x="{o["x"]}" y="{o["y"]}" z="{o["z"]}" yaw="0" '
+            f'w="0.5" d="0.5" h="0.5" looks="-" moves="-"/>' for o in objs) + "</plan>"
+    if text.startswith("Here is the plan"):
+        want = re.search(r"ONLY these \d+ objects from the plan: (.*)\.\n", text).group(1).split("; ")
+        out = '<scene title="Small kitchen" objects="%d">' % len(want) + "".join(
+            o["block"] for o in objs if o["name"] in want) + "</scene>"
+        on_text(out)
+        return out
     for t in FAKE_THINKING:
         b._think("\n\n" + t)
         time.sleep(delay)
     out = ""
     for chunk in re.split(r"(?=<object )", FAKE_SCENE):
         out += chunk
-        b._text(out)
+        on_text(out)
         time.sleep(delay)
     return out

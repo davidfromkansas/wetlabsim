@@ -226,3 +226,25 @@ def test_codex_reasoning_lines_become_steps(monkeypatch):
     got = []
     PS._codex_stream("m", "sys", [{"type": "text", "text": "x"}], "{}", "high", got.append, lambda t: None, lambda: False)
     assert got == [PS.STEP, "\n\nMeasuring the bench"]
+
+
+def test_split_mode_plans_then_builds_in_parallel(tmp_path, monkeypatch):
+    from playground.sim import PlaygroundSim
+    monkeypatch.setattr(PS, "SPLIT", True)
+    monkeypatch.setattr(PS, "PER_BUILDER", 1)          # 3 objects -> 3 builders at once
+    s = PlaygroundSim(placed=[], stations=[])
+    b = _build(tmp_path, s)
+    asked = []
+    real = b._ask
+    monkeypatch.setattr(b, "_ask", lambda text, effort, on_text=None: (asked.append(text[:20]), real(text, effort, on_text))[1])
+    b._run()
+    st = b.status()
+    assert st["phase"] == "done" and st["counts"]["placed"] == 3 and not st["skipped"], st
+    assert asked[0].startswith("Plan a sim-ready") and sum(a.startswith("Here is the plan") for a in asked) == 3
+
+
+def test_split_items_mixes_big_and_small():
+    items = [{"name": str(k), "w": str(k), "d": "1", "h": "1"} for k in range(1, 21)]
+    groups = PS.split_items(items)
+    assert len(groups) == 3 and sum(len(g) for g in groups) == 20
+    assert {g[0]["name"] for g in groups} == {"20", "19", "18"}
