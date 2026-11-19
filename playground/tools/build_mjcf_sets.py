@@ -2,8 +2,9 @@
 
 - Google Scanned Objects, as MuJoCo models (github.com/kevinzakka/mujoco_scanned_objects):
   1,030 3D scans of real household items. Meshes and textures CC BY 4.0 (Google), MJCF MIT
-  (Kevin Zakka). The files state no mass, so MuJoCo's default density applies, to the collision
-  pieces only (GSO_MASS_FROM_COLLISION).
+  (Kevin Zakka). The files state no mass: each scan gets its real product's weight
+  (playground/gso_masses.json, estimated per item), spread over its collision pieces; unlisted
+  ones fall back to GSO_DENSITY. Names and toy categories are Google's own.
 - RoboCasa's kitchen objects (github.com/robocasa/robocasa, assets CC BY 4.0): as RoboCasa
   loads them (scaled per category, with its density, friction, solref and solimp), exported by
   tools/export_robocasa.py, which runs RoboCasa's own object code.
@@ -49,6 +50,18 @@ LICENSE = {
 # volume, which weighs it twice; MuJoCo's compiler setting inertiagrouprange weighs only the
 # collision pieces.
 GSO_MASS_FROM_COLLISION = True
+# ... at the density LIBERO and RoboCasa give scanned household objects (100 kg/m3: LIBERO's
+# Google Scanned Objects, RoboCasa's Objaverse scans). A scan is a closed outer surface, so the
+# density of water would weigh a shoe or a box as if solid all the way through.
+GSO_DENSITY = 100
+# Each scan's real weight, estimated from what the product is (name, Google's category, true size)
+# and looked up where needed: id -> {"g": grams, "basis": why}. A scan listed here is weighed at the
+# density that gives that weight over its collision pieces; GSO_DENSITY is the fallback.
+GSO_MASSES = json.loads((OUT.parent / "gso_masses.json").read_text()) if (OUT.parent / "gso_masses.json").exists() else {}
+# Google's own category of a scan (Gazebo Fuel, owner GoogleResearch) -> it's a toy: library tab
+# "Toys & Basics", name starting "Toy" (the scans are true to size; a dollhouse sofa is 21 cm)
+GSO_FUEL = "https://fuel.gazebosim.org/1.0/GoogleResearch/models"
+GSO_TOY_CATEGORIES = {"Toys", "Action Figures", "Board Games", "Legos", "Stuffed Toys"}
 BIG, HEAVY = 0.9, 30.0           # m, kg: bigger or heavier items stay where they're put
 
 # RoboCasa's own words for a few categories, said as people say them
@@ -63,14 +76,42 @@ def _gso_label(folder: str) -> str:
     return s[:60]
 
 
+def gso_rows(folders: list[str]) -> list[dict]:
+    """A library row per scan: Google's own name for it, and toys (by Google's category) in the
+    toys tab, named as toys."""
+    meta = _gso_meta()
+    rows = []
+    for f in folders:
+        m = meta.get(f, {})
+        label = m.get("name") or _gso_label(f)
+        if label.isupper():                     # many toy makers' names are in capitals
+            label = label.title()
+        label = label[:60]
+        toy = bool(GSO_TOY_CATEGORIES & set(m.get("categories", []))) or bool(re.search(r"(?i)\b(toys?|dollhouse)\b", label))
+        if toy and not re.search(r"(?i)\btoys?\b", label):
+            label = ("Toy " + label)[:60]
+        rows.append({"id": "gs_" + re.sub(r"[^a-z0-9]+", "_", f.lower()).strip("_"), "source": "gso",
+                     "folder": f, "label": label, "tab": "Toys & Basics" if toy else "Scanned Objects",
+                     "fixed": False, "category": ", ".join(m.get("categories", []))})
+    return rows
+
+
+def relabel():
+    """Re-name and re-tab the scans already listed (gso_rows), keeping each row's fixed/skip."""
+    rows = json.loads(OUT.read_text())
+    new = {r["id"]: r for r in gso_rows([r["folder"] for r in rows if r["source"] == "gso"])}
+    for r in rows:
+        if r["id"] in new:
+            for k in ("label", "tab", "category"):
+                r[k] = new[r["id"]][k]
+    OUT.write_text(json.dumps(rows, indent=1) + "\n")
+    print(sum(r["tab"] == "Toys & Basics" for r in new.values()), "of", len(new), "scans are toys")
+
+
 def pick(gso: pathlib.Path | None, rc: pathlib.Path | None):
     rows = []
     if gso:
-        for d in sorted((gso / "models").iterdir()):
-            if (d / "model.xml").exists():
-                id_ = "gs_" + re.sub(r"[^a-z0-9]+", "_", d.name.lower()).strip("_")
-                rows.append({"id": id_, "source": "gso", "folder": d.name, "label": _gso_label(d.name),
-                             "tab": "Scanned Objects", "fixed": False})
+        rows += gso_rows(sorted(d.name for d in (gso / "models").iterdir() if (d / "model.xml").exists()))
     if rc:
         found = sorted(rc.glob("*/robocasa.json"))
         counts: dict[str, int] = {}
@@ -89,6 +130,80 @@ def pick(gso: pathlib.Path | None, rc: pathlib.Path | None):
                 r[k] = old[r["id"]][k]
     OUT.write_text(json.dumps(rows, indent=1) + "\n")
     print(len(rows), "items ->", OUT)
+
+
+def _gso_weight(root: ET.Element, density: float = GSO_DENSITY):
+    """A scan's <compiler> and <default>: weigh its collision pieces only, at this density."""
+    for tag in ("compiler", "default"):
+        for el in root.findall(tag):
+            if tag == "compiler" or el.get("class") is None:
+                root.remove(el)
+    comp = {"angle": "radian", "autolimits": "true"}
+    if GSO_MASS_FROM_COLLISION:
+        comp["inertiagrouprange"] = "3 3"       # weigh the collision pieces (group 3) only
+    root.insert(0, ET.Element("compiler", comp))
+    default = ET.Element("default")
+    ET.SubElement(default, "geom", {"density": f"{density:.6g}"})
+    root.insert(1, default)
+
+
+def _gso_meta() -> dict:
+    """Google's name and category for every scan, from Gazebo Fuel (where Google published them)."""
+    import urllib.error
+    import urllib.request
+    out, page = {}, 1
+    while True:
+        try:
+            with urllib.request.urlopen(f"{GSO_FUEL}?per_page=100&page={page}", timeout=60) as r:
+                batch = json.load(r)
+        except urllib.error.HTTPError:          # past the last page
+            break
+        if not batch:
+            break
+        for m in batch:
+            out[m["name"]] = {"categories": m.get("categories") or [],
+                              "name": (m.get("description") or "").split("\n")[0].strip()}
+        page += 1
+    return out
+
+
+def _gso_weigh_file(path: pathlib.Path, id_: str) -> float:
+    """Weigh the scan in model.xml at `path`: its real weight from GSO_MASSES when listed (the
+    density that gives it, over the collision pieces' volume), else GSO_DENSITY. Returns kg."""
+    import mujoco
+
+    def mass(root, density):
+        _gso_weight(root, density)
+        path.write_text(ET.tostring(root, encoding="unicode"))
+        sp = mujoco.MjSpec()
+        sp.attach(mujoco.MjSpec.from_file(str(path)), frame=sp.worldbody.add_frame(), prefix="o_")
+        return float(sp.compile().body_subtreemass[0])
+
+    root = ET.parse(path).getroot()
+    g = GSO_MASSES.get(id_, {}).get("g")
+    if not g:
+        return mass(root, GSO_DENSITY)
+    return mass(root, g / 1000 / mass(root, 1.0))     # mass at density 1 = volume in m3
+
+
+def reweigh(ids=None):
+    """Re-weigh scans already built (playground/assets/gs_*) after GSO_DENSITY or
+    GSO_MASS_FROM_COLLISION change: rewrites their model.xml and asset.json "mass", no rebuild."""
+    import mujoco
+
+    from .. import catalog
+    n = 0
+    for r in json.loads(OUT.read_text()):
+        if r["source"] != "gso" or (ids and r["id"] not in ids):
+            continue
+        d = catalog.ASSETS / r["id"]
+        if not (d / "asset.json").exists():
+            continue
+        meta = json.loads((d / "asset.json").read_text())
+        meta["mass"] = round(_gso_weigh_file(d / "model.xml", r["id"]), 5)
+        (d / "asset.json").write_text(json.dumps(meta, indent=1))
+        n += 1
+    print(n, "scans re-weighed")
 
 
 def _src(row: dict, gso: pathlib.Path, rc: pathlib.Path) -> pathlib.Path:
@@ -130,10 +245,13 @@ def build(row: dict, src: pathlib.Path) -> dict:
         for el in root.findall(tag):
             root.remove(el)
     comp = {"angle": "radian", "autolimits": "true"}
-    if row["source"] == "gso" and GSO_MASS_FROM_COLLISION:
-        comp["inertiagrouprange"] = "3 3"       # weigh the collision pieces (group 3) only
-    root.insert(0, ET.Element("compiler", comp))
+    if row["source"] == "gso":
+        _gso_weight(root)
+    else:
+        root.insert(0, ET.Element("compiler", comp))
     (out / "model.xml").write_text(ET.tostring(root, encoding="unicode"))
+    if row["source"] == "gso":
+        _gso_weigh_file(out / "model.xml", id_)
 
     sp = mujoco.MjSpec()
     sp.attach(mujoco.MjSpec.from_file(str(out / "model.xml")), frame=sp.worldbody.add_frame(), prefix="o_")
@@ -228,7 +346,7 @@ def finish():
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("step", choices=["pick", "build", "finish"])
+    ap.add_argument("step", choices=["pick", "build", "finish", "relabel", "reweigh"])
     ap.add_argument("ids", nargs="*")
     ap.add_argument("--gso", type=pathlib.Path)
     ap.add_argument("--robocasa", type=pathlib.Path)
@@ -239,6 +357,10 @@ def main(argv=None):
         pick(a.gso, a.robocasa)
     elif a.step == "build":
         build_all(a.gso, a.robocasa, set(a.ids), a.workers, a.redo)
+    elif a.step == "relabel":
+        relabel()
+    elif a.step == "reweigh":
+        reweigh(set(a.ids))
     else:
         finish()
 
