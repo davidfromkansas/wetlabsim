@@ -205,6 +205,18 @@ def report(runs: list[dict]):
                     "started": cur.get("started", time.time())}
 
 
+def stage(text: str):
+    """What this lab is doing while it starts (shown on the website's "starting" card); its address
+    goes in only once it answers (report)."""
+    if not LAB_ID:
+        return
+    try:
+        labs = _dict("wetlab-labs")
+        labs[LAB_ID] = {**(labs.get(LAB_ID) or {}), "stage": text}
+    except Exception as e:  # noqa: BLE001
+        print("could not report the start stage:", e)
+
+
 def forget():
     try:
         _dict("wetlab-labs").pop(LAB_ID, None)
@@ -251,7 +263,7 @@ def start_reporting(get_runs, idle_minutes: float, busy, before_exit=None):
                 time.sleep(5)
             try:
                 report(get_runs())
-                if first:
+                if first and LAB_ID:
                     asked = float((_dict("wetlab-labs").get(LAB_ID) or {}).get("asked") or 0)
                     print(f"startup: ready (reported to the front)"
                           + (f", {time.time() - asked:.1f} s after the front asked for it" if asked else ""), flush=True)
@@ -284,7 +296,8 @@ def claim_lab(owner: str, user: str = "") -> dict:
     # the old and new fronts both answer); once up, one from an older build is replaced.
     if lab and lab in live and (not live[lab].get("url") or not older(live[lab].get("build", ""), BUILD)):
         info = live[lab]
-        return {"url": info["url"], "key": keys.get(lab), "lab": lab} if info.get("url") else {"pending": True}
+        return {"url": info["url"], "key": keys.get(lab), "lab": lab} if info.get("url") \
+            else {"pending": True, "stage": info.get("stage") or "starting", "waited": round(time.time() - info.get("asked", time.time()))}
     # An older build's lab with nothing running is on its way out: it doesn't take a place.
     open_labs = [k for k, v in live.items() if not older(v.get("build", ""), BUILD) or v.get("runs")]
     if len(open_labs) >= MAX_LABS:
@@ -294,7 +307,7 @@ def claim_lab(owner: str, user: str = "") -> dict:
     # Counted as open while it starts (it reports itself once its server is up).
     labs[lab] = {"url": "", "seen": time.time() + 120, "started": time.time(), "asked": time.time(), "runs": [], "build": BUILD}
     modal.Function.from_name(os.environ.get("WETLAB_MODAL_APP", "wetlab-playground"), "lab").spawn(lab, key, user)
-    return {"pending": True}
+    return {"pending": True, "stage": "starting", "waited": 0}
 
 
 def live_list(user: str | None = None) -> dict:

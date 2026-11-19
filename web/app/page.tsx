@@ -1,4 +1,5 @@
 import { currentUser } from "@clerk/nextjs/server";
+import { after } from "next/server";
 import { upsertUser } from "@/lib/db";
 import { GoToLab } from "./go-to-lab";
 import { StartButton } from "./start-button";
@@ -10,11 +11,12 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const user = await currentUser();
   if (user) {
-    await upsertUser({
+    // Saved after the page is sent: starting the Modal container needn't wait for the database.
+    after(() => upsertUser({
       id: user.id,
       email: user.primaryEmailAddress?.emailAddress ?? "",
       name: [user.firstName, user.lastName].filter(Boolean).join(" "),
-    });
+    }));
     return <GoToLab />;
   }
   return (
