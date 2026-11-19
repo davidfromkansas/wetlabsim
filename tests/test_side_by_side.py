@@ -81,37 +81,27 @@ def test_soft_limit_caps_copies():
     assert len(made) == SOFT_MAX - 1 and "soft" in why
 
 
-def test_work_box_walls_seen_only_by_robot_cameras():
-    """Each station's work box: four walls the robot's own cameras see (and nothing touches);
-    the default view and the page's 3D view (scene3d) leave them out."""
+def test_no_work_box_walls():
+    """Stations have no walls round them: robots' cameras see the whole scene, side-by-side
+    copies included. LIBERO's own room walls (the same geom group) stay for the robot's cameras."""
     from playground import scene3d
     from wetlabsim.sim import _robot_view
     sim, uid = _lab()
     sim.copy_station(uid, 1)
-    walls = [g for g in range(sim.m.ngeom) if sim.m.geom(g).name.split("/")[-1].startswith("wall")]
-    assert len(walls) == 8
-    for g in walls:
-        assert sim.m.geom_group[g] == W.WALL_GROUP
-        assert sim.m.geom_contype[g] == 0 and sim.m.geom_conaffinity[g] == 0
-    assert not mujoco.MjvOption().geomgroup[W.WALL_GROUP]
+    assert not [g for g in range(sim.m.ngeom) if sim.m.geom(g).name.split("/")[-1].startswith("wall")]
     assert _robot_view("overhead").geomgroup[W.WALL_GROUP] and not _robot_view("side").geomgroup[W.WALL_GROUP]
     assert W.WALL_GROUP not in scene3d.VISIBLE_GROUPS
-    # The robot's cameras are inside its own box.
-    st = sim.station(uid)
-    hx, hy, h = st.work_box()
-    arm = sim.arm_of(uid)
-    for k, cam in arm.P["cameras"].items():
-        if k == "side":
-            continue
-        p = sim.d.cam_xpos[sim.m.camera(cam).id]
-        lx, ly = st.to_local(p[0], p[1])
-        assert abs(lx) < hx and abs(ly) < hy and p[2] < h, k
 
 
-def test_overhead_camera_inside_work_box():
-    """Every one-arm station's overhead camera hangs inside its own work box (over its table,
-    below the walls' top), so it sees its table and not the box's walls from outside."""
-    import math
+def test_working_robot_outlined_by_its_bodies():
+    """The 3D view outlines a working robot by its own bodies (the glow follows its shape)."""
+    sim, uid = _lab()
+    bodies = sorted(int(b) for b in sim.arms[uid].bodies)
+    assert bodies and all(0 < b < sim.m.nbody for b in bodies)
+
+
+def test_overhead_camera_over_its_table():
+    """Every one-arm station's overhead camera hangs over its own table, below WALL_ABOVE."""
     kinds = dict(W.KINDS)          # plus tables no station uses yet: the pose is worked out
     for t in ("workbench", "instrument_trolley", "optical_table"):     # from any table's size
         kinds["try_" + t] = dict(W.KINDS["table"], table=t, robot_xy=(-0.2, 0.0))
@@ -131,7 +121,11 @@ def _check_overhead(kinds):
             task = LB.tasks()[0].id if kind == "libero" else ""
             st = W.Station("st1", "franka", (1.0, -2.0), yaw, kind=kind, task=task)
             m = W.build([], [st])
-            hx, hy, h = st.work_box()
+            sx, sy = st.footprint()
             x, y, z = m.cam_pos[m.camera("st1/overhead").id]
             lx, ly = st.to_local(x, y)
-            assert abs(lx) < hx - 0.05 and abs(ly) < hy - 0.05 and z < h, (kind, yaw, lx, ly, z)
+            if kind == "libero":
+                assert abs(lx) < sx / 2 and abs(ly) < sy / 2, (kind, yaw, lx, ly)
+                continue
+            assert abs(lx) < sx / 2 + 0.05 and abs(ly) < sy / 2 + 0.05, (kind, yaw, lx, ly, z)
+            assert z < st.top + st.WALL_ABOVE + 0.01 or st.floor_arm, (kind, yaw, z)

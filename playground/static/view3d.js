@@ -343,6 +343,7 @@ export function start({stage, base = '', onReady}) {
   // A world taken off screen: free its GPU copies (not the meshes and textures kept for reuse).
   function dispose(group) {
     group.traverse(o => {
+      if (o.userData.isOutline) return;   // shares its mesh's shape; its material is kept
       if (o.geometry && !o.geometry.userData.shared) o.geometry.dispose();
       if (o.material) { o.material.dispose(); }
       if (o.isLight && o.dispose) o.dispose();
@@ -449,83 +450,79 @@ export function start({stage, base = '', onReady}) {
   floorGlass.position.z = 0.006; floorGlass.receiveShadow = true; glassRoom.add(floorGlass);
   glassRoom.visible = false; scene.add(glassRoom);
 
-  // Running stations: see-through light curtains with a white-cyan rim, soft edge
-  // spill and continuous perimeter trails. All distances are metres, so a larger
-  // station keeps the same thin rim instead of stretching it into an opaque band.
-  const zonesGroup = new THREE.Group(); zonesGroup.name = 'Station light curtains'; scene.add(zonesGroup);
-  const zonePool = [];
-  const zoneVertex = `
-    varying vec3 localPos, faceNormal;
+  // Robots at work: a glowing outline that hugs each working robot's own shape and moves with
+  // it. Each of the robot's meshes gets a twin drawn just outside it (its back faces, pushed out
+  // along smoothed normals by a few pixels' worth), so only a rim shows round the robot's form.
+  // zones: [{bodies: [MuJoCo body ids of the robot], waiting}] (waiting = queued: dimmer).
+  const outlineVertex = `
+    attribute vec3 outlineNormal;
+    uniform float widthPx;
     void main() {
-      localPos = position; faceNormal = normal;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      vec4 world = modelMatrix * vec4(position, 1.0);
+      vec3 n = normalize(mat3(modelMatrix) * outlineNormal);
+      float dist = length(cameraPosition - world.xyz);
+      world.xyz += n * clamp(dist * widthPx * 0.0011, 0.002, 0.04);
+      gl_Position = projectionMatrix * viewMatrix * world;
     }`;
-  const zoneFragment = `
-    uniform vec3 halfSize;
-    uniform float time, strength, phase;
-    varying vec3 localPos, faceNormal;
+  const outlineFragment = `
+    uniform float strength;
     void main() {
-      vec3 p = localPos * halfSize;
-      vec3 gap = max(halfSize - abs(p), 0.0);
-      bool lid = abs(faceNormal.z) > 0.5;
-      float sideGap = abs(faceNormal.x) > 0.5 ? gap.y : gap.x;
-      float edge = lid ? min(gap.x, gap.y) : min(sideGap, gap.z);
-      float aa = max(fwidth(edge), 0.001);
-      float width = (lid || gap.z < sideGap) ? 0.009 : 0.003;
-      float core = 1.0 - smoothstep(width, width + aa, edge);
-      float halo = exp(-edge * 24.0);
-      // The top/bottom ribbons spill gently down the clear sides, like a light-cycle trail.
-      float curtain = lid ? 0.0 : exp(-gap.z * 8.0);
-      float hx = halfSize.x, hy = halfSize.y;
-      float perimeter = 4.0 * (hx + hy);
-      float route;
-      bool xSide = lid ? gap.x < gap.y : abs(faceNormal.x) > 0.5;
-      if (xSide) route = p.x > 0.0 ? 2.0 * hx + p.y + hy : 4.0 * hx + 2.0 * hy + hy - p.y;
-      else route = p.y < 0.0 ? p.x + hx : 2.0 * hx + 2.0 * hy + hx - p.x;
-      float behind = mod(time * 0.85 + phase - route + perimeter * 100.0, perimeter);
-      float trail = exp(-behind / 0.65);
-      float rim = lid ? halo : exp(-gap.z * 38.0);
-      float alpha = (lid ? 0.004 : 0.012) + core * 0.76 + halo * 0.14 + curtain * 0.14;
-      alpha += trail * rim * 0.32;
-      vec3 cyan = vec3(0.10, 0.72, 0.82), white = vec3(0.78, 0.98, 1.0);
-      vec3 color = mix(cyan, white, clamp(core + trail * rim * 0.5, 0.0, 1.0));
-      gl_FragColor = vec4(color, min(alpha * strength, 0.92));
+      gl_FragColor = vec4(mix(vec3(0.10, 0.72, 0.82), vec3(0.78, 0.98, 1.0), 0.45), strength);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
     }`;
-  function setZones(zones) {
-    zones = zones || [];
-    for (let i = 0; i < zones.length; i++) {
-      let z = zonePool[i];
-      if (!z) {
-        const material = new THREE.ShaderMaterial({
-          uniforms: {halfSize: {value: new THREE.Vector3(1, 1, 1)}, time: {value: 0},
-            strength: {value: 1}, phase: {value: i * 1.7}},
-          vertexShader: zoneVertex, fragmentShader: zoneFragment,
-          transparent: true, depthWrite: false, side: THREE.DoubleSide, forceSinglePass: true,
-        });
-        const fill = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), material);
-        fill.renderOrder = 5;
-        const g = new THREE.Group(); g.add(fill); zonesGroup.add(g);
-        z = zonePool[i] = {g, fill};
-      }
-      const d = zones[i];
-      z.g.visible = true;
-      z.g.scale.set(d.half[0], d.half[1], d.height / 2);
-      z.fill.material.uniforms.halfSize.value.copy(z.g.scale);
-      z.g.position.set(d.pos[0], d.pos[1], d.height / 2);
-      z.g.rotation.set(0, 0, d.yaw || 0);
-      z.waiting = !!d.waiting;
+  const outlineUniforms = {strength: {value: 0.9}, widthPx: {value: 3.0}};
+  const outlineWaitUniforms = {strength: {value: 0.35}, widthPx: {value: 2.0}};
+  const outlineMat = (u) => new THREE.ShaderMaterial({uniforms: u, vertexShader: outlineVertex,
+    fragmentShader: outlineFragment, side: THREE.BackSide, transparent: true, depthWrite: false});
+  const outlineMats = {on: outlineMat(outlineUniforms), wait: outlineMat(outlineWaitUniforms)};
+  // Normals averaged over vertices at the same place, so a box's or a mesh's hard edges don't
+  // open cracks in the outline. Once per geometry (robots' meshes are shared between sessions).
+  function outlineNormals(geo) {
+    if (geo.attributes.outlineNormal) return;
+    const pos = geo.attributes.position, nor = geo.attributes.normal, n = pos.count;
+    const sums = new Map(), key = new Array(n), out = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const k = `${Math.round(pos.getX(i) * 1e4)},${Math.round(pos.getY(i) * 1e4)},${Math.round(pos.getZ(i) * 1e4)}`;
+      key[i] = k;
+      const v = sums.get(k) || [0, 0, 0];
+      if (nor) { v[0] += nor.getX(i); v[1] += nor.getY(i); v[2] += nor.getZ(i); }
+      sums.set(k, v);
     }
-    for (let i = zones.length; i < zonePool.length; i++) zonePool[i].g.visible = false;
+    for (let i = 0; i < n; i++) {
+      const v = sums.get(key[i]), l = Math.hypot(v[0], v[1], v[2]) || 1;
+      out[3 * i] = v[0] / l; out[3 * i + 1] = v[1] / l; out[3 * i + 2] = v[2] / l;
+    }
+    geo.setAttribute('outlineNormal', new THREE.BufferAttribute(out, 3));
+  }
+  let outlined = new Map();   // body id -> 'on' | 'wait'
+  function setZones(zones) {
+    const next = new Map();
+    for (const z of zones || []) for (const b of z.bodies || []) next.set(b, z.waiting ? 'wait' : 'on');
+    for (const b of outlined.keys()) if (!next.has(b)) outlineBody(b, null);
+    outlined = next;
+  }
+  // Give a body's meshes their outline twins (or hide them: kind null). Run every frame, as a
+  // world's meshes arrive a little after its bodies.
+  function outlineBody(b, kind) {
+    const body = V.bodies[b]; if (!body) return;
+    for (const obj of body.children) {
+      if (!obj.isMesh || obj.userData.isOutline) continue;
+      let o = obj.userData.outline;
+      if (!o) {
+        if (!kind || !obj.geometry || !obj.geometry.attributes.position) continue;
+        outlineNormals(obj.geometry);
+        o = obj.userData.outline = new THREE.Mesh(obj.geometry, outlineMats[kind]);
+        o.userData.isOutline = true; o.renderOrder = 5; o.castShadow = o.receiveShadow = false;
+        obj.add(o);
+      }
+      o.visible = !!kind;
+      if (kind) o.material = outlineMats[kind];
+    }
   }
   function pulseZones(t) {
-    for (const z of zonePool) {
-      if (!z.g.visible) continue;
-      const u = z.fill.material.uniforms;
-      u.time.value = t;
-      u.strength.value = z.waiting ? 0.38 : 0.90 + 0.06 * Math.sin(t * 0.8);
-    }
+    outlineUniforms.strength.value = 0.82 + 0.12 * Math.sin(t * 2.2);
+    for (const [b, kind] of outlined) outlineBody(b, kind);
   }
   V.setZones = setZones;
 

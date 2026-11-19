@@ -94,13 +94,12 @@ class Motion:
 
 
 # ------------------------------------------------------------------- one robot
-WALL_GROUP = 5     # geom group of a playground station's work-box walls (playground/world.py)
+WALL_GROUP = 5     # geom group of a LIBERO room's walls (playground/libero.py ROOM_WALL_GROUP)
 
 
 def _robot_view(camera: str) -> mujoco.MjvOption:
-    """What a robot's own camera draws: MuJoCo's default groups, plus the walls of the work
-    box around its station (so it sees its own table, not the stations around it). The
-    "side" camera is the audience's view from outside the box: no walls."""
+    """What a robot's own camera draws: MuJoCo's default groups, plus a LIBERO room's walls
+    (as in LIBERO). The "side" camera is the audience's view from outside the room: no walls."""
     opt = mujoco.MjvOption()
     if camera != "side":
         opt.geomgroup[WALL_GROUP] = 1
@@ -1382,7 +1381,7 @@ class Humanoid(TwoArm):
         n = len(dirs)
         geomid = np.zeros(n, np.int32)
         dist = np.zeros(n)
-        groups = np.array([1, 1, 1, 0, 0, 1], np.uint8)     # what the cameras see (visible shapes, work-box walls)
+        groups = np.array([1, 1, 1, 0, 0, 1], np.uint8)     # what the cameras see (visible shapes, LIBERO room walls)
         mujoco.mj_multiRay(m, rd, p0, dirs.reshape(-1).copy(), groups, 1, self.torso, geomid, dist, None, n,
                            self.LIDAR_RANGE[1])
         hit = (geomid >= 0) & (dist >= self.LIDAR_RANGE[0])

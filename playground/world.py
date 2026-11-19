@@ -111,7 +111,7 @@ KINDS = {
     # LIBERO builds it, with its Franka where LIBERO mounts it. The station's place is the room's
     # centre; its task and starting layout are the station's own (Station.task, .setup).
     # A pallet on the floor: what a big floor-standing arm lifts from and stacks on. An open
-    # cell (no work-box walls): its robot's cameras see the line around it.
+    # cell: its robot's cameras see the line around it.
     "pallet": {"label": "Pallet", "table": "pallet", "turn": 0.0, "robot_xy": (-0.3, 0.0), "open": True,
                "layout": []},
     # A car body on stands, side on to its robot: the robot stands level with the engine bay
@@ -273,7 +273,7 @@ class Station:
     setup: int = 0        # a LIBERO station: the official starting layout its next run starts from
     free: bool = False    # a benchmark's scene as a free station: the same room or lab, any task you
     #                       type, no goal check and no score (a LIBERO room keeps a task for its room)
-    open_cell: bool = False   # no work-box walls (a ready-made scene's humanoid, among other robots)
+    open_cell: bool = False   # kept from saved sessions; stations no longer have work-box walls
     # Where the user has put the robot itself (its own Move / Rotate controls), apart from its table.
     # None / 0: where the station's kind puts it. robot_at: (x, y) of its base in the station's
     # frame; robot_turn: its turn about the vertical from the station's (rad); robot_z: its mount's
@@ -334,13 +334,6 @@ class Station:
     def floor_arm(self) -> dict | None:
         """A big floor-standing arm's stance (FLOOR_ARMS), else None."""
         return FLOOR_ARMS.get(self.robot)
-
-    @property
-    def open(self) -> bool:
-        """An open cell: no work-box walls, so its robot's cameras see what is around it. A
-        robot on wheels (the RB-Y1) always has one: it drives off to the rest of the lab."""
-        from wetlabsim import scene as WS
-        return bool(self.open_cell or self.spec.get("open") or WS.ROBOTS[self.robot].get("mobile"))
 
     @property
     def stand_gap(self) -> float:
@@ -512,22 +505,11 @@ class Station:
         dx, dy = x - self.pos[0], y - self.pos[1]
         return (c * dx + s * dy, -s * dx + c * dy)
 
-    WALL_MARGIN = 0.1        # the work box: this far out from the table's edge
-    WALL_ABOVE = 1.3         # and this high above the table top (over the overhead camera)
-    ROOM = 7.0               # a humanoid's work box: a solid room this wide (m) round its table,
-                             # to walk about in
-
-    @property
-    def roomy(self) -> bool:
-        """A humanoid that walks (the G1): its work box is a room of solid walls, ROOM wide."""
-        from wetlabsim import scene as WS
-        return bool(WS.ROBOTS[self.robot].get("humanoid")) and not self.libero and not self.open
+    WALL_ABOVE = 1.3         # the overhead camera hangs at most this high above the table top
 
     def area(self):
         """What this station takes of the floor, (half x, half y) about its centre in its own
-        frame: a walking humanoid's room, else its table."""
-        if self.roomy:
-            return self.ROOM / 2, self.ROOM / 2
+        frame: its table (and a moved robot's base)."""
         sx, sy = self.footprint()
         hx, hy = sx / 2, sy / 2
         if self.moved:         # a robot moved off its table: its base too
@@ -547,31 +529,6 @@ class Station:
         hx, hy = self.area()
         f = np.linspace(-1.0, 1.0, n)
         return [self.to_world(a * hx, b * hy)[:2] for a in f for b in f]
-
-    def work_box(self):
-        """The space this station's robot works in: its table's footprint plus a margin, from
-        the floor to well above its cameras. (half x, half y, height), in the station's frame,
-        centred on the table."""
-        sx, sy = self.footprint()
-        if self.libero:        # the room itself
-            return sx / 2, sy / 2, 3.0
-        if self.roomy:         # a walking humanoid: its room
-            return self.ROOM / 2, self.ROOM / 2, self.top + self.WALL_ABOVE
-        # A humanoid stands outside the table's footprint: the box takes in where it stands too.
-        mx = self.stand_gap + 0.35 if self.standing else self.WALL_MARGIN
-        if self.floor_arm:     # a big arm: room for its base behind, its reach to the sides, its height
-            fa = self.floor_arm
-            return (sx / 2 + fa["gap"] + fa["base"], max(sy / 2 + self.WALL_MARGIN, fa["gap"] + fa["base"]),
-                    self.top + fa["above"] + 0.2)
-        hx, hy, h = sx / 2 + mx, sy / 2 + self.WALL_MARGIN, self.top + self.WALL_ABOVE
-        if self.moved and not self.standing:   # a moved arm: the box takes in its base, and its height
-            x, y = self.robot_xy
-            hx, hy = max(hx, abs(x) + 0.35), max(hy, abs(y) + 0.35)
-            h = max(h, self.mount_z + self.WALL_ABOVE)
-        elif self.moved:
-            x, y = self.robot_xy
-            hx, hy = max(hx, abs(x) + 0.5), max(hy, abs(y) + 0.5)
-        return hx, hy, h
 
     def footprint(self):
         """The table's size along the station's own x and y (a LIBERO station: its room's)."""
@@ -1158,9 +1115,8 @@ OVERHEAD_EDGE = 0.05       # kept this far in from the table's edge and below th
 def overhead_pose(st: Station) -> tuple:
     """Where a one-arm robot's overhead camera hangs, worked out from its table's size: (x over
     the table, height above the top), in the station's frame. It looks down at the table's
-    centre line. It hangs in front of the robot but always over the table, so it stays inside
-    the station's work box (outside it, it would see the box's walls); and high enough that
-    the table's whole length fits across the picture, but below the walls' top."""
+    centre line. It hangs in front of the robot but always over the table, high enough that
+    the table's whole length fits across the picture (up to WALL_ABOVE over the top)."""
     sx, sy = st.footprint()
     rx, _ = st.robot_xy
     if st.floor_arm:           # a big arm's: high over the middle of what it reaches
@@ -1223,8 +1179,6 @@ def add_station(world: mujoco.MjSpec, st: Station, cache: set):
         _camera(world, st.prefix + "side", st.to_world(rx + 1.75, ry - 1.3, mz + 0.8),
                 st.to_world(rx + 0.4, ry, mz + 0.1), 45)
     S.add_robot(world, st.robot, st.prefix + "robot_mount", st.prefix)
-    if not st.open:
-        _add_walls(world, st)
 
 
 def _add_stands(world: mujoco.MjSpec, st: Station):
@@ -1237,25 +1191,8 @@ def _add_stands(world: mujoco.MjSpec, st: Station):
                       size=[hx, hy, (hi - lo) / 2], rgba=STAND_RGBA, group=1)
 
 
-WALL_GROUP = 5          # MuJoCo geom group of the work box's walls: hidden in MuJoCo's default
-                        # view (groups 0-2) and in the page's 3D view; the robots' own cameras show it
-WALL_RGBA = [0.86, 0.87, 0.89, 1.0]
-
-
-def _add_walls(world: mujoco.MjSpec, st: Station):
-    """The four walls of a station's work box: seen only by its robots' cameras and lidar (geom
-    group WALL_GROUP), so a robot sees its own table and not the stations around it. A table
-    arm's walls are not part of the physics (contype and conaffinity 0); a walking humanoid's
-    room has solid walls, so what it sees is what stops it."""
-    hx, hy, h = st.work_box()
-    solid = st.roomy
-    t = 0.05 if solid else 0.005
-    for k, (lx, ly, ax, ay) in enumerate(((hx, 0, t, hy), (-hx, 0, t, hy), (0, hy, hx, t), (0, -hy, hx, t))):
-        x, y, _ = st.to_world(lx, ly)
-        world.worldbody.add_geom(name=f"{st.prefix}wall{k}", type=mujoco.mjtGeom.mjGEOM_BOX,
-                                 size=[ax, ay, h / 2], pos=[x, y, h / 2], quat=list(yaw_quat(st.yaw)),
-                                 group=WALL_GROUP, contype=int(solid), conaffinity=int(solid),
-                                 rgba=WALL_RGBA)
+WALL_GROUP = 5          # MuJoCo geom group of a LIBERO room's walls (libero.ROOM_WALL_GROUP): the
+                        # robot's cameras see them, the page's 3D view (looking in from outside) doesn't
 
 
 def read_obj(path):

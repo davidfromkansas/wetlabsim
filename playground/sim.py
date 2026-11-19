@@ -1070,11 +1070,6 @@ class PlaygroundSim(Sim):
             if st.moved and not new.standing and not st.standing:   # another table arm: where this one was
                 new.robot_turn, new.robot_z = st.robot_turn, st.robot_z
                 new.robot_at = new.snap_robot(*st.robot_xy)
-            if new.roomy:
-                spot = self.station_spot(st.pos[0], st.pos[1], st.yaw, exclude=uid, kind=st.kind, robot=robot)
-                if not spot["valid"]:
-                    raise RobotError(f"the {WS.ROBOTS[robot]['name']} works in a 7 × 7 m room round its table, "
-                                     f"and here it doesn't fit: {spot['reason']}. Move this station into open floor first")
             if any(new.holds(p.pos[0], p.pos[1]) and new.near_base(p.pos[0], p.pos[1]) for p in self.placed):
                 raise RobotError(f"there are things where the {WS.ROBOTS[robot]['name']} would stand: "
                                  "move them away from where its base goes first")
@@ -1199,15 +1194,14 @@ class PlaygroundSim(Sim):
             if (any(st.claims(px, py, 0.15) for px, py in pts)
                     or any(probe.claims(px, py, 0.15) for px, py in st.area_points())):
                 return {"pos": [round(x, 4), round(y, 4)], "yaw": yaw, "valid": False,
-                        "reason": f"too close to {st.name or st.uid}"
-                                  + (" (the humanoid's room needs 7 × 7 m)" if probe.roomy or st.roomy else "")}
+                        "reason": f"too close to {st.name or st.uid}"}
         for p in self.placed:
             if catalog.item(p.item)["fixed"]:
                 fx, fy, _ = catalog.meta(p.item)["size"]
                 if probe.claims(p.pos[0], p.pos[1], max(fx, fy) / 2):
                     return {"pos": [round(x, 4), round(y, 4)], "yaw": yaw, "valid": False,
                             "reason": "furniture is in the way"}
-        if max(abs(x), abs(y)) > W.FLOOR_HALF or (probe.roomy and max(max(abs(px), abs(py)) for px, py in pts) > W.FLOOR_HALF + 0.4):
+        if max(abs(x), abs(y)) > W.FLOOR_HALF:
             return {"pos": [round(x, 4), round(y, 4)], "yaw": yaw, "valid": False, "reason": "off the floor"}
         return {"pos": [round(x, 4), round(y, 4)], "yaw": yaw, "valid": True, "reason": ""}
 
