@@ -128,7 +128,7 @@ def to_metres(lay: dict) -> dict:
     stations = []
     for st in lay.get("stations") or []:
         st = dict(st or {})
-        kind = st.get("kind") if st.get("kind") in W.KINDS else "table"
+        kind = st.get("kind") if W.is_kind(st.get("kind")) else "table"
         face = _dir(st.get("facing"))
         deep, wide = station_squares(kind, str(st.get("robot", "franka")))
         x, y = _centre(st.get("x"), st.get("y"), wide, deep, face)

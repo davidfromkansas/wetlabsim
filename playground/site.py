@@ -399,11 +399,11 @@ def _site_sheet(station: W.Station) -> str:
     top = station.top
     rx, ry = station.robot_xy
     turn = station.robot_turn
-    moved = station.moved
+    moved = station.moved or bool(station.spec.get("at"))    # (at a piece of furniture: on a stand beside it)
     mz = station.mount_z
     P = WS.ROBOTS[station.robot]
     tw, td, _ = catalog.meta(station.table_item)["size"]
-    table = TABLES[station.kind]
+    table = TABLES.get(station.kind) or f"a {catalog.item(station.table_item)['label'].lower()}"
     table_txt = f"{table} ({max(tw, td) * 100:.0f} x {min(tw, td) * 100:.0f} cm, top {top * 100:.1f} cm above the floor)"
     common = dict(top_cm=top * 100, table=table, w_cm=max(tw, td) * 100, d_cm=min(tw, td) * 100)
     ext = lambda origin, yaw, about=False: table_extent(station, origin, yaw, about)

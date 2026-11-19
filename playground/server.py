@@ -910,7 +910,7 @@ def _world_from_layout(layout: dict | None):
             continue
         if any(x.uid == st["uid"] for x in stations):
             continue
-        kind = st.get("kind") if st.get("kind") in W.KINDS else "table"
+        kind = st.get("kind") if W.is_kind(st.get("kind")) else "table"
         task, setup = "", 0
         free = bool(st.get("free")) and (kind == "libero" or bool(WR.lab_of(kind)))
         if kind == "libero":

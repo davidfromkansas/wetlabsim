@@ -639,6 +639,11 @@ shelf to stock, the sink and dishwasher of a dish line, the conveyor a robot loa
 robot, the part the robot works on within 0.8 m of the robot's base, at a\
 side end of the table (its -y or +y end), not past its far edge. Better still, use small \
 furniture on the table (below) when one fits the request.
+  - A robot whose task happens ON a big piece of furniture (folding laundry on a bed, setting a \
+dining table, a game at a ping-pong table) gets no table of its own: give its station "at": that \
+furniture's id, and don't list that piece under "furniture". The furniture is then the robot's \
+table: the station's x, y is the furniture's middle and its yaw turns it; the robot stands on a \
+stand at its -x edge, facing +x; things on it go "on": "station" in that frame.
   - The request's centrepiece (the car on its lift in a tire change, the patient bed by a care \
 robot, the machine being serviced) stands within 0.5 m of the robot's table, on the side the work \
 faces, even when the task itself is done on the table: the robot must look like it works on it.
@@ -1495,9 +1500,10 @@ class Build:
             rb = str((st or {}).get("robot", ""))
             if rb in want_r:
                 want_r.remove(rb)
-                kind = st.get("kind") if st.get("kind") in W.KINDS else "table"
+                kind = st.get("kind") if W.is_kind(st.get("kind")) else "table"
                 stations.append({"robot": rb, "kind": kind, "x": _f(st.get("x")), "y": _f(st.get("y")),
-                                 "yaw": math.radians(_f(st.get("yaw"))), "task": str(st.get("task") or "")})
+                                 "yaw": math.radians(_f(st.get("yaw"))), "task": str(st.get("task") or ""),
+                                 "at": str(st.get("at") or "")})
         for rb in want_r:
             stations.append({"robot": rb, "kind": "table", "x": 0.0, "y": 2.0 * len(stations), "yaw": 0.0})
         if len(stations) == 2 and HANDOVER.search(self.prompt or "") and not self.preset and \
@@ -1512,6 +1518,17 @@ class Build:
             fx, fy = _rot(deep, 0.0, a_["yaw"])
             b_["x"], b_["y"], b_["yaw"] = a_["x"] + fx, a_["y"] + fy, a_["yaw"] + math.pi
         items = [i["id"] for i in self.pick["items"] for _ in range(i["count"])]
+        # a robot that works right at a big piece of furniture (a bed, a dining table): no table of
+        # its own, the furniture is its table ("at:<item>": it stands on a stand at its near edge)
+        if not self.preset:
+            for st in stations:
+                it = st.pop("at", "")
+                if it in items and catalog.item(it)["fixed"] and max(catalog.meta(it)["size"][:2]) > 0.6 \
+                        and W.furniture_top(it) >= 0.3 and len(W.Station("probe", st["robot"], (0, 0), 0, kind="table").bases()) == 1:
+                    st["kind"] = W.AT + it
+                    items.remove(it)
+        for st in stations:
+            st.pop("at", None)
         from .scenebrief import tabletop
         small = set(tabletop()) if self.pick.get("brief") else set()
         # small furniture the layout puts on a robot's table goes down like an object
@@ -1553,13 +1570,13 @@ class Build:
                 k_st = max(0, min(len(stations) - 1, _int(o.get("station"), 0)))
                 if on == "floor" and self._role_of(it) == "task" and max(catalog.meta(it)["size"][:2]) <= 0.5:
                     # a small thing the task uses, put on the bare floor: onto the robot's table, in reach
-                    rx0, ry0 = W.KINDS[stations[k_st]["kind"]].get("robot_xy", (-0.42, 0.0))
+                    rx0, ry0 = W.kind_spec(stations[k_st]["kind"]).get("robot_xy", (-0.42, 0.0))
                     ang = (-0.9, 0.9, -0.45, 0.45, 0.0)[len(objects) % 5]
                     o = {**o, "on": "station", "x": rx0 + 0.5 * math.cos(ang), "y": ry0 + 0.5 * math.sin(ang)}
                     on = "station"
                 yaw = math.radians(_f(o.get("yaw")))
                 if on == "station":       # in the station's frame: its robot sits at robot_xy
-                    rx, ry = W.KINDS[stations[k_st]["kind"]].get("robot_xy", (-0.42, 0.0))
+                    rx, ry = W.kind_spec(stations[k_st]["kind"]).get("robot_xy", (-0.42, 0.0))
                     face = o.get("face")
                     if isinstance(face, str) and face.strip().lower().startswith("station"):
                         face = [rx, ry]

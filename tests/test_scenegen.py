@@ -152,3 +152,14 @@ def test_scene_fills_in_as_the_layout_is_written(monkeypatch):
     shelf = next(sim.find(u) for u in b.objects if sim.find(u).item == "shelf_three_level")
     assert abs(soup.pos[0] - shelf.pos[0]) < 0.2 and soup.pos[2] - shelf.pos[2] < 0.05    # on its bottom level
     assert st["task"] == "Stack the blocks."
+
+
+def test_robot_at_furniture_station():
+    """A robot that works at a big piece of furniture (a bed) has no table of its own: the bed is
+    its table, and a table arm stands on a steel stand at its near edge, as high as its mattress."""
+    from playground import world as W
+    assert W.is_kind("at:uc_trundle_bed") and not W.is_kind("at:no_such_item")
+    st = W.Station("probe", "franka", (0.0, 0.0), 0.0, kind="at:uc_trundle_bed")
+    assert st.table_item == "uc_trundle_bed" and st.open
+    assert 0.25 < st.top < 0.6                  # the mattress, not the headboard
+    assert st.robot_side() == "off" and st.stands() and abs(st.stands()[0][4] - st.top) < 1e-6

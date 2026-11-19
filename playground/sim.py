@@ -811,7 +811,7 @@ class PlaygroundSim(Sim):
         station (a LIBERO task's room, or a WetRobo lab with its kit): any task, no goal check."""
         if robot not in WS.ROBOTS:
             raise RobotError(f"unknown robot {robot!r}")
-        if kind not in W.KINDS:
+        if not W.is_kind(kind):
             raise RobotError(f"unknown kind of station {kind!r}")
         if kind == "libero":
             try:

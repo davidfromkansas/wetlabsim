@@ -305,7 +305,7 @@ class Station:
 
     @property
     def spec(self) -> dict:
-        return KINDS.get(self.kind, KINDS["table"])
+        return kind_spec(self.kind)
 
     @property
     def table_item(self) -> str | None:
@@ -493,6 +493,8 @@ class Station:
         if self.libero:        # the robot's base height: LIBERO's table top, or the floor
             r = self.room()
             return float(r["base"]["pos"][2]) if r else 0.9
+        if self.spec.get("at"):
+            return furniture_top(self.table_item)
         return table_top(self.table_item)
 
     def to_world(self, x: float, y: float, z: float = 0.0):
@@ -1125,6 +1127,68 @@ def table_top(item: str) -> float:
     """Where a station's robot and objects stand: the item's height, or its worktop when a
     backsplash rises above it (catalog.WORKTOP)."""
     return float(catalog.WORKTOP.get(item, catalog.meta(item)["size"][2]))
+
+
+# A robot at a piece of furniture, with no table of its own ("at:<item id>", from a described
+# scene: a bed to fold laundry on, a dining table to set, a ping-pong table): the furniture is the
+# station's table, and a table arm stands just off its near edge on a steel stand as high as its top.
+AT = "at:"
+AT_GAP = 0.2        # the arm's base this far out from the furniture's near edge (m)
+
+
+def at_item(kind) -> str | None:
+    """The furniture of an "at:<item>" station, or None."""
+    if isinstance(kind, str) and kind.startswith(AT):
+        item = kind[len(AT):]
+        try:
+            catalog.meta(item)
+            return item
+        except (KeyError, OSError, ValueError):
+            return None
+    return None
+
+
+def is_kind(kind) -> bool:
+    return kind in KINDS or at_item(kind) is not None
+
+
+def kind_spec(kind) -> dict:
+    if kind in KINDS:
+        return KINDS[kind]
+    item = at_item(kind)
+    if item is None:
+        return KINDS["table"]
+    sx = catalog.meta(item)["size"][0]
+    return {"label": f"At the {catalog.item(item)['label'].lower()}", "table": item, "turn": 0.0,
+            "robot_xy": (-sx / 2 - AT_GAP, 0.0), "open": True, "layout": [], "at": True}
+
+
+_TOPS: dict = {}
+
+
+def furniture_top(item: str) -> float:
+    """The height of a piece of furniture's working top (a bed's mattress, a table's top), not
+    its tallest part (a headboard): rays down over the middle of it, the middle hit height."""
+    if item not in _TOPS:
+        try:
+            meta = catalog.meta(item)
+            world = mujoco.MjSpec.from_string(_world_xml())
+            _add_item(world, Placed("t", item, (0.0, 0.0, 0.0)), meta, True, set())
+            m = world.compile()
+            d = mujoco.MjData(m)
+            mujoco.mj_forward(m, d)
+            sx, sy, sz = meta["size"]
+            hits, gid = [], np.zeros(1, np.int32)
+            for u in np.linspace(-0.3, 0.3, 7):
+                for v in np.linspace(-0.3, 0.3, 7):
+                    dist = mujoco.mj_ray(m, d, np.array([u * sx, v * sy, sz + 1.0]), np.array([0, 0, -1.0]),
+                                         None, 1, -1, gid)
+                    if dist >= 0 and gid[0] >= 0 and m.geom_bodyid[gid[0]] != 0:
+                        hits.append(sz + 1.0 - dist)
+            _TOPS[item] = float(np.median(hits)) if hits else table_top(item)
+        except Exception:  # noqa: BLE001
+            _TOPS[item] = table_top(item)
+    return _TOPS[item]
 
 
 def _quat_mul(a, b):
