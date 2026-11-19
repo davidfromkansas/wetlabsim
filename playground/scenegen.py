@@ -38,6 +38,8 @@ SCENE_MODELS = [
     {"id": "claude-opus-5-5", "label": "Claude Opus 5.5", "provider": "anthropic"},
     {"id": "claude-sonnet-5-5", "label": "Claude Sonnet 5.5", "provider": "anthropic"},
     {"id": "claude-haiku-5-5", "label": "Claude Haiku 5.5", "provider": "anthropic"},
+    {"id": "gpt-6.2-astra", "label": "GPT-6.2 Astra", "provider": "openai"},
+    {"id": "gpt-6.2-sol", "label": "GPT-6.2 Sol", "provider": "openai"},
     {"id": "gpt-6-astra", "label": "GPT-6 Astra", "provider": "openai"},
     {"id": "gpt-6.1-sol", "label": "GPT-6.1 Sol", "provider": "openai"},
     {"id": "gpt-6.1-terra", "label": "GPT-6.1 Terra", "provider": "openai"},
@@ -45,7 +47,7 @@ SCENE_MODELS = [
     {"id": "gpt-6-luna", "label": "GPT-6 Luna", "provider": "openai"},
 ]
 # A task run's model (server.MODELS ids) as the scene model it is, for "the last model you used".
-FROM_RUN = {"claude": "claude-opus-5-5", "codex": "gpt-6-astra"}
+FROM_RUN = {"claude": "claude-opus-5-5", "codex": "gpt-6-astra"}  # (only its company is used now)
 _ENV = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY"}
 _AGENT = {"anthropic": "claude", "openai": "codex"}
 

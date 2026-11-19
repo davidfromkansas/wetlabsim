@@ -179,13 +179,15 @@ const nItems = () => (G.pick ? G.pick.items.reduce((a, r) => a + r.count, 0) : 0
 const modelInfo = (id) => G.models.find(m => m.id === id) || null;
 
 function defaultModel() {
-  // one company: its most capable model; both: the model of your last task run, if it can build
+  // Scenes are built by the strongest model you have: one company, its strongest model; both,
+  // the strongest model of the company your last task run used (Anthropic if none yet).
+  if (modelInfo(G.model)) return G.model;
   let last = '';
   try { last = localStorage.getItem('pgLastModel') || ''; } catch (err) {}
   last = G.fromRun[last] || last;
-  if (G.models.length && new Set(G.models.map(m => m.provider)).size > 1 && modelInfo(last)) return last;
-  if (modelInfo(G.model)) return G.model;
-  return (G.models.find(m => m.default) || G.models[0] || {}).id || '';
+  const lastCo = (modelInfo(last) || {}).provider || (/^(gpt|codex)/.test(last) ? 'openai' : /^claude/.test(last) ? 'anthropic' : '');
+  const tops = G.models.filter(m => m.default);
+  return ((lastCo && tops.find(m => m.provider === lastCo)) || tops[0] || G.models[0] || {}).id || '';
 }
 
 async function loadInfo() {
