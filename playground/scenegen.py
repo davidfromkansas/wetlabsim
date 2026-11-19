@@ -1571,6 +1571,8 @@ class Build:
                         dist = math.hypot(ox_, oy_) or 1.0
                         ang = math.atan2(oy_, ox_) if dist > 1e-6 else 0.0
                         ang = max(-1.15, min(1.15, ang))
+                        if abs(ang) < 0.5:       # not straight ahead, under the arm's hand at its ready pose
+                            ang = 0.5 if ang >= 0 else -0.5
                         need = max(dist, 0.45 + max(catalog.meta(it)["size"][:2]) / 2)
                         o = {**o, "x": rx + need * math.cos(ang), "y": ry + need * math.sin(ang)}
                     yaw = _facing(it, _f(o.get("x")), _f(o.get("y")), face, [], yaw)
