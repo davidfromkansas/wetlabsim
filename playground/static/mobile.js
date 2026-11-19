@@ -20,6 +20,7 @@ const IC = {
   x: '<path d="M6 6l12 12M18 6L6 18"/>',
   robot: '<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01"/>',
   station: '<path d="M3 10h18M5 10v9M19 10v9M8 10V6h8v4"/>',
+  box: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>',
   spark: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
   past: '<path d="M6.5 3h11M6.5 21h11"/><path d="M7.5 3c0 4.5 4.5 6 4.5 9s-4.5 4.5-4.5 9"/><path d="M16.5 3c0 4.5-4.5 6-4.5 9s4.5 4.5 4.5 9"/>',
   set: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
@@ -55,13 +56,20 @@ const css = `
   .campad,#vbtns,#sgBar,#openRight,.bl,#axisGuide{display:none!important}
   textarea,input,select{font-size:16px!important}
   /* top row: sessions, session name, Physics */
-  #mTop{position:absolute;left:10px;right:150px;top:calc(10px + env(safe-area-inset-top));z-index:8;display:flex;gap:8px;align-items:center}
+  #mTop{position:absolute;left:10px;right:10px;top:calc(10px + env(safe-area-inset-top));z-index:8;display:flex;gap:8px;align-items:center}
   .mbtn{width:44px;height:44px;flex:none;border-radius:14px;border:0;display:flex;align-items:center;justify-content:center;padding:0;color:#111827;background:rgba(255,255,255,.94);box-shadow:0 4px 14px rgba(17,24,39,.14),0 0 0 1px rgba(17,24,39,.08)}
   #mSess{flex:1;min-width:0;height:44px;border-radius:14px;border:0;display:flex;align-items:center;gap:4px;padding:0 12px;font:600 15px Inter,sans-serif;color:#111827;background:rgba(255,255,255,.94);box-shadow:0 4px 14px rgba(17,24,39,.14),0 0 0 1px rgba(17,24,39,.08)}
   #mSess span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
-  #rcol{position:absolute!important;right:10px!important;top:calc(10px + env(safe-area-inset-top))!important;left:auto!important;z-index:8;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
-  #rcol .fbtn{height:44px;border-radius:14px}
-  #galBtn{width:44px;padding:0;justify-content:center;font-size:0;gap:0}
+  /* the scene menu bar: Undo, Redo | Physics | + (Robot, Station, Objects) | Gallery, more (Past runs, Settings),
+     just above the robot sheet */
+  #sbar{position:fixed!important;z-index:45;bottom:var(--sbB,calc(14px + env(safe-area-inset-bottom)));padding:4px;border-radius:18px;gap:0;max-width:calc(100% - 12px)}
+  #sbar .sb{height:44px}#sbar .sb.ic{width:42px}
+  #sbar .sep{margin:0 3px}
+  #sbar .adds,#pastBtn,#setBtn,#sbTip{display:none!important}
+  #mPlus{width:44px;height:44px;border-radius:12px!important;padding:0!important;background:var(--blue)!important;color:#fff!important}
+  #mPlus[aria-disabled=true]{background:#93B4FF!important}
+  @media (max-width:389px){#physBtn .w{display:none}#physBtn{padding:0 8px!important}}
+  body.m-half #sbar,body.m-full #sbar,body.m-fs:not(.m-fsui) #sbar,body.m-placing #sbar,body.m-addopen #sbar,body.objopen #sbar,body.m-nav #sbar{display:none!important}
   /* the cameras the AI sees: two small windows, top left */
   .pips{left:10px!important;top:calc(64px + env(safe-area-inset-top))!important;bottom:auto!important;flex-direction:column;gap:8px;z-index:4}
   .pip,.pips.four .pip{width:104px!important;border-radius:10px}
@@ -164,19 +172,19 @@ const css = `
   #rpk .caret{display:none}
   #addModal{padding:0!important;align-items:flex-end!important}
   #addModal .am{border-radius:22px 22px 0 0!important;max-height:88dvh!important;padding:18px 16px calc(18px + env(safe-area-inset-bottom))!important}
-  #mAdd{position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:80;flex-direction:column;gap:8px}
-  #mAdd[hidden]{display:none!important}
-  #mAdd .grp{background:#fff;border-radius:18px;overflow:hidden}
-  #mAdd .grp button{display:flex;align-items:center;gap:14px;width:100%;min-height:58px;border:0;border-bottom:1px solid #F0F1F3;background:#fff;padding:8px 16px;font:500 16px Inter,sans-serif;color:#111827;text-align:left}
-  #mAdd .grp button:last-child{border-bottom:0}
-  #mAdd .grp small{display:block;font-size:13px;color:#4B5563;font-weight:400}
-  #mAdd .cancel{height:54px;border-radius:18px;border:0;background:#fff;font:600 16px Inter,sans-serif;color:#111827}
+  #mAdd,#mMore{position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:80;flex-direction:column;gap:8px}
+  #mAdd[hidden],#mMore[hidden]{display:none!important}
+  #mAdd .grp,#mMore .grp{background:#fff;border-radius:18px;overflow:hidden}
+  #mAdd .grp button,#mMore .grp button{display:flex;align-items:center;gap:14px;width:100%;min-height:58px;border:0;border-bottom:1px solid #F0F1F3;background:#fff;padding:8px 16px;font:500 16px Inter,sans-serif;color:#111827;text-align:left}
+  #mAdd .grp button:last-child,#mMore .grp button:last-child{border-bottom:0}
+  #mAdd .grp small,#mMore .grp small{display:block;font-size:13px;color:#4B5563;font-weight:400}
+  #mAdd .cancel,#mMore .cancel{height:54px;border-radius:18px;border:0;background:#fff;font:600 16px Inter,sans-serif;color:#111827}
   /* full screen: only the scene */
   #mFloat{position:absolute;right:10px;z-index:7;flex-direction:column;gap:8px;top:calc(162px + env(safe-area-inset-top))}
-  body.m-fs #mTop,body.m-fs #rcol,body.m-fs .pips,body.m-fs .tl,body.m-fs #mFloat,body.m-fs #objPanel,body.m-fs .watchbanner{display:none!important}
+  body.m-fs #mTop,body.m-fs .pips,body.m-fs .tl,body.m-fs #mFloat,body.m-fs #objPanel,body.m-fs .watchbanner{display:none!important}
   #mFsX{position:absolute;right:12px;top:calc(12px + env(safe-area-inset-top));z-index:9;opacity:.8;display:none!important}
   body.m-fs #mFsX{display:flex!important}
-  body.m-fs.m-fsui #mTop,body.m-fs.m-fsui #rcol{display:flex!important}
+  body.m-fs.m-fsui #mTop{display:flex!important}
   body.m-fs.m-fsui #mFsX{top:calc(64px + env(safe-area-inset-top));opacity:1}
   body.m-placing #mFloat,body.m-placing .pips{display:none!important}
   /* the sheet follows the keyboard (browsers that don't resize the page for it) */
@@ -196,7 +204,7 @@ const css = `
   #objDrawer .dh::before,#rpk .ph::before{content:"";position:absolute;left:50%;top:7px;width:38px;height:5px;margin-left:-19px;border-radius:3px;background:#D1D5DB}
   #objDrawer .dh,#rpk .ph{position:relative;padding-top:18px!important}
   /* small things come in quickly */
-  #mAdd:not([hidden]){animation:mUp 220ms cubic-bezier(.23,1,.32,1)}
+  #mAdd:not([hidden]),#mMore:not([hidden]){animation:mUp 220ms cubic-bezier(.23,1,.32,1)}
   body.m-nav #mScrim,body.m-addopen #mScrim{animation:mFade 220ms ease-out}
   @keyframes mUp{from{transform:translateY(24px);opacity:0}}
   @keyframes mFade{from{opacity:0}}
@@ -222,7 +230,16 @@ document.body.insertAdjacentHTML('beforeend',
   + `<button id="mAddRobot">${svg(IC.robot, 22)}<span>Add a robot<small>Pick a robot, then tap the floor</small></span></button>`
   + `<button id="mAddStation">${svg(IC.station, 22)}<span>Add a station<small>Starter stations and benchmarks</small></span></button>`
   + `<button id="mAddScene">${svg(IC.spark, 22)}<span>Describe a scene<small>Ready-made scenes, or build one from words</small></span></button>`
-  + `</div><button class="cancel" id="mAddCancel">Cancel</button></div>`);
+  + `<button id="mAddObj">${svg(IC.box, 22)}<span>Add objects<small>Open the library, then tap one</small></span></button>`
+  + `</div><button class="cancel" id="mAddCancel">Cancel</button></div>`
+  + `<div id="mMore" class="m-only" hidden role="dialog" aria-label="More"><div class="grp">`
+  + `<button id="mMorePast">${svg(IC.past, 22)}<span>Past runs<small>Replays of every finished run</small></span></button>`
+  + `<button id="mMoreSet">${svg(IC.set, 22)}<span>Settings<small>Physics settings, time limit, your API keys</small></span></button>`
+  + `</div><button class="cancel" id="mMoreCancel">Cancel</button></div>`);
+// the bar's phone-only buttons: one + for every Add, and a More for Past runs and Settings
+$('addRobot').insertAdjacentHTML('beforebegin', `<button type="button" class="sb ic m-only ed" id="mPlus" aria-label="Add" aria-haspopup="dialog">${svg('<path d="M12 5v14M5 12h14"/>', 22)}</button>`);
+$('pastBtn').insertAdjacentHTML('beforebegin', `<button type="button" class="sb ic m-only" id="mMoreBtn" aria-label="More" aria-haspopup="dialog">${svg(IC.more)}</button>`);
+$('sbar').insertBefore($('mPlus'), $('mPlus').parentNode);   // outside the Adds group, which phones hide
 right.insertAdjacentHTML('afterbegin', `<button id="mGrab" class="m-only" aria-label="Resize the robot panel"><i></i></button>`);
 $('rtitle').insertAdjacentHTML('beforeend', `<button id="mRMore" class="m-only" aria-label="Robot actions">${svg(IC.more)}</button>`);
 $('tabChat').insertAdjacentHTML('afterend', `<button role="tab" id="mTabObj" class="m-only" aria-selected="false" hidden>Objects</button>`);
@@ -324,13 +341,31 @@ $('mRMore').onclick = (e) => {
 // ---- sessions drawer
 const nav = (open) => { body.classList.toggle('m-nav', open); if (open) $('sessNav').classList.remove('closed'); };
 $('mNav').onclick = () => nav(true); $('mSess').onclick = () => nav(true);
-$('mScrim').onclick = () => { nav(false); showAdd(false); };
+$('mScrim').onclick = () => { nav(false); showAdd(false); showMore(false); };
 $('navClose').addEventListener('click', (e) => { if (M()) { e.stopImmediatePropagation(); nav(false); } }, true);
 $('sessNav').addEventListener('click', (e) => { if (M() && e.target.closest('.srow, .rrow, #newSession, #mPast, #mSet') && !e.target.closest('.smore')) setTimeout(() => nav(false), 50); });
 $('mSet').onclick = () => { nav(false); window.openSettings && window.openSettings(); };
 
 // ---- the + tile: one Add menu
-function showAdd(open) { $('mAdd').hidden = !open; body.classList.toggle('m-addopen', open); }
+function showAdd(open) { $('mAdd').hidden = !open; if (open) $('mMore').hidden = true; body.classList.toggle('m-addopen', open); }
+function showMore(open) { $('mMore').hidden = !open; if (open) $('mAdd').hidden = true; body.classList.toggle('m-addopen', open); }
+$('mPlus').onclick = () => { if (typeof barOff === 'function' && barOff()) return; showAdd(true); };
+$('mMoreBtn').onclick = () => showMore(true);
+$('mMoreCancel').onclick = () => showMore(false);
+$('mMorePast').onclick = () => { showMore(false); window.open($('pastBtn').href, '_blank', 'noopener'); };
+$('mMoreSet').onclick = () => { showMore(false); window.openSettings && window.openSettings(); };
+$('mAddObj').onclick = () => { showAdd(false); if (typeof setObjects === 'function') setObjects(true); };
+// the bar sits just above the robot sheet (at its small height), or at the bottom when the sheet is away
+function placeBar() {
+  if (!M()) { $('sbar').style.removeProperty('--sbB'); return; }
+  const r = right.getBoundingClientRect(), up = r.height && r.top < innerHeight - 4 ? innerHeight - r.top + 10 : 0;
+  if (up) $('sbar').style.setProperty('--sbB', up + 'px'); else $('sbar').style.removeProperty('--sbB');
+}
+if (window.ResizeObserver) new ResizeObserver(placeBar).observe(right);
+right.addEventListener('transitionend', placeBar);
+addEventListener('resize', placeBar);
+MQ.addEventListener && MQ.addEventListener('change', placeBar);
+setInterval(placeBar, 1000);     // the sheet's own height changes with its contents
 $('rrail').addEventListener('click', (e) => { if (M() && e.target.closest('#rAdd') && !S.watch) { e.stopImmediatePropagation(); e.preventDefault(); showAdd(true); } }, true);
 $('mAddCancel').onclick = () => showAdd(false);
 $('mAddRobot').onclick = () => { showAdd(false); openPicker('add'); };

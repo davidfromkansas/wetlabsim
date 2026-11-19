@@ -554,6 +554,19 @@ class Session:
         self.bench = LiberoScores(runs / "libero_results.jsonl")     # every LIBERO station's runs
         self.wetrobo = LiberoScores(runs / "wetrobo_results.jsonl", suites=False)  # every WetRobo station's runs
         self.wetbench = WL.WetBench(sim, self.runner, self, runs / "wetlab_results.jsonl")
+        self.undo: list[dict] = []    # the scene before each of the user's own edits (sim.scene_state), newest last
+        self.redo: list[dict] = []    # edits undone, to do again
+
+    UNDO_MAX = 50
+
+    def push_undo(self, state: dict):
+        """Remember the scene from before one of the user's edits; a new edit forgets what was undone."""
+        self.undo = (self.undo + [state])[-self.UNDO_MAX:]
+        self.redo = []
+
+    def forget_undo(self):
+        """A robot ran (or the scene changed some other way): going back would undo its work too."""
+        self.undo, self.redo = [], []
 
     def station_runner(self, uid: str) -> Runner:
         r = self.runners.get(uid)
@@ -1640,6 +1653,19 @@ class PGHandler(Handler):
             return self._json({"ok": True, "build": build.status()})
         return self._err("not found", 404)
 
+    # The user's own scene edits, which Undo takes back (the scene from before each is kept).
+    UNDOABLE = ("/pg/place", "/pg/move", "/pg/rotate", "/pg/translate", "/pg/orient", "/pg/remove", "/pg/remove_many",
+                "/pg/selection", "/pg/duplicate_many", "/pg/clear", "/pg/station/add", "/pg/station/move",
+                "/pg/station/rotate", "/pg/station/place_robot", "/pg/station/duplicate", "/pg/station/swap",
+                "/pg/station/remove", "/pg/station/remove_copies",
+                "/pg/scenegen/preset", "/pg/scenegen/build", "/pg/scenegen/photo")
+
+    def _json(self, obj, code=200):
+        pre = self.__dict__.pop("_undo_pre", None)
+        if pre is not None and code == 200 and isinstance(obj, dict) and obj.get("ok"):
+            self.sess.push_undo(pre)
+        return super()._json(obj, code)
+
     def _locked(self) -> str:
         if self.sim.scene_mode == "wetlab":
             return "the wet lab bench is fixed for a fair test: switch to Free play to build your own"
@@ -1778,6 +1804,7 @@ class PGHandler(Handler):
                                           "half": [hx, hy], "height": h, "waiting": not r.get("active")})
                 info["zones"] = zones
                 return self._json({**info, "run": run, "runs": runs, "locked": self._locked(),
+                                   "undo": len(self.sess.undo), "redo": len(self.sess.redo),
                                    "wetbench": self.wetbench.status(),
                                    "session": {"id": self.sess.id, "name": self.sess.name,
                                                "mine": self._owns()}, "stale": LABS.stale(),
@@ -2043,9 +2070,26 @@ class PGHandler(Handler):
                     return self._json({"valid": False, "reason": lock})
                 return self._json(s.probe_station(float(b["u"]), float(b["v"]), float(b.get("yaw", 0.0)), b.get("uid"),
                                                   b.get("kind")))
+            if p in self.UNDOABLE and s.scene_mode == "free":
+                self._undo_pre = s.scene_state()      # kept if the edit goes through (_json)
             if p.startswith("/pg/scenegen/"):
                 return self._scenegen(p[len("/pg/scenegen/"):], b)
             lock = self._locked()
+            if p in ("/pg/undo", "/pg/redo"):
+                if lock:
+                    return self._json({"ok": False, "error": lock})
+                back = p == "/pg/undo"
+                src = self.sess.undo if back else self.sess.redo
+                if not src or s.scene_mode != "free":
+                    return self._json({"ok": False, "error": "Nothing to undo." if back else "Nothing to redo."})
+                now = s.scene_state()
+                s.restore_scene(src.pop())
+                (self.sess.redo if back else self.sess.undo).append(now)
+                gone = set(self.runners) - {st.uid for st in s.stations}
+                for u in gone:
+                    if not self.runners[u].active():
+                        self.runners.pop(u, None)
+                return self._json({"ok": True, "undo": len(self.sess.undo), "redo": len(self.sess.redo)})
             if (p in ("/pg/place", "/pg/move", "/pg/remove", "/pg/remove_many", "/pg/duplicate_many", "/pg/selection", "/pg/rotate", "/pg/orient", "/pg/translate", "/pg/clear") or p.startswith("/pg/station/")) and lock:
                 # Rename any time; Reset while physics plays too, but not while an AI works.
                 if p != "/pg/station/rename" and not (p in ("/pg/station/reset", "/pg/station/remove_copies")
@@ -2255,6 +2299,7 @@ class PGHandler(Handler):
                     s.set_wetlab(b.get("task") or s.wetlab_task or WL.ORDER[0])
                 else:
                     s.set_free()
+                self.sess.forget_undo()
                 s._glide = None
                 self._camera_preset("home")
                 return self._json({"ok": True})
@@ -2293,6 +2338,7 @@ class PGHandler(Handler):
                         task = LB.task(station.task).language
                     elif station.wetrobo and station.task:
                         task = WR.task(station.task).language
+                    self.sess.forget_undo()       # going back now would take back the robot's work too
                     model = b.get("model", "claude")
                     mdl = next((m for m in MODELS if m["id"] == model), None)
                     if PUBLIC and (mdl is None or mdl["agent"] not in _site_agents()):
