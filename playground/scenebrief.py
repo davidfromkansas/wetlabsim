@@ -356,6 +356,8 @@ needs "drawers". A thing with no "opens" note doesn't open at all: a closed box 
 "opens" note can't be filled or emptied, so for a container the task fills or takes things \
 from (restocking "from a box") choose an open one (a tray, basket, tote, open crate) or one that \
 opens.
+- A surface the task lays things on (a bed to fold laundry on, a table to set) needs a solid \
+top: a bed with its mattress, not a bare "bed frame" of slats.
 - Task slots: the object must fit the task; check its size suits a robot hand. Something \
 that starts inside a closed drawer must be short enough for it (a small cabinet's drawer is \
 about 5.5 cm tall inside): choose a low thing for that, or say so in the task.
