@@ -3,6 +3,9 @@ a language model on their own key picks the robots and objects from our catalog,
 checks that list, and the model then writes a layout plan that the server builds on a free
 spot of the floor: robots first (each on its own station table), then furniture, then the
 objects, every one put down with the same drop check as drag and drop (PlaygroundSim.support).
+Library objects always win; anything the scene needs that the library lacks (up to MAX_MADE
+things) is made by the same model from simple shapes first, the way a scene from a photo is
+(photoscene.py), and each one checked and physics-tested by aimade.py before it is laid out.
 
 Models: the owner's own Anthropic or OpenAI key (Settings > General); on a computer of one's
 own, ANTHROPIC_API_KEY / OPENAI_API_KEY too. With one company connected its most capable model
@@ -24,6 +27,7 @@ import urllib.error
 import urllib.request
 
 from . import accounts as ACCT
+from . import aimade as AI
 from . import catalog
 from . import world as W
 from wetlabsim import scene as WS
@@ -31,6 +35,7 @@ from wetlabsim import scene as WS
 MAX_ROBOTS = 4
 MAX_EACH = 6          # copies of one object a scene may ask for
 MAX_ITEMS = 40        # objects in one scene, all told
+MAX_MADE = 15         # different objects the AI may make for one scene (things the library lacks)
 
 # The models that can build a scene, by company, most capable first (the default).
 SCENE_MODELS = [
@@ -314,15 +319,22 @@ robot or a number, follow it. Otherwise pick what suits the task (one robot unle
 clearly needs more; a two-arm robot for two-handed work).
 - items: the objects (and furniture) from the list that the scene needs, with how many of each \
 (1 to {max_each}). Use only ids from the list. Include what makes the place feel right, but keep \
-it to what fits: about 4 to 16 objects in all.
-- missing: things the request asks for that the list doesn't have, each with "instead": the id \
-of a listed object used in its place, or "" if nothing fits.
+it to what fits: about 4 to 16 objects in all (with the ones to make).
+- make: things the scene needs that are NOT in the list. They will be built for it from simple \
+shapes by an AI, so don't settle for a poor stand-in. But the list always wins: before you add \
+one here, look through the list again, and if a listed object is that thing (any make, size or \
+style of it), put it in items instead. Each entry: name (plain words, e.g. "Loaf of bread"), \
+count (1 to {max_each}), kind ("furniture" if it stands on the floor, else "object"), size \
+[width, depth, height] in metres (its real size), looks (colours, materials, main parts) and \
+moves (its moving parts, e.g. "door hinged on the left", or "none"). At most {max_made} \
+different things; leave out the least important ones if there would be more.
 - title: a short name for the scene, 2 to 4 words.
 - task: one sentence, the task the robot(s) will be given, in plain words.
 
 Answer with JSON only, exactly this shape:
 {{"title": "...", "robots": [{{"robot": "franka", "count": 1}}], "items": [{{"id": "mug", "count": 1}}], \
-"missing": [{{"name": "bread", "instead": ""}}], "task": "..."}}"""
+"make": [{{"name": "Loaf of bread", "count": 1, "kind": "object", "size": [0.25, 0.12, 0.10], \
+"looks": "golden-brown crust, rounded top", "moves": "none"}}], "task": "..."}}"""
 
 LAYOUT_SYSTEM = """You lay out a scene in a robot physics playground (MuJoCo, metres, z up). \
 Write a short layout plan, then exact positions. You decide anything the person didn't say: \
@@ -367,9 +379,80 @@ List every station and every object exactly once per copy (an item asked for twi
 twice). Put furniture items in "furniture" only."""
 
 
+MAKE_SYSTEM = """You are a 3D artist and simulation engineer. Build each object you are asked for as a \
+SIM-READY MuJoCo model for a robot physics playground: the right size, the right look and colours, and \
+it must behave like the real thing. Doors open, drawers slide, lids lift, loose things fall and can be \
+picked up. Units are metres; z is up. Keep your written notes short (a few lines before the answer).
+
+For each object:
+1. Each object is either kind="fixed" (furniture, counters, appliances, heavy things: they never move as a \
+whole) or kind="loose" (things a hand could pick up or push); you are told which. Give every part a \
+realistic mass (from material and size: water/food ~1000 kg/m3, wood ~600, plastic ~950, glass ~2500, \
+steel ~7800, ceramic ~2300; hollow items use their shell, not their whole volume; the object as a whole \
+should weigh what the real one does) and friction for its material (0.3 smooth to 1.0 rubber).
+2. Anything with moving parts gets them: oven and fridge doors, cabinet doors, drawers, lids, laptop \
+screens. Each moving part is a child body with a hinge (turns) or slide (moves in a line) joint at the \
+right edge, with its axis, a limited range (e.g. a door 0 to 110 degrees, a drawer 0 to 0.40 m), damping \
+0.05-1 and armature 0.01 so it moves calmly. Doors start closed. Collision shapes are the visible \
+shapes: build hollow things hollow (an oven cavity from 5 walls, a cup from a base and a ring of thin \
+boxes) so things can go inside them.
+3. Build it from simple shapes into a recognisable form: a mug = cylinder walls + base + handle, a chair \
+= seat + back + 4 legs, a microwave = hollow box + hinged door with a handle.
+
+ANSWER FORMAT. After your short notes, write the objects and nothing after them:
+
+<scene title="Objects" objects="N">
+<object name="Microwave" kind="fixed" x="0" y="0" z="0" yaw="0">
+<mujoco>
+  <asset><material name="steel" rgba="0.8 0.8 0.82 1" specular="0.5"/></asset>
+  <worldbody>
+    <body name="microwave">
+      <geom type="box" size="0.25 0.18 0.01" pos="0 0 -0.14" material="steel" mass="2.5"/>
+      ...
+      <body name="door" pos="-0.25 -0.19 0">
+        <joint name="door_hinge" type="hinge" axis="0 0 1" range="-110 0" damping="0.2" armature="0.01"/>
+        <geom type="box" size="0.25 0.01 0.14" pos="0.25 0 0" rgba="0.1 0.1 0.1 1" mass="0.8"/>
+      </body>
+    </body>
+  </worldbody>
+</mujoco>
+</object>
+...
+</scene>
+
+Rules for every object:
+- One <object> per object asked for, in the order asked, with exactly the name and kind given; x, y, z \
+and yaw are always 0 (the playground places it).
+- Inside <mujoco>, build the object around its own origin with its front facing -y. Angles are in degrees.
+- One top <body> per object. Moving parts are child bodies, each with one hinge or slide <joint> and a \
+plain name saying what it is ("door_left", "drawer_top", "lid").
+- Allowed: <asset> with <material name rgba specular shininess reflectance> only; <body>, <geom> \
+(type box, cylinder, capsule, sphere or ellipsoid), <joint> (type hinge or slide), <inertial>. NOT \
+allowed: meshes, textures, files, <include>, <default>, lights, cameras, actuators, <freejoint> (the \
+playground adds those itself).
+- Every geom has mass= (or density=) and rgba= or material=. At most 40 bodies and 160 geoms per object.
+- Parts must not start inside each other where they move, and nothing may stick out below the \
+object's bottom. A loose object must stand steady on a flat floor.
+"""
+
+MAKE_ASK = """Make these {n} objects for a scene ("{title}", from the request: "{prompt}"):
+
+{wants}"""
+
+
+def make_messages(prompt: str, title: str, make: list) -> str:
+    rows = []
+    for k, m in enumerate(make, 1):
+        size = (" x ".join(f"{v:.2f}" for v in m["size"]) + " m (width x depth x height)") if m.get("size") else "its real size"
+        rows.append(f'{k}. name="{m["name"]}" kind="{"fixed" if m["kind"] == "furniture" else "loose"}": size {size}; '
+                    f'looks: {m.get("looks") or "as the real thing"}; moving parts: {m.get("moves") or "none"}')
+    return MAKE_ASK.format(n=len(make), title=title.replace('"', "'"), prompt=prompt.strip()[:600].replace('"', "'"),
+                           wants="\n".join(rows))
+
+
 def pick_messages(prompt: str) -> tuple[str, str]:
     sys_ = PICK_SYSTEM.format(robots=_robots_text(), objects=_objects_text(), max_robots=MAX_ROBOTS,
-                              max_each=MAX_EACH)
+                              max_each=MAX_EACH, max_made=MAX_MADE)
     return sys_, f"The person's request:\n{prompt.strip()[:2000]}"
 
 
@@ -397,8 +480,37 @@ def clean_pick(raw: dict) -> dict:
         inst = str((m or {}).get("instead", ""))
         if name:
             missing.append({"name": name, "instead": inst if inst in rows else ""})
+    # Things the library lacks, to be made by the AI (photoscene/aimade): the first MAX_MADE kept,
+    # the rest left out and said so. A name that is a library object's label is that object.
+    labels = {c["label"].strip().lower(): c["id"] for c in rows.values()}
+    make, have = [], set()
+    for m in raw.get("make") or []:
+        if not isinstance(m, dict):
+            continue
+        name = " ".join(str(m.get("name", "")).split())[:40]
+        n = _int(m.get("count"), 1)
+        if not name or n <= 0 or name.lower() in have:
+            continue
+        have.add(name.lower())
+        lib = labels.get(name.lower())
+        if lib:                                    # the library has it after all
+            if lib not in [x["id"] for x in items] and n_items < MAX_ITEMS:
+                n = min(n, MAX_EACH, MAX_ITEMS - n_items)
+                items.append({"id": lib, "count": n})
+                n_items += n
+            continue
+        if len(make) >= MAX_MADE or n_items >= MAX_ITEMS:
+            missing.append({"name": name, "instead": ""})
+            continue
+        n = min(n, MAX_EACH, MAX_ITEMS - n_items)
+        size = m.get("size") if isinstance(m.get("size"), list) else []
+        size = [min(20.0, max(0.01, _f(v))) for v in size[:3]] if len(size) >= 3 else []
+        make.append({"name": name, "count": n, "kind": "furniture" if m.get("kind") == "furniture" else "object",
+                     "size": size, "looks": " ".join(str(m.get("looks", "")).split())[:200],
+                     "moves": " ".join(str(m.get("moves", "")).split())[:200]})
+        n_items += n
     return {"title": (str(raw.get("title") or "").strip() or "New scene")[:40],
-            "robots": robots, "items": items, "missing": missing[:8],
+            "robots": robots, "items": items, "make": make, "missing": missing[:8],
             "task": str(raw.get("task") or "").strip()[:600]}
 
 
@@ -419,6 +531,9 @@ def layout_messages(prompt: str, pick: dict) -> tuple[str, str]:
             f"Furniture among the objects: {json.dumps(furn)}\n"
             + (f"Things we don't have (leave them out): {json.dumps([m['name'] for m in pick['missing']])}\n"
                if pick.get("missing") else "")
+            + (f"Objects made for this scene (id: what it is): "
+               f"{json.dumps({i: catalog.item(i)['label'] for i in set(items) if AI.is_ai(i)})}\n"
+               if any(AI.is_ai(i) for i in items) else "")
             + (f"Task in mind: {pick['task']}\n" if pick.get("task") else ""))
     return sys_, user
 
@@ -429,7 +544,8 @@ def fake_pick(prompt: str) -> dict:
             "items": [{"id": i, "count": 1} for i in ("refrigerator", "workbench", "wash_basin", "toaster",
                                                        "cereal_box", "milk", "bowl", "mug", "kettle", "apple")
                       if i in {c["id"] for c in _catalog_rows()}],
-            "missing": [{"name": "bread", "instead": ""}],
+            "make": [{"name": "Loaf of bread", "count": 1, "kind": "object", "size": [0.25, 0.12, 0.1],
+                      "looks": "golden-brown crust", "moves": "none"}],
             "task": "Pour cereal into the bowl and put the mug next to it."}
 
 
@@ -449,6 +565,22 @@ def fake_layout(pick: dict) -> dict:
                          "y": spots[(k // max(1, len(robots))) % len(spots)][1], "yaw": 0}
                         for k, it in enumerate(small)],
             "task": pick.get("task", "")}
+
+
+def fake_make(text: str) -> str:
+    """A pretend model's answer to MAKE_ASK: each object asked for as a plain box of its size."""
+    if text.startswith("Your object"):
+        return ""
+    time.sleep(0.4)
+    out = []
+    for name, kind, size in re.findall(r'^\d+\. name="([^"]*)" kind="(\w+)": size ([\d. x]*)', text, re.M):
+        dims = [float(v) for v in re.findall(r"[\d.]+", size)][:3] or [0.2, 0.2, 0.2]
+        w, d, h = (dims + [0.2, 0.2, 0.2])[:3]
+        mass = max(0.05, min(80.0, w * d * h * 400))
+        out.append(f'<object name="{name}" kind="{kind}" x="0" y="0" z="0" yaw="0"><mujoco><worldbody>'
+                   f'<body name="b"><geom type="box" size="{w / 2:.3f} {d / 2:.3f} {h / 2:.3f}" '
+                   f'rgba="0.8 0.6 0.3 1" mass="{mass:.3f}"/></body></worldbody></mujoco></object>')
+    return f'<scene title="Objects" objects="{len(out)}">' + "".join(out) + "</scene>"
 
 
 # Ready-made scenes (Add station, no prompt and no model): a layout in the same shape a model
@@ -760,10 +892,8 @@ class Build:
         self.plan_text = ""
         self.error = ""
         self.stop = False
-        n_items = sum(i["count"] for i in pck["items"])
-        n_furn = sum(i["count"] for i in pck["items"] if catalog.item(i["id"])["fixed"])
-        self.counts = {"robots": [0, sum(r["count"] for r in pck["robots"])], "furniture": [0, n_furn],
-                       "objects": [0, n_items - n_furn]}
+        self.counts = {"robots": [0, sum(r["count"] for r in pck["robots"])], "furniture": [0, 0],
+                       "objects": [0, 0], "make": [0, 0 if preset else len(pck.get("make") or [])], "retries": 0}
         self.stations: list[str] = []
         self.objects: list[str] = []
         self.skipped: list[str] = []
@@ -772,17 +902,38 @@ class Build:
         self.undone = False
         self.started = time.time()
         self.now = ""                 # what is being put down right now ("the mug")
+        self.thought = ""             # the model's latest thinking heading, while it makes objects
+        self.answers: list[str] = []
+        self.names = {}
+        self._recount(bool(self.counts["make"][1]))
+        if self.counts["make"][1]:
+            self.phase = "make"
+            self.names["make"] = [m["name"] for m in pck["make"]]
+
+    def _recount(self, to_make: bool = False):
+        """Furniture and object counts and names, from the pick's items (and, before they are
+        made, the things still to make)."""
+        pck = self.pick
         rl = {r["id"]: r["label"].replace(" (two arms)", "") for r in catalog.robots()}
-        self.names = {"robots": [rl.get(r["robot"], r["robot"]) for r in pck["robots"]],
-                      "furniture": [catalog.item(i["id"])["label"] for i in pck["items"] if catalog.item(i["id"])["fixed"]],
-                      "objects": [catalog.item(i["id"])["label"] for i in pck["items"] if not catalog.item(i["id"])["fixed"]]}
+        fixed = [i for i in pck["items"] if catalog.item(i["id"])["fixed"]]
+        loose = [i for i in pck["items"] if not catalog.item(i["id"])["fixed"]]
+        later = (pck.get("make") or []) if to_make else []
+        self.counts["furniture"][1] = sum(i["count"] for i in fixed) + sum(m["count"] for m in later if m["kind"] == "furniture")
+        self.counts["objects"][1] = sum(i["count"] for i in loose) + sum(m["count"] for m in later if m["kind"] != "furniture")
+        self.names.update({"robots": [rl.get(r["robot"], r["robot"]) for r in pck["robots"]],
+                           "furniture": [catalog.item(i["id"])["label"] for i in fixed]
+                           + [m["name"] for m in later if m["kind"] == "furniture"],
+                           "objects": [catalog.item(i["id"])["label"] for i in loose]
+                           + [m["name"] for m in later if m["kind"] != "furniture"]})
 
     def status(self) -> dict:
         return {"id": self.id, "phase": self.phase, "plan": self.plan_text, "error": self.error,
                 "counts": self.counts, "title": self.pick["title"], "stations": self.stations,
                 "objects": len(self.objects), "skipped": self.skipped, "task": self.task,
-                "undone": self.undone, "now": self.now, "names": self.names,
-                "model": next((m["label"] for m in SCENE_MODELS if m["id"] == self.model_id), ""), "active": self.phase in ("plan", "robots", "furniture", "objects")}
+                "undone": self.undone, "now": self.now, "names": self.names, "thought": self.thought,
+                "elapsed": round(time.time() - self.started, 1),
+                "model": next((m["label"] for m in SCENE_MODELS if m["id"] == self.model_id), ""),
+                "active": self.phase in ("make", "plan", "robots", "furniture", "objects")}
 
     def start(self):
         threading.Thread(target=self._run, daemon=True, name="scene-build").start()
@@ -792,6 +943,13 @@ class Build:
         s = self.sim
         was_playing = not s.paused
         try:
+            if self.phase == "make":
+                self._make_missing()
+                if self.stop:
+                    return self._end("stopped")
+                self.phase = "plan"
+                self.now = ""
+                self._recount()
             if self.preset:
                 lay = PRESETS[self.preset]
             elif fake():
@@ -843,8 +1001,63 @@ class Build:
             self._end("error")
         finally:
             s.zone = []
-            if was_playing and self.phase != "plan":
+            if was_playing and self.phase not in ("make", "plan"):
                 s.play()
+
+    # -------------------------------------------------- objects the library lacks, made by the model
+    def _make_missing(self):
+        """Every thing on the pick's "make" list built by the model in one answer (the photo scene's
+        object format), then each one checked and physics-tested (aimade), sent back to the model
+        to fix when it fails (photoscene.PhotoBuild._make). What passes joins the pick's items."""
+        from . import photoscene as PS
+        wants = self.pick["make"]
+        self.now = ""
+        ans = self._ask(make_messages(self.prompt, self.pick["title"], wants), "high", on_text=self._made_text)
+        if self.stop:
+            return
+        _, objs = PS.parse_scene(ans)
+        by_name = {o["name"].strip().lower(): o for o in objs}
+        for k, w in enumerate(wants):
+            if self.stop:
+                return
+            o = by_name.get(w["name"].lower()) or (objs[k] if k < len(objs) and objs[k]["name"].lower() not in
+                                                   {x["name"].lower() for x in wants} else None)
+            self.now = f"Testing the {w['name'].lower()}"
+            got = None
+            if o and o["xml"]:
+                o = {**o, "name": w["name"], "kind": "fixed" if w["kind"] == "furniture" else "loose"}
+                got = PS.PhotoBuild._make(self, o)    # the same checks and fixing as a scene from a photo
+            elif w["name"] not in self.skipped:
+                self.skipped.append(w["name"])
+            if got:
+                self.pick["items"].append({"id": got["item"], "count": w["count"]})
+                self.counts["make"][0] += 1
+
+    def _made_text(self, full: str):
+        names = re.findall(r'<object\b[^>]*\bname="([^"]*)"', full)
+        if names:
+            self.now = f"Making the {names[-1].lower()}" + (f" ({len(names)} of {self.counts['make'][1]})"
+                                                             if self.counts["make"][1] > 1 else "")
+
+    def _think(self, s):
+        if not s:
+            return
+        heads = re.findall(r"\*\*(.+?)\*\*", s)
+        if heads:
+            self.thought = heads[-1].strip()[:80]
+        elif s.strip() and not self.thought:
+            self.thought = s.strip().splitlines()[0][:80]
+
+    def _ask(self, text: str, effort: str, on_text=None) -> str:
+        """One streamed answer from the scene's model (photoscene.ask_stream), with MAKE_SYSTEM."""
+        from . import photoscene as PS
+        if fake():
+            ans = fake_make(text)
+        else:
+            ans = PS.ask_stream(self.model_id, [{"type": "text", "text": text}], self.public, effort, self._think,
+                                on_text or (lambda t: None), lambda: self.stop, system=MAKE_SYSTEM)
+        self.answers.append(f"===== asked: {text[:200]}\n\n{ans}")
+        return ans
 
     def _end(self, phase: str):
         self.phase = phase
