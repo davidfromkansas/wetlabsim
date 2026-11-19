@@ -45,7 +45,9 @@ Work it out in five steps. Keep your written notes short (at most 12 lines befor
 1. INVENTORY. Every visible object: furniture, appliances, and small loose items. Note colour, material \
 (wood, metal, glass, plastic, fabric, ceramic) and what each rests on. Leave out the floor, the ceiling and \
 the walls themselves (the playground has its own floor), but keep things fixed to walls (wall cabinets, \
-shelves) at their real height.
+shelves) at their real height. Ignore any people (and pets) in the photo: don't build them, and build \
+what they hide or hold as it would be without them (a chair someone sits on is an empty chair; something \
+in a person's hand is left out).
 2. SCALE. Pick 2-3 objects whose real size you know well (counter height 0.90 m, table 0.75 m, door \
 2.0 x 0.8 m, mug 0.10 m tall, soda can 0.12 m, A4 paper 0.30 x 0.21 m, floor tiles 0.30 or 0.60 m) and say \
 which you used. Estimate where the camera stands and its height.
