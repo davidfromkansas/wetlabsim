@@ -245,12 +245,19 @@ def start_reporting(get_runs, idle_minutes: float, busy, before_exit=None):
     def loop():
         global _stale
         nonlocal stale_since
+        first = True
         while True:
-            time.sleep(5)
+            if not first:
+                time.sleep(5)
             try:
                 report(get_runs())
+                if first:
+                    asked = float((_dict("wetlab-labs").get(LAB_ID) or {}).get("asked") or 0)
+                    print(f"startup: ready (reported to the front)"
+                          + (f", {time.time() - asked:.1f} s after the front asked for it" if asked else ""), flush=True)
             except Exception as e:  # noqa: BLE001
                 print("lab report failed:", e)
+            first = False
             cur = current_build()
             _stale = older(BUILD, cur)
             if _stale and stale_since is None:
@@ -285,7 +292,7 @@ def claim_lab(owner: str, user: str = "") -> dict:
     lab, key = secrets.token_hex(4), secrets.token_urlsafe(24)
     owners[owner], keys[lab] = lab, key
     # Counted as open while it starts (it reports itself once its server is up).
-    labs[lab] = {"url": "", "seen": time.time() + 120, "started": time.time(), "runs": [], "build": BUILD}
+    labs[lab] = {"url": "", "seen": time.time() + 120, "started": time.time(), "asked": time.time(), "runs": [], "build": BUILD}
     modal.Function.from_name(os.environ.get("WETLAB_MODAL_APP", "wetlab-playground"), "lab").spawn(lab, key, user)
     return {"pending": True}
 

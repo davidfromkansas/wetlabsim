@@ -910,9 +910,14 @@ def _load_saved() -> int:
                                        and x.owner == ACCOUNT_OWNER and x.sim.scene_mode == "free"], _snapshot)
     n = 0
     try:
-        for row in SAVE.load_sessions(SAVED_AT_START):
-            _from_row(row)
+        rows = SAVE.load_sessions(SAVED_AT_START)
+        startup_log(f"{len(rows)} saved sessions read from the database")
+        for row in rows:
+            t = time.time()
+            sess = _from_row(row)
             n += 1
+            print(f"startup: session {n} built in {time.time() - t:.1f} s ({len(sess.sim.stations)} stations, "
+                  f"{len(sess.sim.placed)} objects)", flush=True)
     except Exception as e:  # noqa: BLE001
         print("could not load saved sessions:", e)
     AUTOSAVE.start()
@@ -2558,7 +2563,16 @@ class RobotAPIHandler(RA.RobotAPIMixin, PGHandler):
     the station a run token opens. Shares the app's state (PGHandler's class attributes)."""
 
 
+_T0 = float(os.environ.get("WETLAB_T_FN") or 0) or time.time()   # the hosted function's start, else this process's
+
+
+def startup_log(what: str):
+    """How long startup has taken so far (hosted: since the Modal function began), in the log."""
+    print(f"startup: {what} {time.time() - _T0:.1f} s", flush=True)
+
+
 def main(argv=None):
+    startup_log("code loaded")
     ap = argparse.ArgumentParser(description="MuJoCo Playground")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8780)
@@ -2609,6 +2623,7 @@ def main(argv=None):
     # shared volume; WETLAB_SESSION_DIR points it elsewhere when hosted.)
     if not (_load_saved() if SAVE.enabled() else 0):
         new_session("", "Untitled lab", default=True)
+    startup_log("sessions loaded")
     srv = ThreadingHTTPServer((args.host, args.port), PGHandler)
     srv.daemon_threads = True
 
@@ -2648,6 +2663,7 @@ def main(argv=None):
         MODEL_PROXY = True
         print(f"Model proxy for agents on port {args.model_proxy_port} (run tokens only)")
     print(f"MuJoCo Playground is running at {url}")
+    startup_log("serving")
     if not args.no_browser:
         import webbrowser
         threading.Timer(1.0, lambda: webbrowser.open(url)).start()

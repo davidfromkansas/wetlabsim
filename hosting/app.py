@@ -111,7 +111,7 @@ def _commit_loop(every=30):
 def web():
     subprocess.Popen(["python", "-m", "playground.server", "--host", "0.0.0.0", "--port", "8780", "--no-browser",
                       "--front", "--public", "--robot-port", "0", "--runs", "/data/runs"], cwd="/app",
-                     env=dict(os.environ, WETLAB_SESSION_DIR="/tmp/sessions"))
+                     env=dict(os.environ, WETLAB_SESSION_DIR="/tmp/sessions", WETLAB_T_FN=str(time.time())))
     _commit_loop()
 
 
@@ -119,10 +119,13 @@ def web():
               volumes={"/data": runs, "/library": library}, max_containers=MAX_LABS, timeout=12 * 3600)
 def lab(lab_id: str, owner_key: str, owner_user: str = ""):
     """One visitor's lab, for as long as it is in use (its server exits after 5 minutes with no real activity)."""
+    t_fn = time.time()        # this function began (the container is up): startup timings count from here
     with modal.forward(8780) as page, modal.forward(8781) as robot, modal.forward(8782) as proxy:
         env = dict(os.environ, WETLAB_SESSION_DIR="/tmp/sessions", WETLAB_LAB_ID=lab_id, WETLAB_OWNER_KEY=owner_key, WETLAB_LAB_URL=page.url,
                    WETLAB_OWNER_USER=owner_user,
-                   WETLAB_RUN_TAG=lab_id, WETLAB_MODEL_PROXY_URL=proxy.url)
+                   WETLAB_RUN_TAG=lab_id, WETLAB_MODEL_PROXY_URL=proxy.url,
+                   WETLAB_T_FN=str(t_fn))
+        print(f"startup: tunnels open {time.time() - t_fn:.1f} s after the function began")
         _commit_loop()
         proc = subprocess.Popen(
             ["python", "-m", "playground.server", "--host", "0.0.0.0", "--port", "8780", "--no-browser",
