@@ -239,7 +239,7 @@ What the datasheets can't tell you: how this particular robot is set up.
 ## Mounting
 
 - Unitree G1 humanoid (29 body joints) with a Dex3-1 three-finger hand on each arm (`left`
-  and `right`). It is not mounted: it stands on its own feet on the floor, {facing} ({w_cm:.0f} x {d_cm:.0f} cm, top {top_cm:.1f} cm above the floor), balancing
+  and `right`). It is not mounted: it stands on its own feet on the floor, {facing}, balancing
   under its whole-body controller (NVIDIA's GEAR-SONIC, see `COMMANDS.md`).
 - Both arms report in one frame, the pelvis frame: origin at the pelvis (about {pelvis_cm:.0f} cm
   above the floor when standing), x forward, y to the robot's left, z up. All positions and
@@ -295,8 +295,7 @@ What the datasheets can't tell you: how this particular robot is set up.
 
 - Rainbow Robotics RB-Y1 (model A): two 7-joint arms (`left` and `right`), each with the
   standard two-finger gripper, on a 6-joint torso with a 2-joint pan-tilt head, on a
-  two-wheeled mobile base. It is not mounted: it stands on its wheels on the floor, {facing}
-  ({w_cm:.0f} x {d_cm:.0f} cm, top {top_cm:.1f} cm above the floor).
+  two-wheeled mobile base. It is not mounted: it stands on its wheels on the floor, {facing}.
   Nothing balances it for you and nothing moves on its own: the wheels, torso, head and each
   arm do what you command and hold still otherwise.
 - Both arms report in one frame, the base frame (Rainbow's `base` link): origin on the floor
@@ -395,8 +394,83 @@ def site_sheet(placed: list[W.Placed], station: W.Station | None = None,
     return text
 
 
+def _bare_sheet(station: W.Station) -> str:
+    """The sheet of a robot put down on its own, with no table: how high it stands and on
+    what kind of mount. It names nothing around it (what it stands on included): the agent
+    finds that with its cameras."""
+    from wetlabsim import scene as WS
+    P = WS.ROBOTS[station.robot]
+    mz, g = station.mount_z, station.surface_z()
+    stands = station.stands()
+    h = 100 * (stands[0][4] - stands[0][3]) if stands else 0.0
+    ready = "[" + ", ".join(f"{v:g}" for v in P.get("ready_q", [])) + "]"
+    two = station.robot == "aloha"
+    if stands and g < STAND_FLOOR:
+        how = f"on {'two steel stands' if two else 'a steel stand'} {h:.1f} cm tall on the floor."
+    elif stands:
+        how = (f"on {'two steel risers' if two else 'a steel riser'} {h:.1f} cm tall on a flat surface "
+               f"{g * 100:.1f} cm above the floor.")
+    elif g >= STAND_FLOOR:
+        how = f"on a flat surface {g * 100:.1f} cm above the floor."
+    else:
+        how = "on the floor."
+    def surf(z0: float) -> str:     # the surface and the floor, in a frame whose origin is z0 above the floor
+        if g >= STAND_FLOOR:
+            return (f"The surface it stands on is the plane z = {_fmt(g - z0)}; how far it reaches, find with "
+                    f"the cameras. The floor is the plane z = {_fmt(-z0)}.")
+        return f"The floor is the plane z = {_fmt(-z0)}."
+    if two:
+        bz = ALOHA_BASES["left"][2]
+        by = ALOHA_BASES["left"][1]
+        text = ALOHA_TEMPLATE.format(mounting=how, gap=2 * by, gap_cm=200 * by, where="",
+                                     origin_at="its mount", table_line=surf(mz + bz),
+                                     ready="[" + ", ".join(f"{v:g}" for v in WS.aloha_side("left")["ready_q"]) + "]")
+        return (text.replace("Seen from the operator's side of the table", "Seen from the operator's side")
+                .replace("fixed above the operator's side of the table, looking down at the middle",
+                         "fixed above the operator's side, looking down at the middle between the arms")
+                .replace("fixed at the operator's edge of the table, low down, looking across it",
+                         "fixed at the operator's side, low down, looking across between the arms"))
+    if station.robot in ("g1", "rby1"):
+        fmt = lambda q: "[" + ", ".join(f"{v:.4g}" if station.robot == "rby1" else f"{v:g}" for v in q) + "]"
+        if station.robot == "g1":
+            hp = WS.G1_STANDING_HEIGHT
+            text = G1_TEMPLATE.format(pelvis_cm=hp * 100, facing="with nothing set out for it",
+                                      table_line=f"The floor is about z = {_fmt(-hp)} m.",
+                                      ready_l=fmt(WS.G1_READY["left"]), ready_r=fmt(WS.G1_READY["right"]))
+            return (text.replace("the table is somewhere\n  else in it", "everything around it is somewhere\n  else in it")
+                    .replace(" (about 20 to 35 cm past the table's edge)", "")
+                    .replace(",\nabove the table top and behind its edge.", "."))
+        text = RBY1_TEMPLATE.format(facing="with nothing set out for it",
+                                    table_line="The floor is the plane z = 0.",
+                                    ready_l=fmt(WS.RBY1_READY["left"]), ready_r=fmt(WS.RBY1_READY["right"]))
+        return (text.replace("after that, the table is somewhere else in it", "after that, everything around it is somewhere else in it")
+                .replace("straight-down (top) grasps over the table need", "straight-down (top) grasps need")
+                .replace(" grippers open and pointing\nforward and down, above the table and past its edge.",
+                         " grippers open and pointing\nforward and down."))
+    if station.robot == "fr3_duo":
+        hd = WS.FR3_DUO_ORIGIN_HEIGHT
+        fmt = lambda q: "[" + ", ".join(f"{v:g}" for v in q) + "]"
+        text = FR3_DUO_TEMPLATE.format(origin_cm=hd * 1000, table_line=surf(mz + hd), mounting="that stands " + how,
+                                       origin_at=f"its mount ({mz * 100:.1f} cm above the floor)", across="",
+                                       ready_l=fmt(WS.FR3_DUO_READY["left"]), ready_r=fmt(WS.FR3_DUO_READY["right"]))
+        return text.replace("looking forward and\n  down at the table", "looking forward and\n  down")
+    if station.floor_arm:
+        return FLOOR_ARM_TEMPLATE.format(table_line="Nothing is set out in front of it: look with the cameras.",
+                                         robot_name=P["name"], tool=TOOL[station.robot], hand=HAND[station.robot],
+                                         ready=ready)
+    text = TEMPLATE.format(robot_name=P["name"], mounting="mounted upright on its base flange, " + how,
+                           origin_at=f"{mz * 100:.1f} cm above the floor", across="", table_line=surf(mz),
+                           tool=TOOL[station.robot], hand=HAND[station.robot], ready=ready)
+    return text.replace("looking down at the table", "looking down in front of\n  the robot")
+
+
+STAND_FLOOR = 0.01      # a surface lower than this is the floor
+
+
 def _site_sheet(station: W.Station) -> str:
     from wetlabsim import scene as WS
+    if station.bare:
+        return _bare_sheet(station)
     sx, sy = station.footprint()
     top = station.top
     rx, ry = station.robot_xy
@@ -454,6 +528,8 @@ def _site_sheet(station: W.Station) -> str:
             line = f"At the start the table top is at {zt}{_fmt(tz) if station.robot == 'g1' else f'{tz:.3f}'} m and {e}."
         facing = (f"facing the middle of one\n  edge of {table}" if station.robot == "g1" else f"facing the\n  middle of one edge of {table}") \
             if not moved else f"near {table}"
+        dims = f"({max(tw, td) * 100:.0f} x {min(tw, td) * 100:.0f} cm, top {top * 100:.1f} cm above the floor)"
+        facing += f" {dims}" if station.robot == "g1" else f"\n  {dims}"
         if station.robot == "g1":
             return G1_TEMPLATE.format(**common, pelvis_cm=h * 100, facing=facing, table_line=line,
                                       ready_l=fmt(WS.G1_READY["left"]), ready_r=fmt(WS.G1_READY["right"]))
