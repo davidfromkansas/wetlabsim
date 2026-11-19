@@ -477,7 +477,7 @@ export function start({stage, base = '', onReady}) {
       float scan = smoothstep(0.82, 1.0, sin(vWorld.z * 140.0 - time * 3.0)) * 0.10;
       float a = (rim * 0.85 + scan * (0.4 + rim)) * strength;
       vec3 color = mix(vec3(0.10, 0.72, 0.82), vec3(0.80, 0.98, 1.0), rim);
-      gl_FragColor = vec4(color * a, a);
+      gl_FragColor = vec4(color, a);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
     }`;
