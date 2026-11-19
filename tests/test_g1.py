@@ -205,24 +205,17 @@ def test_site_sheet_and_robot_api():
     assert RA.allowed("GET", "/lidar.npz") and RA.allowed("GET", "/camera/head.png")
 
 
-def test_g1_works_in_a_solid_7m_room():
-    """The G1 walks about: its work box is a 7 x 7 m room of solid walls round its table (not
-    the table arm's walls just behind it, which its lidar saw as a wall 40 cm back), other
-    stations stay out of the room, and the site sheet says so."""
+def test_g1_is_not_boxed_in():
+    """No walls round the G1's station: its lidar sees open floor behind it (up to the next
+    thing that is really there), it may walk anywhere, and the site sheet names no room."""
     sim = PlaygroundSim(stations=[])
     uid = sim.add_station("g1", (0.0, 0.0), 0.0, "table", starter=False)
     st, g = sim.station(uid), sim.arms[uid]
-    assert st.roomy and not st.open
-    assert st.work_box()[:2] == (3.5, 3.5)
-    walls = [i for i in range(sim.m.ngeom) if sim.m.geom(i).name.startswith(f"{st.prefix}wall")]
-    assert len(walls) == 4 and all(sim.m.geom_contype[i] and sim.m.geom_conaffinity[i] for i in walls)
+    assert not [i for i in range(sim.m.ngeom) if sim.m.geom(i).name.startswith(f"{st.prefix}wall")]
     pts = g.lidar()["points"]
-    behind = pts[(pts[:, 0] < -0.15) & (pts[:, 0] > -1.5) & (abs(pts[:, 1]) < 0.6) & (pts[:, 2] > -0.3)]
+    behind = pts[(pts[:, 0] < -0.15) & (pts[:, 0] > -3.0) & (abs(pts[:, 1]) < 0.6) & (pts[:, 2] > -0.3)]
     assert len(behind) == 0
-    assert not sim.station_spot(2.0, 0.0, 0.0)["valid"]           # a table arm inside the room
-    assert sim.station_spot(5.0, 0.0, 0.0)["valid"]               # and just outside it
-    other = sim.add_station("franka", (-5.5, 0.0), 0.0, "table", starter=False)
-    with pytest.raises(RobotError, match="7 × 7 m room"):
-        sim.swap_robot(other, "g1")                                 # its room would overlap
-    assert "7 x 7 m" in site.site_sheet([], st)
+    assert sim.station_spot(3.0, 0.0, 0.0)["valid"]               # another station can stand nearby
+    sheet = site.site_sheet([], st)
+    assert "7 x 7" not in sheet and "walls" not in sheet
     sim.stop_threads()
