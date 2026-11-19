@@ -703,6 +703,8 @@ body.watch #physBtn{display:none}
 /* ---------- the robot picker: one card for Add and Swap ---------- */
 #rpk{position:fixed;z-index:90;width:420px;max-width:calc(100vw - 24px);background:#fff;border-radius:16px;box-shadow:0 24px 60px -12px rgba(17,24,39,.35),0 0 0 1px rgba(17,24,39,.08);font:13px Inter,sans-serif;color:var(--ink);transform-origin:var(--o,right top);animation:rpkIn 160ms cubic-bezier(.23,1,.32,1)}
 #rpk[hidden]{display:none}
+body.robotdrag #rpk{opacity:0;pointer-events:none;transition:opacity 120ms ease-out}
+#rpk .ri[draggable=true]{cursor:grab}
 @keyframes rpkIn{from{opacity:0;transform:scale(.97)}}
 #rpk .caret{position:absolute;right:-7px;width:14px;height:14px;background:#fff;transform:rotate(45deg);box-shadow:1px -1px 0 rgba(17,24,39,.08)}
 #rpk .ph{padding:16px 16px 10px;display:flex;align-items:flex-start;gap:10px}
@@ -1210,10 +1212,19 @@ async function probe(item, p, uid) {
 }
 function showTag(p, text, bad) { const t = $('droptag'); t.style.display = 'block'; t.style.left = p.x + 'px'; t.style.top = p.y + 'px'; t.textContent = text; t.classList.toggle('bad', !!bad); }
 function hideTag() { $('droptag').style.display = 'none'; }
-stage.addEventListener('dragover', (e) => { if (!S.dragItem) return; e.preventDefault(); probe(S.dragItem.id, uv(e)); });
+stage.addEventListener('dragover', (e) => {
+  if (S.dragRobot) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; probeStation(uv(e)); return; }
+  if (!S.dragItem) return; e.preventDefault(); probe(S.dragItem.id, uv(e));
+});
 stage.addEventListener('dragleave', (e) => { if (e.target === stage || e.target === view) { hideTag(); api('/pg/ghost/clear', {}); } });
 stage.addEventListener('drop', async (e) => {
-  e.preventDefault(); const id = e.dataTransfer.getData('text/plain') || (S.dragItem && S.dragItem.id); if (!id) return;
+  e.preventDefault();
+  if (S.dragRobot) {
+    S.dragRobot = null; stProbeNext = null; document.body.classList.remove('robotdrag'); closePicker();
+    const p = uv(e); await S.robotHold; await placeStation(p);
+    if (S.placing) cancelPlacing();          // couldn't go there: placeStation said why
+    return;
+  } const id = e.dataTransfer.getData('text/plain') || (S.dragItem && S.dragItem.id); if (!id) return;
   S.dragItem = null; probeNext = null; hideTag(); await place(id, uv(e));
 });
 async function place(id, p) {
@@ -1943,6 +1954,11 @@ function openPicker(mode, uid, from) {
   pk.querySelectorAll('.ri[data-r]').forEach(b => {
     b.onclick = () => { S.pick.sel = b.dataset.r; paint(); };
     b.ondblclick = () => { S.pick.sel = b.dataset.r; paint(); pickerGo(); };
+    if (mode === 'add') {     // or drag it onto the floor, like an object from the library
+      b.draggable = true; b.title = 'Drag onto the floor, or pick it and press Add';
+      b.ondragstart = (e) => robotDragStart(e, b);
+      b.ondragend = robotDragEnd;
+    }
   });
   pk.querySelector('.x').onclick = () => closePicker(true);
   pk.querySelector('.no').onclick = () => closePicker(true);
@@ -2031,6 +2047,24 @@ $('addModal').onclick = (e) => { if (e.target === $('addModal')) closeAdd(true);
 const STATION_KINDS = {table: {label: 'Table', items: 0}, wetlab: {label: 'Wet lab bench', items: 18},
   island: {label: 'Kitchen island', items: 0}, counter: {label: 'Kitchen counter', items: 0}, libero: {label: 'LIBERO room', items: 0},
   wetrobo_x: {label: 'WetRobo Lab X', items: 0}, wetrobo_y: {label: 'WetRobo Lab Y', items: 0}};
+// Dragging a robot out of the Add picker: the picker steps aside and the station's outline
+// follows the pointer on the floor, as when placing it by clicking.
+function robotDragStart(e, b) {
+  if (runLock(S.scene)) { e.preventDefault(); toast(runLock(S.scene)); return; }
+  const robot = b.dataset.r; S.pick.sel = robot;
+  pk_paint();
+  S.dragRobot = robot; S.placing = robot; S.placeKind = S.pick.kind || 'table'; S.placeTask = ''; S.placeFree = false; S.placeYaw = 0;
+  S.armed = null; markArmed();
+  e.dataTransfer.setData('text/plain', 'robot:' + robot); e.dataTransfer.effectAllowed = 'copy';
+  const img = b.querySelector('img'); if (img) e.dataTransfer.setDragImage(img, 40, 40);
+  setTimeout(() => document.body.classList.add('robotdrag'));   // after the drag has begun
+  S.robotHold = holdPhysics();
+}
+async function robotDragEnd() {
+  document.body.classList.remove('robotdrag');
+  if (S.dragRobot) { S.dragRobot = null; await S.robotHold; cancelPlacing(); }    // let go outside the scene: nothing changes
+}
+const pk_paint = () => document.querySelectorAll('#rpk .ri[data-r]').forEach(x => x.setAttribute('aria-checked', String(S.pick && x.dataset.r === S.pick.sel)));
 function startPlacing(robot, kind = 'table', task = '', free = false) {
   closeAdd(); S.placing = robot; S.placeKind = kind; S.placeTask = task; S.placeFree = !!free; S.placeYaw = 0; S.armed = null; markArmed();
   api('/pg/camera', {preset: 'lab'});
@@ -2049,7 +2083,7 @@ async function probeStation(p) {
     if (!S.placing) { hideTag(); api('/pg/ghost/clear', {}); return; }
     const label = (S.cat.robots.find(x => x.id === S.placing) || {}).label || '';
     const what = S.placeKind !== 'table' ? `${STATION_KINDS[S.placeKind].label} · ${label}` : `${label} station`;
-    showTag(p, r.valid ? `${what} · click to place` : (r.reason || "can't go there"), !r.valid);
+    showTag(p, r.valid ? `${what} · ${S.dragRobot ? 'let go to place' : 'click to place'}` : (r.reason || "can't go there"), !r.valid);
   } finally { stProbeBusy = false; if (stProbeNext) { const n = stProbeNext; stProbeNext = null; probeStation(n); } }
 }
 async function placeStation(p) {

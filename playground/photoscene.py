@@ -266,10 +266,13 @@ def _codex_stream(model, system, content, login, effort, on_think, on_text, stop
     imgs = [base64.b64decode(c["source"]["data"]) for c in content if c["type"] == "image"]
 
     seen: set = set()
+    said: set = set()                    # thoughts shown, without spaces (both sources give each one)
+    out = {"stdout": False}              # stdout has given reasoning items: the log is then not needed
 
-    def event(line: str):
+    def event(line: str, log: bool = False):
         """One line of Codex's --json output or of its session log (CODEX_HOME/sessions/*.jsonl):
-        a finished reasoning item is a thinking step, with its summary when there is one."""
+        a finished reasoning item is a thinking step, with its summary when there is one. The
+        log is only a fallback for when stdout gives none, so a thought isn't shown twice."""
         try:
             ev = json.loads(line)
         except json.JSONDecodeError:
@@ -284,6 +287,10 @@ def _codex_stream(model, system, content, login, effort, on_think, on_text, stop
         what = str(body.get("type") or ev.get("type") or "").lower()
         if "reasoning" not in kind or "start" in what or "delta" in what:
             return
+        if log and out["stdout"]:
+            return
+        if not log:
+            out["stdout"] = True
         key = it.get("id")
         if key:
             if key in seen:
@@ -292,6 +299,11 @@ def _codex_stream(model, system, content, login, effort, on_think, on_text, stop
         txt = it.get("text") or it.get("summary") or it.get("summary_text") or ""
         if isinstance(txt, list):
             txt = " ".join(str(x.get("text", x)) if isinstance(x, dict) else str(x) for x in txt)
+        flat = "".join(str(txt).split())
+        if flat:
+            if flat in said:
+                return
+            said.add(flat)
         on_think("\n\n" + str(txt).strip() if str(txt).strip() else STEP)
 
     if SG.WHERE == "modal":
@@ -394,7 +406,7 @@ def _codex_local_stream(model, prompt, imgs, login, effort, event, stopped):
         except FileNotFoundError:
             raise ModelError("Codex isn't installed on this machine (npm install -g @openai/codex)") from None
         w = _watch(p.kill, stopped)
-        follow = _follow_logs(os.path.join(home, "sessions"), event)
+        follow = _follow_logs(os.path.join(home, "sessions"), lambda ln: event(ln, True))
         try:
             for line in p.stdout:
                 event(line)
