@@ -43,9 +43,14 @@ can be picked up. Units are metres; z is up.
 
 Work it out in five steps. Keep your written notes short (at most 12 lines before the scene):
 1. INVENTORY. Every visible object: furniture, appliances, and small loose items. Note colour, material \
-(wood, metal, glass, plastic, fabric, ceramic) and what each rests on. Leave out the floor, the ceiling and \
-the walls themselves (the playground has its own floor), but keep things fixed to walls (wall cabinets, \
-shelves) at their real height. Ignore any people (and pets) in the photo: don't build them, and build \
+(wood, metal, glass, plastic, fabric, ceramic) and what each rests on. Build the walls you can see: \
+each wall is its own kind="fixed" object ("Back wall", "Left wall"), a thin box 0.10-0.15 m thick from the \
+floor up to the ceiling's height, in the wall's colour, with gaps where the photo shows a doorway or a \
+window (build the wall around the gap from several boxes, and the door or window as its own object in \
+it). Split a wall longer than 8 m into pieces. Walls count towards the 40 objects: if you run out, leave \
+out the smallest loose items first. Leave out the floor and the ceiling (the playground has its own \
+floor). Keep things fixed to walls (wall cabinets, shelves, whiteboards) at their real height, against \
+their wall. Ignore any people (and pets) in the photo: don't build them, and build \
 what they hide or hold as it would be without them (a chair someone sits on is an empty chair; something \
 in a person's hand is left out).
 2. SCALE. Pick 2-3 objects whose real size you know well (counter height 0.90 m, table 0.75 m, door \
