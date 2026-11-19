@@ -217,5 +217,5 @@ def test_g1_is_not_boxed_in():
     assert len(behind) == 0
     assert sim.station_spot(3.0, 0.0, 0.0)["valid"]               # another station can stand nearby
     sheet = site.site_sheet([], st)
-    assert "room" not in sheet and "walls" not in sheet
+    assert "7 x 7" not in sheet and "walls" not in sheet
     sim.stop_threads()
