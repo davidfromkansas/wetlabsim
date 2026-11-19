@@ -384,20 +384,36 @@ SIM-READY MuJoCo model for a robot physics playground: the right size, the right
 it must behave like the real thing. Doors open, drawers slide, lids lift, loose things fall and can be \
 picked up. Units are metres; z is up. Keep your written notes short (a few lines before the answer).
 
-For each object:
-1. Each object is either kind="fixed" (furniture, counters, appliances, heavy things: they never move as a \
-whole) or kind="loose" (things a hand could pick up or push); you are told which. Give every part a \
-realistic mass (from material and size: water/food ~1000 kg/m3, wood ~600, plastic ~950, glass ~2500, \
-steel ~7800, ceramic ~2300; hollow items use their shell, not their whole volume; the object as a whole \
-should weigh what the real one does) and friction for its material (0.3 smooth to 1.0 rubber).
-2. Anything with moving parts gets them: oven and fridge doors, cabinet doors, drawers, lids, laptop \
-screens. Each moving part is a child body with a hinge (turns) or slide (moves in a line) joint at the \
-right edge, with its axis, a limited range (e.g. a door 0 to 110 degrees, a drawer 0 to 0.40 m), damping \
-0.05-1 and armature 0.01 so it moves calmly. Doors start closed. Collision shapes are the visible \
-shapes: build hollow things hollow (an oven cavity from 5 walls, a cup from a base and a ring of thin \
-boxes) so things can go inside them.
-3. Build it from simple shapes into a recognisable form: a mug = cylinder walls + base + handle, a chair \
-= seat + back + 4 legs, a microwave = hollow box + hinged door with a handle.
+For each object (these follow Google DeepMind's MuJoCo asset standards, cut to what this format allows):
+1. REAL SIZE. Its overall width, depth and height match the real thing (the size you are given, or a \
+real product's); check that the parts add up to it. Units are metres and kilograms.
+2. KIND. Each object is either kind="fixed" (furniture, counters, appliances, heavy things: they never move \
+as a whole) or kind="loose" (things a hand could pick up or push); you are told which.
+3. MASS. Put the mass on the shapes themselves, spread by volume and material (water/food ~1000 kg/m3, wood \
+~600, plastic ~950, glass ~2500, steel ~7800, ceramic ~2300; hollow items use their shell, not their whole \
+volume), so the total is what the real one weighs and the centre of mass sits where the real one's does \
+(a heavy base low down). No hidden extra weights, and no part without mass.
+4. SHAPES THAT WORK. Collision shapes are the visible shapes, and they must keep what the object is used for:
+   - Containers (cups, bowls, bins, trays, drawers, sinks): a base plus a ring of thin wall boxes, open on \
+top, so a small thing dropped in lands on the inside floor. Never fill a hollow with one solid shape.
+   - Handles and loops (mug handles, drawer pulls, kettle handles): build them from separate segments \
+with a real gap, so a finger fits through.
+   - Nothing thinner than 3 mm (walls, shelves, bases, rods), so things dropped on it don't pass through.
+   - Wheels and casters that let it roll are their own child bodies on hinges (a caster: a swivel body on \
+a vertical hinge, then a wheel body on its axle hinge), not fixed to the frame.
+   - Every shape is visible: its alpha (the last number of rgba) is 1, never 0.
+5. MOVING PARTS. Give it only the joints the real thing has (doors, drawers, lids, laptop screens, knobs \
+that turn): each moving part is a child body with one hinge (turns) or slide (moves in a line) joint whose \
+pos and axis sit on the real pivot (a door's hinge edge, a drawer's runners). Each has a limited range \
+it can really move without hitting its frame or a neighbour (leave 2-3 mm gaps), damping (0.02-0.5 for \
+small lids and hinges, 1-5 for heavy doors and drawers) and armature 0.001-0.01. A part that stays where \
+it is put (a laptop screen, an adjustable stand) gets frictionloss a little more than gravity's pull on \
+it (about 1.25 x its weight in N, times its lever arm in m for a hinge). A part that springs back (a \
+toaster lever, a button) gets stiffness and springref. Doors start closed.
+6. CONTACT. Give each shape the friction of its material (0.3 smooth glass or metal to 1.0 rubber). Leave \
+condim, solref, solimp, margin and gap out: the playground sets contact physics for every object itself.
+7. LOOKS. Build it from simple shapes into a recognisable form: a mug = cylinder walls + base + handle, a \
+chair = seat + back + 4 legs, a microwave = hollow box + hinged door with a handle. Use its real colours.
 
 ANSWER FORMAT. After your short notes, write the objects and nothing after them:
 
@@ -424,8 +440,9 @@ Rules for every object:
 - One <object> per object asked for, in the order asked, with exactly the name and kind given; x, y, z \
 and yaw are always 0 (the playground places it).
 - Inside <mujoco>, build the object around its own origin with its front facing -y. Angles are in degrees.
-- One top <body> per object. Moving parts are child bodies, each with one hinge or slide <joint> and a \
-plain name saying what it is ("door_left", "drawer_top", "lid").
+- One top <body> per object, named for what it is ("toaster", not "body" or "root"), with no pos or \
+rotation of its own. Moving parts are child bodies, each with one hinge or slide <joint> and a plain name \
+saying what it is ("door_left", "drawer_top", "lid").
 - Allowed: <asset> with <material name rgba specular shininess reflectance> only; <body>, <geom> \
 (type box, cylinder, capsule, sphere or ellipsoid), <joint> (type hinge or slide), <inertial>. NOT \
 allowed: meshes, textures, files, <include>, <default>, lights, cameras, actuators, <freejoint> (the \
