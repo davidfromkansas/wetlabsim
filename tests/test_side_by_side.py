@@ -127,5 +127,9 @@ def _check_overhead(kinds):
             if kind == "libero":
                 assert abs(lx) < sx / 2 and abs(ly) < sy / 2, (kind, yaw, lx, ly)
                 continue
+            if kind == "bare":         # no table: it hangs in front of the robot, over what it reaches
+                assert 0.0 < lx < 1.0 and abs(ly) < 0.05, (kind, yaw, lx, ly)
+                assert z < st.mount_z + st.WALL_ABOVE + 0.01, (kind, yaw, z)
+                continue
             assert abs(lx) < sx / 2 + 0.05 and abs(ly) < sy / 2 + 0.05, (kind, yaw, lx, ly, z)
             assert z < st.top + st.WALL_ABOVE + 0.01 or st.floor_arm, (kind, yaw, z)
