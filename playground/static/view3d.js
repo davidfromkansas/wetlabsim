@@ -461,7 +461,7 @@ export function start({stage, base = '', onReady}) {
       vec4 world = modelMatrix * vec4(position, 1.0);
       vec3 n = normalize(mat3(modelMatrix) * outlineNormal);
       float dist = length(cameraPosition - world.xyz);
-      world.xyz += n * clamp(dist * widthPx * 0.0011, 0.002, 0.04);
+      world.xyz += n * clamp(dist * widthPx * 0.0011, 0.006, 0.12);
       gl_Position = projectionMatrix * viewMatrix * world;
     }`;
   const outlineFragment = `
@@ -471,8 +471,8 @@ export function start({stage, base = '', onReady}) {
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
     }`;
-  const outlineUniforms = {strength: {value: 0.9}, widthPx: {value: 3.0}};
-  const outlineWaitUniforms = {strength: {value: 0.35}, widthPx: {value: 2.0}};
+  const outlineUniforms = {strength: {value: 0.9}, widthPx: {value: 9.0}};
+  const outlineWaitUniforms = {strength: {value: 0.35}, widthPx: {value: 6.0}};
   const outlineMat = (u) => new THREE.ShaderMaterial({uniforms: u, vertexShader: outlineVertex,
     fragmentShader: outlineFragment, side: THREE.BackSide, transparent: true, depthWrite: false});
   const outlineMats = {on: outlineMat(outlineUniforms), wait: outlineMat(outlineWaitUniforms)};
