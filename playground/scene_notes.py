@@ -54,19 +54,18 @@ NOTES = [
      "open them; desk under a window with its chair tucked in. In a kid's room the toy box stands open "
      "at the foot of the bed or against a wall, toys scattered on the floor or rug in the middle and "
      "on the robot's low table. "
-     "Laundry folded on the bed means the bed is the work surface: it stands right at the side end "
-     "of the robot's table (gap 0.05), long side to the robot, nothing between them, and the laundry "
+     "Laundry folded on the bed means the bed is the work surface: the robot works AT the bed "
+     "(its station \"at\": the bed, no table of its own), a bed with a mattress, and the laundry "
      "lies on the half of the bed nearest the robot."),
     (("set the table", "set a table", "dinner table", "dining", "place setting", "table for", "lay the table"),
-     "Setting a table: the robot's own table is the table being set: the plates, glasses and "
-     "cutlery start stacked together at one end of it, and the places are laid along it, all in reach; "
-     "chairs tucked in along its far side and ends. No second dining table: the one the robot sets is "
-     "the one it stands at."),
+     "Setting a table: the robot works AT the dining table (its station \"at\": the dining table, "
+     "no table of its own): the plates, glasses and cutlery start stacked together near the robot, "
+     "and the places are laid along the table, all in reach; chairs tucked in along its far side and "
+     "ends."),
     (("ping pong", "ping-pong", "table tennis", "air hockey", "foosball", "billiard", "pool table", "game"),
-     "Games: the robot plays from its own table. A ping-pong or air-hockey table stands end-on right "
-     "against the far edge of the robot's table (gap 0.05), its length running away from the robot, "
-     "net across its middle; the ball and paddle start on the robot's table near that edge. Nothing "
-     "else stands beside the robot or between it and the game table."),
+     "Games: the robot plays AT the game table (its station \"at\": the ping-pong or air-hockey "
+     "table, no table of its own), at one end of it; the ball and paddle start on the game table "
+     "near the robot. Nothing else stands beside the robot or between it and the game table."),
     (("laundry", "washer", "washing machine", "dryer", "fold", "towel", "clothes"),
      "Laundry room: washer and dryer side by side against one wall, doors facing the room, a counter or "
      "folding table next to them; the laundry basket on the floor or table right in front of the "
