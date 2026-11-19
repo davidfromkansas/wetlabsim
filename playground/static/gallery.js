@@ -34,7 +34,8 @@ document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
 const stage = document.getElementById('stage');
 const TV = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="19" height="13" rx="2.5"/><path d="M8 3l4 4 4-4"/></svg>';
 const XI = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E5E7EB" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
-(document.getElementById('rcol') || stage).insertAdjacentHTML('beforeend', `<button class="fbtn" id="galBtn" aria-haspopup="dialog" aria-expanded="false">${TV}Gallery</button>`);
+// In the scene menu bar (index.html #sbar), before Past runs.
+document.getElementById('pastBtn').insertAdjacentHTML('beforebegin', `<button type="button" class="sb ic" id="galBtn" aria-label="Gallery" aria-haspopup="dialog" aria-expanded="false" data-tip="Gallery|Every robot, live">${TV.replace('width="16" height="16"', 'width="19" height="19"')}</button>`);
 stage.insertAdjacentHTML('beforeend', `<div id="gal" role="dialog" aria-label="Gallery: every robot, live"><div class="gh"><b>Gallery</b><span class="n" id="galN"></span><button class="gx" id="galX" aria-label="Close gallery">${XI}</button></div><div class="gg" id="galG"></div></div>`);
 const btn = document.getElementById('galBtn'), gal = document.getElementById('gal'), grid = document.getElementById('galG');
 const G = {open: false, key: '', seen: {}, busy: 0};
