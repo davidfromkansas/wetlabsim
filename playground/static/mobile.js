@@ -124,6 +124,24 @@ const css = `
   #objDrawer .tabs button{flex:none;height:34px}
   #objClose{width:44px;height:44px}
   #objDrawer .card,#objDrawer .pin{cursor:pointer}
+  /* the pin board on a phone: back button + category name in the header instead of breadcrumbs,
+     one swipeable row of pills that fades at the edge, a big search, larger names */
+  #objDrawer #crumbs,#objDrawer .tabs button.up,#objDrawer .tabs .here{display:none!important}
+  #objDrawer .dh{gap:6px;min-height:52px}
+  #objDrawer.deep .dh{padding-left:6px!important}
+  #objDrawer.deep .dh h2{display:none}
+  #objDrawer.deep .dh .mback{display:flex;flex:none;width:44px;height:44px;border:0;border-radius:999px;background:transparent;align-items:center;justify-content:center}
+  #objDrawer.deep .dh .mtitle{display:flex;flex-direction:column;flex:1;min-width:0}
+  #objDrawer .dh .mtrail{font-size:12.5px;color:#4B5563;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #objDrawer .dh .mname{font-size:20px;font-weight:700;line-height:1.2;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #objDrawer .dh h2{font-size:20px!important}
+  #objDrawer #search{height:46px;font-size:16px}
+  #objDrawer .tabs{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);padding-right:30px}
+  #objDrawer .tabs button{height:40px!important;padding:0 16px;font-size:14px}
+  #objDrawer #items{padding:2px 12px 16px}
+  #objDrawer .mcols{gap:10px}
+  #objDrawer .pin .n{font-size:14px}
+  #objDrawer .pin .w{font-size:12px}
   /* placing an object: a preview, then Place here */
   #mPlace{position:fixed;left:0;right:0;bottom:0;z-index:60;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -8px 30px -10px rgba(17,24,39,.3);padding:14px 16px calc(14px + env(safe-area-inset-bottom));flex-direction:column;gap:12px}
   #mPlace[hidden]{display:none!important}

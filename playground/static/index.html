@@ -557,7 +557,8 @@ body.objopen.dragging #objTab,body.objopen.libarmed #objTab{display:flex}
 /* the library as a pin board: 3 masonry columns, a category path (breadcrumbs) and the next
    level's categories as pills */
 #objDrawer{width:780px;max-width:calc(100% - 28px)}
-body.objopen #sgBar{visibility:hidden}   /* "Describe a scene" sits where the drawer's title is */
+body.objopen #sgBar{visibility:hidden}
+#objDrawer .dh .mback,#objDrawer .dh .mtitle{display:none}   /* the phone header (mobile.js) */   /* "Describe a scene" sits where the drawer's title is */
 #objDrawer .lib-top{gap:8px}
 #objDrawer #search{height:42px;border-radius:999px;border:0;background:#F1F2F4;padding:0 18px;font-size:14.5px}
 #crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:2px;min-height:30px}
@@ -1098,6 +1099,17 @@ function goPath(path) { S.path = path; S.search = ''; $('search').value = ''; re
 function renderTabs() {
   const here = S.path.length ? S.path[S.path.length - 1] : '';
   $('search').placeholder = here ? `Search in ${here}` : `Search ${libItems().length.toLocaleString()} objects`;
+  // on a phone the path is a back button and the category's name in the sheet's header
+  const dh = $('objDrawer').querySelector('.dh');
+  if (dh && !dh.querySelector('.mback')) {
+    dh.insertAdjacentHTML('afterbegin', '<button type="button" class="mback" aria-label="Back"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button><div class="mtitle"><span class="mtrail"></span><b class="mname"></b></div>');
+    dh.querySelector('.mback').onclick = () => goPath(S.path.slice(0, -1));
+  }
+  if (dh) {
+    $('objDrawer').classList.toggle('deep', S.path.length > 0);
+    dh.querySelector('.mtrail').textContent = ['All objects', ...S.path.slice(0, -1)].join(' › ');
+    dh.querySelector('.mname').textContent = here;
+  }
   const nav = $('crumbs'); nav.innerHTML = '';
   ['All objects', ...S.path].forEach((name, k) => {
     if (k) nav.insertAdjacentHTML('beforeend', CHEV);
