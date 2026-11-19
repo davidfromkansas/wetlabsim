@@ -273,6 +273,8 @@ def _codex_stream(model, system, content, login, effort, on_think, on_text, stop
             SG.ACCT.update_login("openai", new)
         except Exception as e:  # noqa: BLE001
             print("could not keep Codex's refreshed login:", e)
+    if not text.strip() and stopped():
+        return ""                        # Stop was pressed: the build ends as "stopped"
     if not text.strip():
         raise ModelError("Codex gave no answer (is the ChatGPT sign-in still good? Try signing in again in Settings)")
     on_text(text)
