@@ -383,3 +383,149 @@ def shake(id_: str) -> None:
         if moved > 0.25:
             raise Bad(f"the object doesn't stay put on a flat floor (it moved {100 * moved:.0f} cm): "
                       "check its shape is stable and its parts' masses")
+
+
+# ------------------------------------------------------------------ inspection (after shake)
+# More of what a robot will do to the object, each in a small world of its own, after the ideas
+# in Google DeepMind's MuJoCo asset audit (mujoco-audit in google-deepmind/robotics-antigravity-plugin,
+# Apache-2.0): every door and drawer opens and closes, a container is really hollow with a closed
+# bottom, and nothing falls through a tabletop.
+# Each raises Bad with what to fix (sent back to the model like a shake failure).
+CONTAINER = re.compile(r"\b(beaker|cup|mug|bowl|bin|tray|basket|bucket|pot|pan|sink|tub|crate|pitcher|jug|"
+                       r"vase|planter|colander|dish)s?\b", re.I)
+
+
+def _world(id_: str, fixed: bool, pos=(0.0, 0.0, 0.001), floor: bool = True, extra: str = ""):
+    """A test world: the object put in as the playground puts it (world._add_mjcf), plus `extra`
+    (MJCF worldbody/actuator text). Returns (model, data, root body id, the object's body ids)."""
+    from . import settings as ST
+    from . import world as W
+    wb, act = (extra.split("<!--actuators-->") + [""])[:2]
+    spec = mujoco.MjSpec.from_string(
+        '<mujoco><compiler angle="radian" autolimits="true"/>'
+        f'<option {W._xml_attrs(ST.option_attrs(W.OPTION, {}))}/>'
+        '<worldbody>' + ('<geom name="floor" type="plane" size="5 5 0.1"/>' if floor else "") + wb +
+        '</worldbody>' + (f"<actuator>{act}</actuator>" if act.strip() else "") + '</mujoco>')
+    W._add_mjcf(spec, W.Placed("t", id_, tuple(pos), 0.0), meta(id_), fixed)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        m = spec.compile()
+    d = mujoco.MjData(m)
+    mujoco.mj_forward(m, d)
+    root = m.body("obj_t").id
+    bodies = {b for b in range(m.nbody) if b == root or m.body(b).name.startswith("obj_t__")}
+    return m, d, root, bodies
+
+
+def _run(m, d, seconds: float, each=None):
+    for k in range(int(seconds / m.opt.timestep)):
+        if each:
+            each(k * m.opt.timestep)
+        mujoco.mj_step(m, d)
+        if not np.all(np.isfinite(d.qpos)):
+            raise Bad("the physics blew up in a test: check masses, joint limits and parts that start "
+                      "inside each other")
+
+
+def _check_moving_parts(id_: str):
+    """Every hinge and slide goes from where it starts to its other end and back with a hand's push
+    (the object held still, off the floor)."""
+    m, d, root, bodies = _world(id_, True, pos=(0, 0, 1.0), floor=False)
+    eqs = [e for e in range(m.neq) if m.eq_type[e] == int(mujoco.mjtEq.mjEQ_JOINT)]
+    tied = {int(m.eq_obj1id[e]) for e in eqs} | {int(m.eq_obj2id[e]) for e in eqs}
+    joints = [j for j in range(m.njnt) if int(m.jnt_bodyid[j]) in bodies and j not in tied
+              and m.jnt_type[j] in (int(mujoco.mjtJoint.mjJNT_HINGE), int(mujoco.mjtJoint.mjJNT_SLIDE))
+              and m.jnt_limited[j]]
+    joints = [j for j in joints if abs(m.jnt_range[j][1] - m.jnt_range[j][0]) > 0.02
+              and m.body_subtreemass[m.jnt_bodyid[j]] >= 0.1]   # not tiny parts (a bottle's cap)
+    if not joints:
+        return
+    start = {j: float(d.qpos[m.jnt_qposadr[j]]) for j in joints}
+
+    def far_end(j):
+        lo, hi = m.jnt_range[j]
+        return hi if abs(hi - start[j]) >= abs(lo - start[j]) else lo
+
+    def push(j, target, seconds=1.0):
+        a, v = m.jnt_qposadr[j], m.jnt_dofadr[j]
+        lo, hi = m.jnt_range[j]
+        b = m.jnt_bodyid[j]
+        lever = 1.0
+        if m.jnt_type[j] == int(mujoco.mjtJoint.mjJNT_HINGE):   # a long arm needs more turning force
+            lever = max(0.1, float(np.linalg.norm(d.subtree_com[b] - d.xanchor[j])))
+        f = 2 * 9.81 * m.body_subtreemass[b] * lever + 4 * m.dof_damping[v] * abs(hi - lo) \
+            + 2 * m.jnt_stiffness[j] * max(abs(hi), abs(lo)) + 0.05
+
+        band = 0.1 * abs(hi - lo) + 1e-3          # full push until close, then easing off (a hand's PD)
+        kp = f / band
+        kd = 2 * math.sqrt(kp * max(float(m.dof_M0[v]), 1e-6))
+
+        def each(_t):
+            d.qfrc_applied[:] = 0
+            err = target - d.qpos[a]
+            d.qfrc_applied[v] = float(np.clip(kp * err - kd * d.qvel[v], -f, f))
+        _run(m, d, seconds, each)
+        d.qfrc_applied[:] = 0
+
+    for _ in range(2):              # twice over: a door opens before the drawer behind it moves
+        for j in joints:
+            push(j, far_end(j))
+    for j in joints:
+        travel = abs(far_end(j) - start[j])
+        got = abs(d.qpos[m.jnt_qposadr[j]] - start[j])
+        if got < 0.7 * travel:
+            raise Bad(f"its moving part '{m.joint(j).name.split('__', 1)[-1]}' only opens "
+                      f"{100 * got / travel:.0f}% of its range when pushed: something blocks it (another part "
+                      "in the way, the hinge on the wrong edge or the wrong axis)")
+    for _ in range(2):
+        for j in reversed(joints):
+            push(j, start[j])
+    for j in joints:
+        travel = abs(far_end(j) - start[j])
+        if abs(d.qpos[m.jnt_qposadr[j]] - start[j]) > 0.3 * travel:
+            raise Bad(f"its moving part '{m.joint(j).name.split('__', 1)[-1]}' doesn't close again after "
+                      "opening: check its range and that it doesn't catch on another part")
+
+
+def _check_hollow(id_: str):
+    """A container (by its name) is open at the top, and a small ball dropped in stays inside."""
+    d0 = _REG[id_]
+    if not CONTAINER.search(d0["label"]):
+        return
+    m, d, root, bodies = _world(id_, True)
+    lo, hi = _bounds(m, d, bodies)
+    h = hi[2] - lo[2]
+    cx, cy = (lo[:2] + hi[:2]) / 2
+    gid = np.array([-1], dtype=np.int32)
+    dist = mujoco.mj_ray(m, d, np.array([cx, cy, hi[2] + 0.05]), np.array([0, 0, -1.0]), None, 1, -1, gid)
+    depth = (dist - 0.05) if dist >= 0 else h
+    if gid[0] >= 0 and m.geom_bodyid[gid[0]] not in bodies:
+        depth = h                     # straight through to the floor: caught just below
+    if depth < max(0.012, 0.25 * h):
+        raise Bad("it should be open and hollow so things fit inside it, but from above it's solid: build "
+                  "it from a base and thin walls, open at the top")
+    if gid[0] < 0 or m.geom_bodyid[gid[0]] not in bodies:
+        raise Bad("it should hold things, but it has no bottom: from above you look straight through it to "
+                  "the floor; give it a closed bottom")
+
+
+def _check_drop(id_: str):
+    """A loose thing dropped 40 cm onto a 2 cm tabletop stays on top (doesn't pass through)."""
+    d0 = _REG[id_]
+    if d0["fixed"]:
+        return
+    m, d, root, bodies = _world(id_, False, pos=(0, 0, 0.92), extra=(
+        '<geom name="slab" type="box" pos="0 0 0.5" size="0.6 0.6 0.01"/>'))
+    _run(m, d, 1.2)
+    lo, hi = _bounds(m, d, bodies)
+    c = d.xpos[root]
+    if abs(c[0]) < 0.6 and abs(c[1]) < 0.6 and lo[2] < 0.49 and hi[2] < 0.6:
+        raise Bad("dropped onto a tabletop it passes through it: its collision shapes are too thin; give "
+                  "walls and bases at least 3 mm of thickness")
+
+
+def inspect(id_: str) -> None:
+    """The robot's-eye checks above, in turn (after shake). Raises Bad with what to fix."""
+    _check_moving_parts(id_)
+    _check_hollow(id_)
+    _check_drop(id_)

@@ -32,6 +32,7 @@ from . import scenegen as SG
 from .scenegen import ModelError
 
 MAX_TRIES = 3
+FIX_AT_ONCE = 6               # objects tested (and sent back to fix) side by side
 MAX_OBJECTS = 46          # up to 40 things + 6 walls
 MAX_PHOTO_BYTES = 6_000_000
 THINKING_KEEP = 4000          # characters of thinking the page is sent
@@ -73,6 +74,14 @@ hinge (turns) or slide (moves in a line) joint at the right edge, with its axis,
 calmly. Doors start closed unless open in the photo. Collision shapes are the visible shapes: build hollow \
 things hollow (a microwave cavity from 5 walls, a cup from a base and a ring of thin boxes) so things \
 can go inside them.
+Every object is tested in MuJoCo before it goes in; build it to pass:
+- Each hinge or slide moves over its whole range: a door swings fully open and shut without hitting its frame, \
+the next door or the worktop (leave 2-3 mm gaps), with its axis on the door's hinge edge. Never give a joint more \
+range than the part can really move (an elbow can't fold through its own arm).
+- Containers (cups, beakers, bowls, bins, trays, tubs, sinks, drawers) are open at the top with a closed bottom.
+- Nothing is thinner than 3 mm (walls, bases, shelves, wires, rods), so things dropped on it don't pass through.
+- Collision shapes follow the visible outside and keep handles, openings and rims usable; the mass of each part \
+fits its material and size.
 5. BUILD each object from simple shapes into a recognisable form: a mug = cylinder walls + base + handle, \
 a chair = seat + back + 4 legs, a microwave = hollow box + hinged door with a handle. Use the colours in the \
 photo.
@@ -726,15 +735,21 @@ class PhotoBuild(SG.Build):
                 raise ModelError("the model's answer had no objects in it")
             self.counts["built"] = self.counts["total"] = len(objs)
             self.phase = "test"
-            ready = []
-            for o in objs:
+            from concurrent.futures import ThreadPoolExecutor
+            lock = threading.Lock()
+
+            def make(o):                # objects are tested side by side: a fix waits on the model
                 if self.stop:
-                    return self._end("stopped")
+                    return None
                 self.now = o["name"]
                 got = self._make(o)
-                if got:
-                    ready.append(got)
-                self.counts["tested"] += 1
+                with lock:
+                    self.counts["tested"] += 1
+                return got
+            with ThreadPoolExecutor(max_workers=FIX_AT_ONCE) as pool:
+                ready = [g for g in pool.map(make, objs) if g]
+            if self.stop:
+                return self._end("stopped")
             if not ready:
                 raise ModelError("none of the objects passed the physics check")
             self.phase = "place"
@@ -809,6 +824,7 @@ class PhotoBuild(SG.Build):
 
     def _make(self, o: dict) -> dict | None:
         """The object checked and tested (sent back to the model to fix, up to MAX_TRIES)."""
+        inspected = False
         for k in range(MAX_TRIES):
             try:
                 xml = AI.clean(o["xml"])
@@ -816,9 +832,18 @@ class PhotoBuild(SG.Build):
                 fixed = o["kind"] != "loose"
                 uid = AI.register(o["name"], xml, fixed, size, frame, mass)
                 AI.shake(uid)
-                return {**o, "item": uid, "fixed": fixed, "size": size}
             except AI.Bad as e:
                 err = str(e)
+            else:
+                ok = {**o, "item": uid, "fixed": fixed, "size": size}
+                try:
+                    AI.inspect(uid)        # doors and drawers move, containers hold, nothing falls through
+                    return ok
+                except AI.Bad as e:
+                    if inspected:          # it stands and settles; one fix tried: keep it as it is
+                        self._think(f"\n\n**Kept the {o['name'].lower()}** as it is: {e}")
+                        return ok
+                    inspected, err = True, str(e)
             if k == MAX_TRIES - 1 or self.stop:
                 break
             self.counts["retries"] += 1

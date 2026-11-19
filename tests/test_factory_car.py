@@ -25,7 +25,7 @@ def _at_pallet(robot):
 def test_big_arm_stands_on_the_floor_and_holds_still(robot):
     sim, uid = _at_pallet(robot)
     a, st = sim.arms[uid], sim.station(uid)
-    assert st.floor_arm and st.open
+    assert st.floor_arm
     base = sim.d.xpos[a.base_body]
     assert abs(base[2]) < 0.01                                  # on the floor, not on the pallet
     q0 = sim.d.qpos[a.arm_qadr].copy()
@@ -140,12 +140,11 @@ def test_ready_made_scene_builds_whole(name):
 
 
 def test_wheeled_humanoid_drives_out_of_its_cell():
-    """The RB-Y1's cell has no work-box walls: it backs over 1.5 m away from its table, far past where
+    """The RB-Y1 has no walls round it: it backs over 1.5 m away from its table, far past where
     a table arm's walls would stand."""
     sim = PlaygroundSim(stations=[])
     uid = sim.add_station("rby1", (0.0, 0.0), 0.0, "table", starter=False)
     st, r = sim.station(uid), sim.arms[uid]
-    assert st.open
     assert not any(sim.m.geom(g).name.startswith(f"{st.prefix}wall") for g in range(sim.m.ngeom))
     _step(sim, 0.5)
     x0 = float(sim.d.xpos[r.base_body][0])

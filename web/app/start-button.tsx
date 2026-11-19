@@ -1,11 +1,13 @@
 "use client";
 import { useClerk } from "@clerk/nextjs";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // One "Start" button: goes straight to Google's sign-in (new and returning users alike).
 export function StartButton() {
   const { client, loaded } = useClerk();
   const [busy, setBusy] = useState(false);
+  // Wake the Modal front while the visitor reads the page and signs in (it can take a few seconds to start).
+  useEffect(() => { fetch("/api/wake").catch(() => {}); }, []);
   async function start() {
     if (!loaded || !client || busy) return;
     setBusy(true);

@@ -51,14 +51,23 @@ HERE = pathlib.Path(__file__).parent
 PAGE = HERE / "static" / "index.html"
 
 
+_PAGE_CACHE: dict = {}
+
+
 def _page() -> bytes:
     """The page, with the 3D view's scripts named by their content: a browser that cached an older
-    view3d.js (an hour, like every static file) loads the new one as soon as it changes."""
+    view3d.js (an hour, like every static file) loads the new one as soon as it changes. Made once
+    per change of the files (it is asked for on every page load)."""
     import hashlib
+    names = ("view3d.js", "runpanel.js", "scenesettings.js", "results.js", "runpage.js", "gallery.js", "scenegen.js", "mobile.js")
+    stamp = tuple((HERE / "static" / n).stat().st_mtime_ns for n in names) + (PAGE.stat().st_mtime_ns,)
+    if _PAGE_CACHE.get("stamp") == stamp:
+        return _PAGE_CACHE["page"]
     page = PAGE.read_bytes()
-    for name in ("view3d.js", "runpanel.js", "scenesettings.js", "results.js", "runpage.js", "gallery.js", "scenegen.js", "mobile.js"):
+    for name in names:
         v = hashlib.sha1((HERE / "static" / name).read_bytes()).hexdigest()[:12]
         page = page.replace(f"/pg/static/{name}?v=HASH".encode(), f"/pg/static/{name}?v={v}".encode())
+    _PAGE_CACHE.update(stamp=stamp, page=page)
     return page
 ROBOT_API_URL = ""      # set when the robot API listener is running (main)
 MODEL_PROXY = False     # whether the model proxy is running here (main)
@@ -864,7 +873,8 @@ def _older_sessions(open_ids: set) -> list[dict]:
             print("could not list saved sessions:", e)
         _OLDER["t"] = time.time()
     return [{"db": r["session_id"], "name": r["session_name"], "saved": r.get("saved") or 0}
-            for r in _OLDER["rows"] if r["session_id"] not in open_ids and not _saved_recently(r)]
+            for r in _OLDER["rows"] if r["session_id"] not in open_ids and r["session_id"] not in _LOADING
+            and not _saved_recently(r)]
 
 
 def _snapshot(sess: Session):
@@ -879,6 +889,9 @@ def _snapshot(sess: Session):
 
 def open_saved(db_id: str) -> Session | None:
     """A saved session of the owner's, open in this lab (loaded from the database if needed)."""
+    ev = _LOADING.get(db_id)
+    if ev is not None:          # still being built at the lab's start: wait for that one
+        ev.wait(120)
     for x in list(SESSIONS.values()):
         if x is not None and x.db_id == db_id:
             return x
@@ -903,20 +916,57 @@ def _from_row(row: dict) -> Session:
     return sess
 
 
+# Saved sessions still being built at the lab's start (db id -> set once it is open here): the
+# newest opens before the lab answers, the rest right after, so the page needn't wait for them.
+_LOADING: dict[str, threading.Event] = {}
+
+
+def _build_saved(row: dict, n: int) -> Session | None:
+    t = time.time()
+    try:
+        sess = _from_row(row)
+    except Exception as e:  # noqa: BLE001
+        print("could not load a saved session:", e)
+        return None
+    print(f"startup: session {n} built in {time.time() - t:.1f} s ({len(sess.sim.stations)} stations, "
+          f"{len(sess.sim.placed)} objects)", flush=True)
+    return sess
+
+
 def _load_saved() -> int:
-    """At start: the owner's most recently saved sessions, and autosave from then on."""
+    """At start: the owner's most recently saved sessions, and autosave from then on. The newest
+    is built now; the others in the background (the lab answers meanwhile; the sidebar shows them
+    as they open). Autosave starts once they are all open."""
     global AUTOSAVE
     AUTOSAVE = SAVE.Autosaver(lambda: [x for x in list(SESSIONS.values()) if x is not None and x.db_id
                                        and x.owner == ACCOUNT_OWNER and x.sim.scene_mode == "free"], _snapshot)
-    n = 0
     try:
-        for row in SAVE.load_sessions(SAVED_AT_START):
-            _from_row(row)
-            n += 1
+        rows = SAVE.load_sessions(SAVED_AT_START)
     except Exception as e:  # noqa: BLE001
         print("could not load saved sessions:", e)
-    AUTOSAVE.start()
-    return n
+        rows = []
+    startup_log(f"{len(rows)} saved sessions read from the database")
+    if not rows:
+        AUTOSAVE.start()
+        return 0
+    rest = rows[1:]
+    for r in rest:
+        _LOADING[r["session_id"]] = threading.Event()
+    first = _build_saved(rows[0], 1)
+
+    def load_rest():
+        for i, r in enumerate(rest):
+            sess = _build_saved(r, i + 2)
+            if sess is not None and first is not None:
+                sess.used = sess.created = first.used - 1 - i     # listed under the newest, in saved order
+            _LOADING.pop(r["session_id"]).set()
+        startup_log("all saved sessions open")
+        AUTOSAVE.start()
+    if rest:
+        threading.Thread(target=load_rest, daemon=True, name="load-saved").start()
+    else:
+        AUTOSAVE.start()
+    return 1 if first is not None else (len(rest) or 0)
 
 
 AUTOSAVE = None
@@ -1162,7 +1212,22 @@ def _start_queued():
                 print("could not start a queued run:", e)
 
 
+_GZIP_TYPES = ("application/json", "text/html", "text/plain", "text/css", "text/javascript", "application/javascript",
+               "image/svg+xml")
+
+
 class PGHandler(Handler):
+    def _send(self, code, body: bytes, ctype="application/json", headers=None):
+        """Every reply; text over a few KB goes gzipped when the browser takes it (the page and the
+        object catalog are a few hundred KB each, and a new container's address is never cached)."""
+        headers = dict(headers or {})
+        if (len(body) > 4096 and "Content-Encoding" not in headers and ctype.split(";")[0].strip() in _GZIP_TYPES
+                and "gzip" in (self.headers.get("Accept-Encoding") or "")):
+            import gzip
+            body, headers["Content-Encoding"] = gzip.compress(body, 4), "gzip"
+            headers.setdefault("Vary", "Accept-Encoding")
+        return super()._send(code, body, ctype, headers)
+
     # Set for each request from its session (_bind_session): that session's world, runs and chat.
     sess: Session
     sim: PlaygroundSim
@@ -1450,7 +1515,7 @@ class PGHandler(Handler):
             mine = sorted((x.summary() for x in live if owner and x.owner == me), key=lambda d: -d["used"])
             older = _older_sessions({x.db_id for x in live if x.db_id}) if owner else []
             return {"mine": mine, "older": older, "live": [{**w.summary(), "url": ""}] if w else [],
-                    "max": MAX_SESSIONS, "owner": owner}
+                    "max": MAX_SESSIONS, "owner": owner, "loading": len(_LOADING) if owner else 0}
         mine = sorted((x.summary() for x in live if me and x.owner == me), key=lambda d: -d["used"])
         others = [{**x.summary(), "url": ""} for x in live if x.owner != me and x.status() == "working"]
         if LABS.shared():
@@ -1793,15 +1858,15 @@ class PGHandler(Handler):
                     else self.sim.scene_info()
                 runs = self._runs_status() if info["mode"] == "free" else {}
                 run = runs.get(info["active"], {"active": False}) if info["mode"] == "free" else self.runner.status()
-                # Robots at work: their work boxes, drawn in the 3D view (a glowing outline).
+                # Robots at work: their own bodies, outlined in the 3D view (a glow that follows them).
                 zones = []
                 if info["mode"] == "free":
+                    arms = dict(self.sim.arms)
                     for st in list(self.sim.stations):
                         r = runs.get(st.uid) or {}
-                        if r.get("active") or r.get("queued"):
-                            hx, hy, h = st.work_box()
-                            zones.append({"uid": st.uid, "pos": [st.pos[0], st.pos[1]], "yaw": st.yaw,
-                                          "half": [hx, hy], "height": h, "waiting": not r.get("active")})
+                        if (r.get("active") or r.get("queued")) and st.uid in arms:
+                            zones.append({"uid": st.uid, "bodies": sorted(int(b) for b in arms[st.uid].bodies),
+                                          "waiting": not r.get("active")})
                 info["zones"] = zones
                 return self._json({**info, "run": run, "runs": runs, "locked": self._locked(),
                                    "undo": len(self.sess.undo), "redo": len(self.sess.redo),
@@ -2484,7 +2549,7 @@ class PGHandler(Handler):
         db = str(b.get("db", ""))
         if not (SAVE.enabled() and re.match(r"^[0-9a-f-]{36}$", db)):
             return self._json({"ok": False, "error": "no such session"})
-        if not any(x is not None and x.db_id == db for x in SESSIONS.values()):
+        if db not in _LOADING and not any(x is not None and x.db_id == db for x in SESSIONS.values()):
             try:
                 row = next((r for r in SAVE.list_sessions(50) if r["session_id"] == db), None)
             except Exception:  # noqa: BLE001
@@ -2558,7 +2623,16 @@ class RobotAPIHandler(RA.RobotAPIMixin, PGHandler):
     the station a run token opens. Shares the app's state (PGHandler's class attributes)."""
 
 
+_T0 = float(os.environ.get("WETLAB_T_FN") or 0) or time.time()   # the hosted function's start, else this process's
+
+
+def startup_log(what: str):
+    """How long startup has taken so far (hosted: since the Modal function began), in the log."""
+    print(f"startup: {what} {time.time() - _T0:.1f} s", flush=True)
+
+
 def main(argv=None):
+    startup_log("code loaded")
     ap = argparse.ArgumentParser(description="MuJoCo Playground")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8780)
@@ -2607,8 +2681,13 @@ def main(argv=None):
     # The starter session: the first browser to open the page takes it. (The front keeps one
     # too: the replay viewer draws past runs with its renderer. The idle robot log stays off a
     # shared volume; WETLAB_SESSION_DIR points it elsewhere when hosted.)
-    if not (_load_saved() if SAVE.enabled() else 0):
-        new_session("", "Untitled lab", default=True)
+    if FRONT:     # its world is for replays only: built while it already answers (handing out containers)
+        threading.Thread(target=lambda: new_session("", "Untitled lab", default=True), daemon=True).start()
+    else:
+        LABS.stage("Opening your sessions")
+        if not (_load_saved() if SAVE.enabled() else 0):
+            new_session("", "Untitled lab", default=True)
+        startup_log("sessions loaded")
     srv = ThreadingHTTPServer((args.host, args.port), PGHandler)
     srv.daemon_threads = True
 
@@ -2648,6 +2727,7 @@ def main(argv=None):
         MODEL_PROXY = True
         print(f"Model proxy for agents on port {args.model_proxy_port} (run tokens only)")
     print(f"MuJoCo Playground is running at {url}")
+    startup_log("serving")
     if not args.no_browser:
         import webbrowser
         threading.Timer(1.0, lambda: webbrowser.open(url)).start()

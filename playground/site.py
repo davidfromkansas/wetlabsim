@@ -251,8 +251,6 @@ What the datasheets can't tell you: how this particular robot is set up.
 - The hands work best from about x = 0.30 m to 0.45 m (about 20 to 35 cm past the table's edge),
   pointing forward or tilted down. Closer to the chest the arms run out of room, and
   straight-down (top) grasps are mostly out of reach. To work further away, walk closer.
-- The robot and its table are in a room of their own, 7 x 7 m, centred on the table, with
-  solid walls about {room_h:.1f} m high. It can walk anywhere in the room; the walls stop it.
 
 ## Tool and payload settings
 
@@ -458,8 +456,7 @@ def _site_sheet(station: W.Station) -> str:
             if not moved else f"near {table}"
         if station.robot == "g1":
             return G1_TEMPLATE.format(**common, pelvis_cm=h * 100, facing=facing, table_line=line,
-                                      ready_l=fmt(WS.G1_READY["left"]), ready_r=fmt(WS.G1_READY["right"]),
-                                      room_h=station.work_box()[2])
+                                      ready_l=fmt(WS.G1_READY["left"]), ready_r=fmt(WS.G1_READY["right"]))
         return RBY1_TEMPLATE.format(**common, facing=facing, table_line=line,
                                     ready_l=fmt(WS.RBY1_READY["left"]), ready_r=fmt(WS.RBY1_READY["right"]))
     if station.robot == "fr3_duo":
