@@ -143,3 +143,56 @@ def test_an_object_that_never_passes_is_left_out(tmp_path, monkeypatch):
     monkeypatch.setattr(b, "_ask", lambda text, effort: broken if "Rebuild" in text else "no fix")
     b._run()
     assert b.phase == "done" and b.skipped == ["Mug"] and b.counts["placed"] == 2
+
+
+def test_object_card_lists_moving_parts_and_friction():
+    xml = AI.clean('<mujoco><worldbody><body name="cab"><geom type="box" size=".3 .2 .4" friction="0.6" mass="20"/>'
+                   '<body name="door_1" pos="-.3 -.2 0"><joint type="hinge" axis="0 0 1" range="0 90"/>'
+                   '<geom type="box" size=".15 .01 .4" mass="2"/></body>'
+                   '<body name="door_2" pos=".3 -.2 0"><joint type="hinge" axis="0 0 1" range="-90 0"/>'
+                   '<geom type="box" size=".15 .01 .4" mass="2"/></body>'
+                   '<body pos="0 -.2 .3"><joint type="slide" axis="0 -1 0" range="0 .3"/>'
+                   '<geom type="box" size=".2 .01 .05" mass="1"/></body></body></worldbody></mujoco>')
+    uid = AI.register("Cabinet", xml, True, *AI.measure(xml))
+    m = catalog.meta(uid)
+    assert m["parts"] == "2 doors and 1 sliding part" and m["friction"] == 0.6
+
+
+def test_a_wall_is_allowed(tmp_path):
+    wall = AI.clean('<mujoco><worldbody><body name="wall"><geom type="box" size="5 0.06 1.5" mass="750" '
+                    'rgba="0.9 0.8 0.3 1"/></body></worldbody></mujoco>')
+    uid = AI.register("Wall (back)", wall, True, *AI.measure(wall))
+    AI.shake(uid)
+    assert catalog.meta(uid)["size"][0] == pytest.approx(10.0)
+
+
+def test_the_answer_is_kept_with_the_photo(tmp_path):
+    from playground.sim import PlaygroundSim
+    s = PlaygroundSim(placed=[], stations=[])
+    b = _build(tmp_path, s)
+    b._run()
+    rec = b.photo_rec
+    assert rec.get("answer") and "<scene" in (tmp_path / rec["answer"]).read_text()
+
+
+def test_thinking_steps_without_words_are_counted(tmp_path):
+    from playground.sim import PlaygroundSim
+    b = _build(tmp_path, PlaygroundSim(placed=[], stations=[]))
+    b._think(PS.STEP)
+    b._think(PS.STEP)
+    st = b.status()
+    assert st["steps"] == 2 and st["thinking"] == "" and st["quiet"] < 5
+
+
+def test_time_limit_stops_a_silent_model(monkeypatch):
+    import subprocess
+    import time as T
+    monkeypatch.setattr(PS, "PHOTO_TIMEOUT", 1)
+    p = subprocess.Popen(["sleep", "30"], stdout=subprocess.PIPE, text=True)   # prints nothing, like Codex writing
+    t0 = T.time()
+    w = PS._watch(p.kill, lambda: False)
+    for _ in p.stdout:
+        pass
+    p.wait()
+    w.done()
+    assert w.over.is_set() and T.time() - t0 < 5

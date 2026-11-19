@@ -512,11 +512,15 @@ function drawProg() {
 
 // ------------------------------------------------ a scene from a photo, as it goes
 const mmss = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
-function thinkHtml(t) {
+function thinkHtml(t, b) {
   const paras = String(t || '').split(/\n\s*\n/).map(x => x.trim()).filter(Boolean).slice(-10);
+  if (!paras.length && b && b.steps) return `<p class="empty">${writing(b) ? 'Done thinking. Now writing out every object as shapes, sizes, weights and hinges. This is the longest part, often 5 to 10 minutes.' : `Working through the photo: ${b.steps} thinking step${b.steps === 1 ? '' : 's'} so far. This model doesn't share the words of its thinking, only that it's thinking.`}</p>`;
   if (!paras.length) return '<p class="empty">The model\'s thinking shows here as it works…</p>';
   return paras.map(x => `<p>${e(x).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>')}</p>`).join('');
 }
+// No word from the model for a while after it has been thinking: it is writing its answer
+// (Codex on a ChatGPT sign-in sends nothing while it writes).
+const writing = (b) => b.phase === 'look' && b.steps > 0 && b.quiet > 40;
 function drawPhotoProg(b) {
   if (b.phase === 'done') { prog.classList.remove('open', 'ph'); bar.classList.remove('busy'); bar.innerHTML = REST(); return; }
   const c = b.counts, total = c.total || b.expected || 0;
@@ -543,15 +547,15 @@ function drawPhotoProg(b) {
       return `<li class="${st}"><span class="ti">${ic(icon)}${badge}</span><span class="nm">${label}${sub ? `<small>${e(sub)}</small>` : ''}</span>${mini}<span class="n">${n || ''}</span></li>`;
     };
     const fixing = /\*\*Fixing the ([^*]+)\*\*[^\n]*$/.exec(b.thinking || '');
-    const pct = [4, 14, 20 + 40 * c.built / Math.max(1, b.expected || 1), 60 + 25 * c.tested / Math.max(1, total), 85 + 15 * c.placed / Math.max(1, total)][Math.max(0, at)];
+    const pct = [4 + Math.min(9, (b.elapsed || 0) / 60), 14, 20 + 40 * c.built / Math.max(1, b.expected || 1), 60 + 25 * c.tested / Math.max(1, total), 85 + 15 * c.placed / Math.max(1, total)][Math.max(0, at)];
     html = `<div class="bar"><i style="width:${Math.min(100, pct)}%"></i></div>
 <div class="phd">${thumb}<div class="ptt"><b>Building your ${e(name)}</b><small>${e(b.model || 'The model')} · ${mmss(b.elapsed || 0)}</small></div><button class="gb g" id="sgStop2">${ic('stop', 10)}Stop</button></div>
-<ul>${row('look', 'eye', 'Looking at the photo', b.expected ? `${b.expected} things` : '', '')}
+<ul>${row('look', 'eye', writing(b) ? 'Writing the scene' : 'Looking at the photo', b.expected ? `${b.expected} things` : writing(b) ? `thought in ${b.steps} steps` : b.steps ? `${b.steps} thinking step${b.steps === 1 ? '' : 's'}` : '', '')}
 ${row('measure', 'ruler', 'Measuring sizes', '', '')}
 ${row('build', 'objects', 'Building objects', at === 2 && b.now ? b.now : '', b.expected ? `${c.built} of ${b.expected}` : '', b.expected ? c.built / b.expected : null)}
 ${row('test', 'pulse', 'Testing physics', at === 3 ? (fixing ? `Asking the AI to fix the ${fixing[1]}` : b.now || '') : c.retries ? `${c.retries} fixed by the AI` : '', total && at >= 3 ? `${c.tested} of ${total}` : '', total ? c.tested / total : null)}
 ${row('place', 'plan', 'Placing in your session', at === 4 ? b.now || '' : '', at >= 4 ? `${c.placed} of ${total - (b.skipped || []).length}` : '', total ? c.placed / Math.max(1, total - (b.skipped || []).length) : null)}</ul>
-<div class="think"><div class="thl">${SPARK.replace('width="16" height="16"', 'width="12" height="12"')}Thinking</div><div class="thx" id="sgTx">${thinkHtml(b.thinking)}</div></div>`;
+<div class="think"><div class="thl">${SPARK.replace('width="16" height="16"', 'width="12" height="12"')}Thinking</div><div class="thx" id="sgTx">${thinkHtml(b.thinking, b)}</div></div>`;
   } else if (b.phase === 'stopped') {
     html = `<div class="res"><span class="ri" style="background:#F3F4F6;color:#374151">${ic('pause', 15)}</span><div><b>Stopped</b><p>${b.objects ? `${b.objects} object${b.objects === 1 ? '' : 's'} placed. They stay, or undo them.` : 'Nothing was placed.'}</p></div></div>
 <div class="acts">${b.objects ? `<button class="gb g" id="sgUndo">${ic('undo', 14)}Undo</button>` : ''}<button class="gb p" id="sgOk">Done</button></div>`;

@@ -861,7 +861,7 @@ body.watch #physBtn{display:none}
     <div class="emptyfloor"><b>No robots yet</b><span id="emptyMsg">Press “+ Station”, then click the floor to place it.</span></div>
     <div id="objPanel" class="glass" style="display:none;flex-direction:column;gap:10px">
       <div class="ohd"><img id="objImg" alt=""><div><span id="objKind" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Selected object</span><h3 id="objName" style="margin:2px 0 0;font-size:15px;color:var(--ink)" spellcheck="false"></h3></div><button class="iconbtn" id="objX" aria-label="Deselect and close" title="Deselect (Esc)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" stroke="#374151" stroke-width="1.7" stroke-linecap="round"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
-      <dl id="objInfo"><dt>Size</dt><dd id="objSize"></dd><dt>Mass</dt><dd id="objMass"></dd><dt>Friction</dt><dd id="objFric"></dd><dt>Collision</dt><dd id="objCol" style="font-family:Inter;font-size:12px"></dd></dl>
+      <dl id="objInfo"><dt>Size</dt><dd id="objSize"></dd><dt>Mass</dt><dd id="objMass"></dd><dt>Friction</dt><dd id="objFric"></dd><dt>Collision</dt><dd id="objCol" style="font-family:Inter;font-size:12px"></dd><dt id="objPartsT">Moving parts</dt><dd id="objParts" style="font-family:Inter;font-size:12px"></dd></dl>
       <dl id="robInfo" style="display:none"><dt>Robot</dt><dd id="robModel" style="font-family:Inter;font-size:12px"></dd><dt>Stands on</dt><dd id="robOn" style="font-family:Inter;font-size:12px"></dd><dt>Base height</dt><dd id="robH"></dd><dt>Facing</dt><dd id="robFace"></dd></dl>
       <div class="small" id="robWhy" style="display:none"></div>
       <div class="acts" style="display:flex;flex-direction:column;gap:10px">
@@ -2389,7 +2389,9 @@ function render() {
     const it = S.cat.items.find(i => i.id === obj.item) || obj.ai || {};
     $('objName').textContent = obj.label; $('objSize').textContent = it.size ? fmtSize(it.size) : '';
     $('objMass').textContent = fmtMass(it.mass); $('objFric').textContent = it.friction != null ? it.friction : '';
-    $('objCol').textContent = it.collision || ''; $('delBtn').disabled = !obj.removable || sc.locked;
+    $('objCol').textContent = it.collision || '';
+    $('objParts').textContent = it.parts || ''; $('objParts').style.display = $('objPartsT').style.display = it.parts ? '' : 'none';
+    $('delBtn').disabled = !obj.removable || sc.locked;
     if (it.thumb && $('objImg').getAttribute('src') !== it.thumb) $('objImg').src = it.thumb;
     if (obj.euler) drawRotPanel(obj, it);
     drawEditPanel(obj);

@@ -1292,7 +1292,9 @@ class PlaygroundSim(Sim):
                               **({"at": self.obj_at(p.uid)} if p.uid == sel else {}),
                               # an AI-made object (aimade.py) isn't in the page's library list: its own details
                               **({"ai": {"size": catalog.meta(p.item)["size"], "mass": catalog.meta(p.item)["mass"],
-                                         "collision": "Simple shapes, made by AI", "thumb": f"/pg/thumb/{p.item}.png"}}
+                                         "collision": "Simple shapes, made by AI", "thumb": f"/pg/thumb/{p.item}.png",
+                                         "parts": catalog.meta(p.item)["parts"],
+                                         "friction": catalog.meta(p.item)["friction"]}}
                                  if it.get("ai") else {})})
             return {"mode": "free", "objects": items, "paused": self.paused, "selected": self.selected,
                     "time": round(self.d.time, 3), "realtime_factor": round(self.rt_factor, 3),

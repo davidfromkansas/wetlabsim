@@ -32,9 +32,11 @@ from . import scenegen as SG
 from .scenegen import ModelError
 
 MAX_TRIES = 3
-MAX_OBJECTS = 40
+MAX_OBJECTS = 46          # up to 40 things + 6 walls
 MAX_PHOTO_BYTES = 6_000_000
 THINKING_KEEP = 4000          # characters of thinking the page is sent
+PHOTO_TIMEOUT = 25 * 60       # s: the longest a model may take over one answer
+STEP = None                   # on_think(STEP): a thinking step ended that has no words to show
 
 SYSTEM = """You are a 3D artist and simulation engineer. Rebuild the place in the attached photo as a \
 SIM-READY MuJoCo scene: the same objects, the same sizes, the same positions and the same colours, \
@@ -43,9 +45,13 @@ can be picked up. Units are metres; z is up.
 
 Work it out in five steps. Keep your written notes short (at most 12 lines before the scene):
 1. INVENTORY. Every visible object: furniture, appliances, and small loose items. Note colour, material \
-(wood, metal, glass, plastic, fabric, ceramic) and what each rests on. Leave out the floor, the ceiling and \
-the walls themselves (the playground has its own floor), but keep things fixed to walls (wall cabinets, \
-shelves) at their real height. Ignore any people (and pets) in the photo: don't build them, and build \
+(wood, metal, glass, plastic, fabric, ceramic) and what each rests on. Build every wall you can see in \
+the photo, each as its own fixed object named "Wall (back)", "Wall (left)" and so on: its real length, \
+height and colour, about 0.12 m thick, standing on the floor, with openings where the photo shows a door, \
+window or doorway (build the wall from boxes around the opening, and the window or door as its own object). \
+A wall behind the camera that the photo doesn't show is not built. Leave out the floor (the playground has \
+its own) and the ceiling. Keep things fixed to walls (wall cabinets, shelves, boards) at their real height. \
+Ignore any people (and pets) in the photo: don't build them, and build \
 what they hide or hold as it would be without them (a chair someone sits on is an empty chair; something \
 in a person's hand is left out).
 2. SCALE. Pick 2-3 objects whose real size you know well (counter height 0.90 m, table 0.75 m, door \
@@ -58,7 +64,7 @@ fit on their surface.
 4. MAKE IT SIM-READY. Each object is either kind="fixed" (furniture, counters, built-in cabinets, \
 appliances, heavy things: they never move as a whole) or kind="loose" (things a hand could pick up or push: \
 mugs, bottles, fruit, tools, small boxes, chairs). Give every part a realistic mass (from material and size: \
-water/food ~1000 kg/m3, wood ~600, plastic ~950, glass ~2500, steel ~7800, ceramic ~2300; hollow items use \
+water/food ~1000 kg/m3, wood ~600, plastic ~950, glass ~2500, steel ~7800, ceramic ~2300, a wall ~25 kg per m2 of its face; hollow items use \
 their shell, not their whole volume) and friction for its material (0.3 smooth to 1.0 rubber). Anything with \
 moving parts gets them, even when the object itself is fixed: microwave, oven and fridge doors, cabinet \
 doors, drawers, lids, laptop screens, toilet seats, windows. Each moving part is a child body with a \
@@ -93,7 +99,7 @@ ANSWER FORMAT. After your short notes, write the scene and nothing after it:
 </scene>
 
 Rules for every object:
-- N = how many <object> elements follow (at most 40). Name each object plainly ("Coffee mug", "Fridge").
+- N = how many <object> elements follow (at most 40, plus the walls). Name each object plainly ("Coffee mug", "Fridge").
 - x, y = the middle of the object's footprint in the room frame; z = the height of its BOTTOM above the floor \
 (0 for things on the floor, 0.90 for things on a 0.90 m counter); yaw = degrees it is turned about z, \
 counter-clockwise seen from above, 0 = its front faces the camera.
@@ -240,11 +246,10 @@ def _codex_stream(model, system, content, login, effort, on_think, on_text, stop
             txt = it.get("text") or it.get("summary") or ""
             if isinstance(txt, list):
                 txt = " ".join(str(x.get("text", x)) if isinstance(x, dict) else str(x) for x in txt)
-            if txt:
-                on_think("\n\n" + str(txt))
+            on_think("\n\n" + str(txt) if txt else STEP)
 
     if SG.WHERE == "modal":
-        text, new = _codex_modal_stream(model, prompt, imgs, login, effort, event)
+        text, new = _codex_modal_stream(model, prompt, imgs, login, effort, event, stopped)
     else:
         text, new = _codex_local_stream(model, prompt, imgs, login, effort, event, stopped)
     if new and new.strip() != login.strip():
@@ -256,6 +261,31 @@ def _codex_stream(model, system, content, login, effort, on_think, on_text, stop
         raise ModelError("Codex gave no answer (is the ChatGPT sign-in still good? Try signing in again in Settings)")
     on_text(text)
     return text
+
+
+class _watch:
+    """Calls kill() once Stop is pressed or PHOTO_TIMEOUT has passed, checking every second on a
+    clock of its own (Codex prints nothing while it writes, so its output can't be the clock).
+    `over` is set when it was the time limit; done() ends the watch."""
+
+    def __init__(self, kill, stopped):
+        self.over, self._done = threading.Event(), threading.Event()
+        end = time.time() + PHOTO_TIMEOUT
+
+        def run():
+            while not self._done.wait(1.0):
+                if stopped() or time.time() > end:
+                    if not stopped():
+                        self.over.set()
+                    try:
+                        kill()
+                    except Exception:  # noqa: BLE001
+                        pass
+                    return
+        threading.Thread(target=run, daemon=True).start()
+
+    def done(self):
+        self._done.set()
 
 
 def _codex_args(model, effort, out, jail, images):
@@ -287,13 +317,15 @@ def _codex_local_stream(model, prompt, imgs, login, effort, event, stopped):
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, stdin=subprocess.DEVNULL)
         except FileNotFoundError:
             raise ModelError("Codex isn't installed on this machine (npm install -g @openai/codex)") from None
-        t0 = time.time()
-        for line in p.stdout:
-            event(line)
-            if stopped() or time.time() - t0 > SG.CODEX_TIMEOUT * 3:
-                p.kill()
-                break
-        p.wait()
+        w = _watch(p.kill, stopped)
+        try:
+            for line in p.stdout:
+                event(line)
+            p.wait()
+        finally:
+            w.done()
+        if w.over.is_set():
+            raise ModelError(f"the model took longer than {PHOTO_TIMEOUT // 60} minutes, so it was stopped")
         text = open(out).read() if os.path.exists(out) else ""
         if p.returncode not in (0, None) and not text and not stopped():
             tail = " ".join((p.stderr.read() or "").strip().splitlines()[-2:])[:300]
@@ -303,11 +335,11 @@ def _codex_local_stream(model, prompt, imgs, login, effort, event, stopped):
         shutil.rmtree(home, ignore_errors=True)
 
 
-def _codex_modal_stream(model, prompt, imgs, login, effort, event):
+def _codex_modal_stream(model, prompt, imgs, login, effort, event, stopped):
     import modal
 
     from wetlabsim.launchers import CHATGPT_HOSTS, ModalSandboxLauncher
-    limit = SG.CODEX_TIMEOUT * 3
+    limit = PHOTO_TIMEOUT
     app = modal.App.lookup(ModalSandboxLauncher.APP, create_if_missing=True)
     sb = modal.Sandbox.create("sleep", "infinity", app=app, image=ModalSandboxLauncher.image(),
                               timeout=limit + 120, cpu=0.5, memory=1024, outbound_domain_allowlist=CHATGPT_HOSTS)
@@ -323,8 +355,16 @@ def _codex_modal_stream(model, prompt, imgs, login, effort, event):
                        env={"CODEX_HOME": "/tmp/codex", "NO_COLOR": "1"}, timeout=limit)
         proc.stdin.write_eof()          # see scenegen._codex_modal
         proc.stdin.drain()
-        for line in proc.stdout:
-            event(line)
+        w = _watch(sb.terminate, stopped)
+        try:
+            for line in proc.stdout:
+                event(line)
+        finally:
+            w.done()
+        if w.over.is_set():
+            raise ModelError(f"the model took longer than {PHOTO_TIMEOUT // 60} minutes, so it was stopped")
+        if stopped():
+            return "", ""
         log = proc.stderr.read()
         proc.wait()
         try:
@@ -416,6 +456,9 @@ def jpeg_from_data_url(s: str) -> tuple[bytes, str]:
     return buf.getvalue(), f"{im.width}x{im.height}"
 
 
+_PHOTO_DIRS: dict = {}       # build id -> the folder its photo is kept in
+
+
 def keep_photo(build_id: str, data: bytes, runs_dir) -> dict:
     """The photo kept with the session: a file on this server and, on the hosted site, in Blob."""
     from . import savestore as SAVE
@@ -424,6 +467,7 @@ def keep_photo(build_id: str, data: bytes, runs_dir) -> dict:
         d = pathlib.Path(runs_dir) / "photos"
         d.mkdir(parents=True, exist_ok=True)
         (d / f"{build_id}.jpg").write_bytes(data)
+        _PHOTO_DIRS[build_id] = d
         rec["file"] = f"photos/{build_id}.jpg"
     except Exception as e:  # noqa: BLE001
         print("could not keep the photo here:", e)
@@ -436,6 +480,27 @@ def keep_photo(build_id: str, data: bytes, runs_dir) -> dict:
             print("could not upload the photo:", e)
     threading.Thread(target=up, daemon=True).start()
     return rec
+
+
+def keep_answer(rec: dict, text: str) -> None:
+    """The model's whole answer (and any fixes) kept next to its photo, to look into a scene later."""
+    from . import savestore as SAVE
+    data = text.encode()
+    d = _PHOTO_DIRS.get(rec["id"])
+    try:
+        if d is not None:
+            (d / f"{rec['id']}.answer.txt").write_bytes(data)
+            rec["answer"] = f"photos/{rec['id']}.answer.txt"
+    except Exception as e:  # noqa: BLE001
+        print("could not keep the model's answer here:", e)
+
+    def up():
+        try:
+            if SAVE.blob_enabled() and SAVE._upload(f"photo-{rec['id']}", "answer.txt", data, "text/plain"):
+                rec["answer_blob"] = f"runs/photo-{rec['id']}/answer.txt"
+        except Exception as e:  # noqa: BLE001
+            print("could not upload the model's answer:", e)
+    threading.Thread(target=up, daemon=True).start()
 
 
 # ------------------------------------------------------------------ the build
@@ -467,6 +532,9 @@ class PhotoBuild(SG.Build):
         self.title = ""
         self.thinking = ""
         self.answer = ""
+        self.answers: list[str] = []       # every answer the model gave, kept with the photo
+        self.steps = 0                     # thinking steps so far (Codex sends some with no words)
+        self.last_heard = time.time()
         self.expected = 0
         self.named: list[str] = []
         self.counts = {"built": 0, "tested": 0, "placed": 0, "total": 0, "retries": 0}
@@ -480,16 +548,23 @@ class PhotoBuild(SG.Build):
                 "objects": len(self.objects), "skipped": self.skipped, "stations": [], "undone": self.undone,
                 "model": next((m["label"] for m in SG.SCENE_MODELS if m["id"] == self.model_id), ""),
                 "elapsed": round(time.time() - self.started, 1),
+                "steps": self.steps, "quiet": round(time.time() - self.last_heard, 1),
                 "active": self.phase in self.STEPS}
 
     # -------------------------------------------------- streaming
-    def _think(self, s: str):
+    def _think(self, s: str | None):
+        self.last_heard = time.time()
+        if s is STEP or s.startswith("\n\n"):
+            self.steps += 1
+        if s is STEP:
+            return
         self.thinking += s
         if len(self.thinking) > 3 * THINKING_KEEP:
             self.thinking = self.thinking[-THINKING_KEEP:]
 
     def _text(self, full: str):
         self.answer = full
+        self.last_heard = time.time()
         if self.phase == "look":
             self.phase = "measure"
         m = re.search(r"<scene\b([^>]*)>", full)
@@ -514,9 +589,12 @@ class PhotoBuild(SG.Build):
 
     def _ask(self, text: str, effort: str) -> str:
         if SG.fake():
-            return _fake_stream(self, text)
-        return ask_stream(self.model_id, self._content(text), self.public, effort, self._think,
-                          self._text, lambda: self.stop)
+            ans = _fake_stream(self, text)
+        else:
+            ans = ask_stream(self.model_id, self._content(text), self.public, effort, self._think,
+                             self._text, lambda: self.stop)
+        self.answers.append(f"===== asked: {text[:200]}\n\n{ans}")
+        return ans
 
     # -------------------------------------------------- the steps
     def _run(self):
@@ -619,6 +697,8 @@ class PhotoBuild(SG.Build):
     def _end(self, phase: str):
         self.phase = phase
         self.sim.zone = []
+        if self.answers:
+            keep_answer(self.photo_rec, "\n\n".join(self.answers))
 
 
 # ------------------------------------------------------------------ pretend model (tests)

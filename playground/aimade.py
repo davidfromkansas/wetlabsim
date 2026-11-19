@@ -32,7 +32,7 @@ TAB = "AI-made"
 MAX_BODIES = 40
 MAX_GEOMS = 160
 MAX_JOINTS = 24
-MAX_SIZE = 8.0          # m, along any side
+MAX_SIZE = 20.0         # m, along any side (a whole wall of a large room)
 MAX_XML = 60_000        # characters
 
 # The picture an AI-made object shows where library objects show their thumbnail.
@@ -66,8 +66,37 @@ def item(id_: str) -> dict:
 
 def meta(id_: str) -> dict:
     d = _REG[id_]
+    parts, friction = describe(d["xml"])
     return {"mjcf_xml": d["xml"], "size": list(d["size"]), "frame": {"pos": list(d["frame"])},
-            "mass": d["mass"], "label": d["label"]}
+            "mass": d["mass"], "label": d["label"], "parts": parts, "friction": friction}
+
+
+def describe(xml: str) -> tuple[str, float | None]:
+    """("2 doors and 1 drawer", 0.6): the object's moving parts in words, and its usual friction."""
+    try:
+        root = ET.fromstring(xml)
+    except ET.ParseError:
+        return "", None
+    names: list[str] = []
+    for body in root.iter("body"):
+        js = [j for j in body.findall("joint") if j.get("type", "hinge") in ("hinge", "slide")]
+        if not js:
+            continue
+        nm = re.sub(r"[_\-]+", " ", body.get("name") or "").strip().lower()
+        nm = re.sub(r"\s*\d+$", "", nm)                       # "door 2" -> "door"
+        nm = re.sub(r"^(left|right|top|bottom|front|back|upper|lower) ", "", nm)
+        if len(nm) < 3:                                        # unnamed (named "b3" when cleaned)
+            nm = "sliding part" if js[0].get("type") == "slide" else "hinged part"
+        names.append(nm)
+    counts: dict[str, int] = {}
+    for n in names:
+        counts[n] = counts.get(n, 0) + 1
+    words = [f"{k} {n}{'' if k == 1 or n.endswith('s') else 's'}" if k > 1 else f"1 {n}" for n, k in counts.items()]
+    parts = words[0] if len(words) == 1 else ", ".join(words[:-1]) + " and " + words[-1] if words else ""
+    fr = [float(g.get("friction").split()[0]) for g in root.iter("geom")
+          if g.get("friction") and g.get("friction").split()[0].replace(".", "", 1).isdigit()]
+    friction = round(max(set(fr), key=fr.count), 2) if fr else 1.0      # MuJoCo's default is 1
+    return parts, friction
 
 
 def register(label: str, xml: str, fixed: bool, size, frame, mass: float, id_: str | None = None) -> str:
@@ -293,7 +322,7 @@ def measure(xml: str):
     mass = float(m.body_mass[1:].sum())
     if not math.isfinite(mass) or mass <= 0:
         raise Bad("the object has no mass")
-    if mass > 5000:
+    if mass > 20000:
         raise Bad(f"the object weighs {mass:.0f} kg: check the masses and densities")
     centre = (lo + hi) / 2
     frame = [-float(centre[0]), -float(centre[1]), -float(lo[2])]
