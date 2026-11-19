@@ -903,6 +903,7 @@ class Build:
         self.started = time.time()
         self.now = ""                 # what is being put down right now ("the mug")
         self.thought = ""             # the model's latest thinking heading, while it makes objects
+        self.last_heard = time.time()  # when the model last sent anything (thinking or answer)
         self.answers: list[str] = []
         self.names = {}
         self._recount(bool(self.counts["make"][1]))
@@ -931,6 +932,7 @@ class Build:
                 "counts": self.counts, "title": self.pick["title"], "stations": self.stations,
                 "objects": len(self.objects), "skipped": self.skipped, "task": self.task,
                 "undone": self.undone, "now": self.now, "names": self.names, "thought": self.thought,
+                "quiet": round(time.time() - self.last_heard, 1),
                 "elapsed": round(time.time() - self.started, 1),
                 "model": next((m["label"] for m in SCENE_MODELS if m["id"] == self.model_id), ""),
                 "active": self.phase in ("make", "plan", "robots", "furniture", "objects")}
@@ -1034,12 +1036,14 @@ class Build:
                 self.counts["make"][0] += 1
 
     def _made_text(self, full: str):
+        self.last_heard = time.time()
         names = re.findall(r'<object\b[^>]*\bname="([^"]*)"', full)
         if names:
             self.now = f"Making the {names[-1].lower()}" + (f" ({len(names)} of {self.counts['make'][1]})"
                                                              if self.counts["make"][1] > 1 else "")
 
     def _think(self, s):
+        self.last_heard = time.time()
         if not s:
             return
         heads = re.findall(r"\*\*(.+?)\*\*", s)

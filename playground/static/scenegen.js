@@ -74,7 +74,7 @@ body:not(.freeplay) #sgBar, body.watch #sgBar, body.sgHide #sgBar{display:none}
 #sgCard .oc{position:relative;border:1px solid #E5E7EB;border-radius:10px;padding:6px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
 #sgCard .oc img{width:100%;aspect-ratio:1;object-fit:contain}
 #sgCard .oc b{font:500 11.5px Inter,sans-serif;width:100%;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#sgCard .oc .n{position:absolute;left:6px;top:5px;font:600 11px Inter,sans-serif;color:#4B5563}
+#sgCard .oc .n{position:absolute;left:5px;top:5px;font:600 11px Inter,sans-serif;color:#111827;background:rgba(255,255,255,.92);border-radius:6px;padding:1px 5px;box-shadow:0 0 0 1px #E5E7EB}
 #sgCard .oc .rm{position:absolute;right:2px;top:2px;width:22px;height:22px;border:0;background:none;border-radius:6px;color:#9CA3AF;cursor:pointer;display:flex;align-items:center;justify-content:center}
 #sgCard .oc .rm:hover{background:#F3F4F6;color:#111827}
 #sgCard .oc.add{border-style:dashed;justify-content:center;font:600 12px Inter,sans-serif;color:#374151;cursor:pointer;background:#fff;min-height:84px}
@@ -473,7 +473,7 @@ function drawProg() {
     const mk = c.make || [0, 0];
     const pct = b.phase === 'make' ? 3 + 27 * Math.min(1, (b.elapsed || 0) / 420) : b.phase === 'plan' ? (mk[1] ? 32 : 6) : (mk[1] ? 36 : 10) + (mk[1] ? 64 : 90) * done / Math.max(1, all);
     const plan = b.phase === 'make'
-      ? `<div class="plan"><span class="pi">${SPARK}</span><div style="flex:1"><b>${e(b.model || 'The model')} is making ${mk[1] === 1 ? 'an object' : `${mk[1]} objects`} our library doesn’t have</b><p>${e(b.now || (b.thought ? b.thought + '…' : 'Thinking…'))}${b.elapsed > 20 ? ` · ${mmss(b.elapsed)}` : ''}</p></div></div>`
+      ? `<div class="plan"><span class="pi">${SPARK}</span><div style="flex:1"><b>${e(b.model || 'The model')} is making ${mk[1] === 1 ? 'an object' : `${mk[1]} objects`} our library doesn’t have</b><p>${e(b.now || (b.quiet > 40 ? `Thinking done, writing ${mk[1] === 1 ? 'the object' : `all ${mk[1]} objects`} out…` : b.thought ? b.thought + '…' : 'Thinking…'))}${b.elapsed > 20 ? ` · ${mmss(b.elapsed)}` : ''}</p></div></div>`
       : b.plan
       ? `<div class="plan"><span class="pi">${ic('plan')}</span><div><b>Layout plan</b><p>${e(b.plan)}</p></div></div>`
       : `<div class="plan"><span class="pi">${ic('plan')}</span><div style="flex:1"><b>${e(b.model || 'The model')} is writing the layout plan…</b><div class="skl" style="width:92%"></div><div class="skl" style="width:70%"></div></div></div>`;
