@@ -104,3 +104,47 @@ def test_chatgpt_sign_in_asks_through_codex(monkeypatch, tmp_path):
     out = G.pick("a robot", "gpt-6-astra", True)
     assert out["robots"] == [{"robot": "ur5e", "count": 1}]
     assert json.loads(kept["openai"]) == {"tok": "new"}
+
+
+def test_things_the_library_lacks_are_kept_to_make():
+    """The pick's "make" list: kept to MAX_MADE things (the rest left out, and said so), and a
+    name that is a library object's label becomes that object (the library always wins)."""
+    lib = G._catalog_rows()
+    raw = {"title": "x", "robots": [{"robot": "franka", "count": 1}], "items": [],
+           "make": [{"name": f"Thing {k}", "count": 2, "kind": "furniture" if k == 0 else "object",
+                     "size": [0.2, 0.1, 0.3], "looks": "red", "moves": "none"} for k in range(G.MAX_MADE + 3)]}
+    if lib:
+        raw["make"].insert(0, {"name": lib[0]["label"], "count": 1})
+    p = G.clean_pick(raw)
+    assert len(p["make"]) == G.MAX_MADE
+    assert p["make"][0] == {"name": "Thing 0", "count": 2, "kind": "furniture", "size": [0.2, 0.1, 0.3],
+                            "looks": "red", "moves": "none"}
+    assert [m["name"] for m in p["missing"]] == [f"Thing {k}" for k in range(G.MAX_MADE, G.MAX_MADE + 3)]
+    if lib:
+        assert p["items"] == [{"id": lib[0]["id"], "count": 1}]
+    assert G.clean_pick(p)["make"] == p["make"]          # the checked list comes back unchanged
+
+
+def test_build_makes_what_the_library_lacks(monkeypatch):
+    """Things to make are built by the model first, physics-tested (aimade), then laid out and
+    placed like library objects; Undo takes them away too."""
+    monkeypatch.setenv("WETLAB_SCENEGEN_FAKE", "1")
+    sim = PlaygroundSim(stations=[])
+    sim.pause()
+    pick = G.clean_pick({"title": "Bakery", "robots": [{"robot": "franka", "count": 1}], "items": [],
+                         "make": [{"name": "Loaf of bread", "count": 2, "kind": "object", "size": [0.2, 0.1, 0.08]},
+                                  {"name": "Bread rack", "count": 1, "kind": "furniture", "size": [0.8, 0.4, 1.2]}]})
+    b = G.Build(sim, _Sess(), "a bakery", pick, "claude-fable-5-2", False)
+    assert b.status()["phase"] == "make" and b.status()["counts"]["objects"][1] == 2
+    b.start()
+    t = time.time()
+    while b.status()["active"] and time.time() - t < 120:
+        time.sleep(0.2)
+    st = b.status()
+    assert st["phase"] == "done", st
+    assert st["counts"]["make"] == [2, 2] and not st["skipped"]
+    assert st["counts"]["objects"] == [2, 2] and st["counts"]["furniture"] == [1, 1]
+    made = [p for p in sim.placed if p.item.startswith("ai_")]
+    assert len(made) == 3
+    assert {G.catalog.item(p.item)["label"] for p in made} == {"Loaf of bread", "Bread rack"}
+    assert b.undo() is None and sim.placed == []

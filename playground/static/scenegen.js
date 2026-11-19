@@ -74,10 +74,12 @@ body:not(.freeplay) #sgBar, body.watch #sgBar, body.sgHide #sgBar{display:none}
 #sgCard .oc{position:relative;border:1px solid #E5E7EB;border-radius:10px;padding:6px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
 #sgCard .oc img{width:100%;aspect-ratio:1;object-fit:contain}
 #sgCard .oc b{font:500 11.5px Inter,sans-serif;width:100%;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#sgCard .oc .n{position:absolute;left:6px;top:5px;font:600 11px Inter,sans-serif;color:#4B5563}
+#sgCard .oc .n{position:absolute;left:5px;top:5px;font:600 11px Inter,sans-serif;color:#111827;background:rgba(255,255,255,.92);border-radius:6px;padding:1px 5px;box-shadow:0 0 0 1px #E5E7EB}
 #sgCard .oc .rm{position:absolute;right:2px;top:2px;width:22px;height:22px;border:0;background:none;border-radius:6px;color:#9CA3AF;cursor:pointer;display:flex;align-items:center;justify-content:center}
 #sgCard .oc .rm:hover{background:#F3F4F6;color:#111827}
 #sgCard .oc.add{border-style:dashed;justify-content:center;font:600 12px Inter,sans-serif;color:#374151;cursor:pointer;background:#fff;min-height:84px}
+#sgCard .oc .mk{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:#F9FAFB;border-radius:8px}
+#sgCard .oc small{font:400 10.5px Inter,sans-serif;color:#2563EB;white-space:nowrap}
 #sgCard .note{font-size:12.5px;color:#4B5563;margin:12px 0 2px;line-height:1.45}
 #sgCard .srch{width:100%;box-sizing:border-box;height:34px;border:1px solid #E5E7EB;border-radius:9px;padding:0 10px;font:14px Inter,sans-serif;margin-bottom:8px}
 #sgCard .sk{border-radius:12px;background:linear-gradient(90deg,#F3F4F6 0%,#E9EBEF 50%,#F3F4F6 100%);background-size:200% 100%;animation:sgSk 1.2s ease-in-out infinite}
@@ -175,7 +177,7 @@ const itemsCat = () => (S.cat && S.cat.items) || [];
 const robotLabel = (id) => { const r = robotsCat().find(x => x.id === id); return r ? r.label.replace(/ \(two arms\)/, '') : id; };
 const item = (id) => itemsCat().find(x => x.id === id) || {id, label: id, thumb: `/pg/thumb/${id}.png`};
 const nRobots = () => (G.pick ? G.pick.robots.reduce((a, r) => a + r.count, 0) : 0);
-const nItems = () => (G.pick ? G.pick.items.reduce((a, r) => a + r.count, 0) : 0);
+const nItems = () => (G.pick ? G.pick.items.concat(G.pick.make || []).reduce((a, r) => a + r.count, 0) : 0);
 const modelInfo = (id) => G.models.find(m => m.id === id) || null;
 
 function defaultModel() {
@@ -271,6 +273,8 @@ function draw() {
       ? `<div class="rc" style="width:200px"><div class="dd open" style="position:static;width:auto;box-shadow:0 0 0 1px #E5E7EB">${robotsCat().map(r => `<button data-addr="${r.id}"><img src="${PIC[r.id] || `/pg/static/robot_${r.id}.png`}" alt="" width="22" height="22" style="object-fit:contain">${e(robotLabel(r.id))}</button>`).join('')}</div></div>`
       : `<button class="addr" id="sgAddR" ${full ? 'disabled' : ''}>${PLUS}Add a robot</button>`;
     const objs = p.items.map((it, i) => { const c = item(it.id); return `<div class="oc">${it.count > 1 ? `<span class="n">×${it.count}</span>` : ''}<img src="${c.thumb}" alt=""><b title="${e(c.label)}">${e(c.label)}</b><button class="rm" data-o="${i}" aria-label="Remove ${e(c.label)}">${XS}</button></div>`; }).join('');
+    const big = SPARK.replace('width="16" height="16"', 'width="26" height="26"');
+    const made = (p.make || []).map((m, i) => `<div class="oc" title="Not in our library: the AI will make it from simple shapes">${m.count > 1 ? `<span class="n">×${m.count}</span>` : ''}<div class="mk">${big}</div><b title="${e(m.name)}">${e(m.name)}</b><small>Will be made by AI</small><button class="rm" data-mk="${i}" aria-label="Remove ${e(m.name)}">${XS}</button></div>`).join('');
     let addO = `<button class="oc add" id="sgAddO">${PLUS} Add</button>`;
     let search = '';
     if (G.adding === 'object') {
@@ -279,11 +283,13 @@ function draw() {
       search = `<input class="srch" id="sgQ" placeholder="Search our objects" value="${e(G.q)}" aria-label="Search objects"><div class="grid" style="margin-bottom:10px">${hits.map(c => `<button class="oc add" data-addo="${c.id}" style="border-style:solid;min-height:0"><img src="${c.thumb}" alt=""><b>${e(c.label)}</b></button>`).join('') || '<span class="note">Nothing matches.</span>'}</div>`;
       addO = '';
     }
-    const miss = p.missing.filter(m => m.name);
-    const note = miss.length ? `<p class="note">Not in our objects yet: ${miss.map(m => `<b>${e(m.name)}</b>${m.instead ? ` (using ${e(item(m.instead).label.toLowerCase())})` : ''}`).join(', ')}. ${miss.some(m => !m.instead) ? 'They’re left out.' : ''}</p>` : '';
+    const miss = (p.missing || []).filter(m => m.name);
+    const mk = (p.make || []).length;
+    const note = (mk ? `<p class="note">${mk === 1 ? 'One object isn’t' : `${mk} objects aren’t`} in our library, so the AI will make ${mk === 1 ? 'it' : 'them'} from simple shapes and test ${mk === 1 ? 'it' : 'each one'} in physics first. This adds a few minutes.</p>` : '')
+      + (miss.length ? `<p class="note">Left out: ${miss.map(m => `<b>${e(m.name)}</b>${m.instead ? ` (using ${e(item(m.instead).label.toLowerCase())})` : ''}`).join(', ')}.</p>` : '');
     card.innerHTML = head(p.title || 'New scene') + `<div class="body"><div class="quote"><span>“${e(G.prompt)}”</span><a id="sgEdit">Edit</a></div>
 <div class="sec">Robots <small>${nRobots()} of up to ${G.maxRobots}</small></div><div class="car">${robots}${addR}</div>
-<div class="sec" style="margin-top:12px">Objects <small>${nItems()}</small></div>${search}<div class="grid">${objs}${addO}</div>${note}
+<div class="sec" style="margin-top:12px">Objects <small>${nItems()}</small></div>${search}<div class="grid">${objs}${made}${addO}</div>${note}
 ${G.err ? `<p class="err">${e(G.err)}</p>` : ''}</div>
 <div class="f"><span class="sp"></span><button class="btn blue" id="sgCreate" ${nRobots() ? '' : 'disabled'}>Create scene<span class="kb">↵</span></button></div>`;
     const qi = document.getElementById('sgQ');
@@ -364,6 +370,7 @@ function wire() {
     G.adding = ''; draw();
   });
   card.querySelectorAll('[data-o]').forEach(b => b.onclick = () => { G.pick.items.splice(+b.dataset.o, 1); draw(); });
+  card.querySelectorAll('[data-mk]').forEach(b => b.onclick = () => { G.pick.make.splice(+b.dataset.mk, 1); draw(); });
   card.querySelectorAll('[data-addo]').forEach(b => b.onclick = () => { G.pick.items.push({id: b.dataset.addo, count: 1}); G.adding = ''; G.q = ''; draw(); });
 }
 
@@ -452,7 +459,7 @@ function drawProg() {
   const c = b.counts, done = c.robots[0] + c.furniture[0] + c.objects[0], all = c.robots[1] + c.furniture[1] + c.objects[1];
   if (b.active) {
     bar.classList.add('busy');
-    bar.innerHTML = `${ring()}<span>${b.phase === 'plan' ? 'Planning' : 'Creating'} ${e(b.title)}</span>${b.phase !== 'plan' ? `<span class="ct">${done} of ${all}</span>` : ''}<span class="sep"></span><span class="stop" id="sgStop" role="button" tabindex="0">${ic('stop', 10)}Stop</span>`;
+    bar.innerHTML = `${ring()}<span>${b.phase === 'make' ? 'Making objects for' : b.phase === 'plan' ? 'Planning' : 'Creating'} ${e(b.title)}</span>${b.phase !== 'plan' && b.phase !== 'make' ? `<span class="ct">${done} of ${all}</span>` : ''}<span class="sep"></span><span class="stop" id="sgStop" role="button" tabindex="0">${ic('stop', 10)}Stop</span>`;
     const st = document.getElementById('sgStop');
     st.onclick = async (ev) => { ev.stopPropagation(); await api('/pg/scenegen/stop', {}); };
     st.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); st.click(); } };
@@ -462,21 +469,25 @@ function drawProg() {
   }
   let html;
   if (b.active) {
-    const order = ['plan', 'robots', 'furniture', 'objects'], at = order.indexOf(b.phase);
-    const pct = b.phase === 'plan' ? 6 : 10 + 90 * done / Math.max(1, all);
-    const plan = b.plan
+    const order = ['make', 'plan', 'robots', 'furniture', 'objects'], at = order.indexOf(b.phase);
+    const mk = c.make || [0, 0];
+    const pct = b.phase === 'make' ? 3 + 27 * Math.min(1, (b.elapsed || 0) / 420) : b.phase === 'plan' ? (mk[1] ? 32 : 6) : (mk[1] ? 36 : 10) + (mk[1] ? 64 : 90) * done / Math.max(1, all);
+    const plan = b.phase === 'make'
+      ? `<div class="plan"><span class="pi">${SPARK}</span><div style="flex:1"><b>${e(b.model || 'The model')} is making ${mk[1] === 1 ? 'an object' : `${mk[1]} objects`} our library doesn’t have</b><p>${e(b.now || (b.quiet > 40 ? `Thinking done, writing ${mk[1] === 1 ? 'the object' : `all ${mk[1]} objects`} out…` : b.thought ? b.thought + '…' : 'Thinking…'))}${b.elapsed > 20 ? ` · ${mmss(b.elapsed)}` : ''}</p></div></div>`
+      : b.plan
       ? `<div class="plan"><span class="pi">${ic('plan')}</span><div><b>Layout plan</b><p>${e(b.plan)}</p></div></div>`
       : `<div class="plan"><span class="pi">${ic('plan')}</span><div style="flex:1"><b>${e(b.model || 'The model')} is writing the layout plan…</b><div class="skl" style="width:92%"></div><div class="skl" style="width:70%"></div></div></div>`;
     const row = (k, label, sub) => {
       const i = order.indexOf(k), st = at > i ? 'ok' : at === i ? 'now' : 'todo', [d, n] = c[k];
       const badge = st === 'ok' ? `<span class="bd">${ic('check', 9, '#fff', 3)}</span>` : st === 'now' ? `<span class="bd">${ring(13)}</span>` : '';
+      if (k === 'make') return `<li class="${st}"><span class="ti">${SPARK}${badge}</span><span class="nm">${label}${sub ? `<small>${e(sub)}</small>` : ''}</span><span class="n">${st === 'ok' ? `${d} of ${n}` : ''}</span></li>`;
       const mini = st === 'now' ? `<span class="mini"><i style="width:${Math.round(100 * d / Math.max(1, n))}%"></i></span>` : '';
       return `<li class="${st}"><span class="ti">${ic(k)}${badge}</span><span class="nm">${label}${sub ? `<small>${e(sub)}</small>` : ''}</span>${mini}<span class="n">${d} of ${n}</span></li>`;
     };
     const nm = b.names || {};
     const objSub = b.phase === 'objects' && b.now ? `Placing the ${b.now.toLowerCase()}` : list(nm.objects);
     const furSub = b.phase === 'furniture' && b.now ? `Placing the ${b.now.toLowerCase()}` : list(nm.furniture);
-    html = `<div class="bar"><i style="width:${pct}%"></i></div>${plan}<ul>${row('robots', c.robots[1] === 1 ? 'Robot' : 'Robots', list(nm.robots))}${c.furniture[1] ? row('furniture', 'Furniture', furSub) : ''}${row('objects', 'Objects', objSub)}</ul>`;
+    html = `<div class="bar"><i style="width:${pct}%"></i></div>${plan}<ul>${mk[1] ? row('make', 'Made by AI', list(nm.make)) : ''}${row('robots', c.robots[1] === 1 ? 'Robot' : 'Robots', list(nm.robots))}${c.furniture[1] ? row('furniture', 'Furniture', furSub) : ''}${row('objects', 'Objects', objSub)}</ul>`;
   } else {
     const undo = b.stations.length || b.objects ? `<button class="gb g" id="sgUndo">${ic('undo', 14)}Undo</button>` : '';
     if (b.phase === 'done') {

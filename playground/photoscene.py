@@ -485,7 +485,7 @@ def _codex_modal_stream(model, prompt, imgs, login, effort, event, stopped):
             pass
 
 
-def ask_stream(model_id, content, public, effort, on_think, on_text, stopped) -> str:
+def ask_stream(model_id, content, public, effort, on_think, on_text, stopped, system: str | None = None) -> str:
     m = next((m for m in SG.SCENE_MODELS if m["id"] == model_id), None)
     if m is None:
         raise ModelError("that model can't build scenes")
@@ -497,7 +497,7 @@ def ask_stream(model_id, content, public, effort, on_think, on_text, stopped) ->
         call = _codex_stream
     else:
         call = _anthropic_stream if m["provider"] == "anthropic" else _openai_stream
-    return call(m["id"], SYSTEM, content, key, effort, on_think, on_text, stopped)
+    return call(m["id"], system or SYSTEM, content, key, effort, on_think, on_text, stopped)
 
 
 # ------------------------------------------------------------------ reading the answer
