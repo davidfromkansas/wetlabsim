@@ -94,6 +94,12 @@ body:not(.freeplay) #sgBar, body.watch #sgBar, body.sgHide #sgBar{display:none}
 #sgProg .plan .pi{width:28px;height:28px;border-radius:8px;background:#EFF4FF;color:#2563EB;display:flex;align-items:center;justify-content:center;flex:none}
 #sgProg .plan b{display:block;font:600 12px Inter,sans-serif;margin-bottom:2px}
 #sgProg .plan p{margin:0;color:#4B5563;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#sgProg .mkl{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:3px}
+#sgProg .mkl li{display:flex;justify-content:space-between;gap:8px;font:500 11.5px Inter,sans-serif;color:#374151}
+#sgProg .mkl li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#sgProg .mkl li em{font-style:normal;color:#6B7280;display:flex;align-items:center;gap:4px;flex:none}
+#sgProg .mkl li.making em,#sgProg .mkl li.testing em,#sgProg .mkl li.fixing em{color:#2563EB}
+#sgProg .mkl li.done em{color:#16A34A}#sgProg .mkl li.failed em{color:#B45309}#sgProg .mkl li.waiting{color:#9CA3AF}
 #sgProg .plan .skl{height:9px;border-radius:5px;margin-top:7px;background:linear-gradient(90deg,#EEF0F3 0%,#E3E6EB 50%,#EEF0F3 100%);background-size:200% 100%;animation:sgSk 1.2s ease-in-out infinite}
 #sgProg ul{list-style:none;margin:0;padding:8px 8px 10px}
 #sgProg li{display:flex;align-items:center;gap:10px;height:40px;padding:0 8px;border-radius:9px}
@@ -471,9 +477,10 @@ function drawProg() {
   if (b.active) {
     const order = ['make', 'plan', 'robots', 'furniture', 'objects'], at = order.indexOf(b.phase);
     const mk = c.make || [0, 0];
-    const pct = b.phase === 'make' ? 3 + 27 * Math.min(1, (b.elapsed || 0) / 420) : b.phase === 'plan' ? (mk[1] ? 32 : 6) : (mk[1] ? 36 : 10) + (mk[1] ? 64 : 90) * done / Math.max(1, all);
+    const ended = (b.making || []).filter(m => m.state === 'done' || m.state === 'failed').length;
+    const pct = b.phase === 'make' ? 3 + 27 * Math.max(Math.min(1, (b.elapsed || 0) / 240) * 0.5, ended / Math.max(1, mk[1])) : b.phase === 'plan' ? (mk[1] ? 32 : 6) : (mk[1] ? 36 : 10) + (mk[1] ? 64 : 90) * done / Math.max(1, all);
     const plan = b.phase === 'make'
-      ? `<div class="plan"><span class="pi">${SPARK}</span><div style="flex:1"><b>${e(b.model || 'The model')} is making ${mk[1] === 1 ? 'an object' : `${mk[1]} objects`} our library doesn’t have</b><p>${e(b.now || (b.quiet > 40 ? `Thinking done, writing ${mk[1] === 1 ? 'the object' : `all ${mk[1]} objects`} out…` : b.thought ? b.thought + '…' : 'Thinking…'))}${b.elapsed > 20 ? ` · ${mmss(b.elapsed)}` : ''}</p></div></div>`
+      ? `<div class="plan"><span class="pi">${SPARK}</span><div style="flex:1"><b>${e(b.model || 'The model')} is making ${mk[1] === 1 ? 'an object' : `${mk[1]} objects`} our library doesn’t have</b><p>${e(b.thought ? b.thought + '…' : 'Thinking…')}${b.elapsed > 20 ? ` · ${mmss(b.elapsed)}` : ''}</p>${making(b.making)}</div></div>`
       : b.plan
       ? `<div class="plan"><span class="pi">${ic('plan')}</span><div><b>Layout plan</b><p>${e(b.plan)}</p></div></div>`
       : `<div class="plan"><span class="pi">${ic('plan')}</span><div style="flex:1"><b>${e(b.model || 'The model')} is writing the layout plan…</b><div class="skl" style="width:92%"></div><div class="skl" style="width:70%"></div></div></div>`;
@@ -530,6 +537,9 @@ function thinkHtml(t, b) {
 }
 // No word from the model for a while after it has been thinking: it is writing its answer
 // (Codex on a ChatGPT sign-in sends nothing while it writes).
+// Each object the AI is making, side by side: its name and where it is (made, physics test, fix).
+const MK_STATE = { waiting: 'Waiting', making: 'Making…', testing: 'Physics test…', fixing: 'Fixing…', done: 'Ready', failed: 'Didn’t pass' };
+const making = (rows) => rows && rows.length ? `<ul class="mkl">${rows.map(r => `<li class="${r.state}"><span>${e(r.name)}</span><em>${r.state === 'done' ? ic('check', 9, '#16A34A', 3) : ''}${MK_STATE[r.state] || ''}</em></li>`).join('')}</ul>` : '';
 const writing = (b) => b.phase === 'look' && b.steps > 0 && b.quiet > 40;
 function drawPhotoProg(b) {
   if (b.phase === 'done') { prog.classList.remove('open', 'ph'); bar.classList.remove('busy'); bar.innerHTML = REST(); return; }
