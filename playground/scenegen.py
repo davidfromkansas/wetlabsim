@@ -36,7 +36,7 @@ MAX_ROBOTS = 4
 MAX_EACH = 6          # copies of one object a scene may ask for
 MAX_ITEMS = 40        # objects in one scene, all told
 MAX_MADE = 15         # different objects the AI may make for one scene (things the library lacks)
-MAKE_AT_ONCE = 6      # objects the AI makes side by side, each in its own request (then tested as it arrives)
+MAKE_AT_ONCE = 8      # objects the AI makes side by side, each in its own request (then tested as it arrives)
 
 # The models that can build a scene, by company, most capable first (the default).
 SCENE_MODELS = [
@@ -1113,6 +1113,11 @@ class Build:
             ans = PS.ask_stream(self.model_id, [{"type": "text", "text": text}], self.public, effort, self._think,
                                 on_text or (lambda t: None), lambda: self.stop, system=MAKE_SYSTEM)
         self.answers.append(f"===== asked: {text[:200]}\n\n{ans}")
+        fix = re.match(r'Your object "([^"]*)"', text)
+        if fix:                          # a fixed version is back: it goes through the physics test again
+            for row in self.making:
+                if row["name"].lower() == fix.group(1).lower() and row["state"] == "fixing":
+                    row["state"] = "testing"
         return ans
 
     def _end(self, phase: str):
