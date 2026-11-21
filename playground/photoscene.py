@@ -660,6 +660,15 @@ class PhotoBuild(SG.Build):
         self.counts = {"built": 0, "tested": 0, "placed": 0, "total": 0, "retries": 0}
         self.plan_text = ""
         self.station_tasks = {}
+        self.items: list[dict] = []        # outlines on the floor while placing (SG.Build._outline)
+        self.shown = 0
+        self.hl = -1
+        self.ostate: dict[str, str] = {}   # each object's step: testing, fixing, ready, failed, ok, bad
+
+    def _rows(self) -> list[dict]:
+        """Each object the model named, and where it is: making, testing, fixing, ready, failed,
+        then ok (placed) or bad (didn't fit)."""
+        return [{"name": n, "state": self.ostate.get(n.lower(), "making")} for n in self.named[:MAX_OBJECTS]]
 
     def status(self) -> dict:
         return {"id": self.id, "photo": True, "phase": self.phase, "error": self.error,
@@ -669,6 +678,9 @@ class PhotoBuild(SG.Build):
                 "model": next((m["label"] for m in SG.SCENE_MODELS if m["id"] == self.model_id), ""),
                 "elapsed": round(time.time() - self.started, 1),
                 "steps": self.steps, "quiet": round(time.time() - self.last_heard, 1),
+                "rows": self._rows(), "note": self.note[:300],
+                "items": [{"name": it["name"], "kind": it["kind"], "state": it["state"], "at": bool(it["rect"])}
+                          for it in self.items[:self.shown]],
                 "active": self.phase in self.STEPS}
 
     # -------------------------------------------------- streaming
@@ -678,6 +690,9 @@ class PhotoBuild(SG.Build):
             self.steps += 1
         if s is STEP:
             return
+        fix = re.search(r"\*\*Fixing the (.+?)\*\*", s)
+        if fix:
+            self.ostate[fix.group(1).strip().lower()] = "fixing"
         self.thinking += s
         if len(self.thinking) > 3 * THINKING_KEEP:
             self.thinking = self.thinking[-THINKING_KEEP:]
@@ -742,7 +757,9 @@ class PhotoBuild(SG.Build):
                 if self.stop:
                     return None
                 self.now = o["name"]
+                self.ostate[o["name"].lower()] = "testing"
                 got = self._make(o)
+                self.ostate[o["name"].lower()] = "ready" if got else "failed"
                 with lock:
                     self.counts["tested"] += 1
                 return got
@@ -759,11 +776,18 @@ class PhotoBuild(SG.Build):
             if off is None:
                 raise ModelError("there's no free floor space big enough for this scene: remove something first")
             self._show_zone([], ready, [], off)
-            for o in sorted(ready, key=lambda o: (o["z"], not o["fixed"])):
+            order = sorted(ready, key=lambda o: (o["z"], not o["fixed"]))
+            self._outline_made(order, off)
+            for k, o in enumerate(order):
                 if self.stop:
                     return self._end("stopped")
                 self.now = o["name"]
+                self._mark(k, "now")
+                had = len(self.objects)
                 self._put(o, off)
+                ok = len(self.objects) > had
+                self._mark(k, "ok" if ok else "bad")
+                self.ostate[o["name"].lower()] = "ok" if ok else "bad"
             self.now = ""
             self._end("done")
         except Exception as e:  # noqa: BLE001
@@ -859,6 +883,20 @@ class PhotoBuild(SG.Build):
             o = {**o, "xml": f["xml"], "block": f["block"], "kind": f["kind"] or o["kind"]}
         self.skipped.append(o["name"])
         return None
+
+    def _outline_made(self, order, off):
+        """The made objects' spots as outlines, shown one by one (as SG.Build._outline)."""
+        self.items = [{"name": o["name"], "kind": "furniture" if o["fixed"] else "object", "state": "plan", "t": 0.0,
+                       "rect": SG._item_rect(o["item"], o["x"] + off[0], o["y"] + off[1], o["yaw"])} for o in order]
+        gap = min(0.12, self.REVEAL_S / max(1, len(order)))
+        for k in range(len(order)):
+            if self.stop:
+                break
+            self.shown = k + 1
+            self._draw()
+            time.sleep(gap)
+        self.shown = len(order)
+        self._draw()
 
     def _rects(self, stations, furniture, objects, ox=0.0, oy=0.0):
         return [SG._item_rect(f["item"], f["x"] + ox, f["y"] + oy, f["yaw"]) for f in furniture]

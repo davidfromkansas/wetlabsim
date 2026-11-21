@@ -507,7 +507,10 @@ body.rclosed #right{display:none}
 #tabObjects,.dock{display:none!important}
 .tl{top:auto!important;bottom:78px}
 /* the cameras the AI sees: top left, so the menu bar has the bottom middle */
-.pips{top:12px;bottom:auto;align-items:flex-start}
+.pips{top:12px;bottom:auto;align-items:flex-start;flex-direction:column;gap:8px}
+.pip{width:200px}
+.pips.four .pip{width:124px}
+@container (max-width:900px){.pip{width:150px}.pips.four .pip{width:110px}}
 #sessNav.closed ~ #stage .pips{left:62px}
 @container (max-width:780px){.pips{top:104px}#sessNav.closed ~ #stage .pips{left:14px}}
 #axisGuide{top:auto;bottom:14px}
