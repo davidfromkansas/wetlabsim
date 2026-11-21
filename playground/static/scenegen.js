@@ -157,7 +157,7 @@ body.sgPanel .pips{left:372px!important}
 #addRobot.sgPulse{box-shadow:0 0 0 2px #2563EB;border-radius:11px}
 #sgFly{position:absolute;inset:0;z-index:25;background:rgba(17,24,39,.82);display:flex;align-items:center;justify-content:center;pointer-events:none}
 #sgFly img{max-width:86%;max-height:80%;border-radius:14px;box-shadow:0 30px 60px -20px rgba(0,0,0,.6)}
-@container (max-width:780px){#sgBar{left:14px;top:58px;transform:none}#sgBar:active{transform:scale(.98)}#sgCard{top:52px}#sgCard .st4{grid-template-columns:repeat(2,minmax(0,1fr))}body.sgPanel .pips,body.sgPanel #sgBar{display:none}}
+@container (max-width:780px){#sgCard{top:8px}#sgCard .st4{grid-template-columns:repeat(2,minmax(0,1fr))}body.sgPanel .pips,body.sgPanel #sgBar{display:none}}
 @media (prefers-reduced-motion:reduce){#sgCard.open,#sgProg li.nw,#sgProg .tile,#sgDone.open,#sgProg p.plan{animation:none}}
 `;
 document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
