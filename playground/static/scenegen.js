@@ -89,7 +89,7 @@ body.sgOpen .emptyfloor,body.sgPanel .emptyfloor{display:none!important}
 
 /* the panel on the left while it builds */
 body.sgPanel .pips{left:372px!important}
-#sgProg{position:absolute;left:14px;top:12px;z-index:9;width:min(344px,calc(100% - 28px));max-height:calc(100% - 104px);display:none;flex-direction:column;background:rgba(255,255,255,.96);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-radius:16px;box-shadow:0 18px 40px -16px rgba(17,24,39,.35),0 0 0 1px rgba(17,24,39,.07);overflow:hidden;font:13px/1.45 Inter,sans-serif;color:#111827}
+#sgProg{position:absolute;left:14px;top:12px;z-index:9;width:min(344px,calc(100% - 28px));max-height:calc(100% - 136px);display:none;flex-direction:column;background:rgba(255,255,255,.96);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-radius:16px;box-shadow:0 18px 40px -16px rgba(17,24,39,.35),0 0 0 1px rgba(17,24,39,.07);overflow:hidden;font:13px/1.45 Inter,sans-serif;color:#111827}
 #sgProg.open{display:flex}
 #sgProg .hd{display:flex;align-items:center;gap:10px;padding:12px 10px 10px 14px}
 #sgProg .hd .tt{flex:1;min-width:0}
@@ -145,6 +145,7 @@ body.sgPanel .pips{left:372px!important}
 /* the "ready" pill above the menu bar, and the nudge to add a robot */
 #sgDone{position:absolute;left:50%;bottom:84px;transform:translateX(-50%);z-index:9;display:none;align-items:center;gap:10px;height:42px;padding:0 6px 0 12px;border-radius:14px;background:#111827;color:#fff;font:600 13px Inter,sans-serif;box-shadow:0 12px 28px -10px rgba(17,24,39,.5);white-space:nowrap;max-width:calc(100% - 32px)}
 #sgDone.open{display:flex;animation:sgFade 280ms cubic-bezier(.23,1,.32,1)}
+#sgDone.up{bottom:132px}
 #sgDone .t{overflow:hidden;text-overflow:ellipsis}
 #sgDone small{font-weight:500;color:#9CA3AF;margin-left:2px}
 #sgDone button{height:30px;padding:0 10px;border-radius:9px;border:0;background:rgba(255,255,255,.12);color:#fff;font:600 12.5px Inter,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none}
@@ -677,15 +678,15 @@ function ready(b) {
     if (ar && ar.offsetParent) {
       const r = ar.getBoundingClientRect();
       nudge.style.left = `${r.left + r.width / 2}px`; nudge.style.top = `${r.top - 10}px`;
-      nudge.classList.add('open'); ar.classList.add('sgPulse');
-      const off = () => { nudge.classList.remove('open'); ar.classList.remove('sgPulse'); };
+      nudge.classList.add('open'); ar.classList.add('sgPulse'); done.classList.add('up');
+      const off = () => { nudge.classList.remove('open'); ar.classList.remove('sgPulse'); done.classList.remove('up'); };
       ar.addEventListener('click', off, {once: true});
       setTimeout(off, 12000);
     }
   }
   G.build = null; drawProg();
 }
-function hideDone() { done.classList.remove('open'); nudge.classList.remove('open'); const ar = document.getElementById('addRobot'); if (ar) ar.classList.remove('sgPulse'); }
+function hideDone() { done.classList.remove('open', 'up'); nudge.classList.remove('open'); const ar = document.getElementById('addRobot'); if (ar) ar.classList.remove('sgPulse'); }
 
 // ------------------------------------------------ opening and closing
 bar.onclick = () => { if (!(G.build && G.build.active)) openCard(); };
