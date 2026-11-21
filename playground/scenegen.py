@@ -905,7 +905,12 @@ class Build:
     """One scene being built: its layout put down step by step in a session's sim (in a thread
     of its own), with progress the page polls, Stop, and Undo."""
 
-    def __init__(self, sim, sess, prompt: str, pck: dict, model_id: str, public: bool, preset: str = ""):
+    def __init__(self, sim, sess, prompt: str, pck: dict | None, model_id: str, public: bool, preset: str = ""):
+        # pck None: the model picks the robots and objects first, in this build's own thread
+        # (the "pick" phase), and the build goes straight on from there.
+        self.need_pick = pck is None
+        if pck is None:
+            pck = {"title": "", "robots": [], "items": [], "make": [], "missing": [], "task": ""}
         self.sim, self.sess, self.prompt, self.pick = sim, sess, prompt, pck
         self.preset = preset          # a ready-made scene (PRESETS): its own layout, no model
         self.station_tasks: dict[str, str] = {}
@@ -929,7 +934,23 @@ class Build:
         self.last_heard = time.time()  # when the model last sent anything (thinking or answer)
         self.answers: list[str] = []
         self.making: list[dict] = []  # each object being made: {"name", "state": waiting/making/testing/fixing/done/failed}
+        # Everything the layout puts down, in the order it is placed: {"name", "kind" (robot,
+        # furniture, object), "rect" (its spot on the floor, or None for a thing on a table), "state":
+        # plan (shown as an outline), now (being placed), ok (it landed), bad (it didn't fit)}.
+        self.items: list[dict] = []
+        self.shown = 0                # how many of them are outlined yet (they appear one by one)
+        self.hl = -1                  # the one the person points at in the build's list
         self.names = {}
+        self._setup(pck)
+        if self.need_pick:
+            self.phase = "pick"
+
+    def _setup(self, pck: dict):
+        """Counts and names from the pick (at the start, or once the model has picked)."""
+        self.pick = pck
+        self.task = pck.get("task", "") or self.task
+        self.counts = {"robots": [0, sum(r["count"] for r in pck["robots"])], "furniture": [0, 0],
+                       "objects": [0, 0], "make": [0, 0 if self.preset else len(pck.get("make") or [])], "retries": 0}
         self._recount(bool(self.counts["make"][1]))
         if self.counts["make"][1]:
             self.phase = "make"
@@ -956,11 +977,15 @@ class Build:
                 "counts": self.counts, "title": self.pick["title"], "stations": self.stations,
                 "objects": len(self.objects), "skipped": self.skipped, "task": self.task,
                 "undone": self.undone, "now": self.now, "names": self.names, "thought": self.thought,
-                "making": self.making,
+                "making": self.making, "prompt": self.prompt[:300], "preset": self.preset,
+                "items": [{"name": it["name"], "kind": it["kind"], "state": it["state"], "at": bool(it["rect"])}
+                          for it in self.items[:self.shown]],
+                "picked": {"robots": [r["robot"] for r in self.pick["robots"]],
+                           "items": [i["id"] for i in self.pick["items"]][:40]},
                 "quiet": round(time.time() - self.last_heard, 1),
                 "elapsed": round(time.time() - self.started, 1),
                 "model": next((m["label"] for m in SCENE_MODELS if m["id"] == self.model_id), ""),
-                "active": self.phase in ("make", "plan", "robots", "furniture", "objects")}
+                "active": self.phase in ("pick", "make", "plan", "robots", "furniture", "objects")}
 
     def start(self):
         threading.Thread(target=self._run, daemon=True, name="scene-build").start()
@@ -970,6 +995,12 @@ class Build:
         s = self.sim
         was_playing = not s.paused
         try:
+            if self.phase == "pick":
+                got = pick(self.prompt, self.model_id, self.public)
+                if self.stop:
+                    return self._end("stopped")
+                self.phase = "plan"
+                self._setup(got)
             if self.phase == "make":
                 self._make_missing()
                 if self.stop:
@@ -998,24 +1029,41 @@ class Build:
                 raise ModelError("there's no free floor space big enough for this scene: "
                                  "remove something, or ask for a smaller scene")
             self._show_zone(stations, furniture, objects, off)
+            self._outline(stations, furniture, objects, off)
             self.phase = "robots"
+            n = 0
             for k, st in enumerate(stations):
                 if self.stop:
                     return self._end("stopped")
+                self._mark(n, "now")
+                had = len(self.stations)
                 self._place_station(st, off, k, len(stations))
+                self._mark(n, "ok" if len(self.stations) > had else "bad")
+                n += 1
             self.phase = "furniture"
             fixed_uids = []
             for f in furniture:
                 if self.stop:
                     return self._end("stopped")
                 self.now = catalog.item(f["item"])["label"]
+                self._mark(n, "now")
                 fixed_uids.append(self._place_furniture(f, off))
+                self._mark(n, "ok" if fixed_uids[-1] else "bad")
+                n += 1
             self.phase = "objects"
+            looking = None
             for o in objects:
                 if self.stop:
                     return self._end("stopped")
+                # the camera follows the small things to the table they go on (the page stops
+                # following once the person moves the view)
+                if o["on"] == "station" and o["station"] < len(self.stations) and looking != self.stations[o["station"]]:
+                    looking = self.stations[o["station"]]
+                    s.frame_station(looking)
                 self.now = catalog.item(o["item"])["label"]
-                self._place_object(o, off, fixed_uids)
+                self._mark(n, "now")
+                self._mark(n, "ok" if self._place_object(o, off, fixed_uids) else "bad")
+                n += 1
             self.now = ""
             if self.stations and self.task:
                 for u in self.stations:
@@ -1241,6 +1289,63 @@ class Build:
         self.sim._set_view({"lookat": [cx, cy, 0.5], "distance": 1.6 + 1.2 * span, "azimuth": 145.0,
                             "elevation": -35.0}, True)
 
+    # -------------------------------------------------- outlines on the floor, while it builds
+    REVEAL_S = 1.4                     # all outlines appear within this, one after another
+
+    def _outline(self, stations, furniture, objects, off):
+        """Every planned thing as an outline on the floor where it goes, shown one by one (the
+        layout arrives as one answer, however the model sends it), before anything is put down."""
+        rl = {r["id"]: r["label"].replace(" (two arms)", "") for r in catalog.robots()}
+        items = [{"name": rl.get(st["robot"], st["robot"]), "kind": "robot",
+                  "rect": _station_rect(st["kind"], st["robot"], st["x"] + off[0], st["y"] + off[1], st["yaw"])}
+                 for st in stations]
+        items += [{"name": catalog.item(f["item"])["label"], "kind": "furniture",
+                   "rect": _item_rect(f["item"], f["x"] + off[0], f["y"] + off[1], f["yaw"])} for f in furniture]
+        items += [{"name": catalog.item(o["item"])["label"], "kind": "object",
+                   "rect": _item_rect(o["item"], o["x"] + off[0], o["y"] + off[1], o["yaw"]) if o["on"] == "floor" else None}
+                  for o in objects]
+        for it in items:
+            it["state"], it["t"] = "plan", 0.0
+        self.items, self.shown = items, 0
+        gap = min(0.12, self.REVEAL_S / max(1, len(items)))
+        for k in range(len(items)):
+            if self.stop:
+                break
+            self.shown = k + 1
+            self._draw()
+            time.sleep(gap)
+        self.shown = len(items)
+        self._draw()
+
+    def _mark(self, k: int, state: str):
+        if 0 <= k < len(self.items):
+            self.items[k]["state"], self.items[k]["t"] = state, time.time()
+            self._draw()
+
+    def _draw(self):
+        """The zone, then each shown outline: blue while planned, bright while it goes down, a
+        short green flash when it lands (the drop check passed), red when it didn't fit."""
+        if not getattr(self, "zone", None):
+            return
+        x0, y0, x1, y1 = self.zone
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        out = [{"type": "box", "size": [(x1 - x0) / 2, (y1 - y0) / 2, 0.002], "pos": [cx, cy, 0.003],
+                "yaw": 0.0, "rgba": [0.25, 0.55, 1.0, 0.10]}]
+        now = time.time()
+        for k, it in enumerate(self.items[:self.shown]):
+            r = it["rect"]
+            if not r:
+                continue
+            st = it["state"]
+            if st == "ok" and now - it["t"] > 1.2:
+                continue
+            hot = k == self.hl
+            col = {"plan": [0.15, 0.39, 0.92, 0.95 if hot else 0.6], "now": [0.15, 0.39, 0.92, 1.0],
+                   "ok": [0.09, 0.64, 0.29, 0.95], "bad": [0.86, 0.15, 0.15, 0.95]}[st]
+            fill = {"plan": 0.16 if hot else 0.05, "now": 0.22, "ok": 0.28, "bad": 0.18}[st]
+            out += _rect_shapes(r, col, fill, 0.012 if (hot or st != "plan") else 0.008)
+        self.sim.zone = out
+
     def _place_station(self, st, off, k, n):
         s = self.sim
         x, y, yaw = st["x"] + off[0], st["y"] + off[1], st["yaw"]
@@ -1372,6 +1477,66 @@ class Build:
             self.sess.unsent.pop(u, None)
         self.undone = True
         return None
+
+
+def _rect_shapes(r, rgba, fill: float, w: float) -> list[dict]:
+    """A floor rectangle (x0, y0, x1, y1) as a faint fill and four thin edges."""
+    x0, y0, x1, y1 = r
+    cx, cy, hx, hy = (x0 + x1) / 2, (y0 + y1) / 2, (x1 - x0) / 2, (y1 - y0) / 2
+    z = 0.006
+    edge = lambda pos, size: {"type": "box", "size": size, "pos": pos, "yaw": 0.0, "rgba": rgba}
+    return [{"type": "box", "size": [hx, hy, 0.002], "pos": [cx, cy, 0.004], "yaw": 0.0, "rgba": rgba[:3] + [fill]},
+            edge([cx, y0, z], [hx, w, 0.003]), edge([cx, y1, z], [hx, w, 0.003]),
+            edge([x0, cy, z], [w, hy, 0.003]), edge([x1, cy, z], [w, hy, 0.003])]
+
+
+# ------------------------------------------------------------------ recent prompts
+RECENT_KEEP = 10
+
+
+def _recent_file():
+    import pathlib
+    return pathlib.Path(os.environ.get("WETLAB_ACCOUNT_FILE") or pathlib.Path.home() / ".wetlab" / "account.json").with_name("scene_prompts.json")
+
+
+def recent_prompts(public: bool) -> list[str]:
+    """The account's last scene prompts, newest first: in the website's database for a signed-in
+    account, in ~/.wetlab/scene_prompts.json locally (the public site without sign-in keeps none)."""
+    from . import savestore as SAVE
+    try:
+        if SAVE.enabled():
+            return SAVE.recent_prompts(RECENT_KEEP)
+        if public:
+            return []
+        f = _recent_file()
+        return [str(x) for x in json.loads(f.read_text())][:RECENT_KEEP] if f.exists() else []
+    except Exception as e:  # noqa: BLE001
+        print("could not read recent scene prompts:", e)
+        return []
+
+
+def remember_prompt(prompt: str, public: bool) -> None:
+    prompt = " ".join(str(prompt or "").split())[:500]
+    if not prompt:
+        return
+    from . import savestore as SAVE
+
+    def save():
+        try:
+            if SAVE.enabled():
+                SAVE.add_prompt(prompt, RECENT_KEEP)
+            elif not public:
+                f = _recent_file()
+                old = json.loads(f.read_text()) if f.exists() else []
+                new = [prompt] + [x for x in old if x != prompt]
+                f.parent.mkdir(parents=True, exist_ok=True)
+                f.write_text(json.dumps(new[:RECENT_KEEP]))
+        except Exception as e:  # noqa: BLE001
+            print("could not keep the scene prompt:", e)
+    if SAVE.enabled():                 # the database is a network call: not on the request's time
+        threading.Thread(target=save, daemon=True).start()
+    else:
+        save()
 
 
 def _f(v) -> float:

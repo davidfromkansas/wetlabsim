@@ -96,3 +96,12 @@ create table if not exists user_api_keys (
   connected_at   timestamptz not null default now(),
   primary key (user_id, provider)
 )
+;
+-- This person's last 10 "Describe a scene" prompts, newest first (playground/savestore.py keeps
+-- only the newest 10, and makes this table itself if it isn't here yet).
+create table if not exists scene_prompts (
+  owner_user_id text not null references users (user_id) on delete cascade,
+  prompt_text   text not null,
+  used_at       timestamptz not null default now(),
+  primary key (owner_user_id, prompt_text)
+)

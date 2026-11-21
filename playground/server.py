@@ -1653,12 +1653,18 @@ class PGHandler(Handler):
         s, cur = self.sim, getattr(self.sess, "scenegen", None)
         if what == "info":
             return self._json({"ok": True, "models": SG.models(PUBLIC), "max_robots": SG.MAX_ROBOTS,
-                               "from_run": SG.FROM_RUN, "build": cur.status() if cur else None})
+                               "from_run": SG.FROM_RUN, "build": cur.status() if cur else None,
+                               "recent": SG.recent_prompts(PUBLIC)})
         if what == "status":
             return self._json({"ok": True, "build": cur.status() if cur else None})
         if what == "stop":
             if cur is not None:
                 cur.stop = True
+            return self._json({"ok": True})
+        if what == "hl":               # the person points at one thing in the build's list: its outline lights up
+            if cur is not None and hasattr(cur, "items"):
+                cur.hl = int(b.get("i", -1)) if str(b.get("i", "")).lstrip("-").isdigit() else -1
+                cur._draw()
             return self._json({"ok": True})
         if what == "undo":
             if cur is None or cur.id != b.get("id"):
@@ -1709,6 +1715,16 @@ class PGHandler(Handler):
                 return self._json({"ok": True, "pick": SG.pick(prompt, model, PUBLIC)})
             except SG.ModelError as e:
                 return self._json({"ok": False, "error": str(e)[:1].upper() + str(e)[1:] + "."})
+        if what == "go":               # straight from the words to the scene: the model picks, then it builds
+            if self._busy():
+                return self._json({"ok": False, "error": "A robot is working on a task. Stop it first to build a scene."})
+            if cur is not None and cur.status()["active"]:
+                return self._json({"ok": False, "error": "a scene is already being built"})
+            SG.remember_prompt(prompt, PUBLIC)
+            build = SG.Build(s, self.sess, prompt, None, model, PUBLIC)
+            self.sess.scenegen = build
+            build.start()
+            return self._json({"ok": True, "build": build.status()})
         if what == "build":
             if self._busy():
                 return self._json({"ok": False, "error": "A robot is working on a task. Stop it first to build a scene."})
@@ -1728,7 +1744,7 @@ class PGHandler(Handler):
                 "/pg/selection", "/pg/duplicate_many", "/pg/clear", "/pg/station/add", "/pg/station/move",
                 "/pg/station/rotate", "/pg/station/place_robot", "/pg/station/duplicate", "/pg/station/swap",
                 "/pg/station/remove", "/pg/station/remove_copies",
-                "/pg/scenegen/preset", "/pg/scenegen/build", "/pg/scenegen/photo")
+                "/pg/scenegen/preset", "/pg/scenegen/build", "/pg/scenegen/photo", "/pg/scenegen/go")
 
     def _json(self, obj, code=200):
         pre = self.__dict__.pop("_undo_pre", None)
