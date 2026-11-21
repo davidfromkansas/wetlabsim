@@ -12,7 +12,7 @@
 (() => {
 const css = `
 body:not(.freeplay) #sgBar, body.watch #sgBar, body.sgHide #sgBar, body.sgOpen #sgBar{display:none}
-body.sgOpen .emptyfloor{display:none!important}
+body.sgOpen .emptyfloor,body.sgPanel .emptyfloor{display:none!important}
 #sgBar{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:7;display:flex;align-items:center;gap:8px;height:38px;padding:0 8px 0 12px;border-radius:12px;border:0;background:rgba(255,255,255,.95);box-shadow:0 4px 14px rgba(17,24,39,.14),0 0 0 1px rgba(17,24,39,.08);font:500 13px Inter,sans-serif;color:#4B5563;cursor:text;white-space:nowrap;transition:transform 160ms ease-out}
 #sgBar:active{transform:translateX(-50%) scale(.98)}
 #sgBar .k{font:600 11px Inter,sans-serif;color:#4B5563;border:1px solid #E5E7EB;border-radius:5px;padding:1px 6px;margin-left:10px}
@@ -42,8 +42,8 @@ body.sgOpen .emptyfloor{display:none!important}
 #sgCard .pc small{display:block;font-weight:500;color:#6B7280}
 #sgCard .pc button{width:26px;height:26px;border:0;border-radius:7px;background:none;color:#6B7280;cursor:pointer;display:flex;align-items:center;justify-content:center}
 #sgCard .pc button:hover{background:#E5E7EB;color:#111827}
-#sgCard .tl{display:flex;align-items:center;gap:6px;padding:6px 12px 12px 12px;position:relative}
-#sgCard .tl .sp{flex:1}
+#sgCard .sgTl{display:flex;align-items:center;gap:6px;padding:6px 12px 12px 12px;position:relative}
+#sgCard .sgTl .sp{flex:1}
 #sgCard .ib{width:34px;height:34px;border-radius:9px;border:0;background:none;color:#4B5563;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 120ms ease-out}
 #sgCard .ib:hover{background:rgba(17,24,39,.06);color:#111827}
 #sgCard .ib:active{transform:scale(.94)}
@@ -113,7 +113,7 @@ body.sgPanel .pips{left:372px!important}
 #sgProg .tile img{max-width:88%;max-height:88%;object-fit:contain}
 #sgProg .tile.sk{animation:none;background:linear-gradient(90deg,#F3F4F6 0%,#E5E7EB 50%,#F3F4F6 100%);background-size:200% 100%;animation:sgSk 1.2s ease-in-out infinite}
 #sgProg .tile.mk{background:#EFF4FF}
-#sgProg .plan{margin:2px 14px 8px;color:#4B5563;font-size:12.5px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;animation:sgFade 300ms ease-out}
+#sgProg p.plan{margin:2px 14px 8px;color:#4B5563;font-size:12.5px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;animation:sgFade 300ms ease-out}
 #sgProg ul{list-style:none;margin:0;padding:0 8px}
 #sgProg li{display:flex;align-items:center;gap:9px;min-height:30px;padding:3px 8px;border-radius:8px;font-size:12.5px;color:#374151}
 #sgProg li.nw{animation:sgFade 260ms ease-out backwards}
@@ -156,8 +156,8 @@ body.sgPanel .pips{left:372px!important}
 #addRobot.sgPulse{box-shadow:0 0 0 2px #2563EB;border-radius:11px}
 #sgFly{position:absolute;inset:0;z-index:25;background:rgba(17,24,39,.82);display:flex;align-items:center;justify-content:center;pointer-events:none}
 #sgFly img{max-width:86%;max-height:80%;border-radius:14px;box-shadow:0 30px 60px -20px rgba(0,0,0,.6)}
-@container (max-width:780px){#sgBar{left:14px;top:58px;transform:none}#sgBar:active{transform:scale(.98)}#sgCard{top:52px}#sgCard .st4{grid-template-columns:repeat(2,minmax(0,1fr))}body.sgPanel .pips{display:none}}
-@media (prefers-reduced-motion:reduce){#sgCard.open,#sgProg li.nw,#sgProg .tile,#sgDone.open,#sgProg .plan{animation:none}}
+@container (max-width:780px){#sgBar{left:14px;top:58px;transform:none}#sgBar:active{transform:scale(.98)}#sgCard{top:52px}#sgCard .st4{grid-template-columns:repeat(2,minmax(0,1fr))}body.sgPanel .pips,body.sgPanel #sgBar{display:none}}
+@media (prefers-reduced-motion:reduce){#sgCard.open,#sgProg li.nw,#sgProg .tile,#sgDone.open,#sgProg p.plan{animation:none}}
 `;
 document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
 const stage = document.getElementById('stage');
@@ -296,7 +296,7 @@ function draw(first = false) {
   card.innerHTML = `<div class="in">${SPARK}<textarea id="sgTa" rows="1" placeholder="${G.photo ? 'Add a note for the AI (optional): what to leave out, which way doors open…' : 'Describe a scene: the place, the robot, what it should do…'}" aria-label="Describe the scene">${e(G.prompt)}</textarea></div>
 <div id="sgPc"></div>
 ${G.err ? `<p class="err">${e(G.err)}</p>` : ''}
-<div class="tl"><button class="ib" id="sgPh" aria-label="Add a photo" title="Add a photo: the AI rebuilds what it sees">${PHOTO(18)}</button>${modelBtn()}<span class="sp"></span><button class="go" id="sgGo" aria-label="Build the scene">${SEND}</button>${modelMenu()}</div>
+<div class="sgTl"><button class="ib" id="sgPh" aria-label="Add a photo" title="Add a photo: the AI rebuilds what it sees">${PHOTO(18)}</button>${modelBtn()}<span class="sp"></span><button class="go" id="sgGo" aria-label="Build the scene">${SEND}</button>${modelMenu()}</div>
 ${can || !G.loaded ? '' : `<div class="empty"><span><b>Connect an AI model to build from your words</b>Scenes are built by your own Anthropic or OpenAI account. The ready scenes below work without one.</span><button class="btn" id="sgSet">Open Settings</button></div>`}
 <div class="sec" id="sgLists"></div><div class="cft" id="sgFoot"></div><input type="file" id="sgFile" accept="image/*" hidden>`;
   const ta = document.getElementById('sgTa');
