@@ -379,6 +379,7 @@ body.watch .watchbanner{display:flex}
 body.watch .tl{top:130px}
 .emptyfloor{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:none;flex-direction:column;align-items:center;gap:6px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:14px;padding:18px 24px;text-align:center;z-index:2;pointer-events:none}
 body.empty .emptyfloor{display:flex}
+body.empty.hasobj .emptyfloor{display:none}
 .emptyfloor b{font-size:15px;color:var(--ink)}.emptyfloor span{font-size:13px;color:var(--muted);max-width:260px}
 /* the two cameras the AI sees, small in the lower left */
 .pips{position:absolute;left:14px;bottom:14px;display:flex;gap:10px;align-items:flex-end;z-index:2}
@@ -2562,6 +2563,7 @@ function render() {
   $('addStationBtn').disabled = !!sc.locked;
   const empty = free && !(sc.robots || []).length;
   document.body.classList.toggle('empty', empty);
+  document.body.classList.toggle('hasobj', !!(sc.objects || []).length);
   $('emptyMsg').textContent = S.watch ? 'Nobody has added a robot to this lab yet.' : 'Press Robot or Station in the bar below, then click the floor to place it.';
   const camKey = (stBase() || '/') + '|' + (free ? curStation().robot || '' : '');
   if (S.camFor !== camKey) { S.camFor = camKey; openCams(); }

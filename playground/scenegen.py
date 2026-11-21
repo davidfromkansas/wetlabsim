@@ -1051,9 +1051,15 @@ class Build:
                 self._mark(n, "ok" if fixed_uids[-1] else "bad")
                 n += 1
             self.phase = "objects"
+            looking = None
             for o in objects:
                 if self.stop:
                     return self._end("stopped")
+                # the camera follows the small things to the table they go on (the page stops
+                # following once the person moves the view)
+                if o["on"] == "station" and o["station"] < len(self.stations) and looking != self.stations[o["station"]]:
+                    looking = self.stations[o["station"]]
+                    s.frame_station(looking)
                 self.now = catalog.item(o["item"])["label"]
                 self._mark(n, "now")
                 self._mark(n, "ok" if self._place_object(o, off, fixed_uids) else "bad")
