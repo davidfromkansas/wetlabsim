@@ -98,6 +98,43 @@ def opened(session_id: str):
         [session_id, OWNER_USER])
 
 
+# ------------------------------------------------------------------ recent scene prompts
+# The owner's last few "Describe a scene" prompts (web/db/schema.sql: scene_prompts), shown in the
+# box when it opens. The table is made here too, the first time, so this works before the
+# website's migration has run.
+_PROMPTS_TABLE = """create table if not exists scene_prompts (
+  owner_user_id text not null references users (user_id) on delete cascade,
+  prompt_text   text not null,
+  used_at       timestamptz not null default now(),
+  primary key (owner_user_id, prompt_text)
+)"""
+_prompts_ready = False
+
+
+def _prompts_table():
+    global _prompts_ready
+    if not _prompts_ready:
+        sql(_PROMPTS_TABLE)
+        _prompts_ready = True
+
+
+def recent_prompts(limit: int) -> list[str]:
+    _prompts_table()
+    rows = sql("""select prompt_text from scene_prompts where owner_user_id = $1
+                  order by used_at desc limit $2""", [OWNER_USER, limit])
+    return [r["prompt_text"] for r in rows]
+
+
+def add_prompt(prompt: str, keep: int):
+    """The prompt as the newest (once), and only the newest `keep` kept."""
+    _prompts_table()
+    sql("""insert into scene_prompts (owner_user_id, prompt_text) values ($1, $2)
+           on conflict (owner_user_id, prompt_text) do update set used_at = now()""", [OWNER_USER, prompt])
+    sql("""delete from scene_prompts where owner_user_id = $1 and prompt_text not in
+           (select prompt_text from scene_prompts where owner_user_id = $1 order by used_at desc limit $2)""",
+        [OWNER_USER, keep])
+
+
 class Autosaver:
     """Saves each of the owner's sessions a few seconds after it changes (and never only at the
     end: a container can stop without warning). snapshot(sess) -> (db_id, name, layout, unsent)."""

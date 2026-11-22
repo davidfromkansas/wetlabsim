@@ -151,3 +151,40 @@ def test_build_makes_what_the_library_lacks(monkeypatch):
     assert len(made) == 3
     assert {G.catalog.item(p.item)["label"] for p in made} == {"Loaf of bread", "Bread rack"}
     assert b.undo() is None and sim.placed == []
+
+
+def test_straight_from_words_picks_then_builds_with_outlines(monkeypatch):
+    """No check-list step: the build picks robots and objects itself, then outlines every planned
+    thing on the floor (one by one, even when the layout arrives as one answer), and marks each
+    as it lands (ok) or doesn't fit (bad)."""
+    monkeypatch.setenv("WETLAB_SCENEGEN_FAKE", "1")
+    sim = PlaygroundSim(stations=[])
+    sim.pause()
+    b = G.Build(sim, _Sess(), "a robot making breakfast", None, "claude-fable-5-2", False)
+    assert b.status()["phase"] == "pick" and b.status()["active"]
+    seen_zone = []
+    b.start()
+    t = time.time()
+    while b.status()["active"] and time.time() - t < 120:
+        if sim.zone:
+            seen_zone.append(len(sim.zone))
+        time.sleep(0.05)
+    st = b.status()
+    assert st["phase"] == "done", st
+    assert st["picked"]["robots"] and st["stations"]
+    assert st["items"] and all(it["state"] in ("ok", "bad") for it in st["items"])
+    assert sum(it["state"] == "ok" for it in st["items"]) == st["counts"]["robots"][0] + st["counts"]["furniture"][0] + st["counts"]["objects"][0]
+    assert any(it["at"] for it in st["items"])          # robots and furniture have floor spots
+    assert seen_zone and max(seen_zone) > 2              # outlines were drawn while it built
+    assert sim.zone == []                                # and are gone at the end
+
+
+def test_recent_prompts_kept_locally(monkeypatch, tmp_path):
+    monkeypatch.setenv("WETLAB_ACCOUNT_FILE", str(tmp_path / "account.json"))
+    for k in range(12):
+        G.remember_prompt(f"scene {k}", False)
+    got = G.recent_prompts(False)
+    assert got[0] == "scene 11" and len(got) == G.RECENT_KEEP
+    G.remember_prompt("scene 5", False)
+    assert G.recent_prompts(False)[0] == "scene 5" and G.recent_prompts(False).count("scene 5") == 1
+    assert G.recent_prompts(True) == []                  # the public site without sign-in keeps none
