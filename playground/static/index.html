@@ -514,6 +514,16 @@ body.rclosed #right{display:none}
 @container (max-width:900px){.pip{width:150px}.pips.four .pip{width:110px}}
 #sessNav.closed ~ #stage .pips{left:62px}
 @container (max-width:780px){.pips{top:104px}#sessNav.closed ~ #stage .pips{left:14px}}
+/* A robot selected: its cameras sit bottom left, and the menu bar and "Describe a scene" step aside.
+   Nothing selected (click empty floor, or Esc): the cameras go, the menu bar and scene bar come back. */
+@media (min-width:761px){
+  body.freeplay:not(.robotsel) .pips{display:none}
+  body.freeplay.robotsel #sbar{display:none}
+  body.freeplay:not(.robotsel) .rrow.on > button.rsel{background:transparent;box-shadow:none}
+  body.freeplay:not(.robotsel) .rbot[aria-current=true]{box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(17,24,39,.06)}
+  body.freeplay.robotsel .pips{top:auto;bottom:14px;flex-direction:row;align-items:flex-end;gap:10px}
+  body.freeplay.robotsel .pip{width:220px}
+}
 #axisGuide{top:auto;bottom:14px}
 #objDrawer{bottom:78px!important}
 #playpill{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:12px;padding:6px 14px 6px 6px;border-radius:14px;background:rgba(255,255,255,.92);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 6px 20px rgba(17,24,39,.14),0 0 0 1px rgba(17,24,39,.06);white-space:nowrap}
@@ -1388,7 +1398,7 @@ window.addEventListener('mouseup', async (e) => {
   const locObj = loc && (S.scene.objects || []).find(o => (o.bodies || []).includes(loc.body));
   if (locObj) { S.sel = locObj.uid; S.robotEdit = null; render(); }
   const hit = await api('/pg/pick', {u: p.u, v: p.v});
-  S.sel = hit.kind === 'robot' || hit.station ? 'robot' : hit.kind === 'object' ? hit.uid : S.sel === 'robot' ? S.sel : null;
+  S.sel = hit.kind === 'robot' || hit.station ? 'robot' : hit.kind === 'object' ? hit.uid : null;   // empty floor: nothing selected
   // a click on the robot itself (not its table) opens its card: what it is, Move and Rotate
   S.robotEdit = hit.kind === 'robot' && S.scene && S.scene.mode === 'free' && !S.watch ? hit.station : null;
   if (hit.kind === 'robot' && S.scene && S.scene.mode === 'free') S.sideTab = 'chat';
@@ -1685,6 +1695,16 @@ function renderRail() {
 }
 $('task').addEventListener('input', () => $('startBtn').classList.toggle('blank', !$('task').value.trim()));
 $('startBtn').before($('infoBtn'));
+// keep the bottom menu bar clear of the camera joystick: slide it left only when they would touch
+function fitSbar() {
+  const bar = $('sbar'), pad = document.querySelector('.campad');
+  if (!bar || !pad) return;
+  bar.style.marginLeft = '';
+  if (!bar.offsetWidth || !pad.offsetWidth) return;
+  const b = bar.getBoundingClientRect(), c = pad.getBoundingClientRect(), st = bar.offsetParent.getBoundingClientRect();
+  const over = b.right + 12 - c.left;
+  if (over > 0) bar.style.marginLeft = -Math.min(over, b.left - st.left - 12) + 'px';
+}
 // side panels open and close
 function setRight(open) {
   document.body.classList.toggle('rclosed', !open); S.railKey = null; if (S.scene) renderRail();
@@ -2254,8 +2274,8 @@ $('robHome').onclick = () => placeRobot({home: true});
 })();
 function deselect() {
   if (S.sel === 'robot' && S.robotEdit) { S.robotEdit = null; if (window.V3) window.V3.setPreview(null); refresh(); return; }
-  if (!S.sel || S.sel === 'robot') return;
-  S.sel = null; if (window.V3) window.V3.setPreview(null);
+  if (!S.sel) return;
+  S.sel = null; if (window.V3) window.V3.setPreview(null);   // a robot too: its cameras step aside, the scene bar comes back
   refresh();
 }
 $('objX').onclick = deselect;
@@ -2572,6 +2592,8 @@ function render() {
   $('addStationBtn').disabled = !!sc.locked;
   const empty = free && !(sc.robots || []).length;
   document.body.classList.toggle('empty', empty);
+  document.body.classList.toggle('robotsel', S.sel === 'robot' && !empty);
+  fitSbar();
   document.body.classList.toggle('hasobj', !!(sc.objects || []).length);
   $('emptyMsg').textContent = S.watch ? 'Nobody has added a robot to this lab yet.' : 'Press Robot or Station in the bar below, then click the floor to place it.';
   const camKey = (stBase() || '/') + '|' + (free ? curStation().robot || '' : '');
@@ -2724,7 +2746,7 @@ async function refresh() {
   if (watch !== S.watch) { S.watch = watch; document.body.classList.toggle('watch', watch); S.dockKey = ''; if (watch && S.sideTab === 'objects') S.sideTab = 'chat'; }
   $('sessName').classList.toggle('can', !watch);
   if (sc.session && sc.session.name !== S.sessName) { S.sessName = sc.session.name; $('sessName').textContent = sc.session.name; document.title = sc.session.name + ' · MuJoCo Playground'; }
-  if (S.sel !== 'robot' && !S.scene.objects.find(o => o.uid === S.sel)) S.sel = 'robot';
+  if (S.sel && S.sel !== 'robot' && !S.scene.objects.find(o => o.uid === S.sel)) S.sel = 'robot';
   render();
 }
 // If the server goes away (restarted, or stopped and started again), the live streams end and
@@ -3305,6 +3327,7 @@ window.onAccount = (r) => { S.acct = r; fillModels(); if (S.scene) render(); };
   if (SID) { q.set('s', SID); q.delete('copy'); history.replaceState(null, '', location.pathname + '?' + q); try { localStorage.setItem('pgSession', SID); } catch (e) {} }
   renderSessions();
   const sendAspect = () => { const r = stage.getBoundingClientRect(); if (r.width > 50 && r.height > 50 && !S.watch) api('/pg/camera', {aspect: r.width / r.height}); };
+  new ResizeObserver(fitSbar).observe(stage);
   sendAspect(); new ResizeObserver(() => { clearTimeout(sendAspect.h); sendAspect.h = setTimeout(sendAspect, 150); }).observe(stage);
   $('modelLogo').src = LOGOS[modelInfo($('model').value).provider] || LOGOS.anthropic;
   // Draw the main view in the page (instant camera); fall back to the server's video.
