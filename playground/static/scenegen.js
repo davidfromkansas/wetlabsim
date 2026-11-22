@@ -11,12 +11,19 @@
 // At the end the panel shrinks to a "ready" pill above the menu bar, with Undo.
 (() => {
 const css = `
-body:not(.freeplay) #sgBar, body.watch #sgBar, body.sgHide #sgBar, body.sgOpen #sgBar{display:none}
+body:not(.freeplay) #sgBar, body.watch #sgBar, body.freeplay.robotsel #sgBar, body.sgHide #sgBar, body.sgOpen #sgBar{display:none}
 body.sgOpen .emptyfloor,body.sgPanel .emptyfloor{display:none!important}
-#sgBar{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:7;display:flex;align-items:center;gap:8px;height:38px;padding:0 8px 0 12px;border-radius:12px;border:0;background:rgba(255,255,255,.95);box-shadow:0 4px 14px rgba(17,24,39,.14),0 0 0 1px rgba(17,24,39,.08);font:500 13px Inter,sans-serif;color:#4B5563;cursor:text;white-space:nowrap;transition:transform 160ms ease-out}
+#sgBar{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:7;display:flex;align-items:center;gap:6px;height:44px;padding:0 5px;border-radius:22px;border:0;background:rgba(255,255,255,.95);box-shadow:0 10px 28px -10px rgba(17,24,39,.35),0 0 0 1px rgba(17,24,39,.08);font:400 14px Inter,sans-serif;color:#6B7280;cursor:text;white-space:nowrap;transition:transform 160ms ease-out}
+#sgBar:not(.busy){width:270px}
+#sgBar:hover:not(.busy){box-shadow:0 0 0 2px #93C5FD,0 10px 28px -10px rgba(17,24,39,.35)}
+#sgBar #sgBarT{flex:1;text-align:left}
+#sgBar .ph,#sgCard .phb{width:34px;height:34px;flex:none;border-radius:50%;border:0;padding:0;background:#F3F4F6;box-shadow:inset 0 0 0 1px #E5E7EB;color:#111827;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 120ms ease-out,transform 120ms ease-out}
+#sgBar .ph:hover,#sgCard .phb:hover{background:#E5E7EB}
+#sgCard .phb:active{transform:scale(.94)}
+#sgBar .snd{width:34px;height:34px;flex:none;border-radius:50%;background:#E5E7EB;color:#fff;display:flex;align-items:center;justify-content:center}
 #sgBar:active{transform:translateX(-50%) scale(.98)}
 #sgBar .k{font:600 11px Inter,sans-serif;color:#4B5563;border:1px solid #E5E7EB;border-radius:5px;padding:1px 6px;margin-left:10px}
-#sgBar.busy{cursor:default;color:#111827;font-weight:600;padding:0 6px 0 12px;gap:10px}
+#sgBar.busy{cursor:default;color:#111827;font-weight:600;padding:0 6px 0 14px;gap:10px}
 #sgBar .ct{font-weight:500;color:#6B7280;font-variant-numeric:tabular-nums}
 #sgBar .sep{width:1px;height:18px;background:#E5E7EB}
 #sgBar .stop{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:8px;background:#F3F4F6;font:600 12.5px/1 Inter,sans-serif;color:#111827;cursor:pointer}
@@ -33,7 +40,7 @@ body.sgOpen .emptyfloor,body.sgPanel .emptyfloor{display:none!important}
 #sgCard.center{top:min(14%,120px)}
 @keyframes sgGrow{from{opacity:0;transform:translateX(-50%) scaleX(.55) scaleY(.2)}}
 #sgCard .in{display:flex;align-items:flex-start;gap:10px;padding:16px 16px 4px}
-#sgCard .in>svg{flex:none;margin-top:4px}
+#sgCard .in>.phb{margin:-5px 0 0 -4px;width:36px;height:36px}
 #sgCard textarea{flex:1;box-sizing:border-box;min-height:26px;max-height:180px;resize:none;border:0;outline:0;background:none;font:16px/1.55 Inter,sans-serif;color:#111827;padding:0}
 #sgCard textarea::placeholder{color:#6B7280}
 #sgCard .pc{display:flex;align-items:center;gap:10px;margin:6px 16px 2px 42px;padding:6px;border-radius:12px;background:#F3F4F6;width:max-content;max-width:calc(100% - 58px)}
@@ -163,6 +170,9 @@ body.sgPanel .pips{left:372px!important}
 document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
 const stage = document.getElementById('stage');
 const e = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+// A picture with a small + : add a photo (the scene bar and the box both lead with it).
+const IMGPLUS = (s = 18) => `<svg aria-hidden="true" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4.5H5.5A2.5 2.5 0 0 0 3 7v11a2.5 2.5 0 0 0 2.5 2.5h12A2.5 2.5 0 0 0 20 18v-6"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M20 16l-4.5-4.5L6 20.5"/><path d="M19 2.5v6M16 5.5h6"/></svg>`;
+const BAR_REST = () => `<span class="ph" title="Add a photo">${IMGPLUS(17)}</span><span id="sgBarT">Describe a scene…</span><span class="snd" aria-hidden="true"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span>`;
 const SPARK = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>';
 const XS = '<svg aria-hidden="true" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
 const CHEV = '<svg aria-hidden="true" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#4B5563" stroke-width="1.6" stroke-linecap="round"><path d="M3 4.5l3 3 3-3"/></svg>';
@@ -171,7 +181,7 @@ const CLOCK = '<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24
 const PIC = {franka: '/pg/static/robot_franka.png', ur5e: '/pg/static/robot_ur5e.png', aloha: '/pg/static/robot_aloha.png', fr3_duo: '/pg/static/robot_fr3_duo.png', g1: '/pg/static/robot_g1.png', piper: '/pg/static/robot_piper.png', n220: '/pg/static/robot_n220.png', crx30ia: '/pg/static/robot_crx30ia.png', rby1: '/pg/static/robot_rby1.png'};
 const LOGO = {anthropic: '/static/anthropic.svg', openai: '/static/openai.svg'};
 
-stage.insertAdjacentHTML('beforeend', `<button id="sgBar" aria-haspopup="dialog" aria-expanded="false">${SPARK}<span id="sgBarT">Describe a scene…</span><span class="k" aria-hidden="true">/</span></button>
+stage.insertAdjacentHTML('beforeend', `<button id="sgBar" aria-haspopup="dialog" aria-expanded="false" aria-keyshortcuts="/" title="Describe a scene (/)">${BAR_REST()}</button>
 <div id="sgCard" role="dialog" aria-label="Describe a scene"></div><div id="sgProg" role="status" aria-live="polite"></div><div id="sgDone" role="status"></div>`);
 document.body.insertAdjacentHTML('beforeend', '<div id="sgNudge">Now add a robot</div>');
 const bar = document.getElementById('sgBar'), card = document.getElementById('sgCard'), prog = document.getElementById('sgProg');
@@ -294,10 +304,10 @@ const recentsFor = (q) => {
 function draw(first = false) {
   if (!G.open) return;
   const can = !!G.models.length;
-  card.innerHTML = `<div class="in">${SPARK}<textarea id="sgTa" rows="1" placeholder="${G.photo ? 'Add a note for the AI (optional): what to leave out, which way doors open…' : 'Describe a scene: the place, the robot, what it should do…'}" aria-label="Describe the scene">${e(G.prompt)}</textarea></div>
+  card.innerHTML = `<div class="in"><button class="phb" id="sgPh" aria-label="Add a photo" title="Add a photo: the AI rebuilds what it sees">${IMGPLUS()}</button><textarea id="sgTa" rows="1" placeholder="${G.photo ? 'Add a note for the AI (optional): what to leave out, which way doors open…' : 'Describe a scene: the place, the robot, what it should do…'}" aria-label="Describe the scene">${e(G.prompt)}</textarea></div>
 <div id="sgPc"></div>
 ${G.err ? `<p class="err">${e(G.err)}</p>` : ''}
-<div class="sgTl"><button class="ib" id="sgPh" aria-label="Add a photo" title="Add a photo: the AI rebuilds what it sees">${PHOTO(18)}</button>${modelBtn()}<span class="sp"></span><button class="go" id="sgGo" aria-label="Build the scene">${SEND}</button>${modelMenu()}</div>
+<div class="sgTl">${modelBtn()}<span class="sp"></span><button class="go" id="sgGo" aria-label="Build the scene">${SEND}</button>${modelMenu()}</div>
 ${can || !G.loaded ? '' : `<div class="empty"><span><b>Connect an AI model to build from your words</b>Scenes are built by your own Anthropic or OpenAI account. The ready scenes below work without one.</span><button class="btn" id="sgSet">Open Settings</button></div>`}
 <div class="sec" id="sgLists"></div><div class="cft" id="sgFoot"></div><input type="file" id="sgFile" accept="image/*" hidden>`;
   const ta = document.getElementById('sgTa');
@@ -498,7 +508,7 @@ const ic = (k, s = 16, c = 'currentColor', w = 1.75) => `<svg aria-hidden="true"
 const ring = (s = 16) => { const r = s / 2 - 1.5; return `<svg class="sgRing" style="width:${s}px;height:${s}px" viewBox="0 0 ${s} ${s}" aria-hidden="true"><circle cx="${s / 2}" cy="${s / 2}" r="${r}" fill="none" stroke="#DBE5FF" stroke-width="2"/><path d="M${s / 2} ${s / 2 - r}a${r} ${r} 0 0 1 ${r} ${r}" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/></svg>`; };
 const cap = (s) => String(s || '').replace(/^./, c => c.toUpperCase());
 const mmss = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
-const REST = () => `${SPARK}<span id="sgBarT">Describe a scene…</span><span class="k" aria-hidden="true">/</span>`;
+const REST = BAR_REST;
 
 // The panel is a few parts, each written again only when it changes, so the list keeps its
 // place, hover and animations while the build moves on.
@@ -689,7 +699,12 @@ function ready(b) {
 function hideDone() { done.classList.remove('open', 'up'); nudge.classList.remove('open'); const ar = document.getElementById('addRobot'); if (ar) ar.classList.remove('sgPulse'); }
 
 // ------------------------------------------------ opening and closing
-bar.onclick = () => { if (!(G.build && G.build.active)) openCard(); };
+bar.onclick = async (ev) => {
+  if (G.build && G.build.active) return;
+  const photo = ev.target.closest && ev.target.closest('.ph');
+  await openCard();
+  if (photo) { const f = document.getElementById('sgFile'); if (f) f.click(); }   // the picture button: straight to choosing a photo
+};
 document.addEventListener('keydown', (ev) => {
   if (ev.key === 'Escape' && G.open) { const dd = document.getElementById('sgDd'); if (dd && dd.classList.contains('open')) { dd.classList.remove('open'); return; } closeCard(); return; }
   if (ev.key === '/' && !G.open && !/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '') && !document.activeElement.isContentEditable
