@@ -316,8 +316,10 @@ Only these objects exist (id: label | group | size | kind):
 
 Read the person's request and choose:
 - robots: which robots and how many of each, 1 to {max_robots} robots in all. If they name a \
-robot or a number, follow it. Otherwise pick what suits the task (one robot unless the task \
-clearly needs more; a two-arm robot for two-handed work).
+robot or a number, follow it. Otherwise pick what suits the task and the place from the whole \
+list, not the same arm every time (one robot unless the task clearly needs more; a two-arm robot \
+for two-handed work; a humanoid or wheeled robot for moving between places; an industrial arm \
+for factory work; a small arm for small benchtop work).
 - items: the objects (and furniture) from the list that the scene needs, with how many of each \
 (1 to {max_each}). Use only ids from the list. Include what makes the place feel right, but keep \
 it to what fits: about 4 to 16 objects in all (with the ones to make).
@@ -342,7 +344,16 @@ Write a short layout plan, then exact positions. You decide anything the person 
 where things go, which way they face, what goes on which surface.
 
 How the playground works:
-- Every robot stands on its own station table, near one long edge, facing across it (+x in \
+- A robot either works at the scene's own furniture with no table of its own (kind "bare"), or \
+stands on a station table of its own. Prefer "bare" whenever the scene has furniture to work at \
+(a counter, a lab bench, a workbench, a desk, a cart): the station's x, y is then where the \
+robot's base stands (scene frame), next to that furniture (about 0.25 to 0.35 m from its edge, \
+facing it: the robot faces +x turned by yaw), and "at" is that furniture's index in "furniture". \
+An arm there gets a steel stand up to the furniture's height by itself, or give "on": true to \
+stand it on top of the furniture (a big table or bench). Put its task objects on that furniture \
+("on": "furniture"), within 0.65 m of the robot's base. A humanoid or wheeled robot stands on \
+the floor. Use a station table only when there is no furniture to work at.
+- A station with a table stands near one of the table's long edges, facing across it (+x in \
 the station's own frame). A station is "table" (a packing table 1.87 m along x by 1.22 m along \
 y, top 0.99 m high, the robot's base at x -0.42, y 0) or "wetlab" (a stainless lab bench 0.70 m \
 along x by 1.80 m along y, top 0.85 m high, the robot's base at x -0.20, y 0) or "island" (a \
@@ -370,7 +381,7 @@ Sizes (x by y by z, cm): {sizes}
 
 Answer with JSON only, exactly this shape:
 {{"plan": "2 to 4 plain sentences on the layout and the choices you made",
- "stations": [{{"robot": "franka", "kind": "table", "x": 0, "y": 0, "yaw": 0}}],
+ "stations": [{{"robot": "franka", "kind": "bare", "at": 0, "x": 1.7, "y": 1.2, "yaw": 0}}],
  "furniture": [{{"item": "refrigerator", "x": 2.0, "y": 1.2, "yaw": 180}}],
  "objects": [{{"item": "mug", "on": "station", "station": 0, "x": 0.3, "y": 0.1, "yaw": 0}},
              {{"item": "kettle", "on": "furniture", "furniture": 0, "dx": 0, "dy": 0, "yaw": 0}},
@@ -883,6 +894,8 @@ def _rot(x: float, y: float, yaw: float):
 
 
 def _station_rect(kind: str, robot: str, x: float, y: float, yaw: float):
+    if kind == "bare":                 # a robot with no table: about its base
+        return x - 0.3, y - 0.3, x + 0.3, y + 0.3
     st = W.Station("probe", robot, (x, y), yaw, kind=kind)
     sx, sy = st.footprint()
     pts = [st.to_world(fx * sx / 2, fy * sy / 2)[:2] for fx in (-1, 1) for fy in (-1, 1)]
@@ -938,6 +951,7 @@ class Build:
         # furniture, object), "rect" (its spot on the floor, or None for a thing on a table), "state":
         # plan (shown as an outline), now (being placed), ok (it landed), bad (it didn't fit)}.
         self.items: list[dict] = []
+        self.at_uid: dict[int, str] = {}  # furniture index -> the robot with no table that works at it
         self.shown = 0                # how many of them are outlined yet (they appear one by one)
         self.hl = -1                  # the one the person points at in the build's list
         self.names = {}
@@ -1030,17 +1044,9 @@ class Build:
                                  "remove something, or ask for a smaller scene")
             self._show_zone(stations, furniture, objects, off)
             self._outline(stations, furniture, objects, off)
-            self.phase = "robots"
-            n = 0
-            for k, st in enumerate(stations):
-                if self.stop:
-                    return self._end("stopped")
-                self._mark(n, "now")
-                had = len(self.stations)
-                self._place_station(st, off, k, len(stations))
-                self._mark(n, "ok" if len(self.stations) > had else "bad")
-                n += 1
+            # furniture first, so a robot with no table of its own can stand at it
             self.phase = "furniture"
+            n = len(stations)
             fixed_uids = []
             for f in furniture:
                 if self.stop:
@@ -1050,6 +1056,16 @@ class Build:
                 fixed_uids.append(self._place_furniture(f, off))
                 self._mark(n, "ok" if fixed_uids[-1] else "bad")
                 n += 1
+            self.now = ""
+            self.phase = "robots"
+            for k, st in enumerate(stations):
+                if self.stop:
+                    return self._end("stopped")
+                self._mark(k, "now")
+                had = len(self.stations)
+                self._place_station(st, off, k, len(stations), fixed_uids)
+                self._mark(k, "ok" if len(self.stations) > had else "bad")
+            n = len(stations) + len(furniture)
             self.phase = "objects"
             looking = None
             for o in objects:
@@ -1057,8 +1073,10 @@ class Build:
                     return self._end("stopped")
                 # the camera follows the small things to the table they go on (the page stops
                 # following once the person moves the view)
-                if o["on"] == "station" and o["station"] < len(self.stations) and looking != self.stations[o["station"]]:
-                    looking = self.stations[o["station"]]
+                near = (self.stations[o["station"]] if o["on"] == "station" and o["station"] < len(self.stations)
+                        else self.at_uid.get(o["furniture"]) if o["on"] == "furniture" else None)
+                if near and looking != near:
+                    looking = near
                     s.frame_station(looking)
                 self.now = catalog.item(o["item"])["label"]
                 self._mark(n, "now")
@@ -1185,8 +1203,12 @@ class Build:
             if rb in want_r:
                 want_r.remove(rb)
                 kind = st.get("kind") if st.get("kind") in W.KINDS else "table"
+                if kind in ("libero",) or kind.startswith("wetrobo"):
+                    kind = "table"
                 stations.append({"robot": rb, "kind": kind, "x": _f(st.get("x")), "y": _f(st.get("y")),
-                                 "yaw": math.radians(_f(st.get("yaw"))), "task": str(st.get("task") or "")})
+                                 "yaw": math.radians(_f(st.get("yaw"))), "task": str(st.get("task") or ""),
+                                 "at": _int(st.get("at"), -1) if kind == "bare" else -1,
+                                 "up": bool(st.get("on")) and kind == "bare"})
         for rb in want_r:
             stations.append({"robot": rb, "kind": "table", "x": 0.0, "y": 2.0 * len(stations), "yaw": 0.0})
         items = [i["id"] for i in self.pick["items"] for _ in range(i["count"])]
@@ -1222,6 +1244,17 @@ class Build:
                             "x": 0.3, "y": 0.0, "dx": 0.0, "dy": 0.0, "yaw": 0.0})
         if not stations:
             raise ModelError("the scene has no robot")
+        for st in stations:              # a robot with no table of its own: at a piece of furniture
+            if st["kind"] == "bare" and not 0 <= st["at"] < len(furniture):
+                st["at"] = -1 if not furniture else min(
+                    range(len(furniture)), key=lambda k: math.hypot(furniture[k]["x"] - st["x"], furniture[k]["y"] - st["y"]))
+        for o in objects:                # its task things go on that furniture, not on a table it hasn't got
+            if o["on"] == "station" and o["station"] < len(stations) and stations[o["station"]]["kind"] == "bare":
+                st = stations[o["station"]]
+                if st["at"] >= 0:
+                    o.update(on="furniture", furniture=st["at"], dx=0.0, dy=0.0)
+                else:
+                    o.update(on="floor", x=st["x"] + 0.5 * math.cos(st["yaw"]), y=st["y"] + 0.5 * math.sin(st["yaw"]))
         if any(o["on"] == "furniture" for o in objects) and not furniture:
             for o in objects:
                 if o["on"] == "furniture":
@@ -1346,9 +1379,11 @@ class Build:
             out += _rect_shapes(r, col, fill, 0.012 if (hot or st != "plan") else 0.008)
         self.sim.zone = out
 
-    def _place_station(self, st, off, k, n):
+    def _place_station(self, st, off, k, n, fixed_uids=()):
         s = self.sim
         x, y, yaw = st["x"] + off[0], st["y"] + off[1], st["yaw"]
+        if st["kind"] == "bare":
+            return self._place_bare(st, x, y, yaw, k, n, fixed_uids)
         spot = None
         for dx, dy in _spiral(0.25, 6):
             spot = s.station_spot(x + dx, y + dy, yaw, kind=st["kind"])
@@ -1363,6 +1398,35 @@ class Build:
                             open_cell=bool(WS.ROBOTS[st["robot"]].get("humanoid")))
         if self.preset and st.get("task"):
             self.station_tasks[uid] = st["task"]
+        title = self.pick["title"]
+        s.rename_station(uid, title if n == 1 else f"{title} {k + 1}")
+        self.stations.append(uid)
+        self.counts["robots"][0] += 1
+
+    def _place_bare(self, st, x, y, yaw, k, n, fixed_uids):
+        """A robot with no table of its own, at the scene's furniture: beside it on the floor
+        (an arm gets its steel stand up to the worktop by itself), or on top of it ("up"),
+        turned to face the furniture it works at."""
+        s = self.sim
+        at = st.get("at", -1)
+        p = s.find(fixed_uids[at]) if 0 <= at < len(fixed_uids) and fixed_uids[at] else None
+        spot = None
+        for dx, dy in _spiral(0.08, 8):
+            sp = s.robot_spot(st["robot"], x + dx, y + dy, yaw)
+            if sp["valid"] and (st.get("up") or p is None or sp["surface"] == "the floor"):
+                spot = sp
+                break
+        if spot is None:
+            self.skipped.append(next((r["label"] for r in catalog.robots() if r["id"] == st["robot"]), st["robot"]))
+            self.counts["robots"][1] -= 1
+            return
+        if p is not None and not st.get("up"):
+            face = math.atan2(p.pos[1] - spot["pos"][1], p.pos[0] - spot["pos"][0])
+            if s.robot_spot(st["robot"], *spot["pos"], face)["valid"]:
+                yaw = face
+        uid = s.add_station(st["robot"], spot["pos"], yaw, "bare", starter=False, ground=spot["ground"])
+        if p is not None:
+            self.at_uid[at] = uid
         title = self.pick["title"]
         s.rename_station(uid, title if n == 1 else f"{title} {k + 1}")
         self.stations.append(uid)
