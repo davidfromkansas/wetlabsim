@@ -282,6 +282,16 @@ export function start({stage, base = '', onReady}) {
     if (!loading) loading = buildScene().finally(() => { loading = null; });
     return loading;
   }
+  // An edit (drop, undo, redo) that rebuilds the world gets the new world back with its reply.
+  // While one is on its way the pose stream's "new version" doesn't send for it separately: that
+  // request would wait behind the lab's few connections (camera pictures, pose stream, polls).
+  let given = null, holdUntil = 0;
+  V.hold = (on = true) => { holdUntil = on ? performance.now() + 8000 : 0; if (!on) loadScene(); };
+  V.give = (sc) => {
+    holdUntil = 0;
+    if (sc && sc.version != null && (V.version === null || Number(sc.version) > Number(V.version))) given = {sc, base};
+    loadScene().then(() => { if (given) loadScene(); });   // one already loading: then this one
+  };
   function install(next, sc, bodies, skins, head) {
     [...camera.children].forEach(c => { camera.remove(c); c.dispose && c.dispose(); }); camera.add(head); camera.add(head.target);
     scene.remove(root); retired.push(root); root = next; scene.add(root);
@@ -299,7 +309,9 @@ export function start({stage, base = '', onReady}) {
     for (let tries = 0; ; tries++) {
       const g0 = gen, fresh = V.version === null, src = base;
       try {
-        const sc = await (await get(`${src}/pg/scene3d`)).json();
+        const pre = given && given.base === src && (V.version === null || Number(given.sc.version) > Number(V.version)) ? given.sc : null;
+        given = null;
+        const sc = pre || await (await get(`${src}/pg/scene3d`)).json();
         if (g0 !== gen) continue;
         const texhash = sc.texhash || {};
         fetchMeshes(Object.values(sc.meshhash || {}), src);
@@ -548,7 +560,7 @@ export function start({stage, base = '', onReady}) {
     es = new EventSource(`${base}/pg/poses.sse`);
     es.onmessage = (ev) => {
       const f = JSON.parse(ev.data);
-      if (f.v !== V.version) { loadScene(); return; }
+      if (f.v !== V.version) { if (performance.now() > holdUntil) loadScene(); return; }
       const p = b64(f.p), q = b64(f.q);
       V.rawP = p; V.rawQ = q;
       for (let i = 0; i < V.bodies.length; i++) {
@@ -805,7 +817,7 @@ export function start({stage, base = '', onReady}) {
   // Another session: its own world (scene, meshes, textures and pose stream), drawn at once.
   V.setBase = (b) => {
     if (b === base) return;
-    base = b; gen++; V.version = null; V.follow = true; V.lastLocal = 0; V.camGen = null;
+    base = b; gen++; V.version = null; V.follow = true; V.lastLocal = 0; V.camGen = null; given = null; holdUntil = 0;
     // The old session's world leaves the screen at once; the new one fills in as it loads.
     scene.remove(root); retired.push(root); root = new THREE.Group(); scene.add(root); V.bodies = []; V.skins = [];
     showNote(true);

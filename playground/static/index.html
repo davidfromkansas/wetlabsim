@@ -1250,7 +1250,9 @@ stage.addEventListener('drop', async (e) => {
   S.dragItem = null; probeNext = null; hideTag(); await place(id, uv(e));
 });
 async function place(id, p) {
-  const r = await api('/pg/place', {item: id, u: p.u, v: p.v});
+  if (window.V3) window.V3.hold();
+  let r;
+  try { r = await api('/pg/place', {item: id, u: p.u, v: p.v}); } finally { if (window.V3) window.V3.give(r && r.scene3d); }
   if (!r.ok) toast(r.error || "Can't go there"); else { S.sel = r.uid; }
   refresh();
 }
@@ -1949,10 +1951,9 @@ async function undoRedo(back) {
   if (barOff() || S.undoBusy || !S.scene || !(back ? S.scene.undo : S.scene.redo)) return;
   S.undoBusy = true;
   try {
-    const playing = !S.scene.paused;
-    if (playing) await api('/pg/pause', {});
-    const r = await api(back ? '/pg/undo' : '/pg/redo', {});
-    if (playing) await api('/pg/play', {});
+    if (window.V3) window.V3.hold();
+    let r;    // hold: the server stops physics for the moment it takes, then plays on
+    try { r = await api(back ? '/pg/undo' : '/pg/redo', {hold: true}); } finally { if (window.V3) window.V3.give(r && r.scene3d); }
     if (!r.ok) toast(r.error || 'Could not do that.');
     else { S.scene.undo = r.undo; S.scene.redo = r.redo; loadSessions(); }
   } finally { S.undoBusy = false; refresh(); }
