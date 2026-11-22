@@ -1443,6 +1443,11 @@ class Build:
         uid = s.add_station(st["robot"], spot["pos"], yaw, "bare", starter=False, ground=spot["ground"])
         if p is not None:
             self.at_uid[at] = uid
+            made = s.station(uid)
+            if not st.get("up") and made.liftable and made.ground < W.STAND_MIN:
+                # an arm beside the furniture: its stand reaches up to the worktop it works at
+                # (not the stand height an arm put down on the floor gets)
+                s.place_robot(uid, z=W.table_top(p.item))
         title = self.pick["title"]
         s.rename_station(uid, title if n == 1 else f"{title} {k + 1}")
         self.stations.append(uid)
