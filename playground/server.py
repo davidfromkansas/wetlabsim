@@ -1752,6 +1752,15 @@ class PGHandler(Handler):
             self.sess.push_undo(pre)
         return super()._json(obj, code)
 
+    def _scene3d(self) -> dict:
+        """The 3D view's world (scene3d.scene). An edit that rebuilt the world sends it back with
+        its reply, so the page needn't ask again (and wait for a free connection) to draw it."""
+        with self.sim.lock:
+            m, ver = self.sim.m, self.sim._model_ver
+        out = S3.scene(m, ver)
+        out["floorfx"] = self.sim.scene_mode == "free"      # the Tron floor, drawn by the page
+        return out
+
     def _locked(self) -> str:
         if self.sim.scene_mode == "wetlab":
             return "the wet lab bench is fixed for a fair test: switch to Free play to build your own"
@@ -1946,10 +1955,7 @@ class PGHandler(Handler):
             # No waiting on the simulator's lock here: a compiled model never changes, and a world
             # with soft objects keeps the lock busy enough that these requests could wait for ages.
             if p == "/pg/scene3d":
-                m, ver = self.sim.m, self.sim._model_ver
-                out = S3.scene(m, ver)
-                out["floorfx"] = self.sim.scene_mode == "free"      # the Tron floor, drawn by the page
-                return self._json(out)
+                return self._json(self._scene3d())
             if p.startswith("/pg/skin/"):
                 m, i = self.sim.m, int(pathlib.Path(p).stem)
                 if not 0 <= i < m.nskin:
@@ -2162,20 +2168,33 @@ class PGHandler(Handler):
                 return self._scenegen(p[len("/pg/scenegen/"):], b)
             lock = self._locked()
             if p in ("/pg/undo", "/pg/redo"):
-                if lock:
-                    return self._json({"ok": False, "error": lock})
-                back = p == "/pg/undo"
-                src = self.sess.undo if back else self.sess.redo
-                if not src or s.scene_mode != "free":
-                    return self._json({"ok": False, "error": "Nothing to undo." if back else "Nothing to redo."})
-                now = s.scene_state()
-                s.restore_scene(src.pop())
-                (self.sess.redo if back else self.sess.undo).append(now)
-                gone = set(self.runners) - {st.uid for st in s.stations}
-                for u in gone:
-                    if not self.runners[u].active():
-                        self.runners.pop(u, None)
-                return self._json({"ok": True, "undo": len(self.sess.undo), "redo": len(self.sess.redo)})
+                # hold: physics stops for the moment the edit takes, then plays on (as the page's
+                # own pause / play around it did, in one request instead of three).
+                with QUEUE_LOCK:
+                    waiting = any(q["session"] == self.sess.id for q in QUEUE)
+                resume = bool(b.get("hold")) and not s.paused and not self._busy() and not waiting
+                if resume:
+                    s.pause()
+                    lock = self._locked()
+                try:
+                    if lock:
+                        return self._json({"ok": False, "error": lock})
+                    back = p == "/pg/undo"
+                    src = self.sess.undo if back else self.sess.redo
+                    if not src or s.scene_mode != "free":
+                        return self._json({"ok": False, "error": "Nothing to undo." if back else "Nothing to redo."})
+                    now = s.scene_state()
+                    s.restore_scene(src.pop())
+                    (self.sess.redo if back else self.sess.undo).append(now)
+                    gone = set(self.runners) - {st.uid for st in s.stations}
+                    for u in gone:
+                        if not self.runners[u].active():
+                            self.runners.pop(u, None)
+                finally:
+                    if resume:
+                        s.play()
+                return self._json({"ok": True, "undo": len(self.sess.undo), "redo": len(self.sess.redo),
+                                   "scene3d": self._scene3d()})
             if (p in ("/pg/place", "/pg/move", "/pg/remove", "/pg/remove_many", "/pg/duplicate_many", "/pg/selection", "/pg/rotate", "/pg/orient", "/pg/translate", "/pg/clear") or p.startswith("/pg/station/")) and lock:
                 # Rename any time; Reset while physics plays too, but not while an AI works.
                 if p != "/pg/station/rename" and not (p in ("/pg/station/reset", "/pg/station/remove_copies")
@@ -2326,7 +2345,7 @@ class PGHandler(Handler):
                     return self._json({"ok": False, "error": spot.get("reason") or "can't go there"})
                 uid = s.add(b["item"], spot["pos"], float(b.get("yaw", 0.0)))
                 s.selected = uid
-                return self._json({"ok": True, "uid": uid, "spot": spot})
+                return self._json({"ok": True, "uid": uid, "spot": spot, "scene3d": self._scene3d()})
             if p == "/pg/move":
                 spot = s.probe(s.find(b["uid"]).item, float(b["u"]), float(b["v"]), float(b.get("yaw", 0.0)), b["uid"])
                 s.clear_ghost()
