@@ -584,6 +584,32 @@ class PlaygroundSim(Sim):
                  (self.stations[0].uid if self.stations else None))
             self.rebuild(sync=False)
 
+    def _place_free(self, p: W.Placed, pos, quat) -> bool:
+        """Put a loose object at pos (its bottom centre) turned by quat by setting its free
+        joint's position (MuJoCo's qpos), with no recompile. Only for an object that is one free
+        body (and what hangs off it): not furniture, soft objects or ones made of several loose
+        bodies. Must hold self.lock. False: it needs a rebuild."""
+        if catalog.item(p.item)["soft"] or catalog.item(p.item)["fixed"]:
+            return False
+        m, d = self.m, self.d
+        b = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, f"obj_{p.uid}")
+        if b < 0 or m.body_parentid[b] != 0 or not m.body_jntnum[b]:
+            return False
+        j = int(m.body_jntadr[b])
+        if m.jnt_type[j] != mujoco.mjtJoint.mjJNT_FREE:
+            return False
+        pre = f"obj_{p.uid}__"
+        for k in range(m.nbody):          # another loose body of the same object (a jointed item)
+            if k != b and m.body_parentid[k] == 0 and (mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, k) or "").startswith(pre):
+                return False
+        qa, va = int(m.jnt_qposadr[j]), int(m.jnt_dofadr[j])
+        d.qpos[qa:qa + 3] = pos
+        d.qpos[qa + 3:qa + 7] = quat
+        d.qvel[va:va + 6] = 0.0
+        mujoco.mj_forward(m, d)
+        p.pos, p.quat = tuple(float(v) for v in pos), tuple(float(v) for v in quat)
+        return True
+
     def add(self, item: str, pos, yaw: float = 0.0) -> str:
         if catalog.item(item)["soft"] and W.soft_count(self.placed) >= SOFT_MAX:
             raise RobotError(f"a lab holds at most {SOFT_MAX} soft objects (each takes a lot of the "
@@ -605,6 +631,8 @@ class PlaygroundSim(Sim):
                 if p.quat is not None:
                     p.quat = W.rot_quat(W.axis_rot("z", math.degrees(yaw - p.yaw)) @ W._rot(p.quat))
                 p.yaw = yaw
+            if self._place_free(p, p.pos, p.quat or W.yaw_quat(p.yaw)):
+                return                   # a loose object: just set where it is, no rebuild
             self.rebuild(sync=False)     # synced above; its new place stands
 
     def can_lift(self, uid: str) -> str:
@@ -655,6 +683,8 @@ class PlaygroundSim(Sim):
             p.pos = tuple(spot["pos"])
             if not catalog.item(p.item)["soft"]:
                 p.quat = W.rot_quat(R)
+                if self._place_free(p, p.pos, p.quat):
+                    return
             self.rebuild(sync=False)
 
     def _obj_mid(self, p: W.Placed, R) -> np.ndarray:
@@ -702,6 +732,8 @@ class PlaygroundSim(Sim):
         with self.lock:
             p.pos, p.quat = tuple(spot["pos"]), W.rot_quat(R)
             p.yaw = math.atan2(R[1, 0], R[0, 0])
+            if self._place_free(p, p.pos, p.quat):
+                return
             self.rebuild(sync=False)
 
     def remove(self, uid: str):

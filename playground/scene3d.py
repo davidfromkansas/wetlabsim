@@ -23,6 +23,7 @@ import json
 import struct
 import threading
 import weakref
+import zlib
 
 import mujoco
 import numpy as np
@@ -253,14 +254,61 @@ _MODELS: collections.OrderedDict = collections.OrderedDict()
 _MODELS_LOCK = threading.Lock()
 
 
+# A rebuild (an object dropped, an undo) makes a new model whose meshes and textures are almost all
+# the ones the last model had. Their content hashes are kept by name, size and a small sample of
+# the data, so each is worked out once per lab instead of once per rebuild (hashing a big
+# kitchen's textures took most of a second). An unnamed one is always hashed in full.
+_HASHES: dict[tuple, str] = {}
+_HASHES_LOCK = threading.Lock()
+
+
+def _sample(a: np.ndarray) -> int:
+    """A quick checksum of a few spots of a large array (its start, middle and end)."""
+    b = a.reshape(-1).view(np.uint8)
+    n, k = b.size, 1 << 14
+    if n <= 3 * k:
+        return zlib.crc32(b.tobytes())
+    c = zlib.crc32(b[:k].tobytes())
+    c = zlib.crc32(b[n // 2:n // 2 + k].tobytes(), c)
+    return zlib.crc32(b[n - k:].tobytes(), c)
+
+
+def _known(key: tuple, make) -> str:
+    if not key[1]:                       # no name: nothing to know it by
+        return make()
+    with _HASHES_LOCK:
+        h = _HASHES.get(key)
+    if h is None:
+        h = make()
+        with _HASHES_LOCK:
+            if len(_HASHES) > 20000:
+                _HASHES.clear()
+            _HASHES[key] = h
+    return h
+
+
+def _mesh_key(m, i: int) -> tuple:
+    a, b = int(m.mesh_vertadr[i]), int(m.mesh_vertnum[i])
+    fa, fn = int(m.mesh_faceadr[i]), int(m.mesh_facenum[i])
+    return ("mesh", mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_MESH, i) or "", b, fn,
+            _sample(m.mesh_vert[a:a + b]), _sample(m.mesh_face[fa:fa + fn]), _cube_mapped(m, i))
+
+
+def _tex_key(m, i: int) -> tuple:
+    w, h, c = int(m.tex_width[i]), int(m.tex_height[i]), int(m.tex_nchannel[i])
+    a = int(m.tex_adr[i])
+    return ("tex", mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_TEXTURE, i) or "", w, h, c,
+            _sample(m.tex_data[a:a + w * h * c]))
+
+
 def _info(m) -> dict:
     with _MODELS_LOCK:
         hit = _MODELS.get(id(m))
         if hit is not None and hit[0]() is m:
             _MODELS.move_to_end(id(m))
             return hit[1]
-    mesh = [mesh_hash(m, i) for i in range(int(m.nmesh))]
-    info = {"mesh": mesh, "tex": [tex_hash(m, i) for i in range(int(m.ntex))],
+    mesh = [_known(_mesh_key(m, i), lambda i=i: mesh_hash(m, i)) for i in range(int(m.nmesh))]
+    info = {"mesh": mesh, "tex": [_known(_tex_key(m, i), lambda i=i: tex_hash(m, i)) for i in range(int(m.ntex))],
             "index": {h: i for i, h in reversed(list(enumerate(mesh)))}}
     with _MODELS_LOCK:
         for k in [k for k, (ref, _) in _MODELS.items() if ref() is None]:

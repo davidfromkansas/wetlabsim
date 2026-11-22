@@ -54,3 +54,22 @@ def test_limits(lab):
         sim.translate(uid, lift=5.0)                     # too high
     with pytest.raises(RobotError):
         sim.translate(uid, x=20.0)                       # off the floor
+
+
+def test_loose_object_moves_and_turns_without_a_rebuild(lab):
+    """A loose object is moved and turned by setting where it is (no recompile of the world),
+    so the page needn't reload the scene; furniture still needs a rebuild."""
+    sim, st = lab
+    uid = sim.add("rubiks_cube", (st.pos[0] + 0.5, st.pos[1] - 0.1, st.top))
+    ver, m = sim._model_ver, sim.m
+    x, y, _ = _at(sim, uid)
+    sim.translate(uid, x=x + 0.04)
+    sim.orient(uid, axis="z", degrees=30)
+    sim.translate(uid, lift=0.05)
+    assert sim._model_ver == ver and sim.m is m
+    assert _at(sim, uid) == pytest.approx([x + 0.04, y, 0.05], abs=3e-3)
+    p = sim.find(uid)
+    b = sim.m.body(f"obj_{uid}").id
+    assert sim.d.xpos[b] == pytest.approx(p.pos, abs=1e-6)       # remembered for the next rebuild
+    sim.rebuild()                                                # and kept by it
+    assert _at(sim, uid) == pytest.approx([x + 0.04, y, 0.05], abs=3e-3)
