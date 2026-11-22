@@ -1984,10 +1984,9 @@ class Sim:
                     rd = mujoco.MjData(m)
                 if "rgb_r" in locals():
                     rgb_r.close()
-                    dep_r.close()
+                # One renderer for color and depth (MuJoCo's own enable/disable_depth_rendering).
+                # Building a renderer holds Python's lock for ~0.6 s, so one per rebuild, not two.
                 rgb_r = mujoco.Renderer(m, CAM_H, CAM_W)
-                dep_r = mujoco.Renderer(m, CAM_H, CAM_W)
-                dep_r.enable_depth_rendering()
             if model is not None:
                 try:
                     if id(model) not in other:
@@ -2024,8 +2023,11 @@ class Sim:
                 rgb_r.update_scene(rd, camera=cam_name, scene_option=_robot_view(camera))
                 box["rgb"] = rgb_r.render().copy()
                 if depth:
-                    dep_r.update_scene(rd, camera=cam_name, scene_option=_robot_view(camera))
-                    box["depth"] = dep_r.render().astype(np.float32)
+                    rgb_r.enable_depth_rendering()
+                    try:
+                        box["depth"] = rgb_r.render().astype(np.float32)
+                    finally:
+                        rgb_r.disable_depth_rendering()
                 fovy = np.deg2rad(m.cam_fovy[cid])
                 f = (CAM_H / 2) / np.tan(fovy / 2)
                 box["intrinsics"] = {"fx": f, "fy": f, "cx": CAM_W / 2, "cy": CAM_H / 2,
