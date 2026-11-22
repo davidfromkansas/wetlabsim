@@ -563,6 +563,7 @@ export function start({stage, base = '', onReady}) {
       if (f.v !== V.version) { if (performance.now() > holdUntil) loadScene(); return; }
       const p = b64(f.p), q = b64(f.q);
       V.rawP = p; V.rawQ = q;
+      settleCheck(p, q);
       for (let i = 0; i < V.bodies.length; i++) {
         V.bodies[i].position.set(p[3 * i], p[3 * i + 1], p[3 * i + 2]);
         V.bodies[i].quaternion.set(q[4 * i + 1], q[4 * i + 2], q[4 * i + 3], q[4 * i]);
@@ -711,6 +712,25 @@ export function start({stage, base = '', onReady}) {
   // ([dx, dy, dz] m), until cleared.
   let PV = null;
   V.setPreview = (pv) => { PV = pv; };
+  // Called as a move/turn goes to the server: the preview stays until the pose stream shows the
+  // previewed bodies somewhere new, then goes (dropping it sooner shows the old pose for a
+  // moment, later adds the offset twice). Gone after 3 s whatever happens.
+  V.settlePreview = () => {
+    const pv = PV;
+    if (!pv || !V.rawP) { PV = null; return; }
+    const i = pv.bodies.find(j => V.bodies[j]);
+    if (i == null) { PV = null; return; }
+    pv.settle = {i, p: Array.from(V.rawP.slice(3 * i, 3 * i + 3)), q: Array.from(V.rawQ.slice(4 * i, 4 * i + 4))};
+    setTimeout(() => { if (PV === pv) PV = null; }, 3000);
+  };
+  function settleCheck(p, q) {
+    const s = PV && PV.settle;
+    if (!s) return;
+    let d = 0;
+    for (let k = 0; k < 3; k++) d = Math.max(d, Math.abs(p[3 * s.i + k] - s.p[k]));
+    for (let k = 0; k < 4; k++) d = Math.max(d, Math.abs(q[4 * s.i + k] - s.q[k]));
+    if (d > 1e-5) PV = null;
+  }
   function drawPreview() {
     if (!PV || !V.rawP) return;
     if (PV.offset) {

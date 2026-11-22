@@ -1351,11 +1351,11 @@ window.addEventListener('mouseup', async (e) => {
     window.V3.setGizmo({active: null});
     const m = d.mv;
     if (m.cm) {
+      window.V3.settlePreview();   // the preview stays until the new place streams in
       const r = m.obj.robot ? await api('/pg/station/place_robot', {uid: m.obj.uid, ...robotMove(m.k, m.obj.at[AXI[m.k]] + m.cm / 100)})
         : await api('/pg/translate', {uid: m.obj.uid, ...moveBody(m.k, m.obj.at[AXI[m.k]] + m.cm / 100)});
-      if (!r.ok) toast(r.error);
+      if (!r.ok) { toast(r.error); window.V3.setPreview(null); }
       await refresh();
-      setTimeout(() => window.V3.setPreview(null), 150);    // once the new place has streamed in
     } else window.V3.setPreview(null);
     return;
   }
@@ -1363,11 +1363,11 @@ window.addEventListener('mouseup', async (e) => {
     $('rotTag').style.display = 'none';
     window.V3.setGizmo({active: null});
     if (d.rot.deg) {
+      window.V3.settlePreview();   // the preview stays until the new pose streams in
       const r = d.rot.obj.robot ? await api('/pg/station/place_robot', {uid: d.rot.obj.uid, turn: d.rot.deg})
         : await api('/pg/orient', {uid: d.rot.obj.uid, axis: d.rot.k, degrees: d.rot.deg});
-      if (!r.ok) toast(r.error);
+      if (!r.ok) { toast(r.error); window.V3.setPreview(null); }
       await refresh();
-      setTimeout(() => window.V3.setPreview(null), 150);    // once the new pose has streamed in
     } else window.V3.setPreview(null);
     return;
   }
