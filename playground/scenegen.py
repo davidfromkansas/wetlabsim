@@ -563,6 +563,9 @@ def layout_messages(prompt: str, pick: dict) -> tuple[str, str]:
     sys_ = LAYOUT_SYSTEM.format(robots=json.dumps(robots), items=json.dumps(items), sizes=json.dumps(sizes))
     user = (f"The person's request:\n{prompt.strip()[:2000]}\n\nScene name: {pick['title']}\n"
             f"Furniture among the objects: {json.dumps(furn)}\n"
+            + (f"These counters have a backsplash along their -y edge: their front (where a robot stands "
+               f"to work at them) is their +y side: {json.dumps(sorted(set(furn) & catalog.FRONT_PLUS_Y))}\n"
+               if set(furn) & catalog.FRONT_PLUS_Y else "")
             + (f"Things we don't have (leave them out): {json.dumps([m['name'] for m in pick['missing']])}\n"
                if pick.get("missing") else "")
             + (f"Objects made for this scene (id: what it is): "
@@ -1248,6 +1251,19 @@ class Build:
             if st["kind"] == "bare" and not 0 <= st["at"] < len(furniture):
                 st["at"] = -1 if not furniture else min(
                     range(len(furniture)), key=lambda k: math.hypot(furniture[k]["x"] - st["x"], furniture[k]["y"] - st["y"]))
+        for st in stations:              # a counter is worked from its front, not from behind its backsplash
+            f = furniture[st["at"]] if st["kind"] == "bare" and not st["up"] and st["at"] >= 0 else None
+            if f is None or f["item"] not in catalog.FRONT_PLUS_Y:
+                continue
+            c, sn = math.cos(f["yaw"]), math.sin(f["yaw"])
+            lx, ly = c * (st["x"] - f["x"]) + sn * (st["y"] - f["y"]), -sn * (st["x"] - f["x"]) + c * (st["y"] - f["y"])
+            if ly >= 0:
+                continue
+            # the same spot on its front side, and the things on it mirrored with it
+            st.update(x=f["x"] + c * lx + sn * ly, y=f["y"] + sn * lx - c * ly, yaw=f["yaw"] - math.pi / 2)
+            for o in objects:
+                if o["on"] == "furniture" and o["furniture"] == st["at"]:
+                    o["dy"] = -o["dy"]
         for o in objects:                # its task things go on that furniture, not on a table it hasn't got
             if o["on"] == "station" and o["station"] < len(stations) and stations[o["station"]]["kind"] == "bare":
                 st = stations[o["station"]]

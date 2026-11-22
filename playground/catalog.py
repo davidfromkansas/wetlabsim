@@ -491,6 +491,9 @@ MAX_TRIS = {i[0]: 200_000 for i in ITEMS if i[3].startswith("palatial:") and i[0
 # The worktop of a counter whose backsplash stands higher than it (the asset's height is the
 # backsplash's): the top of its worktop collider.
 WORKTOP = {"countertop": 0.738, "countertop_2": 0.754}
+# Counters whose backsplash stands along their -y edge: they are worked from their +y side (the
+# open front, where the drawers are), as the "counter" station kind does (world.KINDS).
+FRONT_PLUS_Y = {"countertop", "countertop_2"}
 # The roller conveyor carries things on its rollers, below its side rails: the top of a roller.
 WORKTOP["roller_conveyor"] = 0.768
 
