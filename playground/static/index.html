@@ -1216,6 +1216,7 @@ new ResizeObserver(() => { const w = $('items').clientWidth; if (S.lib && w && (
 // ---------------------------------------------------------------- dropping
 let probeBusy = false, probeNext = null;
 async function probe(item, p, uid) {
+  moveTag(p);              // the tag keeps up with the pointer; its words follow when the server answers
   if (probeBusy) { probeNext = [item, p, uid]; return; }
   probeBusy = true;
   try {
@@ -1229,8 +1230,10 @@ async function probe(item, p, uid) {
     if (probeNext) { const n = probeNext; probeNext = null; probe(...n); }
   }
 }
-function showTag(p, text, bad) { const t = $('droptag'); t.style.display = 'block'; t.style.left = p.x + 'px'; t.style.top = p.y + 'px'; t.textContent = text; t.classList.toggle('bad', !!bad); }
-function hideTag() { $('droptag').style.display = 'none'; }
+let tagAt = null;
+function moveTag(p) { tagAt = p; const t = $('droptag'); if (t.style.display === 'block') { t.style.left = p.x + 'px'; t.style.top = p.y + 'px'; } }
+function showTag(p, text, bad) { const t = $('droptag'), at = tagAt || p; t.style.display = 'block'; t.style.left = at.x + 'px'; t.style.top = at.y + 'px'; t.textContent = text; t.classList.toggle('bad', !!bad); }
+function hideTag() { tagAt = null; $('droptag').style.display = 'none'; }
 stage.addEventListener('dragover', (e) => {
   if (S.dragRobot) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; probeStation(uv(e)); return; }
   if (!S.dragItem) return; e.preventDefault(); probe(S.dragItem.id, uv(e));
@@ -1377,6 +1380,11 @@ window.addEventListener('mouseup', async (e) => {
   }
   if (S.placing) { await placeStation(p); return; }
   if (S.armed) { const id = S.armed; S.armed = null; probeNext = null; markArmed(); hideTag(); $('libhint').textContent = LIBHINT; await place(id, p); return; }
+  // An object: its card opens at once, from what the 3D view shows under the pointer. The server's
+  // pick below still has the last word (and tells the server what's selected).
+  const loc = S.scene && S.scene.mode === 'free' && window.V3 && window.V3.pickBody && window.V3.pickBody(e.clientX, e.clientY);
+  const locObj = loc && (S.scene.objects || []).find(o => (o.bodies || []).includes(loc.body));
+  if (locObj) { S.sel = locObj.uid; S.robotEdit = null; render(); }
   const hit = await api('/pg/pick', {u: p.u, v: p.v});
   S.sel = hit.kind === 'robot' || hit.station ? 'robot' : hit.kind === 'object' ? hit.uid : S.sel === 'robot' ? S.sel : null;
   // a click on the robot itself (not its table) opens its card: what it is, Move and Rotate
@@ -2132,7 +2140,7 @@ function startPlacing(robot, kind = 'table', task = '', free = false) {
 function cancelPlacing() { S.placing = null; hideTag(); api('/pg/ghost/clear', {}); resumePhysics(); render(); }
 let stProbeBusy = false, stProbeNext = null;
 async function probeStation(p) {
-  S.lastUV = p;
+  S.lastUV = p; moveTag(p);
   if (stProbeBusy) { stProbeNext = p; return; }
   stProbeBusy = true;
   try {

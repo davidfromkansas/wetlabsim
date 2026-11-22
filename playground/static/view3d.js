@@ -784,6 +784,20 @@ export function start({stage, base = '', onReady}) {
     const w = parseFloat(canvas.style.width) || 0, h = parseFloat(canvas.style.height) || 0;
     return {x: (v.x + 1) / 2 * w, y: (1 - v.y) / 2 * h, visible: v.z < 1 && Math.abs(v.x) <= 1.2 && Math.abs(v.y) <= 1.2};
   };
+  // Which body (its MuJoCo body id) the pointer is over in what the page shows, and where, at
+  // once (no trip to the server): {body, point} or null. Outlines and the rings don't count.
+  V.pickBody = (clientX, clientY) => {
+    if (!V.bodies || !V.bodies.length) return null;
+    const idOf = new Map(V.bodies.map((b, i) => [b, i]));
+    root.updateMatrixWorld(true);
+    for (const h of rayAt(clientX, clientY).intersectObjects(V.bodies, true)) {
+      if (!h.object.isMesh || h.object.userData.isOutline || !h.object.visible) continue;
+      for (let o = h.object; o; o = o.parent) {
+        if (idOf.has(o)) return {body: idOf.get(o), point: [h.point.x, h.point.y, h.point.z]};
+      }
+    }
+    return null;
+  };
   // A tab in the background lets go of its pose stream, so other tabs of the same lab keep working.
   V.pause = () => { if (es) { es.close(); es = null; } };
   V.resume = () => { if (!es) connect(); };
