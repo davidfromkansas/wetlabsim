@@ -199,8 +199,10 @@ def _codex_local(model: str, prompt: str, login: str, effort: str) -> tuple[str,
         env = {k: v for k, v in os.environ.items() if k not in ("OPENAI_API_KEY", "CODEX_API_KEY", "OPENAI_BASE_URL")}
         env.update(CODEX_HOME=home, NO_COLOR="1")
         try:
-            p = subprocess.run(_codex_cmd(model, effort, out, jail=False) + [prompt], env=env, cwd=home,
-                               capture_output=True, text=True, timeout=CODEX_TIMEOUT, stdin=subprocess.DEVNULL)
+            # The prompt goes in through stdin ("-"), not as an argument: with the object list it can
+            # be far bigger than the system's limit on command arguments.
+            p = subprocess.run(_codex_cmd(model, effort, out, jail=False) + ["-"], env=env, cwd=home, input=prompt,
+                               capture_output=True, text=True, timeout=CODEX_TIMEOUT)
         except FileNotFoundError:
             raise ModelError("Codex isn't installed on this machine (npm install -g @openai/codex)") from None
         except subprocess.TimeoutExpired:
@@ -212,6 +214,14 @@ def _codex_local(model: str, prompt: str, login: str, effort: str) -> tuple[str,
         return text, open(auth).read()
     finally:
         shutil.rmtree(home, ignore_errors=True)
+
+
+def _from_file(sb, prompt: str, cmd: list) -> list:
+    """Run `cmd` in the Sandbox reading its prompt from a file through stdin ("-"). A Sandbox
+    command's arguments are capped at 64 KB (and Linux caps one argument at 128 KB), and a prompt
+    with the object list can be ~600 KB ("Total length of CMD arguments cannot exceed 65536 bytes")."""
+    sb.filesystem.write_bytes(prompt.encode(), "/tmp/w/prompt.txt")
+    return ["sh", "-c", 'exec "$@" < /tmp/w/prompt.txt', "sh", *cmd, "-"]
 
 
 def _codex_modal(model: str, prompt: str, login: str, effort: str) -> tuple[str, str]:
@@ -227,8 +237,8 @@ def _codex_modal(model: str, prompt: str, login: str, effort: str) -> tuple[str,
         sb.exec("mkdir", "-p", "/tmp/codex", "/tmp/w").wait()
         sb.filesystem.write_bytes(login.encode(), "/tmp/codex/auth.json")
         sb.exec("chmod", "600", "/tmp/codex/auth.json").wait()
-        proc = sb.exec(*_codex_cmd(model, effort, "/tmp/w/answer.txt", jail=True), prompt, workdir="/tmp/w",
-                       env={"CODEX_HOME": "/tmp/codex", "NO_COLOR": "1"}, timeout=CODEX_TIMEOUT)
+        proc = sb.exec(*_from_file(sb, prompt, _codex_cmd(model, effort, "/tmp/w/answer.txt", jail=True)),
+                       workdir="/tmp/w", env={"CODEX_HOME": "/tmp/codex", "NO_COLOR": "1"}, timeout=CODEX_TIMEOUT)
         # Close Codex's input right away: `codex exec` reads more of the prompt from a piped stdin
         # until it ends, and a Sandbox process's stdin stays open, so Codex sat waiting until it
         # timed out ("Reading additional input from stdin..."). The local path uses DEVNULL.

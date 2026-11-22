@@ -410,8 +410,11 @@ def _codex_local_stream(model, prompt, imgs, login, effort, event, stopped):
         env = {k: v for k, v in os.environ.items() if k not in ("OPENAI_API_KEY", "CODEX_API_KEY", "OPENAI_BASE_URL")}
         env.update(CODEX_HOME=home, NO_COLOR="1")
         try:
-            p = subprocess.Popen(_codex_args(model, effort, out, False, paths) + [prompt], env=env, cwd=home,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, stdin=subprocess.DEVNULL)
+            pfile = os.path.join(home, "prompt.txt")
+            pathlib.Path(pfile).write_text(prompt)
+            with open(pfile) as pin:   # the prompt goes in through stdin ("-"): see scenegen._from_file
+                p = subprocess.Popen(_codex_args(model, effort, out, False, paths) + ["-"], env=env, cwd=home,
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, stdin=pin)
         except FileNotFoundError:
             raise ModelError("Codex isn't installed on this machine (npm install -g @openai/codex)") from None
         w = _watch(p.kill, stopped)
@@ -450,8 +453,8 @@ def _codex_modal_stream(model, prompt, imgs, login, effort, event, stopped):
         for k, b in enumerate(imgs):
             paths.append(f"/tmp/w/photo{k}.jpg")
             sb.filesystem.write_bytes(b, paths[-1])
-        proc = sb.exec(*_codex_args(model, effort, "/tmp/w/answer.txt", True, paths), prompt, workdir="/tmp/w",
-                       env={"CODEX_HOME": "/tmp/codex", "NO_COLOR": "1"}, timeout=limit)
+        proc = sb.exec(*SG._from_file(sb, prompt, _codex_args(model, effort, "/tmp/w/answer.txt", True, paths)),
+                       workdir="/tmp/w", env={"CODEX_HOME": "/tmp/codex", "NO_COLOR": "1"}, timeout=limit)
         proc.stdin.write_eof()          # see scenegen._codex_modal
         proc.stdin.drain()
         w = _watch(sb.terminate, stopped)
