@@ -519,6 +519,8 @@ body.rclosed #right{display:none}
 @media (min-width:761px){
   body.freeplay:not(.robotsel) .pips{display:none}
   body.freeplay.robotsel #sbar{display:none}
+  body.freeplay:not(.robotsel) .rrow.on > button.rsel{background:transparent;box-shadow:none}
+  body.freeplay:not(.robotsel) .rbot[aria-current=true]{box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(17,24,39,.06)}
   body.freeplay.robotsel .pips{top:auto;bottom:14px;flex-direction:row;align-items:flex-end;gap:10px}
   body.freeplay.robotsel .pip{width:220px}
 }
@@ -1693,6 +1695,16 @@ function renderRail() {
 }
 $('task').addEventListener('input', () => $('startBtn').classList.toggle('blank', !$('task').value.trim()));
 $('startBtn').before($('infoBtn'));
+// keep the bottom menu bar clear of the camera joystick: slide it left only when they would touch
+function fitSbar() {
+  const bar = $('sbar'), pad = document.querySelector('.campad');
+  if (!bar || !pad) return;
+  bar.style.marginLeft = '';
+  if (!bar.offsetWidth || !pad.offsetWidth) return;
+  const b = bar.getBoundingClientRect(), c = pad.getBoundingClientRect(), st = bar.offsetParent.getBoundingClientRect();
+  const over = b.right + 12 - c.left;
+  if (over > 0) bar.style.marginLeft = -Math.min(over, b.left - st.left - 12) + 'px';
+}
 // side panels open and close
 function setRight(open) {
   document.body.classList.toggle('rclosed', !open); S.railKey = null; if (S.scene) renderRail();
@@ -2581,6 +2593,7 @@ function render() {
   const empty = free && !(sc.robots || []).length;
   document.body.classList.toggle('empty', empty);
   document.body.classList.toggle('robotsel', S.sel === 'robot' && !empty);
+  fitSbar();
   document.body.classList.toggle('hasobj', !!(sc.objects || []).length);
   $('emptyMsg').textContent = S.watch ? 'Nobody has added a robot to this lab yet.' : 'Press Robot or Station in the bar below, then click the floor to place it.';
   const camKey = (stBase() || '/') + '|' + (free ? curStation().robot || '' : '');
@@ -3314,6 +3327,7 @@ window.onAccount = (r) => { S.acct = r; fillModels(); if (S.scene) render(); };
   if (SID) { q.set('s', SID); q.delete('copy'); history.replaceState(null, '', location.pathname + '?' + q); try { localStorage.setItem('pgSession', SID); } catch (e) {} }
   renderSessions();
   const sendAspect = () => { const r = stage.getBoundingClientRect(); if (r.width > 50 && r.height > 50 && !S.watch) api('/pg/camera', {aspect: r.width / r.height}); };
+  new ResizeObserver(fitSbar).observe(stage);
   sendAspect(); new ResizeObserver(() => { clearTimeout(sendAspect.h); sendAspect.h = setTimeout(sendAspect, 150); }).observe(stage);
   $('modelLogo').src = LOGOS[modelInfo($('model').value).provider] || LOGOS.anthropic;
   // Draw the main view in the page (instant camera); fall back to the server's video.
