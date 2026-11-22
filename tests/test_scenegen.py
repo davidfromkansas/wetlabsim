@@ -5,6 +5,7 @@ import time
 
 from playground import scenegen as G
 from playground.sim import PlaygroundSim
+from playground import world as W
 
 
 class _Sess:
@@ -217,3 +218,50 @@ def test_robot_without_a_table_works_at_the_scenes_furniture(monkeypatch):
     assert math.hypot(robot.pos[0] - bench.pos[0], robot.pos[1] - bench.pos[1]) < 1.6
     face = math.atan2(bench.pos[1] - robot.pos[1], bench.pos[0] - robot.pos[0])
     assert math.cos(face - robot.yaw) > 0.7                            # facing the bench
+
+
+def test_robot_at_a_counter_stands_at_its_front_not_behind_its_backsplash(monkeypatch):
+    """A countertop's backsplash runs along its -y edge: a robot the model puts behind it is moved
+    to the same spot on its front (+y) side, and the things on the counter are mirrored with it."""
+    import math
+    monkeypatch.setenv("WETLAB_SCENEGEN_FAKE", "1")
+    pk = G.clean_pick({"title": "Tea", "robots": [{"robot": "ur5e", "count": 1}],
+                       "items": [{"id": "countertop_2", "count": 1}, {"id": "mug", "count": 1}]})
+    monkeypatch.setattr(G, "fake_layout", lambda p: {
+        "plan": "An arm behind the counter (the wrong side).",
+        "stations": [{"robot": "ur5e", "kind": "bare", "at": 0, "x": 0, "y": -0.6, "yaw": 90}],
+        "furniture": [{"item": "countertop_2", "x": 0, "y": 0, "yaw": 0}],
+        "objects": [{"item": "mug", "on": "furniture", "furniture": 0, "dx": 0.1, "dy": -0.15, "yaw": 0}],
+        "task": "Pick up the mug."})
+    sim = PlaygroundSim(stations=[])
+    sim.pause()
+    st = _build(sim, pk).status()
+    assert st["phase"] == "done", st
+    robot = sim.station(st["stations"][0])
+    counter = next(p for p in sim.placed if p.item == "countertop_2")
+    assert robot.pos[1] - counter.pos[1] > 0.4                          # on the counter's front side
+    assert math.sin(robot.yaw) < -0.7                                   # facing the counter (-y)
+    mug = next(p for p in sim.placed if p.item == "mug")
+    assert mug.pos[2] > 0.5 and mug.pos[1] > counter.pos[1]             # on the counter, front half
+    assert math.hypot(mug.pos[0] - robot.pos[0], mug.pos[1] - robot.pos[1]) < 0.65
+
+
+def test_arm_beside_furniture_stands_up_to_its_worktop(monkeypatch):
+    """An arm with no table, beside a lab bench, gets a steel stand up to the bench's worktop
+    (0.85 m), not the 0.75 m an arm put down on the floor gets."""
+    monkeypatch.setenv("WETLAB_SCENEGEN_FAKE", "1")
+    pk = G.clean_pick({"title": "Lab", "robots": [{"robot": "piper", "count": 1}],
+                       "items": [{"id": "lab_bench", "count": 1}, {"id": "mug", "count": 1}]})
+    monkeypatch.setattr(G, "fake_layout", lambda p: {
+        "plan": "A small arm beside the lab bench.",
+        "stations": [{"robot": "piper", "kind": "bare", "at": 0, "x": 0, "y": -0.65, "yaw": 90}],
+        "furniture": [{"item": "lab_bench", "x": 0, "y": 0, "yaw": 0}],
+        "objects": [{"item": "mug", "on": "furniture", "furniture": 0, "dx": 0, "dy": -0.1, "yaw": 0}],
+        "task": "Pick up the mug."})
+    sim = PlaygroundSim(stations=[])
+    sim.pause()
+    st = _build(sim, pk).status()
+    assert st["phase"] == "done", st
+    robot = sim.station(st["stations"][0])
+    assert W.table_top("lab_bench") > 0.8
+    assert abs(robot.mount_z - W.table_top("lab_bench")) < 0.01
