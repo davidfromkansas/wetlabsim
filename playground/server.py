@@ -1761,6 +1761,17 @@ class PGHandler(Handler):
         out["floorfx"] = self.sim.scene_mode == "free"      # the Tron floor, drawn by the page
         return out
 
+    def _model_for(self, qs) -> "mujoco.MjModel":
+        """The model a mesh, texture or skin request means: this session's world, or with
+        ?item=, the model of that one library object (scene3d.item_model: a drag preview)."""
+        item = (qs.get("item") or [""])[0]
+        if item:
+            try:
+                return S3.item_model(item)[0]
+            except (KeyError, FileNotFoundError):
+                raise RobotError("no such object")
+        return self.sim.m
+
     def _locked(self) -> str:
         if self.sim.scene_mode == "wetlab":
             return "the wet lab bench is fixed for a fair test: switch to Free play to build your own"
@@ -1956,8 +1967,15 @@ class PGHandler(Handler):
             # with soft objects keeps the lock busy enough that these requests could wait for ages.
             if p == "/pg/scene3d":
                 return self._json(self._scene3d())
+            if p == "/pg/item3d":
+                # One library object on its own, for the page to draw while it is dragged in.
+                try:
+                    _, sc = S3.item_model((qs.get("item") or [""])[0])
+                except (KeyError, FileNotFoundError):
+                    return self._err("no such object", 404)
+                return self._json(sc)
             if p.startswith("/pg/skin/"):
-                m, i = self.sim.m, int(pathlib.Path(p).stem)
+                m, i = self._model_for(qs), int(pathlib.Path(p).stem)
                 if not 0 <= i < m.nskin:
                     return self._err("no such skin", 404)
                 data = S3.skin_cached(m, i)
@@ -1971,7 +1989,7 @@ class PGHandler(Handler):
                 # for each, its length (uint32, 0xFFFFFFFF if this world has no such mesh) and mesh_bin.
                 want = [h for h in (qs.get("h") or [""])[0].split(",") if re.match(r"^[0-9a-f]{16}$", h)][:400]
                 parts = []
-                for b in S3.mesh_by_hash(self.sim.m, want):
+                for b in S3.mesh_by_hash(self._model_for(qs), want):
                     parts += [struct.pack("<I", 0xFFFFFFFF)] if b is None else [struct.pack("<I", len(b)), b]
                 data = b"".join(parts)
                 hdr = {"Cache-Control": "private, max-age=86400"}   # the URL names the contents
@@ -1980,7 +1998,7 @@ class PGHandler(Handler):
                     data, hdr["Content-Encoding"] = gzip.compress(data, 4), "gzip"
                 return self._send(200, data, "application/octet-stream", hdr)
             if p.startswith("/pg/mesh/") or p.startswith("/pg/tex/"):
-                m = self.sim.m
+                m = self._model_for(qs)
                 i = int(pathlib.Path(p).stem)
                 if p.startswith("/pg/tex/") and qs.get("h"):      # by its contents: this world's own index for it
                     i = S3.tex_index(m, qs["h"][0], i)
@@ -2133,7 +2151,7 @@ class PGHandler(Handler):
                 if lock:
                     return self._json({"valid": False, "reason": lock})
                 return self._json(s.probe(b["item"], float(b["u"]), float(b["v"]), float(b.get("yaw", 0.0)),
-                                          b.get("uid")))
+                                          b.get("uid"), bool(b.get("preview"))))
             if p == "/pg/ghost/clear":
                 s.clear_ghost()
                 return self._json({"ok": True})

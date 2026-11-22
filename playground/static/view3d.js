@@ -150,12 +150,13 @@ export function start({stage, base = '', onReady}) {
   }
   // Everything one load asks for goes to the session it is loading (src), even if the page has
   // switched to another session meanwhile: that session's world has other shapes and images.
-  function fetchMeshes(hashes, src) {
+  // q: more of the query (e.g. "&item=<id>": that library object's own meshes, for a drag preview).
+  function fetchMeshes(hashes, src, q = '') {
     const missing = [...new Set(hashes)].filter(h => !meshCache.has(h));
     const per = Math.max(20, Math.ceil(missing.length / 3));
     for (let i = 0; i < missing.length; i += per) {
       const batch = missing.slice(i, i + per);
-      const p = get(`${src}/pg/meshes?h=${batch.join(',')}`, 60000).then(r => r.arrayBuffer()).then(buf => {
+      const p = get(`${src}/pg/meshes?h=${batch.join(',')}${q}`, 60000).then(r => r.arrayBuffer()).then(buf => {
         const out = new Map(), dv = new DataView(buf);
         let o = 0;
         for (const h of batch) {
@@ -172,16 +173,19 @@ export function start({stage, base = '', onReady}) {
       }
     }
   }
-  function meshGeometry(hash, src) {
-    if (!meshCache.has(hash)) fetchMeshes([hash], src);
+  function meshGeometry(hash, src, q = '') {
+    if (!meshCache.has(hash)) fetchMeshes([hash], src, q);
     return meshCache.get(hash);
   }
   // One texture per (image, repeat): a clone made before the image arrives would draw black.
-  function texture(id, hash, rx, ry, src) {
+  function texture(id, hash, rx, ry, src, q = '') {
     const key = [hash, rx, ry].join(':');
     if (!texCache.has(key)) {
-      const t = new THREE.TextureLoader().load(`${src}/pg/tex/${id}.png?h=${hash}`, undefined, undefined,
-                                               () => texCache.delete(key));   // try again next time
+      let done;
+      const ready = new Promise(r => { done = r; });
+      const t = new THREE.TextureLoader().load(`${src}/pg/tex/${id}.png?h=${hash}${q}`, () => done(), undefined,
+                                               () => { texCache.delete(key); done(); });   // try again next time
+      t.userData.ready = ready;     // its picture is in (until then it draws black)
       t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping;
       t.anisotropy = renderer.capabilities.getMaxAnisotropy();
       t.repeat.set(rx, ry);
@@ -190,7 +194,7 @@ export function start({stage, base = '', onReady}) {
     return texCache.get(key);
   }
 
-  async function geomObject(g, texhash, meshhash, src, themed) {
+  async function geomObject(g, texhash, meshhash, src, themed, q = '') {
     let geo;
     const s = g.size;
     if (g.type === 'box') geo = new THREE.BoxGeometry(2 * s[0], 2 * s[1], 2 * s[2]);
@@ -199,7 +203,7 @@ export function start({stage, base = '', onReady}) {
     else if (g.type === 'capsule') { geo = new THREE.CapsuleGeometry(s[0], 2 * s[1], 8, 24); geo.rotateX(Math.PI / 2); }
     else if (g.type === 'cylinder') { geo = new THREE.CylinderGeometry(s[0], s[0], 2 * s[1], 32); geo.rotateX(Math.PI / 2); }
     else if (g.type === 'plane') geo = new THREE.PlaneGeometry(2 * (s[0] || 40), 2 * (s[1] || 40));
-    else if (g.type === 'mesh') geo = await meshGeometry(meshhash[String(g.mesh)], src);
+    else if (g.type === 'mesh') geo = await meshGeometry(meshhash[String(g.mesh)], src, q);
     else return null;
     const mat = new THREE.MeshPhongMaterial({
       color: srgb(g.rgba), specular: new THREE.Color(g.specular * 0.3, g.specular * 0.3, g.specular * 0.3),
@@ -210,7 +214,7 @@ export function start({stage, base = '', onReady}) {
     } else if (g.tex >= 0) {
       const uni = g.type === 'plane' && g.texuniform;
       mat.map = texture(g.tex, texhash[String(g.tex)], uni ? 2 * (s[0] || 40) * g.texrepeat[0] : g.texrepeat[0],
-                        uni ? 2 * (s[1] || 40) * g.texrepeat[1] : g.texrepeat[1], src);
+                        uni ? 2 * (s[1] || 40) * g.texrepeat[1] : g.texrepeat[1], src, q);
     }
     const obj = new THREE.Mesh(geo, mat);
     obj.position.set(...g.pos);
@@ -221,8 +225,8 @@ export function start({stage, base = '', onReady}) {
 
   // A soft object's mesh (a MuJoCo skin, scene3d.skin_bin): each vertex follows the bodies of
   // the simulated shape it is bound to, re-placed every pose frame (drawSkins).
-  async function skinObject(sk, version, src, texhash) {
-    const buf = await (await get(`${src}/pg/skin/${sk.id}.bin?v=${encodeURIComponent(version)}`)).arrayBuffer();
+  async function skinObject(sk, version, src, texhash, q = '') {
+    const buf = await (await get(`${src}/pg/skin/${sk.id}.bin?v=${encodeURIComponent(version)}${q}`)).arrayBuffer();
     const [nv, nf, hasUv, k] = new Uint32Array(buf, 0, 4);
     let o = 16;
     const rest = new Float32Array(buf, o, nv * 3); o += nv * 12;
@@ -237,7 +241,7 @@ export function start({stage, base = '', onReady}) {
     const mat = new THREE.MeshPhongMaterial({
       color: srgb(sk.rgba), specular: new THREE.Color(sk.specular * 0.3, sk.specular * 0.3, sk.specular * 0.3),
       shininess: 4 + 96 * sk.shininess, side: THREE.DoubleSide});
-    if (sk.tex >= 0) mat.map = texture(sk.tex, texhash[String(sk.tex)], 1, 1, src);
+    if (sk.tex >= 0) mat.map = texture(sk.tex, texhash[String(sk.tex)], 1, 1, src, q);
     const obj = new THREE.Mesh(geo, mat);
     obj.castShadow = obj.receiveShadow = true; obj.frustumCulled = false;
     return {obj, geo, rest, body, w, bind, k, nv};
@@ -296,6 +300,7 @@ export function start({stage, base = '', onReady}) {
     [...camera.children].forEach(c => { camera.remove(c); c.dispose && c.dispose(); }); camera.add(head); camera.add(head.target);
     scene.remove(root); retired.push(root); root = next; scene.add(root);
     V.bodies = bodies; V.skins = skins; V.version = sc.version;
+    if (DP && DP.untilScene) previewOff();     // the dropped object is in the world now
     glassRoom.visible = !!sc.floorfx;
     if (!V.ready) { V.ready = true; onReady && onReady(); }
   }
@@ -585,7 +590,7 @@ export function start({stage, base = '', onReady}) {
     if (V.glide) glideStep();
     const {pos, look} = camFrame(V.cam);
     camera.position.copy(pos); camera.lookAt(look);
-    drawPreview(); drawGizmo(); drawMarks();
+    drawPreview(); drawGizmo(); drawMarks(); drawDragPreview();
     if (V.onFrame) V.onFrame();
     roomClock.value = performance.now() / 1000;
     if (glassRoom.visible && automaton.advance(roomClock.value)) gridFlow.needsUpdate = true;
@@ -783,6 +788,112 @@ export function start({stage, base = '', onReady}) {
       else h.box.expandByScalar(0.008);
     });
   }
+
+  // ---------------------------------------------------------------- drag preview
+  // An object dragged in from the library, drawn where it would land: the real object, at its
+  // true size and in its own colours (scene3d.item_model). It comes in three steps, each shown
+  // as soon as it is there: at once, the outline of the object's box (its size is in the
+  // library); then the outline of its own shape (its collision shapes, which are small); then
+  // the object itself (its meshes and textures, which a big object takes a moment to bring).
+  const dragGroup = new THREE.Group(); dragGroup.visible = false; scene.add(dragGroup);
+  const itemScenes = new Map();      // item -> promise of its item3d
+  let DP = null;                     // {item, box, hulls, full, pos, yaw, valid, untilScene, t}
+  const hullMat = new THREE.MeshBasicMaterial({color: 0x60A5FA, transparent: true, opacity: 0.28, depthWrite: false});
+  const hullEdge = new THREE.LineBasicMaterial({color: 0x93C5FD, transparent: true, opacity: 0.9});
+  function outlineBox(size) {
+    const s = size || [0.1, 0.1, 0.1];
+    const g = new THREE.Group();
+    const fill = new THREE.Mesh(new THREE.BoxGeometry(s[0], s[1], s[2]), hullMat);
+    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(fill.geometry), hullEdge);
+    fill.position.z = edges.position.z = s[2] / 2;
+    g.add(fill, edges);
+    return g;
+  }
+  function hullObject(h, meshhash, src, q) {
+    return geomObject({...h, rgba: [0.4, 0.65, 1, 0.3], specular: 0, shininess: 0, emission: 0, tex: -1}, {}, meshhash, src, false, q)
+      .then(o => { if (o) { o.material.dispose(); o.material = hullMat; o.castShadow = false; o.receiveShadow = false; } return o; });
+  }
+  function itemScene(item) {
+    if (!itemScenes.has(item)) {
+      const p = get(`${base}/pg/item3d?item=${encodeURIComponent(item)}`, 60000).then(r => r.json());
+      p.catch(() => itemScenes.delete(item));          // try again next time
+      itemScenes.set(item, p);
+    }
+    return itemScenes.get(item);
+  }
+  function previewOff() {
+    dragGroup.visible = false;
+    if (DP) { DP.untilScene = false; DP.pos = null; }
+  }
+  // Start showing the object (item id, its size [x, y, z] m), hidden until it has a place.
+  V.previewItem = (item, size) => {
+    if (DP && DP.item === item) { DP.untilScene = false; return; }
+    for (const c of [...dragGroup.children]) { dragGroup.remove(c); dispose(c); }
+    const box = outlineBox(size);
+    dragGroup.add(box);
+    const me = DP = {item, box, pos: null, yaw: 0, valid: true, untilScene: false};
+    const src = base, q = `&item=${encodeURIComponent(item)}`;
+    itemScene(item).then(sc => {
+      if (DP !== me) return;
+      const mh = sc.meshhash || {}, th = sc.texhash || {};
+      // the collision shapes first (small): the outline of the object's shape shows sooner
+      fetchMeshes((sc.hulls || []).filter(h => h.mesh >= 0).map(h => mh[String(h.mesh)]), src, q);
+      fetchMeshes(Object.values(mh), src, q);
+      const hulls = new THREE.Group(); hulls.visible = false; dragGroup.add(hulls);
+      const full = new THREE.Group(); full.visible = false; dragGroup.add(full);
+      Promise.all((sc.hulls || []).map(h => hullObject(h, mh, src, q).then(o => { if (o) hulls.add(o); }))).then(() => {
+        if (DP !== me || full.visible || !hulls.children.length) return;
+        hulls.visible = true; box.visible = false;
+      }, () => {});
+      Promise.all([
+        ...(sc.geoms || []).map(g => geomObject(g, th, mh, src, false, q).then(o => {
+          if (o) full.add(o);
+          return o && o.material.map && o.material.map.userData.ready;     // shown with its picture on
+        })),
+        ...(sc.skins || []).map(sk => skinObject(sk, 'preview', src, th, q).then(x => { full.add(x.obj); return x.obj.material.map && x.obj.material.map.userData.ready; }))]).then(() => {
+        if (DP !== me || !full.children.length) return;
+        full.visible = true; hulls.visible = false; box.visible = false;
+      }, (e) => console.warn('3D view: drag preview failed to load', e));
+    }, (e) => console.warn('3D view: drag preview failed to load', e));
+  };
+  // Where it is now: its bottom centre (world, m) and turn about the vertical (rad); null hides it.
+  V.previewAt = (pos, yaw = 0, valid = true) => {
+    if (!DP) return;
+    DP.untilScene = false;
+    DP.pos = pos; DP.yaw = yaw; DP.valid = valid;
+  };
+  // Done: hide it now, or (afterDrop) once the world with the dropped object in it is drawn, so
+  // the preview turns into the real thing where it stands. Gone after 6 s whatever happens.
+  V.previewDone = (afterDrop = false) => {
+    if (!DP) return;
+    if (!afterDrop || !DP.pos) { previewOff(); DP = null; for (const c of [...dragGroup.children]) { dragGroup.remove(c); dispose(c); } return; }
+    const me = DP; me.untilScene = true;
+    setTimeout(() => { if (DP === me && me.untilScene) previewOff(); }, 6000);
+  };
+  V.previewing = () => !!DP;
+  // Ask for an object's shapes ahead of a drag (a press on its library card).
+  V.prefetchItem = (item) => { itemScene(item).catch(() => {}); };
+  function drawDragPreview() {
+    const on = !!(DP && DP.pos);
+    dragGroup.visible = on;
+    if (!on) return;
+    dragGroup.position.set(DP.pos[0], DP.pos[1], DP.pos[2]);
+    dragGroup.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), DP.yaw || 0);
+  }
+  // The first thing in the world under the pointer (not the preview, outlines or overlays), else
+  // the floor: where to show a dragged object until the server says exactly where it lands.
+  V.groundAt = (clientX, clientY) => {
+    root.updateMatrixWorld(true);
+    const r = rayAt(clientX, clientY);
+    for (const h of r.intersectObjects(V.bodies || [], true)) {
+      if (!h.object.isMesh || h.object.userData.isOutline || !h.object.visible) continue;
+      let shown = true;
+      for (let o = h.object; o && shown; o = o.parent) if (o.visible === false) shown = false;
+      if (shown) return [h.point.x, h.point.y, h.point.z];
+    }
+    const p = new THREE.Vector3();
+    return r.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), p) ? [p.x, p.y, 0] : null;
+  };
 
   V._scene = scene;   // for debugging from the console
   V.applyDelta = (d) => { V.glide = null; V.cam = applyDelta(V.cam, d); V.lastLocal = performance.now(); };
