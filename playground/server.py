@@ -1888,16 +1888,6 @@ class PGHandler(Handler):
                     else self.sim.scene_info()
                 runs = self._runs_status() if info["mode"] == "free" else {}
                 run = runs.get(info["active"], {"active": False}) if info["mode"] == "free" else self.runner.status()
-                # Robots at work: their own bodies, outlined in the 3D view (a glow that follows them).
-                zones = []
-                if info["mode"] == "free":
-                    arms = dict(self.sim.arms)
-                    for st in list(self.sim.stations):
-                        r = runs.get(st.uid) or {}
-                        if (r.get("active") or r.get("queued")) and st.uid in arms:
-                            zones.append({"uid": st.uid, "bodies": sorted(int(b) for b in arms[st.uid].bodies),
-                                          "waiting": not r.get("active")})
-                info["zones"] = zones
                 return self._json({**info, "run": run, "runs": runs, "locked": self._locked(),
                                    "undo": len(self.sess.undo), "redo": len(self.sess.redo),
                                    "wetbench": self.wetbench.status(),

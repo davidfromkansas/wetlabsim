@@ -355,7 +355,6 @@ export function start({stage, base = '', onReady}) {
   // A world taken off screen: free its GPU copies (not the meshes and textures kept for reuse).
   function dispose(group) {
     group.traverse(o => {
-      if (o.userData.isOutline) return;   // shares its mesh's shape; its material is kept
       if (o.geometry && !o.geometry.userData.shared) o.geometry.dispose();
       if (o.material) { o.material.dispose(); }
       if (o.isLight && o.dispose) o.dispose();
@@ -462,94 +461,6 @@ export function start({stage, base = '', onReady}) {
   floorGlass.position.z = 0.006; floorGlass.receiveShadow = true; glassRoom.add(floorGlass);
   glassRoom.visible = false; scene.add(glassRoom);
 
-  // Robots at work: a hologram shell round each working robot's own shape that moves with it.
-  // Each of the robot's meshes gets a twin pushed out along smoothed normals (about 9 px at any
-  // zoom). The shell is nearly clear where it faces the camera and glows only where it curves
-  // away (a rim, so the robot stays visible through it), with faint scan lines drifting up. Its
-  // light adds to what is behind it rather than covering it.
-  // zones: [{bodies: [MuJoCo body ids of the robot], waiting}] (waiting = queued: dimmer).
-  const outlineVertex = `
-    attribute vec3 outlineNormal;
-    uniform float widthPx;
-    varying vec3 vNormal, vView, vWorld;
-    void main() {
-      vec4 world = modelMatrix * vec4(position, 1.0);
-      vec3 n = normalize(mat3(modelMatrix) * outlineNormal);
-      float dist = length(cameraPosition - world.xyz);
-      world.xyz += n * clamp(dist * widthPx * 0.0011, 0.006, 0.12);
-      vNormal = n; vView = normalize(cameraPosition - world.xyz); vWorld = world.xyz;
-      gl_Position = projectionMatrix * viewMatrix * world;
-    }`;
-  const outlineFragment = `
-    uniform float strength, time;
-    varying vec3 vNormal, vView, vWorld;
-    void main() {
-      float facing = abs(dot(normalize(vNormal), vView));
-      float rim = pow(1.0 - facing, 3.0);
-      float scan = smoothstep(0.82, 1.0, sin(vWorld.z * 140.0 - time * 3.0)) * 0.10;
-      float a = (rim * 0.85 + scan * (0.4 + rim)) * strength;
-      vec3 color = mix(vec3(0.10, 0.72, 0.82), vec3(0.80, 0.98, 1.0), rim);
-      gl_FragColor = vec4(color, a);
-      #include <tonemapping_fragment>
-      #include <colorspace_fragment>
-    }`;
-  const outlineUniforms = {strength: {value: 1.0}, widthPx: {value: 9.0}, time: {value: 0}};
-  const outlineWaitUniforms = {strength: {value: 0.4}, widthPx: {value: 6.0}, time: outlineUniforms.time};
-  const outlineMat = (u) => new THREE.ShaderMaterial({uniforms: u, vertexShader: outlineVertex,
-    fragmentShader: outlineFragment, side: THREE.FrontSide, transparent: true, depthWrite: false,
-    blending: THREE.AdditiveBlending});
-  const outlineMats = {on: outlineMat(outlineUniforms), wait: outlineMat(outlineWaitUniforms)};
-  // Normals averaged over vertices at the same place, so a box's or a mesh's hard edges don't
-  // open cracks in the outline. Once per geometry (robots' meshes are shared between sessions).
-  function outlineNormals(geo) {
-    if (geo.attributes.outlineNormal) return;
-    const pos = geo.attributes.position, nor = geo.attributes.normal, n = pos.count;
-    const sums = new Map(), key = new Array(n), out = new Float32Array(n * 3);
-    for (let i = 0; i < n; i++) {
-      const k = `${Math.round(pos.getX(i) * 1e4)},${Math.round(pos.getY(i) * 1e4)},${Math.round(pos.getZ(i) * 1e4)}`;
-      key[i] = k;
-      const v = sums.get(k) || [0, 0, 0];
-      if (nor) { v[0] += nor.getX(i); v[1] += nor.getY(i); v[2] += nor.getZ(i); }
-      sums.set(k, v);
-    }
-    for (let i = 0; i < n; i++) {
-      const v = sums.get(key[i]), l = Math.hypot(v[0], v[1], v[2]) || 1;
-      out[3 * i] = v[0] / l; out[3 * i + 1] = v[1] / l; out[3 * i + 2] = v[2] / l;
-    }
-    geo.setAttribute('outlineNormal', new THREE.BufferAttribute(out, 3));
-  }
-  let outlined = new Map();   // body id -> 'on' | 'wait'
-  function setZones(zones) {
-    const next = new Map();
-    for (const z of zones || []) for (const b of z.bodies || []) next.set(b, z.waiting ? 'wait' : 'on');
-    for (const b of outlined.keys()) if (!next.has(b)) outlineBody(b, null);
-    outlined = next;
-  }
-  // Give a body's meshes their outline twins (or hide them: kind null). Run every frame, as a
-  // world's meshes arrive a little after its bodies.
-  function outlineBody(b, kind) {
-    const body = V.bodies[b]; if (!body) return;
-    for (const obj of body.children) {
-      if (!obj.isMesh || obj.userData.isOutline) continue;
-      let o = obj.userData.outline;
-      if (!o) {
-        if (!kind || !obj.geometry || !obj.geometry.attributes.position) continue;
-        outlineNormals(obj.geometry);
-        o = obj.userData.outline = new THREE.Mesh(obj.geometry, outlineMats[kind]);
-        o.userData.isOutline = true; o.renderOrder = 5; o.castShadow = o.receiveShadow = false;
-        obj.add(o);
-      }
-      o.visible = !!kind;
-      if (kind) o.material = outlineMats[kind];
-    }
-  }
-  function pulseZones(t) {
-    outlineUniforms.strength.value = 0.92 + 0.08 * Math.sin(t * 2.2);
-    outlineUniforms.time.value = t;
-    for (const [b, kind] of outlined) outlineBody(b, kind);
-  }
-  V.setZones = setZones;
-
   // The pose stream.
   const b64 = (s) => { const bin = atob(s), a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return new Float32Array(a.buffer); };
   let es = null;
@@ -589,7 +500,6 @@ export function start({stage, base = '', onReady}) {
     if (V.onFrame) V.onFrame();
     roomClock.value = performance.now() / 1000;
     if (glassRoom.visible && automaton.advance(roomClock.value)) gridFlow.needsUpdate = true;
-    pulseZones(performance.now() / 1000);
 
     renderer.render(scene, camera);
     requestAnimationFrame(frame);
@@ -823,7 +733,7 @@ export function start({stage, base = '', onReady}) {
     const idOf = new Map(V.bodies.map((b, i) => [b, i]));
     root.updateMatrixWorld(true);
     for (const h of rayAt(clientX, clientY).intersectObjects(V.bodies, true)) {
-      if (!h.object.isMesh || h.object.userData.isOutline || !h.object.visible) continue;
+      if (!h.object.isMesh || !h.object.visible) continue;
       for (let o = h.object; o; o = o.parent) {
         if (idOf.has(o)) return {body: idOf.get(o), point: [h.point.x, h.point.y, h.point.z]};
       }
