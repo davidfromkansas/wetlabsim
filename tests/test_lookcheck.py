@@ -293,6 +293,15 @@ def test_the_worktop_is_measured_under_its_shelf():
     assert op["+y"] < 0.2 and op["-y"] > 0.8                 # the pegboard side is shut, the front open
 
 
+def test_the_worktop_is_still_found_with_things_on_it():
+    sim, p = _bench_sim()
+    _, box = _registered(BOX.format(w=0.12))
+    for x in (-0.45, -0.15, 0.15, 0.45):
+        for y in (-0.2, 0.0):
+            sim.add(box["item"], (x, y, 0.90), 0.0)
+    assert abs(SG.worktop(sim, p) - 0.90) < 0.02
+
+
 def test_a_robot_behind_the_pegboard_goes_to_the_open_front():
     sim, p = _bench_sim()
     pick = SG.clean_pick({"title": "Bench", "robots": [{"robot": "franka", "count": 1}], "items": []})
@@ -318,7 +327,7 @@ def test_edits_left_out_say_why_and_the_next_round_hears_it(monkeypatch):
     sim, b = _fake_scene(monkeypatch)
     asked = []
     answers = ['SCORE: 5/10\nx\n```json\n{"edits": [{"do": "move", "id": "r1", "x": 0, "y": 0},'
-               '{"do": "move", "id": "o1", "x": 0, "y": 0, "z": 150}]}\n```', "SCORE: 6/10\nbetter",
+               '{"do": "move", "id": "o9", "x": 0, "y": 0}]}\n```', "SCORE: 6/10\nbetter",
                "SCORE: 6/10\nok"]
 
     def ask(text, effort, on_text=None, images=()):
@@ -326,4 +335,4 @@ def test_edits_left_out_say_why_and_the_next_round_hears_it(monkeypatch):
         return answers.pop(0)
     b._ask = ask
     LC.look_scene(b, list(b.objects), ["mug"])
-    assert "robot can't be moved" in asked[1] and "o1" in asked[1]
+    assert "move r1: a robot can't be moved" in asked[1] and "move o9: no such id" in asked[1]

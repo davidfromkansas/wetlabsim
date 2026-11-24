@@ -493,11 +493,11 @@ def apply_edits(b, edits, ids, mid, addable: set, why: list | None = None) -> in
                     no(e, r)
                 continue
             v = ids.get(str(e.get("id") or ""))
+            if v is not None and v["kind"] != "object":
+                no(e, f"a {v['kind']} can't be moved or removed, only loose objects")
+                continue
             if v is None or s.find(v["uid"]) is None:
                 no(e, "no such id in the list")
-                continue
-            if v["kind"] != "object":
-                no(e, f"a {v['kind']} can't be moved or removed, only loose objects")
                 continue
             uid = v["uid"]
             if e["do"] == "remove":

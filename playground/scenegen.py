@@ -1028,9 +1028,19 @@ def _rot(x: float, y: float, yaw: float):
 
 
 def _own_hit(s, p, p0, d):
-    """How far a ray goes before it meets the placed furniture `p` (None if it doesn't)."""
-    dist, body = s._ray(p0, d)
-    return dist if dist is not None and s._owner(body) == ("object", p.uid) else None
+    """How far a ray goes before it meets the placed furniture `p` (None if it doesn't). It goes
+    on through anything else (the things already standing on it, a robot)."""
+    p0, d = [float(v) for v in p0], [float(v) for v in d]
+    went, excl = 0.0, -1
+    for _ in range(12):
+        dist, body = s._ray([a + went * b for a, b in zip(p0, d)], d, excl)
+        if dist is None:
+            return None
+        if s._owner(body) == ("object", p.uid):
+            return went + dist
+        went += dist + 1e-4
+        excl = body
+    return None
 
 
 def worktop(s, p) -> float:
