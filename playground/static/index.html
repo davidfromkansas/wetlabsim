@@ -521,10 +521,9 @@ body.rclosed #right{display:none}
   body.freeplay.robotsel #sbar{display:none}
   body.freeplay:not(.robotsel) .rrow.on > button.rsel{background:transparent;box-shadow:none}
   body.freeplay:not(.robotsel) .rbot[aria-current=true]{box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(17,24,39,.06)}
-  /* flush with the left and bottom edges of the scene */
-  body.freeplay.robotsel .pips,body.freeplay.robotsel #sessNav.closed ~ #stage .pips{top:auto;bottom:0;left:0;flex-direction:row;align-items:flex-end;gap:10px}
-  body.freeplay.robotsel .pip{width:220px;border-radius:10px 10px 0 0;border-bottom:0}
-  body.freeplay.robotsel .pip:first-child{border-left:0;border-top-left-radius:0}
+  /* the same 10px from the left edge, the bottom edge and each other */
+  body.freeplay.robotsel .pips,body.freeplay.robotsel #sessNav.closed ~ #stage .pips{top:auto;bottom:10px;left:10px;flex-direction:row;align-items:flex-end;gap:10px}
+  body.freeplay.robotsel .pip{width:220px}
 }
 #axisGuide{top:auto;bottom:14px}
 #objDrawer{bottom:78px!important}
