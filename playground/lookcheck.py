@@ -348,7 +348,7 @@ def look_scene(b, focus_uids: list[str], addable: list[str]) -> None:
         done = apply_edits(b, edits, ids, mid, set(addable), dropped)
         b._think(f"\n\n**Changed the scene** ({done} of {len(edits)} edits fit), scored {score}/10 before"
                  + "".join(f"\n- left out: {w}" for w in dropped))
-        if not done:
+        if not done and not dropped:
             return
         focus_uids = [u for u in focus_uids if s.find(u) is not None] + \
             [u for u in b.objects if u not in focus_uids]
