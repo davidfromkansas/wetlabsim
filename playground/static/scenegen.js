@@ -96,6 +96,7 @@ body.sgOpen .emptyfloor,body.sgPanel .emptyfloor{display:none!important}
 
 /* the panel on the left while it builds */
 body.sgPanel .pips{left:372px!important}
+body.sgPanel #sgBar{display:none}   /* the panel already shows the build and its Stop */
 #sgProg{position:absolute;left:14px;top:12px;z-index:9;width:min(344px,calc(100% - 28px));max-height:calc(100% - 136px);display:none;flex-direction:column;background:rgba(255,255,255,.96);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-radius:16px;box-shadow:0 18px 40px -16px rgba(17,24,39,.35),0 0 0 1px rgba(17,24,39,.07);overflow:hidden;font:13px/1.45 Inter,sans-serif;color:#111827}
 #sgProg.open{display:flex}
 #sgProg .hd{display:flex;align-items:center;gap:10px;padding:12px 10px 10px 14px}
@@ -164,7 +165,7 @@ body.sgPanel .pips{left:372px!important}
 #addRobot.sgPulse{box-shadow:0 0 0 2px #2563EB;border-radius:11px}
 #sgFly{position:absolute;inset:0;z-index:25;background:rgba(17,24,39,.82);display:flex;align-items:center;justify-content:center;pointer-events:none}
 #sgFly img{max-width:86%;max-height:80%;border-radius:14px;box-shadow:0 30px 60px -20px rgba(0,0,0,.6)}
-@container (max-width:780px){#sgCard{top:8px}#sgCard .st4{grid-template-columns:repeat(2,minmax(0,1fr))}body.sgPanel .pips,body.sgPanel #sgBar{display:none}}
+@container (max-width:780px){#sgCard{top:8px}#sgCard .st4{grid-template-columns:repeat(2,minmax(0,1fr))}body.sgPanel .pips{display:none}}
 @media (prefers-reduced-motion:reduce){#sgCard.open,#sgProg li.nw,#sgProg .tile,#sgDone.open,#sgProg p.plan{animation:none}}
 `;
 document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
