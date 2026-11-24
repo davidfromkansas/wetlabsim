@@ -62,13 +62,13 @@ body.sgOpen .emptyfloor,body.sgPanel .emptyfloor{display:none!important}
 #sgCard .mp.flat{cursor:default}
 #sgCard .mp.flat:hover{background:none}
 #sgCard .mp img{width:16px;height:16px}
-#sgCard .dd{position:absolute;left:52px;top:44px;width:280px;background:#fff;border-radius:12px;box-shadow:0 16px 32px -12px rgba(17,24,39,.35),0 0 0 1px rgba(17,24,39,.08);padding:6px;z-index:3;display:none;max-height:320px;overflow:auto}
-#sgCard .dd.open{display:block}
-#sgCard .dd .gh{font-size:12px;font-weight:600;color:#4B5563;padding:8px 10px 4px}
-#sgCard .dd button{width:100%;height:34px;display:flex;align-items:center;gap:8px;padding:0 10px;border-radius:8px;border:0;background:none;font:14px Inter,sans-serif;color:#111827;cursor:pointer;text-align:left}
-#sgCard .dd button:hover,#sgCard .dd button.on{background:#F3F4F6}
-#sgCard .dd button.on{font-weight:600}
-#sgCard .dd button .ck{margin-left:auto;color:#2563EB}
+#sgDd{position:fixed;left:0;top:0;width:280px;box-sizing:border-box;font:14px Inter,sans-serif;background:#fff;border-radius:12px;box-shadow:0 16px 32px -12px rgba(17,24,39,.35),0 0 0 1px rgba(17,24,39,.08);padding:6px;z-index:40;display:none;max-height:320px;overflow:auto;overscroll-behavior:contain}
+#sgDd.open{display:block}
+#sgDd .gh{font-size:12px;font-weight:600;color:#4B5563;padding:8px 10px 4px}
+#sgDd button{width:100%;height:34px;display:flex;align-items:center;gap:8px;padding:0 10px;border-radius:8px;border:0;background:none;font:14px Inter,sans-serif;color:#111827;cursor:pointer;text-align:left}
+#sgDd button:hover,#sgDd button.on{background:#F3F4F6}
+#sgDd button.on{font-weight:600}
+#sgDd button .ck{margin-left:auto;color:#2563EB}
 #sgCard .sec{border-top:1px solid rgba(17,24,39,.07);padding:4px 6px 6px;overflow:auto;min-height:0}
 #sgCard .gh2{font:600 11.5px Inter,sans-serif;color:#6B7280;padding:8px 10px 4px;text-transform:uppercase;letter-spacing:.06em}
 #sgCard .it{display:flex;align-items:center;gap:10px;width:100%;height:36px;padding:0 10px;border-radius:9px;border:0;background:none;font:14px Inter,sans-serif;color:#111827;cursor:pointer;text-align:left}
@@ -274,6 +274,7 @@ function closeCard() {
   G.open = false; bar.setAttribute('aria-expanded', 'false');
   card.classList.remove('open', 'center', 'over');
   document.body.classList.remove('sgOpen');
+  const dd = document.getElementById('sgDd'); if (dd) dd.classList.remove('open');
 }
 
 function modelBtn() {
@@ -363,9 +364,25 @@ function wire() {
   on('sgPh', () => document.getElementById('sgFile').click());
   const file = document.getElementById('sgFile');
   file.onchange = () => { if (file.files[0]) readPhoto(file.files[0]); };
+  // The model menu lives on the page, not in the box, so the box's edge never cuts it off.
+  document.querySelectorAll('body > #sgDd').forEach(n => n.remove());
   const mp = document.getElementById('sgMp'), dd = document.getElementById('sgDd');
-  if (mp && dd && !mp.classList.contains('flat')) mp.onclick = (ev) => { ev.stopPropagation(); const o = !dd.classList.contains('open'); dd.classList.toggle('open', o); mp.setAttribute('aria-expanded', o); };
-  card.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { G.model = b.dataset.m; draw(); });
+  if (!dd) return;
+  document.body.appendChild(dd);
+  if (mp && !mp.classList.contains('flat')) mp.onclick = (ev) => { ev.stopPropagation(); const o = !dd.classList.contains('open'); dd.classList.toggle('open', o); mp.setAttribute('aria-expanded', o); if (o) placeMenu(mp, dd); };
+  dd.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { G.model = b.dataset.m; draw(); });
+}
+// Opens under the model button when it fits, otherwise above it; never past the window's edge.
+function placeMenu(mp, dd) {
+  const r = mp.getBoundingClientRect(), pad = 8, gap = 4;
+  dd.style.maxHeight = '320px';
+  const h = Math.min(320, dd.scrollHeight + 2);
+  const below = innerHeight - r.bottom - gap - pad, above = r.top - gap - pad;
+  const down = h <= below || below >= above;
+  const room = Math.max(120, down ? below : above);
+  dd.style.maxHeight = Math.min(320, room) + 'px';
+  dd.style.left = Math.max(pad, Math.min(r.left, innerWidth - dd.offsetWidth - pad)) + 'px';
+  dd.style.top = (down ? r.bottom + gap : Math.max(pad, r.top - gap - Math.min(h, room))) + 'px';
 }
 // A photo dropped on the box, pasted, or chosen: made small enough to send (longest side 1600 px, JPEG).
 card.addEventListener('dragover', (ev) => { if (ev.dataTransfer && [...ev.dataTransfer.types].includes('Files')) { ev.preventDefault(); card.classList.add('over'); } });
@@ -710,9 +727,10 @@ document.addEventListener('keydown', (ev) => {
   if (ev.key === '/' && !G.open && !/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '') && !document.activeElement.isContentEditable
       && document.body.classList.contains('freeplay') && !document.body.classList.contains('watch')) { ev.preventDefault(); openCard(); }
 });
+addEventListener('resize', () => { const dd = document.getElementById('sgDd'); if (dd) dd.classList.remove('open'); });
 document.addEventListener('click', (ev) => { const dd = document.getElementById('sgDd'); if (dd && dd.classList.contains('open') && !ev.target.closest('#sgDd')) dd.classList.remove('open'); });
 // A click on the 3D view (or anywhere outside the box) hides it again.
-document.addEventListener('pointerdown', (ev) => { if (G.open && !ev.target.closest('#sgCard,#sgBar')) closeCard(); }, true);
+document.addEventListener('pointerdown', (ev) => { if (G.open && !ev.target.closest('#sgCard,#sgBar,#sgDd')) closeCard(); }, true);
 // The play pill (a lock message) takes the top middle while it shows: the bar steps aside.
 const pill = document.getElementById('playpill');
 const sync = () => document.body.classList.toggle('sgHide', !!pill && !pill.classList.contains('none') && pill.innerHTML.trim() !== '' && !(G.build && G.build.active));
