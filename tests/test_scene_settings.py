@@ -107,6 +107,66 @@ def test_reset_station_to_before_last_run():
     assert sim.reset_station(snap)          # the robot is gone: a plain-words error
 
 
+def test_reset_takes_back_only_what_the_run_moved():
+    """Reset after a run: what the robot moved anywhere in the lab goes back, and the robot to
+    its starting pose; objects the user moved or added afterwards stay as the user left them."""
+    sim = PlaygroundSim(stations=[])
+    uid = sim.add_station("franka", (0, 0), 0.0, "table")
+    st = sim.station(uid)
+    x, y, _ = st.to_world(st.robot_xy[0] + 0.45, st.robot_xy[1])
+    x2, y2, _ = st.to_world(st.robot_xy[0] + 0.45, st.robot_xy[1] + 0.15)
+    x3, y3, _ = st.to_world(st.robot_xy[0] + 0.45, st.robot_xy[1] - 0.15)
+    sim.placed = [W.Placed("t1", "tube_15ml", (x, y, st.top + 0.01), 0.0),       # the robot moves it
+                  W.Placed("t2", "tube_15ml", (2.5, 2.5, 0.01), 0.0),             # on the floor: knocked further
+                  W.Placed("t3", "tube_15ml", (x2, y2, st.top + 0.01), 0.0),     # robot moves it, then the user
+                  W.Placed("t4", "tube_15ml", (x3, y3, st.top + 0.01), 0.0)]     # nobody touches it
+    sim.rebuild()
+    for _ in range(300):
+        mujoco.mj_step(sim.m, sim.d)
+    before, start = sim.scene_snapshot(), sim.station_snapshot(uid)
+    arm = sim.arms[uid]
+    arm_q = [int(sim.m.joint(n).qposadr[0]) for n in arm.own_joints][:7]
+
+    def jq(name):
+        j = mujoco.mj_name2id(sim.m, mujoco.mjtObj.mjOBJ_JOINT, f"obj_{name}_joint")
+        return int(sim.m.jnt_qposadr[j])
+
+    def at(name):
+        return sim.d.xpos[mujoco.mj_name2id(sim.m, mujoco.mjtObj.mjOBJ_BODY, f"obj_{name}")].copy()
+
+    home = {n: at(n) for n in ("t1", "t2", "t3", "t4")}
+    # "The run": the robot's arm moves, t1 and t3 slide 10 cm, t2 rolls off 30 cm.
+    sim.d.qpos[arm_q] += 0.2
+    for n, dx in (("t1", 0.1), ("t2", 0.3), ("t3", 0.1)):
+        sim.d.qpos[jq(n)] += dx
+    mujoco.mj_forward(sim.m, sim.d)
+    moved = sim.scene_changes(before)
+    assert set(moved) == {"t1", "t2", "t3"}
+    assert moved["t1"] == uid and moved["t2"] is None
+    for o in moved:
+        sim.touched[o] = "run1"
+    # The user moves t3 and adds an object (that rebuilds the lab).
+    pre = sim.scene_state()
+    sim.move("t3", (x2, y2 + 0.3, st.top + 0.01))
+    sim.mark_user_edits(pre)
+    assert sim.touched["t3"] == "user"
+    user_t3 = at("t3")
+    new = sim.add("tube_15ml", (x3, y3 - 0.1, st.top + 0.01))
+    new_at = at(new)
+    owners = {o for o in moved if sim.touched.get(o) == "run1"}
+    assert owners == {"t1", "t2"}
+    assert sim.undo_run(uid, before, start, owners) is None
+    assert np.allclose(at("t1"), home["t1"], atol=1e-6)
+    assert np.allclose(at("t2"), home["t2"], atol=1e-6)
+    assert np.allclose(at("t3"), user_t3, atol=1e-6)
+    assert np.allclose(at("t4"), home["t4"], atol=1e-3)
+    assert np.allclose(at(new), new_at, atol=1e-6)
+    now = arm.snapshot()["q"]                                   # the robot is back in its starting pose
+    assert all(abs(now[n] - v) < 1e-9 for n, v in start["arm"]["q"].items())
+    sim.remove_station(uid)
+    assert sim.undo_run(uid, before, start, owners)          # the robot is gone: a plain-words error
+
+
 def test_run_video_layout_and_parts(tmp_path):
     from playground import runvideo as RV
     for n in (2, 3):
