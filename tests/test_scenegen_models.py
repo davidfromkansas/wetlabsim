@@ -125,3 +125,38 @@ def test_devin_is_offered_when_connected(monkeypatch):
     assert [m["id"] for m in ms] == ["swe-2-max", "swe-2-high", "swe-2-medium"]
     assert ms[0]["default"] and not ms[1]["default"]
     assert json.dumps(ms)          # plain data for the page
+
+
+def test_devin_in_a_modal_sandbox_reads_chunked_output(monkeypatch):
+    """On the site Devin runs in a Modal Sandbox, whose output arrives in chunks of any size (not
+    lines): the answer is still read whole."""
+    import types
+    from wetlabsim import launchers
+    out = "".join(json.dumps(e) + "\n" for e in [
+        {"type": "_devin_acp", "kind": "thinks", "text": "Thinking"},
+        {"type": "_devin_acp", "kind": "says", "text": '```json\n{"plan": 7}\n```'},
+        {"type": "_devin_acp", "kind": "end", "stop_reason": "end_turn"}])
+    chunks = [out[i:i + 7] for i in range(0, len(out), 7)]      # split mid-line
+
+    class Proc:
+        stdout = chunks
+        stdin = types.SimpleNamespace(write_eof=lambda: None, drain=lambda: None)
+
+        def wait(self):
+            return 0
+
+    class Sb:
+        filesystem = types.SimpleNamespace(write_bytes=lambda data, path: None)
+
+        def exec(self, *a, **k):
+            return Proc() if "devin_acp.py" in " ".join(a) else types.SimpleNamespace(wait=lambda: 0)
+
+        def terminate(self):
+            pass
+    fake = types.SimpleNamespace(App=types.SimpleNamespace(lookup=lambda *a, **k: None),
+                                 Sandbox=types.SimpleNamespace(create=lambda *a, **k: Sb()))
+    monkeypatch.setitem(sys.modules, "modal", fake)
+    monkeypatch.setattr(launchers.ModalSandboxLauncher, "image", staticmethod(lambda: None))
+    monkeypatch.setattr(SG, "WHERE", "modal")
+    text = SG.devin_answer("swe-2-max", "hi", [], "dk_test", lambda t: None, lambda t: None, lambda: False, 60)
+    assert SG.parse_json(text) == {"plan": 7}

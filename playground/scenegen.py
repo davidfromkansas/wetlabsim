@@ -349,7 +349,7 @@ def _devin_modal(model, prompt, images, key, line, stopped, timeout) -> bool:
     import modal
 
     from wetlabsim import devin_auth
-    from wetlabsim.launchers import ModalSandboxLauncher
+    from wetlabsim.launchers import ModalSandboxLauncher, _SandboxRun
     app = modal.App.lookup(ModalSandboxLauncher.APP, create_if_missing=True)
     sb = modal.Sandbox.create("sleep", "infinity", app=app, image=ModalSandboxLauncher.image(),
                               timeout=int(timeout) + 120, cpu=0.5, memory=1024,
@@ -371,7 +371,8 @@ def _devin_modal(model, prompt, images, key, line, stopped, timeout) -> bool:
         proc.stdin.drain()
         over, done = _watch_until(sb.terminate, stopped, timeout)
         try:
-            for ln in proc.stdout:
+            # the sandbox's output comes in chunks of any size, not lines: whole lines, as locally
+            for ln in _SandboxRun._lines(proc.stdout):
                 line(ln)
             proc.wait()
         finally:
