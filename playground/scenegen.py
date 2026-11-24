@@ -7,12 +7,14 @@ Library objects always win; anything the scene needs that the library lacks (up 
 things) is made by the same model from simple shapes first, the way a scene from a photo is
 (photoscene.py), and each one checked and physics-tested by aimade.py before it is laid out.
 
-Models: the owner's own Anthropic or OpenAI key (Settings > General); on a computer of one's
-own, ANTHROPIC_API_KEY / OPENAI_API_KEY too. With one company connected its most capable model
-is used; with both, the page shows a picker. An OpenAI connection made by ChatGPT sign-in
-(Codex's login, not an API key) asks through Codex instead (`codex exec`, where task runs go:
-a Modal Sandbox on the hosted site), on the person's ChatGPT plan. Devin and Jev can't do this (Devin is a coding
-agent that is slow and costly for one answer; Jev only answers moves for a robot).
+Models: the owner's own Anthropic, OpenAI or Devin key (Settings > General); on a computer of
+one's own, ANTHROPIC_API_KEY / OPENAI_API_KEY / DEVIN_API_KEY too. With one company connected
+its most capable model is used; with more, the page shows a picker. Anthropic and OpenAI keys
+call the company's API (streamed, so a long answer isn't cut off). An OpenAI connection made by
+ChatGPT sign-in (Codex's login, not an API key) asks through Codex instead (`codex exec`), on the
+person's ChatGPT plan; a Devin key asks Devin through its CLI (wetlabsim/devin_acp.py). Both run
+where task runs go: a Modal Sandbox on the hosted site. Jev can't do this (it only answers moves
+for a robot).
 
 WETLAB_SCENEGEN_FAKE=1 answers without any model (tests, screenshots)."""
 from __future__ import annotations
@@ -23,8 +25,6 @@ import os
 import re
 import threading
 import time
-import urllib.error
-import urllib.request
 
 from . import accounts as ACCT
 from . import aimade as AI
@@ -51,11 +51,15 @@ SCENE_MODELS = [
     {"id": "gpt-6.1-terra", "label": "GPT-6.1 Terra", "provider": "openai"},
     {"id": "gpt-6-sol", "label": "GPT-6 Sol", "provider": "openai"},
     {"id": "gpt-6-luna", "label": "GPT-6 Luna", "provider": "openai"},
+    {"id": "swe-2-max", "label": "SWE-2 Max", "provider": "cognition"},
+    {"id": "swe-2-high", "label": "SWE-2 High", "provider": "cognition"},
+    {"id": "swe-2-medium", "label": "SWE-2 Medium", "provider": "cognition"},
 ]
 # A task run's model (server.MODELS ids) as the scene model it is, for "the last model you used".
 FROM_RUN = {"claude": "claude-opus-5-5", "codex": "gpt-6-astra"}  # (only its company is used now)
-_ENV = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY"}
-_AGENT = {"anthropic": "claude", "openai": "codex"}
+_ENV = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY", "cognition": "DEVIN_API_KEY"}
+_AGENT = {"anthropic": "claude", "openai": "codex", "cognition": "devin"}
+PROVIDERS = ("anthropic", "openai", "cognition")
 
 
 def fake() -> bool:
@@ -81,12 +85,12 @@ def providers(public: bool) -> list[str]:
     """The companies a scene can be built with here: connected in Settings (or, on one's own
     computer, an API key in the environment)."""
     if fake():
-        return ["anthropic", "openai"]
+        return list(PROVIDERS)
     try:
         conn = ACCT.connected()
     except Exception:  # noqa: BLE001
         conn = set()
-    return [p for p in ("anthropic", "openai") if p in conn or (not public and os.environ.get(_ENV[p]))]
+    return [p for p in PROVIDERS if p in conn or (not public and os.environ.get(_ENV[p]))]
 
 
 def models(public: bool) -> list[dict]:
@@ -104,53 +108,15 @@ class ModelError(RuntimeError):
     pass
 
 
-def _post(url: str, headers: dict, body: dict, timeout: float = 240.0) -> dict:
-    req = urllib.request.Request(url, data=json.dumps(body).encode(), method="POST",
-                                 headers={"content-type": "application/json", **headers})
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            return json.loads(r.read())
-    except urllib.error.HTTPError as e:
-        try:
-            msg = json.loads(e.read()).get("error", {}).get("message", "")
-        except Exception:  # noqa: BLE001
-            msg = ""
-        raise ModelError(f"the model's company said no ({e.code}{': ' + msg[:200] if msg else ''})") from None
-    except (urllib.error.URLError, TimeoutError) as e:
-        raise ModelError(f"couldn't reach the model ({e})") from None
-
-
-def _anthropic(model: str, system: str, user: str, key: str, effort: str) -> str:
-    body = {"model": model, "max_tokens": 32000, "system": system,
-            "messages": [{"role": "user", "content": user}], "output_config": {"effort": effort}}
-    headers = {"x-api-key": key, "anthropic-version": "2023-06-01"}
-    try:
-        out = _post("https://api.anthropic.com/v1/messages", headers, body)
-    except ModelError as e:
-        if "(400" not in str(e):
-            raise
-        body.pop("output_config")          # a model without effort levels
-        out = _post("https://api.anthropic.com/v1/messages", headers, body)
-    if out.get("stop_reason") == "refusal":
-        raise ModelError("the model declined this request")
-    return "".join(b.get("text", "") for b in out.get("content", []) if b.get("type") == "text")
-
-
-def _openai(model: str, system: str, user: str, key: str, effort: str) -> str:
-    body = {"model": model, "instructions": system, "input": user, "max_output_tokens": 32000,
-            "reasoning": {"effort": effort}}
-    headers = {"authorization": f"Bearer {key}"}
-    try:
-        out = _post("https://api.openai.com/v1/responses", headers, body)
-    except ModelError as e:
-        if "(400" not in str(e):
-            raise
-        body.pop("reasoning")
-        out = _post("https://api.openai.com/v1/responses", headers, body)
-    if out.get("output_text"):
-        return out["output_text"]
-    return "".join(c.get("text", "") for o in out.get("output", []) if o.get("type") == "message"
-                   for c in o.get("content", []) if c.get("type") in ("output_text", "text"))
+def _api(provider: str, model: str, system: str, user: str, key: str, effort: str) -> str:
+    """One answer from the company's API on an API key, streamed (photoscene's calls, with nobody
+    watching the stream). Streaming keeps the connection busy while the model thinks, so a long
+    answer (a big layout on a slow model) isn't cut off by a read timeout, and Anthropic takes
+    big max_tokens only when streamed."""
+    from . import photoscene as PS
+    call = PS._anthropic_stream if provider == "anthropic" else PS._openai_stream
+    return call(model, system, [{"type": "text", "text": user}], key, effort,
+                lambda t: None, lambda t: None, lambda: False)
 
 
 WHERE = "local"     # where Codex runs for a ChatGPT sign-in: "local", or "modal" (server.RUN_LAUNCHER)
@@ -265,6 +231,159 @@ def _codex_modal(model: str, prompt: str, login: str, effort: str) -> tuple[str,
             pass
 
 
+# ------------------------------------------------------------------ asking Devin
+DEVIN_TAIL = ("\n\nDon't run any commands, open any files or change anything: everything you need is "
+              "above. Answer in the format asked for, as your final message, with nothing after it.")
+
+
+def _devin_lines(line: str, said: list, on_think, on_text):
+    """One JSON line from devin_acp.py: thoughts go to on_think, replies are kept (without the
+    bridge's own [permission ...] notes) and shown through on_text."""
+    try:
+        ev = json.loads(line)
+    except ValueError:
+        return None
+    if not isinstance(ev, dict):
+        return None
+    if ev.get("type") == "_raw":
+        return str(ev.get("text", ""))
+    kind, text = ev.get("kind"), str(ev.get("text", ""))
+    if kind == "thinks" and text:
+        on_think("\n\n" + text)
+    elif kind == "says" and text and not text.startswith("[permission") and not text.startswith("[unsupported"):
+        said.append(text)
+        on_text("\n\n".join(said))
+    elif kind == "tool":
+        on_think("\n\n(" + (ev.get("title") or ev.get("name") or "a tool") + ")")
+    return None
+
+
+def devin_answer(model: str, prompt: str, images: list, key: str, on_think, on_text, stopped,
+                 timeout: float) -> str:
+    """One answer from Devin on the person's Devin key, through Devin's CLI and our ACP bridge
+    (wetlabsim/devin_acp.py), in an empty folder of its own: locally, or in a Modal Sandbox that
+    reaches Devin's servers only (where task runs go). The prompt goes to Devin over ACP from a
+    file, so its size doesn't matter. `images` are JPEG/PNG bytes."""
+    runner = _devin_modal if WHERE == "modal" else _devin_local
+    said: list = []
+    errs: list = []
+
+    def line(ln: str):
+        e = _devin_lines(ln, said, on_think, on_text)
+        if e:
+            errs.append(e)
+    over = runner(model, prompt, images, key, line, stopped, timeout)
+    if over:
+        raise ModelError(f"Devin took longer than {int(timeout) // 60} minutes, so it was stopped")
+    text = "\n\n".join(said)
+    if not text.strip() and stopped():
+        return ""
+    if not text.strip():
+        why = (errs[-1] if errs else "").replace("Error: ", "")[:300]
+        raise ModelError("Devin gave no answer" + (f" ({why})" if why else
+                         " (is the Devin key still good, on a plan with this model? Check Settings)"))
+    return text
+
+
+def _watch_until(kill, stopped, timeout: float):
+    """Calls kill() when Stop is pressed or `timeout` seconds pass; returns (over, done)."""
+    over, done = threading.Event(), threading.Event()
+    end = time.time() + timeout
+
+    def run():
+        while not done.wait(1.0):
+            if stopped() or time.time() > end:
+                if not stopped():
+                    over.set()
+                try:
+                    kill()
+                except Exception:  # noqa: BLE001
+                    pass
+                return
+    threading.Thread(target=run, daemon=True).start()
+    return over, done
+
+
+def _devin_local(model, prompt, images, key, line, stopped, timeout) -> bool:
+    import pathlib
+    import shutil
+    import subprocess
+    import sys
+    import tempfile
+
+    from wetlabsim import devin_auth
+    home = pathlib.Path(tempfile.mkdtemp(prefix="wetlab-scene-devin-"))
+    try:
+        os.chmod(home, 0o700)
+        ws = home / "ws"
+        ws.mkdir()
+        devin_auth.write_login(home / "data", key)
+        (home / "prompt.txt").write_text(prompt)
+        cmd = [sys.executable, str(pathlib.Path(devin_auth.__file__).with_name("devin_acp.py")), str(ws), "-",
+               "--prompt-file", str(home / "prompt.txt"), "--model", model,
+               "--deny", str(pathlib.Path(__file__).resolve().parent.parent), "--deny", str(home / "data")]
+        for k, b in enumerate(images):
+            (home / f"photo{k}.jpg").write_bytes(b)
+            cmd += ["--image", str(home / f"photo{k}.jpg")]
+        env = {k: v for k, v in os.environ.items() if k != "DEVIN_API_KEY"}
+        env.update(XDG_DATA_HOME=str(home / "data"), NO_COLOR="1")
+        if not shutil.which("devin"):
+            raise ModelError("Devin's CLI isn't installed on this machine (see https://cli.devin.ai)")
+        p = subprocess.Popen(cmd, env=env, cwd=ws, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                             stdin=subprocess.DEVNULL, text=True)
+        over, done = _watch_until(p.kill, stopped, timeout)
+        try:
+            for ln in p.stdout:
+                line(ln)
+            p.wait()
+        finally:
+            done.set()
+        return over.is_set()
+    finally:
+        shutil.rmtree(home, ignore_errors=True)
+
+
+def _devin_modal(model, prompt, images, key, line, stopped, timeout) -> bool:
+    import pathlib
+
+    import modal
+
+    from wetlabsim import devin_auth
+    from wetlabsim.launchers import ModalSandboxLauncher
+    app = modal.App.lookup(ModalSandboxLauncher.APP, create_if_missing=True)
+    sb = modal.Sandbox.create("sleep", "infinity", app=app, image=ModalSandboxLauncher.image(),
+                              timeout=int(timeout) + 120, cpu=0.5, memory=1024,
+                              outbound_domain_allowlist=devin_auth.HOSTS)
+    try:
+        sb.exec("mkdir", "-p", "/tools", "/tmp/w/ws", "/root/.local/share/devin").wait()
+        sb.filesystem.write_bytes(pathlib.Path(devin_auth.__file__).with_name("devin_acp.py").read_bytes(),
+                                  "/tools/devin_acp.py")
+        sb.filesystem.write_bytes(devin_auth.credentials(key).encode(), "/root/.local/share/devin/credentials.toml")
+        sb.exec("chmod", "600", "/root/.local/share/devin/credentials.toml").wait()
+        sb.filesystem.write_bytes(prompt.encode(), "/tmp/w/prompt.txt")
+        cmd = ["python3", "/tools/devin_acp.py", "/tmp/w/ws", "-", "--prompt-file", "/tmp/w/prompt.txt",
+               "--model", model, "--deny", "/tools", "--deny", "/root"]
+        for k, b in enumerate(images):
+            sb.filesystem.write_bytes(b, f"/tmp/w/photo{k}.jpg")
+            cmd += ["--image", f"/tmp/w/photo{k}.jpg"]
+        proc = sb.exec(*cmd, workdir="/tmp/w/ws", env={"NO_COLOR": "1"}, timeout=int(timeout))
+        proc.stdin.write_eof()
+        proc.stdin.drain()
+        over, done = _watch_until(sb.terminate, stopped, timeout)
+        try:
+            for ln in proc.stdout:
+                line(ln)
+            proc.wait()
+        finally:
+            done.set()
+        return over.is_set()
+    finally:
+        try:
+            sb.terminate()
+        except Exception:  # noqa: BLE001
+            pass
+
+
 def ask_json(model_id: str, system: str, user: str, public: bool, effort: str = "medium") -> dict:
     m = next((m for m in SCENE_MODELS if m["id"] == model_id), None)
     if m is None:
@@ -275,9 +394,11 @@ def ask_json(model_id: str, system: str, user: str, public: bool, effort: str = 
         raise ModelError(f"connect your {label} API key in Settings to use {m['label']}")
     if kind == "chatgpt":
         text = _codex(m["id"], system, user, key, effort)
+    elif m["provider"] == "cognition":
+        text = devin_answer(m["id"], system + "\n\n" + user + DEVIN_TAIL, [], key,
+                            lambda t: None, lambda t: None, lambda: False, CODEX_TIMEOUT)
     else:
-        call = _anthropic if m["provider"] == "anthropic" else _openai
-        text = call(m["id"], system, user, key, effort)
+        text = _api(m["provider"], m["id"], system, user, key, effort)
     return parse_json(text)
 
 
@@ -906,6 +1027,70 @@ def _rot(x: float, y: float, yaw: float):
     return c * x - s * y, s * x + c * y
 
 
+def _own_hit(s, p, p0, d):
+    """How far a ray goes before it meets the placed furniture `p` (None if it doesn't). It goes
+    on through anything else (the things already standing on it, a robot)."""
+    p0, d = [float(v) for v in p0], [float(v) for v in d]
+    went, excl = 0.0, -1
+    for _ in range(12):
+        dist, body = s._ray([a + went * b for a, b in zip(p0, d)], d, excl)
+        if dist is None:
+            return None
+        if s._owner(body) == ("object", p.uid):
+            return went + dist
+        went += dist + 1e-4
+        excl = body
+    return None
+
+
+def worktop(s, p) -> float:
+    """The height of a piece of furniture's main working surface, measured from its shape: rays
+    dropped over its top, and the height most of them land on (a workbench's worktop, not the
+    narrow shelf above it). The catalog's own number (catalog.WORKTOP) wins where there is one."""
+    if p.item in catalog.WORKTOP:
+        return float(catalog.WORKTOP[p.item])
+    sx, sy, sz = catalog.meta(p.item)["size"]
+    top = p.pos[2] + sz + 0.2
+    hits = []
+    for i in range(9):
+        for j in range(9):
+            lx, ly = sx * 0.4 * (i / 4 - 1), sy * 0.4 * (j / 4 - 1)
+            wx, wy = _rot(lx, ly, p.yaw)
+            dist = _own_hit(s, p, (p.pos[0] + wx, p.pos[1] + wy, top), (0, 0, -1.0))
+            if dist is not None and top - dist > p.pos[2] + 0.2:
+                hits.append(top - dist)
+    if len(hits) < 10:
+        return float(W.table_top(p.item))
+    bins: dict[int, list] = {}
+    for z in hits:
+        bins.setdefault(round(z / 0.02), []).append(z)
+    best = max(bins.values(), key=len)
+    return float(sum(best) / len(best))
+
+
+def open_sides(s, p, z: float) -> dict:
+    """How open each side of a piece of furniture is just above its worktop (height z): rays sent
+    in level from each side ("+x", "-x", "+y", "-y" in its own frame), and how far across it they
+    get, as a share of its depth (1: clear across; 0: a back panel or pegboard right at its edge)."""
+    sx, sy, _ = catalog.meta(p.item)["size"]
+    out = {}
+    for side, (ax, sign) in {"+x": (0, 1), "-x": (0, -1), "+y": (1, 1), "-y": (1, -1)}.items():
+        depth, width = (sx, sy) if ax == 0 else (sy, sx)
+        got = []
+        for h in (0.08, 0.25):
+            for f in (-0.3, 0.0, 0.3):
+                start = depth / 2 + 0.3
+                lx, ly = (sign * start, f * width) if ax == 0 else (f * width, sign * start)
+                dx, dy = (-sign, 0.0) if ax == 0 else (0.0, -sign)
+                wx, wy = _rot(lx, ly, p.yaw)
+                wdx, wdy = _rot(dx, dy, p.yaw)
+                dist = _own_hit(s, p, (p.pos[0] + wx, p.pos[1] + wy, z + h), (wdx, wdy, 0.0))
+                into = depth if dist is None else max(0.0, dist - 0.3)
+                got.append(min(1.0, into / depth))
+        out[side] = sum(got) / len(got)
+    return out
+
+
 def _station_rect(kind: str, robot: str, x: float, y: float, yaw: float):
     if kind == "bare":                 # a robot with no table: about its base
         return x - 0.3, y - 0.3, x + 0.3, y + 0.3
@@ -965,6 +1150,7 @@ class Build:
         # plan (shown as an outline), now (being placed), ok (it landed), bad (it didn't fit)}.
         self.items: list[dict] = []
         self.at_uid: dict[int, str] = {}  # furniture index -> the robot with no table that works at it
+        self.flip: dict[int, str] = {}    # furniture index -> "x"/"y": its robot moved to the open side
         self.shown = 0                # how many of them are outlined yet (they appear one by one)
         self.hl = -1                  # the one the person points at in the build's list
         self.names = {}
@@ -1012,7 +1198,8 @@ class Build:
                 "quiet": round(time.time() - self.last_heard, 1),
                 "elapsed": round(time.time() - self.started, 1),
                 "model": next((m["label"] for m in SCENE_MODELS if m["id"] == self.model_id), ""),
-                "active": self.phase in ("pick", "make", "plan", "robots", "furniture", "objects")}
+                "looks": getattr(self, "looks", [])[-8:], "look_pic": getattr(self, "look_pic", ""),
+                "active": self.phase in ("pick", "make", "plan", "robots", "furniture", "objects", "check")}
 
     def start(self):
         threading.Thread(target=self._run, daemon=True, name="scene-build").start()
@@ -1096,6 +1283,9 @@ class Build:
                 self._mark(n, "ok" if self._place_object(o, off, fixed_uids) else "bad")
                 n += 1
             self.now = ""
+            self._look_scene()
+            if self.stop:
+                return self._end("stopped")
             if self.stations and self.task:
                 for u in self.stations:
                     self.sess.unsent[u] = {"task": self.task, "model": ""}
@@ -1109,6 +1299,15 @@ class Build:
             s.zone = []
             if was_playing and self.phase not in ("make", "plan"):
                 s.play()
+
+    def _look_scene(self):
+        """Level 2 of the look check (lookcheck.look_scene): the built scene drawn, scored against
+        the request and edited. Not for ready-made scenes or without a model."""
+        from . import lookcheck as LC
+        if not LC.LOOK or self.preset or not self.model_id:
+            return
+        self.phase = "check"
+        LC.look_scene(self, list(self.objects), [i["id"] for i in self.pick["items"]])
 
     # -------------------------------------------------- objects the library lacks, made by the model
     def _make_missing(self):
@@ -1183,14 +1382,16 @@ class Build:
         elif s.strip() and not self.thought:
             self.thought = s.strip().splitlines()[0][:80]
 
-    def _ask(self, text: str, effort: str, on_text=None) -> str:
-        """One streamed answer from the scene's model (photoscene.ask_stream), with MAKE_SYSTEM."""
+    def _ask(self, text: str, effort: str, on_text=None, images=()) -> str:
+        """One streamed answer from the scene's model (photoscene.ask_stream), with MAKE_SYSTEM;
+        `images`: pictures after the words (lookcheck.images)."""
+        from . import lookcheck as LC
         from . import photoscene as PS
         if fake():
-            ans = fake_make(text)
+            ans = LC.fake_look(text) if images else fake_make(text)
         else:
-            ans = PS.ask_stream(self.model_id, [{"type": "text", "text": text}], self.public, effort, self._think,
-                                on_text or (lambda t: None), lambda: self.stop, system=MAKE_SYSTEM)
+            ans = PS.ask_stream(self.model_id, [{"type": "text", "text": text}] + list(images), self.public, effort,
+                                self._think, on_text or (lambda t: None), lambda: self.stop, system=MAKE_SYSTEM)
         self.answers.append(f"===== asked: {text[:200]}\n\n{ans}")
         fix = re.match(r'Your object "([^"]*)"', text)
         if fix:                          # a fixed version is back: it goes through the physics test again
@@ -1436,6 +1637,9 @@ class Build:
         s = self.sim
         at = st.get("at", -1)
         p = s.find(fixed_uids[at]) if 0 <= at < len(fixed_uids) and fixed_uids[at] else None
+        wt = None if p is None else W.table_top(p.item) if self.preset else worktop(s, p)
+        if p is not None and not st.get("up") and not self.preset:
+            x, y = self._open_front(st, p, wt, x, y, at)
         spot = None
         for dx, dy in _spiral(0.08, 8):
             sp = s.robot_spot(st["robot"], x + dx, y + dy, yaw)
@@ -1457,11 +1661,37 @@ class Build:
             if not st.get("up") and made.liftable and made.ground < W.STAND_MIN:
                 # an arm beside the furniture: its stand reaches up to the worktop it works at
                 # (not the stand height an arm put down on the floor gets)
-                s.place_robot(uid, z=W.table_top(p.item))
+                s.place_robot(uid, z=wt)
         title = self.pick["title"]
         s.rename_station(uid, title if n == 1 else f"{title} {k + 1}")
         self.stations.append(uid)
         self.counts["robots"][0] += 1
+
+    def _open_front(self, st, p, wt, x, y, at):
+        """A robot beside furniture works from its open side: if the model stood it behind a back
+        panel or pegboard (measured, open_sides) and the far side is open, it goes to the same spot
+        on the far side, and the things put on that furniture are mirrored with it."""
+        c, sn = math.cos(p.yaw), math.sin(p.yaw)
+        lx, ly = c * (x - p.pos[0]) + sn * (y - p.pos[1]), -sn * (x - p.pos[0]) + c * (y - p.pos[1])
+        sx, sy, _ = catalog.meta(p.item)["size"]
+        ax = "x" if abs(lx) / sx >= abs(ly) / sy else "y"
+        mine = ("+" if (lx if ax == "x" else ly) >= 0 else "-") + ax
+        far = ("-" if mine[0] == "+" else "+") + ax
+        try:
+            op = open_sides(self.sim, p, wt)
+        except Exception as ex:  # noqa: BLE001     no measure: leave it where the model put it
+            print("scene: couldn't measure the furniture's sides:", ex)
+            return x, y
+        if op[mine] >= 0.3 or op[far] < 0.6:
+            return x, y
+        if ax == "x":
+            lx = -lx
+        else:
+            ly = -ly
+        self.flip[at] = ax
+        print(f"scene: {st['robot']} moved to the open {far} side of {p.item} "
+              f"(open {op[mine]:.2f} where the model put it, {op[far]:.2f} there)")
+        return p.pos[0] + c * lx - sn * ly, p.pos[1] + sn * lx + c * ly
 
     def _place_furniture(self, f, off):
         s = self.sim
@@ -1514,13 +1744,33 @@ class Build:
             p = s.find(fixed_uids[o["furniture"]])
             if p is None:
                 return self._skip(it)
+            from . import lookcheck as LC
             want = catalog.item(p.item)["label"]
             bx, by = p.pos[0], p.pos[1]
+            odx, ody = o["dx"], o["dy"]
+            ax = self.flip.get(o["furniture"])
+            if ax == "x":
+                odx = -odx
+            elif ax == "y":
+                ody = -ody
+            # on its worktop first (with room above: not on a shelf over it), then anywhere on it
+            wt = None if self.preset else worktop(s, p)
             for dx, dy in _spiral(0.04, 8):
-                ddx, ddy = _rot(o["dx"] + dx, o["dy"] + dy, p.yaw)
+                ddx, ddy = _rot(odx + dx, ody + dy, p.yaw)
+                if wt is not None:
+                    spot = LC._spot(s, it, bx + ddx, by + ddy, yaw, z=100 * wt)
+                    if spot and spot["surface"] == want:
+                        return self._add(it, spot, yaw)
+                    continue
                 spot = s.support(it, bx + ddx, by + ddy, yaw)
                 if spot["valid"] and (spot["level"] or o.get("overhang")) and spot["surface"] == want:
                     return self._add(it, spot, yaw)
+            if wt is not None:
+                for dx, dy in _spiral(0.04, 8):
+                    ddx, ddy = _rot(odx + dx, ody + dy, p.yaw)
+                    spot = s.support(it, bx + ddx, by + ddy, yaw)
+                    if spot["valid"] and spot["level"] and spot["surface"] == want:
+                        return self._add(it, spot, yaw)
             return self._skip(it)
         # the floor (or a furniture piece that wasn't placed: next to the scene's first table)
         x, y = o["x"] + off[0], o["y"] + off[1]

@@ -652,6 +652,7 @@ class Session:
                                      "how": entry["reason"], "seconds": wr.get("passed_at") or entry["seconds"],
                                      "cost_usd": entry["cost_usd"], "tokens": entry["tokens"], "run_id": entry["run_id"],
                                      "when": time.strftime("%Y-%m-%d %H:%M:%S")})
+        self._note_changes(uid, runner, b)
         if b and not b.get("finished"):
             b["results"].append("succeeded" if entry["ok"] else "failed")
             idx = b.setdefault("running", {}).pop(uid, None)
@@ -667,6 +668,26 @@ class Session:
             self.make_video(uid, entry)
         if b and not b.get("finished"):
             self._next_in_batch(uid, b)
+
+    def _note_changes(self, uid: str, runner: "Runner", b: dict | None):
+        """A run has ended: which objects in the lab it moved (anywhere, not only on its own
+        table), so its robot's Reset can put them back. An object that stood on the table of
+        another robot working at the same time is left to that robot."""
+        ended = self.__dict__.setdefault("ended_at", {})
+        started = float(runner.info.get("started") or 0.0)
+        try:
+            if not b or not b.get("scene0"):
+                return
+            others = {v for v, r in self.runners.items() if v != uid and (r.active() or ended.get(v, 0.0) > started)}
+            moved = {o for o, at in self.sim.scene_changes(b["scene0"]).items() if at not in others}
+            token = f"{b['id']}:{uid}"
+            for o in moved:
+                self.sim.touched[o] = token
+            b.setdefault("changed", {}).setdefault(uid, set()).update(moved)
+        except Exception as e:  # noqa: BLE001     never let this stop the run being recorded
+            print("could not note what the run moved:", e)
+        finally:
+            ended[uid] = time.time()
 
     def make_video(self, uid: str, entry: dict) -> bool:
         """Queue a run's video (its robot's scene, overhead and wrist cameras). False when it can't
@@ -1676,7 +1697,7 @@ class PGHandler(Handler):
         if what == "photo":            # a scene from a photo (photoscene.py): AI-made objects, no robot
             model = str(b.get("model") or "")
             if model not in {m["id"] for m in SG.models(PUBLIC)}:
-                return self._json({"ok": False, "error": "Connect an Anthropic or OpenAI account in Settings to build a scene."})
+                return self._json({"ok": False, "error": "Connect an Anthropic, OpenAI or Devin account in Settings to build a scene."})
             if self._busy():
                 return self._json({"ok": False, "error": "A robot is working on a task. Stop it first to build a scene."})
             if cur is not None and cur.status()["active"]:
@@ -1706,7 +1727,7 @@ class PGHandler(Handler):
             return self._json({"ok": True, "build": build.status()})
         model = str(b.get("model") or "")
         if model not in {m["id"] for m in SG.models(PUBLIC)}:
-            return self._json({"ok": False, "error": "Connect an Anthropic or OpenAI API key in Settings to build a scene."})
+            return self._json({"ok": False, "error": "Connect an Anthropic, OpenAI or Devin account in Settings to build a scene."})
         prompt = str(b.get("prompt") or "").strip()[:2000]
         if not prompt:
             return self._json({"ok": False, "error": "describe the scene first"})
@@ -1750,6 +1771,7 @@ class PGHandler(Handler):
         pre = self.__dict__.pop("_undo_pre", None)
         if pre is not None and code == 200 and isinstance(obj, dict) and obj.get("ok"):
             self.sess.push_undo(pre)
+            self.sim.mark_user_edits(pre)     # what this edit moved is the user's: Reset leaves it
         return super()._json(obj, code)
 
     def _scene3d(self) -> dict:
@@ -1899,16 +1921,6 @@ class PGHandler(Handler):
                     else self.sim.scene_info()
                 runs = self._runs_status() if info["mode"] == "free" else {}
                 run = runs.get(info["active"], {"active": False}) if info["mode"] == "free" else self.runner.status()
-                # Robots at work: their own bodies, outlined in the 3D view (a glow that follows them).
-                zones = []
-                if info["mode"] == "free":
-                    arms = dict(self.sim.arms)
-                    for st in list(self.sim.stations):
-                        r = runs.get(st.uid) or {}
-                        if (r.get("active") or r.get("queued")) and st.uid in arms:
-                            zones.append({"uid": st.uid, "bodies": sorted(int(b) for b in arms[st.uid].bodies),
-                                          "waiting": not r.get("active")})
-                info["zones"] = zones
                 return self._json({**info, "run": run, "runs": runs, "locked": self._locked(),
                                    "undo": len(self.sess.undo), "redo": len(self.sess.redo),
                                    "wetbench": self.wetbench.status(),
@@ -2204,6 +2216,7 @@ class PGHandler(Handler):
                     now = s.scene_state()
                     s.restore_scene(src.pop())
                     (self.sess.redo if back else self.sess.undo).append(now)
+                    s.mark_user_edits(now)
                     gone = set(self.runners) - {st.uid for st in s.stations}
                     for u in gone:
                         if not self.runners[u].active():
@@ -2283,7 +2296,13 @@ class PGHandler(Handler):
                 bt = self.sess.batches.get(b["uid"])
                 if not bt or not bt.get("snap"):
                     return self._json({"ok": False, "error": "This robot hasn't run a task yet, so there's nothing to reset to."})
-                err = s.reset_station((bt.get("snaps") or {}).get(b["uid"]) or bt["snap"])
+                start = (bt.get("snaps") or {}).get(b["uid"]) or bt["snap"]
+                if bt.get("scene0"):     # what its runs moved, anywhere in the lab, unless moved since
+                    token = f"{bt['id']}:{b['uid']}"
+                    owners = {o for o in (bt.get("changed") or {}).get(b["uid"], set()) if s.touched.get(o) == token}
+                    err = s.undo_run(b["uid"], bt["scene0"], start, owners)
+                else:
+                    err = s.reset_station(start)
                 if err:
                     return self._json({"ok": False, "error": err})
                 return self._json({"ok": True})
@@ -2507,6 +2526,7 @@ class PGHandler(Handler):
                           "snaps": {u: s.station_snapshot(u) for u in stations}, "started": 0, "running": {},
                           "note": note}
                     bt["snap"] = bt["snaps"][uid]
+                    bt["scene0"] = s.scene_snapshot()     # the whole lab, for Reset to take back what the runs moved
                     if station.libero and not station.free:
                         # each run starts from the next of LIBERO's official layouts: 1, 2, 3...
                         n = LB.task(station.task).n_setups

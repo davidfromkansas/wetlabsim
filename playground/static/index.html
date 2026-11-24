@@ -515,6 +515,17 @@ body.rclosed #right{display:none}
 @container (max-width:900px){.pip{width:150px}.pips.four .pip{width:110px}}
 #sessNav.closed ~ #stage .pips{left:62px}
 @container (max-width:780px){.pips{top:104px}#sessNav.closed ~ #stage .pips{left:14px}}
+/* A robot selected: its cameras sit bottom left, and the menu bar and "Describe a scene" step aside.
+   Nothing selected (click empty floor, or Esc): the cameras go, the menu bar and scene bar come back. */
+@media (min-width:761px){
+  body.freeplay:not(.robotsel) .pips{display:none}
+  body.freeplay.robotsel #sbar{display:none}
+  body.freeplay:not(.robotsel) .rrow.on > button.rsel{background:transparent;box-shadow:none}
+  body.freeplay:not(.robotsel) .rbot[aria-current=true]{box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(17,24,39,.06)}
+  /* the same 10px from the left edge, the bottom edge and each other */
+  body.freeplay.robotsel .pips,body.freeplay.robotsel #sessNav.closed ~ #stage .pips{top:auto;bottom:10px;left:10px;flex-direction:row;align-items:flex-end;gap:10px}
+  body.freeplay.robotsel .pip{width:220px}
+}
 #axisGuide{top:auto;bottom:14px}
 #objDrawer{bottom:78px!important}
 #playpill{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:12px;padding:6px 14px 6px 6px;border-radius:14px;background:rgba(255,255,255,.92);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 6px 20px rgba(17,24,39,.14),0 0 0 1px rgba(17,24,39,.06);white-space:nowrap}
@@ -724,7 +735,9 @@ body.watch #sbar .ed,body:not(.freeplay) #sbar .ed,body.fixed #sbar .ed{display:
 .cdlg .act{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
 .cdlg button{height:36px;padding:0 14px;border-radius:9px;font:600 13px Inter,sans-serif;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink)}
 .cdlg button.ok{background:var(--blue);border-color:var(--blue);color:#fff}
-@container (max-width:1060px){#playpill{left:auto;right:14px;transform:none;top:112px}}
+/* the "Scene locked…" pill sits top right; it drops below the "Describe a scene" bar if they'd touch */
+#playpill{left:auto;right:14px;transform:none}
+#playpill.under{visibility:hidden}
 @container (max-width:1060px){body.lbst #goalCard{top:160px}}
 
 /* ---------- the robot picker: one card for Add and Swap ---------- */
@@ -945,7 +958,7 @@ body.robotdrag #rpk{opacity:0;pointer-events:none;transition:opacity 120ms ease-
       <div class="pip"><img id="camWrist" alt="Wrist camera, what the AI sees"><div class="pcap">Wrist<span>AI SEES</span><button class="exp" data-cam="wrist" aria-label="Expand wrist camera" title="Expand"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M7 1 H11 V5 M5 11 H1 V7 M11 1 L7 5 M1 11 L5 7"/></svg></button></div></div>
     </div>
     <div id="bigCamWrap" role="dialog" aria-modal="true" aria-label="Camera, large"><div class="bigcam"><div class="bigview"><img id="bigCam" alt=""><canvas id="bigPoster" aria-hidden="true" hidden></canvas><div class="bigload" id="bigLoad" role="status" hidden><i aria-hidden="true"></i>Loading camera…</div></div><div class="pcap" style="padding:8px 10px 8px 14px;font-size:13px"><b id="bigName" style="font-weight:600"></b><span>AI SEES THIS</span><button class="exp wide" id="shrinkBtn" aria-label="Shrink camera"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"><path d="M11 5 H7 V1 M1 7 H5 V11 M7 5 L11 1 M5 7 L1 11"/></svg>Shrink</button></div></div></div>
-    <div class="tl"><span class="live" id="liveTag" style="display:none">● Running · real time</span><span class="libtag wetlab" id="libTag"></span><span class="hint" id="hintTag"></span></div>
+    <div class="tl"><span class="libtag wetlab" id="libTag"></span><span class="hint" id="hintTag"></span></div>
     <div class="bl"><button class="fbtn" id="openRight" aria-label="Show robot panel" title="Show robot panel"><img id="openRightImg" alt=""><span id="openRightName">Robot</span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#374151" stroke-width="1.5"><rect x="1.75" y="2.75" width="14.5" height="12.5" rx="2.5"/><path d="M11.5 2.75 V15.25"/></svg></button></div>
     <div class="campad" role="group" aria-label="Camera">
       <div class="joy" id="joy" tabindex="0" role="application" aria-label="Camera joystick: drag to slide the view, or use the arrow keys" title="Drag to slide the view (arrow keys too)">
@@ -1434,7 +1447,7 @@ window.addEventListener('mouseup', async (e) => {
   const locObj = loc && (S.scene.objects || []).find(o => (o.bodies || []).includes(loc.body));
   if (locObj) { S.sel = locObj.uid; S.robotEdit = null; render(); }
   const hit = await api('/pg/pick', {u: p.u, v: p.v});
-  S.sel = hit.kind === 'robot' || hit.station ? 'robot' : hit.kind === 'object' ? hit.uid : S.sel === 'robot' ? S.sel : null;
+  S.sel = hit.kind === 'robot' || hit.station ? 'robot' : hit.kind === 'object' ? hit.uid : null;   // empty floor: nothing selected
   // a click on the robot itself (not its table) opens its card: what it is, Move and Rotate
   S.robotEdit = hit.kind === 'robot' && S.scene && S.scene.mode === 'free' && !S.watch ? hit.station : null;
   if (hit.kind === 'robot' && S.scene && S.scene.mode === 'free') S.sideTab = 'chat';
@@ -1731,6 +1744,16 @@ function renderRail() {
 }
 $('task').addEventListener('input', () => $('startBtn').classList.toggle('blank', !$('task').value.trim()));
 $('startBtn').before($('infoBtn'));
+// keep the bottom menu bar clear of the camera joystick: slide it left only when they would touch
+function fitSbar() {
+  const bar = $('sbar'), pad = document.querySelector('.campad');
+  if (!bar || !pad) return;
+  bar.style.marginLeft = '';
+  if (!bar.offsetWidth || !pad.offsetWidth) return;
+  const b = bar.getBoundingClientRect(), c = pad.getBoundingClientRect(), st = bar.offsetParent.getBoundingClientRect();
+  const over = b.right + 12 - c.left;
+  if (over > 0) bar.style.marginLeft = -Math.min(over, b.left - st.left - 12) + 'px';
+}
 // side panels open and close
 function setRight(open) {
   document.body.classList.toggle('rclosed', !open); S.railKey = null; if (S.scene) renderRail();
@@ -1749,6 +1772,24 @@ try { if (localStorage.getItem('pgRight') === '0') setRight(false); } catch (e) 
   $('playBtn').parentElement.style.display = 'none';
   document.body.appendChild($('shareWrap')); $('shareBtn').style.display = 'none';
   ['pastLink', 'watchTag', 'lockmsg'].forEach(id => { if ($(id)) pill.appendChild($(id)); });
+  // keep the pill clear of the "Describe a scene" bar (top middle) and its open box
+  const hit = (a, b) => a.left < b.right + 8 && b.left < a.right + 8 && a.top < b.bottom + 8 && b.top < a.bottom + 8;
+  const shown = el => el && el.offsetParent && getComputedStyle(el).visibility !== 'hidden';
+  const place = () => {
+    pill.style.top = ''; pill.classList.remove('under');
+    if (!pill.offsetParent) return;
+    const bar = $('sgBar'), card = $('sgCard');
+    if (shown(card) && hit(pill.getBoundingClientRect(), card.getBoundingClientRect())) { pill.classList.add('under'); return; }
+    if (shown(bar)) {
+      const b = bar.getBoundingClientRect();
+      if (hit(pill.getBoundingClientRect(), b)) pill.style.top = (b.bottom - pill.offsetParent.getBoundingClientRect().top + 8) + 'px';
+    }
+  };
+  window.placePlayPill = () => { watch(); place(); };
+  const mo = new MutationObserver(() => requestAnimationFrame(place)), seen = new Set();
+  const watch = () => ['sgBar', 'sgCard'].forEach(id => { const el = $(id); if (el && !seen.has(el)) { seen.add(el); mo.observe(el, {attributes: true, attributeFilter: ['class', 'style']}); } });
+  mo.observe(document.body, {attributes: true, attributeFilter: ['class']});
+  window.addEventListener('resize', place);
 })();
 // the object library lives in a drawer over the scene
 (() => {
@@ -2300,8 +2341,8 @@ $('robHome').onclick = () => placeRobot({home: true});
 })();
 function deselect() {
   if (S.sel === 'robot' && S.robotEdit) { S.robotEdit = null; if (window.V3) window.V3.setPreview(null); refresh(); return; }
-  if (!S.sel || S.sel === 'robot') return;
-  S.sel = null; if (window.V3) window.V3.setPreview(null);
+  if (!S.sel) return;
+  S.sel = null; if (window.V3) window.V3.setPreview(null);   // a robot too: its cameras step aside, the scene bar comes back
   refresh();
 }
 $('objX').onclick = deselect;
@@ -2577,7 +2618,6 @@ async function pollTrace() {
 function render() {
   const sc = S.scene; if (!sc) return;
   applyMode();
-  if (window.V3 && window.V3.setZones) window.V3.setZones(sc.mode === 'free' ? sc.zones : []);   // robots at work: outlined
   const run = sc.run || {}, active = !!run.active, playing = !sc.paused;
   $('playBtn').classList.toggle('on', playing);
   $('playLabel').textContent = playing ? 'Pause physics' : 'Play physics';
@@ -2591,7 +2631,7 @@ function render() {
   $('lockmsg').style.display = sc.locked && (active || S.fixed) ? '' : 'none'; $('lockmsg').textContent = S.fixed ? 'Scene locked for a fair test' : active ? 'Scene locked while a robot works' : 'Pause physics to edit the scene';
   $('right').classList.toggle('locked', !!sc.locked);
   $('playpill').classList.toggle('none', $('lockmsg').style.display === 'none' && !S.watch);
-  $('liveTag').style.display = playing ? '' : 'none';
+  if (window.placePlayPill) window.placePlayPill();
   $('hintTag').style.display = playing ? 'none' : '';
   // stations: the list, and the selected one's cameras, task and chat
   const st = curStation(), free = sc.mode === 'free';
@@ -2618,6 +2658,8 @@ function render() {
   $('addStationBtn').disabled = !!sc.locked;
   const empty = free && !(sc.robots || []).length;
   document.body.classList.toggle('empty', empty);
+  document.body.classList.toggle('robotsel', S.sel === 'robot' && !empty);
+  fitSbar();
   document.body.classList.toggle('hasobj', !!(sc.objects || []).length);
   $('emptyMsg').textContent = S.watch ? 'Nobody has added a robot to this lab yet.' : 'Press Robot or Station in the bar below, then click the floor to place it.';
   const camKey = (stBase() || '/') + '|' + (free ? curStation().robot || '' : '');
@@ -2770,7 +2812,7 @@ async function refresh() {
   if (watch !== S.watch) { S.watch = watch; document.body.classList.toggle('watch', watch); S.dockKey = ''; if (watch && S.sideTab === 'objects') S.sideTab = 'chat'; }
   $('sessName').classList.toggle('can', !watch);
   if (sc.session && sc.session.name !== S.sessName) { S.sessName = sc.session.name; $('sessName').textContent = sc.session.name; document.title = sc.session.name + ' · MuJoCo Playground'; }
-  if (S.sel !== 'robot' && !S.scene.objects.find(o => o.uid === S.sel)) S.sel = 'robot';
+  if (S.sel && S.sel !== 'robot' && !S.scene.objects.find(o => o.uid === S.sel)) S.sel = 'robot';
   render();
 }
 // If the server goes away (restarted, or stopped and started again), the live streams end and
@@ -3351,6 +3393,7 @@ window.onAccount = (r) => { S.acct = r; fillModels(); if (S.scene) render(); };
   if (SID) { q.set('s', SID); q.delete('copy'); history.replaceState(null, '', location.pathname + '?' + q); try { localStorage.setItem('pgSession', SID); } catch (e) {} }
   renderSessions();
   const sendAspect = () => { const r = stage.getBoundingClientRect(); if (r.width > 50 && r.height > 50 && !S.watch) api('/pg/camera', {aspect: r.width / r.height}); };
+  new ResizeObserver(fitSbar).observe(stage);
   sendAspect(); new ResizeObserver(() => { clearTimeout(sendAspect.h); sendAspect.h = setTimeout(sendAspect, 150); }).observe(stage);
   $('modelLogo').src = LOGOS[modelInfo($('model').value).provider] || LOGOS.anthropic;
   // Draw the main view in the page (instant camera); fall back to the server's video.

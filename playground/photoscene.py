@@ -28,6 +28,7 @@ import urllib.error
 import urllib.request
 
 from . import aimade as AI
+from . import lookcheck as LC
 from . import scenegen as SG
 from .scenegen import ModelError
 
@@ -488,6 +489,16 @@ def _codex_modal_stream(model, prompt, imgs, login, effort, event, stopped):
             pass
 
 
+def _devin_stream(model, system, content, key, effort, on_think, on_text, stopped):
+    """Through Devin's CLI on the person's Devin key (scenegen.devin_answer), photos and all."""
+    prompt = system + "\n\n" + "\n\n".join(c["text"] for c in content if c["type"] == "text") + SG.DEVIN_TAIL
+    imgs = [base64.b64decode(c["source"]["data"]) for c in content if c["type"] == "image"]
+    text = SG.devin_answer(model, prompt, imgs, key, on_think, on_text, stopped, PHOTO_TIMEOUT)
+    if text:
+        on_text(text)
+    return text
+
+
 def ask_stream(model_id, content, public, effort, on_think, on_text, stopped, system: str | None = None) -> str:
     m = next((m for m in SG.SCENE_MODELS if m["id"] == model_id), None)
     if m is None:
@@ -498,6 +509,8 @@ def ask_stream(model_id, content, public, effort, on_think, on_text, stopped, sy
         raise ModelError(f"connect your {label} API key in Settings to use {m['label']}")
     if kind == "chatgpt":
         call = _codex_stream
+    elif m["provider"] == "cognition":
+        call = _devin_stream
     else:
         call = _anthropic_stream if m["provider"] == "anthropic" else _openai_stream
     return call(m["id"], system or SYSTEM, content, key, effort, on_think, on_text, stopped)
@@ -627,11 +640,19 @@ def keep_answer(rec: dict, text: str) -> None:
 
 
 # ------------------------------------------------------------------ the build
+def _looked(b, o: dict, ok: dict) -> dict:
+    """An object that passed its physics tests, after the look check (lookcheck.look_object):
+    walls are only boxes, so they skip it."""
+    if not LC.LOOK or o["name"].lower().startswith("wall"):
+        return ok
+    return LC.look_object(b, o, ok)
+
+
 class PhotoBuild(SG.Build):
     """One scene being made from a photo, in a thread of its own: the model's answer streamed
     (thinking shown live), each object checked and tested, then put down on a free spot."""
 
-    STEPS = ["look", "measure", "build", "test", "place"]
+    STEPS = ["look", "measure", "build", "test", "place", "check"]
 
     def __init__(self, sim, sess, photo: bytes, note: str, model_id: str, public: bool, photo_rec: dict):
         self.sim, self.sess = sim, sess
@@ -681,7 +702,7 @@ class PhotoBuild(SG.Build):
                 "model": next((m["label"] for m in SG.SCENE_MODELS if m["id"] == self.model_id), ""),
                 "elapsed": round(time.time() - self.started, 1),
                 "steps": self.steps, "quiet": round(time.time() - self.last_heard, 1),
-                "rows": self._rows(), "note": self.note[:300],
+                "rows": self._rows(), "note": self.note[:300], "looks": getattr(self, "looks", [])[-8:], "look_pic": getattr(self, "look_pic", ""),
                 "items": [{"name": it["name"], "kind": it["kind"], "state": it["state"], "at": bool(it["rect"])}
                           for it in self.items[:self.shown]],
                 "active": self.phase in self.STEPS}
@@ -725,12 +746,14 @@ class PhotoBuild(SG.Build):
                                              "data": base64.b64encode(self.photo).decode()}},
                 {"type": "text", "text": text}]
 
-    def _ask(self, text: str, effort: str, on_text=None) -> str:
-        on_text = on_text or self._text
+    def _ask(self, text: str, effort: str, on_text=None, images=()) -> str:
+        """One streamed answer about the photo; `images`: more pictures after the words, as
+        lookcheck.images makes them (pictures of what was built)."""
+        on_text = on_text or (self._text if not images else (lambda t: None))
         if SG.fake():
-            ans = _fake_stream(self, text, on_text)
+            ans = LC.fake_look(text) if images else _fake_stream(self, text, on_text)
         else:
-            ans = ask_stream(self.model_id, self._content(text), self.public, effort, self._think,
+            ans = ask_stream(self.model_id, self._content(text) + list(images), self.public, effort, self._think,
                              on_text, lambda: self.stop)
         self.answers.append(f"===== asked: {text[:200]}\n\n{ans}")
         return ans
@@ -792,6 +815,11 @@ class PhotoBuild(SG.Build):
                 self._mark(k, "ok" if ok else "bad")
                 self.ostate[o["name"].lower()] = "ok" if ok else "bad"
             self.now = ""
+            if LC.LOOK and self.objects:     # level 2 of the look check: the scene against the photo
+                self.phase = "check"
+                LC.look_scene(self, list(self.objects), [o["item"] for o in ready])
+                if self.stop:
+                    return self._end("stopped")
             self._end("done")
         except Exception as e:  # noqa: BLE001
             self.error = str(e) if isinstance(e, ModelError) else f"something went wrong: {e}"
@@ -865,11 +893,11 @@ class PhotoBuild(SG.Build):
                 ok = {**o, "item": uid, "fixed": fixed, "size": size}
                 try:
                     AI.inspect(uid)        # doors and drawers move, containers hold, nothing falls through
-                    return ok
+                    return _looked(self, o, ok)
                 except AI.Bad as e:
                     if inspected:          # it stands and settles; one fix tried: keep it as it is
                         self._think(f"\n\n**Kept the {o['name'].lower()}** as it is: {e}")
-                        return ok
+                        return _looked(self, o, ok)
                     inspected, err = True, str(e)
             if k == MAX_TRIES - 1 or self.stop:
                 break

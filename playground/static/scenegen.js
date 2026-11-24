@@ -11,12 +11,19 @@
 // At the end the panel shrinks to a "ready" pill above the menu bar, with Undo.
 (() => {
 const css = `
-body:not(.freeplay) #sgBar, body.watch #sgBar, body.sgHide #sgBar, body.sgOpen #sgBar{display:none}
+body:not(.freeplay) #sgBar, body.watch #sgBar, body.freeplay.robotsel #sgBar, body.sgHide #sgBar, body.sgOpen #sgBar{display:none}
 body.sgOpen .emptyfloor,body.sgPanel .emptyfloor{display:none!important}
-#sgBar{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:7;display:flex;align-items:center;gap:8px;height:38px;padding:0 8px 0 12px;border-radius:12px;border:0;background:rgba(255,255,255,.95);box-shadow:0 4px 14px rgba(17,24,39,.14),0 0 0 1px rgba(17,24,39,.08);font:500 13px Inter,sans-serif;color:#4B5563;cursor:text;white-space:nowrap;transition:transform 160ms ease-out}
+#sgBar{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:7;display:flex;align-items:center;gap:6px;height:44px;padding:0 5px;border-radius:22px;border:0;background:rgba(255,255,255,.95);box-shadow:0 10px 28px -10px rgba(17,24,39,.35),0 0 0 1px rgba(17,24,39,.08);font:400 14px Inter,sans-serif;color:#6B7280;cursor:text;white-space:nowrap;transition:transform 160ms ease-out}
+#sgBar:not(.busy){width:270px}
+#sgBar:hover:not(.busy){box-shadow:0 0 0 2px #93C5FD,0 10px 28px -10px rgba(17,24,39,.35)}
+#sgBar #sgBarT{flex:1;text-align:left}
+#sgBar .ph,#sgCard .phb{width:34px;height:34px;flex:none;border-radius:50%;border:0;padding:0;background:#F3F4F6;box-shadow:inset 0 0 0 1px #E5E7EB;color:#111827;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 120ms ease-out,transform 120ms ease-out}
+#sgBar .ph:hover,#sgCard .phb:hover{background:#E5E7EB}
+#sgCard .phb:active{transform:scale(.94)}
+#sgBar .snd{width:34px;height:34px;flex:none;border-radius:50%;background:#E5E7EB;color:#fff;display:flex;align-items:center;justify-content:center}
 #sgBar:active{transform:translateX(-50%) scale(.98)}
 #sgBar .k{font:600 11px Inter,sans-serif;color:#4B5563;border:1px solid #E5E7EB;border-radius:5px;padding:1px 6px;margin-left:10px}
-#sgBar.busy{cursor:default;color:#111827;font-weight:600;padding:0 6px 0 12px;gap:10px}
+#sgBar.busy{cursor:default;color:#111827;font-weight:600;padding:0 6px 0 14px;gap:10px}
 #sgBar .ct{font-weight:500;color:#6B7280;font-variant-numeric:tabular-nums}
 #sgBar .sep{width:1px;height:18px;background:#E5E7EB}
 #sgBar .stop{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:8px;background:#F3F4F6;font:600 12.5px/1 Inter,sans-serif;color:#111827;cursor:pointer}
@@ -33,7 +40,7 @@ body.sgOpen .emptyfloor,body.sgPanel .emptyfloor{display:none!important}
 #sgCard.center{top:min(14%,120px)}
 @keyframes sgGrow{from{opacity:0;transform:translateX(-50%) scaleX(.55) scaleY(.2)}}
 #sgCard .in{display:flex;align-items:flex-start;gap:10px;padding:16px 16px 4px}
-#sgCard .in>svg{flex:none;margin-top:4px}
+#sgCard .in>.phb{margin:-5px 0 0 -4px;width:36px;height:36px}
 #sgCard textarea{flex:1;box-sizing:border-box;min-height:26px;max-height:180px;resize:none;border:0;outline:0;background:none;font:16px/1.55 Inter,sans-serif;color:#111827;padding:0}
 #sgCard textarea::placeholder{color:#6B7280}
 #sgCard .pc{display:flex;align-items:center;gap:10px;margin:6px 16px 2px 42px;padding:6px;border-radius:12px;background:#F3F4F6;width:max-content;max-width:calc(100% - 58px)}
@@ -55,13 +62,13 @@ body.sgOpen .emptyfloor,body.sgPanel .emptyfloor{display:none!important}
 #sgCard .mp.flat{cursor:default}
 #sgCard .mp.flat:hover{background:none}
 #sgCard .mp img{width:16px;height:16px}
-#sgCard .dd{position:absolute;left:52px;top:44px;width:280px;background:#fff;border-radius:12px;box-shadow:0 16px 32px -12px rgba(17,24,39,.35),0 0 0 1px rgba(17,24,39,.08);padding:6px;z-index:3;display:none;max-height:320px;overflow:auto}
-#sgCard .dd.open{display:block}
-#sgCard .dd .gh{font-size:12px;font-weight:600;color:#4B5563;padding:8px 10px 4px}
-#sgCard .dd button{width:100%;height:34px;display:flex;align-items:center;gap:8px;padding:0 10px;border-radius:8px;border:0;background:none;font:14px Inter,sans-serif;color:#111827;cursor:pointer;text-align:left}
-#sgCard .dd button:hover,#sgCard .dd button.on{background:#F3F4F6}
-#sgCard .dd button.on{font-weight:600}
-#sgCard .dd button .ck{margin-left:auto;color:#2563EB}
+#sgDd{position:fixed;left:0;top:0;width:280px;box-sizing:border-box;font:14px Inter,sans-serif;background:#fff;border-radius:12px;box-shadow:0 16px 32px -12px rgba(17,24,39,.35),0 0 0 1px rgba(17,24,39,.08);padding:6px;z-index:40;display:none;max-height:320px;overflow:auto;overscroll-behavior:contain}
+#sgDd.open{display:block}
+#sgDd .gh{font-size:12px;font-weight:600;color:#4B5563;padding:8px 10px 4px}
+#sgDd button{width:100%;height:34px;display:flex;align-items:center;gap:8px;padding:0 10px;border-radius:8px;border:0;background:none;font:14px Inter,sans-serif;color:#111827;cursor:pointer;text-align:left}
+#sgDd button:hover,#sgDd button.on{background:#F3F4F6}
+#sgDd button.on{font-weight:600}
+#sgDd button .ck{margin-left:auto;color:#2563EB}
 #sgCard .sec{border-top:1px solid rgba(17,24,39,.07);padding:4px 6px 6px;overflow:auto;min-height:0}
 #sgCard .gh2{font:600 11.5px Inter,sans-serif;color:#6B7280;padding:8px 10px 4px;text-transform:uppercase;letter-spacing:.06em}
 #sgCard .it{display:flex;align-items:center;gap:10px;width:100%;height:36px;padding:0 10px;border-radius:9px;border:0;background:none;font:14px Inter,sans-serif;color:#111827;cursor:pointer;text-align:left}
@@ -89,6 +96,7 @@ body.sgOpen .emptyfloor,body.sgPanel .emptyfloor{display:none!important}
 
 /* the panel on the left while it builds */
 body.sgPanel .pips{left:372px!important}
+body.sgPanel #sgBar{display:none}   /* the panel already shows the build and its Stop */
 #sgProg{position:absolute;left:14px;top:12px;z-index:9;width:min(344px,calc(100% - 28px));max-height:calc(100% - 136px);display:none;flex-direction:column;background:rgba(255,255,255,.96);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-radius:16px;box-shadow:0 18px 40px -16px rgba(17,24,39,.35),0 0 0 1px rgba(17,24,39,.07);overflow:hidden;font:13px/1.45 Inter,sans-serif;color:#111827}
 #sgProg.open{display:flex}
 #sgProg .hd{display:flex;align-items:center;gap:10px;padding:12px 10px 10px 14px}
@@ -132,6 +140,14 @@ body.sgPanel .pips{left:372px!important}
 #sgProg li .ok{animation:sgPop 320ms cubic-bezier(.23,1,.32,1)}
 #sgProg .think{margin:4px 14px 8px;font-size:12px;color:#6B7280;display:flex;gap:6px;align-items:flex-start}
 #sgProg .think svg{flex:none;margin-top:2px}
+#sgProg .look{margin:4px 14px 10px;display:flex;gap:10px;align-items:flex-start}
+#sgProg .look img{flex:none;width:72px;height:72px;border-radius:8px;object-fit:cover;background:#F3F4F6;border:1px solid #E5E7EB}
+#sgProg .look ol{list-style:none;margin:0;padding:0;font-size:12px;color:#374151;min-width:0;flex:1}
+#sgProg .look li{display:flex;gap:6px;align-items:baseline;padding:1px 0}
+#sgProg .look li b{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+#sgProg .look li .sc{font-variant-numeric:tabular-nums;color:#6B7280}
+#sgProg .look li .sc.ok{color:#047857}
+#sgProg .look li span.pr{color:#9CA3AF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 #sgProg .cam{display:flex;align-items:center;gap:8px;margin:2px 14px 10px;padding:6px 8px 6px 10px;border-radius:9px;background:#FFFBEB;font-size:12px;color:#92400E}
 #sgProg .cam span{flex:1}
 #sgProg .cam button{border:0;background:none;font:600 12px Inter,sans-serif;color:#1D4ED8;cursor:pointer;padding:2px 4px}
@@ -157,21 +173,25 @@ body.sgPanel .pips{left:372px!important}
 #addRobot.sgPulse{box-shadow:0 0 0 2px #2563EB;border-radius:11px}
 #sgFly{position:absolute;inset:0;z-index:25;background:rgba(17,24,39,.82);display:flex;align-items:center;justify-content:center;pointer-events:none}
 #sgFly img{max-width:86%;max-height:80%;border-radius:14px;box-shadow:0 30px 60px -20px rgba(0,0,0,.6)}
-@container (max-width:780px){#sgCard{top:8px}#sgCard .st4{grid-template-columns:repeat(2,minmax(0,1fr))}body.sgPanel .pips,body.sgPanel #sgBar{display:none}}
+@container (max-width:780px){#sgCard{top:8px}#sgCard .st4{grid-template-columns:repeat(2,minmax(0,1fr))}body.sgPanel .pips{display:none}}
 @media (prefers-reduced-motion:reduce){#sgCard.open,#sgProg li.nw,#sgProg .tile,#sgDone.open,#sgProg p.plan{animation:none}}
 `;
 document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
 const stage = document.getElementById('stage');
 const e = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+// A picture with a small + : add a photo (the scene bar and the box both lead with it).
+const IMGPLUS = (s = 18) => `<svg aria-hidden="true" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4.5H5.5A2.5 2.5 0 0 0 3 7v11a2.5 2.5 0 0 0 2.5 2.5h12A2.5 2.5 0 0 0 20 18v-6"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M20 16l-4.5-4.5L6 20.5"/><path d="M19 2.5v6M16 5.5h6"/></svg>`;
+const BAR_REST = () => `<span class="ph" title="Add a photo">${IMGPLUS(17)}</span><span id="sgBarT">Describe a scene…</span><span class="snd" aria-hidden="true"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span>`;
 const SPARK = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>';
 const XS = '<svg aria-hidden="true" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
 const CHEV = '<svg aria-hidden="true" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#4B5563" stroke-width="1.6" stroke-linecap="round"><path d="M3 4.5l3 3 3-3"/></svg>';
 const SEND = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
 const CLOCK = '<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>';
 const PIC = {franka: '/pg/static/robot_franka.png', ur5e: '/pg/static/robot_ur5e.png', aloha: '/pg/static/robot_aloha.png', fr3_duo: '/pg/static/robot_fr3_duo.png', g1: '/pg/static/robot_g1.png', piper: '/pg/static/robot_piper.png', n220: '/pg/static/robot_n220.png', crx30ia: '/pg/static/robot_crx30ia.png', rby1: '/pg/static/robot_rby1.png'};
-const LOGO = {anthropic: '/static/anthropic.svg', openai: '/static/openai.svg'};
+const LOGO = {anthropic: '/static/anthropic.svg', openai: '/static/openai.svg', cognition: '/static/cognition.svg'};
+const CO = {anthropic: 'Anthropic', openai: 'OpenAI', cognition: 'Devin'};
 
-stage.insertAdjacentHTML('beforeend', `<button id="sgBar" aria-haspopup="dialog" aria-expanded="false">${SPARK}<span id="sgBarT">Describe a scene…</span><span class="k" aria-hidden="true">/</span></button>
+stage.insertAdjacentHTML('beforeend', `<button id="sgBar" aria-haspopup="dialog" aria-expanded="false" aria-keyshortcuts="/" title="Describe a scene (/)">${BAR_REST()}</button>
 <div id="sgCard" role="dialog" aria-label="Describe a scene"></div><div id="sgProg" role="status" aria-live="polite"></div><div id="sgDone" role="status"></div>`);
 document.body.insertAdjacentHTML('beforeend', '<div id="sgNudge">Now add a robot</div>');
 const bar = document.getElementById('sgBar'), card = document.getElementById('sgCard'), prog = document.getElementById('sgProg');
@@ -232,7 +252,7 @@ function defaultModel() {
   let last = '';
   try { last = localStorage.getItem('pgLastModel') || ''; } catch (err) {}
   last = G.fromRun[last] || last;
-  const lastCo = (modelInfo(last) || {}).provider || (/^(gpt|codex)/.test(last) ? 'openai' : /^claude/.test(last) ? 'anthropic' : '');
+  const lastCo = (modelInfo(last) || {}).provider || (/^(gpt|codex)/.test(last) ? 'openai' : /^claude/.test(last) ? 'anthropic' : /^swe-/.test(last) ? 'cognition' : '');
   const tops = G.models.filter(m => m.default);
   return ((lastCo && tops.find(m => m.provider === lastCo)) || tops[0] || G.models[0] || {}).id || '';
 }
@@ -264,6 +284,7 @@ function closeCard() {
   G.open = false; bar.setAttribute('aria-expanded', 'false');
   card.classList.remove('open', 'center', 'over');
   document.body.classList.remove('sgOpen');
+  const dd = document.getElementById('sgDd'); if (dd) dd.classList.remove('open');
 }
 
 function modelBtn() {
@@ -276,7 +297,7 @@ function modelMenu() {
   const by = {};
   for (const m of G.models) (by[m.provider] = by[m.provider] || []).push(m);
   return `<div class="dd" id="sgDd" role="listbox">` + Object.entries(by).map(([p, ms]) =>
-    `<div class="gh">${p === 'anthropic' ? 'Anthropic' : 'OpenAI'}</div>` + ms.map(m =>
+    `<div class="gh">${CO[p] || p}</div>` + ms.map(m =>
       `<button role="option" data-m="${m.id}" class="${m.id === G.model ? 'on' : ''}" aria-selected="${m.id === G.model}"><img src="${LOGO[m.provider]}" alt="" width="16" height="16">${e(m.label)}${m.id === G.model ? '<span class="ck">✓</span>' : ''}</button>`).join('')).join('') + '</div>';
 }
 function marked(text, q) {
@@ -294,11 +315,11 @@ const recentsFor = (q) => {
 function draw(first = false) {
   if (!G.open) return;
   const can = !!G.models.length;
-  card.innerHTML = `<div class="in">${SPARK}<textarea id="sgTa" rows="1" placeholder="${G.photo ? 'Add a note for the AI (optional): what to leave out, which way doors open…' : 'Describe a scene: the place, the robot, what it should do…'}" aria-label="Describe the scene">${e(G.prompt)}</textarea></div>
+  card.innerHTML = `<div class="in"><button class="phb" id="sgPh" aria-label="Add a photo" title="Add a photo: the AI rebuilds what it sees">${IMGPLUS()}</button><textarea id="sgTa" rows="1" placeholder="${G.photo ? 'Add a note for the AI (optional): what to leave out, which way doors open…' : 'Describe a scene: the place, the robot, what it should do…'}" aria-label="Describe the scene">${e(G.prompt)}</textarea></div>
 <div id="sgPc"></div>
 ${G.err ? `<p class="err">${e(G.err)}</p>` : ''}
-<div class="sgTl"><button class="ib" id="sgPh" aria-label="Add a photo" title="Add a photo: the AI rebuilds what it sees">${PHOTO(18)}</button>${modelBtn()}<span class="sp"></span><button class="go" id="sgGo" aria-label="Build the scene">${SEND}</button>${modelMenu()}</div>
-${can || !G.loaded ? '' : `<div class="empty"><span><b>Connect an AI model to build from your words</b>Scenes are built by your own Anthropic or OpenAI account. The ready scenes below work without one.</span><button class="btn" id="sgSet">Open Settings</button></div>`}
+<div class="sgTl">${modelBtn()}<span class="sp"></span><button class="go" id="sgGo" aria-label="Build the scene">${SEND}</button>${modelMenu()}</div>
+${can || !G.loaded ? '' : `<div class="empty"><span><b>Connect an AI model to build from your words</b>Scenes are built by your own Anthropic, OpenAI or Devin account. The ready scenes below work without one.</span><button class="btn" id="sgSet">Open Settings</button></div>`}
 <div class="sec" id="sgLists"></div><div class="cft" id="sgFoot"></div><input type="file" id="sgFile" accept="image/*" hidden>`;
   const ta = document.getElementById('sgTa');
   const grow = () => { ta.style.height = 'auto'; ta.style.height = Math.min(180, ta.scrollHeight) + 'px'; };
@@ -353,9 +374,25 @@ function wire() {
   on('sgPh', () => document.getElementById('sgFile').click());
   const file = document.getElementById('sgFile');
   file.onchange = () => { if (file.files[0]) readPhoto(file.files[0]); };
+  // The model menu lives on the page, not in the box, so the box's edge never cuts it off.
+  document.querySelectorAll('body > #sgDd').forEach(n => n.remove());
   const mp = document.getElementById('sgMp'), dd = document.getElementById('sgDd');
-  if (mp && dd && !mp.classList.contains('flat')) mp.onclick = (ev) => { ev.stopPropagation(); const o = !dd.classList.contains('open'); dd.classList.toggle('open', o); mp.setAttribute('aria-expanded', o); };
-  card.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { G.model = b.dataset.m; draw(); });
+  if (!dd) return;
+  document.body.appendChild(dd);
+  if (mp && !mp.classList.contains('flat')) mp.onclick = (ev) => { ev.stopPropagation(); const o = !dd.classList.contains('open'); dd.classList.toggle('open', o); mp.setAttribute('aria-expanded', o); if (o) placeMenu(mp, dd); };
+  dd.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { G.model = b.dataset.m; draw(); });
+}
+// Opens under the model button when it fits, otherwise above it; never past the window's edge.
+function placeMenu(mp, dd) {
+  const r = mp.getBoundingClientRect(), pad = 8, gap = 4;
+  dd.style.maxHeight = '320px';
+  const h = Math.min(320, dd.scrollHeight + 2);
+  const below = innerHeight - r.bottom - gap - pad, above = r.top - gap - pad;
+  const down = h <= below || below >= above;
+  const room = Math.max(120, down ? below : above);
+  dd.style.maxHeight = Math.min(320, room) + 'px';
+  dd.style.left = Math.max(pad, Math.min(r.left, innerWidth - dd.offsetWidth - pad)) + 'px';
+  dd.style.top = (down ? r.bottom + gap : Math.max(pad, r.top - gap - Math.min(h, room))) + 'px';
 }
 // A photo dropped on the box, pasted, or chosen: made small enough to send (longest side 1600 px, JPEG).
 card.addEventListener('dragover', (ev) => { if (ev.dataTransfer && [...ev.dataTransfer.types].includes('Files')) { ev.preventDefault(); card.classList.add('over'); } });
@@ -498,10 +535,16 @@ const ic = (k, s = 16, c = 'currentColor', w = 1.75) => `<svg aria-hidden="true"
 const ring = (s = 16) => { const r = s / 2 - 1.5; return `<svg class="sgRing" style="width:${s}px;height:${s}px" viewBox="0 0 ${s} ${s}" aria-hidden="true"><circle cx="${s / 2}" cy="${s / 2}" r="${r}" fill="none" stroke="#DBE5FF" stroke-width="2"/><path d="M${s / 2} ${s / 2 - r}a${r} ${r} 0 0 1 ${r} ${r}" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/></svg>`; };
 const cap = (s) => String(s || '').replace(/^./, c => c.toUpperCase());
 const mmss = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
-const REST = () => `${SPARK}<span id="sgBarT">Describe a scene…</span><span class="k" aria-hidden="true">/</span>`;
+const REST = BAR_REST;
 
 // The panel is a few parts, each written again only when it changes, so the list keeps its
 // place, hover and animations while the build moves on.
+// The look check (lookcheck.py): a small picture of what the model last looked at, and its latest scores.
+function lookPart(b, body) {
+  const ls = (b.looks || []).slice(-4).reverse();
+  part('look', ls.length ? `<div class="look">${b.look_pic ? `<img src="${b.look_pic}" alt="What the AI looked at">` : ''}<ol>${ls.map(l =>
+    `<li><b>${e(cap(l.name))}</b><span class="sc${l.score >= 8 ? ' ok' : ''}">${l.score == null ? '–' : l.score + '/10'}</span>${l.problems && l.score < 8 ? `<span class="pr" title="${e(l.problems)}">${e(l.problems)}</span>` : ''}</li>`).join('')}</ol></div>` : null, body);
+}
 function part(name, html, where) {
   let n = prog.querySelector(`[data-part="${name}"]`);
   if (html == null) { if (n) n.remove(); delete G.panelKey[name]; return null; }
@@ -564,13 +607,13 @@ function drawProg(force = false) {
   const c = b.counts, placed = c.robots[0] + c.furniture[0] + c.objects[0], all = c.robots[1] + c.furniture[1] + c.objects[1];
   const mk = c.make || [0, 0];
   const title = b.title || (b.preset ? 'Ready scene' : 'Your scene');
-  barBusy(b, b.phase === 'pick' ? 'Choosing robots and objects' : b.phase === 'make' ? `Making objects for ${title}` : b.phase === 'plan' ? `Planning ${title}` : `Building ${title}`,
+  barBusy(b, b.phase === 'pick' ? 'Choosing robots and objects' : b.phase === 'make' ? `Making objects for ${title}` : b.phase === 'plan' ? `Planning ${title}` : b.phase === 'check' ? `Checking ${title}` : `Building ${title}`,
     ['robots', 'furniture', 'objects'].includes(b.phase) ? `${placed} of ${all}` : '');
   part('hd', `<div class="hd">${SPARK}<div class="tt"><b>${e(title)}</b><small>${e(b.model || (b.preset ? 'Ready-made scene' : 'The model'))} · ${mmss(b.elapsed || 0)}</small></div><button class="gb" data-stop="1">${ic('stop', 10)}Stop</button></div>`);
   part('q', b.prompt ? `<div class="q">“${e(b.prompt)}”</div>` : null);
   const ended = (b.making || []).filter(m => m.state === 'done' || m.state === 'failed').length;
   const pct = b.phase === 'pick' ? 4 + Math.min(10, (b.elapsed || 0) / 3) : b.phase === 'make' ? 15 + 25 * Math.max(Math.min(1, (b.elapsed || 0) / 300) * 0.5, ended / Math.max(1, mk[1]))
-    : b.phase === 'plan' ? (mk[1] ? 42 : 22) + Math.min(10, (b.quiet || 0) / 6) : 50 + 50 * placed / Math.max(1, all);
+    : b.phase === 'plan' ? (mk[1] ? 42 : 22) + Math.min(10, (b.quiet || 0) / 6) : b.phase === 'check' ? 96 : 50 + 46 * placed / Math.max(1, all);
   part('bar', `<div class="pbar"><i style="width:${Math.min(100, pct).toFixed(1)}%"></i></div>`);
   const body = part('body', '') || prog;
   body.className = 'body';
@@ -578,6 +621,7 @@ function drawProg(force = false) {
   const step = b.phase === 'pick' ? ['Choosing robots and objects', '']
     : b.phase === 'make' ? [`Making ${mk[1] === 1 ? 'an object' : `${mk[1]} objects`} our library doesn’t have`, `${ended} of ${mk[1]}`]
     : b.phase === 'plan' ? ['Planning where everything goes', '']
+    : b.phase === 'check' ? ['Looking at the whole scene and fixing what looks wrong', '']
     : ['Putting it all in place', `${placed} of ${all}`];
   part('step', `<div class="step">${ring(14)}${e(step[0])}<small>${step[1]}</small></div>`, body);
   // the strip of what it picked (skeletons while it picks)
@@ -589,7 +633,8 @@ function drawProg(force = false) {
     : tiles.length ? `<div class="strip">${tiles.map((t, i) => t.replace('class="tile', `style="animation-delay:${Math.min(i, 14) * 45}ms" class="tile`)).join('')}</div>` : null, body);
   const slow = (b.phase === 'pick' || b.phase === 'plan') && (b.quiet || 0) > 25;
   part('hint', slow ? `<p class="hint">Still working. Some models (like ChatGPT sign-ins) send their whole answer at the end, then it all appears at once.</p>` : null, body);
-  part('think', b.phase === 'make' && b.thought ? `<div class="think">${SPARK.replace('width="16" height="16"', 'width="12" height="12"')}<span>${e(b.thought)}…</span></div>` : null, body);
+  part('think', (b.phase === 'make' || b.phase === 'check') && b.thought ? `<div class="think">${SPARK.replace('width="16" height="16"', 'width="12" height="12"')}<span>${e(b.thought)}…</span></div>` : null, body);
+  lookPart(b, body);
   part('plan', b.plan ? `<p class="plan">${e(b.plan)}</p>` : null, body);
   part('cam', G.grabbed ? `<div class="cam">${ic('cam', 14, '#B45309')}<span>You moved the view, so the camera stopped following.</span><button data-follow="1">Follow</button></div>` : null, body);
   // the AI-made objects while they're made and tested, then every planned thing
@@ -607,21 +652,23 @@ function drawPhoto(b) {
   const c = b.counts, total = c.total || b.expected || 0;
   const name = b.title || 'Your photo';
   const rowsL = b.rows || [];
-  const at = ['look', 'measure', 'build', 'test', 'place'].indexOf(b.phase);
+  const at = ['look', 'measure', 'build', 'test', 'place', 'check'].indexOf(b.phase);
   const writing = b.phase === 'look' && b.steps > 0 && b.quiet > 40;   // Codex on a ChatGPT sign-in sends nothing while it writes
   const step = b.phase === 'look' ? [writing ? 'Writing the scene' : 'Looking at the photo', b.elapsed > 20 ? mmss(b.elapsed) : '']
     : b.phase === 'measure' ? ['Measuring sizes', ''] : b.phase === 'build' ? ['Building each object', `${c.built} of ${b.expected || '?'}`]
-    : b.phase === 'test' ? ['Testing each object in physics', `${c.tested} of ${total}`] : ['Putting it in your session', `${c.placed} of ${total - (b.skipped || []).length}`];
+    : b.phase === 'test' ? ['Testing each object in physics and how it looks', `${c.tested} of ${total}`]
+    : b.phase === 'check' ? ['Comparing the scene with your photo', ''] : ['Putting it in your session', `${c.placed} of ${total - (b.skipped || []).length}`];
   barBusy(b, `Building ${name.replace(/^./, x => x.toLowerCase())}`, step[1]);
   part('hd', `<div class="hd">${PHOTO(16).replace('currentColor', '#2563EB')}<div class="tt"><b>${e(name)}</b><small>${e(b.model || 'The model')} · ${mmss(b.elapsed || 0)}</small></div><button class="gb" data-stop="1">${ic('stop', 10)}Stop</button></div>`);
   part('photo', G.photoUrl ? `<div class="photo"><img src="${G.photoUrl}" alt="Your photo"></div>` : null);
-  const pct = [4 + Math.min(9, (b.elapsed || 0) / 60), 14, 20 + 40 * c.built / Math.max(1, b.expected || 1), 60 + 25 * c.tested / Math.max(1, total), 85 + 15 * c.placed / Math.max(1, total)][Math.max(0, at)];
+  const pct = [4 + Math.min(9, (b.elapsed || 0) / 60), 14, 20 + 40 * c.built / Math.max(1, b.expected || 1), 60 + 25 * c.tested / Math.max(1, total), 85 + 11 * c.placed / Math.max(1, total), 97][Math.max(0, at)];
   part('bar', `<div class="pbar"><i style="width:${Math.min(100, pct).toFixed(1)}%"></i></div>`);
   const body = part('body', '');
   body.className = 'body';
   part('step', `<div class="step">${ring(14)}${e(step[0])}<small>${step[1]}</small></div>`, body);
   part('q', b.note ? `<div class="q">“${e(b.note)}”</div>` : null, body);
   const heads = String(b.thinking || '').match(/\*\*([^*]+)\*\*/g);
+  lookPart(b, body);
   part('think', b.phase === 'look' || b.phase === 'measure' ? `<div class="think">${SPARK.replace('width="16" height="16"', 'width="12" height="12"')}<span>${e(heads ? heads[heads.length - 1].replace(/\*/g, '') + '…' : writing ? 'Writing its answer. Some models send it all at the end.' : 'Thinking…')}</span></div>` : null, body);
   part('cam', G.grabbed ? `<div class="cam">${ic('cam', 14, '#B45309')}<span>You moved the view, so the camera stopped following.</span><button data-follow="1">Follow</button></div>` : null, body);
   const ix = new Map((b.items || []).map((it, i) => [it.name, i]));
@@ -689,15 +736,21 @@ function ready(b) {
 function hideDone() { done.classList.remove('open', 'up'); nudge.classList.remove('open'); const ar = document.getElementById('addRobot'); if (ar) ar.classList.remove('sgPulse'); }
 
 // ------------------------------------------------ opening and closing
-bar.onclick = () => { if (!(G.build && G.build.active)) openCard(); };
+bar.onclick = async (ev) => {
+  if (G.build && G.build.active) return;
+  const photo = ev.target.closest && ev.target.closest('.ph');
+  await openCard();
+  if (photo) { const f = document.getElementById('sgFile'); if (f) f.click(); }   // the picture button: straight to choosing a photo
+};
 document.addEventListener('keydown', (ev) => {
   if (ev.key === 'Escape' && G.open) { const dd = document.getElementById('sgDd'); if (dd && dd.classList.contains('open')) { dd.classList.remove('open'); return; } closeCard(); return; }
   if (ev.key === '/' && !G.open && !/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '') && !document.activeElement.isContentEditable
       && document.body.classList.contains('freeplay') && !document.body.classList.contains('watch')) { ev.preventDefault(); openCard(); }
 });
+addEventListener('resize', () => { const dd = document.getElementById('sgDd'); if (dd) dd.classList.remove('open'); });
 document.addEventListener('click', (ev) => { const dd = document.getElementById('sgDd'); if (dd && dd.classList.contains('open') && !ev.target.closest('#sgDd')) dd.classList.remove('open'); });
 // A click on the 3D view (or anywhere outside the box) hides it again.
-document.addEventListener('pointerdown', (ev) => { if (G.open && !ev.target.closest('#sgCard,#sgBar')) closeCard(); }, true);
+document.addEventListener('pointerdown', (ev) => { if (G.open && !ev.target.closest('#sgCard,#sgBar,#sgDd')) closeCard(); }, true);
 // The play pill (a lock message) takes the top middle while it shows: the bar steps aside.
 const pill = document.getElementById('playpill');
 const sync = () => document.body.classList.toggle('sgHide', !!pill && !pill.classList.contains('none') && pill.innerHTML.trim() !== '' && !(G.build && G.build.active));
