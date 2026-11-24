@@ -94,6 +94,9 @@ class PlaygroundSim(Sim):
         self._burners: dict[str, dict] = {}           # each LIBERO station's stove burners (site ids)
         self._rooms: dict[str, tuple] = {}            # each LIBERO station's room frame as last built
         self.active_station = self.stations[0].uid if self.stations else None   # the station the page is looking at
+        # Who last moved each object (owner key, see _owner_key): "user" or a run's token. Reset
+        # only takes back what that robot's last run moved and nobody moved after it.
+        self.touched: dict[str, str] = {}
         super().__init__(robot=robot, **kw)
         self.paused = False                     # the world plays unless someone pauses it
         cam = mujoco.MjvCamera()
@@ -314,6 +317,133 @@ class PlaygroundSim(Sim):
             arm.reset_state()
             arm.motion = None
             mujoco.mj_forward(m, d)
+        return None
+
+    # ------------------------------------- the whole lab: what a robot's run changed
+    @staticmethod
+    def _jnt_size(t) -> tuple[int, int]:
+        if t == mujoco.mjtJoint.mjJNT_FREE:
+            return 7, 6
+        if t == mujoco.mjtJoint.mjJNT_BALL:
+            return 4, 3
+        return 1, 1
+
+    @staticmethod
+    def _owner_key(m, root: int) -> str:
+        """Which object a top-level body belongs to: a placed object's uid (its moving parts
+        included), or the body's own name (a LIBERO room's objects)."""
+        name = m.body(root).name or f"#{root}"
+        return name[4:].split("__")[0] if name.startswith("obj_") else name
+
+    def scene_snapshot(self) -> dict:
+        """Every joint in the lab that isn't a robot's (loose objects, their lids, doors and
+        drawers, LIBERO rooms' objects) as it is now, by name and by place, and which station's
+        table each object stands on."""
+        with self.lock:
+            m, d = self.m, self.d
+            bots = set()
+            for a in self.arms.values():
+                bots |= {int(m.body_rootid[b]) for b in a.bodies}
+            joints, where = [], {}
+            for j in range(m.njnt):
+                r = int(m.body_rootid[m.jnt_bodyid[j]])
+                if r == 0 or r in bots:
+                    continue
+                owner = self._owner_key(m, r)
+                nq, nv = self._jnt_size(m.jnt_type[j])
+                qa, va = int(m.jnt_qposadr[j]), int(m.jnt_dofadr[j])
+                joints.append({"name": m.joint(j).name, "type": int(m.jnt_type[j]), "qa": qa, "va": va,
+                               "q": d.qpos[qa:qa + nq].copy(), "owner": owner})
+                if owner not in where:
+                    x, y = float(d.xpos[r][0]), float(d.xpos[r][1])
+                    where[owner] = next((st.uid for st in self.stations if not st.bare and st.holds(x, y, 0.05)), None)
+            return {"ver": self._model_ver, "joints": joints, "where": where}
+
+    def _joint_now(self, j: dict):
+        """Where a snapshot's joint is in the lab now: (qpos address, dof address), or None if
+        it is gone (its object was deleted) or no longer fits."""
+        m = self.m
+        if not j["name"]:
+            return None
+        k = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, j["name"])
+        if k < 0 or int(m.jnt_type[k]) != j["type"]:
+            return None
+        return int(m.jnt_qposadr[k]), int(m.jnt_dofadr[k])
+
+    def scene_changes(self, before: dict) -> dict[str, str | None]:
+        """The objects that moved since the snapshot `before` (more than settling: 5 mm, 2
+        degrees), each with the station whose table it stood on then."""
+        moved = {}
+        with self.lock:
+            d, same = self.d, before["ver"] == self._model_ver
+            for j in before["joints"]:
+                if j["owner"] in moved:
+                    continue
+                at = (j["qa"], j["va"]) if same else self._joint_now(j)
+                if at is None:
+                    continue
+                t, q0 = j["type"], j["q"]
+                q = d.qpos[at[0]:at[0] + len(q0)]
+                if t == mujoco.mjtJoint.mjJNT_FREE:
+                    turned = 2 * math.degrees(math.acos(min(1.0, abs(float(np.dot(q[3:], q0[3:]))))))
+                    far = float(np.linalg.norm(q[:3] - q0[:3])) > 0.005 or turned > 2.0
+                elif t == mujoco.mjtJoint.mjJNT_BALL:
+                    far = 2 * math.degrees(math.acos(min(1.0, abs(float(np.dot(q, q0)))))) > 2.0
+                elif t == mujoco.mjtJoint.mjJNT_HINGE:
+                    far = abs(float(q[0] - q0[0])) > math.radians(2.0)
+                else:
+                    far = abs(float(q[0] - q0[0])) > 0.005
+                if far:
+                    moved[j["owner"]] = before["where"].get(j["owner"])
+        return moved
+
+    def mark_user_edits(self, pre: dict):
+        """After one of the user's edits (pre: scene_state from just before it): every object
+        it moved or turned is the user's now, so Reset leaves it where they put it."""
+        with self.lock:
+            self._sync_placed()
+            old = {p.uid: p for p in pre.get("placed") or []}
+            for p in self.placed:
+                o = old.get(p.uid)
+                if o is None:
+                    continue
+                moved = float(np.linalg.norm(np.subtract(p.pos, o.pos))) > 0.003 or abs(p.yaw - o.yaw) > 0.01
+                if not moved and p.quat is not None and o.quat is not None:
+                    moved = abs(float(np.dot(p.quat, o.quat))) < 0.99985     # about 2 degrees
+                if moved:
+                    self.touched[p.uid] = "user"
+
+    def undo_run(self, uid: str, before: dict, start: dict, owners: set[str]) -> str | None:
+        """Reset (the robot's menu): the objects in `owners` back to where they were in the lab
+        snapshot `before`, and this robot back to its pose in its station snapshot `start`.
+        Nothing else moves. An error in plain words, or None."""
+        st, arm = self.station(uid), self.arms.get(uid)
+        if st is None or arm is None:
+            return "This robot is no longer in the lab."
+        if start.get("robot") and st.robot != start["robot"]:
+            return "This robot was swapped since its last run, so there's nothing to go back to."
+        with self.lock:
+            m, d, same = self.m, self.d, before["ver"] == self._model_ver
+            for j in before["joints"]:
+                if j["owner"] not in owners:
+                    continue
+                at = (j["qa"], j["va"]) if same else self._joint_now(j)
+                if at is None:
+                    continue
+                nq, nv = self._jnt_size(j["type"])
+                if len(j["q"]) != nq:
+                    continue
+                d.qpos[at[0]:at[0] + nq] = j["q"]
+                d.qvel[at[1]:at[1] + nv] = 0.0
+            try:
+                arm.restore(start["arm"])
+            except (ValueError, KeyError, IndexError):
+                pass
+            arm.reset_state()
+            arm.motion = None
+            mujoco.mj_forward(m, d)
+            for o in owners:
+                self.touched.pop(o, None)
         return None
 
     def set_free(self):
