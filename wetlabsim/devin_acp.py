@@ -3,6 +3,10 @@ including its reasoning. (`devin -p` only prints the final answer, and its --exp
 written at exit.)
 
     python -m wetlabsim.devin_acp <workspace> <prompt> [--model M] [--mcp JSON]
+    python -m wetlabsim.devin_acp <workspace> - --prompt-file F [--image photo.jpg ...]
+
+(--prompt-file: the prompt from a file, for one too big to be a command argument; it goes to
+Devin over ACP. --image: pictures sent with it, as ACP image blocks.)
 
 Prints one JSON line per trace event on stdout:
     {"type": "_devin_acp", "kind": "thinks" | "says", "text": ...}
@@ -19,6 +23,7 @@ quiet for --idle-timeout seconds with no tool running, the turn is cancelled and
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
 import re
@@ -50,6 +55,8 @@ def main(argv=None):
     ap.add_argument("workspace")
     ap.add_argument("prompt")
     ap.add_argument("--model")
+    ap.add_argument("--prompt-file", help="read the prompt from this file (the prompt argument is then ignored)")
+    ap.add_argument("--image", action="append", default=[], help="a JPEG or PNG sent with the prompt")
     ap.add_argument("--mcp", default="[]", help="ACP mcpServers list as JSON")
     ap.add_argument("--deny", action="append", default=[], help="folder the agent may not touch")
     ap.add_argument("--idle-timeout", type=float, default=120,
@@ -220,8 +227,14 @@ def main(argv=None):
             "fs": {"readTextFile": False, "writeTextFile": False}, "terminal": False}})
         session[0] = request("session/new", {"cwd": workspace,
                                              "mcpServers": json.loads(args.mcp)})["sessionId"]
-        res = request("session/prompt", {"sessionId": session[0],
-                                         "prompt": [{"type": "text", "text": args.prompt}]})
+        text = open(args.prompt_file, encoding="utf-8").read() if args.prompt_file else args.prompt
+        blocks = [{"type": "text", "text": text}]
+        for f in args.image:
+            with open(f, "rb") as fh:
+                data = fh.read()
+            mime = "image/png" if data[:8] == b"\x89PNG\r\n\x1a\n" else "image/jpeg"
+            blocks.append({"type": "image", "mimeType": mime, "data": base64.b64encode(data).decode()})
+        res = request("session/prompt", {"sessionId": session[0], "prompt": blocks})
         flush()
         emit({"type": "_devin_acp", "kind": "end", "stop_reason": res.get("stopReason")})
         if stalled.is_set():

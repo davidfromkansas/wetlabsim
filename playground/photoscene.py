@@ -488,6 +488,16 @@ def _codex_modal_stream(model, prompt, imgs, login, effort, event, stopped):
             pass
 
 
+def _devin_stream(model, system, content, key, effort, on_think, on_text, stopped):
+    """Through Devin's CLI on the person's Devin key (scenegen.devin_answer), photos and all."""
+    prompt = system + "\n\n" + "\n\n".join(c["text"] for c in content if c["type"] == "text") + SG.DEVIN_TAIL
+    imgs = [base64.b64decode(c["source"]["data"]) for c in content if c["type"] == "image"]
+    text = SG.devin_answer(model, prompt, imgs, key, on_think, on_text, stopped, PHOTO_TIMEOUT)
+    if text:
+        on_text(text)
+    return text
+
+
 def ask_stream(model_id, content, public, effort, on_think, on_text, stopped, system: str | None = None) -> str:
     m = next((m for m in SG.SCENE_MODELS if m["id"] == model_id), None)
     if m is None:
@@ -498,6 +508,8 @@ def ask_stream(model_id, content, public, effort, on_think, on_text, stopped, sy
         raise ModelError(f"connect your {label} API key in Settings to use {m['label']}")
     if kind == "chatgpt":
         call = _codex_stream
+    elif m["provider"] == "cognition":
+        call = _devin_stream
     else:
         call = _anthropic_stream if m["provider"] == "anthropic" else _openai_stream
     return call(m["id"], system or SYSTEM, content, key, effort, on_think, on_text, stopped)

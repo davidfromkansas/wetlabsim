@@ -1676,7 +1676,7 @@ class PGHandler(Handler):
         if what == "photo":            # a scene from a photo (photoscene.py): AI-made objects, no robot
             model = str(b.get("model") or "")
             if model not in {m["id"] for m in SG.models(PUBLIC)}:
-                return self._json({"ok": False, "error": "Connect an Anthropic or OpenAI account in Settings to build a scene."})
+                return self._json({"ok": False, "error": "Connect an Anthropic, OpenAI or Devin account in Settings to build a scene."})
             if self._busy():
                 return self._json({"ok": False, "error": "A robot is working on a task. Stop it first to build a scene."})
             if cur is not None and cur.status()["active"]:
@@ -1706,7 +1706,7 @@ class PGHandler(Handler):
             return self._json({"ok": True, "build": build.status()})
         model = str(b.get("model") or "")
         if model not in {m["id"] for m in SG.models(PUBLIC)}:
-            return self._json({"ok": False, "error": "Connect an Anthropic or OpenAI API key in Settings to build a scene."})
+            return self._json({"ok": False, "error": "Connect an Anthropic, OpenAI or Devin account in Settings to build a scene."})
         prompt = str(b.get("prompt") or "").strip()[:2000]
         if not prompt:
             return self._json({"ok": False, "error": "describe the scene first"})
