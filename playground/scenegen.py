@@ -1133,7 +1133,8 @@ class Build:
                 "quiet": round(time.time() - self.last_heard, 1),
                 "elapsed": round(time.time() - self.started, 1),
                 "model": next((m["label"] for m in SCENE_MODELS if m["id"] == self.model_id), ""),
-                "active": self.phase in ("pick", "make", "plan", "robots", "furniture", "objects")}
+                "looks": getattr(self, "looks", [])[-8:], "look_pic": getattr(self, "look_pic", ""),
+                "active": self.phase in ("pick", "make", "plan", "robots", "furniture", "objects", "check")}
 
     def start(self):
         threading.Thread(target=self._run, daemon=True, name="scene-build").start()
@@ -1217,6 +1218,9 @@ class Build:
                 self._mark(n, "ok" if self._place_object(o, off, fixed_uids) else "bad")
                 n += 1
             self.now = ""
+            self._look_scene()
+            if self.stop:
+                return self._end("stopped")
             if self.stations and self.task:
                 for u in self.stations:
                     self.sess.unsent[u] = {"task": self.task, "model": ""}
@@ -1230,6 +1234,15 @@ class Build:
             s.zone = []
             if was_playing and self.phase not in ("make", "plan"):
                 s.play()
+
+    def _look_scene(self):
+        """Level 2 of the look check (lookcheck.look_scene): the built scene drawn, scored against
+        the request and edited. Not for ready-made scenes or without a model."""
+        from . import lookcheck as LC
+        if not LC.LOOK or self.preset or not self.model_id:
+            return
+        self.phase = "check"
+        LC.look_scene(self, list(self.objects), [i["id"] for i in self.pick["items"]])
 
     # -------------------------------------------------- objects the library lacks, made by the model
     def _make_missing(self):
@@ -1304,14 +1317,16 @@ class Build:
         elif s.strip() and not self.thought:
             self.thought = s.strip().splitlines()[0][:80]
 
-    def _ask(self, text: str, effort: str, on_text=None) -> str:
-        """One streamed answer from the scene's model (photoscene.ask_stream), with MAKE_SYSTEM."""
+    def _ask(self, text: str, effort: str, on_text=None, images=()) -> str:
+        """One streamed answer from the scene's model (photoscene.ask_stream), with MAKE_SYSTEM;
+        `images`: pictures after the words (lookcheck.images)."""
+        from . import lookcheck as LC
         from . import photoscene as PS
         if fake():
-            ans = fake_make(text)
+            ans = LC.fake_look(text) if images else fake_make(text)
         else:
-            ans = PS.ask_stream(self.model_id, [{"type": "text", "text": text}], self.public, effort, self._think,
-                                on_text or (lambda t: None), lambda: self.stop, system=MAKE_SYSTEM)
+            ans = PS.ask_stream(self.model_id, [{"type": "text", "text": text}] + list(images), self.public, effort,
+                                self._think, on_text or (lambda t: None), lambda: self.stop, system=MAKE_SYSTEM)
         self.answers.append(f"===== asked: {text[:200]}\n\n{ans}")
         fix = re.match(r'Your object "([^"]*)"', text)
         if fix:                          # a fixed version is back: it goes through the physics test again
