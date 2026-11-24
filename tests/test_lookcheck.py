@@ -260,3 +260,70 @@ def test_a_height_aims_at_the_surface_under_a_shelf(monkeypatch):
     s.ray_up = 0.1                                   # too low to fit under
     assert LC._spot(s, "mug", 0.1, 0.2, 0.0, z=76) is None
     assert LC._spot(s, "mug", 0.1, 0.2, 0.0, z="x") is None
+
+
+# A workbench: a worktop 90 cm up, a pegboard along its +y edge, a shelf on it at 125 cm over the
+# back of the worktop.
+BENCH = ('<object name="Workbench" kind="furniture" x="0" y="0" z="0" yaw="0"><mujoco><worldbody><body name="b">'
+         '<geom type="box" size="0.6 0.3 0.02" pos="0 0 0.88" rgba="0.6 0.4 0.2 1" mass="30"/>'
+         '<geom type="box" size="0.03 0.03 0.43" pos="-0.55 -0.25 0.43" rgba="0.3 0.3 0.3 1" mass="2"/>'
+         '<geom type="box" size="0.03 0.03 0.43" pos="0.55 -0.25 0.43" rgba="0.3 0.3 0.3 1" mass="2"/>'
+         '<geom type="box" size="0.03 0.03 0.43" pos="-0.55 0.25 0.43" rgba="0.3 0.3 0.3 1" mass="2"/>'
+         '<geom type="box" size="0.03 0.03 0.43" pos="0.55 0.25 0.43" rgba="0.3 0.3 0.3 1" mass="2"/>'
+         '<geom type="box" size="0.6 0.01 0.4" pos="0 0.29 1.3" rgba="0.5 0.5 0.5 1" mass="5"/>'
+         '<geom type="box" size="0.6 0.1 0.01" pos="0 0.18 1.25" rgba="0.5 0.5 0.5 1" mass="3"/>'
+         '</body></worldbody></mujoco></object>')
+
+
+def _bench_sim():
+    o = PS.parse_scene(BENCH)[1][0]
+    xml = AI.clean(o["xml"])
+    size, frame, mass = AI.measure(xml)
+    item = AI.register(o["name"], xml, True, size, frame, mass)
+    sim = PlaygroundSim(stations=[])
+    sim.pause()
+    uid = sim.add(item, (0.0, 0.0, 0.0), 0.0)
+    return sim, sim.find(uid)
+
+
+def test_the_worktop_is_measured_under_its_shelf():
+    sim, p = _bench_sim()
+    assert abs(SG.worktop(sim, p) - 0.90) < 0.02           # not the shelf (1.26) or the pegboard top
+    op = SG.open_sides(sim, p, SG.worktop(sim, p))
+    assert op["+y"] < 0.2 and op["-y"] > 0.8                 # the pegboard side is shut, the front open
+
+
+def test_a_robot_behind_the_pegboard_goes_to_the_open_front():
+    sim, p = _bench_sim()
+    pick = SG.clean_pick({"title": "Bench", "robots": [{"robot": "franka", "count": 1}], "items": []})
+    b = SG.Build(sim, type("S", (), {"unsent": {}})(), "a watchmaker's bench", pick, "claude-fable-5-2", False)
+    wt = SG.worktop(sim, p)
+    x, y = b._open_front({"robot": "franka"}, p, wt, 0.1, 0.62, 0)
+    assert abs(x - 0.1) < 1e-6 and abs(y + 0.62) < 1e-6 and b.flip == {0: "y"}
+    x, y = b._open_front({"robot": "franka"}, p, wt, 0.1, -0.62, 1)   # already at the front: stays
+    assert abs(y + 0.62) < 1e-6 and 1 not in b.flip
+
+
+def test_things_for_the_bench_go_on_its_worktop_not_the_shelf():
+    sim, p = _bench_sim()
+    pick = SG.clean_pick({"title": "Bench", "robots": [{"robot": "franka", "count": 1}], "items": []})
+    b = SG.Build(sim, type("S", (), {"unsent": {}})(), "a watchmaker's bench", pick, "claude-fable-5-2", False)
+    _, box = _registered(BOX.format(w=0.06))
+    o = {"item": box["item"], "on": "furniture", "furniture": 0, "dx": 0.0, "dy": 0.18, "yaw": 0.0}   # under the shelf
+    uid = b._place_object(o, (0.0, 0.0), [p.uid])
+    assert uid and abs(sim.find(uid).pos[2] - 0.90) < 0.02
+
+
+def test_edits_left_out_say_why_and_the_next_round_hears_it(monkeypatch):
+    sim, b = _fake_scene(monkeypatch)
+    asked = []
+    answers = ['SCORE: 5/10\nx\n```json\n{"edits": [{"do": "move", "id": "r1", "x": 0, "y": 0},'
+               '{"do": "move", "id": "o1", "x": 0, "y": 0, "z": 150}]}\n```', "SCORE: 6/10\nbetter",
+               "SCORE: 6/10\nok"]
+
+    def ask(text, effort, on_text=None, images=()):
+        asked.append(text)
+        return answers.pop(0)
+    b._ask = ask
+    LC.look_scene(b, list(b.objects), ["mug"])
+    assert "robot can't be moved" in asked[1] and "o1" in asked[1]

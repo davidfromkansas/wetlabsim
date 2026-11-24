@@ -1027,6 +1027,60 @@ def _rot(x: float, y: float, yaw: float):
     return c * x - s * y, s * x + c * y
 
 
+def _own_hit(s, p, p0, d):
+    """How far a ray goes before it meets the placed furniture `p` (None if it doesn't)."""
+    dist, body = s._ray(p0, d)
+    return dist if dist is not None and s._owner(body) == ("object", p.uid) else None
+
+
+def worktop(s, p) -> float:
+    """The height of a piece of furniture's main working surface, measured from its shape: rays
+    dropped over its top, and the height most of them land on (a workbench's worktop, not the
+    narrow shelf above it). The catalog's own number (catalog.WORKTOP) wins where there is one."""
+    if p.item in catalog.WORKTOP:
+        return float(catalog.WORKTOP[p.item])
+    sx, sy, sz = catalog.meta(p.item)["size"]
+    top = p.pos[2] + sz + 0.2
+    hits = []
+    for i in range(9):
+        for j in range(9):
+            lx, ly = sx * 0.4 * (i / 4 - 1), sy * 0.4 * (j / 4 - 1)
+            wx, wy = _rot(lx, ly, p.yaw)
+            dist = _own_hit(s, p, (p.pos[0] + wx, p.pos[1] + wy, top), (0, 0, -1.0))
+            if dist is not None and top - dist > p.pos[2] + 0.2:
+                hits.append(top - dist)
+    if len(hits) < 10:
+        return float(W.table_top(p.item))
+    bins: dict[int, list] = {}
+    for z in hits:
+        bins.setdefault(round(z / 0.02), []).append(z)
+    best = max(bins.values(), key=len)
+    return float(sum(best) / len(best))
+
+
+def open_sides(s, p, z: float) -> dict:
+    """How open each side of a piece of furniture is just above its worktop (height z): rays sent
+    in level from each side ("+x", "-x", "+y", "-y" in its own frame), and how far across it they
+    get, as a share of its depth (1: clear across; 0: a back panel or pegboard right at its edge)."""
+    sx, sy, _ = catalog.meta(p.item)["size"]
+    out = {}
+    for side, (ax, sign) in {"+x": (0, 1), "-x": (0, -1), "+y": (1, 1), "-y": (1, -1)}.items():
+        depth, width = (sx, sy) if ax == 0 else (sy, sx)
+        got = []
+        for h in (0.08, 0.25):
+            for f in (-0.3, 0.0, 0.3):
+                start = depth / 2 + 0.3
+                lx, ly = (sign * start, f * width) if ax == 0 else (f * width, sign * start)
+                dx, dy = (-sign, 0.0) if ax == 0 else (0.0, -sign)
+                wx, wy = _rot(lx, ly, p.yaw)
+                wdx, wdy = _rot(dx, dy, p.yaw)
+                dist = _own_hit(s, p, (p.pos[0] + wx, p.pos[1] + wy, z + h), (wdx, wdy, 0.0))
+                into = depth if dist is None else max(0.0, dist - 0.3)
+                got.append(min(1.0, into / depth))
+        out[side] = sum(got) / len(got)
+    return out
+
+
 def _station_rect(kind: str, robot: str, x: float, y: float, yaw: float):
     if kind == "bare":                 # a robot with no table: about its base
         return x - 0.3, y - 0.3, x + 0.3, y + 0.3
@@ -1086,6 +1140,7 @@ class Build:
         # plan (shown as an outline), now (being placed), ok (it landed), bad (it didn't fit)}.
         self.items: list[dict] = []
         self.at_uid: dict[int, str] = {}  # furniture index -> the robot with no table that works at it
+        self.flip: dict[int, str] = {}    # furniture index -> "x"/"y": its robot moved to the open side
         self.shown = 0                # how many of them are outlined yet (they appear one by one)
         self.hl = -1                  # the one the person points at in the build's list
         self.names = {}
@@ -1572,6 +1627,9 @@ class Build:
         s = self.sim
         at = st.get("at", -1)
         p = s.find(fixed_uids[at]) if 0 <= at < len(fixed_uids) and fixed_uids[at] else None
+        wt = None if p is None else W.table_top(p.item) if self.preset else worktop(s, p)
+        if p is not None and not st.get("up") and not self.preset:
+            x, y = self._open_front(st, p, wt, x, y, at)
         spot = None
         for dx, dy in _spiral(0.08, 8):
             sp = s.robot_spot(st["robot"], x + dx, y + dy, yaw)
@@ -1593,11 +1651,37 @@ class Build:
             if not st.get("up") and made.liftable and made.ground < W.STAND_MIN:
                 # an arm beside the furniture: its stand reaches up to the worktop it works at
                 # (not the stand height an arm put down on the floor gets)
-                s.place_robot(uid, z=W.table_top(p.item))
+                s.place_robot(uid, z=wt)
         title = self.pick["title"]
         s.rename_station(uid, title if n == 1 else f"{title} {k + 1}")
         self.stations.append(uid)
         self.counts["robots"][0] += 1
+
+    def _open_front(self, st, p, wt, x, y, at):
+        """A robot beside furniture works from its open side: if the model stood it behind a back
+        panel or pegboard (measured, open_sides) and the far side is open, it goes to the same spot
+        on the far side, and the things put on that furniture are mirrored with it."""
+        c, sn = math.cos(p.yaw), math.sin(p.yaw)
+        lx, ly = c * (x - p.pos[0]) + sn * (y - p.pos[1]), -sn * (x - p.pos[0]) + c * (y - p.pos[1])
+        sx, sy, _ = catalog.meta(p.item)["size"]
+        ax = "x" if abs(lx) / sx >= abs(ly) / sy else "y"
+        mine = ("+" if (lx if ax == "x" else ly) >= 0 else "-") + ax
+        far = ("-" if mine[0] == "+" else "+") + ax
+        try:
+            op = open_sides(self.sim, p, wt)
+        except Exception as ex:  # noqa: BLE001     no measure: leave it where the model put it
+            print("scene: couldn't measure the furniture's sides:", ex)
+            return x, y
+        if op[mine] >= 0.3 or op[far] < 0.6:
+            return x, y
+        if ax == "x":
+            lx = -lx
+        else:
+            ly = -ly
+        self.flip[at] = ax
+        print(f"scene: {st['robot']} moved to the open {far} side of {p.item} "
+              f"(open {op[mine]:.2f} where the model put it, {op[far]:.2f} there)")
+        return p.pos[0] + c * lx - sn * ly, p.pos[1] + sn * lx + c * ly
 
     def _place_furniture(self, f, off):
         s = self.sim
@@ -1650,13 +1734,33 @@ class Build:
             p = s.find(fixed_uids[o["furniture"]])
             if p is None:
                 return self._skip(it)
+            from . import lookcheck as LC
             want = catalog.item(p.item)["label"]
             bx, by = p.pos[0], p.pos[1]
+            odx, ody = o["dx"], o["dy"]
+            ax = self.flip.get(o["furniture"])
+            if ax == "x":
+                odx = -odx
+            elif ax == "y":
+                ody = -ody
+            # on its worktop first (with room above: not on a shelf over it), then anywhere on it
+            wt = None if self.preset else worktop(s, p)
             for dx, dy in _spiral(0.04, 8):
-                ddx, ddy = _rot(o["dx"] + dx, o["dy"] + dy, p.yaw)
+                ddx, ddy = _rot(odx + dx, ody + dy, p.yaw)
+                if wt is not None:
+                    spot = LC._spot(s, it, bx + ddx, by + ddy, yaw, z=100 * wt)
+                    if spot and spot["surface"] == want:
+                        return self._add(it, spot, yaw)
+                    continue
                 spot = s.support(it, bx + ddx, by + ddy, yaw)
                 if spot["valid"] and (spot["level"] or o.get("overhang")) and spot["surface"] == want:
                     return self._add(it, spot, yaw)
+            if wt is not None:
+                for dx, dy in _spiral(0.04, 8):
+                    ddx, ddy = _rot(odx + dx, ody + dy, p.yaw)
+                    spot = s.support(it, bx + ddx, by + ddy, yaw)
+                    if spot["valid"] and spot["level"] and spot["surface"] == want:
+                        return self._add(it, spot, yaw)
             return self._skip(it)
         # the floor (or a furniture piece that wasn't placed: next to the scene's first table)
         x, y = o["x"] + off[0], o["y"] + off[1]

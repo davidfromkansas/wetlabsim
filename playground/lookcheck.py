@@ -299,6 +299,7 @@ def look_scene(b, focus_uids: list[str], addable: list[str]) -> None:
     s = b.sim
     before = None
     snap, snap_objects = None, list(b.objects)
+    dropped: list[str] = []
     for rnd in range(SCENE_ROUNDS + 1):
         if b.stop:
             return
@@ -318,6 +319,9 @@ def look_scene(b, focus_uids: list[str], addable: list[str]) -> None:
                                  objects=_lines(b, "object", ids, mid) or "(none)",
                                  addable=", ".join(addable[:40]) or "(none)",
                                  tail=SCORE_TAIL if last else EDIT_TAIL.format(good=GOOD, n=MAX_EDITS))
+        if dropped:
+            text += ("\n\nLast round, these edits didn't fit and weren't made:\n"
+                     + "\n".join(f"- {w}" for w in dropped[:MAX_EDITS]))
         b._think("\n\n**Looking at the whole scene**")
         try:
             ans = b._ask(text, "medium", images=images(pics))
@@ -340,8 +344,10 @@ def look_scene(b, focus_uids: list[str], addable: list[str]) -> None:
         if not edits:
             return
         before, snap, snap_objects = score, s.scene_state(), list(b.objects)
-        done = apply_edits(b, edits, ids, mid, set(addable))
-        b._think(f"\n\n**Changed the scene** ({done} of {len(edits)} edits fit), scored {score}/10 before")
+        dropped = []
+        done = apply_edits(b, edits, ids, mid, set(addable), dropped)
+        b._think(f"\n\n**Changed the scene** ({done} of {len(edits)} edits fit), scored {score}/10 before"
+                 + "".join(f"\n- left out: {w}" for w in dropped))
         if not done:
             return
         focus_uids = [u for u in focus_uids if s.find(u) is not None] + \
@@ -370,7 +376,16 @@ def _describe(b, uids):
         else:
             no += 1
             key = f"o{no}"
-        label = it["label"] + (f", {100 * catalog.meta(p.item)['size'][2]:.0f} cm tall" if it["fixed"] else "")
+        label = it["label"]
+        if it["fixed"]:
+            label += f", {100 * catalog.meta(p.item)['size'][2]:.0f} cm tall"
+            try:
+                from . import scenegen as SG
+                wt = SG.worktop(s, p)
+                if abs(wt - catalog.meta(p.item)["size"][2]) > 0.03:
+                    label += f", its worktop at z {100 * wt:.0f}"
+            except Exception:  # noqa: BLE001
+                pass
         out[key] = {"uid": u, "kind": "furniture" if it["fixed"] else "object", "label": label,
                     "at": (float(p.pos[0]), float(p.pos[1])), "z": float(p.pos[2]), "yaw": float(p.yaw)}
     pts = [v["at"] for v in out.values()] or [(0.0, 0.0)]
@@ -416,15 +431,24 @@ def _spot(s, item, x, y, yaw, z=None, uid=None) -> dict | None:
     """Where `item` lands with its middle over (x, y): the drop check (sim.support), on the
     highest surface there, or with `z` (cm) on the surface at about that height, with room above
     it for the item (a worktop under a shelf). None if it doesn't fit, or not level."""
+    return _fit(s, item, x, y, yaw, z, uid)[0]
+
+
+def _fit(s, item, x, y, yaw, z=None, uid=None) -> tuple:
+    """_spot, and in plain words why it doesn't fit when it doesn't."""
     top = 3.0
     if z is not None:
         top = _num(z, -1) / 100 + 0.04
         if top <= 0.02:
-            return None
+            return None, "the surface height z wasn't a height above the floor"
     spot = s.support(item, x, y, yaw, top=top, exclude_uid=uid)
-    if not (spot["valid"] and spot["level"]):
-        return None
+    if not spot["valid"]:
+        return None, spot["reason"] or "something is in the way there"
+    if not spot["level"]:
+        return None, f"it would stand tilted there, half on {spot.get('surface', 'two things')}"
     if z is not None:
+        if spot.get("surface") == "the floor" and _num(z, 0) > 5:
+            return None, f"there is no surface at z {_num(z, 0):.0f} cm there, only the floor"
         h = float(catalog.meta(item)["size"][2])
         bottom = spot["pos"][2]
         excl = -1
@@ -433,15 +457,22 @@ def _spot(s, item, x, y, yaw, z=None, uid=None) -> dict | None:
                 excl = s.m.body(f"obj_{uid}").id
         dist, _ = s._ray((x, y, bottom + 0.005), (0, 0, 1.0), excl)
         if dist is not None and dist < h:
-            return None                      # no room under what is above it
-    return spot
+            return None, (f"no room: it is {100 * h:.0f} cm tall and there are only "
+                          f"{100 * dist:.0f} cm under what is above it")
+    return spot, ""
 
 
-def apply_edits(b, edits, ids, mid, addable: set) -> int:
+def apply_edits(b, edits, ids, mid, addable: set, why: list | None = None) -> int:
     """The model's edits, each put down with the drop check (sim.support) or left out. Robots and
-    furniture never move. Returns how many fit."""
+    furniture never move. Returns how many fit; `why` gets a line for each one left out."""
     s = b.sim
     done = 0
+    why = [] if why is None else why
+
+    def no(e, reason):
+        line = f"{e.get('do')} {e.get('id') or e.get('item') or ''}: {reason}"
+        why.append(line)
+        print("look check: an edit didn't fit:", line)
     for e in edits:
         if b.stop:
             break
@@ -449,17 +480,24 @@ def apply_edits(b, edits, ids, mid, addable: set) -> int:
             if e["do"] == "add":
                 item = str(e.get("item") or "")
                 if item not in addable:
+                    no(e, "only objects already in this scene can be added")
                     continue
                 x, y = mid[0] + _num(e.get("x")) / 100, mid[1] + _num(e.get("y")) / 100
                 yaw = math.radians(_num(e.get("deg")))
-                spot = _spot(s, item, x, y, yaw, e.get("z"))
+                spot, r = _fit(s, item, x, y, yaw, e.get("z"))
                 if spot:
                     uid = s.add(item, spot["pos"], yaw)
                     b.objects.append(uid)
                     done += 1
+                else:
+                    no(e, r)
                 continue
             v = ids.get(str(e.get("id") or ""))
-            if v is None or v["kind"] != "object" or s.find(v["uid"]) is None:
+            if v is None or s.find(v["uid"]) is None:
+                no(e, "no such id in the list")
+                continue
+            if v["kind"] != "object":
+                no(e, f"a {v['kind']} can't be moved or removed, only loose objects")
                 continue
             uid = v["uid"]
             if e["do"] == "remove":
@@ -475,12 +513,14 @@ def apply_edits(b, edits, ids, mid, addable: set) -> int:
             else:                                   # turn, where it stands
                 cx, cy, _ = s.obj_at(uid)
                 x, y, yaw = cx, cy, math.radians(_num(e.get("deg")))
-            spot = _spot(s, p.item, x, y, yaw, e.get("z") if e["do"] == "move" else None, uid)
+            spot, r = _fit(s, p.item, x, y, yaw, e.get("z") if e["do"] == "move" else None, uid)
             if spot:
                 s.move(uid, spot["pos"], yaw)
                 done += 1
+            else:
+                no(e, r)
         except Exception as ex:  # noqa: BLE001     one edit that doesn't fit is left out
-            print("look check: an edit didn't fit:", e, ex)
+            no(e, f"error: {ex}")
     return done
 
 
