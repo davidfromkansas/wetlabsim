@@ -395,16 +395,27 @@ CONTAINER = re.compile(r"\b(beaker|cup|mug|bowl|bin|tray|basket|bucket|pot|pan|s
                        r"vase|planter|colander|dish)s?\b", re.I)
 
 
-def _world(id_: str, fixed: bool, pos=(0.0, 0.0, 0.001), floor: bool = True, extra: str = ""):
+# A floor with 10 cm squares and plain light, for pictures of an object (lookcheck.py).
+GRID = ('<asset><texture name="grid" type="2d" builtin="checker" rgb1=".78 .78 .76" rgb2=".6 .6 .58" '
+        'width="256" height="256"/><material name="grid" texture="grid" texrepeat="5 5" texuniform="true" '
+        'specular="0" reflectance="0"/><texture type="skybox" builtin="gradient" rgb1=".93 .94 .96" '
+        'rgb2=".8 .82 .86" width="64" height="64"/></asset><visual><global offwidth="1024" offheight="1024"/>'
+        '<headlight ambient=".3 .3 .3" diffuse=".35 .35 .35" specular="0 0 0"/></visual>')
+
+
+def _world(id_: str, fixed: bool, pos=(0.0, 0.0, 0.001), floor: bool = True, extra: str = "", grid: bool = False):
     """A test world: the object put in as the playground puts it (world._add_mjcf), plus `extra`
-    (MJCF worldbody/actuator text). Returns (model, data, root body id, the object's body ids)."""
+    (MJCF worldbody/actuator text); `grid`: the floor drawn in 10 cm squares, lit for pictures.
+    Returns (model, data, root body id, the object's body ids)."""
     from . import settings as ST
     from . import world as W
     wb, act = (extra.split("<!--actuators-->") + [""])[:2]
     spec = mujoco.MjSpec.from_string(
         '<mujoco><compiler angle="radian" autolimits="true"/>'
-        f'<option {W._xml_attrs(ST.option_attrs(W.OPTION, {}))}/>'
-        '<worldbody>' + ('<geom name="floor" type="plane" size="5 5 0.1"/>' if floor else "") + wb +
+        f'<option {W._xml_attrs(ST.option_attrs(W.OPTION, {}))}/>' + (GRID if grid else "") +
+        '<worldbody>' + ('<geom name="floor" type="plane" size="5 5 0.1"' + (' material="grid"' if grid else "")
+                         + '/>' if floor else "") +
+        ('<light pos="1 -1 3" dir="-.3 .5 -1" directional="true" diffuse=".45 .45 .45" specular="0 0 0"/>' if grid else "") + wb +
         '</worldbody>' + (f"<actuator>{act}</actuator>" if act.strip() else "") + '</mujoco>')
     W._add_mjcf(spec, W.Placed("t", id_, tuple(pos), 0.0), meta(id_), fixed)
     with warnings.catch_warnings():
