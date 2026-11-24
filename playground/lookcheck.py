@@ -281,14 +281,16 @@ EDIT_TAIL = """If the score is {good} or more, stop there. Otherwise end with th
 and nothing after it:
 ```json
 {{"edits": [
-  {{"do": "move", "id": "o3", "x": 12, "y": -40}},
+  {{"do": "move", "id": "o3", "x": 12, "y": -40, "z": 76}},
   {{"do": "turn", "id": "o3", "deg": 90}},
   {{"do": "remove", "id": "o5"}},
   {{"do": "add", "item": "<a library id from the list>", "x": 30, "y": 5, "deg": 0}}
 ]}}
 ```
-"move" puts an object's middle at (x, y) on whatever surface is there; "turn" turns it to face deg \
-(0 = its front towards -y, counter-clockwise from above)."""
+"move" puts an object's middle at (x, y) on a surface there; "z" (optional, cm) is the height of the \
+surface you mean, such as a worktop under a shelf or a robot's table top: without it the object lands \
+on the highest surface at (x, y). "add" takes "z" too. "turn" turns an object where it stands to face \
+deg (0 = its front towards -y, counter-clockwise from above)."""
 
 
 def look_scene(b, focus_uids: list[str], addable: list[str]) -> None:
@@ -353,7 +355,8 @@ def _describe(b, uids):
     for k, u in enumerate(b.stations, 1):
         st = s.station(u)
         if st is not None:
-            out[f"r{k}"] = {"uid": u, "kind": "robot", "label": f"{st.name} ({st.robot})", "at": tuple(st.pos[:2]),
+            top = "" if st.bare else f", its table top at z {100 * st.top:.0f}"
+            out[f"r{k}"] = {"uid": u, "kind": "robot", "label": f"{st.name} ({st.robot}){top}", "at": tuple(st.pos[:2]),
                             "z": 0.0}
     nf = no = 0
     for u in uids:
@@ -367,7 +370,8 @@ def _describe(b, uids):
         else:
             no += 1
             key = f"o{no}"
-        out[key] = {"uid": u, "kind": "furniture" if it["fixed"] else "object", "label": it["label"],
+        label = it["label"] + (f", {100 * catalog.meta(p.item)['size'][2]:.0f} cm tall" if it["fixed"] else "")
+        out[key] = {"uid": u, "kind": "furniture" if it["fixed"] else "object", "label": label,
                     "at": (float(p.pos[0]), float(p.pos[1])), "z": float(p.pos[2]), "yaw": float(p.yaw)}
     pts = [v["at"] for v in out.values()] or [(0.0, 0.0)]
     mid = ((min(p[0] for p in pts) + max(p[0] for p in pts)) / 2, (min(p[1] for p in pts) + max(p[1] for p in pts)) / 2)
@@ -408,6 +412,31 @@ def _num(v, d=0.0) -> float:
         return d
 
 
+def _spot(s, item, x, y, yaw, z=None, uid=None) -> dict | None:
+    """Where `item` lands with its middle over (x, y): the drop check (sim.support), on the
+    highest surface there, or with `z` (cm) on the surface at about that height, with room above
+    it for the item (a worktop under a shelf). None if it doesn't fit, or not level."""
+    top = 3.0
+    if z is not None:
+        top = _num(z, -1) / 100 + 0.04
+        if top <= 0.02:
+            return None
+    spot = s.support(item, x, y, yaw, top=top, exclude_uid=uid)
+    if not (spot["valid"] and spot["level"]):
+        return None
+    if z is not None:
+        h = float(catalog.meta(item)["size"][2])
+        bottom = spot["pos"][2]
+        excl = -1
+        if uid:
+            with s.lock:
+                excl = s.m.body(f"obj_{uid}").id
+        dist, _ = s._ray((x, y, bottom + 0.005), (0, 0, 1.0), excl)
+        if dist is not None and dist < h:
+            return None                      # no room under what is above it
+    return spot
+
+
 def apply_edits(b, edits, ids, mid, addable: set) -> int:
     """The model's edits, each put down with the drop check (sim.support) or left out. Robots and
     furniture never move. Returns how many fit."""
@@ -423,8 +452,8 @@ def apply_edits(b, edits, ids, mid, addable: set) -> int:
                     continue
                 x, y = mid[0] + _num(e.get("x")) / 100, mid[1] + _num(e.get("y")) / 100
                 yaw = math.radians(_num(e.get("deg")))
-                spot = s.support(item, x, y, yaw)
-                if spot["valid"] and spot["level"]:
+                spot = _spot(s, item, x, y, yaw, e.get("z"))
+                if spot:
                     uid = s.add(item, spot["pos"], yaw)
                     b.objects.append(uid)
                     done += 1
@@ -446,8 +475,8 @@ def apply_edits(b, edits, ids, mid, addable: set) -> int:
             else:                                   # turn, where it stands
                 cx, cy, _ = s.obj_at(uid)
                 x, y, yaw = cx, cy, math.radians(_num(e.get("deg")))
-            spot = s.support(p.item, x, y, yaw, exclude_uid=uid)
-            if spot["valid"] and spot["level"]:
+            spot = _spot(s, p.item, x, y, yaw, e.get("z") if e["do"] == "move" else None, uid)
+            if spot:
                 s.move(uid, spot["pos"], yaw)
                 done += 1
         except Exception as ex:  # noqa: BLE001     one edit that doesn't fit is left out

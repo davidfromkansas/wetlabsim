@@ -236,3 +236,27 @@ def test_pictures_reach_devin(monkeypatch, key):
     PS.ask_stream("swe-2-max", [{"type": "text", "text": "look"}, PIC], True, "medium",
                   lambda t: None, lambda t: None, lambda: False)
     assert got["images"] == [b"\xff\xd8jpg"]
+
+
+def test_a_height_aims_at_the_surface_under_a_shelf(monkeypatch):
+    """A move with "z" drops from just above that height (under a shelf above it) and needs room
+    for the object there; without it, the highest surface wins."""
+    class Sim:
+        lock = __import__("threading").Lock()
+        ray_up = None
+
+        def support(self, item, x, y, yaw, top=3.0, exclude_uid=None):
+            self.top = top
+            z = 0.76 if top < 1.0 else 1.2           # a worktop at 76 cm under a shelf at 120 cm
+            return {"pos": [x, y, z], "valid": True, "level": True}
+
+        def _ray(self, p0, d, excl=-1):
+            return self.ray_up, 1
+    monkeypatch.setattr(LC.catalog, "meta", lambda item: {"size": [0.1, 0.1, 0.2]})
+    s = Sim()
+    assert LC._spot(s, "mug", 0.1, 0.2, 0.0)["pos"][2] == 1.2 and s.top == 3.0
+    s.ray_up = 0.43                                  # the shelf, 43 cm above the worktop
+    assert LC._spot(s, "mug", 0.1, 0.2, 0.0, z=76)["pos"][2] == 0.76 and abs(s.top - 0.80) < 1e-9
+    s.ray_up = 0.1                                   # too low to fit under
+    assert LC._spot(s, "mug", 0.1, 0.2, 0.0, z=76) is None
+    assert LC._spot(s, "mug", 0.1, 0.2, 0.0, z="x") is None
