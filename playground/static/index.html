@@ -191,6 +191,7 @@ body.v3 #view{position:relative;opacity:0}
 .idlecard button{margin-top:4px;height:36px;border:0;border-radius:9px;background:var(--blue);color:#fff;font:600 13.5px Inter,sans-serif;cursor:pointer}
 #droptag{position:absolute;transform:translate(-50%,-140%);white-space:nowrap;font-size:12px;font-weight:600;color:#fff;background:var(--blue);padding:3px 8px;border-radius:6px;box-shadow:0 2px 6px rgba(37,99,235,.3);pointer-events:none;display:none}
 #droptag.bad{background:var(--red)}
+#dragchip{position:fixed;z-index:9999;width:56px;height:56px;object-fit:contain;transform:translate(-50%,-50%);pointer-events:none;display:none;filter:drop-shadow(0 4px 10px rgba(0,0,0,.25))}
 .sharewrap{position:relative}
 .sharebtn{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:8px;border:1px solid #1D4ED8;background:#1D4ED8;color:#fff;font:600 14px Inter,sans-serif;cursor:pointer}
 .sharepop{position:absolute;right:0;top:46px;z-index:60;width:400px;box-sizing:border-box;padding:20px;background:#fff;border:1px solid #DCDCD6;border-radius:12px;box-shadow:0 12px 32px rgba(20,20,19,.14);display:flex;flex-direction:column;gap:16px}
@@ -1098,7 +1099,7 @@ function toast(msg) { const t = $('toast'); t.textContent = msg; t.style.display
 function uv(e) {
   if (window.V3) {   // the in-page view fills the box exactly
     const r = view.getBoundingClientRect(), sr = stage.getBoundingClientRect();
-    return {u: (e.clientX - r.left) / r.width, v: (e.clientY - r.top) / r.height, x: e.clientX - sr.left, y: e.clientY - sr.top};
+    return {u: (e.clientX - r.left) / r.width, v: (e.clientY - r.top) / r.height, x: e.clientX - sr.left, y: e.clientY - sr.top, cx: e.clientX, cy: e.clientY};
   }
   // image is object-fit: contain; map to the rendered frame
   const r = view.getBoundingClientRect(), ar = (view.naturalWidth && view.naturalHeight) ? view.naturalWidth / view.naturalHeight : 1.6;
@@ -1182,8 +1183,15 @@ function pinCard(it) {
   const th = c.querySelector('.th'), img = c.querySelector('img');
   img.onload = () => th.classList.add('ready'); img.onerror = () => th.classList.add('ready');
   if (img.complete && img.naturalWidth) th.classList.add('ready');
-  c.ondragstart = (e) => { document.body.classList.add('dragging'); e.dataTransfer.setData('text/plain', it.id); e.dataTransfer.effectAllowed = 'copy'; S.dragItem = it; e.dataTransfer.setDragImage(img, 30, 30); };
-  c.ondragend = () => { document.body.classList.remove('dragging'); S.dragItem = null; hideTag(); api('/pg/ghost/clear', {}); };
+  // Over the scene the object itself shows where it would land (the 3D view's drag preview);
+  // elsewhere a small picture of it follows the pointer.
+  c.ondragstart = (e) => {
+    document.body.classList.add('dragging'); e.dataTransfer.setData('text/plain', it.id); e.dataTransfer.effectAllowed = 'copy'; S.dragItem = it;
+    if (window.V3 && window.V3.previewItem) { e.dataTransfer.setDragImage(BLANK, 0, 0); dragChip(it.thumb, e); startPreview(it.id); }
+    else e.dataTransfer.setDragImage(img, 30, 30);
+  };
+  c.ondragend = () => { document.body.classList.remove('dragging'); S.dragItem = null; dragChip(null); hideTag(); if (!S.dropping) { endPreview(false); api('/pg/ghost/clear', {}); } };
+  c.onpointerdown = () => { if (window.V3 && window.V3.previewItem) window.V3.prefetchItem && window.V3.prefetchItem(it.id); };
   c.onclick = () => { S.armed = S.armed === it.id ? null : it.id; markArmed(); $('libhint').textContent = S.armed ? `Now click in the scene to place the ${it.label.toLowerCase()}. Esc to cancel.` : LIBHINT; };
   return c;
 }
@@ -1191,7 +1199,31 @@ function pinCard(it) {
 function markArmed() {
   document.querySelectorAll('#items .pin').forEach(c => c.classList.toggle('armed', c.dataset.id === S.armed));
   document.body.classList.toggle('libarmed', !!S.armed);
+  if (S.armed) startPreview(S.armed); else if (!S.dragItem && !S.dropping) endPreview(false);
 }
+// The object being brought in, drawn in the 3D view where it would land (view3d's drag preview).
+const BLANK = new Image(); BLANK.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+let pvAt = null;           // the last spot the server gave for the preview: {item, u, v, r}
+function startPreview(id) {
+  const it = S.cat && S.cat.items.find(i => i.id === id);
+  pvAt = null;
+  if (it && window.V3 && window.V3.previewItem) window.V3.previewItem(id, it.size);
+}
+function endPreview(afterDrop) { pvAt = null; if (window.V3 && window.V3.previewDone) window.V3.previewDone(afterDrop); }
+// A small picture of the object following the pointer while it is outside the scene.
+function dragChip(src, e) {
+  let c = $('dragchip');
+  if (!src) { if (c) c.remove(); return; }
+  if (!c) { c = document.createElement('img'); c.id = 'dragchip'; c.alt = ''; document.body.appendChild(c); }
+  c.src = src; if (e) moveChip(e);
+}
+function moveChip(e) {
+  const c = $('dragchip'); if (!c) return;
+  const over = stage.contains(e.target) && !e.target.closest('#objDrawer');
+  c.style.display = over || (!e.clientX && !e.clientY) ? 'none' : 'block';
+  c.style.left = e.clientX + 'px'; c.style.top = e.clientY + 'px';
+}
+document.addEventListener('dragover', (e) => { if (S.dragItem) moveChip(e); });
 function libMore() {
   const L = S.lib; if (!L || L.shown >= L.list.length) return;
   for (const it of L.list.slice(L.shown, L.shown + LIB_PAGE)) {
@@ -1230,12 +1262,21 @@ new ResizeObserver(() => { const w = $('items').clientWidth; if (S.lib && w && (
 let probeBusy = false, probeNext = null;
 async function probe(item, p, uid) {
   moveTag(p);              // the tag keeps up with the pointer; its words follow when the server answers
+  const pv = !uid && window.V3 && window.V3.previewing && window.V3.previewing();
+  if (pv) {
+    // The object follows the pointer at once (on whatever the view shows under it); where the
+    // server says it lands takes over once the pointer is still. The same spot again (dragover
+    // repeats while the pointer rests) needn't ask the server again.
+    if (pvAt && pvAt.item === item && pvAt.u === p.u && pvAt.v === p.v) { probeNext = null; return; }
+    if (p.cx != null) window.V3.previewAt(window.V3.groundAt(p.cx, p.cy));
+  }
   if (probeBusy) { probeNext = [item, p, uid]; return; }
   probeBusy = true;
   try {
-    const r = await api('/pg/probe', {item, u: p.u, v: p.v, uid});
+    const r = await api('/pg/probe', {item, u: p.u, v: p.v, uid, preview: !!pv});
     S.lastSpot = r;
     if (!S.dragItem && !S.armed && !(drag && drag.obj)) { hideTag(); api('/pg/ghost/clear', {}); return; }
+    if (pv && !probeNext) { pvAt = {item, u: p.u, v: p.v, r}; window.V3.previewAt(r.pos || null, (r.box && r.box.yaw) || 0, !!r.valid); }
     const label = (S.cat.items.find(i => i.id === item) || {}).label || '';
     showTag(p, r.valid ? `${label} · lands on ${r.surface.toLowerCase().startsWith('the') ? r.surface : 'the ' + r.surface.toLowerCase()}` : (r.reason || "can't go there"), !r.valid);
   } finally {
@@ -1251,7 +1292,9 @@ stage.addEventListener('dragover', (e) => {
   if (S.dragRobot) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; probeStation(uv(e)); return; }
   if (!S.dragItem) return; e.preventDefault(); probe(S.dragItem.id, uv(e));
 });
-stage.addEventListener('dragleave', (e) => { if (e.target === stage || e.target === view) { hideTag(); api('/pg/ghost/clear', {}); } });
+stage.addEventListener('dragleave', (e) => {
+  if (e.target === stage || e.target === view) { hideTag(); pvAt = null; if (window.V3 && window.V3.previewAt) window.V3.previewAt(null); api('/pg/ghost/clear', {}); }
+});
 stage.addEventListener('drop', async (e) => {
   e.preventDefault();
   if (S.dragRobot) {
@@ -1260,13 +1303,16 @@ stage.addEventListener('drop', async (e) => {
     if (S.placing) cancelPlacing();          // couldn't go there: placeStation said why
     return;
   } const id = e.dataTransfer.getData('text/plain') || (S.dragItem && S.dragItem.id); if (!id) return;
+  S.dropping = true;
   S.dragItem = null; probeNext = null; hideTag(); await place(id, uv(e));
 });
 async function place(id, p) {
+  // The preview stays where it is until the world with the object in it is drawn.
+  S.dropping = true; endPreview(true);
   if (window.V3) window.V3.hold();
   let r;
-  try { r = await api('/pg/place', {item: id, u: p.u, v: p.v}); } finally { if (window.V3) window.V3.give(r && r.scene3d); }
-  if (!r.ok) toast(r.error || "Can't go there"); else { S.sel = r.uid; }
+  try { r = await api('/pg/place', {item: id, u: p.u, v: p.v}); } finally { S.dropping = false; if (window.V3) window.V3.give(r && r.scene3d); }
+  if (!r || !r.ok) { endPreview(false); toast((r && r.error) || "Can't go there"); } else { S.sel = r.uid; }
   refresh();
 }
 
@@ -1394,7 +1440,7 @@ window.addEventListener('mouseup', async (e) => {
     return;
   }
   if (S.placing) { await placeStation(p); return; }
-  if (S.armed) { const id = S.armed; S.armed = null; probeNext = null; markArmed(); hideTag(); $('libhint').textContent = LIBHINT; await place(id, p); return; }
+  if (S.armed) { const id = S.armed; S.armed = null; probeNext = null; S.dropping = true; markArmed(); hideTag(); $('libhint').textContent = LIBHINT; await place(id, p); return; }
   // An object: its card opens at once, from what the 3D view shows under the pointer. The server's
   // pick below still has the last word (and tells the server what's selected).
   const loc = S.scene && S.scene.mode === 'free' && window.V3 && window.V3.pickBody && window.V3.pickBody(e.clientX, e.clientY);

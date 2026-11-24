@@ -1887,8 +1887,10 @@ class PlaygroundSim(Sim):
         return {"mid": [round(float(v), 4) for v in mid], "half": [round(float(v), 4) for v in half],
                 "yaw": round(math.atan2(R[1, 0], R[0, 0]), 4) if upright else 0.0}
 
-    def probe(self, item: str, u: float, v: float, yaw: float = 0.0, exclude_uid: str | None = None) -> dict:
-        """Where an item being dragged over the view at (u, v) would land."""
+    def probe(self, item: str, u: float, v: float, yaw: float = 0.0, exclude_uid: str | None = None,
+              preview: bool = False) -> dict:
+        """Where an item being dragged over the view at (u, v) would land. preview: the page draws
+        the item itself there (a drag from the library), so the ghost is only the glow under it."""
         p0, d = self.pixel_ray(u, v)
         excl = -1
         if exclude_uid:
@@ -1919,10 +1921,10 @@ class PlaygroundSim(Sim):
             if yaw:
                 rot = W.axis_rot("z", math.degrees(yaw)) @ rot
         out = self.support(item, float(hit[0]), float(hit[1]), yaw, exclude_uid=exclude_uid, rot=rot)
-        self.set_ghost(item, out, yaw)
+        self.set_ghost(item, out, yaw, preview)
         return out
 
-    def set_ghost(self, item, spot, yaw=0.0):
+    def set_ghost(self, item, spot, yaw=0.0, preview=False):
         ok = spot.get("valid", False)
         col = [0.25, 0.55, 1.0] if ok else [1.0, 0.3, 0.25]
         if "box" not in spot:
@@ -1935,7 +1937,7 @@ class PlaygroundSim(Sim):
              "yaw": spot["box"]["yaw"], "rgba": [*col, 0.45]},
             # the space the item will take
             {"type": "box", "size": [hx, hy, hz], "pos": [x, y, zm], "yaw": spot["box"]["yaw"], "rgba": [*col, 0.18]},
-        ]
+        ][:1 if preview else 2]
 
     def clear_ghost(self):
         self.overlay = []

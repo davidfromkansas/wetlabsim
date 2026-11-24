@@ -41,46 +41,51 @@ def _r(v, n=5):
     return [round(float(x), n) for x in v]
 
 
-def scene(m: mujoco.MjModel, version) -> dict:
-    geoms = []
-    for g in range(m.ngeom):
-        t = TYPES.get(int(m.geom_type[g]))
-        if t is None or int(m.geom_group[g]) not in VISIBLE_GROUPS:
-            continue
-        mat = int(m.geom_matid[g])
-        rgba = np.array(m.geom_rgba[g], np.float32)
-        # MuJoCo draws a material's colour unless the geom sets its own.
-        if mat >= 0 and np.allclose(rgba, _DEFAULT_RGBA):
-            rgba = np.array(m.mat_rgba[mat], np.float32)
-        if rgba[3] <= 0:
-            continue
-        tex = int(m.mat_texid[mat, int(mujoco.mjtTextureRole.mjTEXROLE_RGB)]) if mat >= 0 else -1
-        if tex >= 0 and int(m.tex_type[tex]) != int(mujoco.mjtTexture.mjTEXTURE_2D) and not (
-                t == "mesh" and _cube_mapped(m, int(m.geom_dataid[g]))):
-            tex = -1
-        geoms.append({
-            "name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g),
-            "body": int(m.geom_bodyid[g]), "type": t, "size": _r(m.geom_size[g]),
-            "pos": _r(m.geom_pos[g]), "quat": _r(m.geom_quat[g]), "rgba": _r(rgba, 3),
-            "mesh": int(m.geom_dataid[g]) if t == "mesh" else -1, "tex": tex,
-            "texrepeat": _r(m.mat_texrepeat[mat], 3) if mat >= 0 else [1, 1],
-            "texuniform": bool(m.mat_texuniform[mat]) if mat >= 0 else False,
-            "emission": round(float(m.mat_emission[mat]), 3) if mat >= 0 else 0.0,
+def _geom(m: mujoco.MjModel, g: int) -> dict | None:
+    """One geom as the page draws it (None for one MuJoCo doesn't show: a hidden group, clear)."""
+    t = TYPES.get(int(m.geom_type[g]))
+    if t is None or int(m.geom_group[g]) not in VISIBLE_GROUPS:
+        return None
+    mat = int(m.geom_matid[g])
+    rgba = np.array(m.geom_rgba[g], np.float32)
+    # MuJoCo draws a material's colour unless the geom sets its own.
+    if mat >= 0 and np.allclose(rgba, _DEFAULT_RGBA):
+        rgba = np.array(m.mat_rgba[mat], np.float32)
+    if rgba[3] <= 0:
+        return None
+    tex = int(m.mat_texid[mat, int(mujoco.mjtTextureRole.mjTEXROLE_RGB)]) if mat >= 0 else -1
+    if tex >= 0 and int(m.tex_type[tex]) != int(mujoco.mjtTexture.mjTEXTURE_2D) and not (
+            t == "mesh" and _cube_mapped(m, int(m.geom_dataid[g]))):
+        tex = -1
+    return {
+        "name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g),
+        "body": int(m.geom_bodyid[g]), "type": t, "size": _r(m.geom_size[g]),
+        "pos": _r(m.geom_pos[g]), "quat": _r(m.geom_quat[g]), "rgba": _r(rgba, 3),
+        "mesh": int(m.geom_dataid[g]) if t == "mesh" else -1, "tex": tex,
+        "texrepeat": _r(m.mat_texrepeat[mat], 3) if mat >= 0 else [1, 1],
+        "texuniform": bool(m.mat_texuniform[mat]) if mat >= 0 else False,
+        "emission": round(float(m.mat_emission[mat]), 3) if mat >= 0 else 0.0,
+        "specular": round(float(m.mat_specular[mat]), 3) if mat >= 0 else 0.5,
+        "shininess": round(float(m.mat_shininess[mat]), 3) if mat >= 0 else 0.5,
+        "reflectance": round(float(m.mat_reflectance[mat]), 3) if mat >= 0 else 0.0,
+        "shadow": True,
+    }
+
+
+def _skin(m: mujoco.MjModel, i: int) -> dict | None:
+    if int(m.skin_group[i]) not in VISIBLE_GROUPS:
+        return None
+    mat = int(m.skin_matid[i])
+    rgba = np.array(m.mat_rgba[mat] if mat >= 0 else m.skin_rgba[i], np.float32)
+    tex = int(m.mat_texid[mat, int(mujoco.mjtTextureRole.mjTEXROLE_RGB)]) if mat >= 0 else -1
+    return {"id": i, "rgba": _r(rgba, 3), "tex": tex,
             "specular": round(float(m.mat_specular[mat]), 3) if mat >= 0 else 0.5,
-            "shininess": round(float(m.mat_shininess[mat]), 3) if mat >= 0 else 0.5,
-            "reflectance": round(float(m.mat_reflectance[mat]), 3) if mat >= 0 else 0.0,
-            "shadow": True,
-        })
-    skins = []
-    for i in range(m.nskin):
-        if int(m.skin_group[i]) not in VISIBLE_GROUPS:
-            continue
-        mat = int(m.skin_matid[i])
-        rgba = np.array(m.mat_rgba[mat] if mat >= 0 else m.skin_rgba[i], np.float32)
-        tex = int(m.mat_texid[mat, int(mujoco.mjtTextureRole.mjTEXROLE_RGB)]) if mat >= 0 else -1
-        skins.append({"id": i, "rgba": _r(rgba, 3), "tex": tex,
-                      "specular": round(float(m.mat_specular[mat]), 3) if mat >= 0 else 0.5,
-                      "shininess": round(float(m.mat_shininess[mat]), 3) if mat >= 0 else 0.5})
+            "shininess": round(float(m.mat_shininess[mat]), 3) if mat >= 0 else 0.5}
+
+
+def scene(m: mujoco.MjModel, version) -> dict:
+    geoms = [x for x in (_geom(m, g) for g in range(m.ngeom)) if x]
+    skins = [x for x in (_skin(m, i) for i in range(m.nskin)) if x]
     lights = [{"pos": _r(m.light_pos[i]), "dir": _r(m.light_dir[i]), "diffuse": _r(m.light_diffuse[i], 3),
                "ambient": _r(m.light_ambient[i], 3), "directional": int(m.light_type[i]) == 1,
                "castshadow": bool(m.light_castshadow[i])} for i in range(m.nlight)]
@@ -360,3 +365,76 @@ def poses(xpos: np.ndarray, xquat: np.ndarray, extra: dict) -> str:
     """One frame for the stream, as a JSON line (positions and orientations as base64 float32)."""
     return json.dumps({"p": base64.b64encode(np.asarray(xpos, "<f4").tobytes()).decode(),
                        "q": base64.b64encode(np.asarray(xquat, "<f4").tobytes()).decode(), **extra})
+
+
+# ---------------------------------------------------------------- one library object on its own
+# While an object is dragged in from the library the page draws the object itself, at its true
+# size and in its own colours, where it would land. Its shapes come from a model of that object
+# alone (compiled by world.build, as a drop would add it), kept for the last few objects dragged.
+# Its meshes and textures have the same content hashes as in any world, so what the page fetches
+# for the preview is already at hand when the object is dropped.
+_ITEM_MODELS: collections.OrderedDict = collections.OrderedDict()
+_ITEM_LOCKS: dict[str, threading.Lock] = {}
+_ITEM_LOCK = threading.Lock()
+ITEM_UID = "dragpreview"
+
+
+def item_model(item: str):
+    """(model, scene) for one library object at the origin, turned by 0: its bottom centre at
+    (0, 0, 0), as world.Placed puts it. Raises KeyError for an object the library doesn't have."""
+    with _ITEM_LOCK:
+        hit = _ITEM_MODELS.get(item)
+        if hit is not None:
+            _ITEM_MODELS.move_to_end(item)
+            return hit
+        lock = _ITEM_LOCKS.setdefault(item, threading.Lock())
+    with lock:                            # two requests for one object build it once
+        with _ITEM_LOCK:
+            hit = _ITEM_MODELS.get(item)
+        if hit is not None:
+            return hit
+        from . import catalog, world as W
+        catalog.item(item)                # KeyError for an unknown object
+        m = W.build([W.Placed(ITEM_UID, item, (0.0, 0.0, 0.0))], [])
+        hit = (m, item_scene(m))
+        with _ITEM_LOCK:
+            _ITEM_MODELS[item] = hit
+            while len(_ITEM_MODELS) > 24:
+                _ITEM_MODELS.popitem(last=False)
+            _ITEM_LOCKS.pop(item, None)
+        return hit
+
+
+def item_scene(m: mujoco.MjModel) -> dict:
+    """The object's shapes in its own frame (bottom centre at the origin): "geoms" as scene()
+    gives them, each with its pose in that frame; "hulls", its collision shapes (simple and
+    small, so the page can show the object's outline while the full meshes are on their way);
+    and "skins" (a soft object's mesh, at rest)."""
+    d = mujoco.MjData(m)
+    mujoco.mj_kinematics(m, d)
+    mine = {b for b in range(m.nbody)
+            if (mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, b) or "").startswith(f"obj_{ITEM_UID}")}
+
+    def pose(g, out):
+        q = np.zeros(4)
+        mujoco.mju_mat2Quat(q, d.geom_xmat[g])
+        out["pos"], out["quat"] = _r(d.geom_xpos[g]), _r(q)
+        return out
+
+    geoms, hulls = [], []
+    for g in range(m.ngeom):
+        if int(m.geom_bodyid[g]) not in mine:
+            continue
+        x = _geom(m, g)
+        if x:
+            geoms.append(pose(g, x))
+        t = TYPES.get(int(m.geom_type[g]))
+        if t and t != "plane" and (m.geom_contype[g] or m.geom_conaffinity[g]):
+            hulls.append(pose(g, {"type": t, "size": _r(m.geom_size[g]),
+                                  "mesh": int(m.geom_dataid[g]) if t == "mesh" else -1}))
+    skins = [x for x in (_skin(m, i) for i in range(m.nskin)) if x]
+    meshes = {gg["mesh"] for gg in geoms + hulls if gg["mesh"] >= 0}
+    return {"geoms": geoms, "hulls": hulls, "skins": skins,
+            "meshhash": {str(i): _info(m)["mesh"][i] for i in meshes},
+            "texhash": {str(i): _info(m)["tex"][i] for i in {gg["tex"] for gg in geoms if gg["tex"] >= 0}
+                        | {sk["tex"] for sk in skins if sk["tex"] >= 0}}}
