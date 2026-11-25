@@ -1200,6 +1200,12 @@ def _all_runners():
     return [r for x in list(SESSIONS.values()) if x is not None for r in list(x.runners.values())]
 
 
+def _building() -> bool:
+    """A scene being built in any session counts as use, so the container doesn't close under it."""
+    return any(getattr(getattr(x, "scenegen", None), "active", lambda: False)()
+               for x in list(SESSIONS.values()) if x is not None)
+
+
 def _start_queued():
     """Start waiting runs while there is room (MAX_ACTIVE on the public site; no limit locally)."""
     with QUEUE_LOCK:
@@ -2792,7 +2798,8 @@ def main(argv=None):
                                     "share": f"{SAVE.WEBSITE_URL}/s/{sess.share_token}" if sess.share_token and SAVE.WEBSITE_URL else ""})
             return out
         LABS.start_reporting(live_runs, args.idle_minutes,
-                             lambda: bool(QUEUE) or VIDEOS.busy() or any(r.active() for r in _all_runners()),
+                             lambda: bool(QUEUE) or VIDEOS.busy() or any(r.active() for r in _all_runners())
+                             or _building(),
                              before_exit=lambda: AUTOSAVE and AUTOSAVE.tick())
     if args.robot_port:
         global ROBOT_API_URL

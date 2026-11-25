@@ -1039,7 +1039,10 @@ class Build:
                 "elapsed": round(time.time() - self.started, 1),
                 "model": next((m["label"] for m in SCENE_MODELS if m["id"] == self.model_id), ""),
                 "looks": getattr(self, "looks", [])[-8:], "look_pic": getattr(self, "look_pic", ""),
-                "active": self.phase in ("pick", "make", "plan", "robots", "furniture", "objects", "check")}
+                "active": self.active()}
+
+    def active(self) -> bool:
+        return self.phase in ("pick", "make", "plan", "robots", "furniture", "objects", "check")
 
     def start(self):
         threading.Thread(target=self._run, daemon=True, name="scene-build").start()
