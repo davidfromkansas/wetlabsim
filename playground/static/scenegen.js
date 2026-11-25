@@ -188,8 +188,8 @@ const CHEV = '<svg aria-hidden="true" width="10" height="10" viewBox="0 0 12 12"
 const SEND = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
 const CLOCK = '<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>';
 const PIC = {franka: '/pg/static/robot_franka.png', ur5e: '/pg/static/robot_ur5e.png', aloha: '/pg/static/robot_aloha.png', fr3_duo: '/pg/static/robot_fr3_duo.png', g1: '/pg/static/robot_g1.png', piper: '/pg/static/robot_piper.png', n220: '/pg/static/robot_n220.png', crx30ia: '/pg/static/robot_crx30ia.png', rby1: '/pg/static/robot_rby1.png'};
-const LOGO = {anthropic: '/static/anthropic.svg', openai: '/static/openai.svg', cognition: '/static/cognition.svg'};
-const CO = {anthropic: 'Anthropic', openai: 'OpenAI', cognition: 'Devin'};
+const LOGO = {anthropic: '/static/anthropic.svg', openai: '/static/openai.svg'};
+const CO = {anthropic: 'Anthropic', openai: 'OpenAI'};
 
 stage.insertAdjacentHTML('beforeend', `<button id="sgBar" aria-haspopup="dialog" aria-expanded="false" aria-keyshortcuts="/" title="Describe a scene (/)">${BAR_REST()}</button>
 <div id="sgCard" role="dialog" aria-label="Describe a scene"></div><div id="sgProg" role="status" aria-live="polite"></div><div id="sgDone" role="status"></div>`);
@@ -252,7 +252,7 @@ function defaultModel() {
   let last = '';
   try { last = localStorage.getItem('pgLastModel') || ''; } catch (err) {}
   last = G.fromRun[last] || last;
-  const lastCo = (modelInfo(last) || {}).provider || (/^(gpt|codex)/.test(last) ? 'openai' : /^claude/.test(last) ? 'anthropic' : /^swe-/.test(last) ? 'cognition' : '');
+  const lastCo = (modelInfo(last) || {}).provider || (/^(gpt|codex)/.test(last) ? 'openai' : /^claude/.test(last) ? 'anthropic' : '');
   const tops = G.models.filter(m => m.default);
   return ((lastCo && tops.find(m => m.provider === lastCo)) || tops[0] || G.models[0] || {}).id || '';
 }
@@ -319,7 +319,7 @@ function draw(first = false) {
 <div id="sgPc"></div>
 ${G.err ? `<p class="err">${e(G.err)}</p>` : ''}
 <div class="sgTl">${modelBtn()}<span class="sp"></span><button class="go" id="sgGo" aria-label="Build the scene">${SEND}</button>${modelMenu()}</div>
-${can || !G.loaded ? '' : `<div class="empty"><span><b>Connect an AI model to build from your words</b>Scenes are built by your own Anthropic, OpenAI or Devin account. The ready scenes below work without one.</span><button class="btn" id="sgSet">Open Settings</button></div>`}
+${can || !G.loaded ? '' : `<div class="empty"><span><b>Connect an AI model to build from your words</b>Scenes are built by your own Anthropic or OpenAI account. The ready scenes below work without one.</span><button class="btn" id="sgSet">Open Settings</button></div>`}
 <div class="sec" id="sgLists"></div><div class="cft" id="sgFoot"></div><input type="file" id="sgFile" accept="image/*" hidden>`;
   const ta = document.getElementById('sgTa');
   const grow = () => { ta.style.height = 'auto'; ta.style.height = Math.min(180, ta.scrollHeight) + 'px'; };

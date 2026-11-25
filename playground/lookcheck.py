@@ -14,7 +14,7 @@ down with the same drop check as drag and drop. Up to SCENE_ROUNDS rounds; a rou
 lower than the scene before it is undone.
 
 Every connection takes the pictures (photoscene.ask_stream: Anthropic and OpenAI API keys, Codex
-on a ChatGPT sign-in, Devin). The pictures are only for building: nothing here reaches the
+on a ChatGPT sign-in). The pictures are only for building: nothing here reaches the
 robot's AI.
 """
 from __future__ import annotations

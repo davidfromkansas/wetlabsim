@@ -226,18 +226,6 @@ def test_pictures_reach_codex(monkeypatch):
     assert got["imgs"] == [b"\xff\xd8jpg"] and "look" in got["prompt"]
 
 
-def test_pictures_reach_devin(monkeypatch, key):
-    got = {}
-
-    def fake(model, prompt, images, k, on_think, on_text, stopped, timeout):
-        got.update(images=images)
-        return "SCORE: 9/10"
-    monkeypatch.setattr(SG, "devin_answer", fake)
-    PS.ask_stream("swe-2-max", [{"type": "text", "text": "look"}, PIC], True, "medium",
-                  lambda t: None, lambda t: None, lambda: False)
-    assert got["images"] == [b"\xff\xd8jpg"]
-
-
 def test_a_height_aims_at_the_surface_under_a_shelf(monkeypatch):
     """A move with "z" drops from just above that height (under a shelf above it) and needs room
     for the object there; without it, the highest surface wins."""
