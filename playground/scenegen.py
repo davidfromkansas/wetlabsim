@@ -7,14 +7,13 @@ Library objects always win; anything the scene needs that the library lacks (up 
 things) is made by the same model from simple shapes first, the way a scene from a photo is
 (photoscene.py), and each one checked and physics-tested by aimade.py before it is laid out.
 
-Models: the owner's own Anthropic, OpenAI or Devin key (Settings > General); on a computer of
-one's own, ANTHROPIC_API_KEY / OPENAI_API_KEY / DEVIN_API_KEY too. With one company connected
+Models: the owner's own Anthropic or OpenAI key (Settings > General); on a computer of
+one's own, ANTHROPIC_API_KEY / OPENAI_API_KEY too. With one company connected
 its most capable model is used; with more, the page shows a picker. Anthropic and OpenAI keys
 call the company's API (streamed, so a long answer isn't cut off). An OpenAI connection made by
 ChatGPT sign-in (Codex's login, not an API key) asks through Codex instead (`codex exec`), on the
-person's ChatGPT plan; a Devin key asks Devin through its CLI (wetlabsim/devin_acp.py). Both run
-where task runs go: a Modal Sandbox on the hosted site. Jev can't do this (it only answers moves
-for a robot).
+person's ChatGPT plan, where task runs go: a Modal Sandbox on the hosted site. Devin and Jev
+don't build scenes.
 
 WETLAB_SCENEGEN_FAKE=1 answers without any model (tests, screenshots)."""
 from __future__ import annotations
@@ -51,15 +50,12 @@ SCENE_MODELS = [
     {"id": "gpt-6.1-terra", "label": "GPT-6.1 Terra", "provider": "openai"},
     {"id": "gpt-6-sol", "label": "GPT-6 Sol", "provider": "openai"},
     {"id": "gpt-6-luna", "label": "GPT-6 Luna", "provider": "openai"},
-    {"id": "swe-2-max", "label": "SWE-2 Max", "provider": "cognition"},
-    {"id": "swe-2-high", "label": "SWE-2 High", "provider": "cognition"},
-    {"id": "swe-2-medium", "label": "SWE-2 Medium", "provider": "cognition"},
 ]
 # A task run's model (server.MODELS ids) as the scene model it is, for "the last model you used".
 FROM_RUN = {"claude": "claude-opus-5-5", "codex": "gpt-6-astra"}  # (only its company is used now)
-_ENV = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY", "cognition": "DEVIN_API_KEY"}
-_AGENT = {"anthropic": "claude", "openai": "codex", "cognition": "devin"}
-PROVIDERS = ("anthropic", "openai", "cognition")
+_ENV = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY"}
+_AGENT = {"anthropic": "claude", "openai": "codex"}
+PROVIDERS = ("anthropic", "openai")
 
 
 def fake() -> bool:
@@ -231,159 +227,6 @@ def _codex_modal(model: str, prompt: str, login: str, effort: str) -> tuple[str,
             pass
 
 
-# ------------------------------------------------------------------ asking Devin
-DEVIN_TAIL = ("\n\nDon't run any commands, open any files or change anything: everything you need is "
-              "above. Answer in the format asked for, as your final message, with nothing after it.")
-
-
-def _devin_lines(line: str, said: list, on_think, on_text):
-    """One JSON line from devin_acp.py: thoughts go to on_think, replies are kept (without the
-    bridge's own [permission ...] notes) and shown through on_text."""
-    try:
-        ev = json.loads(line)
-    except ValueError:
-        return None
-    if not isinstance(ev, dict):
-        return None
-    if ev.get("type") == "_raw":
-        return str(ev.get("text", ""))
-    kind, text = ev.get("kind"), str(ev.get("text", ""))
-    if kind == "thinks" and text:
-        on_think("\n\n" + text)
-    elif kind == "says" and text and not text.startswith("[permission") and not text.startswith("[unsupported"):
-        said.append(text)
-        on_text("\n\n".join(said))
-    elif kind == "tool":
-        on_think("\n\n(" + (ev.get("title") or ev.get("name") or "a tool") + ")")
-    return None
-
-
-def devin_answer(model: str, prompt: str, images: list, key: str, on_think, on_text, stopped,
-                 timeout: float) -> str:
-    """One answer from Devin on the person's Devin key, through Devin's CLI and our ACP bridge
-    (wetlabsim/devin_acp.py), in an empty folder of its own: locally, or in a Modal Sandbox that
-    reaches Devin's servers only (where task runs go). The prompt goes to Devin over ACP from a
-    file, so its size doesn't matter. `images` are JPEG/PNG bytes."""
-    runner = _devin_modal if WHERE == "modal" else _devin_local
-    said: list = []
-    errs: list = []
-
-    def line(ln: str):
-        e = _devin_lines(ln, said, on_think, on_text)
-        if e:
-            errs.append(e)
-    over = runner(model, prompt, images, key, line, stopped, timeout)
-    if over:
-        raise ModelError(f"Devin took longer than {int(timeout) // 60} minutes, so it was stopped")
-    text = "\n\n".join(said)
-    if not text.strip() and stopped():
-        return ""
-    if not text.strip():
-        why = (errs[-1] if errs else "").replace("Error: ", "")[:300]
-        raise ModelError("Devin gave no answer" + (f" ({why})" if why else
-                         " (is the Devin key still good, on a plan with this model? Check Settings)"))
-    return text
-
-
-def _watch_until(kill, stopped, timeout: float):
-    """Calls kill() when Stop is pressed or `timeout` seconds pass; returns (over, done)."""
-    over, done = threading.Event(), threading.Event()
-    end = time.time() + timeout
-
-    def run():
-        while not done.wait(1.0):
-            if stopped() or time.time() > end:
-                if not stopped():
-                    over.set()
-                try:
-                    kill()
-                except Exception:  # noqa: BLE001
-                    pass
-                return
-    threading.Thread(target=run, daemon=True).start()
-    return over, done
-
-
-def _devin_local(model, prompt, images, key, line, stopped, timeout) -> bool:
-    import pathlib
-    import shutil
-    import subprocess
-    import sys
-    import tempfile
-
-    from wetlabsim import devin_auth
-    home = pathlib.Path(tempfile.mkdtemp(prefix="wetlab-scene-devin-"))
-    try:
-        os.chmod(home, 0o700)
-        ws = home / "ws"
-        ws.mkdir()
-        devin_auth.write_login(home / "data", key)
-        (home / "prompt.txt").write_text(prompt)
-        cmd = [sys.executable, str(pathlib.Path(devin_auth.__file__).with_name("devin_acp.py")), str(ws), "-",
-               "--prompt-file", str(home / "prompt.txt"), "--model", model,
-               "--deny", str(pathlib.Path(__file__).resolve().parent.parent), "--deny", str(home / "data")]
-        for k, b in enumerate(images):
-            (home / f"photo{k}.jpg").write_bytes(b)
-            cmd += ["--image", str(home / f"photo{k}.jpg")]
-        env = {k: v for k, v in os.environ.items() if k != "DEVIN_API_KEY"}
-        env.update(XDG_DATA_HOME=str(home / "data"), NO_COLOR="1")
-        if not shutil.which("devin"):
-            raise ModelError("Devin's CLI isn't installed on this machine (see https://cli.devin.ai)")
-        p = subprocess.Popen(cmd, env=env, cwd=ws, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                             stdin=subprocess.DEVNULL, text=True)
-        over, done = _watch_until(p.kill, stopped, timeout)
-        try:
-            for ln in p.stdout:
-                line(ln)
-            p.wait()
-        finally:
-            done.set()
-        return over.is_set()
-    finally:
-        shutil.rmtree(home, ignore_errors=True)
-
-
-def _devin_modal(model, prompt, images, key, line, stopped, timeout) -> bool:
-    import pathlib
-
-    import modal
-
-    from wetlabsim import devin_auth
-    from wetlabsim.launchers import ModalSandboxLauncher
-    app = modal.App.lookup(ModalSandboxLauncher.APP, create_if_missing=True)
-    sb = modal.Sandbox.create("sleep", "infinity", app=app, image=ModalSandboxLauncher.image(),
-                              timeout=int(timeout) + 120, cpu=0.5, memory=1024,
-                              outbound_domain_allowlist=devin_auth.HOSTS)
-    try:
-        sb.exec("mkdir", "-p", "/tools", "/tmp/w/ws", "/root/.local/share/devin").wait()
-        sb.filesystem.write_bytes(pathlib.Path(devin_auth.__file__).with_name("devin_acp.py").read_bytes(),
-                                  "/tools/devin_acp.py")
-        sb.filesystem.write_bytes(devin_auth.credentials(key).encode(), "/root/.local/share/devin/credentials.toml")
-        sb.exec("chmod", "600", "/root/.local/share/devin/credentials.toml").wait()
-        sb.filesystem.write_bytes(prompt.encode(), "/tmp/w/prompt.txt")
-        cmd = ["python3", "/tools/devin_acp.py", "/tmp/w/ws", "-", "--prompt-file", "/tmp/w/prompt.txt",
-               "--model", model, "--deny", "/tools", "--deny", "/root"]
-        for k, b in enumerate(images):
-            sb.filesystem.write_bytes(b, f"/tmp/w/photo{k}.jpg")
-            cmd += ["--image", f"/tmp/w/photo{k}.jpg"]
-        proc = sb.exec(*cmd, workdir="/tmp/w/ws", env={"NO_COLOR": "1"}, timeout=int(timeout))
-        proc.stdin.write_eof()
-        proc.stdin.drain()
-        over, done = _watch_until(sb.terminate, stopped, timeout)
-        try:
-            for ln in proc.stdout:
-                line(ln)
-            proc.wait()
-        finally:
-            done.set()
-        return over.is_set()
-    finally:
-        try:
-            sb.terminate()
-        except Exception:  # noqa: BLE001
-            pass
-
-
 def ask_json(model_id: str, system: str, user: str, public: bool, effort: str = "medium") -> dict:
     m = next((m for m in SCENE_MODELS if m["id"] == model_id), None)
     if m is None:
@@ -394,9 +237,6 @@ def ask_json(model_id: str, system: str, user: str, public: bool, effort: str = 
         raise ModelError(f"connect your {label} API key in Settings to use {m['label']}")
     if kind == "chatgpt":
         text = _codex(m["id"], system, user, key, effort)
-    elif m["provider"] == "cognition":
-        text = devin_answer(m["id"], system + "\n\n" + user + DEVIN_TAIL, [], key,
-                            lambda t: None, lambda t: None, lambda: False, CODEX_TIMEOUT)
     else:
         text = _api(m["provider"], m["id"], system, user, key, effort)
     return parse_json(text)

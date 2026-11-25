@@ -555,10 +555,17 @@ G.draw = () => {
       const acts = open ? '' : p.connected
         ? `<button class="bt" data-edit="${p.id}"${busy ? ' disabled' : ''}>Edit</button><button class="bt red" data-off="${p.id}"${busy ? ' disabled' : ''}>Disconnect</button>`
         : `<button class="bt pri" data-edit="${p.id}">Connect</button>`;
-      const form = open ? `<div class="gexp">${p.id === 'openai' ? G.cgHtml(p) : ''}<div class="way"><h4>${p.id === 'openai' ? (p.connected && !chatgpt ? 'Or replace your API key' : 'Or add an API key') : p.connected ? 'Replace your API key' : 'Add an API key'}</h4><p>Get one from ${inf.where}</p>
+      // OpenAI connects one way at a time: a ChatGPT sign-in or an API key. Not connected, both are
+      // offered; connected, Edit only renews the way it is connected (Disconnect first to switch).
+      const oa = p.id === 'openai', cgWay = oa && (!p.connected || chatgpt), keyWay = !oa || !chatgpt;
+      const switchNote = oa && p.connected
+        ? `<p class="note">OpenAI connects one way at a time. To use ${chatgpt ? 'an API key' : 'your ChatGPT plan'} instead, disconnect first.</p>` : '';
+      const keyForm = keyWay ? `<div class="way"><h4>${oa && !p.connected ? 'Or use an API key' : p.connected ? 'Replace your API key' : 'Add an API key'}</h4><p>Get one from ${inf.where}</p>
         <input class="kin${G.err[p.id] ? ' bad' : ''}" id="gsKey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste API key" aria-label="${esc(p.label)} API key"${G.err[p.id] ? ' aria-describedby="gsErr" aria-invalid="true"' : ''}>
         ${G.err[p.id] ? `<span class="emsg" id="gsErr" role="alert">${esc(G.err[p.id])}</span>` : ''}
-        <div class="row2"><button class="bt pri" id="gsSave"${busy ? ' disabled' : ''}>${busy ? 'Checking…' : 'Save'}</button><button class="bt" id="gsCancel"${busy ? ' disabled' : ''}>Cancel</button></div></div></div>` : '';
+        <div class="row2"><button class="bt pri" id="gsSave"${busy ? ' disabled' : ''}>${busy ? 'Checking…' : 'Save'}</button><button class="bt" id="gsCancel"${busy ? ' disabled' : ''}>Cancel</button></div></div>`
+        : '';
+      const form = open ? `<div class="gexp">${oa && !p.connected ? '<p class="note">Pick one: sign in with ChatGPT, or use an API key.</p>' : ''}${cgWay ? G.cgHtml(p) : ''}${keyForm}${switchNote}${keyWay ? '' : '<div class="row2"><button class="bt" id="gsCancel">Cancel</button></div>'}</div>` : '';
       return `<div class="con"><span class="lg"><img src="${LOGOS[p.id] || ''}" alt=""></span><div class="t"><b>${esc(p.label)} <span class="stt${p.connected ? ' ok' : ''}">${p.connected ? 'Connected' : 'Not connected'}</span></b><span class="d">${facts}</span></div><div class="acts">${acts}</div></div>${form}`;
     }).join('');
     body = `<section><h3>Time limit</h3><div class="tlr"><span id="gsTlLab">Max minutes per AI run (${d.min_minutes} to ${d.max_minutes}).</span>
@@ -616,8 +623,9 @@ G.draw = () => {
   if (sv) {
     sv.onclick = save;
     box.querySelector('#gsKey').addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); });
-    box.querySelector('#gsCancel').onclick = () => { G.cgStop(true); G.open_ = ''; G.err = {}; G.draw(); };
   }
+  const cn = box.querySelector('#gsCancel');
+  if (cn) cn.onclick = () => { G.cgStop(true); G.open_ = ''; G.err = {}; G.draw(); };
   const cgb = box.querySelector('#gsCg');
   if (cgb) cgb.onclick = G.cgStart;
   const cgc = box.querySelector('#gsCgCancel');
