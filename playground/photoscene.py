@@ -682,6 +682,9 @@ class PhotoBuild(SG.Build):
         then ok (placed) or bad (didn't fit)."""
         return [{"name": n, "state": self.ostate.get(n.lower(), "making")} for n in self.named[:MAX_OBJECTS]]
 
+    def active(self) -> bool:
+        return self.phase in self.STEPS
+
     def status(self) -> dict:
         return {"id": self.id, "photo": True, "phase": self.phase, "error": self.error,
                 "title": self.title, "thinking": self.thinking[-THINKING_KEEP:], "now": self.now,
@@ -693,7 +696,7 @@ class PhotoBuild(SG.Build):
                 "rows": self._rows(), "note": self.note[:300], "looks": getattr(self, "looks", [])[-8:], "look_pic": getattr(self, "look_pic", ""),
                 "items": [{"name": it["name"], "kind": it["kind"], "state": it["state"], "at": bool(it["rect"])}
                           for it in self.items[:self.shown]],
-                "active": self.phase in self.STEPS}
+                "active": self.active()}
 
     # -------------------------------------------------- streaming
     def _think(self, s: str | None):

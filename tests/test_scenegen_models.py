@@ -38,3 +38,29 @@ def test_a_devin_model_is_refused(monkeypatch):
     _creds(monkeypatch)
     with pytest.raises(SG.ModelError, match="can't build scenes"):
         SG.ask_json("swe-2-max", "sys", "user", public=True)
+
+
+def test_a_scene_being_built_keeps_the_container_open():
+    """The container closes after minutes with no clicks; a running scene build counts as use."""
+    import types
+    from playground import server as srv
+    from playground import photoscene as PS
+    b = SG.Build.__new__(SG.Build)
+    b.phase = "make"
+    sess = types.SimpleNamespace(scenegen=b, runners={})
+    saved = dict(srv.SESSIONS)
+    try:
+        srv.SESSIONS.clear()
+        srv.SESSIONS["x"] = sess
+        assert srv._building()
+        b.phase = "done"
+        assert not srv._building()
+        p = PS.PhotoBuild.__new__(PS.PhotoBuild)
+        p.phase = p.STEPS[0]
+        sess.scenegen = p
+        assert srv._building()
+        sess.scenegen = None
+        assert not srv._building()
+    finally:
+        srv.SESSIONS.clear()
+        srv.SESSIONS.update(saved)
