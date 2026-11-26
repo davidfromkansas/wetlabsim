@@ -170,6 +170,8 @@ function tagHtml(uid, run, tl) {
 
 let lastPoll = 0;
 const TAG_PPM = 240;    // at this zoom (screen pixels per metre) or closer, a tag is full size
+const TAG_GAP = 0.04;   // metres between the robot's highest point and the tag's pointer
+const TOPS = {};        // per robot: the tag's height last frame, eased toward the robot's top
 function drawTags() {
   const sc = S.scene, V = window.V3;
   const runs = (sc && sc.mode === 'free' && sc.runs) || {};
@@ -178,11 +180,17 @@ function drawTags() {
     for (const rb of sc && sc.robots || []) {
       const run = runs[rb.id];
       if (!run || !run.started || run.queued || !rb.base) continue;
-      // Pinned in the world above the robot's middle: it stays with the robot as the camera
-      // moves (it never slides to the screen's edge), and shrinks with distance like the robot.
-      const p = V.project([rb.base[0], rb.base[1], rb.base[2] + 1.05]);
+      // Pinned in the world over the robot's middle, just above its highest point right now (read
+      // from its own shapes, so any robot works): it rises and falls with the arm, stays with
+      // the robot as the camera moves, and shrinks with distance like the robot.
+      const top = V.topOf ? V.topOf(rb.bodies) : null;
+      const goal = top != null ? top + TAG_GAP : rb.base[2] + 1.05;
+      const now = performance.now(), was = TOPS[rb.id];
+      const z = !was ? goal : was.z + (goal - was.z) * (1 - Math.exp(-(now - was.t) / 90));   // eased, no jitter
+      TOPS[rb.id] = {z, t: now};
+      const p = V.project([rb.base[0], rb.base[1], z]);
       if (!p.visible) continue;
-      const q = V.project([rb.base[0], rb.base[1], rb.base[2] + 1.55]);
+      const q = V.project([rb.base[0], rb.base[1], z + 0.5]);
       const ppm = Math.hypot(p.x - q.x, p.y - q.y) / 0.5;      // screen pixels per metre there
       keep.add(rb.id);
       let el = tagsEl.querySelector(`[data-uid="${rb.id}"]`);
@@ -200,6 +208,7 @@ function drawTags() {
     }
   }
   tagsEl.querySelectorAll('.rtg').forEach(el => { if (!keep.has(el.dataset.uid)) el.remove(); });
+  for (const uid in TOPS) if (!keep.has(uid)) delete TOPS[uid];
   // The bars need each working robot's timeline: every 3 s while it runs, once when it ends.
   if (Date.now() - lastPoll > 3000) {
     lastPoll = Date.now();
