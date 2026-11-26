@@ -14,6 +14,7 @@ const css = `
 #rtags{position:absolute;inset:0;pointer-events:none;z-index:5}
 .rtg{position:absolute;display:flex;flex-direction:column;align-items:flex-start;pointer-events:auto;cursor:pointer;border:0;padding:0;background:none;text-align:left;
   transform:translate(-50%,-100%) scale(var(--s,1));transform-origin:50% 100%;filter:drop-shadow(0 0 .6px rgba(17,24,39,.45)) drop-shadow(0 4px 10px rgba(17,24,39,.14))}
+.rtg{transition:opacity .15s}.rtg.hid{opacity:0;pointer-events:none}
 .rtg:active{transform:translate(-50%,-100%) scale(calc(var(--s,1) * .97))}
 .rtg .ftab{display:flex;align-items:center;gap:6px;height:30px;padding:2px 10px 4px 8px;margin-bottom:-4px;background:#fff;border-radius:8px 8px 0 0;font:600 12.5px Inter,sans-serif;color:#111827;white-space:nowrap;position:relative;z-index:1}
 .rtg .ftab:after{content:"";position:absolute;right:-10px;bottom:0;width:10px;height:14px;background:radial-gradient(circle at 100% 0,transparent 9.5px,#fff 10px) 0 0/10px 10px no-repeat,linear-gradient(#fff,#fff) 0 10px/10px 4px no-repeat}
@@ -168,6 +169,22 @@ function tagHtml(uid, run, tl) {
     <div class="thick" role="img" aria-label="What the robot has been doing over time">${bar}</div></div><div class="pointer"></div>`;
 }
 
+// Robots close together: where tags would overlap, only the tag of the robot nearest the camera
+// shows (nearest = most screen pixels per metre). Moving the camera nearer another robot
+// brings its tag back. A hidden tag needs a little clear space before it comes back, so tags
+// don't flicker at the edge.
+const TAG_CLEAR = 8;    // px
+function hideOverlaps() {
+  const tags = [...tagsEl.querySelectorAll('.rtg')].sort((a, b) => b.style.zIndex - a.style.zIndex);
+  const shown = [];
+  for (const el of tags) {
+    const r = el.getBoundingClientRect(), m = el.classList.contains('hid') ? TAG_CLEAR : 0;
+    const hit = shown.some(o => r.left - m < o.right && r.right + m > o.left && r.top - m < o.bottom && r.bottom + m > o.top);
+    el.classList.toggle('hid', hit); el.tabIndex = hit ? -1 : 0;
+    if (!hit) shown.push(r);
+  }
+}
+
 let lastPoll = 0;
 const TAG_PPM = 240;    // at this zoom (screen pixels per metre) or closer, a tag is full size
 const TAG_GAP = 0.04;   // metres between the robot's highest point and the tag's pointer
@@ -208,6 +225,7 @@ function drawTags() {
     }
   }
   tagsEl.querySelectorAll('.rtg').forEach(el => { if (!keep.has(el.dataset.uid)) el.remove(); });
+  hideOverlaps();
   for (const uid in TOPS) if (!keep.has(uid)) delete TOPS[uid];
   // The bars need each working robot's timeline: every 3 s while it runs, once when it ends.
   if (Date.now() - lastPoll > 3000) {
