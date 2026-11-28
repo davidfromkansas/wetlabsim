@@ -837,6 +837,57 @@ export function start({stage, base = '', onReady}) {
     const w = parseFloat(canvas.style.width) || 0, h = parseFloat(canvas.style.height) || 0;
     return {x: (v.x + 1) / 2 * w, y: (1 - v.y) / 2 * h, visible: v.z < 1 && Math.abs(v.x) <= 1.2 && Math.abs(v.y) <= 1.2};
   };
+  // The highest point of some bodies as drawn right now (e.g. a robot's, to hang its run tag
+  // just above it), as a height in metres, or null before any shape is in. Works for any robot, as it reads the shapes themselves. Each shape is measured by its
+  // outermost points in 162 directions (found once per shape), so a frame stays cheap.
+  const outer = new WeakMap(), DIRS = (() => {
+    const out = [], n = 162, ga = Math.PI * (3 - Math.sqrt(5));
+    for (let i = 0; i < n; i++) {
+      const z = 1 - 2 * (i + 0.5) / n, r = Math.sqrt(1 - z * z);
+      out.push([r * Math.cos(ga * i), r * Math.sin(ga * i), z]);
+    }
+    return out;
+  })();
+  function outerPoints(geo) {
+    let pts = outer.get(geo);
+    if (pts) return pts;
+    const a = geo.attributes && geo.attributes.position;
+    if (!a) return null;
+    const best = new Set();
+    for (const d of DIRS) {
+      let bi = 0, bv = -Infinity;
+      for (let i = 0; i < a.count; i++) {
+        const v = a.getX(i) * d[0] + a.getY(i) * d[1] + a.getZ(i) * d[2];
+        if (v > bv) { bv = v; bi = i; }
+      }
+      best.add(bi);
+    }
+    pts = new Float32Array(best.size * 3);
+    let k = 0;
+    for (const i of best) { pts[k++] = a.getX(i); pts[k++] = a.getY(i); pts[k++] = a.getZ(i); }
+    outer.set(geo, pts);
+    return pts;
+  }
+  const tv = new THREE.Vector3();
+  V.topOf = (ids) => {
+    let top = -Infinity;
+    for (const b of ids || []) {
+      const body = V.bodies && V.bodies[b];
+      if (!body) continue;
+      body.updateMatrixWorld(true);
+      body.traverse(o => {
+        if (!o.isMesh || !o.visible || o.userData.isOutline) return;
+        const pts = outerPoints(o.geometry);
+        if (!pts) return;
+        const m = o.matrixWorld;
+        for (let i = 0; i < pts.length; i += 3) {
+          tv.set(pts[i], pts[i + 1], pts[i + 2]).applyMatrix4(m);
+          if (tv.z > top) top = tv.z;
+        }
+      });
+    }
+    return top > -Infinity ? top : null;
+  };
   // Which body (its MuJoCo body id) the pointer is over in what the page shows, and where, at
   // once (no trip to the server): {body, point} or null. Outlines and the rings don't count.
   V.pickBody = (clientX, clientY) => {
